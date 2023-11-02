@@ -70,8 +70,11 @@
 			<td data-th-text="${#temporals.format(token.created, 'dd MMM yyyy') + ' UTC'}">
 				1 Jan 2010
 			</td>
-			<td>
-				<span class="label" data-th-classappend="${token.status.name() == 'Active'} ? 'label-success' : 'label-warning'"
+			<td data-th-switch="${token.expired}">
+				<span data-th-case="true" class="label label-danger" data-th-text="#{auth-tokens.label.expired}">
+					Expired
+				</span>
+				<span data-th-case="*" class="label" data-th-classappend="${token.status.name() eq 'Active' ? 'label-success' : 'label-warning'}"
 					data-th-text="#{auth-tokens.label.status.__${token.status}__}">
 					Active
 				</span>
@@ -203,6 +206,21 @@
 </table>
 </section>
 
+<template id="node-list">
+	<select name="nodeIds" class="form-control" multiple>
+		<!--/*/ <th:block th:each="userNode : ${userNodes}"> /*/-->
+		<option data-th-value="${userNode.node.id}">
+			<span data-th-text="${userNode.node.id}">123</span>
+			<span data-th-if="${not #strings.isEmpty(userNode.name)}"
+				data-th-text="${' - ' + userNode.name}"> - Home node</span>
+		</option>
+		<!--/*/ </th:block> /*/-->
+		<!--/*--> 
+		<option value="234"><span>234</span><span> - Work node</span></option>
+		<!--*/-->
+	</select>
+</template>
+
 <form id="create-user-auth-token" class="modal fade" data-th-action="@{/u/sec/auth-tokens/generateUser}" method="post">
 	<div class="modal-dialog">
 		<div class="modal-content">
@@ -212,58 +230,135 @@
 		 	</div>
 		 	<div class="modal-body">
 		 		<p class="before" data-th-utext="#{auth-tokens.user.create.intro}">Create user token here.</p>
-				<div class="before form-horizontal">
-					<div class="form-group">
-						<label for="create-user-auth-token-name" class="col-sm-3 control-label"
-							data-th-text="#{auth-tokens.label.name}">
-							Name
-						</label>
-						<div class="col-sm-9">
-							<input type="text" id="create-user-auth-token-name" class="form-control"
-								name="name" maxlength="128">
+				<ul class="nav nav-pills form-group before">
+					<li class="active"><a data-toggle="pill" href="#create-user-auth-token-tab-info" data-th-text="#{auth-tokens.user.create.group.info}">Info</a></li>
+					<li><a data-toggle="pill" href="#create-user-auth-token-tab-ids" data-th-text="#{auth-tokens.data.create.group.ids}">Node/Source IDs</a></li>
+					<li><a data-toggle="pill" href="#create-user-auth-token-tab-expiry" data-th-text="#{auth-tokens.data.create.group.expiry}">Expiry</a></li>
+					<li><a data-toggle="pill" href="#create-user-auth-token-tab-user-meta" data-th-text="#{auth-tokens.data.create.group.user-meta}">User Metadata</a></li>
+					<li><a data-toggle="pill" href="#create-user-auth-token-tab-apipaths" data-th-text="#{auth-tokens.data.create.group.apipaths}">API Paths</a></li>
+				</ul>
+				<div class="tab-content before">
+					<div id="create-user-auth-token-tab-info" class="tab-pane fade form-horizontal in active">
+						<div class="before form-horizontal">
+							<div class="form-group">
+								<label for="create-user-auth-token-name" class="col-sm-3 control-label"
+									data-th-text="#{auth-tokens.label.name}">
+									Name
+								</label>
+								<div class="col-sm-9">
+									<input type="text" id="create-user-auth-token-name" class="form-control"
+										name="name" maxlength="128">
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="create-user-auth-token-description" class="col-sm-3 control-label"
+									data-th-text="#{auth-tokens.label.description}">
+									Description
+								</label>
+								<div class="col-sm-9">
+									<textarea id="create-user-auth-token-description" class="form-control"
+										name="description" maxlength="512"></textarea>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div class="form-group">
-						<label for="create-user-auth-token-description" class="col-sm-3 control-label"
-							data-th-text="#{auth-tokens.label.description}">
-							Description
-						</label>
-						<div class="col-sm-9">
-							<textarea id="create-user-auth-token-description" class="form-control"
-								name="description" maxlength="512"></textarea>
+					<div id="create-user-auth-token-tab-ids" class="tab-pane fade">
+						<div data-id="create-user-auth-token-policy-nodeids" class="node-list">
+							<label for="create-user-auth-token-policy-nodeids"
+								data-th-text="#{auth-tokens.policy.nodeIds.label}">
+								Node IDs
+							</label>
+						</div>
+						<div class="help-block" data-th-text="#{auth-tokens.policy.nodeIds.placeholder}">
+							Select the node IDs to restrict the token to.
+						</div>
+						<div class="form-group">
+							<label for="create-user-auth-token-policy-sourceids"
+								data-th-text="#{auth-tokens.policy.sourceIds.label}">
+								Source IDs
+							</label>
+							<textarea id="create-user-auth-token-policy-sourceids" class="form-control"
+								name="sourceIds" rows="2" placeholder="Comma delimited list of source IDs"
+								data-th-placeholder="#{auth-tokens.policy.sourceIds.placeholder}"></textarea>
 						</div>
 					</div>
-					<div class="form-group">
-						<label for="create-user-auth-token-policy-apipaths" class="col-sm-3 control-label"
-							data-th-text="#{auth-tokens.policy.apiPaths.label}">
+					<div id="create-user-auth-token-tab-expiry" class="tab-pane fade form-horizontal">
+						<div class="form-group">
+							<label for="create-user-auth-token-policy-not-after" class="col-sm-3 control-label"
+								data-th-text="#{auth-tokens.policy.notAfter.label}">
+								Not After
+							</label>
+							<div class="col-sm-9">
+								<input type="date" id="create-user-auth-token-policy-not-after" class="form-control"
+									name="notAfter" maxlength="10" placeholder="Expire date"
+									data-th-placeholder="#{auth-tokens.policy.notAfter.placeholder}">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="create-user-auth-token-policy-not-after" class="col-sm-3 control-label"
+								data-th-text="#{auth-tokens.policy.refreshAllowed.label}">
+								Refresh allowed
+							</label>
+							<div class="col-sm-9">
+								<label class="radio-inline">
+									<input type="radio" name="refreshAllowed" value="true">
+									<span data-th-text="#{auth-tokens-policy-refreshAllowed.true.label}">Yes</span>
+								</label>
+								<label class="radio-inline">
+									<input type="radio" name="refreshAllowed" value="false" checked="checked">
+									<span data-th-text="#{auth-tokens-policy-refreshAllowed.false.label}">No</span>
+								</label>
+								<div class="help-block" data-th-utext="#{auth-tokens.policy.refreshAllowed.caption}">
+									Enable to allow token holder to refresh a token signing key.
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="create-user-auth-token-tab-user-meta" class="tab-pane fade">
+						<label for="create-user-auth-token-policy-usermeta" data-th-text="#{auth-tokens.policy.userMetadataPaths.label}">
+							User Metadata
+						</label>
+						<textarea id="create-user-auth-token-policy-usermeta" class="form-control" name="userMetadataPaths" rows="2"
+							placeholder="Comma delimited list of metadata paths"
+							data-th-placeholder="#{auth-tokens.policy.userMetadataPaths.placeholder}"></textarea>
+						<div class="help-block" data-th-utext="#{auth-tokens.policy.userMetadataPaths.caption}">
+							User metadata paths restrict the account metadata this token has access to.
+						</div>
+					</div>
+					<div id="create-user-auth-token-tab-apipaths" class="tab-pane fade">
+						<label for="create-user-auth-token-policy-apipaths" data-th-text="#{auth-tokens.policy.apiPaths.label}">
 							API Paths
 						</label>
-						<div class="col-sm-9">
-							<textarea id="create-user-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2"
-								data-th-placeholder="#{auth-tokens.policy.apiPaths.placeholder}"
-								placeholder="Comma delimited list of API paths"></textarea>
-							<div class="help-block" data-th-utext="#{auth-tokens.policy.apiPaths.caption}">
-								API paths restrict the API methods this token is allowed to call.
-							</div>
+						<textarea id="create-user-auth-token-policy-apipaths" class="form-control" name="apiPaths" rows="2"
+							placeholder="Comma delimited list of API paths"
+							data-th-placeholder="#{auth-tokens.policy.apiPaths.placeholder}"></textarea>
+						<div class="help-block" data-th-utext="#{auth-tokens.policy.apiPaths.caption}">
+							API paths restrict the API methods this token is allowed to call.
 						</div>
 					</div>
 				</div>
 		 		<div class="after">
 		 			<p data-th-utext="#{auth-tokens.created.intro}">Token created.</p>
-			 		<table class="table">
-			 			<thead>
-			 				<tr>
-			 					<th data-th-text="#{auth-tokens.label.token}">Token</th>
-			 					<th class="text-danger" data-th-text="#{auth-tokens.label.secret}">Secret</th>
-			 				</tr>
-			 			</thead>
-			 			<tbody>
-			 				<tr>
-			 					<td class="monospace result-token"></td>
-			 					<td class="monospace result-secret text-danger"></td>
-			 				</tr>
-			 			</tbody>
-			 		</table>
+					<div class="form-group">
+						<label for="create-user-auth-token-modal-id" data-th-text="#{auth-tokens.label.token}">
+							Token
+						</label>
+						<input type="text" name="tokenId" id="create-user-auth-token-modal-id" 
+								class="form-control" value="" readonly />
+					</div>
+					<div class="form-group">
+						<label for="create-user-auth-token-modal-secret" data-th-text="#{auth-tokens.label.secret}">
+							Secret
+						</label>
+						<input type="text" name="tokenSecret" id="create-user-auth-token-modal-secret" 
+							class="form-control text-danger" value="" readonly />
+					</div>
+			 		<p class="text-center">
+						<a class="btn btn-success btn-lg create-auth-token-download-csv" href="#" download="solarnetwork-user-token-credentials.csv">
+							<i class="glyphicon glyphicon-download-alt"></i>
+							<span data-th-text="#{auth-tokens.action.csvDownload}">Download</span>
+						</a>
+					</p>
 			 		<div class="alert alert-danger">
 			 			<strong data-th-text="#{auth-tokens.created.reiterate.title}">Warning!</strong>
 			 			<span data-th-text="#{auth-tokens.created.reiterate}">You won't be showed this token again.</span>
@@ -278,6 +373,7 @@
 		 	</div>
 		</div>
 	</div>
+	<input type="hidden" name="tokenType" value="User" disabled>
 </form>
 
 <form id="edit-auth-token-info" class="modal fade" data-th-action="@{/u/sec/auth-tokens/info}" method="post">
@@ -373,15 +469,14 @@
 						</div>
 					</div>
 					<div id="create-data-auth-token-tab-ids" class="tab-pane fade">
-						<div id="create-data-auth-token-policy-nodeids" class="toggle-buttons">
-							<!--/*/ <th:block th:each="userNode : ${userNodes}"> /*/-->
-							<button type="button" class="toggle btn btn-sm btn-default"
-								data-th-data-node-id="${userNode.node.id}">
-								<span data-th-text="${userNode.node.id}">123</span>
-								<span data-th-if="${not #strings.isEmpty(userNode.name)}"
-									data-th-text="${' - ' + userNode.name}"> - Home node</span>
-							</button>
-							<!--/*/ </th:block> /*/-->
+						<div data-id="create-data-auth-token-policy-nodeids" class="node-list">
+							<label for="create-data-auth-token-policy-nodeids"
+								data-th-text="#{auth-tokens.policy.nodeIds.label}">
+								Node IDs
+							</label>
+						</div>
+						<div class="help-block" data-th-text="#{auth-tokens.policy.nodeIds.placeholder}">
+							Select the node IDs to restrict the token to.
 						</div>
 						<div class="form-group">
 							<label for="create-data-auth-token-policy-sourceids"
@@ -391,7 +486,6 @@
 							<textarea id="create-data-auth-token-policy-sourceids" class="form-control"
 								name="sourceIds" rows="2" placeholder="Comma delimited list of source IDs"
 								data-th-placeholder="#{auth-tokens.policy.sourceIds.placeholder}"></textarea>
-							<div id="create-data-auth-token-policy-sourceids-hint" class="toggle-buttons"></div>
 						</div>
 					</div>
 					<div id="create-data-auth-token-tab-expiry" class="tab-pane fade form-horizontal">
@@ -476,20 +570,26 @@
 				</div>
 				<div class="after">
 					<p data-th-utext="#{auth-tokens.created.intro}">Your data token has been created.</p>
-			 		<table class="table">
-			 			<thead>
-			 				<tr>
-			 					<th data-th-text="#{auth-tokens.label.token}">Token</th>
-			 					<th class="text-danger" data-th-text="#{auth-tokens.label.secret}">Secret</th>
-			 				</tr>
-			 			</thead>
-			 			<tbody>
-			 				<tr>
-			 					<td class="monospace result-token"></td>
-			 					<td class="monospace result-secret text-danger"></td>
-			 				</tr>
-			 			</tbody>
-			 		</table>
+					<div class="form-group">
+						<label for="create-data-auth-token-modal-id" data-th-text="#{auth-tokens.label.token}">
+							Token
+						</label>
+						<input type="text" name="tokenId" id="create-data-auth-token-modal-id" 
+								class="form-control" value="" readonly />
+					</div>
+					<div class="form-group">
+						<label for="create-data-auth-token-modal-secret" data-th-text="#{auth-tokens.label.secret}">
+							Secret
+						</label>
+						<input type="text" name="tokenSecret" id="create-data-auth-token-modal-secret" 
+							class="form-control text-danger" value="" readonly />
+					</div>
+			 		<p class="text-center">
+						<a class="btn btn-success btn-lg create-auth-token-download-csv" href="#" download="solarnetwork-data-token-credentials.csv">
+							<i class="glyphicon glyphicon-download-alt"></i>
+							<span data-th-text="#{auth-tokens.action.csvDownload}">Download</span>
+						</a>
+					</p>
 			 		<div class="alert alert-danger">
 			 			<strong data-th-text="#{auth-tokens.created.reiterate.title}">Warning!</strong>
 			 			<span data-th-text="#{auth-tokens.created.reiterate}">You won't be showed this token again.</span>
@@ -504,6 +604,7 @@
 			</div>
 		</div>
 	</div>
+	<input type="hidden" name="tokenType" value="ReadNodeData" disabled>
 </form>
 
 <form id="delete-auth-token" class="modal fade" data-th-action="@{/u/sec/auth-tokens/delete}" method="post">
