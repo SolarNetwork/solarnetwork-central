@@ -451,4 +451,179 @@ public class AuthorizationSupport_tokenTests {
 		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
 	}
 
+	@Test
+	public void nodeWriteAccess_data() {
+		// GIVEN
+		final SecurityToken token = becomeToken(ReadNodeData, randomLong(), null);
+		final Long nodeId = randomLong();
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireNodeWriteAccess(nodeId, log);
+		})
+				.as("Data token not allowed write access")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is node ID")
+				.returns(nodeId, AuthorizationException::getId)
+				;
+		// @formatter:on
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_archived() {
+		// GIVEN
+		final SecurityToken token = becomeToken(User, randomLong(), null);
+		final Long nodeId = randomLong();
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		support.requireNodeWriteAccess(nodeId, log);
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_public_archived() {
+		// GIVEN
+		final SecurityToken token = becomeToken(User, randomLong(), null);
+		final Long nodeId = randomLong();
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, NOT_REQUIRES_AUTH, ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		support.requireNodeWriteAccess(nodeId, log);
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_noPolicy() {
+		// GIVEN
+		final SecurityToken token = becomeToken(User, randomLong(), null);
+		final Long nodeId = randomLong();
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		support.requireNodeWriteAccess(nodeId, log);
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_noPolicy_notOwner() {
+		// GIVEN
+		becomeToken(User, randomLong(), null);
+		final Long nodeId = randomLong();
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, randomLong(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireNodeWriteAccess(nodeId, log);
+		})
+				.as("Reason")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is node ID")
+				.returns(nodeId, AuthorizationException::getId)
+				;
+		// @formatter:on
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_policy_notOwner() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final SecurityPolicy policy = builder().withNodeIds(singleton(nodeId)).build();
+		becomeToken(User, randomLong(), policy);
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, randomLong(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireNodeWriteAccess(nodeId, log);
+		})
+				.as("Reason")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is node ID")
+				.returns(nodeId, AuthorizationException::getId)
+				;
+		// @formatter:on
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_policy_included() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final SecurityPolicy policy = builder().withNodeIds(singleton(nodeId)).build();
+		final SecurityToken token = becomeToken(User, randomLong(), policy);
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		support.requireNodeWriteAccess(nodeId, log);
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
+	@Test
+	public void nodeWriteAccess_user_policy_notIncluded() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final SecurityPolicy policy = builder().withNodeIds(singleton(randomLong())).build();
+		final SecurityToken token = becomeToken(User, randomLong(), policy);
+
+		final SolarNodeOwnership ownership = new BasicSolarNodeOwnership(nodeId, token.getUserId(), GB,
+				ZoneOffset.UTC, REQUIRES_AUTH, NOT_ARCHIVED);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(ownership);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireNodeWriteAccess(nodeId, log);
+		})
+				.as("Policy does not include node")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is node ID")
+				.returns(nodeId, AuthorizationException::getId)
+				;
+		// @formatter:on
+
+		// THEN
+		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
+	}
+
 }

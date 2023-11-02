@@ -105,9 +105,6 @@ public class AuthorizationSupport {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
 			throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 		}
-		if ( ownership.isArchived() ) {
-			throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
-		}
 
 		final SecurityActor actor;
 		try {
@@ -119,9 +116,12 @@ public class AuthorizationSupport {
 
 		// node requires authentication
 		if ( actor instanceof SecurityNode node ) {
+			if ( ownership.isArchived() ) {
+				throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
+			}
 			if ( !nodeId.equals(node.getNodeId()) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
-				throw new AuthorizationException(node.getNodeId().toString(), ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			return;
 		}
@@ -129,18 +129,25 @@ public class AuthorizationSupport {
 		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, user.getEmail());
-				throw new AuthorizationException(user.getEmail(), ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			return;
 		}
 
 		if ( actor instanceof SecurityToken token ) {
 			if ( SecurityTokenType.User.equals(token.getTokenType()) ) {
-				// user token, so user ID must match node user's ID
+				// node must be owned by token user
 				if ( !token.getUserId().equals(ownership.getUserId()) ) {
 					log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
 							token.getToken());
-					throw new AuthorizationException(token.getToken(), ACCESS_DENIED);
+					throw new AuthorizationException(ACCESS_DENIED, nodeId);
+				}
+				if ( token.getPolicy() != null && token.getPolicy().getNodeIds() != null
+						&& !token.getPolicy().getNodeIds().contains(nodeId) ) {
+					// policy specifies nodes, so policy must include the requested node ID
+					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
+							token.getToken());
+					throw new AuthorizationException(ACCESS_DENIED, nodeId);
 				}
 				return;
 			}
@@ -221,14 +228,14 @@ public class AuthorizationSupport {
 					throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 				}
 			}
-			// token does not restrict node IDs, so node must be owned by token user
+			// node must be owned by token user
 			if ( !token.getUserId().equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to node {} for token {}; wrong user", nodeId, token.getToken());
 				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			if ( token.getPolicy() != null && token.getPolicy().getNodeIds() != null
 					&& !token.getPolicy().getNodeIds().contains(nodeId) ) {
-				// data token specifies nodes, so token must include the requested node ID
+				// policy specifies nodes, so policy must include the requested node ID
 				log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
 						token.getToken());
 				throw new AuthorizationException(ACCESS_DENIED, nodeId);
