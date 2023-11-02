@@ -30,9 +30,19 @@ import net.solarnetwork.domain.Identity;
  * API for a {@link Configuration} associated with an identity.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DatumExportRequest extends Identity<UUID> {
+
+	/**
+	 * Get the authorization token associated with this job, if any.
+	 * 
+	 * @return the authorization token, or {@literal null} if none
+	 * @since 2.1
+	 */
+	default String getTokenId() {
+		return null;
+	}
 
 	/**
 	 * Get the configuration associated with this entity.

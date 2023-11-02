@@ -58,6 +58,7 @@ CREATE TABLE solaruser.user_export_datum_conf (
 	delay_mins		INTEGER NOT NULL,
 	schedule		CHARACTER(1) NOT NULL,
 	min_export_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	auth_token		TEXT,
 	data_conf_id	BIGINT,
 	dest_conf_id	BIGINT,
 	outp_conf_id	BIGINT,
@@ -186,6 +187,7 @@ CREATE TABLE solaruser.user_adhoc_export_task (
 	user_id			BIGINT NOT NULL,
 	schedule		CHARACTER(1) NOT NULL,
 	task_id			uuid NOT NULL,
+	auth_token 		TEXT,
 	CONSTRAINT user_adhoc_export_task_pkey PRIMARY KEY (user_id, task_id),
 	CONSTRAINT user_adhoc_export_task_datum_export_task_fk
 		FOREIGN KEY (task_id) REFERENCES solarnet.sn_datum_export_task (id)
@@ -202,18 +204,19 @@ CREATE TABLE solaruser.user_adhoc_export_task (
 CREATE OR REPLACE FUNCTION solaruser.store_adhoc_export_task(
 	usr BIGINT,
 	sched CHARACTER(1),
-	cfg text
+	cfg text,
+	token text DEFAULT NULL
   ) RETURNS uuid LANGUAGE plpgsql VOLATILE AS
 $$
 DECLARE
 	t_id uuid;
 BEGIN
 	t_id := gen_random_uuid();
-	PERFORM solarnet.add_datum_export_task(t_id, CURRENT_TIMESTAMP, cfg);
+	PERFORM solarnet.add_datum_export_task(t_id, CURRENT_TIMESTAMP, cfg, token);
 	INSERT INTO solaruser.user_adhoc_export_task
-		(user_id, schedule, task_id)
+		(user_id, schedule, task_id, auth_token)
 	VALUES
-		(usr, sched, t_id);
+		(usr, sched, t_id, token);
 
 	RETURN t_id;
 END;

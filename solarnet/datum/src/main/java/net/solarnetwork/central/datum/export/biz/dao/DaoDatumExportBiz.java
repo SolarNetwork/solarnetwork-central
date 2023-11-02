@@ -486,6 +486,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		taskInfo.setId(info.getId());
 		taskInfo.setCreated(Instant.now());
 		taskInfo.setStatus(DatumExportState.Claimed);
+		taskInfo.setTokenId(info.getTokenId());
 		DatumExportTask task = new DatumExportTask(taskInfo);
 		Future<DatumExportResult> future = executor.submit(task);
 		task.setDelegate(future);

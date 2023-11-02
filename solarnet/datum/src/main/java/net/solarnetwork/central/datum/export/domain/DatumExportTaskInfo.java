@@ -32,7 +32,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Entity for user-specific datum export tasks.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
 		implements DatumExportRequest, DatumExportResult {
@@ -46,6 +46,23 @@ public class DatumExportTaskInfo extends BaseObjectEntity<UUID>
 	private Boolean taskSuccess;
 	private String message;
 	private Instant completed;
+	private String tokenId;
+
+	@Override
+	public String getTokenId() {
+		return tokenId;
+	}
+
+	/**
+	 * Set the authorization token ID.
+	 * 
+	 * @param tokenId
+	 *        the token ID to set
+	 * @since 2.1
+	 */
+	public void setTokenId(String tokenId) {
+		this.tokenId = tokenId;
+	}
 
 	@Override
 	public Instant getExportDate() {

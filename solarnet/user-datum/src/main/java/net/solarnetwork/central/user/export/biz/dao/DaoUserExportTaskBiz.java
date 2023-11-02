@@ -45,7 +45,7 @@ import net.solarnetwork.central.datum.export.domain.BasicDataConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
@@ -55,6 +55,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * DAO implementation of {@link UserExportTaskBiz}.
@@ -193,6 +194,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		task.setUserId(config.getUserId());
 		task.setScheduleType(scheduleType);
 		task.setConfig(taskConfig);
+		task.setTokenId(SecurityUtils.currentTokenId());
 		UUID pk = adhocTaskDao.store(task);
 		task.setId(pk);
 		return task;
