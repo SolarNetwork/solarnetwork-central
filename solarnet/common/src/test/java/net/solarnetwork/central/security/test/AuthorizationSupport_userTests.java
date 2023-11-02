@@ -344,4 +344,60 @@ public class AuthorizationSupport_userTests {
 		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
 	}
 
+	@Test
+	public void userReadAccess() {
+		// GIVEN
+		final SecurityUser auth = becomeUser(randomString(), randomLong());
+
+		// WHEN
+		support.requireUserReadAccess(auth.getUserId(), log);
+	}
+
+	@Test
+	public void userReadAccess_notOwner() {
+		// GIVEN
+		becomeUser(randomString(), randomLong());
+
+		// WHEN
+		// @formatter:off
+		final Long readUserId = randomLong();
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserReadAccess(readUserId, log);
+		})
+				.as("Cannot read other user")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is user ID")
+				.returns(readUserId, AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
+	@Test
+	public void userWriteAccess() {
+		// GIVEN
+		final SecurityUser auth = becomeUser(randomString(), randomLong());
+
+		// WHEN
+		support.requireUserWriteAccess(auth.getUserId(), log);
+	}
+
+	@Test
+	public void userWriteAccess_notOwner() {
+		// GIVEN
+		becomeUser(randomString(), randomLong());
+
+		// WHEN
+		// @formatter:off
+		final Long readUserId = randomLong();
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserWriteAccess(readUserId, log);
+		})
+				.as("Cannot write other user")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is user ID")
+				.returns(readUserId, AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
 }

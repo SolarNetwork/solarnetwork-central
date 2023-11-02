@@ -626,4 +626,126 @@ public class AuthorizationSupport_tokenTests {
 		then(nodeOwnershipDao).should().ownershipForNodeId(nodeId);
 	}
 
+	@Test
+	public void userReadAccess_data_noPolicy() {
+		// GIVEN
+		final SecurityToken token = becomeToken(ReadNodeData, randomLong(), null);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserReadAccess(token.getUserId(), log);
+		})
+				.as("Cannot read other user")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is user ID")
+				.returns(token.getUserId(), AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
+	@Test
+	public void userReadAccess_data_withPolicy_noUserMetadataPaths() {
+		// GIVEN
+		final SecurityPolicy policy = builder().withNodeIds(singleton(randomLong())).build();
+		final SecurityToken token = becomeToken(ReadNodeData, randomLong(), policy);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserReadAccess(token.getUserId(), log);
+		})
+				.as("Cannot read user without user metadata policy")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is user ID")
+				.returns(token.getUserId(), AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
+	@Test
+	public void userReadAccess_data_withPolicy_withUserMetadataPaths() {
+		// GIVEN
+		final SecurityPolicy policy = builder().withNodeIds(singleton(randomLong()))
+				.withUserMetadataPaths(singleton("/pm/foobar/**")).build();
+		final SecurityToken token = becomeToken(ReadNodeData, randomLong(), policy);
+
+		// WHEN
+		support.requireUserReadAccess(token.getUserId(), log);
+	}
+
+	@Test
+	public void userReadAccess_user() {
+		// GIVEN
+		final SecurityToken token = becomeToken(User, randomLong(), null);
+
+		// WHEN
+		support.requireUserReadAccess(token.getUserId(), log);
+	}
+
+	@Test
+	public void userReadAccess_user_notOwner() {
+		// GIVEN
+		becomeToken(User, randomLong(), null);
+
+		// WHEN
+		// @formatter:off
+		final Long readUserId = randomLong();
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserReadAccess(readUserId, log);
+		})
+				.as("Cannot read other user")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is user ID")
+				.returns(readUserId, AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
+	@Test
+	public void userWriteAccess_data() {
+		// GIVEN
+		final SecurityToken token = becomeToken(ReadNodeData, randomLong(), null);
+
+		// WHEN
+		// @formatter:off
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserWriteAccess(token.getUserId(), log);
+		})
+				.as("Data token not allowed write access")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is node ID")
+				.returns(token.getUserId(), AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
+	@Test
+	public void userWriteAccess_user() {
+		// GIVEN
+		final SecurityToken token = becomeToken(User, randomLong(), null);
+
+		// WHEN
+		support.requireUserWriteAccess(token.getUserId(), log);
+	}
+
+	@Test
+	public void userWriteAccess_user_notOwner() {
+		// GIVEN
+		becomeToken(User, randomLong(), null);
+
+		// WHEN
+		// @formatter:off
+		final Long readUserId = randomLong();
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			support.requireUserWriteAccess(readUserId, log);
+		})
+				.as("Cannot write other user")
+				.returns(ACCESS_DENIED, AuthorizationException::getReason)
+				.as("Reference is user ID")
+				.returns(readUserId, AuthorizationException::getId)
+				;
+		// @formatter:on
+	}
+
 }

@@ -137,7 +137,7 @@ public class SecurityUtils {
 	 *        the node ID to become
 	 * @since 1.4
 	 */
-	public static void becomeNode(Long nodeId) {
+	public static SecurityNode becomeNode(Long nodeId) {
 		AuthenticatedNode node = new AuthenticatedNode(nodeId, NodeUserDetailsService.AUTHORITIES,
 				false);
 		Collection<GrantedAuthority> authorities = Collections
@@ -145,6 +145,7 @@ public class SecurityUtils {
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(node, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+		return node;
 	}
 
 	/**

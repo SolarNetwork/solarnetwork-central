@@ -371,16 +371,16 @@ public class AuthorizationSupport {
 		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
-				throw new AuthorizationException(user.getEmail(), ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
 			return;
 		}
 
 		if ( actor instanceof SecurityToken token ) {
-			// user token, so user ID must match token owner's ID
+			// token, so user ID must match token owner's ID
 			if ( !token.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for token {}; wrong user", userId, token.getToken());
-				throw new AuthorizationException(token.getToken(), ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
 			if ( SecurityTokenType.ReadNodeData.equals(token.getTokenType()) ) {
 				// data token, the token must include a user metadata policy that can be enforced
@@ -389,7 +389,7 @@ public class AuthorizationSupport {
 					log.warn(
 							"Access DENIED to user {} for token {}; user metadata not included in policy",
 							userId, token.getToken());
-					throw new AuthorizationException(token.getToken(), ACCESS_DENIED);
+					throw new AuthorizationException(ACCESS_DENIED, userId);
 				}
 			}
 			return;
