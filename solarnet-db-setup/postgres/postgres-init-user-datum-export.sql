@@ -212,12 +212,11 @@ DECLARE
 	t_id uuid;
 BEGIN
 	t_id := gen_random_uuid();
-	PERFORM solarnet.add_datum_export_task(t_id, CURRENT_TIMESTAMP, cfg, token);
+	PERFORM solarnet.add_datum_export_task(t_id, CURRENT_TIMESTAMP, cfg);
 	INSERT INTO solaruser.user_adhoc_export_task
 		(user_id, schedule, task_id, auth_token)
 	VALUES
 		(usr, sched, t_id, token);
-
 	RETURN t_id;
 END;
 $$;

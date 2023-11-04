@@ -52,6 +52,8 @@
 		<result property="exportDate" column="datum_export_task_export_date"/>
 		<result property="statusKey" column="datum_export_task_status"/>
 		<result property="configJson" column="datum_export_task_config"/>
+		<result property="userId" column="datum_export_task_user_id"/>
+		<result property="tokenId" column="datum_export_task_auth_token"/>
 		<result property="taskSuccess" column="datum_export_task_success"/>
 		<result property="message" column="datum_export_task_message"/>
 		<result property="completed" column="datum_export_task_completed"/>
@@ -71,9 +73,13 @@
 	
 	<select id="get-DatumExportTaskInfo-for-id" parameterType="java.util.UUID" resultMap="DatumExportTaskInfoFullResult">
 		SELECT
-			<include refid="fragment-DatumExportTaskInfo-full-result"/>
-		FROM
-			solarnet.sn_datum_export_task det
+			<include refid="fragment-DatumExportTaskInfo-full-result"/>,
+			COALESCE(uaet.user_id, uedc.user_id) AS datum_export_task_user_id,
+			COALESCE(uaet.auth_token, uedc.auth_token) AS datum_export_task_auth_token
+		FROM solarnet.sn_datum_export_task det
+		LEFT OUTER JOIN solaruser.user_adhoc_export_task uaet ON uaet.task_id = det.id
+		LEFT OUTER JOIN solaruser.user_export_task uet ON uet.task_id = det.id
+		LEFT OUTER JOIN solaruser.user_export_datum_conf uedc ON uedc.id = uet.conf_id
 		WHERE
 			det.id = #{id}
 	</select>

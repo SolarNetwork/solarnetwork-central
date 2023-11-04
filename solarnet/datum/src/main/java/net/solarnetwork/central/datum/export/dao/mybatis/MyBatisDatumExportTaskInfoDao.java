@@ -62,7 +62,12 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 
 	@Override
 	public DatumExportTaskInfo claimQueuedTask() {
-		return selectFirst(queryForClaimQueuedTask, null);
+		DatumExportTaskInfo info = selectFirst(queryForClaimQueuedTask, null);
+		if ( info != null ) {
+			// re-fetch
+			info = get(info.getId());
+		}
+		return info;
 	}
 
 	@Override

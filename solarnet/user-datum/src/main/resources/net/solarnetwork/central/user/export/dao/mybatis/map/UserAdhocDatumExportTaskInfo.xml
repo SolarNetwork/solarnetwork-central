@@ -32,6 +32,7 @@
 		uaet.created AS user_adhoc_export_task_created,
 		uaet.user_id AS user_adhoc_export_task_user_id,
 		uaet.schedule AS user_adhoc_export_task_schedule,
+		uaet.auth_token AS user_adhoc_export_task_auth_token,
 		uaet.task_id AS user_adhoc_export_task_task_id
 	</sql>
 
@@ -39,6 +40,7 @@
 		<id property="id" column="user_adhoc_export_task_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 		<result property="userId" column="user_adhoc_export_task_user_id"/>
 		<result property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>
+		<result property="tokenId" column="user_adhoc_export_task_auth_token"/>
 		<result property="created" column="user_adhoc_export_task_created"/>
 		
 		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />

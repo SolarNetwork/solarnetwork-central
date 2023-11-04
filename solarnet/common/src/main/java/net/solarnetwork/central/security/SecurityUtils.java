@@ -97,7 +97,7 @@ public class SecurityUtils {
 	 *        the security policy to use
 	 * @since 2.0
 	 */
-	public static void becomeToken(String tokenId, SecurityTokenType type, Long userId,
+	public static SecurityToken becomeToken(String tokenId, SecurityTokenType type, Long userId,
 			SecurityPolicy policy) {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new User(tokenId, "", true, true, true, true, AuthorityUtils.NO_AUTHORITIES), type,
@@ -107,6 +107,7 @@ public class SecurityUtils {
 		PreAuthenticatedAuthenticationToken auth = new PreAuthenticatedAuthenticationToken(token, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+		return token;
 	}
 
 	/**
@@ -120,7 +121,7 @@ public class SecurityUtils {
 	 *        the user ID
 	 * @since 2.0
 	 */
-	public static void becomeUser(String username, String name, Long userId) {
+	public static SecurityUser becomeUser(String username, String name, Long userId) {
 		User userDetails = new User(username, "", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, userId, name, false);
 		Collection<GrantedAuthority> authorities = Collections
@@ -128,6 +129,7 @@ public class SecurityUtils {
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+		return user;
 	}
 
 	/**

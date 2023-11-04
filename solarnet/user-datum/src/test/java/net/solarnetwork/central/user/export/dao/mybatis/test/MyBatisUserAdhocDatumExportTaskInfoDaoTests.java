@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -32,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -52,7 +56,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * Test cases for the {@link MyBatisUserAdhocDatumExportTaskInfoDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.1
  */
 public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
@@ -83,7 +87,6 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setCreated(Instant.now());
 		conf.setUserId(this.user.getId());
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
@@ -114,6 +117,48 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	}
 
 	@Test
+	public void storeNew_withToken() {
+		// GIVEN
+		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
+		info.setConfig(createNewUserDatumExportConfig());
+		info.setUserId(this.user.getId());
+		info.setTokenId(randomString());
+
+		// WHEN
+		UUID id = dao.store(info);
+
+		// THEN
+		then(id).as("Primary key assigned").isNotNull();
+
+		List<Map<String, Object>> userTaskRows = this.jdbcTemplate
+				.queryForList("select * from solaruser.user_adhoc_export_task");
+		// @formatter:off
+		then(userTaskRows)
+				.as("User export task row created")
+				.hasSize(1)
+				.element(0, map(String.class, Object.class))
+				.as("Datum task_id populated")
+				.containsKey("task_id")
+				.as("Token saved")
+				.containsEntry("auth_token", info.getTokenId())
+				;
+
+		List<Map<String, Object>> exportTaskRows = this.jdbcTemplate
+				.queryForList("select * from solarnet.sn_datum_export_task");
+		then(exportTaskRows)
+				.as("Datum export task row created")
+				.hasSize(1)
+				.element(0, map(String.class, Object.class))
+				.as("ID same as in user export task_id")
+				.containsEntry("id", userTaskRows.get(0).get("task_id"))
+				;
+
+		// stash results for other tests to use
+		info.setId(id);
+		this.info = info;
+	}
+
+	@Test
 	public void getByPrimaryKey() {
 		storeNew();
 		UserAdhocDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
@@ -124,6 +169,33 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		assertThat("Schedule type", info.getScheduleType(), equalTo(ScheduleType.Adhoc));
 		assertThat("Config", info.getConfig(), notNullValue());
 		assertThat("Modified date not used", info.getModified(), nullValue());
+
+		// stash results for other tests to use
+		this.info = info;
+	}
+
+	@Test
+	public void getByPrimaryKey_withToken() {
+		// GIVEN
+		storeNew_withToken();
+
+		// WHEN
+		UserAdhocDatumExportTaskInfo info = dao.get(this.info.getId(), this.user.getId());
+
+		// THEN
+		// @formatter:off
+		then(info)
+			.as("Found by PK")
+			.isNotNull()
+			.as("Primary key")
+			.returns(this.info.getId(), UserAdhocDatumExportTaskInfo::getId)
+			.as("User ID saved")
+			.returns(this.info.getUserId(), UserAdhocDatumExportTaskInfo::getUserId)
+			.as("Schedule type saved")
+			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
+			.as("Token saved")
+			.returns(this.info.getTokenId(), UserAdhocDatumExportTaskInfo::getTokenId)
+			;
 
 		// stash results for other tests to use
 		this.info = info;
