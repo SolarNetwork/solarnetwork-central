@@ -218,6 +218,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		if ( getUserIds() != null ) {
 			builder.append("userIds=");
 			builder.append(Arrays.toString(getUserIds()));
+			builder.append(", ");
 		}
 		if ( streamIds != null ) {
 			builder.append("streamIds=");
