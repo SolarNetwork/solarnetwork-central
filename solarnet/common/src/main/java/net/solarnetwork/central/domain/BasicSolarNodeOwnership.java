@@ -33,7 +33,7 @@ import net.solarnetwork.domain.Differentiable;
  * Basic implementation of {@link SolarNodeOwnership}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicSolarNodeOwnership
 		implements Serializable, SolarNodeOwnership, Differentiable<SolarNodeOwnership> {
@@ -276,7 +276,7 @@ public class BasicSolarNodeOwnership
 
 	@Override
 	public boolean isRequiresAuthorization() {
-		return requiresAuthorization;
+		return requiresAuthorization || archived;
 	}
 
 	@Override

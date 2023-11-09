@@ -1,5 +1,5 @@
 /* ==================================================================
- * DelegatingPasswordEncoderTest.java - Mar 19, 2013 10:28:23 AM
+ * DelegatingPasswordEncoderTests.java - Mar 19, 2013 10:28:23 AM
  * 
  * Copyright 2007-2013 SolarNetwork.net Dev Team
  * 
@@ -38,7 +38,7 @@ import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
  * @version 1.0
  */
 @ContextConfiguration
-public class DelegatingPasswordEncoderTest extends AbstractJUnit4SpringContextTests {
+public class DelegatingPasswordEncoderTests extends AbstractJUnit4SpringContextTests {
 
 	private static final String TEST_PASSWORD = "test.password";
 

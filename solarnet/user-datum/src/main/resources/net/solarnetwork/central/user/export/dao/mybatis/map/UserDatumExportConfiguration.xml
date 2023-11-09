@@ -20,12 +20,12 @@
               SELECT nextval('solaruser.user_export_seq') AS id 
 		</selectKey>
 		INSERT INTO solaruser.user_export_datum_conf (
-			id, user_id, cname, delay_mins, schedule, data_conf_id, dest_conf_id, outp_conf_id
+			id, user_id, cname, delay_mins, schedule, auth_token, data_conf_id, dest_conf_id, outp_conf_id
 			<if test="created != null">,created</if>
 			<if test="minimumExportDate != null">,min_export_date</if>
 			)
 		VALUES (
-			#{id}, #{userId}, #{name}, (#{hourDelayOffset} * 60), #{scheduleKey},
+			#{id}, #{userId}, #{name}, (#{hourDelayOffset} * 60), #{scheduleKey}, #{tokenId},
 			#{userDataConfigurationId}, #{userDestinationConfigurationId}, #{userOutputConfigurationId}
 			<if test="created != null">,#{created}</if>
 			<if test="minimumExportDate != null">,#{minimumExportDate}</if>
@@ -70,6 +70,7 @@
 		udexc.cname AS user_export_datum_conf_cname,
 		udexc.delay_mins / 60 AS user_export_datum_conf_delay_hours,
 		udexc.schedule AS user_export_datum_conf_schedule,
+		udexc.auth_token AS user_export_datum_conf_auth_token,
 		udexc.min_export_date AS user_export_datum_conf_min_export_date
 	</sql>
 
@@ -80,6 +81,7 @@
 		<result property="name" column="user_export_datum_conf_cname"/>
 		<result property="hourDelayOffset" column="user_export_datum_conf_delay_hours"/>
 		<result property="scheduleKey" column="user_export_datum_conf_schedule"/>
+		<result property="tokenId" column="user_export_datum_conf_auth_token"/>
 		<result property="minimumExportDate" column="user_export_datum_conf_min_export_date"/>
 		<result property="timeZoneId" column="user_export_datum_conf_time_zone"/>
 		<association property="userDataConfiguration" resultMap="net.solarnetwork.central.user.export.domain.UserDataConfiguration.UserDataConfigurationFullResult"/>

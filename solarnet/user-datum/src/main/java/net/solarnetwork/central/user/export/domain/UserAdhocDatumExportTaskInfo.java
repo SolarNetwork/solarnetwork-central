@@ -26,31 +26,31 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import net.solarnetwork.central.dao.BaseObjectEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.dao.BaseObjectEntity;
-import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Entity for user-specific datum export tasks.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
-@JsonPropertyOrder({ "id", "userId", "scheduleTypeKey", "created", "config", "task" })
+@JsonPropertyOrder({ "id", "userId", "scheduleTypeKey", "created", "config", "tokenId", "task" })
 public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 		implements UserRelatedEntity<UUID> {
 
-	private static final long serialVersionUID = -2432426770743118556L;
-
+	private static final long serialVersionUID = 3607582937761384987L;
 	private Long userId;
 	private ScheduleType scheduleType;
 	private Configuration config;
 	private String configJson;
+	private String tokenId;
 	private DatumExportTaskInfo task;
 
 	@Override
@@ -134,6 +134,25 @@ public class UserAdhocDatumExportTaskInfo extends BaseObjectEntity<UUID>
 		} catch ( IllegalArgumentException e ) {
 			setScheduleType(ScheduleType.Adhoc);
 		}
+	}
+
+	/**
+	 * Get the token ID.
+	 * 
+	 * @return the token ID
+	 */
+	public String getTokenId() {
+		return tokenId;
+	}
+
+	/**
+	 * Set the token ID.
+	 * 
+	 * @param tokenId
+	 *        the token ID to set
+	 */
+	public void setTokenId(String tokenId) {
+		this.tokenId = tokenId;
 	}
 
 }

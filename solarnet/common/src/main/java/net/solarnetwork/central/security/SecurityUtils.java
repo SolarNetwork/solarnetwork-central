@@ -46,7 +46,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
  * Security helper methods.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SecurityUtils {
 
@@ -76,6 +76,15 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Clear the current authentication.
+	 * 
+	 * @since 2.2
+	 */
+	public static void removeAuthentication() {
+		SecurityContextHolder.getContext().setAuthentication(null);
+	}
+
+	/**
 	 * Become an authenticated token with a {@code RUN_AS_ROLE_USER} authority.
 	 * 
 	 * @param tokenId
@@ -88,7 +97,7 @@ public class SecurityUtils {
 	 *        the security policy to use
 	 * @since 2.0
 	 */
-	public static void becomeToken(String tokenId, SecurityTokenType type, Long userId,
+	public static SecurityToken becomeToken(String tokenId, SecurityTokenType type, Long userId,
 			SecurityPolicy policy) {
 		AuthenticatedToken token = new AuthenticatedToken(
 				new User(tokenId, "", true, true, true, true, AuthorityUtils.NO_AUTHORITIES), type,
@@ -98,6 +107,7 @@ public class SecurityUtils {
 		PreAuthenticatedAuthenticationToken auth = new PreAuthenticatedAuthenticationToken(token, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+		return token;
 	}
 
 	/**
@@ -111,7 +121,7 @@ public class SecurityUtils {
 	 *        the user ID
 	 * @since 2.0
 	 */
-	public static void becomeUser(String username, String name, Long userId) {
+	public static SecurityUser becomeUser(String username, String name, Long userId) {
 		User userDetails = new User(username, "", AuthorityUtils.NO_AUTHORITIES);
 		AuthenticatedUser user = new AuthenticatedUser(userDetails, userId, name, false);
 		Collection<GrantedAuthority> authorities = Collections
@@ -119,6 +129,7 @@ public class SecurityUtils {
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+		return user;
 	}
 
 	/**
@@ -128,7 +139,7 @@ public class SecurityUtils {
 	 *        the node ID to become
 	 * @since 1.4
 	 */
-	public static void becomeNode(Long nodeId) {
+	public static SecurityNode becomeNode(Long nodeId) {
 		AuthenticatedNode node = new AuthenticatedNode(nodeId, NodeUserDetailsService.AUTHORITIES,
 				false);
 		Collection<GrantedAuthority> authorities = Collections
@@ -136,6 +147,7 @@ public class SecurityUtils {
 		UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(node, "",
 				authorities);
 		SecurityContextHolder.getContext().setAuthentication(auth);
+		return node;
 	}
 
 	/**
@@ -303,6 +315,20 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Get the current {@link SecurityToken#getToken()}, if available.
+	 * 
+	 * @return the token, or {@literal null} if a token is not available
+	 * @since 2.2
+	 */
+	public static String currentTokenId() {
+		try {
+			return getCurrentToken().getToken();
+		} catch ( SecurityException e ) {
+			return null;
+		}
+	}
+
+	/**
 	 * Get the current {@link SecurityUser}.
 	 * 
 	 * @return the current user, never {@literal null}
@@ -445,6 +471,27 @@ public class SecurityUtils {
 					: Collections.emptySet());
 		}
 		return restrictedToNodeIds;
+	}
+
+	/**
+	 * Get a {@link SecurityPolicy} for the active user, if available.
+	 * 
+	 * @return The active user's policy, or {@code null}.
+	 * @since 2.2
+	 */
+	public static SecurityPolicy getActiveSecurityPolicy() {
+		final SecurityActor actor;
+		try {
+			actor = SecurityUtils.getCurrentActor();
+		} catch ( SecurityException e ) {
+			return null;
+		}
+
+		if ( actor instanceof SecurityToken token ) {
+			return token.getPolicy();
+		}
+
+		return null;
 	}
 
 }

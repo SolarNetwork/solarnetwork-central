@@ -12,6 +12,7 @@ CREATE TABLE solarnet.sn_datum_import_job (
 	import_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	state			CHARACTER(1) NOT NULL,
 	group_key		TEXT NOT NULL DEFAULT uuid_generate_v4()::TEXT,
+	auth_token 		TEXT,
 	progress		DOUBLE PRECISION NOT NULL DEFAULT 0,
 	success 		BOOLEAN,
 	load_count		BIGINT NOT NULL DEFAULT 0,

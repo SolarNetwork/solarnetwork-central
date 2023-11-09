@@ -47,7 +47,7 @@ import net.solarnetwork.central.datum.export.domain.ScheduleType;
 public class UserDatumExportConfiguration extends BaseEntity
 		implements Configuration, UserRelatedEntity<Long>, Serializable {
 
-	private static final long serialVersionUID = -961786443214010801L;
+	private static final long serialVersionUID = 7392841763656888488L;
 
 	private Long userId;
 	private String name;
@@ -58,6 +58,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	private UserDestinationConfiguration userDestinationConfiguration;
 	private Instant minimumExportDate;
 	private String timeZoneId;
+	private String tokenId;
 
 	@Override
 	public Long getUserId() {
@@ -336,6 +337,25 @@ public class UserDatumExportConfiguration extends BaseEntity
 	public ZoneId zone() {
 		String tzId = getTimeZoneId();
 		return (tzId != null ? ZoneId.of(tzId) : ZoneOffset.UTC);
+	}
+
+	/**
+	 * Get the token ID.
+	 * 
+	 * @return the token ID
+	 */
+	public String getTokenId() {
+		return tokenId;
+	}
+
+	/**
+	 * Set the token ID.
+	 * 
+	 * @param tokenId
+	 *        the token ID to set
+	 */
+	public void setTokenId(String tokenId) {
+		this.tokenId = tokenId;
 	}
 
 }

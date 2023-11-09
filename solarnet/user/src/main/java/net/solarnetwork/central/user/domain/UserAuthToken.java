@@ -31,6 +31,7 @@ import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
@@ -40,9 +41,9 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user authorization token.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String> {
+public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String>, SecurityToken {
 
 	private static final long serialVersionUID = -4544594854807498756L;
 
@@ -220,6 +221,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * 
 	 * @return the policy
 	 */
+	@Override
 	public BasicSecurityPolicy getPolicy() {
 		if ( policy == null && policyJson != null ) {
 			policy = JsonUtils.getObjectFromJSON(policyJson, BasicSecurityPolicy.class);
@@ -282,4 +284,23 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 		SecurityPolicy policy = getPolicy();
 		return (policy != null && !policy.isValidAt(Instant.now()));
 	}
+
+	@JsonIgnore
+	@Override
+	public boolean isAuthenticatedWithToken() {
+		return true;
+	}
+
+	@JsonIgnore
+	@Override
+	public String getToken() {
+		return getId();
+	}
+
+	@JsonIgnore
+	@Override
+	public SecurityTokenType getTokenType() {
+		return getType();
+	}
+
 }

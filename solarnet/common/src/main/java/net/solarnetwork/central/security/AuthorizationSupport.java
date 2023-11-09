@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.central.security.AuthorizationException.Reason.ACCESS_DENIED;
+import static net.solarnetwork.central.security.AuthorizationException.Reason.UNKNOWN_OBJECT;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,9 +41,9 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * Helper class for authorization needs, e.g. aspect implementations.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public abstract class AuthorizationSupport {
+public class AuthorizationSupport {
 
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private PathMatcher pathMatcher;
@@ -66,7 +68,7 @@ public abstract class AuthorizationSupport {
 	 * 
 	 * @return The {@link SolarNodeOwnershipDao}.
 	 */
-	protected SolarNodeOwnershipDao getNodeOwnershipDao() {
+	public SolarNodeOwnershipDao getNodeOwnershipDao() {
 		return nodeOwnershipDao;
 	}
 
@@ -81,10 +83,27 @@ public abstract class AuthorizationSupport {
 	 *         if the authorization check fails
 	 */
 	protected void requireNodeWriteAccess(Long nodeId) {
+		requireNodeWriteAccess(nodeId, log);
+	}
+
+	/**
+	 * Require the active user have "write" access to a given node ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param nodeId
+	 *        the node ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireNodeWriteAccess(Long nodeId, Logger log) {
 		final SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
 		if ( ownership == null ) {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, nodeId);
+			throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 		}
 
 		final SecurityActor actor;
@@ -92,15 +111,17 @@ public abstract class AuthorizationSupport {
 			actor = SecurityUtils.getCurrentActor();
 		} catch ( SecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+			throw new AuthorizationException(ACCESS_DENIED, nodeId);
 		}
 
 		// node requires authentication
 		if ( actor instanceof SecurityNode node ) {
+			if ( ownership.isArchived() ) {
+				throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
+			}
 			if ( !nodeId.equals(node.getNodeId()) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
-				throw new AuthorizationException(node.getNodeId().toString(),
-						AuthorizationException.Reason.ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			return;
 		}
@@ -108,27 +129,32 @@ public abstract class AuthorizationSupport {
 		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, user.getEmail());
-				throw new AuthorizationException(user.getEmail(),
-						AuthorizationException.Reason.ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			return;
 		}
 
 		if ( actor instanceof SecurityToken token ) {
 			if ( SecurityTokenType.User.equals(token.getTokenType()) ) {
-				// user token, so user ID must match node user's ID
+				// node must be owned by token user
 				if ( !token.getUserId().equals(ownership.getUserId()) ) {
 					log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
 							token.getToken());
-					throw new AuthorizationException(token.getToken(),
-							AuthorizationException.Reason.ACCESS_DENIED);
+					throw new AuthorizationException(ACCESS_DENIED, nodeId);
+				}
+				if ( token.getPolicy() != null && token.getPolicy().getNodeIds() != null
+						&& !token.getPolicy().getNodeIds().contains(nodeId) ) {
+					// policy specifies nodes, so policy must include the requested node ID
+					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
+							token.getToken());
+					throw new AuthorizationException(ACCESS_DENIED, nodeId);
 				}
 				return;
 			}
 		}
 
 		log.warn("Access DENIED to node {} for actor {}", nodeId, actor);
-		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+		throw new AuthorizationException(ACCESS_DENIED, nodeId);
 	}
 
 	/**
@@ -142,10 +168,27 @@ public abstract class AuthorizationSupport {
 	 *         if the authorization check fails
 	 */
 	protected void requireNodeReadAccess(Long nodeId) {
+		requireNodeReadAccess(nodeId, log);
+	}
+
+	/**
+	 * Require the active user have "read" access to a given node ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param nodeId
+	 *        the node ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireNodeReadAccess(Long nodeId, Logger log) {
 		final SolarNodeOwnership ownership = nodeOwnershipDao.ownershipForNodeId(nodeId);
 		if ( ownership == null ) {
 			log.warn("Access DENIED to node {}; owner not found", nodeId);
-			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, nodeId);
+			throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 		}
 		if ( !ownership.isRequiresAuthorization() ) {
 			return;
@@ -156,15 +199,17 @@ public abstract class AuthorizationSupport {
 			actor = SecurityUtils.getCurrentActor();
 		} catch ( SecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+			throw new AuthorizationException(ACCESS_DENIED, nodeId);
 		}
 
 		// node requires authentication
 		if ( actor instanceof SecurityNode node ) {
+			if ( ownership.isArchived() ) {
+				throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
+			}
 			if ( !nodeId.equals(node.getNodeId()) ) {
 				log.warn("Access DENIED to node {} for node {}; wrong node", nodeId, node.getNodeId());
-				throw new AuthorizationException(node.getNodeId().toString(),
-						AuthorizationException.Reason.ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			return;
 		}
@@ -172,45 +217,34 @@ public abstract class AuthorizationSupport {
 		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to node {} for user {}; wrong user", nodeId, user.getEmail());
-				throw new AuthorizationException(user.getEmail(),
-						AuthorizationException.Reason.ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
 			}
 			return;
 		}
 
 		if ( actor instanceof SecurityToken token ) {
-			if ( SecurityTokenType.User.equals(token.getTokenType()) ) {
-				// user token, so user ID must match node user's ID
-				if ( !token.getUserId().equals(ownership.getUserId()) ) {
-					log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
-							token.getToken());
-					throw new AuthorizationException(token.getToken(),
-							AuthorizationException.Reason.ACCESS_DENIED);
-				}
-				return;
-			}
 			if ( SecurityTokenType.ReadNodeData.equals(token.getTokenType()) ) {
-				if ( token.getPolicy() == null || token.getPolicy().getNodeIds() == null ) {
-					// data token does not restrict node IDs, so node must be owned by token user
-					if ( !token.getUserId().equals(ownership.getUserId()) ) {
-						log.warn("Access DENIED to node {} for token {}; wrong user", nodeId,
-								token.getToken());
-						throw new AuthorizationException(token.getToken(),
-								AuthorizationException.Reason.ACCESS_DENIED);
-					}
-				} else if ( !token.getPolicy().getNodeIds().contains(nodeId) ) {
-					// data token specifies nodes, so token must include the requested node ID
-					log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
-							token.getToken());
-					throw new AuthorizationException(token.getToken(),
-							AuthorizationException.Reason.ACCESS_DENIED);
+				if ( ownership.isArchived() ) {
+					throw new AuthorizationException(UNKNOWN_OBJECT, nodeId);
 				}
-				return;
 			}
+			// node must be owned by token user
+			if ( !token.getUserId().equals(ownership.getUserId()) ) {
+				log.warn("Access DENIED to node {} for token {}; wrong user", nodeId, token.getToken());
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
+			}
+			if ( token.getPolicy() != null && token.getPolicy().getNodeIds() != null
+					&& !token.getPolicy().getNodeIds().contains(nodeId) ) {
+				// policy specifies nodes, so policy must include the requested node ID
+				log.warn("Access DENIED to node {} for token {}; node not included", nodeId,
+						token.getToken());
+				throw new AuthorizationException(ACCESS_DENIED, nodeId);
+			}
+			return;
 		}
 
 		log.warn("Access DENIED to node {} for actor {}", nodeId, actor);
-		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeId);
+		throw new AuthorizationException(ACCESS_DENIED, nodeId);
 	}
 
 	/**
@@ -222,21 +256,37 @@ public abstract class AuthorizationSupport {
 	 *        the user ID to check
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
-	 * @since 1.1
 	 */
 	protected void requireUserWriteAccess(Long userId) {
+		requireUserWriteAccess(userId, log);
+	}
+
+	/**
+	 * Require the active user have "write" access to a given user ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param userId
+	 *        the user ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireUserWriteAccess(Long userId, Logger log) {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
 		} catch ( SecurityException e ) {
 			log.warn("Access DENIED to user {} for non-authenticated user", userId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+			throw new AuthorizationException(ACCESS_DENIED, userId);
 		}
 
 		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
-				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
 			return;
 		}
@@ -247,36 +297,23 @@ public abstract class AuthorizationSupport {
 				if ( !token.getUserId().equals(userId) ) {
 					log.warn("Access DENIED to user {} for token {}; wrong user", userId,
 							token.getToken());
-					throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED,
-							userId);
+					throw new AuthorizationException(ACCESS_DENIED, userId);
 				}
 				return;
 			}
 		}
 
 		log.warn("Access DENIED to user {} for actor {}", userId, actor);
-		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+		throw new AuthorizationException(ACCESS_DENIED, userId);
 	}
 
 	/**
 	 * Get a {@link SecurityPolicy} for the active user, if available.
 	 * 
 	 * @return The active user's policy, or {@code null}.
-	 * @since 1.3
 	 */
-	protected SecurityPolicy getActiveSecurityPolicy() {
-		final SecurityActor actor;
-		try {
-			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
-			return null;
-		}
-
-		if ( actor instanceof SecurityToken token ) {
-			return token.getPolicy();
-		}
-
-		return null;
+	public SecurityPolicy getActiveSecurityPolicy() {
+		return SecurityUtils.getActiveSecurityPolicy();
 	}
 
 	/**
@@ -288,15 +325,31 @@ public abstract class AuthorizationSupport {
 	 *        the user ID to check
 	 * @throws AuthorizationException
 	 *         if the authorization check fails
-	 * @since 1.1
 	 */
 	protected void requireUserReadAccess(Long userId) {
+		requireUserReadAccess(userId, log);
+	}
+
+	/**
+	 * Require the active user have "read" access to a given user ID. If the
+	 * active user is not authorized, a {@link AuthorizationException} will be
+	 * thrown.
+	 * 
+	 * @param userId
+	 *        the user ID to check
+	 * @param log
+	 *        the logger to use
+	 * @throws AuthorizationException
+	 *         if the authorization check fails
+	 * @since 1.1
+	 */
+	public void requireUserReadAccess(Long userId, Logger log) {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
 		} catch ( SecurityException e ) {
 			log.warn("Access DENIED to user {} for non-authenticated user", userId);
-			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+			throw new AuthorizationException(ACCESS_DENIED, userId);
 		}
 
 		// node requires authentication
@@ -306,11 +359,11 @@ public abstract class AuthorizationSupport {
 					: null);
 			if ( ownership == null ) {
 				log.warn("Access DENIED to user {} for node {}; not found", userId, node.getNodeId());
-				throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, userId);
+				throw new AuthorizationException(UNKNOWN_OBJECT, userId);
 			}
 			if ( !userId.equals(ownership.getUserId()) ) {
 				log.warn("Access DENIED to user {} for node {}; wrong node", userId, node.getNodeId());
-				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
 			return;
 		}
@@ -318,18 +371,16 @@ public abstract class AuthorizationSupport {
 		if ( actor instanceof SecurityUser user ) {
 			if ( !user.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for user {}; wrong user", userId, user.getEmail());
-				throw new AuthorizationException(user.getEmail(),
-						AuthorizationException.Reason.ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
 			return;
 		}
 
 		if ( actor instanceof SecurityToken token ) {
-			// user token, so user ID must match token owner's ID
+			// token, so user ID must match token owner's ID
 			if ( !token.getUserId().equals(userId) ) {
 				log.warn("Access DENIED to user {} for token {}; wrong user", userId, token.getToken());
-				throw new AuthorizationException(token.getToken(),
-						AuthorizationException.Reason.ACCESS_DENIED);
+				throw new AuthorizationException(ACCESS_DENIED, userId);
 			}
 			if ( SecurityTokenType.ReadNodeData.equals(token.getTokenType()) ) {
 				// data token, the token must include a user metadata policy that can be enforced
@@ -338,15 +389,14 @@ public abstract class AuthorizationSupport {
 					log.warn(
 							"Access DENIED to user {} for token {}; user metadata not included in policy",
 							userId, token.getToken());
-					throw new AuthorizationException(token.getToken(),
-							AuthorizationException.Reason.ACCESS_DENIED);
+					throw new AuthorizationException(ACCESS_DENIED, userId);
 				}
 			}
 			return;
 		}
 
 		log.warn("Access DENIED to user {} for actor {}", userId, actor);
-		throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, userId);
+		throw new AuthorizationException(ACCESS_DENIED, userId);
 	}
 
 	/**
@@ -360,9 +410,8 @@ public abstract class AuthorizationSupport {
 	 * @return The domain object to use.
 	 * @throws AuthorizationException
 	 *         If the policy check fails.
-	 * @since 1.4
 	 */
-	protected <T> T policyEnforcerCheck(T domainObject) {
+	public <T> T policyEnforcerCheck(T domainObject) {
 		return policyEnforcerCheck(domainObject, SecurityPolicyMetadataType.Node);
 	}
 
@@ -381,9 +430,8 @@ public abstract class AuthorizationSupport {
 	 * @return The domain object to use.
 	 * @throws AuthorizationException
 	 *         If the policy check fails.
-	 * @since 1.4
 	 */
-	protected <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
+	public <T> T policyEnforcerCheck(T domainObject, SecurityPolicyMetadataType metadataType) {
 		Authentication authentication = SecurityUtils.getCurrentAuthentication();
 		SecurityPolicy policy = getActiveSecurityPolicy();
 		if ( policy == null || domainObject == null ) {
@@ -433,7 +481,6 @@ public abstract class AuthorizationSupport {
 	 * Get the path matcher to use.
 	 * 
 	 * @return the path matcher
-	 * @since 1.4
 	 */
 	public PathMatcher getPathMatcher() {
 		return pathMatcher;
@@ -444,7 +491,6 @@ public abstract class AuthorizationSupport {
 	 * 
 	 * @param pathMatcher
 	 *        the matcher to use
-	 * @since 1.4
 	 */
 	public void setPathMatcher(PathMatcher pathMatcher) {
 		this.pathMatcher = pathMatcher;

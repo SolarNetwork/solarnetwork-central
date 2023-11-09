@@ -51,6 +51,8 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.AntPathMatcher;
+import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -74,6 +76,11 @@ import net.solarnetwork.central.datum.export.support.DatumExportException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
@@ -102,6 +109,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	private final DatumExportTaskInfoDao taskDao;
 	private final DatumEntityDao datumDao;
+	private final SecurityTokenDao securityTokenDao;
 	private final TaskScheduler scheduler;
 	private final AsyncTaskExecutor executor;
 	private final TransactionTemplate transactionTemplate;
@@ -120,6 +128,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *        the task DAO
 	 * @param datumDao
 	 *        the datum DAO
+	 * @param securityTokenDao
+	 *        the security token DAO
 	 * @param scheduler
 	 *        the scheduler
 	 * @param executor
@@ -127,17 +137,19 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 * @param transactionTemplate
 	 *        the transaction template
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 *         if any argument other than {@code transactionTemplate} is
+	 *         {@literal null}
 	 */
 	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
-			TaskScheduler scheduler, AsyncTaskExecutor executor,
+			SecurityTokenDao securityTokenDao, TaskScheduler scheduler, AsyncTaskExecutor executor,
 			TransactionTemplate transactionTemplate) {
 		super();
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
+		this.securityTokenDao = requireNonNullArgument(securityTokenDao, "securityTokenDao");
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
 		this.executor = requireNonNullArgument(executor, "executor");
-		this.transactionTemplate = requireNonNullArgument(transactionTemplate, "transactionTemplate");
+		this.transactionTemplate = transactionTemplate;
 	}
 
 	/**
@@ -326,7 +338,10 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 			ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
 					: ZoneOffset.UTC);
-			BasicDatumCriteria filter = DatumUtils.criteriaFromFilter(datumFilter);
+
+			// validate export criteria
+			BasicDatumCriteria filter = DatumUtils.criteriaFromFilter(policyEnforcer(datumFilter));
+			filter.setUserId(info.getUserId()); // restrict to user if available
 			if ( schedule == ScheduleType.Adhoc ) {
 				if ( !(filter.hasLocalDateRange() || filter.hasDateRange()) ) {
 					throw new DatumExportException(info.getId(),
@@ -387,6 +402,23 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			} catch ( IOException e ) {
 				throw new DatumExportException(info.getId(), e.getMessage(), e);
 			}
+		}
+
+		private AggregateGeneralNodeDatumFilter policyEnforcer(
+				AggregateGeneralNodeDatumFilter datumFilter) {
+			final SecurityPolicy policy = tokenPolicyForId(info.getTokenId());
+			if ( policy == null ) {
+				return datumFilter;
+			}
+
+			AntPathMatcher sourceIdMatcher = new AntPathMatcher();
+			sourceIdMatcher.setCachePatterns(false);
+			sourceIdMatcher.setCaseSensitive(true);
+
+			SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, info.getTokenId(),
+					datumFilter, sourceIdMatcher);
+
+			return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 		}
 
 		private void uploadToDestination(Configuration config, Iterable<DatumExportResource> resources)
@@ -486,6 +518,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		taskInfo.setId(info.getId());
 		taskInfo.setCreated(Instant.now());
 		taskInfo.setStatus(DatumExportState.Claimed);
+		taskInfo.setTokenId(info.getTokenId());
+		taskInfo.setUserId(info.getUserId());
 		DatumExportTask task = new DatumExportTask(taskInfo);
 		Future<DatumExportResult> future = executor.submit(task);
 		task.setDelegate(future);
@@ -540,6 +574,43 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Get a {@link SecurityToken} for a given token ID.
+	 * 
+	 * @param tokenId
+	 *        the ID of the token to get, or {@literal null}
+	 * @return the token, or {@literal null} if {@code token} is {@literal null}
+	 * @throws AuthorizationException
+	 *         if {@code token} is not {@literal null} but a
+	 *         {@link SecurityToken} is not found for it
+	 */
+	private SecurityToken tokenForId(String tokenId) throws AuthorizationException {
+		if ( tokenId == null ) {
+			return null;
+		}
+		SecurityToken token = securityTokenDao.securityTokenForId(tokenId);
+		if ( token == null ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, tokenId);
+		}
+		return token;
+	}
+
+	/**
+	 * Get a {@link SecurityPolicy} for a given token ID.
+	 * 
+	 * @param tokenId
+	 *        the ID of the token to get, or {@literal null}
+	 * @return the policy, or {@literal null} if {@code token} is
+	 *         {@literal null} or the token has no policy
+	 * @throws AuthorizationException
+	 *         if {@code token} is not {@literal null} but a
+	 *         {@link SecurityToken} is not found for it
+	 */
+	private SecurityPolicy tokenPolicyForId(String tokenId) throws AuthorizationException {
+		SecurityToken token = tokenForId(tokenId);
+		return token != null ? token.getPolicy() : null;
 	}
 
 	/**

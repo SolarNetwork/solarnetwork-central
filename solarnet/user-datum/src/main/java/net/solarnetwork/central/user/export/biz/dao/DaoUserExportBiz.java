@@ -45,6 +45,7 @@ import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
@@ -214,6 +215,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			ts = configuration.getSchedule().exportDate(ts);
 			configuration.setMinimumExportDate(ts.toInstant());
 		}
+		configuration.setTokenId(SecurityUtils.currentTokenId());
 		return datumExportConfigDao.store(configuration);
 	}
 

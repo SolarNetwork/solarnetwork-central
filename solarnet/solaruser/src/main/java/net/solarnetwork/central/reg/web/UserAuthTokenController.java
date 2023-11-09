@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Controller for user authorization ticket management.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/auth-tokens")
@@ -122,8 +122,22 @@ public class UserAuthTokenController extends ControllerSupport {
 	 *        an optional name
 	 * @param description
 	 *        an optional description
+	 * @param nodeIds
+	 *        optional node IDs
+	 * @param sourceIds
+	 *        optional source IDs
+	 * @param minAggregation
+	 *        optional minimum aggregation
+	 * @param nodeMetadataPaths
+	 *        optional node metadata paths
+	 * @param userMetadataPaths
+	 *        optional user metadata paths
 	 * @param apiPaths
 	 *        optional API paths
+	 * @param notAfter
+	 *        optional expiration date
+	 * @param refreshAllowed
+	 *        {@literal true} if refresh is allowed
 	 * @return the generated token
 	 */
 	@RequestMapping(value = "/generateUser", method = RequestMethod.POST)
@@ -131,10 +145,23 @@ public class UserAuthTokenController extends ControllerSupport {
 	public Result<UserAuthToken> generateUserToken(
 			@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "description", required = false) String description,
-			@RequestParam(value = "apiPath", required = false) Set<String> apiPaths) {
+			@RequestParam(value = "nodeId", required = false) Set<Long> nodeIds,
+			@RequestParam(value = "sourceId", required = false) Set<String> sourceIds,
+			@RequestParam(value = "minAggregation", required = false) Aggregation minAggregation,
+			@RequestParam(value = "nodeMetadataPath", required = false) Set<String> nodeMetadataPaths,
+			@RequestParam(value = "userMetadataPath", required = false) Set<String> userMetadataPaths,
+			@RequestParam(value = "apiPath", required = false) Set<String> apiPaths,
+			@RequestParam(value = "notAfter", required = false) LocalDate notAfter,
+			@RequestParam(value = "refreshAllowed", required = false) Boolean refreshAllowed) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
+		final Instant notAfterDate = (notAfter != null
+				? notAfter.atStartOfDay(ZoneOffset.UTC).toInstant()
+				: null);
 		UserAuthToken token = userBiz.generateUserAuthToken(user.getUserId(), SecurityTokenType.User,
-				new BasicSecurityPolicy.Builder().withApiPaths(apiPaths).build());
+				new BasicSecurityPolicy.Builder().withNodeIds(nodeIds).withSourceIds(sourceIds)
+						.withMinAggregation(minAggregation).withNodeMetadataPaths(nodeMetadataPaths)
+						.withUserMetadataPaths(userMetadataPaths).withApiPaths(apiPaths)
+						.withNotAfter(notAfterDate).withRefreshAllowed(refreshAllowed).build());
 		token = updateTokenInfo(user, token, name, description);
 		return success(token);
 	}
@@ -205,7 +232,7 @@ public class UserAuthTokenController extends ControllerSupport {
 	 *        optional expiration date
 	 * @param refreshAllowed
 	 *        {@literal true} if refresh is allowed
-	 * @return
+	 * @return the generated token
 	 */
 	@RequestMapping(value = "/generateData", method = RequestMethod.POST)
 	@ResponseBody

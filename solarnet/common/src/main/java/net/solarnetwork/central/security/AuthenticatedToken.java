@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -29,7 +30,7 @@ import org.springframework.security.core.userdetails.UserDetails;
  * {@link SecurityUser} implementation for authenticated tokens.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AuthenticatedToken extends User implements SecurityToken {
 
@@ -50,14 +51,33 @@ public class AuthenticatedToken extends User implements SecurityToken {
 	 *        the user ID (that the token belongs to)
 	 * @param policy
 	 *        optional policy associated with the token
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code policy} is {@literal null}
 	 */
 	public AuthenticatedToken(UserDetails user, SecurityTokenType tokenType, Long userId,
 			SecurityPolicy policy) {
-		super(user.getUsername(), user.getPassword(), user.isEnabled(), user.isAccountNonExpired(),
-				user.isCredentialsNonExpired(), user.isAccountNonLocked(), user.getAuthorities());
-		this.tokenType = tokenType;
-		this.userId = userId;
+		super(requireNonNullArgument(user, "user").getUsername(), user.getPassword(), user.isEnabled(),
+				user.isAccountNonExpired(), user.isCredentialsNonExpired(), user.isAccountNonLocked(),
+				user.getAuthorities());
+		this.tokenType = requireNonNullArgument(tokenType, "tokenType");
+		this.userId = requireNonNullArgument(userId, "userId");
 		this.policy = policy;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder("AuthenticatedToken{type=");
+		buf.append(tokenType);
+		buf.append(",token=");
+		buf.append(getToken());
+		buf.append(",userId=");
+		buf.append(userId);
+		if ( policy != null ) {
+			buf.append(",policy=");
+			buf.append(policy);
+		}
+		buf.append("}");
+		return buf.toString();
 	}
 
 	@Override

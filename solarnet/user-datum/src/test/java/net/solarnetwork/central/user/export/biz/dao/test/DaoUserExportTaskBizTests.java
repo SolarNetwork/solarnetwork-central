@@ -22,7 +22,11 @@
 
 package net.solarnetwork.central.user.export.biz.dao.test;
 
+import static net.solarnetwork.central.security.SecurityTokenType.User;
+import static net.solarnetwork.central.security.SecurityUtils.becomeToken;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,16 +45,17 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.dao.DaoUserExportTaskBiz;
@@ -62,13 +67,14 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.test.Assertion;
 
 /**
  * Test cases for the {@link UserExportBiz} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserExportTaskBizTests {
 
@@ -84,7 +90,7 @@ public class DaoUserExportTaskBizTests {
 
 	private DaoUserExportTaskBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
 		adhocTaskDao = EasyMock.createMock(UserAdhocDatumExportTaskInfoDao.class);
@@ -98,9 +104,10 @@ public class DaoUserExportTaskBizTests {
 		EasyMock.replay(taskDao, adhocTaskDao, userNodeDao, metaDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(taskDao, adhocTaskDao, userNodeDao, metaDao);
+		SecurityUtils.removeAuthentication();
 	}
 
 	private UserDatumExportConfiguration createConfiguration() {
@@ -281,7 +288,7 @@ public class DaoUserExportTaskBizTests {
 
 	@Test
 	public void submitAdhocTask() {
-		// given
+		// GIVEN
 		UserDatumExportConfiguration config = createConfiguration();
 
 		// make ad hoc with no ID
@@ -295,20 +302,67 @@ public class DaoUserExportTaskBizTests {
 		UUID pk = UUID.randomUUID();
 		expect(adhocTaskDao.store(capture(taskCaptor))).andReturn(pk);
 
-		// when
+		// WHEN
 		replayAll();
 		UserAdhocDatumExportTaskInfo task = biz.submitAdhocDatumExportConfiguration(config);
 
-		// then
-		assertThat("Task created", task, notNullValue());
+		// THEN
+		// @formatter:off
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task user ID")
+			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
+			.as("Schedule is Adhoc")
+			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
+			.as("No token")
+			.returns(null, UserAdhocDatumExportTaskInfo::getTokenId)
+			.as("Config name")
+			;
+		// @formatter:on
+		then(task.getConfig().getName()).isEqualTo(config.getName());
+		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
+				.contains(TEST_NODE_ID);
+	}
 
-		assertThat("Task user ID", task.getUserId(), equalTo(TEST_USER_ID));
-		assertThat("Task schedule", task.getScheduleType(), equalTo(ScheduleType.Adhoc));
-		assertThat("Task config available", task.getConfig(), notNullValue());
-		assertThat("Config name", task.getConfig().getName(), equalTo(config.getName()));
-		assertThat("Node ID populated",
-				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
-				arrayContaining(TEST_NODE_ID));
+	@Test
+	public void submitAdhocTask_withToken() {
+		// GIVEN
+		UserDatumExportConfiguration config = createConfiguration();
+
+		// make ad hoc with no ID
+		config.setId(null);
+
+		expect(userNodeDao.findNodeIdsForUser(TEST_USER_ID))
+				.andReturn(Collections.singleton(TEST_NODE_ID));
+
+		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
+
+		UUID pk = UUID.randomUUID();
+		expect(adhocTaskDao.store(capture(taskCaptor))).andReturn(pk);
+
+		// WHEN
+		replayAll();
+		SecurityToken auth = becomeToken(randomString(), User, TEST_USER_ID, null);
+		UserAdhocDatumExportTaskInfo task = biz.submitAdhocDatumExportConfiguration(config);
+
+		// THEN
+		// @formatter:off
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task user ID")
+			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
+			.as("Schedule is Adhoc")
+			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
+			.as("No token")
+			.returns(auth.getToken(), UserAdhocDatumExportTaskInfo::getTokenId)
+			.as("Config name")
+			;
+		// @formatter:on
+		then(task.getConfig().getName()).isEqualTo(config.getName());
+		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
+				.contains(TEST_NODE_ID);
 	}
 
 }

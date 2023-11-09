@@ -8,6 +8,7 @@
 	schedule		CHARACTER(1) NOT NULL,
 	export_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	task_id			uuid NOT NULL,
+	token_id		TEXT the active user token, if available
  -->
  
 	<parameterMap id="pmap-UserAdhocDatumExportTaskInfo" type="net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo">
@@ -15,10 +16,11 @@
 		<parameter property="userId" jdbcType="BIGINT" mode="IN"/>
 		<parameter property="scheduleTypeKey" jdbcType="CHAR" mode="IN"/>
 		<parameter property="configJson" jdbcType="VARCHAR" mode="IN"/>
+		<parameter property="tokenId" jdbcType="VARCHAR" mode="IN"/>
 	</parameterMap>
 
  	<insert id="insert-UserAdhocDatumExportTaskInfo" parameterMap="pmap-UserAdhocDatumExportTaskInfo" statementType="CALLABLE">
- 		{? = call solaruser.store_adhoc_export_task(?, ?, ?)}
+ 		{? = call solaruser.store_adhoc_export_task(?, ?, ?, ?)}
 	</insert>
 
 	<delete id="delete-UserAdhocDatumExportTaskInfo" parameterType="net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo">
@@ -30,6 +32,7 @@
 		uaet.created AS user_adhoc_export_task_created,
 		uaet.user_id AS user_adhoc_export_task_user_id,
 		uaet.schedule AS user_adhoc_export_task_schedule,
+		uaet.auth_token AS user_adhoc_export_task_auth_token,
 		uaet.task_id AS user_adhoc_export_task_task_id
 	</sql>
 
@@ -37,6 +40,7 @@
 		<id property="id" column="user_adhoc_export_task_task_id" typeHandler="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 		<result property="userId" column="user_adhoc_export_task_user_id"/>
 		<result property="scheduleTypeKey" column="user_adhoc_export_task_schedule"/>
+		<result property="tokenId" column="user_adhoc_export_task_auth_token"/>
 		<result property="created" column="user_adhoc_export_task_created"/>
 		
 		<association property="task" resultMap="net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo.DatumExportTaskInfoFullResult" />

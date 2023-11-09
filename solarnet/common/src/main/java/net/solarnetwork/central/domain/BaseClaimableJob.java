@@ -30,17 +30,18 @@ import net.solarnetwork.central.dao.BaseObjectEntity;
  * Abstract implementation support for {@link ClaimableJob}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.44
  */
 public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, PK extends Comparable<PK> & Serializable>
 		extends BaseObjectEntity<PK> implements ClaimableJob<C, R, S, PK> {
 
-	private static final long serialVersionUID = 5432479029787759481L;
+	private static final long serialVersionUID = 6518967007802666051L;
 
 	private S jobState;
 	private C configuration;
 	private R result;
+	private String tokenId;
 	private String groupKey;
 	private Boolean jobSuccess;
 	private String message;
@@ -84,6 +85,22 @@ public abstract class BaseClaimableJob<C, R, S extends ClaimableJobState, PK ext
 
 	public void setResult(R result) {
 		this.result = result;
+	}
+
+	@Override
+	public String getTokenId() {
+		return tokenId;
+	}
+
+	/**
+	 * Set the authorization token ID.
+	 * 
+	 * @param tokenId
+	 *        the token ID to set
+	 * @since 2.1
+	 */
+	public void setTokenId(String tokenId) {
+		this.tokenId = tokenId;
 	}
 
 	@Override

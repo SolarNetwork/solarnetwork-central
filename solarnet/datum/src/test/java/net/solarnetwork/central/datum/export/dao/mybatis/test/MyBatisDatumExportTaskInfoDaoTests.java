@@ -22,12 +22,21 @@
 
 package net.solarnetwork.central.datum.export.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -35,8 +44,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import net.solarnetwork.central.datum.export.dao.mybatis.MyBatisDatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
@@ -57,6 +70,8 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 	private MyBatisDatumExportTaskInfoDao dao;
 
 	private DatumExportTaskInfo info;
+	private String lastTokenId;
+	private Long lastUserId;
 
 	@Before
 	public void setUp() throws Exception {
@@ -81,6 +96,136 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 	}
 
 	@Test
+	public void storeNew_withToken() {
+		// GIVEN
+		final Long userId = randomLong();
+		setupTestUser(userId);
+		this.lastUserId = userId;
+
+		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
+		info.setExportDate(TEST_EXPORT_DATE);
+		info.setId(UUID.randomUUID());
+		info.setStatus(DatumExportState.Queued);
+
+		final String tokenId = randomString();
+		this.lastTokenId = tokenId;
+
+		// WHEN
+		UUID id = dao.store(info);
+
+		// add user task association (adhoc)
+		jdbcTemplate.update("""
+				insert into solaruser.user_adhoc_export_task (user_id,schedule,task_id,auth_token)
+				values (?,?,?::uuid,?)
+				""", userId, ScheduleType.Adhoc.getKey(), id, tokenId);
+
+		// THEN
+		then(id).as("Primary key assigned").isNotNull();
+
+		// stash results for other tests to use
+		this.info = info;
+	}
+
+	@Test
+	public void storeNew_withUserExportConfig() {
+		// GIVEN
+		final Long userId = randomLong();
+		setupTestUser(userId);
+		this.lastUserId = userId;
+
+		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
+		info.setExportDate(TEST_EXPORT_DATE);
+		info.setId(UUID.randomUUID());
+		info.setStatus(DatumExportState.Queued);
+
+		// WHEN
+		UUID id = dao.store(info);
+
+		// add user task association
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		jdbcTemplate.update(new PreparedStatementCreator() {
+
+			@Override
+			public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+				PreparedStatement stmt = con.prepareStatement("""
+						insert into solaruser.user_export_datum_conf (user_id,cname,delay_mins,schedule)
+						values (?,?,?,?)
+						returning id
+						""", Statement.RETURN_GENERATED_KEYS);
+				stmt.setObject(1, userId);
+				stmt.setObject(2, randomString());
+				stmt.setObject(3, 0);
+				stmt.setObject(4, ScheduleType.Monthly.getKey());
+				return stmt;
+			}
+		}, keyHolder);
+		jdbcTemplate.update("""
+				insert into solaruser.user_export_task (user_id,schedule,export_date,task_id,conf_id)
+				values (?,?,?,?::uuid,?)
+				""", userId, ScheduleType.Monthly.getKey(), Timestamp.from(Instant.now()), id,
+				keyHolder.getKey());
+
+		// THEN
+		then(id).as("Primary key assigned").isNotNull();
+
+		// stash results for other tests to use
+		this.info = info;
+	}
+
+	@Test
+	public void storeNew_withUserExportConfig_withToken() {
+		// GIVEN
+		final Long userId = randomLong();
+		setupTestUser(userId);
+		this.lastUserId = userId;
+
+		DatumExportTaskInfo info = new DatumExportTaskInfo();
+		info.setConfig(new BasicConfiguration(TEST_NAME, ScheduleType.Daily, TEST_HOUR_OFFSET));
+		info.setExportDate(TEST_EXPORT_DATE);
+		info.setId(UUID.randomUUID());
+		info.setStatus(DatumExportState.Queued);
+
+		final String tokenId = randomString();
+		this.lastTokenId = tokenId;
+
+		// WHEN
+		UUID id = dao.store(info);
+
+		// add user task association
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		jdbcTemplate.update(new PreparedStatementCreator() {
+
+			@Override
+			public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+				PreparedStatement stmt = con.prepareStatement("""
+						insert into solaruser.user_export_datum_conf
+						(user_id,cname,delay_mins,schedule,auth_token)
+						values (?,?,?,?,?)
+						returning id""", Statement.RETURN_GENERATED_KEYS);
+				stmt.setObject(1, userId);
+				stmt.setObject(2, randomString());
+				stmt.setObject(3, 0);
+				stmt.setObject(4, ScheduleType.Monthly.getKey());
+				stmt.setObject(5, tokenId);
+				return stmt;
+			}
+		}, keyHolder);
+		jdbcTemplate.update("""
+				insert into solaruser.user_export_task (user_id,schedule,export_date,task_id,conf_id)
+				values (?,?,?,?::uuid,?)
+				""", userId, ScheduleType.Monthly.getKey(), Timestamp.from(Instant.now()), id,
+				keyHolder.getKey());
+
+		// THEN
+		then(id).as("Primary key assigned").isNotNull();
+
+		// stash results for other tests to use
+		this.info = info;
+	}
+
+	@Test
 	public void getByPrimaryKey() {
 		storeNew();
 		DatumExportTaskInfo info = dao.get(this.info.getId());
@@ -95,6 +240,44 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		assertThat("Config name", info.getConfig().getName(), equalTo(TEST_NAME));
 		assertThat("Config schedule", info.getConfig().getSchedule(), equalTo(ScheduleType.Daily));
 		assertThat("Config offset", info.getConfig().getHourDelayOffset(), equalTo(TEST_HOUR_OFFSET));
+	}
+
+	@Test
+	public void getByPrimaryKey_withToken() {
+		// GIVEN
+		storeNew_withToken();
+
+		// WHEN
+		DatumExportTaskInfo info = dao.get(this.info.getId());
+
+		// THEN
+		// @formatter:off
+		then(info)
+				.as("Found by PK")
+				.isNotNull()
+				.as("PK")
+				.returns(this.info.getId(), from(DatumExportTaskInfo::getId))
+				.as("Export date")
+				.returns(TEST_EXPORT_DATE, from(DatumExportTaskInfo::getExportDate))
+				.as("Status queued")
+				.returns(DatumExportState.Queued, from(DatumExportTaskInfo::getStatus))
+				.as("Token found")
+				.returns(this.lastTokenId, from(DatumExportTaskInfo::getTokenId))
+				.as("User ID found")
+				.returns(this.lastUserId, from(DatumExportTaskInfo::getUserId))
+				;
+		
+		then(info.getConfig())
+				.as("Config populated")
+				.isNotNull()
+				.as("Name saved")
+				.returns(TEST_NAME, from(Configuration::getName))
+				.as("Schedule saved")
+				.returns(ScheduleType.Daily, from(Configuration::getSchedule))
+				.as("Offset saved")
+				.returns(TEST_HOUR_OFFSET, from(Configuration::getHourDelayOffset))
+				;
+		// @formatter:on
 	}
 
 	@Test
@@ -126,6 +309,75 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		DatumExportTaskInfo info = dao.claimQueuedTask();
 		assertThat("Found by claim", info, notNullValue());
 		assertThat("PK", info.getId(), equalTo(this.info.getId()));
+	}
+
+	@Test
+	public void getByClaim_withToken() {
+		// GIVEN
+		storeNew_withToken();
+
+		// WHEN
+		DatumExportTaskInfo info = dao.claimQueuedTask();
+
+		// THEN
+		// @formatter:off
+		then(info)
+			.as("Found claim")
+			.isNotNull()
+			.as("PK")
+			.returns(this.info.getId(), from(DatumExportTaskInfo::getId))
+			.as("User ID provided")
+			.returns(this.lastUserId, from(DatumExportTaskInfo::getUserId))
+			.as("Token provided")
+			.returns(this.lastTokenId, from(DatumExportTaskInfo::getTokenId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getByClaim_withUserExportConfig() {
+		// GIVEN
+		storeNew_withUserExportConfig();
+
+		// WHEN
+		DatumExportTaskInfo info = dao.claimQueuedTask();
+
+		// THEN
+		// @formatter:off
+		then(info)
+			.as("Found claim")
+			.isNotNull()
+			.as("PK")
+			.returns(this.info.getId(), from(DatumExportTaskInfo::getId))
+			.as("User ID provided")
+			.returns(this.lastUserId, from(DatumExportTaskInfo::getUserId))
+			.as("Token not available")
+			.returns(null, from(DatumExportTaskInfo::getTokenId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getByClaim_withUserExportConfig_withToken() {
+		// GIVEN
+		storeNew_withUserExportConfig_withToken();
+
+		// WHEN
+		DatumExportTaskInfo info = dao.claimQueuedTask();
+
+		// THEN
+		// @formatter:off
+		then(info)
+			.as("Found claim")
+			.isNotNull()
+			.as("PK")
+			.returns(this.info.getId(), from(DatumExportTaskInfo::getId))
+			.as("User ID provided")
+			.returns(this.lastUserId, from(DatumExportTaskInfo::getUserId))
+			.as("Token not available")
+			.returns(this.lastTokenId, from(DatumExportTaskInfo::getTokenId))
+			;
+		// @formatter:on
 	}
 
 	@Test

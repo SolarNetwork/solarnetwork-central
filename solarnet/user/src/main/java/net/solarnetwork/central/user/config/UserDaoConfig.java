@@ -30,7 +30,6 @@ import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
-import net.solarnetwork.central.user.dao.UserAuthTokenDao;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
@@ -47,7 +46,7 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
  * Configuration for user DAO implementations.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 public class UserDaoConfig {
@@ -70,7 +69,7 @@ public class UserDaoConfig {
 	}
 
 	@Bean
-	public UserAuthTokenDao userAuthTokenDao() {
+	public MyBatisUserAuthTokenDao userAuthTokenDao() {
 		MyBatisUserAuthTokenDao dao = new MyBatisUserAuthTokenDao();
 		dao.setSqlSessionTemplate(sqlSessionTemplate);
 		return dao;

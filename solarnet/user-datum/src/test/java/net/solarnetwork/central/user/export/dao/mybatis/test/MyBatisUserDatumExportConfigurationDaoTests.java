@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -43,7 +45,6 @@ import org.junit.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDataConfigurationDao;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportConfigurationDao;
@@ -53,12 +54,13 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link MyBatisUserDatumExportConfigurationDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -189,13 +191,31 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	}
 
 	@Test
+	public void storeNew_withToken() {
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
+		conf.setCreated(Instant.now());
+		conf.setUserId(this.user.getId());
+		conf.setName(TEST_NAME);
+		conf.setHourDelayOffset(2);
+		conf.setSchedule(ScheduleType.Weekly);
+		conf.setTokenId(randomString());
+
+		Long id = dao.store(conf);
+		assertThat("Primary key assigned", id, notNullValue());
+
+		// stash results for other tests to use
+		conf.setId(id);
+		this.conf = conf;
+	}
+
+	@Test
 	public void storeNewWithConfigurations() {
 		UserDataConfiguration dataConf = addDataConf();
 		UserDestinationConfiguration destConf = addDestConf();
 		UserOutputConfiguration outpConf = addOutpConf();
 
 		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setCreated(Instant.now());
+		conf.setCreated(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		conf.setUserId(this.user.getId());
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
@@ -266,6 +286,37 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 				equalTo(this.conf.getUserOutputConfiguration().getServiceIdentifier()));
 		assertThat("Outp conf compression", outpConf.getCompressionType(),
 				equalTo(this.conf.getUserOutputConfiguration().getCompressionType()));
+	}
+
+	@Test
+	public void getByPrimaryKey_withToken() {
+		// GIVEN
+		storeNew_withToken();
+
+		// WHEN
+		UserDatumExportConfiguration conf = dao.get(this.conf.getId(), this.user.getId());
+
+		// THEN
+		// @formatter:off
+		then(conf)
+			.as("Configuration returned")
+			.isNotNull()
+			.as("New instance returned")
+			.isNotSameAs(this.conf)
+			.as("Created saved")
+			.returns(this.conf.getCreated(), UserDatumExportConfiguration::getCreated)
+			.as("User ID")
+			.returns(this.conf.getUserId(), UserDatumExportConfiguration::getUserId)
+			.as("Name")
+			.returns(this.conf.getName(), UserDatumExportConfiguration::getName)
+			.as("Hour delay")
+			.returns(this.conf.getHourDelayOffset(), UserDatumExportConfiguration::getHourDelayOffset)
+			.as("Schedule")
+			.returns(this.conf.getSchedule(), UserDatumExportConfiguration::getSchedule)
+			.as("TimeZone from user")
+			.returns(TEST_TZ, UserDatumExportConfiguration::getTimeZoneId)
+			;
+		// @formatter:on
 	}
 
 	@Test
