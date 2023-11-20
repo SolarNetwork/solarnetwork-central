@@ -35,6 +35,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.v16.vendor.abb.MeterTransferDataTransferDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.vendor.hiconics.VehicleMacDataTransferDatumPublisher;
 import net.solarnetwork.central.ocpp.v16.vendor.zjbeny.DlbMeterDataTransferDatumPublisher;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import ocpp.v16.cs.DataTransferRequest;
@@ -82,6 +83,18 @@ public class OcppV16VendorActionConfig {
 	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppVendorAbb_MeterTransferDataTransferDatumPublisher_v16(
 			ObjectMapper mapper) {
 		MeterTransferDataTransferDatumPublisher publisher = new MeterTransferDataTransferDatumPublisher(
+				ocppCentralChargePointDao, ocppChargePointSettingsDao,
+				ocppCentralChargePointConnectorDao, datumDao, mapper);
+		publisher.setFluxPublisher(fluxPublisher);
+		return publisher;
+	}
+
+	@Bean
+	@OcppCentralServiceQualifier(OCPP_V16)
+	@Order(0)
+	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppVendorHiconics_VehicleMacDataTransferDatumPublisher_v16(
+			ObjectMapper mapper) {
+		VehicleMacDataTransferDatumPublisher publisher = new VehicleMacDataTransferDatumPublisher(
 				ocppCentralChargePointDao, ocppChargePointSettingsDao,
 				ocppCentralChargePointConnectorDao, datumDao, mapper);
 		publisher.setFluxPublisher(fluxPublisher);
