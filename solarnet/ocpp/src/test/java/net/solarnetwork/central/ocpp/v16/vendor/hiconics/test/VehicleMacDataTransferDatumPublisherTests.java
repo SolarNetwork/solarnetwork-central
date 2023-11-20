@@ -284,4 +284,59 @@ public class VehicleMacDataTransferDatumPublisherTests {
 		// @formatter:on
 	}
 
+	@SuppressWarnings("static-access")
+	@Test
+	public void publishDatum2() {
+		// GIVEN
+		final String vid = "9CF6DD918B5C";
+		final String dataTs = "2023-11-20T03:17:09Z";
+		final String data = """
+				{
+				    "vehicleId": "%s",
+				    "connectorId": 1,
+				    "timestamp": "%s"
+				}
+				""".formatted(vid, dataTs);
+
+		final CentralChargePoint cp = cp();
+		final ChargePointIdentity cpi = cpi(cp);
+		final ChargePointSettings cps = cps(cp);
+
+		final String sourceId = sourceId(cp, 1);
+		final UUID streamId = UUID.randomUUID();
+
+		givenPublishDatumAndFlux(cp, cpi, cps, streamId, true, true);
+
+		// WHEN
+		DataTransferRequest req = req(data);
+		processDataTransfer(cpi, req);
+
+		// THEN
+		thenPublishedDatumAndFlux(true, true);
+
+		GeneralNodeDatum d = datumCaptor.getValue();
+		// @formatter:off
+		and.then(d)
+				.as("Datum published")
+				.isNotNull()
+				.as("Published datum node ID")
+				.returns(cp.getNodeId(), from(GeneralNodeDatum::getNodeId))
+				.as("Published datum source ID")
+				.returns(sourceId, from(GeneralNodeDatum::getSourceId))
+				.as("Published datum ts")
+				.returns(ISO_INSTANT.parse(dataTs, Instant::from), from(GeneralNodeDatum::getCreated))
+				;
+		
+		and.then(d.getSamples())
+				.as("Published vid")
+				.returns(vid, s -> s.getStatusSampleString("vid"))
+				;
+
+		and.then(fluxDatumCaptor.getValue())
+				.as("Published same datum to SolarFlux")
+				.isSameAs(d)
+				;
+		// @formatter:on
+	}
+
 }
