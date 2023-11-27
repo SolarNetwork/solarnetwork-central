@@ -88,7 +88,18 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 	private final DatumPublisherSupport pubSupport;
 
 	/**
+	 * Constructor.
 	 * 
+	 * @param chargePointDao
+	 *        the charge point DAO
+	 * @param chargePointSettingsDao
+	 *        the charge point settings DAO
+	 * @param chargePointConnectorDao
+	 *        the charge point connector DAO
+	 * @param datumDao
+	 *        the datum DAO
+	 * @param mapper
+	 *        the object mapper
 	 */
 	public VehicleMacDataTransferDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
