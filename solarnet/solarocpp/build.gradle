@@ -48,6 +48,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 		
 	// SolarNetwork
+	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.jakarta:${snExternalOcppJakartaVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:${snCommonOcpp16Version}"
