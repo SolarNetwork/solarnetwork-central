@@ -66,6 +66,7 @@ dependencies {
 	implementation 'org.tukaani:xz:1.9'
 		
 	// SolarNetwork
+	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.jakarta:${snExternalOcppJakartaVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web.jakarta:${snCommonOcppWebJakartaVersion}"
