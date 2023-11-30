@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'profile')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'profile')}">
 <head>
     <title data-th-text="#{user.profile.details.title}">SolarUser Profile Form</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">

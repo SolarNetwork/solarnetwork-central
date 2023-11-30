@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'login')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'login')}">
 <head>
-    <title th:text="#{app.name}">SolarUser Registration Error</title>
+    <title data-th-text="#{app.name}">SolarUser Registration Error</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
@@ -11,7 +11,7 @@
 </head>
 <body>
 <main class="container">
-	<div class="alert alert-error" th:text="${rootCauseException != null && rootCauseException.reason eq 'REGISTRATION_ALREADY_CONFIRMED'} 
+	<div class="alert alert-error" data-th-text="${rootCauseException != null && rootCauseException.reason eq 'REGISTRATION_ALREADY_CONFIRMED'}
 		? #{registration.confirm.alreadyconfirmed}
 		: #{registration.confirm.notconfirmed}">
 		Error with registration.

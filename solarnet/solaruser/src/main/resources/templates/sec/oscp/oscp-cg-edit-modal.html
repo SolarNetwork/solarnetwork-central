@@ -73,7 +73,7 @@
 							Measurement Period
 						</label>
 						<div class="col-sm-8">
-							<select name="capacityProviderMeasurementPeriod" class="form-control" data-th-include="sec/oscp/oscp-measurement-period :: content">
+							<select name="capacityProviderMeasurementPeriod" class="form-control" data-th-insert="~{sec/oscp/oscp-measurement-period :: content}">
 								<option value="Minute">Every minute</option>
 								<option value="Hour">Hourly</option>
 							</select>
@@ -101,7 +101,7 @@
 							Measurement Period
 						</label>
 						<div class="col-sm-8">
-							<select name="capacityOptimizerMeasurementPeriod" class="form-control" data-th-include="sec/oscp/oscp-measurement-period :: content">
+							<select name="capacityOptimizerMeasurementPeriod" class="form-control" data-th-insert="~{sec/oscp/oscp-measurement-period :: content}">
 								<option value="Minute">Every minute</option>
 								<option value="Hour">Hourly</option>
 							</select>

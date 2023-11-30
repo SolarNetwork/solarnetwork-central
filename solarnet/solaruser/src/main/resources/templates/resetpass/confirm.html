@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'none')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'none')}">
 <head>
     <title data-th-text="#{user.resetpassword.title}">Reset Password</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,8 +12,8 @@
 	<p class="intro" data-th-text="#{user.resetpassword.confirm.intro}">
 		Enter your new password.
 	</p>
-	
-	<form class="form-horizontal" method="post" data-th-action="@{/u/resetPassword/reset}" data-th-object="${form}">	
+
+	<form class="form-horizontal" method="post" data-th-action="@{/u/resetPassword/reset}" data-th-object="${form}">
 		<fieldset>
 			<div class="form-group" data-th-classappend="${#fields.hasErrors('password')}? error">
 				<label class="col-sm-2 control-label" for="reset-pass-password" data-th-text="#{user.password.label}">Password</label>

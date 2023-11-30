@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'import')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'import')}">
 <head>
     <title data-th-text="#{import.title}">Import</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,7 +18,7 @@
 <section id="datum-import-jobs">
 	<h2>
 		<span data-th-text="#{import.jobList.header}">Datum import</span>
-		<a href="#edit-datum-import-job-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+		<a href="#edit-datum-import-job-modal" class="btn btn-primary pull-right" data-toggle="modal"
 			data-th-title="#{import.jobList.action.create}">
 			<i class="glyphicon glyphicon-plus"></i>
 		</a>
@@ -111,13 +111,13 @@
 
 <!--/* Modal forms */-->
 
-<form data-th-replace="sec/imp/confirm-datum-import-job-modal :: form"></form>
-<form data-th-replace="sec/imp/edit-datum-import-job-modal :: form"></form>
-<form data-th-replace="sec/imp/preview-datum-import-job-modal :: form"></form>
+<form data-th-replace="~{sec/imp/confirm-datum-import-job-modal :: form}"></form>
+<form data-th-replace="~{sec/imp/edit-datum-import-job-modal :: form}"></form>
+<form data-th-replace="~{sec/imp/preview-datum-import-job-modal :: form}"></form>
 
 <!--/* Setting templates */-->
 
-<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+<div id="setting-templates" class="hidden" data-th-replace="~{setting-templates :: content}"></div>
 </div>
 </body>
 </html>
