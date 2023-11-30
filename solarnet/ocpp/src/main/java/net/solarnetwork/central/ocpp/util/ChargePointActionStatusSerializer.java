@@ -53,7 +53,15 @@ public class ChargePointActionStatusSerializer extends StdSerializer<ChargePoint
 			generator.writeNull();
 			return;
 		}
-		generator.writeStartObject(status, 7);
+
+		// @formatter:off
+		final int size = 5 
+				+ (status.getCreated() != null ? 1 : 0)
+				+ (status.getTimestamp() != null ? 1 : 0)
+				;
+		// @formatter:on
+
+		generator.writeStartObject(status, size);
 		if ( status.getCreated() != null ) {
 			generator.writeObjectField("created", status.getCreated());
 		}

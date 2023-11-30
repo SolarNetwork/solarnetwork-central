@@ -46,6 +46,7 @@ dependencies {
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation 'io.moquette:moquette-broker:0.15'
     testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+   	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 }
 
 jar.manifest {

@@ -45,6 +45,7 @@ dependencies {
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation 'org.threeten:threeten-extra:1.7.1'
+   	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 }
 
 jar.manifest {
