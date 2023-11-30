@@ -65,7 +65,7 @@ subprojects {
 		checkstyleVersion = '8.34'
 		jsonSchemaValidatorVersion = '1.0.73'
 		myBatisStarterVersion = '3.0.3'
-		snCommonVersion = '3.5.1'
+		snCommonVersion = '3.5.2'
 		snCommonMqttVersion = '4.0.0'
 		snCommonMqttNettyVersion = '3.0.1'
 		snCommonOcppVersion = '2.7.0'
