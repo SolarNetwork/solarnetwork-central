@@ -42,7 +42,8 @@ subprojects {
 
 	compileTestJava {
 		options.compilerArgs += [
-			"-Xlint:-serial"
+			"-Xlint:-serial",
+            "-Xlint:-static"
 		]
 	}
 
