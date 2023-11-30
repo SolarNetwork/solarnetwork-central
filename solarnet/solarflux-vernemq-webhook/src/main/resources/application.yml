@@ -14,7 +14,6 @@ spring:
     url: jdbc:postgresql://localhost:5412/solarnetwork_unittest
     username: solartest
     password: solartest
-    platform: postgresql
     initialize: false
     tomcat:
       initialSize: 3

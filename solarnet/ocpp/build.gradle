@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15' apply false
+	id 'org.springframework.boot' version '3.2.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -23,6 +23,7 @@ base {
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+	all*.exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
 }
 
 dependencies {
@@ -36,7 +37,7 @@ dependencies {
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// SolarNetwork
-	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp:${snExternalOcppVersion}"
+	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.jakarta:${snExternalOcppJakartaVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp:${snCommonOcppVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:${snCommonOcpp16Version}"
 	

@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15'
+	id 'org.springframework.boot' version '3.2.0'
 }
 
 apply plugin: 'java'
@@ -16,10 +16,11 @@ base {
 }
 
 configurations {
-	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
-	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet.jsp'
+	all*.exclude group: 'javax.servlet'
+	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+	all*.exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
 }
 
 dependencies {
@@ -50,7 +51,7 @@ dependencies {
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:${snCommonOcpp16Version}"
-	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web:${snCommonOcppWebVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web.jakarta:${snCommonOcppWebJakartaVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

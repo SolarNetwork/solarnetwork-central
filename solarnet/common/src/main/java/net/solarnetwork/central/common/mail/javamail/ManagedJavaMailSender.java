@@ -26,13 +26,13 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
-import javax.activation.FileTypeMap;
-import javax.mail.internet.MimeMessage;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessagePreparator;
+import jakarta.activation.FileTypeMap;
+import jakarta.mail.internet.MimeMessage;
 import net.solarnetwork.util.ClassUtils;
 
 /**
@@ -40,7 +40,7 @@ import net.solarnetwork.util.ClassUtils;
  * {@link JavaMailSenderImpl} dynamically.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public class ManagedJavaMailSender implements JavaMailSender {
@@ -141,7 +141,7 @@ public class ManagedJavaMailSender implements JavaMailSender {
 
 	private void doWithSender(Consumer<JavaMailSender> handler) {
 		ClassLoader oldCCL = Thread.currentThread().getContextClassLoader();
-		Thread.currentThread().setContextClassLoader(javax.mail.Message.class.getClassLoader());
+		Thread.currentThread().setContextClassLoader(jakarta.mail.Message.class.getClassLoader());
 		try {
 			handler.accept(delegate);
 		} finally {

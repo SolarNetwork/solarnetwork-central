@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import net.solarnetwork.web.support.MessagesSource;
 import net.solarnetwork.web.support.WebUtils;

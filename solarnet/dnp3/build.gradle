@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15' apply false
+	id 'org.springframework.boot' version '3.2.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -51,7 +51,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
-	implementation 'javax.annotation:javax.annotation-api'
+	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.hibernate.validator:hibernate-validator'
 	implementation 'org.slf4j:slf4j-api'

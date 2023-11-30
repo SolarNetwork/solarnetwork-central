@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15'
+	id 'org.springframework.boot' version '3.2.0'
 }
 
 //apply plugin: 'checkstyle'
@@ -18,8 +18,8 @@ base {
 }
 
 configurations {
-	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
-	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet.jsp'
+	all*.exclude group: 'javax.servlet'
+	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
@@ -48,11 +48,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.webflow:spring-webflow:2.5.1.RELEASE'
+	implementation 'org.springframework.webflow:spring-webflow:3.0.0'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 
 	// Template support
-	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	
 	// Use Commons FileUpload instead of built-in Servlet, so SecurityTokenAuthenticationFilter works as expected
 	implementation 'commons-fileupload:commons-fileupload:1.5'
@@ -67,7 +67,7 @@ dependencies {
 	// SolarNetwork
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
-	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web:${snCommonOcppWebVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web.jakarta:${snCommonOcppWebJakartaVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

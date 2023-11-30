@@ -49,7 +49,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
@@ -101,7 +100,7 @@ import net.solarnetwork.ocpp.service.AuthorizationService;
  * Test cases for the {@link OcppSessionDatumManager} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class OcppSessionDatumManagerTests {
 
@@ -157,10 +156,10 @@ public class OcppSessionDatumManagerTests {
 
 		Capture<Runnable> startupTaskCaptor = new Capture<>();
 		ScheduledFuture<Object> startupTaskFuture = createMock(ScheduledFuture.class);
-		expect(taskScheduler.schedule(capture(startupTaskCaptor), anyObject(Date.class)))
+		expect(taskScheduler.schedule(capture(startupTaskCaptor), anyObject(Instant.class)))
 				.andReturn((ScheduledFuture) startupTaskFuture);
 
-		long taskDelay = TimeUnit.HOURS.toMillis(expireHours) / 4;
+		Duration taskDelay = Duration.ofMillis(TimeUnit.HOURS.toMillis(expireHours) / 4);
 		ScheduledFuture<Object> purgePostedTaskFuture = createMock(ScheduledFuture.class);
 		Capture<Runnable> purgeTaskCaptor = new Capture<>();
 		expect(taskScheduler.scheduleWithFixedDelay(capture(purgeTaskCaptor), anyObject(),

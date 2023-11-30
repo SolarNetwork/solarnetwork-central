@@ -23,5 +23,4 @@ spring:
     url: jdbc:postgresql://localhost/solarnetwork_unittest
     username: solartest
     password: solartest
-    platform: postgres
     initialize: false

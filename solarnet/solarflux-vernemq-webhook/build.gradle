@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15'
+	id 'org.springframework.boot' version '3.2.0'
 }
 
 apply plugin: 'java'
@@ -13,7 +13,7 @@ configurations {
 	all*.exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
 	all*.exclude group: 'com.zaxxer', module: 'HikariCP'
 	all*.exclude group: 'io.netty'
-	all*.exclude group: 'javax.servlet', module: 'com.springsource.javax.servlet'
+	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.mqtt'

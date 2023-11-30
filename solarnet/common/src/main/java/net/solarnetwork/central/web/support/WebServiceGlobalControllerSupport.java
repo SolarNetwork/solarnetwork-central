@@ -32,9 +32,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessException;
@@ -61,7 +61,7 @@ import net.solarnetwork.web.domain.Response;
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @RestControllerAdvice
 @Order(1000)
@@ -159,7 +159,7 @@ public class WebServiceGlobalControllerSupport {
 		String msg;
 		String msgKey;
 		String code;
-		if ( e instanceof DeadlockLoserDataAccessException ) {
+		if ( e instanceof CannotAcquireLockException ) {
 			msg = "Deadlock loser";
 			msgKey = "error.dao.deadlockLoser";
 			code = "DAO.00204";

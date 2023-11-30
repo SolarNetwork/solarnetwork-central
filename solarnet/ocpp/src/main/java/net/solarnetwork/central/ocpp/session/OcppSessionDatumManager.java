@@ -31,7 +31,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -90,7 +89,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -249,7 +248,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				}
 			}
 			configurationFuture = taskScheduler.schedule(new ConfigurationTask(),
-					new Date(System.currentTimeMillis() + 1000));
+					Instant.ofEpochMilli(System.currentTimeMillis() + 1000));
 		}
 	}
 
@@ -270,7 +269,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 							purgeHours);
 					long purgeMs = TimeUnit.HOURS.toMillis(purgeHours) / 4;
 					purgePostedFuture = scheduler.scheduleWithFixedDelay(purgePostedTask,
-							new Date(System.currentTimeMillis() + purgeMs), purgeMs);
+							Instant.ofEpochMilli(System.currentTimeMillis() + purgeMs),
+							Duration.ofMillis(purgeMs));
 				}
 			}
 		}

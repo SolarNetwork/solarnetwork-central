@@ -25,7 +25,6 @@ package net.solarnetwork.central.scheduler;
 import static net.solarnetwork.central.scheduler.SchedulerUtils.extractExecutionScheduleDescription;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import java.util.Date;
 import java.util.concurrent.ScheduledFuture;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
@@ -35,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * A scheduled task.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ScheduledJob extends BasicJobInfo implements Runnable {
 
@@ -117,10 +116,7 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 		}
 		final Instant lastStart = getPreviousExecutionTime();
 		final Instant lastComplete = getLastCompletionTime();
-		Date next = trigger.nextExecutionTime(
-				new SimpleTriggerContext(null, lastStart != null ? Date.from(lastStart) : null,
-						lastComplete != null ? Date.from(lastComplete) : null));
-		return (next != null ? next.toInstant() : null);
+		return trigger.nextExecution(new SimpleTriggerContext(null, lastStart, lastComplete));
 	}
 
 	/**

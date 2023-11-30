@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.oscp.domain;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.oscp.domain.AssetEnergyDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.EnergyDirection;
 import net.solarnetwork.central.oscp.domain.EnergyType;

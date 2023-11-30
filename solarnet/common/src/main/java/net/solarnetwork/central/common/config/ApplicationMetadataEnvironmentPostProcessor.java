@@ -30,10 +30,10 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import org.apache.commons.logging.Log;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.config.ConfigDataEnvironmentPostProcessor;
 import org.springframework.boot.env.EnvironmentPostProcessor;
+import org.springframework.boot.logging.DeferredLog;
 import org.springframework.core.Ordered;
 import org.springframework.core.env.CommandLinePropertySource;
 import org.springframework.core.env.ConfigurableEnvironment;
@@ -52,7 +52,7 @@ import net.solarnetwork.util.ByteUtils;
  * Load up application metadata into the environment.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -76,7 +76,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	 */
 	public static final String ENV_APP_ID_CONTAINER_ID_LENGTH = "APP_ID_CONTAINER_ID_LENGTH";
 
-	private final Log logger;
+	private final DeferredLog logger = new DeferredLog();
 
 	// Before ConfigFileApplicationListener so values there can use these ones
 	private int order = ConfigDataEnvironmentPostProcessor.ORDER - 1;
@@ -88,8 +88,8 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	 * @param logger
 	 *        the logger to use
 	 */
-	public ApplicationMetadataEnvironmentPostProcessor(Log logger) {
-		this.logger = logger;
+	public ApplicationMetadataEnvironmentPostProcessor() {
+		super();
 	}
 
 	public void setOrder(int order) {
@@ -104,6 +104,9 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	@Override
 	public void postProcessEnvironment(ConfigurableEnvironment environment,
 			SpringApplication application) {
+		application.addInitializers(
+				ctx -> logger.replayTo(ApplicationMetadataEnvironmentPostProcessor.class));
+
 		Properties appProps = new Properties();
 
 		String appName = environment.getProperty("application.title", "");

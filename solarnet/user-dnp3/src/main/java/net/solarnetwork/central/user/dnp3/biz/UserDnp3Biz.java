@@ -399,7 +399,7 @@ public interface UserDnp3Biz {
 	 *         if an IO error occurs
 	 * @throws IllegalArgumentException
 	 *         if a parsing error occurs
-	 * @throws javax.validation.ConstraintViolationException
+	 * @throws jakarta.validation.ConstraintViolationException
 	 *         if a validation error occurs
 	 */
 	ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId, InputStreamSource csv,

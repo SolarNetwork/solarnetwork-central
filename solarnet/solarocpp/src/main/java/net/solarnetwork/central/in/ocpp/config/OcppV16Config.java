@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
@@ -45,7 +45,7 @@ import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
  * Configuration for OCPP v1.6.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSocket
@@ -58,7 +58,7 @@ public class OcppV16Config {
 	public ObjectMapper ocppObjectMapper_v16() {
 		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
 		factory.setFeaturesToDisable(Arrays.asList(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
-		factory.setModules(Arrays.asList(new JaxbAnnotationModule()));
+		factory.setModules(Arrays.asList(new JakartaXmlBindAnnotationModule()));
 		try {
 			return factory.getObject();
 		} catch ( Exception e ) {

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.app.config;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,9 +36,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -53,7 +54,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Security configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSecurity
@@ -120,28 +121,26 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/ops/**")
-		        .and()
-	
-		        // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // CORS not needed
-		      .cors().disable()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .httpBasic().realmName("SN Operations").and()
-		      
-		      .authorizeHttpRequests()
-		        .anyRequest().hasAnyAuthority(OPS_AUTHORITY)
-		        
-		    ;
-		    // @formatter:on
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> matchers.requestMatchers("/ops/**"))
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// CORS not needed
+					.cors((cors) -> cors.disable())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.anyRequest().hasAnyAuthority(OPS_AUTHORITY))
+
+			;
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -157,25 +156,27 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .requestMatchers(HttpMethod.GET, 
-		        		"/", 
-		        		"/error",
-		        		"/*.html",
-		        		"/ping").permitAll()
-		        .anyRequest().denyAll();
-		    // @formatter:on
+			http
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+							.requestMatchers(HttpMethod.GET,
+									"/",
+									"/error",
+									"/*.html",
+									"/ping")
+									.permitAll()
+							.anyRequest().denyAll())
+			;
+			// @formatter:on
 			return http.build();
 		}
 

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthorizationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
