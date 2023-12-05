@@ -210,8 +210,8 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V get(K key) {
-		V v = internalStore.get(key);
-		return (v != null ? v : delegate.get(key));
+		//V v = internalStore.get(key);
+		return (/* v != null ? v : */ delegate.get(key));
 	}
 
 	@Override
