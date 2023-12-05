@@ -49,6 +49,8 @@ import javax.cache.integration.CompletionListener;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.EntryProcessorResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.solarnetwork.util.UnionIterator;
 
 /**
@@ -349,6 +351,8 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		throw new UnsupportedOperationException();
 	}
 
+	private static final Logger LOG = LoggerFactory.getLogger(BufferingDelegatingCache.class);
+
 	/**
 	 * Add an element to the cache.
 	 * 
@@ -365,21 +369,25 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		if ( value == null ) {
 			throw new IllegalArgumentException("Null values are not allowed.");
 		}
+		/*-
 		int currSize;
 		do {
-			if ( internalStore.replace(key, value) != null || delegate.replace(key, value) ) {
+			if ( internalStore.replace(key, value) != null ) {
 				// replaced existing value
 				publishUpdatedEvent(key, value);
+				return;
+			} else if ( delegate.replace(key, value) ) {
 				return;
 			}
 			currSize = size.get();
 			final int newSize = currSize + 1;
 			if ( currSize < internalCapacity && size.compareAndSet(currSize, newSize) ) {
 				if ( internalStore.put(key, value) != null ) {
-					// only replaced existing value
+					LOG.debug("PUT REP: |{}", key);
 					size.decrementAndGet();
 					publishUpdatedEvent(key, value);
 				} else {
+					LOG.debug("PUT INT: |{}", key);
 					maxSize.getAndUpdate(m -> {
 						return (m < newSize ? newSize : m);
 					});
@@ -389,6 +397,8 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 			}
 		} while ( currSize < internalCapacity );
 		assert internalStore.get(key) == null;
+		*/
+		LOG.debug("PUT DEL: |{}", key);
 		delegate.put(key, value);
 	}
 
@@ -445,10 +455,12 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	public boolean remove(K key) {
 		final V oldValue = internalStore.remove(key);
 		if ( oldValue != null ) {
+			LOG.debug("REMOVE INT: |{}", key);
 			size.decrementAndGet();
 			publishRemovedEvent(key, oldValue);
 			return true;
 		}
+		LOG.debug("REMOVE DEL: |{}", key);
 		return delegate.remove(key);
 	}
 
