@@ -453,6 +453,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public boolean remove(K key) {
+		/*-
 		final V oldValue = internalStore.remove(key);
 		if ( oldValue != null ) {
 			LOG.debug("REMOVE INT: |{}", key);
@@ -460,6 +461,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 			publishRemovedEvent(key, oldValue);
 			return true;
 		}
+		*/
 		LOG.debug("REMOVE DEL: |{}", key);
 		return delegate.remove(key);
 	}
@@ -500,11 +502,13 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public boolean replace(K key, V value) {
+		/*-
 		final V oldValue = internalStore.replace(key, value);
 		if ( oldValue != null ) {
 			publishUpdatedEvent(key, value);
 			return true;
 		}
+		*/
 		return delegate.replace(key, value);
 	}
 
