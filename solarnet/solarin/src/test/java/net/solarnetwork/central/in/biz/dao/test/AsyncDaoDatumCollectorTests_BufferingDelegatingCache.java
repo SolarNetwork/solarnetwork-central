@@ -22,35 +22,27 @@
 
 package net.solarnetwork.central.in.biz.dao.test;
 
-import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
-import static org.easymock.EasyMock.anyObject;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.Files;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.random.RandomGenerator;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import javax.cache.Caching;
-import org.easymock.Capture;
-import org.easymock.CaptureType;
-import org.easymock.EasyMock;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
@@ -60,15 +52,29 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionException;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
+import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
+import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.in.biz.dao.CollectorStats;
-import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
+import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.PingTest;
 
@@ -82,34 +88,134 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
 
-	private DatumEntityDao datumDao;
-	private PlatformTransactionManager txManager;
+	private static final RandomGenerator RNG = new SecureRandom();
+
+	private TestDatumDao datumDao;
+	private TestTxManager txManager;
 	private CacheManager cacheManager;
-	private NonClosingBufferingDelegatingCache datumCache;
 	private Cache<Serializable, Serializable> delegateDatumCache;
 	private CollectorStats stats;
 
 	private AsyncDaoDatumCollector collector;
 	private List<Throwable> uncaughtExceptions;
+	private List<Object> stored;
 
 	private static final Logger log = LoggerFactory.getLogger(AsyncDaoDatumCollector.class);
 
-	private static class NonClosingBufferingDelegatingCache
-			extends BufferingDelegatingCache<Serializable, Serializable> {
+	private final class TestDatumDao implements DatumEntityDao {
 
-		private NonClosingBufferingDelegatingCache(Cache<Serializable, Serializable> delegate,
-				int internalCapacity) {
-			super(delegate, internalCapacity);
+		@Override
+		public Class<? extends DatumEntity> getObjectType() {
+			return null;
 		}
 
 		@Override
-		public synchronized void close() {
-			log.debug("Ignoring cache close...");
+		public DatumPK save(DatumEntity entity) {
+			stored.add(entity);
+			return null;
 		}
 
-		private void reallyClose() {
-			super.close();
+		@Override
+		public DatumEntity get(DatumPK id) {
+			return null;
 		}
+
+		@Override
+		public Collection<DatumEntity> getAll(List<SortDescriptor> sorts) {
+			return null;
+		}
+
+		@Override
+		public void delete(DatumEntity entity) {
+		}
+
+		@Override
+		public LoadingContext<GeneralNodeDatum> createBulkLoadingContext(LoadingOptions options,
+				LoadingExceptionHandler<GeneralNodeDatum> exceptionHandler) {
+			return null;
+		}
+
+		@Override
+		public ExportResult bulkExport(ExportCallback<GeneralNodeDatumFilterMatch> callback,
+				ExportOptions options) {
+			return null;
+		}
+
+		@Override
+		public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
+				List<SortDescriptor> sorts, Integer offset, Integer max) {
+			return null;
+		}
+
+		@Override
+		public void findFilteredStream(DatumCriteria filter,
+				StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
+				Integer offset, Integer max) throws IOException {
+
+		}
+
+		@Override
+		public DatumPK store(DatumEntity datum) {
+			doStore(datum);
+			return null;
+		}
+
+		@Override
+		public DatumPK store(GeneralNodeDatum datum) {
+			doStore(datum);
+			return null;
+		}
+
+		@Override
+		public DatumPK store(GeneralLocationDatum datum) {
+			doStore(datum);
+			return null;
+		}
+
+		@Override
+		public Iterable<DatumDateInterval> findAvailableInterval(ObjectStreamCriteria filter) {
+			return null;
+		}
+
+	}
+
+	private static class TestTxManager implements PlatformTransactionManager {
+
+		private final List<TransactionStatus> commits = Collections
+				.synchronizedList(new ArrayList<>(1000));
+
+		@Override
+		public TransactionStatus getTransaction(TransactionDefinition definition)
+				throws TransactionException {
+			return new SimpleTransactionStatus(true);
+		}
+
+		@Override
+		public void commit(TransactionStatus status) throws TransactionException {
+			commits.add(status);
+		}
+
+		@Override
+		public void rollback(TransactionStatus status) throws TransactionException {
+
+		}
+
+	}
+
+	private void doStore(Entity<?> o) {
+		try {
+			// simulate taking some time
+			long time = 20;
+			if ( RNG.nextDouble() > 0.96 ) {
+				log.info("Consumer: random long thread sleep {}...", o.getId());
+				time = 200;
+			}
+			Thread.sleep(time);
+		} catch ( InterruptedException e ) {
+			// ignore
+		}
+		stored.add(o);
+		log.debug("STORED: |{}", o.getId());
 	}
 
 	public static CacheManager createCacheManager() {
@@ -140,12 +246,10 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 			throw new RuntimeException(e);
 		}
 
-		datumCache = new NonClosingBufferingDelegatingCache(delegateDatumCache, capacity);
-
-		collector = new AsyncDaoDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
-				stats);
+		collector = new AsyncDaoDatumCollector(delegateDatumCache, datumDao,
+				new TransactionTemplate(txManager), stats);
 		collector.setConcurrency(2);
-		collector.setQueueSize(5);
+		//collector.setQueueSize(5);
 		collector.setExceptionHandler(this);
 		collector.setShutdownWaitSecs(3600);
 		collector.serviceDidStartup();
@@ -154,12 +258,13 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 
 	@Before
 	public void setup() {
-		datumDao = EasyMock.createMock(DatumEntityDao.class);
-		txManager = EasyMock.createMock(PlatformTransactionManager.class);
+		datumDao = new TestDatumDao();
+		txManager = new TestTxManager();
 
 		uncaughtExceptions = new ArrayList<>(2);
-		stats = new CollectorStats("AsyncDaoDatumCollector", 1);
+		stats = new CollectorStats("AsyncDaoDatumCollector", 100);
 
+		stored = Collections.synchronizedList(new ArrayList<>(1000));
 		setupCache(5);
 	}
 
@@ -171,65 +276,22 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 			// ignore
 		}
 		log.info(stats.toString());
-		datumCache.reallyClose();
 	}
 
 	@After
 	public void teardown() throws Throwable {
 		teardownCache();
-		EasyMock.verify(datumDao, txManager);
 		if ( !uncaughtExceptions.isEmpty() ) {
 			throw uncaughtExceptions.get(0);
 		}
 	}
 
 	private void replayAll(Object... mocks) {
-		EasyMock.replay(datumDao, txManager);
-		if ( mocks != null ) {
-			EasyMock.replay(mocks);
-		}
 	}
 
 	@Override
 	public void uncaughtException(Thread t, Throwable e) {
 		uncaughtExceptions.add(e);
-	}
-
-	private void thenBufferStatsEquals(int capacity, int size, int watermark, int lag) {
-		// @formatter:off
-		then(datumCache).asInstanceOf(type(BufferingDelegatingCache.class))
-			.as("Buffer capacity")
-			.returns(capacity, from(BufferingDelegatingCache::getInternalCapacity))
-			.as("Buffer size")
-			.returns(size, from(BufferingDelegatingCache::getInternalSize))
-			.as("Buffer watermark")
-			.returns(watermark, from(BufferingDelegatingCache::getInternalSizeWatermark))
-			.as("Lag")
-			.returns(lag, (cache) -> {
-				return (int)(stats.get(CollectorStats.BasicCount.BufferAdds) - stats.get(CollectorStats.BasicCount.BufferRemovals));
-			})
-			;
-		// @formatter:on
-	}
-
-	private void thenBufferStoreStatsEquals(int add, int remove, int receive, int store) {
-		// @formatter:off
-		then(datumCache).asInstanceOf(type(BufferingDelegatingCache.class))
-			.as("Buffer adds")
-			.returns(add, (cache) -> (int)stats.get(CollectorStats.BasicCount.BufferAdds))
-			.as("Buffer removes")
-			.returns(remove, (cache) -> (int)stats.get(CollectorStats.BasicCount.BufferRemovals))
-			.as("Datum received")
-			.returns(receive, (cache) -> (int)stats.get(CollectorStats.BasicCount.DatumReceived))
-			.as("Datum stored")
-			.returns(store, (cache) -> (int)stats.get(CollectorStats.BasicCount.DatumStored))
-			;
-		// @formatter:on
-	}
-
-	private GeneralNodeDatum createDatum() {
-		return createDatum(UUID.randomUUID().getMostSignificantBits(), UUID.randomUUID().toString(),
-				Instant.now());
 	}
 
 	private GeneralNodeDatum createDatum(Long nodeId, String sourceId, Instant ts) {
@@ -239,149 +301,11 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 		d.setCreated(ts);
 
 		DatumSamples s = new DatumSamples();
-		s.putInstantaneousSampleValue("foo", 1);
+		s.putInstantaneousSampleValue("f", 1);
 		d.setSamples(s);
 		return d;
 	}
 
-	/*-
-	private GeneralLocationDatum createLocationDatum() {
-		GeneralLocationDatum d = new GeneralLocationDatum();
-		d.setLocationId(UUID.randomUUID().getMostSignificantBits());
-		d.setSourceId(UUID.randomUUID().toString());
-		d.setCreated(Instant.now());
-		d.setSamples(new DatumSamples());
-		d.getSamples().putInstantaneousSampleValue("bim", 1);
-		return d;
-	}
-	
-	private DatumEntity createStreamDatum() {
-		DatumProperties p = DatumProperties.propertiesOf(decimalArray("1.23"), null, null, null);
-		return new DatumEntity(UUID.randomUUID(), Instant.now(), Instant.now(), p);
-	}
-	
-	@Test
-	public void addNodeDatumToCache() throws Exception {
-		// GIVEN
-		GeneralNodeDatum d = createDatum();
-	
-		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
-		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
-		txManager.commit(txStatus);
-	
-		// WHEN
-		replayAll(txStatus);
-		datumCache.put(d.getId(), d);
-	
-		// THEN
-		Thread.sleep(1000); // give time for cache to call listener
-		collector.shutdownAndWait();
-	
-		verify(txStatus);
-	}
-	
-	@Test
-	public void addNodeDatumToCache_manyThreads() throws Exception {
-		// GIVEN
-		ExecutorService executor = Executors.newWorkStealingPool(4);
-		List<GeneralNodeDatum> datum = new ArrayList<>(50);
-		Object[] txStatuses = new Object[50];
-		for ( int i = 0; i < 50; i++ ) {
-			GeneralNodeDatum d = createDatum();
-			TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
-			expect(txManager.getTransaction(anyObject())).andReturn(txStatus);
-			expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
-			txManager.commit(txStatus);
-			txStatuses[i] = txStatus;
-			datum.add(d);
-		}
-	
-		// WHEN
-		replayAll(txStatuses);
-		for ( GeneralNodeDatum d : datum ) {
-			executor.execute(new Runnable() {
-	
-				@Override
-				public void run() {
-					datumCache.put(d.getId(), d);
-				}
-	
-			});
-		}
-	
-		// THEN
-		Thread.sleep(1000); // give time for cache to call listener
-		executor.shutdown();
-		executor.awaitTermination(15, TimeUnit.SECONDS);
-		collector.shutdownAndWait();
-	
-		verify(txStatuses);
-		thenBufferStatsEquals(5, 0, 5, 0);
-	}
-	
-	@Test
-	public void addNodeDatumToCache_manyThreads_overflow() throws Exception {
-		// GIVEN
-		ExecutorService executor = Executors.newWorkStealingPool(4);
-		List<GeneralNodeDatum> datum = new ArrayList<>(50);
-		Object[] txStatuses = new Object[50];
-		for ( int i = 0; i < 50; i++ ) {
-			GeneralNodeDatum d = createDatum();
-			TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
-			expect(txManager.getTransaction(anyObject())).andReturn(txStatus);
-			expect(datumDao.store(d)).andAnswer(new IAnswer<DatumPK>() {
-	
-				@Override
-				public DatumPK answer() throws Throwable {
-					try {
-						Thread.sleep(200);
-					} catch ( InterruptedException e ) {
-						// ignore
-					}
-					return new DatumPK(UUID.randomUUID(), d.getCreated());
-				}
-			});
-			txManager.commit(txStatus);
-			txStatuses[i] = txStatus;
-			datum.add(d);
-		}
-	
-		// WHEN
-		replayAll(txStatuses);
-		AtomicInteger putCount = new AtomicInteger();
-		for ( GeneralNodeDatum d : datum ) {
-			executor.execute(new Runnable() {
-	
-				@Override
-				public void run() {
-					datumCache.put(d.getId(), d);
-					try {
-						Thread.sleep(putCount.getAndIncrement() * 10);
-					} catch ( InterruptedException e ) {
-						// ignore
-					}
-				}
-	
-			});
-		}
-	
-		// THEN
-		Thread.sleep(1000);
-		PingTest.Result pingResult1 = collector.performPingTest();
-		Thread.sleep(50 * 200 + 1000); // give time for cache to call listener
-		executor.shutdown();
-		executor.awaitTermination(15, TimeUnit.SECONDS);
-		collector.shutdownAndWait();
-		PingTest.Result pingResult2 = collector.performPingTest();
-	
-		log.info("Ping result 1: {}", pingResult1.getProperties());
-		log.info("Ping result 2: {}", pingResult2.getProperties());
-	
-		verify(txStatuses);
-		thenBufferStatsEquals(5, 0, 5, 0);
-	}
-	*/
 	@Test
 	public void addNodeDatumToCache_manyThreads_overflow_continuousAdd() throws Exception {
 		// GIVEN
@@ -390,40 +314,44 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 		setupCache(capacity);
 
 		ExecutorService executor = Executors.newFixedThreadPool(4);
-		Capture<GeneralNodeDatum> storedDatumCaptor = new Capture<>(CaptureType.ALL);
-
-		expect(txManager.getTransaction(anyObject())).andAnswer(() -> {
-			return new SimpleTransactionStatus(true);
-		}).anyTimes();
-
-		txManager.commit(anyObject());
-		expectLastCall().anyTimes();
-
-		// code doesn't need return value, so can just return null here
-		expect(datumDao.store(capture(storedDatumCaptor))).andReturn(null).anyTimes();
 
 		// WHEN
 		replayAll();
-		AtomicBoolean keepGoing = new AtomicBoolean(true);
-		List<GeneralNodeDatum> puts = Collections.synchronizedList(new ArrayList<>(50));
 		final Long nodeId = 1L;
 		final String sourceId = "s";
 		final Instant startTs = Instant.now().truncatedTo(ChronoUnit.DAYS);
+		final AtomicInteger producerCounter = new AtomicInteger();
 		final AtomicInteger putCounter = new AtomicInteger();
-		for ( int i = 0; i < 4; i++ ) {
+		final int producerCount = 4;
+		final int maxCount = 5_000;
+
+		GeneralNodeDatum[] puts = new GeneralNodeDatum[maxCount];
+
+		for ( int i = 0; i < producerCount; i++ ) {
 			executor.execute(new Runnable() {
 
 				@Override
 				public void run() {
-					while ( keepGoing.get() ) {
-						GeneralNodeDatum d = createDatum(nodeId, sourceId,
-								startTs.plusMillis(putCounter.getAndIncrement()));
-						datumCache.put(d.getId(), d);
-						puts.add(d);
-						try {
-							Thread.sleep(Math.max(0, 90 - puts.size() / 4));
-						} catch ( InterruptedException e ) {
-							// ignore
+					while ( true ) {
+						int count = producerCounter.incrementAndGet();
+						if ( count > maxCount ) {
+							log.info("Producer: maximum reached: {}", maxCount);
+							return;
+						}
+
+						GeneralNodeDatum d = createDatum(nodeId, sourceId, startTs.plusMillis(count));
+						delegateDatumCache.put(d.getId(), d);
+						putCounter.incrementAndGet();
+						log.debug("PUT: |{}", d.getId());
+						puts[count - 1] = d;
+						long sleep = Math.max(0, (count - maxCount / 2) / 4);
+						if ( sleep > 0 ) {
+							log.debug("Producer: sleep {}", sleep);
+							try {
+								Thread.sleep(sleep);
+							} catch ( InterruptedException e ) {
+								// ignore
+							}
 						}
 					}
 				}
@@ -431,211 +359,40 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 			});
 		}
 
-		// THEN
-		Thread.sleep(1000);
+		Thread.sleep(1_000);
 		PingTest.Result pingResult1 = collector.performPingTest();
-		Thread.sleep(4000); // TWEAK THIS HIGHER to trigger issue (4000 working for me)
-		keepGoing.set(false);
+
+		// let producers go until max reached
 		executor.shutdown();
 		executor.awaitTermination(10, TimeUnit.SECONDS);
-		Thread.sleep(30000); // give time for cache to call listener
-		collector.shutdownAndWait();
-		PingTest.Result pingResult2 = collector.performPingTest();
 
+		// wait for stores to stop happening...
+		int storedCount = -1;
+		int unchangeRemaining = 10;
+		while ( true ) {
+			Thread.sleep(1_000L);
+			int newStoredCount = stored.size();
+			if ( newStoredCount == storedCount ) {
+				if ( --unchangeRemaining < 1 ) {
+					break;
+				}
+			} else {
+				unchangeRemaining = 10;
+			}
+			storedCount = newStoredCount;
+		}
+
+		collector.shutdownAndWait();
+
+		PingTest.Result pingResult2 = collector.performPingTest();
 		log.info("Ping result 1: {}", pingResult1.getProperties());
 		log.info("Ping result 2: {}", pingResult2.getProperties());
-		log.info("Put: {}, store: {}", puts.size(), storedDatumCaptor.getValues().size());
 
-		//verify(txStatuses);
-		thenBufferStatsEquals(capacity, 0, /* capacity */0, 0);
-		thenBufferStoreStatsEquals(puts.size(), puts.size(), puts.size(), puts.size());
-	}
-	/*-
-	@Test
-	public void addNodeDatumToCache_manyThreads_overflow_duplicates() throws Exception {
-		// GIVEN
-		GeneralNodeDatum d1 = createDatum();
-		ExecutorService executor = Executors.newWorkStealingPool(4);
-		List<GeneralNodeDatum> datum = new ArrayList<>(50);
-		UUID streamId = UUID.randomUUID();
-		expect(txManager.getTransaction(anyObject())).andAnswer(new IAnswer<TransactionStatus>() {
-	
-			@Override
-			public TransactionStatus answer() throws Throwable {
-				return new SimpleTransactionStatus(true);
-			}
-		}).atLeastOnce();
-		txManager.commit(anyObject(TransactionStatus.class));
-		expectLastCall().atLeastOnce();
-	
-		expect(datumDao.store(d1)).andAnswer(new IAnswer<DatumPK>() {
-	
-			@Override
-			public DatumPK answer() throws Throwable {
-				try {
-					Thread.sleep(200);
-				} catch ( InterruptedException e ) {
-					// ignore
-				}
-				return new DatumPK(streamId, d1.getCreated());
-			}
-		}).atLeastOnce();
-	
-		for ( int i = 0; i < 50; i++ ) {
-			GeneralNodeDatum d = d1.clone();
-			datum.add(d);
-		}
-	
-		// WHEN
-		replayAll();
-		PingTest.Result pingResult1 = collector.performPingTest();
-		for ( GeneralNodeDatum d : datum ) {
-			executor.execute(new Runnable() {
-	
-				@Override
-				public void run() {
-					try {
-						Thread.sleep(50);
-					} catch ( InterruptedException e ) {
-						// ignore
-					}
-					datumCache.put(d.getId(), d);
-				}
-	
-			});
-		}
-	
+		int putCount = putCounter.get();
+		log.info("Put: {}, store: {}", putCount, storedCount);
+
 		// THEN
-		Thread.sleep(1000);
-		executor.shutdown();
-		executor.awaitTermination(60, TimeUnit.SECONDS);
-		Thread.sleep(2000); // give time for cache to call listener
-		collector.shutdownAndWait();
-		PingTest.Result pingResult2 = collector.performPingTest();
-	
-		log.info("Ping result 1: {}", pingResult1.getProperties());
-		log.info("Ping result 2: {}", pingResult2.getProperties());
-	
-		assertThat("Added 50 duplicate datum", stats.get(CollectorStats.BasicCount.BufferAdds),
-				equalTo(50L));
-		assertThat("Removed 50 duplicate datum", stats.get(CollectorStats.BasicCount.BufferRemovals),
-				equalTo(50L));
-		assertThat("Received at least 1 datum", stats.get(CollectorStats.BasicCount.DatumReceived),
-				greaterThanOrEqualTo(1L));
-		assertThat("Stored at least 1 datum", stats.get(CollectorStats.BasicCount.DatumStored),
-				greaterThanOrEqualTo(1L));
+		then(storedCount).as("Stored all that produced").isEqualTo(putCount);
 	}
-	
-	@Test
-	public void addLocationDatumToCache() throws Exception {
-		// GIVEN
-		GeneralLocationDatum d = createLocationDatum();
-	
-		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
-		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
-		txManager.commit(txStatus);
-	
-		// WHEN
-		replayAll(txStatus);
-		datumCache.put(d.getId(), d);
-	
-		// THEN
-		Thread.sleep(1000); // give time for cache to call listener
-		collector.shutdownAndWait();
-	
-		verify(txStatus);
-	}
-	
-	@Test
-	public void addNodeAndLocationDatumToCache_sameKeyValue() throws Exception {
-		// GIVEN
-		GeneralNodeDatum d1 = createDatum();
-		d1.setNodeId(123L);
-		GeneralLocationDatum d2 = createLocationDatum();
-	
-		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
-		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus).times(2);
-		expect(datumDao.store(d1)).andReturn(new DatumPK(UUID.randomUUID(), d1.getCreated()));
-		expect(datumDao.store(d2)).andReturn(new DatumPK(UUID.randomUUID(), d2.getCreated()));
-		txManager.commit(txStatus);
-		expectLastCall().times(2);
-	
-		// WHEN
-		replayAll(txStatus);
-		datumCache.put(d1.getId(), d1);
-		datumCache.put(d2.getId(), d2);
-	
-		// THEN
-		Thread.sleep(1000); // give time for cache to call listener
-		collector.shutdownAndWait();
-	
-		verify(txStatus);
-	
-		assertThat("Added stat", stats.get(CollectorStats.BasicCount.BufferAdds), equalTo(2L));
-		assertThat("Removed stat", stats.get(CollectorStats.BasicCount.BufferRemovals), equalTo(2L));
-	}
-	
-	@Test
-	public void shutdownAndRestoreCache() throws Exception {
-		// GIVEN
-		JCacheFactoryBean<String, Boolean> factory = new JCacheFactoryBean<>(cacheManager, String.class,
-				Boolean.class);
-		factory.setName(TEST_CACHE_NAME);
-		factory.setHeapMaxEntries(3);
-		factory.setDiskMaxSizeMB(1);
-		factory.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
-		factory.setDiskPersistent(true);
-		Cache<String, Boolean> testCache = factory.getObject();
-	
-		// WHEN
-		replayAll();
-		for ( int i = 0; i < 10; i++ ) {
-			testCache.put(String.valueOf(i), Boolean.TRUE);
-		}
-		for ( int i = 0; i < 10; i += 2 ) {
-			testCache.remove(String.valueOf(i));
-		}
-		testCache.close();
-		//cacheManager.close();
-		//cacheManager = createCacheManager();
-	
-		JCacheFactoryBean<String, Boolean> factory2 = new JCacheFactoryBean<>(cacheManager, String.class,
-				Boolean.class);
-		factory2.setName(TEST_CACHE_NAME);
-		factory2.setHeapMaxEntries(3);
-		factory2.setDiskMaxSizeMB(1);
-		factory2.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
-		factory2.setDiskPersistent(true);
-		Cache<String, Boolean> testCache2 = factory2.getObject();
-	
-		Set<String> loadedKeys = StreamSupport.stream(testCache2.spliterator(), false)
-				.map(e -> e.getKey()).collect(Collectors.toSet());
-	
-		// THEN
-		assertThat("Set re-lodaed persisted keys", loadedKeys,
-				containsInAnyOrder("1", "3", "5", "7", "9"));
-	}
-	
-	@Test
-	public void addStreamDatumToCache() throws Exception {
-		// GIVEN
-		DatumEntity d = createStreamDatum();
-	
-		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
-		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.store(d)).andReturn(d.getId());
-		txManager.commit(txStatus);
-	
-		// WHEN
-		replayAll(txStatus);
-		datumCache.put(d.getId(), d);
-	
-		// THEN
-		Thread.sleep(1000); // give time for cache to call listener
-		collector.shutdownAndWait();
-	
-		verify(txStatus);
-	}
-	*/
+
 }
