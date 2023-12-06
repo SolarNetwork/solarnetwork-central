@@ -73,7 +73,7 @@ app:
       datum-cache-removal-alert-threshold: 500
     datum-buffer:
       temp-max-entries: 100
-      heap-max-entries: 200
+      heap-max-entries: 0
       disk-max-size-mb: 2000
   solarqueue:
     connection:
