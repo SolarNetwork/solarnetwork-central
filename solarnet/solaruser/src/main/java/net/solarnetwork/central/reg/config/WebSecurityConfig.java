@@ -325,7 +325,8 @@ public class WebSecurityConfig {
 								.requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
 								.requestMatchers("/api/v1/pub/**").permitAll()
 								.anyRequest().denyAll();
-					});
+					})
+			;
 			// @formatter:on
 			return http.build();
 		}
@@ -407,7 +408,8 @@ public class WebSecurityConfig {
 										"/associate.*"
 										).permitAll()
 								.anyRequest().denyAll();
-					});
+					})
+			;
 			// @formatter:on
 			return http.build();
 		}

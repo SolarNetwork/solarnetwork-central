@@ -225,7 +225,8 @@ public class WebSecurityConfig {
 							
 							.requestMatchers("/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITY)
 
-							.anyRequest().authenticated());
+							.anyRequest().authenticated())
+			;
 			// @formatter:on
 			return http.build();
 		}

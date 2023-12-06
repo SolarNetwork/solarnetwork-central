@@ -243,7 +243,8 @@ public class WebSecurityConfig {
 
 							.requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_OPS.toString())
 
-							.anyRequest().authenticated());
+							.anyRequest().authenticated())
+			;
 			// @formatter:on
 			return http.build();
 		}
