@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.config;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import java.util.Arrays;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +37,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -59,7 +60,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Security configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSecurity
@@ -151,28 +152,26 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/ops/**")
-		        .and()
-	
-		        // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .httpBasic().realmName("SN Operations").and()
-		      
-		      .authorizeHttpRequests()
-		        .anyRequest().hasAnyAuthority(OPS_AUTHORITY)
-		        
-		    ;
-		    // @formatter:on
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> matchers.requestMatchers("/ops/**"))
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.anyRequest().hasAnyAuthority(OPS_AUTHORITY))
+
+			;
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -188,46 +187,46 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/solarin/**")
-		        .and()
-	
-		        // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      	      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .x509()
-		        .userDetailsService(new NodeUserDetailsService())
-		        .subjectPrincipalRegex("UID=(.*?),")
-		        .and()
-		        
-		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()
-		        .requestMatchers(HttpMethod.GET, 
-		        		"/solarin/",
-		        		"/solarin/error",
-		        		"/solarin/*.html",
-		        		"/solarin/css/**",
-		        		"/solarin/img/**",
-		        		"/solarin/ping",
-		        		"/solarin/api/v1/pub/**",
-		        		"/solarin/identity.do").permitAll()
-		        
-		        .requestMatchers( 
-		        		"/solarin/bulkCollector.do",
-		        		"/solarin/u/bulkCollector.do").hasAnyAuthority(NODE_AUTHORITY)
-		        .requestMatchers("/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITY)
-		        
-		        .anyRequest().authenticated()
-		    ;
-		    // @formatter:on
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> matchers.requestMatchers("/solarin/**"))
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					.x509((x509) -> x509
+							.userDetailsService(new NodeUserDetailsService())
+							.subjectPrincipalRegex("UID=(.*?),"))
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(HttpMethod.OPTIONS, "/solarin/**").permitAll()
+							
+							.requestMatchers(HttpMethod.GET,
+									"/solarin/",
+									"/solarin/error",
+									"/solarin/*.html",
+									"/solarin/css/**",
+									"/solarin/img/**",
+									"/solarin/ping",
+									"/solarin/api/v1/pub/**",
+									"/solarin/identity.do")
+									.permitAll()
+
+							.requestMatchers(
+									"/solarin/bulkCollector.do",
+									"/solarin/u/bulkCollector.do")
+									.hasAnyAuthority(NODE_AUTHORITY)
+							
+							.requestMatchers("/solarin/api/v1/sec/**").hasAnyAuthority(NODE_AUTHORITY)
+
+							.anyRequest().authenticated());
+			// @formatter:on
 			return http.build();
 		}
 	}

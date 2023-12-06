@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'dnp3')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'dnp3')}">
 <head>
     <title data-th-text="#{dnp3.title}">OSCP</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,19 +26,19 @@
 </div>
 
 <div class="page-loaded hidden">
-	<div data-th-replace="sec/dnp3/dnp3-ca-list :: content"></div>
-	<div data-th-replace="sec/dnp3/dnp3-server-list :: content"></div>
+	<div data-th-replace="~{sec/dnp3/dnp3-ca-list :: content}"></div>
+	<div data-th-replace="~{sec/dnp3/dnp3-server-list :: content}"></div>
 </div>
 
 <!--/* Modal forms */-->
 
-<form data-th-replace="sec/dnp3/dnp3-ca-import-modal :: form"></form>
-<form data-th-replace="sec/dnp3/dnp3-ca-edit-modal :: form"></form>
-<form data-th-replace="sec/dnp3/dnp3-server-edit-modal :: form"></form>
-<form data-th-replace="sec/dnp3/dnp3-server-data-points-import-modal :: form"></form>
-<form data-th-replace="sec/dnp3/dnp3-auth-edit-modal :: form"></form>
-<form data-th-replace="sec/dnp3/dnp3-measurement-edit-modal :: form"></form>
-<form data-th-replace="sec/dnp3/dnp3-control-edit-modal :: form"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-ca-import-modal :: form}"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-ca-edit-modal :: form}"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-server-edit-modal :: form}"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-server-data-points-import-modal :: form}"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-auth-edit-modal :: form}"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-measurement-edit-modal :: form}"></form>
+<form data-th-replace="~{sec/dnp3/dnp3-control-edit-modal :: form}"></form>
 
 </div>
 </body>

@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -41,9 +40,7 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.util.unit.DataSize;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -68,7 +65,7 @@ import net.solarnetwork.web.support.SimpleXmlView;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -84,18 +81,6 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
 		configurer.setTaskExecutor(taskExecutor);
-	}
-
-	@Bean
-	public CommonsMultipartResolver multipartResolver(
-			@Value("${spring.servlet.multipart.max-file-size:10MB}") DataSize maxFileSize,
-			@Value("${spring.servlet.multipart.max-request-size:10MB}") DataSize maxRequestSize,
-			@Value("${spring.servlet.multipart.file-size-threshold:1MB}") DataSize fileSizeThreshold) {
-		CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
-		multipartResolver.setMaxUploadSize(maxRequestSize.toBytes());
-		multipartResolver.setMaxUploadSizePerFile(maxFileSize.toBytes());
-		multipartResolver.setMaxInMemorySize((int) fileSizeThreshold.toBytes());
-		return multipartResolver;
 	}
 
 	@Bean

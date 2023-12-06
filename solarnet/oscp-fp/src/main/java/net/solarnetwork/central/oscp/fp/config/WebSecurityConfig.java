@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,9 +30,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
@@ -51,7 +52,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Web security configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSecurity
@@ -111,44 +112,39 @@ public class WebSecurityConfig {
 				AuthenticationEntryPoint unauthorizedEntryPoint) throws Exception {
 			// @formatter:off
 			http
-				// limit this configuration to specific paths
-				.securityMatchers()
-					.requestMatchers("/oscp/**")
-					.and()
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> matchers.requestMatchers("/oscp/**"))
 
-				// CSRF not needed for stateless calls
-				.csrf().disable()
-				  
-				// make sure CORS honored
-				.cors().and()
-		      
-				// can simply return 403 on auth failures
-				.exceptionHandling((exc) -> exc.authenticationEntryPoint(unauthorizedEntryPoint))
-		      
-				// no sessions
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-				// token auth filter
-				.addFilterBefore(tokenAuthenticationFilter(),
-						UsernamePasswordAuthenticationFilter.class)
-		      
-				.authorizeHttpRequests()
-					.requestMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(
-							Role.ROLE_CAPACITYPROVIDER.toString())
-					.requestMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(
-							Role.ROLE_CAPACITYOPTIMIZER.toString())
-					.requestMatchers("/oscp/fp/**").hasAnyAuthority(
-							Role.ROLE_CAPACITYOPTIMIZER.toString(),
-							Role.ROLE_CAPACITYPROVIDER.toString())
-					.anyRequest().authenticated()
-					.and()
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
 
-				.oauth2ResourceServer()
-					.jwt().jwtAuthenticationConverter(jwtAuthenticationConverter()).and()
-					.authenticationEntryPoint(unauthorizedEntryPoint)
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
 
-		    ;   
-		    // @formatter:on
+					// can simply return 403 on auth failures
+					.exceptionHandling((exc) -> exc.authenticationEntryPoint(unauthorizedEntryPoint))
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					// token auth filter
+					.addFilterBefore(tokenAuthenticationFilter(),
+							UsernamePasswordAuthenticationFilter.class)
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(UpdateGroupCapacityForecastController.URL_PATH).hasAuthority(Role.ROLE_CAPACITYPROVIDER.toString())
+							.requestMatchers(AdjustGroupCapacityForecastController.URL_PATH).hasAuthority(Role.ROLE_CAPACITYOPTIMIZER.toString())
+							.requestMatchers("/oscp/fp/**").hasAnyAuthority(
+									Role.ROLE_CAPACITYOPTIMIZER.toString(),
+									Role.ROLE_CAPACITYPROVIDER.toString())
+							.anyRequest().authenticated())
+
+					.oauth2ResourceServer((oauth) -> oauth
+							.jwt((jwt) -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+							.authenticationEntryPoint(unauthorizedEntryPoint))
+
+			;
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -164,25 +160,27 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .requestMatchers(HttpMethod.GET, 
-		        		"/", 
-		        		"/error",
-		        		"/*.html",
-		        		"/ping").permitAll()
-		        .anyRequest().denyAll();
-		    // @formatter:on
+			http
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+							.requestMatchers(HttpMethod.GET,
+									"/",
+									"/error",
+									"/*.html",
+									"/ping")
+									.permitAll()
+							.anyRequest().denyAll())
+			;
+			// @formatter:on
 			return http.build();
 		}
 

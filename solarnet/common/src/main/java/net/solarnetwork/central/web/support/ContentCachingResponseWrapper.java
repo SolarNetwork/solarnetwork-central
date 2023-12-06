@@ -29,16 +29,16 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.FastByteArrayOutputStream;
 import org.springframework.web.util.WebUtils;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 /**
- * {@link javax.servlet.http.HttpServletResponse} wrapper that caches all
+ * {@link jakarta.servlet.http.HttpServletResponse} wrapper that caches all
  * content written to the {@linkplain #getOutputStream() output stream}, and
  * allows this content to be retrieved via a {@link #getContentAsByteArray()
  * byte array}.
@@ -55,7 +55,7 @@ import org.springframework.web.util.WebUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.2
  */
 public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
@@ -106,13 +106,12 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public void sendError(int sc, String msg) throws IOException {
 		try {
 			super.sendError(sc, msg);
 		} catch ( IllegalStateException ex ) {
 			// Possibly on Tomcat when called too late: fall back to silent setStatus
-			super.setStatus(sc, msg);
+			super.setStatus(sc);
 		}
 	}
 

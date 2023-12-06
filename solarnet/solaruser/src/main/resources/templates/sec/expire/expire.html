@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'expire')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'expire')}">
 <head>
     <title data-th-text="#{expire.title}">Expire</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +24,7 @@
 <section id="expire-data-configs">
 	<h2>
 		<span data-th-text="#{expire.dataConfigList.header}">Expire configurations</span>
-		<a href="#edit-expire-data-config-modal" class="btn btn-primary pull-right" data-toggle="modal" 
+		<a href="#edit-expire-data-config-modal" class="btn btn-primary pull-right" data-toggle="modal"
 			data-th-title="#{expire.dataConfigList.action.create}">
 			<i class="glyphicon glyphicon-plus"></i>
 		</a>
@@ -53,7 +53,7 @@
 				<td data-tprop="aggregation"></td>
 				<td data-tprop="expireDays"></td>
 				<td><span class="label label-success" data-tprop="active"></span></td>
-				<td><a href="#"><span class="glyphicon glyphicon-eye-open action-link" aria-hidden="true" 
+				<td><a href="#"><span class="glyphicon glyphicon-eye-open action-link" aria-hidden="true"
 					data-action-modal="#expire-data-config-preview-modal"></span></a>
 			</tr>
 		</thead>
@@ -65,11 +65,11 @@
 	</table>
 </section>
 
-<div data-th-replace="sec/expire/datum-delete :: content" data-th-if="${datumDeleteBiz}"></div>
+<div data-th-replace="~{sec/expire/datum-delete :: content}" data-th-if="${datumDeleteBiz}"></div>
 
 <!--/* Modal forms */-->
 
-<form data-th-replace="sec/expire/edit-data-modal :: form"></form>
+<form data-th-replace="~{sec/expire/edit-data-modal :: form}"></form>
 
 <div id="expire-data-config-preview-modal" class="modal config-action fade" role="dialog">
 	<div class="modal-dialog" role="document">
@@ -115,7 +115,7 @@
 
 <!--/* Setting templates */-->
 
-<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+<div id="setting-templates" class="hidden" data-th-replace="~{setting-templates :: content}"></div>
 </div>
 </body>
 </html>

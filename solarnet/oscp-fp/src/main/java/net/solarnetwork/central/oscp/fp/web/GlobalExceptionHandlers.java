@@ -27,8 +27,8 @@ import static net.solarnetwork.central.web.support.WebServiceControllerSupport.u
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Validator;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;

@@ -48,7 +48,7 @@ import net.solarnetwork.central.oscp.web.OscpWebUtils;
  * Task to send a HTTP request.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SystemHttpTask<T> implements Runnable {
 
@@ -130,7 +130,7 @@ public class SystemHttpTask<T> implements Runnable {
 			throw e;
 		} catch ( RestClientResponseException e ) {
 			log.warn("[{}] to [{}] failed because the HTTP status {} was returned (expected {})", name,
-					uri, e.getRawStatusCode(), HttpStatus.NO_CONTENT.value());
+					uri, e.getStatusCode(), HttpStatus.NO_CONTENT.value());
 			throw e;
 		} catch ( UnknownContentTypeException e ) {
 			log.warn(

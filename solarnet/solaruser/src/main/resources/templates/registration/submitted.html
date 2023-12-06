@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'login')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'login')}">
 <head>
-    <title th:text="#{app.name}">SolarUser Registration Submitted</title>
+    <title data-th-text="#{app.name}">SolarUser Registration Submitted</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
@@ -10,8 +10,8 @@
 	<link rel="stylesheet" href="../../static/css/edit-node.css">
 </head>
 <body>
-<main class="container" th:replace="registration/form-layout :: layout(~{::intro}, ~{}, ~{})">
-	<p class="intro" th:utext="#{user.register.submitted.intro(${user.email})}" th:fragment="intro">
+<main class="container" data-th-replace="~{registration/form-layout :: layout(~{::intro}, ~{}, ~{})}">
+	<p class="intro" data-th-utext="#{user.register.submitted.intro(${user.email})}" data-th-fragment="intro">
 		Well done, check your email.
 	</p>
 </main>

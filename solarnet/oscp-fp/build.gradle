@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15'
+	id 'org.springframework.boot' version '3.2.0'
 }
 
 apply plugin: 'java'
@@ -48,7 +48,7 @@ dependencies {
 	// Utilities
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
-	implementation 'org.apache.httpcomponents:httpclient'
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing

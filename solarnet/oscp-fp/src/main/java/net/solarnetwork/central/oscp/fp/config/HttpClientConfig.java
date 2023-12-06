@@ -24,11 +24,13 @@ package net.solarnetwork.central.oscp.fp.config;
 
 import java.time.Duration;
 import java.util.Arrays;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,7 +45,7 @@ import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
  * HTTP client configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class HttpClientConfig {
@@ -124,16 +126,18 @@ public class HttpClientConfig {
 	@Bean
 	public RequestConfig httpRequestConfig(HttpClientSettings settings) {
 		RequestConfig config = RequestConfig.custom()
-				.setConnectTimeout((int) settings.connectTimeout.toMillis())
-				.setConnectionRequestTimeout((int) settings.connectionRequestTimeout.toMillis())
-				.setSocketTimeout((int) settings.socketTimeout.toMillis()).build();
+				.setConnectionRequestTimeout(Timeout.of(settings.connectionRequestTimeout)).build();
 		return config;
 	}
 
 	@ConfigurationProperties(prefix = "app.http.client.connections")
 	@Bean
-	public PoolingHttpClientConnectionManager poolingConnectionManager() {
+	public PoolingHttpClientConnectionManager poolingConnectionManager(HttpClientSettings settings) {
+		ConnectionConfig config = ConnectionConfig.custom()
+				.setConnectTimeout(Timeout.of(settings.connectTimeout))
+				.setSocketTimeout(Timeout.of(settings.socketTimeout)).build();
 		var poolingConnectionManager = new PoolingHttpClientConnectionManager();
+		poolingConnectionManager.setDefaultConnectionConfig(config);
 		return poolingConnectionManager;
 	}
 

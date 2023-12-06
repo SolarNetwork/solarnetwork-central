@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'home')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'home')}">
 <head>
-    <title th:text="#{app.name}">SolarUser</title>
+    <title data-th-text="#{app.name}">SolarUser</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../static/css/bootstrap-theme.css">
@@ -11,7 +11,7 @@
 </head>
 <body>
 <main class="container">
-	<p th:text="#{home.intro}">Why, hello there.</p>
+	<p data-th-text="#{home.intro}">Why, hello there.</p>
 </main>
 </body>
 </html>

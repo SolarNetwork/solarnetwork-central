@@ -28,11 +28,6 @@ import java.io.InputStreamReader;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.mail.BodyPart;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
@@ -44,6 +39,11 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.util.FileCopyUtils;
+import jakarta.mail.BodyPart;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 
 /**
  * Mock implementation of Spring's {@link MailSender}.
@@ -53,7 +53,7 @@ import org.springframework.util.FileCopyUtils;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MockMailSender implements MailSender, JavaMailSender {
 

@@ -23,8 +23,8 @@
 package net.solarnetwork.central.user.oscp.domain;
 
 import java.math.BigDecimal;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.oscp.domain.BaseAssetDatumConfiguration;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.StatisticType;

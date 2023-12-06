@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'alerts')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'alerts')}">
 <head>
     <title data-th-text="#{alerts.title}">Alerts</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -227,8 +227,8 @@
 	<input type="hidden" name="id" value="">
 </form>
 
-<div data-th-replace="sec/alerts/situation-modal :: modal"></div>
-<script data-th-replace="sec/alerts/alert-enums :: script"></script>
+<div data-th-replace="~{sec/alerts/situation-modal :: modal}"></div>
+<script data-th-replace="~{sec/alerts/alert-enums :: script}"></script>
 </main>
 </body>
 </html>

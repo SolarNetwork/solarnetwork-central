@@ -25,7 +25,7 @@ package net.solarnetwork.central.user.dnp3.config;
 import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP3;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.validation.Validator;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;

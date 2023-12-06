@@ -25,7 +25,7 @@ package net.solarnetwork.central.common.job;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.osgi.service.event.Event;
-import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.jdbc.core.JdbcOperations;
 
 /**
@@ -52,7 +52,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.6
  */
 public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
@@ -91,9 +91,9 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
 		try {
 			return execute(remainingIterataions);
-		} catch ( DeadlockLoserDataAccessException e ) {
-			log.warn("Deadlock processing {} for tier '{}' with call {}", taskDescription,
-					tierProcessType, getJdbcCall(), e);
+		} catch ( CannotAcquireLockException e ) {
+			log.warn("Failure acquiring DB lock while processing {} for tier '{}' with call {}",
+					taskDescription, tierProcessType, getJdbcCall(), e);
 		}
 		return 0;
 	}

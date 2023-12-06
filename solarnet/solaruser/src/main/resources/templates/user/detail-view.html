@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
-    <title th:text="#{app.name}">SolarUser</title>
+    <title data-th-text="#{app.name}">SolarUser</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
@@ -11,21 +11,21 @@
 </head>
 <body class="container">
 <form class="form-horizontal registration-form">
-<fieldset class="review" th:fragment="form-content" th:object="${user}">
+<fieldset class="review" data-th-fragment="form-content" data-th-object="${user}">
 	<div class="form-group">
-		<label class="col-sm-2 control-label" for="user-name" th:text="#{user.name.label}">Name</label>
+		<label class="col-sm-2 control-label" for="user-name" data-th-text="#{user.name.label}">Name</label>
 		<div class="col-sm-10">
-			<p id="user-name" class="form-control-static" th:text="${user.name}">Person Name</p>
+			<p id="user-name" class="form-control-static" data-th-text="${user.name}">Person Name</p>
 		</div>
 	</div>
 	<div class="form-group">
-		<label class="col-sm-2 control-label" for="user-email" th:text="#{user.email.label}">Email</label>
+		<label class="col-sm-2 control-label" for="user-email" data-th-text="#{user.email.label}">Email</label>
 		<div class="col-sm-10">
-			<p id="user-email" class="form-control-static" th:text="${user.email}">user@localhost</p>
+			<p id="user-email" class="form-control-static" data-th-text="${user.email}">user@localhost</p>
 		</div>
 	</div>
 	<div class="form-group">
-		<label class="col-sm-2 control-label" for="user-password" th:text="#{user.password.label}">Password</label>
+		<label class="col-sm-2 control-label" for="user-password" data-th-text="#{user.password.label}">Password</label>
 		<div class="col-sm-10">
 			<p id="user-password" class="form-control-static">•••••</p>
 		</div>

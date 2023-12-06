@@ -35,7 +35,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 import java.net.URI;
 import java.util.Collection;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;

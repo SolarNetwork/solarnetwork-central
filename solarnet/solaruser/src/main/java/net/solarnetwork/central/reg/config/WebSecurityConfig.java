@@ -23,6 +23,8 @@
 package net.solarnetwork.central.reg.config;
 
 import static java.lang.String.format;
+import static org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED;
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import java.io.IOException;
 import java.nio.file.Files;
 import javax.sql.DataSource;
@@ -40,9 +42,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -167,59 +169,55 @@ public class WebSecurityConfig {
 			XorCsrfTokenRequestAttributeHandler requestHandler = new XorCsrfTokenRequestAttributeHandler();
 
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/login")
-		        .requestMatchers("/logout")
-		        .requestMatchers("/*.do")
-		        .requestMatchers("/register/**")
-		        .requestMatchers("/u/**")
-		        .and()
-		      
-		      .headers()
-		        .addHeaderWriter(loginHeaderWriter)
-		        .and()
-		      
-		      // opt-in to v6 https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_defer_loading_csrftoken
-		      .csrf((csrf) -> csrf
-		  	    .csrfTokenRequestHandler(requestHandler))
-		      
-		      .sessionManagement((sessions) -> sessions
-		        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-		    	.requireExplicitAuthenticationStrategy(true))
-		      
-		      .authorizeHttpRequests()
-		        .requestMatchers("/*.do").permitAll()
-		        .requestMatchers("/register/**").permitAll()
-		      	.requestMatchers("/u/sec/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
-		      	.requestMatchers("/u/sec/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
-		      	.requestMatchers("/u/sec/event/**").hasAnyAuthority(EVENT_AUTHORITY)
-		      	.requestMatchers("/u/sec/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
-		      	.requestMatchers("/u/sec/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
-		      	.requestMatchers("/u/sec/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
-		      	.requestMatchers("/u/sec/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
-		        .requestMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        .requestMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
-		        .anyRequest().denyAll()
-		        .and()
-			      
-		      // form login
-		      .formLogin()
-		        .permitAll()
-		        .loginPage("/login")
-		        .defaultSuccessUrl("/u/sec/home")
-		        .failureUrl("/login?login_error=1")
-		        .and()
-		        
-		      // logout
-		      .logout()
-		        .permitAll()
-		        .logoutUrl("/logout")
-		        .logoutSuccessUrl("/logoutSuccess.do")
-		        
-		    ;
-		    // @formatter:on
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> {
+						matchers.requestMatchers("/login")
+								.requestMatchers("/logout")
+								.requestMatchers("/*.do")
+								.requestMatchers("/register/**")
+								.requestMatchers("/u/**");
+					})
+
+					.headers((headers) -> {
+						headers.addHeaderWriter(loginHeaderWriter);
+					})
+
+					// opt-in to v6 https://docs.spring.io/spring-security/reference/5.8/migration/servlet/exploits.html#_defer_loading_csrftoken
+					.csrf((csrf) -> csrf.csrfTokenRequestHandler(requestHandler))
+
+					.sessionManagement((sessions) -> sessions.sessionCreationPolicy(IF_REQUIRED))
+
+					.authorizeHttpRequests((matchers) -> {
+						matchers.requestMatchers("/*.do").permitAll()
+								.requestMatchers("/register/**").permitAll()
+								.requestMatchers("/u/sec/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+								.requestMatchers("/u/sec/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
+								.requestMatchers("/u/sec/event/**").hasAnyAuthority(EVENT_AUTHORITY)
+								.requestMatchers("/u/sec/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
+								.requestMatchers("/u/sec/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+								.requestMatchers("/u/sec/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+								.requestMatchers("/u/sec/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
+								.requestMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
+								.requestMatchers("/u/**").hasAnyAuthority(ANONYMOUS_AUTHORITY, Role.ROLE_USER.toString())
+								.anyRequest().denyAll();
+					})
+
+					// form login
+					.formLogin((formLogin) -> {
+						formLogin.permitAll()
+							.loginPage("/login")
+							.defaultSuccessUrl("/u/sec/home")
+							.failureUrl("/login?login_error=1");
+					})
+
+					// logout
+					.logout((logout) -> {
+						logout.permitAll().logoutUrl("/logout").logoutSuccessUrl("/logoutSuccess.do");
+					})
+
+			;
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -289,45 +287,46 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainApi(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/api/**")
-		        .and()
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> {
+						matchers.requestMatchers("/api/**");
+					})
 
-		      // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // can simply return 401 on auth failures
-		      .exceptionHandling()
-		      	.authenticationEntryPoint(unauthorizedEntryPoint())
-		      	.accessDeniedHandler(unauthorizedEntryPoint())
-		      	.and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      // token auth filter
-		      .addFilterBefore(tokenAuthenticationFilter(),
-						UsernamePasswordAuthenticationFilter.class)
-		      
-		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		      	.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
-		      	.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
-		      	.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
-		      	.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
-		      	.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
-		      	.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
-		      	.requestMatchers("/api/v1/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
-		        .requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
-		        .requestMatchers("/api/v1/pub/**").permitAll()
-		        .anyRequest().denyAll()
-		    ;   
-		    // @formatter:on
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// can simply return 401 on auth failures
+					.exceptionHandling((exceptionHandling) -> {
+						exceptionHandling
+								.authenticationEntryPoint(unauthorizedEntryPoint())
+								.accessDeniedHandler(unauthorizedEntryPoint());
+					})
+
+					// no sessions
+					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
+
+					// token auth filter
+					.addFilterBefore(tokenAuthenticationFilter(),
+							UsernamePasswordAuthenticationFilter.class)
+
+					.authorizeHttpRequests((matchers) -> {
+						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+								.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
+								.requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
+								.requestMatchers("/api/v1/pub/**").permitAll()
+								.anyRequest().denyAll();
+					});
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -343,28 +342,26 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/ops/**")
-		        .and()
-	
-		        // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .httpBasic().realmName("SN Operations").and()
-		      
-		      .authorizeHttpRequests()
-		        .anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString())
-		        
-		    ;
-		    // @formatter:on
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> matchers.requestMatchers("/ops/**"))
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
+
+					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
+
+					.authorizeHttpRequests((matchers) -> matchers.anyRequest()
+							.hasAnyAuthority(Role.ROLE_OPS.toString()))
+
+			;
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -380,35 +377,38 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainPublic(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .requestMatchers(HttpMethod.GET, 
-		        		"/", 
-		        		"/error",
-		        		"/session-expired",
-		        		"/*.html",
-		        		"/cert.*",
-		        		"/css/**",
-		        		"/fonts/**",
-		        		"/img/**",
-		        		"/js/**",
-		        		"/js-lib/**",
-		        		"/ping", 
-		        		"/api/v1/pub/**").permitAll()
-		        .requestMatchers(HttpMethod.POST,
-		        		"/associate.*").permitAll()
-		        .anyRequest().denyAll();
-		    // @formatter:on
+			http
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
+
+					.authorizeHttpRequests((matchers) -> {
+						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+								.requestMatchers(HttpMethod.GET, 
+										"/",
+										"/error",
+										"/session-expired",
+										"/*.html",
+										"/cert.*",
+										"/css/**",
+										"/fonts/**",
+										"/img/**",
+										"/js/**",
+										"/js-lib/**",
+										"/ping",
+										"/api/v1/pub/**"
+										).permitAll()
+								.requestMatchers(HttpMethod.POST,
+										"/associate.*"
+										).permitAll()
+								.anyRequest().denyAll();
+					});
+			// @formatter:on
 			return http.build();
 		}
 

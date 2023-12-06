@@ -34,7 +34,7 @@ import net.solarnetwork.codec.JsonDateUtils.InstantSerializer;
  * JSON serializer for {@link ChargePointStatus} objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class ChargePointStatusSerializer extends StdSerializer<ChargePointStatus> {
 
@@ -54,7 +54,17 @@ public class ChargePointStatusSerializer extends StdSerializer<ChargePointStatus
 			generator.writeNull();
 			return;
 		}
-		generator.writeStartObject(status, 6);
+
+		// @formatter:off
+		final int size = 2 
+				+ (status.getCreated() != null ? 1 : 0)
+				+ (status.getConnectedTo() != null ? 1 : 0)
+				+ (status.getSessionId() != null ? 1 : 0)
+				+ (status.getConnectedDate() != null ? 1 : 0)
+				;
+		// @formatter:on
+
+		generator.writeStartObject(status, size);
 		if ( status.getCreated() != null ) {
 			generator.writeFieldName("created");
 			InstantSerializer.INSTANCE.serialize(status.getCreated(), generator, provider);

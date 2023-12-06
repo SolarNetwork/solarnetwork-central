@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import java.util.Arrays;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,9 +37,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -62,7 +63,7 @@ import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
  * Security configuration.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
@@ -134,28 +135,26 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // limit this configuration to specific paths
-		      .securityMatchers()
-		        .requestMatchers("/ops/**")
-		        .and()
-	
-		        // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      .httpBasic().realmName("SN Operations").and()
-		      
-		      .authorizeHttpRequests()
-		        .anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString())
-		        
-		    ;
-		    // @formatter:on
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> matchers.requestMatchers("/ops/**"))
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString()))
+
+			;
+			// @formatter:on
 			return http.build();
 		}
 	}
@@ -213,36 +212,39 @@ public class WebSecurityConfig {
 		@Bean
 		public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 			// @formatter:off
-		    http
-		      // CSRF not needed for stateless calls
-		      .csrf().disable()
-		      
-		      // make sure CORS honored
-		      .cors().and()
-		      
-		      // can simply return 401 on auth failures
-		      .exceptionHandling()
-		      	.authenticationEntryPoint(unauthorizedEntryPoint())
-		      	.accessDeniedHandler(unauthorizedEntryPoint())
-		      	.and()
-		      
-		      // no sessions
-		      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-		      
-		      // token auth filter
-		      .addFilterBefore(tokenAuthenticationFilter(),
-						UsernamePasswordAuthenticationFilter.class)
-		      
-		      .authorizeHttpRequests()
-		      	.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-		        .requestMatchers(HttpMethod.GET, "/", "/error", "/*.html", "/ping", 
-		            "/api/v1/pub/**").permitAll()
-		        
-		        .requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_OPS.toString())
-		        
-		        .anyRequest().authenticated()
-		    ;
-		    // @formatter:on
+			http
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
+
+					// can simply return 401 on auth failures
+					.exceptionHandling((exceptionHandling) -> exceptionHandling
+							.authenticationEntryPoint(unauthorizedEntryPoint())
+							.accessDeniedHandler(unauthorizedEntryPoint()))
+
+					// token auth filter
+					.addFilterBefore(tokenAuthenticationFilter(),
+							UsernamePasswordAuthenticationFilter.class)
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+							.requestMatchers(HttpMethod.GET,
+									"/",
+									"/error",
+									"/*.html",
+									"/ping",
+									"/api/v1/pub/**")
+							.permitAll()
+
+							.requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_OPS.toString())
+
+							.anyRequest().authenticated());
+			// @formatter:on
 			return http.build();
 		}
 	}

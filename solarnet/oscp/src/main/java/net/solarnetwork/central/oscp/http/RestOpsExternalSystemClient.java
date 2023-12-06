@@ -65,7 +65,7 @@ import net.solarnetwork.central.oscp.web.OscpWebUtils;
  * Implementation of {@link ExternalSystemClient} using {@link RestOperations}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class RestOpsExternalSystemClient implements ExternalSystemClient {
 
@@ -248,11 +248,11 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			log.warn(
 					"[{}] with {} {} failed at [{}] because the HTTP status {} was returned (expected {}).",
 					context.name(), context.role(), context.config().getId().ident(), uri,
-					e.getRawStatusCode(), HttpStatus.NO_CONTENT.value());
+					e.getStatusCode(), HttpStatus.NO_CONTENT.value());
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("Invalid HTTP status returned: %d", e.getRawStatusCode())));
+								format("Invalid HTTP status returned: %d", e.getStatusCode())));
 			}
 			throw e;
 		} catch ( UnknownContentTypeException e ) {

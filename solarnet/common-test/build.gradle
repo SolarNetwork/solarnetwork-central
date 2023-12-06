@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15' apply false
+	id 'org.springframework.boot' version '3.2.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -25,11 +25,12 @@ configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.hamcrest', module: 'hamcrest-all'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+	all*.exclude group: 'org.slf4j', module: 'jcl-over-slf4j'
 }
 
 dependencies {
 	api 'ch.qos.logback:logback-classic'
-	api 'net.solarnetwork.common.test:net.solarnetwork.common.test:1.17.0'
+	api 'net.solarnetwork.common.test:net.solarnetwork.common.test:1.20.0'
 	api 'org.hamcrest:hamcrest-library'
 	api 'org.junit.jupiter:junit-jupiter-api'
 	api 'org.springframework.boot:spring-boot-starter-test'

@@ -56,7 +56,25 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 			generator.writeNull();
 			return;
 		}
-		generator.writeStartObject(instr, 7);
+
+		final boolean hasParameters = instr.getParameters() != null && !instr.getParameters().isEmpty();
+		final String resultParamsJson = instr.getResultParametersJson();
+		final boolean hasResultParams = resultParamsJson != null && !resultParamsJson.isEmpty();
+
+		// @formatter:off
+		int size = 
+				  (instr.getId() != null ? 1 : 0)
+				+ (instr.getCreated() != null ? 1 : 0)
+				+ (instr.getNodeId() != null ? 1 : 0)
+				+ (instr.getTopic() != null ? 1 : 0)
+				+ (instr.getInstructionDate() != null ? 1 : 0)
+				+ (instr.getState() != null ? 1 : 0)
+				+ (instr.getStatusDate() != null ? 1 : 0)
+				+ (hasParameters ? 1 : 0)
+				+ (hasResultParams ? 1 : 0)
+				;
+		// @formatter:on
+		generator.writeStartObject(instr, size);
 		generator.writeNumberField("id", instr.getId());
 		generator.writeObjectField("created", instr.getCreated());
 		generator.writeNumberField("nodeId", instr.getNodeId());
@@ -68,7 +86,7 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 		if ( instr.getStatusDate() != null ) {
 			generator.writeObjectField("statusDate", instr.getStatusDate());
 		}
-		if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {
+		if ( hasParameters ) {
 			generator.writeFieldName("parameters");
 			generator.writeStartArray(instr.getParameters(), instr.getParameters().size());
 			for ( InstructionParameter p : instr.getParameters() ) {
@@ -79,8 +97,7 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 			}
 			generator.writeEndArray();
 		}
-		String resultParamsJson = instr.getResultParametersJson();
-		if ( resultParamsJson != null && !resultParamsJson.isEmpty() ) {
+		if ( hasResultParams ) {
 			generator.writeFieldName("resultParameters");
 			try {
 				generator.writeRawValue(resultParamsJson);

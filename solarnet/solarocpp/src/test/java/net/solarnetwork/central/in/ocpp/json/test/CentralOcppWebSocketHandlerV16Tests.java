@@ -51,7 +51,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -82,7 +82,7 @@ import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
  * Test cases for the {@link CentralOcppWebSocketHandler} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class CentralOcppWebSocketHandlerV16Tests {
@@ -121,7 +121,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 	public void setup() throws Exception {
 		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
 		factory.setFeaturesToDisable(Arrays.asList(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
-		factory.setModules(Arrays.asList(new JaxbAnnotationModule()));
+		factory.setModules(Arrays.asList(new JakartaXmlBindAnnotationModule()));
 		mapper = factory.getObject();
 
 		handler = new CentralOcppWebSocketHandler<>(ChargePointAction.class, CentralSystemAction.class,

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'auth-tokens')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'auth-tokens')}">
 <head>
     <title data-th-text="#{auth-tokens.title}">Security Tokens</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,7 +62,7 @@
 			<td data-th-text="${token.name}">Personal Token</td>
 			<td data-th-text="${token.description}">For personal use.</td>
 			<td>
-				<dl data-th-replace="sec/authtokens/token-policy :: content">
+				<dl data-th-replace="~{sec/authtokens/token-policy :: content}">
 					<dt>Not After</dt>
 					<dd>1 Jan 2010</dd>
 				</dl>
@@ -150,7 +150,7 @@
 			<td data-th-text="${token.name}">Personal Token</td>
 			<td data-th-text="${token.description}">For personal use.</td>
 			<td>
-				<dl data-th-replace="sec/authtokens/token-policy :: content">
+				<dl data-th-replace="~{sec/authtokens/token-policy :: content}">
 					<dt>Not After</dt>
 					<dd>1 Jan 2010</dd>
 				</dl>
@@ -215,7 +215,7 @@
 				data-th-text="${' - ' + userNode.name}"> - Home node</span>
 		</option>
 		<!--/*/ </th:block> /*/-->
-		<!--/*--> 
+		<!--/*-->
 		<option value="234"><span>234</span><span> - Work node</span></option>
 		<!--*/-->
 	</select>
@@ -343,14 +343,14 @@
 						<label for="create-user-auth-token-modal-id" data-th-text="#{auth-tokens.label.token}">
 							Token
 						</label>
-						<input type="text" name="tokenId" id="create-user-auth-token-modal-id" 
+						<input type="text" name="tokenId" id="create-user-auth-token-modal-id"
 								class="form-control" value="" readonly />
 					</div>
 					<div class="form-group">
 						<label for="create-user-auth-token-modal-secret" data-th-text="#{auth-tokens.label.secret}">
 							Secret
 						</label>
-						<input type="text" name="tokenSecret" id="create-user-auth-token-modal-secret" 
+						<input type="text" name="tokenSecret" id="create-user-auth-token-modal-secret"
 							class="form-control text-danger" value="" readonly />
 					</div>
 			 		<p class="text-center">
@@ -574,14 +574,14 @@
 						<label for="create-data-auth-token-modal-id" data-th-text="#{auth-tokens.label.token}">
 							Token
 						</label>
-						<input type="text" name="tokenId" id="create-data-auth-token-modal-id" 
+						<input type="text" name="tokenId" id="create-data-auth-token-modal-id"
 								class="form-control" value="" readonly />
 					</div>
 					<div class="form-group">
 						<label for="create-data-auth-token-modal-secret" data-th-text="#{auth-tokens.label.secret}">
 							Secret
 						</label>
-						<input type="text" name="tokenSecret" id="create-data-auth-token-modal-secret" 
+						<input type="text" name="tokenSecret" id="create-data-auth-token-modal-secret"
 							class="form-control text-danger" value="" readonly />
 					</div>
 			 		<p class="text-center">

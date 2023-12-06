@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'export')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'export')}">
 <head>
     <title data-th-text="#{export.title}">Export</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -214,16 +214,16 @@
 
 <!--/* Modal forms */-->
 
-<form data-th-replace="sec/export/edit-adhoc-export-job-modal :: form"></form>
-<form data-th-replace="sec/export/edit-data-modal :: form"></form>
-<form data-th-replace="sec/export/edit-destination-modal :: form"></form>
-<form data-th-replace="sec/export/edit-export-job-date-modal :: form"></form>
-<form data-th-replace="sec/export/edit-export-job-modal :: form"></form>
-<form data-th-replace="sec/export/edit-output-modal :: form"></form>
+<form data-th-replace="~{sec/export/edit-adhoc-export-job-modal :: form}"></form>
+<form data-th-replace="~{sec/export/edit-data-modal :: form}"></form>
+<form data-th-replace="~{sec/export/edit-destination-modal :: form}"></form>
+<form data-th-replace="~{sec/export/edit-export-job-date-modal :: form}"></form>
+<form data-th-replace="~{sec/export/edit-export-job-modal :: form}"></form>
+<form data-th-replace="~{sec/export/edit-output-modal :: form}"></form>
 
 <!--/* Setting templates */-->
 
-<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+<div id="setting-templates" class="hidden" data-th-replace="~{setting-templates :: content}"></div>
 </div>
 </body>
 </html>
