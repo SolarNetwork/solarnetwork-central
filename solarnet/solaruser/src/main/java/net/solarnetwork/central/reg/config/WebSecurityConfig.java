@@ -70,7 +70,7 @@ import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
  * Security configuration.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Configuration
 @EnableWebSecurity
