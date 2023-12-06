@@ -360,23 +360,23 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	public void onCreated(
 			Iterable<CacheEntryEvent<? extends Serializable, ? extends Serializable>> events)
 			throws CacheEntryListenerException {
-		queueLock.lock();
-		try {
-			for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
-				Serializable key = event.getKey();
-				log.trace("Datum cached: {}", key);
-				stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
-				if ( key instanceof DatumPK ) {
-					stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumReceived);
-				} else if ( key instanceof GeneralNodeDatumPK ) {
-					stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
-				} else {
-					stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
-				}
-				queue.offer(key);
+		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
+			Serializable key = event.getKey();
+			log.trace("CACHE_CRE: |{}", key);
+			stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
+			if ( key instanceof DatumPK ) {
+				stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumReceived);
+			} else if ( key instanceof GeneralNodeDatumPK ) {
+				stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
+			} else {
+				stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
 			}
-		} finally {
-			queueLock.unlock();
+			queueLock.lock();
+			try {
+				queue.offer(key);
+			} finally {
+				queueLock.unlock();
+			}
 		}
 	}
 
