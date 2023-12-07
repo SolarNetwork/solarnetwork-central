@@ -22,13 +22,17 @@
 
 package net.solarnetwork.central.datum.export.dest.s3;
 
-import com.amazonaws.services.s3.AmazonS3URI;
+import java.net.URI;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Uri;
+import software.amazon.awssdk.services.s3.S3Utilities;
 
 /**
  * Service properties for the S3 export destination.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class S3DestinationProperties {
 
@@ -54,7 +58,7 @@ public class S3DestinationProperties {
 	private String secretKey;
 	private String storageClass = DEFAULT_STORAGE_CLASS;
 
-	private AmazonS3URI uri;
+	private S3Uri uri;
 
 	/**
 	 * Test if the configuration appears valid.
@@ -100,8 +104,8 @@ public class S3DestinationProperties {
 	 * 
 	 * @return the URI
 	 */
-	public synchronized AmazonS3URI getUri() {
-		AmazonS3URI result = uri;
+	public synchronized S3Uri getUri() {
+		S3Uri result = uri;
 		if ( result == null && path != null ) {
 			String absUri = path;
 			if ( absUri.startsWith("/") ) {
@@ -109,7 +113,8 @@ public class S3DestinationProperties {
 			} else if ( absUri.indexOf("://") < 0 ) {
 				absUri = "https://" + absUri;
 			}
-			result = new AmazonS3URI(absUri);
+			S3Utilities utils = S3Client.builder().region(Region.US_WEST_2).build().utilities();
+			result = utils.parseUri(URI.create(absUri));
 			uri = result;
 		}
 		return result;

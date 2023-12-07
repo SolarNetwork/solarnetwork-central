@@ -38,19 +38,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.DeleteMessageBatchRequest;
-import com.amazonaws.services.sqs.model.DeleteMessageBatchRequestEntry;
-import com.amazonaws.services.sqs.model.GetQueueUrlResult;
-import com.amazonaws.services.sqs.model.Message;
-import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.event.dest.sqs.SqsDestinationProperties;
 import net.solarnetwork.central.user.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService;
@@ -59,6 +48,18 @@ import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequest;
+import software.amazon.awssdk.services.sqs.model.DeleteMessageBatchRequestEntry;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
+import software.amazon.awssdk.services.sqs.model.Message;
+import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 
 /**
  * Test cases for the {@link SqsUserNodeEventHookService} class.
@@ -70,7 +71,7 @@ public class SqsUserNodeEventHookServiceTests {
 
 	private static Map<String, Object> TEST_PROPS;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		Properties p = new Properties();
 		try {
@@ -111,73 +112,77 @@ public class SqsUserNodeEventHookServiceTests {
 				containsInAnyOrder("accessKey", "secretKey", "region", "queueName"));
 	}
 
-	private static AmazonSQS createSqsClient() {
+	private static SqsClient createSqsClient() {
 		SqsDestinationProperties props = SqsDestinationProperties.ofServiceProperties(TEST_PROPS);
-		AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard().withRegion(props.getRegion());
+		SqsClientBuilder builder = SqsClient.builder().region(Region.of(props.getRegion()));
 		String accessKey = props.getAccessKey();
 		String secretKey = props.getSecretKey();
 		if ( accessKey != null && accessKey.length() > 0 && secretKey != null
 				&& secretKey.length() > 0 ) {
-			builder = builder.withCredentials(
-					new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)));
+			builder.credentialsProvider(
+					StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
 		}
 		return builder.build();
 	}
 
 	private static void drainQueue() {
 		SqsDestinationProperties props = SqsDestinationProperties.ofServiceProperties(TEST_PROPS);
-		AmazonSQS client = createSqsClient();
+		SqsClient client = createSqsClient();
 		String queueUrl = null;
 		try {
-			GetQueueUrlResult urlRes = client.getQueueUrl(props.getQueueName());
-			queueUrl = urlRes.getQueueUrl();
+			GetQueueUrlResponse urlRes = client.getQueueUrl((b) -> b.queueName(props.getQueueName()));
+			queueUrl = urlRes.queueUrl();
 		} catch ( QueueDoesNotExistException e ) {
 			throw new IllegalArgumentException(
 					String.format("Queue [%s] does not exist (using region %s).", props.getQueueName(),
 							props.getRegion()));
 		}
 
-		ReceiveMessageRequest req = new ReceiveMessageRequest(queueUrl);
-		req.setWaitTimeSeconds(0);
+		ReceiveMessageRequest req = ReceiveMessageRequest.builder().queueUrl(queueUrl).waitTimeSeconds(0)
+				.build();
 		while ( true ) {
-			ReceiveMessageResult res = client.receiveMessage(req);
+			ReceiveMessageResponse res = client.receiveMessage(req);
 			if ( res == null ) {
 				break;
 			}
-			List<Message> msgs = res.getMessages();
+			List<Message> msgs = res.messages();
 			if ( msgs == null || msgs.isEmpty() ) {
 				break;
 			}
 			List<DeleteMessageBatchRequestEntry> delEntries = new ArrayList<>(8);
 			for ( Message msg : msgs ) {
-				delEntries.add(new DeleteMessageBatchRequestEntry(UUID.randomUUID().toString(),
-						msg.getReceiptHandle()));
+				delEntries.add(DeleteMessageBatchRequestEntry.builder().id(UUID.randomUUID().toString())
+						.receiptHandle(msg.receiptHandle()).build());
 			}
-			DeleteMessageBatchRequest delReq = new DeleteMessageBatchRequest(queueUrl, delEntries);
+			DeleteMessageBatchRequest delReq = DeleteMessageBatchRequest.builder().queueUrl(queueUrl)
+					.entries(delEntries).build();
 			client.deleteMessageBatch(delReq);
 		}
 	}
 
 	private static String getQueueMessage() {
 		SqsDestinationProperties props = SqsDestinationProperties.ofServiceProperties(TEST_PROPS);
-		AmazonSQS client = createSqsClient();
+		SqsClient client = createSqsClient();
 		String queueUrl = null;
 		try {
-			GetQueueUrlResult urlRes = client.getQueueUrl(props.getQueueName());
-			queueUrl = urlRes.getQueueUrl();
+			GetQueueUrlResponse urlRes = client.getQueueUrl((b) -> b.queueName(props.getQueueName()));
+			queueUrl = urlRes.queueUrl();
 		} catch ( QueueDoesNotExistException e ) {
 			throw new IllegalArgumentException(
 					String.format("Queue [%s] does not exist (using region %s).", props.getQueueName(),
 							props.getRegion()));
 		}
 
-		ReceiveMessageRequest req = new ReceiveMessageRequest(queueUrl);
-		req.setWaitTimeSeconds(0);
-		ReceiveMessageResult res = client.receiveMessage(req);
-		assertThat("Message received", res.getMessages(), hasSize(1));
-		client.deleteMessage(queueUrl, res.getMessages().get(0).getReceiptHandle());
+		ReceiveMessageRequest req = ReceiveMessageRequest.builder().queueUrl(queueUrl).waitTimeSeconds(0)
+				.build();
+		ReceiveMessageResponse res = client.receiveMessage(req);
+		assertThat("Message received", res.messages(), hasSize(1));
 
-		String msgBody = res.getMessages().get(0).getBody();
+		final String qUrl = queueUrl;
+		client.deleteMessage(
+				(b) -> b.queueUrl(qUrl).receiptHandle(res.messages().get(0).receiptHandle()));
+
+		String msgBody = res.messages().get(0).body();
 		return msgBody;
 	}
 

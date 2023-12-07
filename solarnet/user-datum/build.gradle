@@ -21,6 +21,7 @@ base {
 }
 
 configurations {
+	all*.exclude group: 'commons-logging'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
@@ -40,7 +41,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 
 	// Utilities
-	implementation 'com.amazonaws:aws-java-sdk-sqs:1.11.1034'
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	implementation 'org.aspectj:aspectjweaver'
 
 	// Testing

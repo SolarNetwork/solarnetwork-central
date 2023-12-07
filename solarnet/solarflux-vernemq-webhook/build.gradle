@@ -9,6 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 configurations {
+	all*.exclude group: 'commons-logging'
 	all*.exclude group: 'com.amazonaws'
 	all*.exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
 	all*.exclude group: 'com.zaxxer', module: 'HikariCP'
