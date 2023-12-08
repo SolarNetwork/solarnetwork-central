@@ -459,7 +459,7 @@ public class WebServiceGlobalControllerSupport {
 	 * @return an error response object
 	 * @since 1.5
 	 */
-	@ExceptionHandler(RuntimeException.class)
+	@ExceptionHandler(HttpMessageConversionException.class)
 	@ResponseBody
 	@ResponseStatus
 	public Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
