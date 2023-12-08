@@ -25,24 +25,24 @@ package net.solarnetwork.central.user.event.dest.sqs;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.services.sqs.AmazonSQS;
 import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.codec.JsonUtils;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.sqs.SqsClient;
 
 /**
  * An SQS client and queue configuration.
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public final class SqsDestination {
 
 	private static final Logger log = LoggerFactory.getLogger(SqsDestination.class);
 
-	private final AmazonSQS client;
+	private final SqsClient client;
 	private final String queueUrl;
 
 	/**
@@ -53,7 +53,7 @@ public final class SqsDestination {
 	 * @param queueUrl
 	 *        the queue URL
 	 */
-	public SqsDestination(AmazonSQS client, String queueUrl) {
+	public SqsDestination(SqsClient client, String queueUrl) {
 		super();
 		this.client = requireNonNullArgument(client, "client");
 		this.queueUrl = requireNonNullArgument(queueUrl, "queueUrl");
@@ -62,17 +62,18 @@ public final class SqsDestination {
 	public void sendJsonMessage(Object msg) {
 		String json = JsonUtils.getJSONString(msg, null);
 		try {
-			client.sendMessage(queueUrl, json);
-		} catch ( AmazonServiceException e ) {
-			log.warn("AWS error: {}; HTTP code {}; AWS code {}; type {}; request ID {}", e.getMessage(),
-					e.getStatusCode(), e.getErrorCode(), e.getErrorType(), e.getRequestId());
+			client.sendMessage((b) -> {
+				b.queueUrl(queueUrl).messageBody(json);
+			});
+		} catch ( AwsServiceException e ) {
+			log.warn("AWS error: {}; HTTP code {}; AWS code {}; request ID {}", e.getMessage(),
+					e.statusCode(), e.awsErrorDetails().errorCode(), e.requestId());
 			throw new RemoteServiceException(
 					String.format("Error publishing SQS message to queue [%s]", queueUrl), e);
-		} catch ( AmazonClientException e ) {
+		} catch ( SdkClientException e ) {
 			log.debug("Error communicating with AWS: {}", e.getMessage());
 			throw new RepeatableTaskException("Error communicating with AWS", e);
 		}
-
 	}
 
 	/**
@@ -80,7 +81,7 @@ public final class SqsDestination {
 	 * 
 	 * @return the client, never {@literal null}
 	 */
-	public AmazonSQS getClient() {
+	public SqsClient getClient() {
 		return client;
 	}
 

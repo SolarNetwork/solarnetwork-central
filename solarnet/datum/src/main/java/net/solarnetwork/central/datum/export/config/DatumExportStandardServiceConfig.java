@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.config;
 
+import java.util.concurrent.ExecutorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +47,9 @@ public class DatumExportStandardServiceConfig {
 
 	@Value("${app.datum.export.temporary-dir}")
 	private String temporaryDir;
+
+	@Autowired
+	private ExecutorService executorService;
 
 	@Bean
 	public DatumExportOutputFormatService csvDatumExportOutputFormatService() {
@@ -74,7 +79,7 @@ public class DatumExportStandardServiceConfig {
 
 	@Bean
 	public DatumExportDestinationService s3DatumExportDestinationService() {
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService();
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(S3DestinationProperties.class.getName());

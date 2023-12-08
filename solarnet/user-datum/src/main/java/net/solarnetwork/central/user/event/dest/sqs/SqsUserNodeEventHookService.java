@@ -33,12 +33,6 @@ import java.util.concurrent.ConcurrentMap;
 import javax.cache.Cache;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.GetQueueUrlResult;
-import com.amazonaws.services.sqs.model.QueueDoesNotExistException;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
@@ -46,12 +40,19 @@ import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
+import software.amazon.awssdk.services.sqs.model.GetQueueUrlResponse;
+import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
 
 /**
  * SQS implementation of {@link UserNodeEventHookService}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SqsUserNodeEventHookService extends
 		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements UserNodeEventHookService {
@@ -140,11 +141,12 @@ public class SqsUserNodeEventHookService extends
 			if ( d == null ) {
 				log.debug("Creating SQS destination for {}@{}/{}", props.getAccessKey(),
 						props.getRegion(), props.getQueueName());
-				AmazonSQS client = createClient(props);
+				SqsClient client = createClient(props);
 				String queueUrl = null;
 				try {
-					GetQueueUrlResult urlRes = client.getQueueUrl(props.getQueueName());
-					queueUrl = urlRes.getQueueUrl();
+					GetQueueUrlResponse urlRes = client
+							.getQueueUrl((b) -> b.queueName(props.getQueueName()));
+					queueUrl = urlRes.queueUrl();
 				} catch ( QueueDoesNotExistException e ) {
 					throw new IllegalArgumentException(
 							String.format("Queue [%s] does not exist (using region %s).",
@@ -175,14 +177,14 @@ public class SqsUserNodeEventHookService extends
 		return Base64.encodeBase64String(DigestUtils.sha1(buf.toString()));
 	}
 
-	private AmazonSQS createClient(SqsDestinationProperties props) {
-		AmazonSQSClientBuilder builder = AmazonSQSClientBuilder.standard().withRegion(props.getRegion());
+	private SqsClient createClient(SqsDestinationProperties props) {
+		SqsClientBuilder builder = SqsClient.builder().region(Region.of(props.getRegion()));
 		String accessKey = props.getAccessKey();
 		String secretKey = props.getSecretKey();
 		if ( accessKey != null && accessKey.length() > 0 && secretKey != null
 				&& secretKey.length() > 0 ) {
-			builder = builder.withCredentials(
-					new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)));
+			builder.credentialsProvider(
+					StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
 		}
 		return builder.build();
 	}

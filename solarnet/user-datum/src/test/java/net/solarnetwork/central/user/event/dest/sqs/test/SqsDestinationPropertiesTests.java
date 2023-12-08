@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.user.event.dest.sqs.test;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.event.dest.sqs.SqsDestinationProperties;
 
 /**

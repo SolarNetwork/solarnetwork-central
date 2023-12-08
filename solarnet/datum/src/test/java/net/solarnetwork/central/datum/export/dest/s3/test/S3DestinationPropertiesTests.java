@@ -22,54 +22,94 @@
 
 package net.solarnetwork.central.datum.export.dest.s3.test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import org.junit.Test;
-import com.amazonaws.services.s3.AmazonS3URI;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static software.amazon.awssdk.regions.Region.AP_SOUTHEAST_2;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.export.dest.s3.S3DestinationProperties;
+import software.amazon.awssdk.services.s3.S3Uri;
 
 /**
  * Test cases for the {@link S3DestinationProperties} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 3.0
  */
 public class S3DestinationPropertiesTests {
 
 	@Test
 	public void uriFromEndpointPathNoScheme() {
+		// GIVEN
 		S3DestinationProperties props = new S3DestinationProperties();
 		props.setPath("s3-ap-southeast-2.amazonaws.com/my-bucket/folder");
-		AmazonS3URI uri = props.getUri();
-		assertThat("URI created from path", uri, notNullValue());
-		assertThat("Region available", uri.getRegion(), equalTo("ap-southeast-2"));
-		assertThat("Bucket", uri.getBucket(), equalTo("my-bucket"));
-		assertThat("Key", uri.getKey(), equalTo("folder"));
+
+		// WHEN
+		S3Uri uri = props.getUri();
+
+		// THEN
+		// @formatter:off
+		then(uri)
+			.as("URI created from path")
+			.isNotNull()
+			.as("Region decoded")
+			.returns(Optional.of(AP_SOUTHEAST_2), from(S3Uri::region))
+			.as("Bucket decoded")			
+			.returns(Optional.of("my-bucket"), from(S3Uri::bucket))
+			.as("Key")
+			.returns(Optional.of("folder"), from(S3Uri::key))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void uriFromEndpointPath() {
+		// GIVEN
 		S3DestinationProperties props = new S3DestinationProperties();
 		props.setPath("http://s3-ap-southeast-2.amazonaws.com/my-bucket/folder");
-		AmazonS3URI uri = props.getUri();
-		assertThat("URI created from path", uri, notNullValue());
-		assertThat("Region available", uri.getRegion(), equalTo("ap-southeast-2"));
-		assertThat("Bucket", uri.getBucket(), equalTo("my-bucket"));
-		assertThat("Key", uri.getKey(), equalTo("folder"));
-		assertThat("Scheme preserved", uri.getURI().getScheme(), equalTo("http"));
+
+		// WHEN
+		S3Uri uri = props.getUri();
+
+		// THEN
+		// @formatter:off
+		then(uri)
+			.as("URI created from path")
+			.isNotNull()
+			.as("Region decoded")
+			.returns(Optional.of(AP_SOUTHEAST_2), from(S3Uri::region))
+			.as("Bucket decoded")			
+			.returns(Optional.of("my-bucket"), from(S3Uri::bucket))
+			.as("Key")
+			.returns(Optional.of("folder"), from(S3Uri::key))
+			.as("Scheme preserved")
+			.returns("http", from((u) -> u.uri().getScheme()))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void uriFromBucketPath() {
+		// GIVEN
 		S3DestinationProperties props = new S3DestinationProperties();
 		props.setPath("/my-bucket/folder");
-		AmazonS3URI uri = props.getUri();
-		assertThat("URI created from path", uri, notNullValue());
-		assertThat("Region not specified", uri.getRegion(), nullValue());
-		assertThat("Bucket", uri.getBucket(), equalTo("my-bucket"));
-		assertThat("Key", uri.getKey(), equalTo("folder"));
+
+		// WHEN
+		S3Uri uri = props.getUri();
+
+		// THEN
+		// @formatter:off
+		then(uri)
+			.as("URI created from path")
+			.isNotNull()
+			.as("Region not specified")
+			.returns(Optional.empty(), from(S3Uri::region))
+			.as("Bucket decoded")			
+			.returns(Optional.of("my-bucket"), from(S3Uri::bucket))
+			.as("Key")
+			.returns(Optional.of("folder"), from(S3Uri::key))
+			;
+		// @formatter:on
 	}
 
 }
