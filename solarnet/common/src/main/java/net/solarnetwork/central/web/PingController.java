@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -51,8 +52,9 @@ import net.solarnetwork.web.domain.Response;
  * the results.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
+@Controller
 @RequestMapping("/ping")
 public class PingController {
 

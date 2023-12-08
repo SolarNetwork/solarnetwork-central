@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.xml.SourceHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.service.CertificateException;
@@ -125,6 +126,12 @@ public class SSLContextFactory implements PingTest {
 
 		if ( LoggingHttpRequestInterceptor.supportsLogging(reqFactory) ) {
 			restTemplate.getInterceptors().add(new LoggingHttpRequestInterceptor());
+		}
+
+		// Spring 6 no longer includes SourceHttpMessageConverter by default, but we rely on that
+		if ( restTemplate.getMessageConverters().stream()
+				.filter(c -> c instanceof SourceHttpMessageConverter<?>).findAny().isEmpty() ) {
+			restTemplate.getMessageConverters().add(0, new SourceHttpMessageConverter<>());
 		}
 
 		return restTemplate;
