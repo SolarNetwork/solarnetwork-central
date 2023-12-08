@@ -367,9 +367,11 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		}
 		int currSize;
 		do {
-			if ( internalStore.replace(key, value) != null || delegate.replace(key, value) ) {
+			if ( internalStore.replace(key, value) != null ) {
 				// replaced existing value
 				publishUpdatedEvent(key, value);
+				return;
+			} else if ( delegate.replace(key, value) ) {
 				return;
 			}
 			currSize = size.get();

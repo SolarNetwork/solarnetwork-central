@@ -35,20 +35,22 @@ import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
-import org.apache.http.client.HttpClient;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.core5.http.config.Registry;
+import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.xml.SourceHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.service.CertificateException;
@@ -110,7 +112,7 @@ public class SSLContextFactory implements PingTest {
 		String[] ciphers = filterByEnabledDisabled(ctx.getSupportedSSLParameters().getCipherSuites(),
 				enabledCipherSuites, disabledCipherSuites);
 		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(createContext(), protocols,
-				ciphers, SSLConnectionSocketFactory.getDefaultHostnameVerifier());
+				ciphers, new DefaultHostnameVerifier());
 		Registry<ConnectionSocketFactory> r = RegistryBuilder.<ConnectionSocketFactory> create()
 				.register("https", sslsf).build();
 
@@ -124,6 +126,12 @@ public class SSLContextFactory implements PingTest {
 
 		if ( LoggingHttpRequestInterceptor.supportsLogging(reqFactory) ) {
 			restTemplate.getInterceptors().add(new LoggingHttpRequestInterceptor());
+		}
+
+		// Spring 6 no longer includes SourceHttpMessageConverter by default, but we rely on that
+		if ( restTemplate.getMessageConverters().stream()
+				.filter(c -> c instanceof SourceHttpMessageConverter<?>).findAny().isEmpty() ) {
+			restTemplate.getMessageConverters().add(0, new SourceHttpMessageConverter<>());
 		}
 
 		return restTemplate;

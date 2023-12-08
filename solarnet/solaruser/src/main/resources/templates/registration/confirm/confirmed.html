@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="layout :: layout(~{::title}, ~{::main}, ~{}, 'login')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::main}, ~{}, 'login')}">
 <head>
-    <title th:text="#{app.name}">SolarUser Registration Confirmed</title>
+    <title data-th-text="#{app.name}">SolarUser Registration Confirmed</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
@@ -11,10 +11,10 @@
 </head>
 <body>
 <main class="container">
-	<p class="intro" th:utext="#{registration.confirm.confirmed(${user.name})}">
+	<p class="intro" data-th-utext="#{registration.confirm.confirmed(${user.name})}">
 		Registration confirmed.
 	</p>
-	<p th:utext="#{registration.confirm.login(@{/u/sec/my-nodes}, ${user.email})}">
+	<p data-th-utext="#{registration.confirm.login(@{/u/sec/my-nodes}, ${user.email})}">
 		Now you can login.
 	</p>
 </main>

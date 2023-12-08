@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15' apply false
+	id 'org.springframework.boot' version '3.2.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,13 +14,14 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OSCP'
-version = '1.8.0'
+version = '2.0.0'
 
 base {
 	archivesName = 'solarnet-oscp'
 }
 
 configurations {
+	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
@@ -56,13 +57,13 @@ dependencies {
 	// Utilities
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
-	implementation 'javax.annotation:javax.annotation-api'
+	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.hibernate.validator:hibernate-validator'
 	implementation 'org.slf4j:slf4j-api'
 	
 	// SolarNetwork
-	api 'net.solarnetwork.external:net.solarnetwork.external.oscp:1.0.2'
+	api 'net.solarnetwork.external:net.solarnetwork.external.oscp.jakarta:1.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -19,7 +19,7 @@ subprojects {
 
 	repositories {
 		mavenCentral()
-		maven { url "https://dev.solarnetwork.net/archive/repository/solarnetwork-stage" }
+		//maven { url "https://dev.solarnetwork.net/archive/repository/solarnetwork-stage" }
 	}
 
 	[
@@ -42,7 +42,8 @@ subprojects {
 
 	compileTestJava {
 		options.compilerArgs += [
-			"-Xlint:-serial"
+			"-Xlint:-serial",
+            "-Xlint:-static"
 		]
 	}
 
@@ -63,18 +64,17 @@ subprojects {
 	ext {
 		batikVersion = '1.16'
 		checkstyleVersion = '8.34'
-		javaxAnnotationVersion = '1.3.2'
 		jsonSchemaValidatorVersion = '1.0.73'
-		myBatisStarterVersion = '2.2.0'
-		snCommonVersion = '3.5.1'
+		myBatisStarterVersion = '3.0.3'
+		snCommonVersion = '3.5.2'
 		snCommonMqttVersion = '4.0.0'
 		snCommonMqttNettyVersion = '3.0.1'
 		snCommonOcppVersion = '2.7.0'
 		snCommonOcpp16Version = '2.1.7'
-		snCommonOcppWebVersion = '3.1.0'
+		snCommonOcppWebJakartaVersion = '1.0.0'
 		snCommonPkiBcVersion = '3.0.0'
-		snCommonWebVersion = '3.3.0'
-		snExternalOcppVersion = '1.1.2'
+		snCommonWebJakartaVersion = '1.0.0'
+		snExternalOcppJakartaVersion = '1.0.0'
 		superCsvVersion = '2.4.0'
 
 		libraries = [
@@ -86,17 +86,14 @@ subprojects {
 			],
 			// Test dependencies.
 			easymock: 'org.easymock:easymock:3.1',
-			hamcrest: 'org.hamcrest:hamcrest-library:2.2',
+			hamcrest: 'org.hamcrest:hamcrest-library',
 			junit4: 'org.junit.vintage:junit-vintage-engine',
-			mockito: 'org.mockito:mockito-core:5.5.0',
-			mockitoJupiter: 'org.mockito:mockito-junit-jupiter:5.5.0'
+			mockito: 'org.mockito:mockito-core',
+			mockitoJupiter: 'org.mockito:mockito-junit-jupiter'
 		]
 	}
 	
 	ext['netty.version'] = '4.1.96.Final'
-	ext['snakeyaml.version'] = '2.0' // SECFIX
-	ext['spring-security.version']='5.8.1'
-	ext['junit-jupiter.version'] = '5.10.0'
 	
 	dependencies {
 		testImplementation libraries.junit4,

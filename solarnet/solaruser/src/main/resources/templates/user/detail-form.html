@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
-    <title th:text="#{app.name}">SolarUser</title>
+    <title data-th-text="#{app.name}">SolarUser</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="../../static/css/bootstrap.css">
 	<link rel="stylesheet" href="../../static/css/bootstrap-theme.css">
@@ -11,28 +11,28 @@
 </head>
 <body class="container">
 <form class="form-horizontal registration-form">
-<fieldset th:fragment="form-content" th:object="${user}">
-	<div class="form-group" th:classappend="${#fields.hasErrors('name')}? error">
-		<label class="col-sm-2 control-label" for="user-name" th:text="#{user.name.label}">Name</label>
+<fieldset data-th-fragment="form-content" data-th-object="${user}">
+	<div class="form-group" data-th-classappend="${#fields.hasErrors('name')}? error">
+		<label class="col-sm-2 control-label" for="user-name" data-th-text="#{user.name.label}">Name</label>
 		<div class="col-sm-6">
-			<input type="text" th:field="*{name}" id="user-name" maxlength="128" th:placeholder="#{user.name.label}" class="form-control">
-			<span class="text-warning" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+			<input type="text" data-th-field="*{name}" id="user-name" maxlength="128" data-th-placeholder="#{user.name.label}" class="form-control">
+			<span class="text-warning" data-th-if="${#fields.hasErrors('name')}" data-th-errors="*{name}"></span>
 		</div>
 	</div>
-	<div class="form-group" th:classappend="${#fields.hasErrors('email')}? error">
-		<label class="col-sm-2 control-label" for="user-email" th:text="#{user.email.label}">Email</label>
+	<div class="form-group" data-th-classappend="${#fields.hasErrors('email')}? error">
+		<label class="col-sm-2 control-label" for="user-email" data-th-text="#{user.email.label}">Email</label>
 		<div class="col-sm-6">
-			<input type="text" th:field="*{email}" maxlength="240" id="user-email" th:placeholder="#{user.email.placeholder}" class="form-control">
-			<span class="help-block" th:text="#{user.email.caption}">Email must be valid.</span>
-			<span class="text-warning" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+			<input type="text" data-th-field="*{email}" maxlength="240" id="user-email" data-th-placeholder="#{user.email.placeholder}" class="form-control">
+			<span class="help-block" data-th-text="#{user.email.caption}">Email must be valid.</span>
+			<span class="text-warning" data-th-if="${#fields.hasErrors('email')}" data-th-errors="*{email}"></span>
 		</div>
 	</div>
-	<div class="form-group" th:classappend="${#fields.hasErrors('password')}? error">
-		<label class="col-sm-2 control-label" for="user-password" th:text="#{user.password.label}">Password</label>
+	<div class="form-group" data-th-classappend="${#fields.hasErrors('password')}? error">
+		<label class="col-sm-2 control-label" for="user-password" data-th-text="#{user.password.label}">Password</label>
 		<div class="col-sm-6">
-			<input type="password" th:field="*{password}" maxlength="255" id="user-password"
-				th:placeholder="${user.id} ? #{user.password.edit.placeholder} : #{user.password.placeholder}" class="form-control"/>
-			<span class="text-warning" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+			<input type="password" data-th-field="*{password}" maxlength="255" id="user-password"
+				data-th-placeholder="${user.id} ? #{user.password.edit.placeholder} : #{user.password.placeholder}" class="form-control"/>
+			<span class="text-warning" data-th-if="${#fields.hasErrors('password')}" data-th-errors="*{password}"></span>
 		</div>
 	</div>
 </fieldset>

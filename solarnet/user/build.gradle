@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15' apply false
+	id 'org.springframework.boot' version '3.2.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User'
-version = '1.5.0'
+version = '2.0.0'
 
 base {
 	archivesName = 'solarnet-user'
@@ -38,7 +38,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
-	implementation 'org.apache.httpcomponents:httpclient'
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.javamoney:moneta:1.4.2'
 	

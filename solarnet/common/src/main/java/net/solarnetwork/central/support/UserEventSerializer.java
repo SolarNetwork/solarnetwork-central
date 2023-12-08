@@ -35,7 +35,7 @@ import net.solarnetwork.codec.JsonUtils;
  * JSON serializer for {@link UserEvent} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserEventSerializer extends StdSerializer<UserEvent> {
 
@@ -55,7 +55,11 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 			generator.writeNull();
 			return;
 		}
-		generator.writeStartObject(event, 6);
+
+		final boolean haveMessage = event.getMessage() != null && !event.getMessage().isBlank();
+		final boolean haveData = event.getData() != null && !event.getData().isBlank();
+
+		generator.writeStartObject(event, 4 + (haveMessage ? 1 : 0) + (haveData ? 1 : 0));
 		generator.writeNumberField("userId", event.getUserId());
 		generator.writeObjectField("created", event.getCreated());
 		generator.writeStringField("eventId", event.getEventId().toString());
@@ -63,10 +67,10 @@ public class UserEventSerializer extends StdSerializer<UserEvent> {
 		generator.writeFieldName("tags");
 		generator.writeArray(event.getTags(), 0, event.getTags().length);
 
-		if ( event.getMessage() != null && !event.getMessage().isBlank() ) {
+		if ( haveMessage ) {
 			generator.writeStringField("message", event.getMessage());
 		}
-		if ( event.getData() != null && !event.getData().isBlank() ) {
+		if ( haveData ) {
 			generator.writeFieldName("data");
 			try {
 				generator.writeRawValue(event.getData());

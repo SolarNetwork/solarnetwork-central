@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout-error :: layout(~{::title}, ~{::main}, ${status})">
+<html data-th-replace="~{layout-error :: layout(~{::title}, ~{::main}, ${status})}">
 <head>
     <title data-th-text="#{error.page.unknown.title}">Error</title>
 	<style type="text/css">

@@ -23,9 +23,9 @@
 package net.solarnetwork.central.user.dnp3.domain;
 
 import java.math.BigDecimal;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.dnp3.domain.BaseServerDatumStreamConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.CodedValue;

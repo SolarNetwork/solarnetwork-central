@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'data-insight')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'data-insight')}">
 <head>
     <title data-th-text="#{dataInsight.title}">Data Insight</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -41,7 +41,7 @@
 				</div>
 			</div>
 		</section>
-			
+
 		<section id="data-insight-overview-datum">
 			<h2 data-th-text="#{dataInsight.overall.datum.header}">Datum stored</h2>
 			<p data-th-utext="#{dataInsight.overall.datum.intro(@{/u/sec/expire})}">
@@ -97,7 +97,7 @@
 				<tbody class="list-container">
 				</tbody>
 			</table>
-		
+
 		</section>
 	</div>
 </div>

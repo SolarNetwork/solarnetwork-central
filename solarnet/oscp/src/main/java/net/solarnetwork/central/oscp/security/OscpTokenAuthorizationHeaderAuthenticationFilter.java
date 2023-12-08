@@ -23,7 +23,7 @@
 package net.solarnetwork.central.oscp.security;
 
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.OSCP_TOKEN_AUTHORIZATION_SCHEME;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 

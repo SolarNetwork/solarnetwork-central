@@ -23,7 +23,7 @@
 package net.solarnetwork.central.scheduler.test;
 
 import static org.assertj.core.api.BDDAssertions.then;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
@@ -52,27 +52,27 @@ public class SchedulerUtilsTests {
 	@Test
 	public void periodicTriggerDescription() {
 		// GIVEN
-		PeriodicTrigger t = new PeriodicTrigger(10L, TimeUnit.MINUTES);
+		PeriodicTrigger t = new PeriodicTrigger(Duration.ofMinutes(10L));
 		t.setFixedRate(false);
 
 		// WHEN
 		String desc = SchedulerUtils.extractExecutionScheduleDescription(t);
 
 		// THEN
-		then(desc).isEqualTo("every 10 minutes (delay)");
+		then(desc).isEqualTo("every PT10M (delay)");
 	}
 
 	@Test
 	public void periodicTriggerDescription_fixedRate() {
 		// GIVEN
-		PeriodicTrigger t = new PeriodicTrigger(10L, TimeUnit.MINUTES);
+		PeriodicTrigger t = new PeriodicTrigger(Duration.ofMinutes(10L));
 		t.setFixedRate(true);
 
 		// WHEN
 		String desc = SchedulerUtils.extractExecutionScheduleDescription(t);
 
 		// THEN
-		then(desc).isEqualTo("every 10 minutes (fix)");
+		then(desc).isEqualTo("every PT10M (fix)");
 	}
 
 }

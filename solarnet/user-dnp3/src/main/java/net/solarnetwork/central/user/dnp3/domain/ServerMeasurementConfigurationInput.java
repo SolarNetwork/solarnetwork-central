@@ -24,8 +24,8 @@ package net.solarnetwork.central.user.dnp3.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import net.solarnetwork.central.dnp3.domain.MeasurementType;
 import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;

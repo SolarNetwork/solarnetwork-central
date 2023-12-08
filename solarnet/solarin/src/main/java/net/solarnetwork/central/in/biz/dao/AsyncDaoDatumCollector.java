@@ -86,6 +86,8 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
 	public final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
+	private final double QUEUE_REFILL_THRESHOLD = 0.1;
+
 	private final Cache<Serializable, Serializable> datumCache;
 	private final DatumEntityDao datumDao;
 	private final TransactionTemplate transactionTemplate;
@@ -99,6 +101,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	private int shutdownWaitSecs;
 	private int datumCacheRemovalAlertThreshold;
 
+	private int queueRefillSize;
 	private volatile boolean writeEnabled = false;
 	private BlockingQueue<Serializable> queue;
 	private ConcurrentMap<Serializable, Object> scratch; // prevent duplicate processing between threads
@@ -144,10 +147,10 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 		this.stats = requireNonNullArgument(stats, "stats");
 		this.concurrency = DEFAULT_CONCURRENCY;
 		this.shutdownWaitSecs = DEFAULT_SHUTDOWN_WAIT_SECS;
-		this.queueSize = DEFAULT_QUEUE_SIZE;
 		this.listenerConfiguration = new MutableCacheEntryListenerConfiguration<Serializable, Serializable>(
 				new SingletonFactory<CacheEntryListener<Serializable, Serializable>>(this), null, false,
 				false);
+		setQueueSize(DEFAULT_QUEUE_SIZE);
 	}
 
 	/**
@@ -271,67 +274,81 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 			try {
 				while ( writeEnabled ) {
 					final Serializable key = queue.take();
-					if ( key == null ) {
-						continue;
-					}
-					if ( scratch.putIfAbsent(key, scratchValue) != null ) {
-						continue;
-					}
-					final Serializable entity = datumCache.get(key);
-					if ( entity == null ) {
-						scratch.remove(key, scratchValue);
-						continue;
-					}
-					try {
-						log.trace("Storing datum {}", key);
-						transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+					if ( key != null ) {
+						log.trace("POLL: |{}", key);
+						if ( scratch.putIfAbsent(key, scratchValue) == null ) {
+							try {
+								final Serializable entity = datumCache.get(key);
+								try {
+									if ( entity != null ) {
+										log.trace("STORE: |{}", key);
+										transactionTemplate
+												.execute(new TransactionCallbackWithoutResult() {
 
-							@Override
-							protected void doInTransactionWithoutResult(TransactionStatus status) {
-								if ( entity instanceof DatumEntity ) {
-									datumDao.store((DatumEntity) entity);
-								} else if ( entity instanceof GeneralNodeDatum ) {
-									datumDao.store((GeneralNodeDatum) entity);
-								} else if ( entity instanceof GeneralLocationDatum ) {
-									datumDao.store((GeneralLocationDatum) entity);
+													@Override
+													protected void doInTransactionWithoutResult(
+															TransactionStatus status) {
+														if ( entity instanceof DatumEntity ) {
+															datumDao.store((DatumEntity) entity);
+														} else if ( entity instanceof GeneralNodeDatum ) {
+															datumDao.store((GeneralNodeDatum) entity);
+														} else if ( entity instanceof GeneralLocationDatum ) {
+															datumDao.store(
+																	(GeneralLocationDatum) entity);
+														}
+													}
+												});
+										log.trace("REMOVE: |{}", key);
+										datumCache.remove(key);
+										if ( entity instanceof DatumEntity ) {
+											stats.incrementAndGet(
+													CollectorStats.BasicCount.StreamDatumStored);
+										} else if ( entity instanceof GeneralNodeDatum ) {
+											stats.incrementAndGet(CollectorStats.BasicCount.DatumStored);
+										} else if ( entity instanceof GeneralLocationDatum ) {
+											stats.incrementAndGet(
+													CollectorStats.BasicCount.LocationDatumStored);
+										}
+									} else {
+										log.trace("MISS: |{}", key);
+									}
+								} catch ( Throwable t ) {
+									if ( entity instanceof DatumEntity ) {
+										stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumFail);
+									} else if ( entity instanceof GeneralNodeDatum ) {
+										stats.incrementAndGet(CollectorStats.BasicCount.DatumFail);
+									} else if ( entity instanceof GeneralLocationDatum ) {
+										stats.incrementAndGet(
+												CollectorStats.BasicCount.LocationDatumFail);
+									}
+									Throwable root = t;
+									while ( root.getCause() != null ) {
+										root = root.getCause();
+									}
+									log.warn("Error storing datum {}: {}", key, root.toString());
+									UncaughtExceptionHandler exHandler = getUncaughtExceptionHandler();
+									if ( exHandler != null ) {
+										exHandler.uncaughtException(this, t);
+									}
 								}
+							} finally {
+								scratch.remove(key, scratchValue);
 							}
-						});
-						datumCache.remove(key);
-						if ( entity instanceof DatumEntity ) {
-							stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumStored);
-						} else if ( entity instanceof GeneralNodeDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCount.DatumStored);
-						} else if ( entity instanceof GeneralLocationDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumStored);
+						} else {
+							log.trace("SCRATCH: |{}", key);
 						}
-					} catch ( Throwable t ) {
-						if ( entity instanceof DatumEntity ) {
-							stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumFail);
-						} else if ( entity instanceof GeneralNodeDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCount.DatumFail);
-						} else if ( entity instanceof GeneralLocationDatum ) {
-							stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumFail);
-						}
-						Throwable root = t;
-						while ( root.getCause() != null ) {
-							root = root.getCause();
-						}
-						log.warn("Error storing datum {}: {}", key, root.toString());
-						UncaughtExceptionHandler exHandler = getUncaughtExceptionHandler();
-						if ( exHandler != null ) {
-							exHandler.uncaughtException(this, t);
-						}
-					} finally {
-						scratch.remove(key, scratchValue);
 					}
 
 					// try to re-fill queue from cache
 					if ( queueLock.tryLock(2, TimeUnit.SECONDS) ) {
 						try {
-							if ( queue.size() < Math.max(1.0, queueSize * 0.1) ) {
+							int currSize = queue.size();
+							if ( currSize < queueRefillSize ) {
 								for ( Entry<Serializable, Serializable> e : datumCache ) {
-									if ( e != null && !queue.offer(e.getKey()) ) {
+									if ( e == null ) {
+										continue;
+									}
+									if ( !queue.offer(e.getKey()) ) {
 										break;
 									}
 								}
@@ -360,23 +377,23 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	public void onCreated(
 			Iterable<CacheEntryEvent<? extends Serializable, ? extends Serializable>> events)
 			throws CacheEntryListenerException {
-		queueLock.lock();
-		try {
-			for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
-				Serializable key = event.getKey();
-				log.trace("Datum cached: {}", key);
-				stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
-				if ( key instanceof DatumPK ) {
-					stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumReceived);
-				} else if ( key instanceof GeneralNodeDatumPK ) {
-					stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
-				} else {
-					stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
-				}
-				queue.offer(key);
+		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
+			Serializable key = event.getKey();
+			log.trace("CACHE_CRE: |{}", key);
+			stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
+			if ( key instanceof DatumPK ) {
+				stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumReceived);
+			} else if ( key instanceof GeneralNodeDatumPK ) {
+				stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
+			} else {
+				stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
 			}
-		} finally {
-			queueLock.unlock();
+			queueLock.lock();
+			try {
+				queue.offer(key);
+			} finally {
+				queueLock.unlock();
+			}
 		}
 	}
 
@@ -386,7 +403,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 			throws CacheEntryListenerException {
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
-			log.trace("Datum updated: {}", key);
+			log.trace("CACHE_UPT: |{}", key);
 			stats.incrementAndGet(CollectorStats.BasicCount.BufferRemovals);
 			stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
 		}
@@ -398,7 +415,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 			throws CacheEntryListenerException {
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
-			log.trace("Datum removed: {}", key);
+			log.trace("CACHE_REM: |{}", key);
 			long c = stats.incrementAndGet(CollectorStats.BasicCount.BufferRemovals);
 			if ( log.isTraceEnabled()
 					&& (stats.getLogFrequency() > 0 && ((c % stats.getLogFrequency()) == 0)) ) {
@@ -472,6 +489,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 			queueSize = 1;
 		}
 		this.queueSize = queueSize;
+		this.queueRefillSize = Math.max(1, (int) (QUEUE_REFILL_THRESHOLD * queueSize));
 	}
 
 	/**

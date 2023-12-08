@@ -27,7 +27,7 @@ import static net.solarnetwork.web.domain.Response.response;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

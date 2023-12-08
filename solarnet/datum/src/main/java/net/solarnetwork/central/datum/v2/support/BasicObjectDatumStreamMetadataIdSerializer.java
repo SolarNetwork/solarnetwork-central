@@ -35,7 +35,7 @@ import net.solarnetwork.codec.BasicObjectDatumStreamMetadataField;
  * Serializer for {@link ObjectDatumStreamMetadataId}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  * @since 1.1
  */
 public class BasicObjectDatumStreamMetadataIdSerializer
@@ -56,7 +56,15 @@ public class BasicObjectDatumStreamMetadataIdSerializer
 	@Override
 	public void serialize(ObjectDatumStreamMetadataId meta, JsonGenerator generator,
 			SerializerProvider provider) throws IOException, JsonGenerationException {
-		generator.writeStartObject(meta, 4);
+		// @formatter:off
+		final int size = 
+				  (meta.getStreamId() != null ? 1 : 0)
+				+ (meta.getKind() != null ? 1 : 0)
+				+ (meta.getObjectId() != null ? 1 : 0)
+				+ (meta.getSourceId() != null ? 1 : 0)
+				;
+		// @formatter:on
+		generator.writeStartObject(meta, size);
 
 		BasicObjectDatumStreamMetadataField.StreamId.writeValue(generator, provider, meta.getStreamId());
 		BasicObjectDatumStreamMetadataField.ObjectDatumKind.writeValue(generator, provider,

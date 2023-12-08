@@ -25,7 +25,6 @@ package net.solarnetwork.central.mail.support;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.util.Arrays;
 import java.util.Iterator;
-import javax.mail.MessagingException;
 import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +35,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import jakarta.mail.MessagingException;
 import net.solarnetwork.central.mail.MailAddress;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.MessageDataSource;
@@ -45,7 +45,7 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DefaultMailService implements MailService {
 

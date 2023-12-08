@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -60,6 +61,7 @@ public class WebConfig implements WebMvcConfigurer {
 		return controller;
 	}
 
+	@Controller
 	@RequestMapping("/ping")
 	static class SolarOscpSimCpPingController extends PingController {
 		// nothing new

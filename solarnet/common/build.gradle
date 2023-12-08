@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '2.7.15' apply false
+	id 'org.springframework.boot' version '3.2.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,13 +14,15 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '1.18.0'
+version = '2.0.0'
 
 base {
 	archivesName = 'solarnet-common'
 }
 
 configurations {
+	all*.exclude group: 'commons-logging'
+	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
@@ -30,18 +32,19 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	runtimeOnly 'org.springframework.boot:spring-boot-properties-migrator'
 
 	implementation 'org.springframework.security:spring-security-core'
 	implementation 'org.springframework:spring-web'
 	
 	// DAO
-	implementation 'org.mybatis:mybatis:3.5.7'
-	implementation 'org.mybatis:mybatis-spring:2.0.6'
-	runtimeOnly "org.postgresql:postgresql"
+	implementation 'org.mybatis:mybatis'
+	implementation 'org.mybatis:mybatis-spring'
+	runtimeOnly 'org.postgresql:postgresql'
 	
 	// JAXB
-	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:2.3.3'
-	implementation 'com.sun.xml.bind:jaxb-impl:2.3.5'
+	implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
+	implementation 'org.glassfish.jaxb:jaxb-runtime'
 	
 	// JCache
 	implementation 'javax.cache:cache-api'
@@ -70,7 +73,7 @@ dependencies {
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation 'commons-codec:commons-codec'
 	implementation 'jakarta.validation:jakarta.validation-api'
-	implementation 'javax.annotation:javax.annotation-api'
+	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.10.0'
 	implementation 'org.slf4j:slf4j-api'
@@ -85,7 +88,10 @@ dependencies {
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
-	api "net.solarnetwork.common:net.solarnetwork.common.web:${snCommonWebVersion}"
+	api "net.solarnetwork.common:net.solarnetwork.common.web.jakarta:${snCommonWebJakartaVersion}"
+	
+	// Web
+	implementation 'jakarta.servlet:jakarta.servlet-api'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

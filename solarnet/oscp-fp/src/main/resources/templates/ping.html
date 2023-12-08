@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
 	<meta charset="utf-8" />
 	<title>SolarOSCP FP Ping Test</title>
@@ -8,24 +8,24 @@
 			font-family: helvetica,sans-serif;
 			font-size: 13px;
 		}
-		
+
 		.caption {
 			font-size: 11px;
 			color: #ccc;
 			margin: 4px 0;
 			font-weight: normal;
 		}
-		
+
 		.pass {
 			color: #090;
 			background-color: inherit;
 		}
-		
+
 		.fail {
 			color: #c00;
 			background-color: inherit;
 		}
-				
+
 		table {
 		    border-collapse: collapse;
 		    border-spacing: 0;
@@ -56,19 +56,19 @@
 		}
 		.table > tbody + tbody {
 		    border-top: 2px solid #ddd;
-		}	
+		}
 	</style>
 </head>
 <body>
-	<section th:if="${results}">
+	<section data-th-if="${results}">
 		<p>
 			<strong>Overall: </strong>
-			<span th:classappend="${!results.allGood}?fail"
-				th:text="${results.allGood} ? 'ALL_GOOD' : 'One or more tests failed.'">Unknown</span>
+			<span data-th-classappend="${!results.allGood}?fail"
+				data-th-text="${results.allGood} ? 'ALL_GOOD' : 'One or more tests failed.'">Unknown</span>
 		</p>
 		<p>
 			<strong>Date: </strong>
-			<span th:text="${#temporals.formatISO(results.date)}">2010-01-01T00:00:00.000Z</span>
+			<span data-th-text="${#temporals.formatISO(results.date)}">2010-01-01T00:00:00.000Z</span>
 		</p>
 		<table class="table">
 			<thead>
@@ -80,20 +80,20 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr th:each="result : ${results.results}">
+				<tr data-th-each="result : ${results.results}">
 					<th>
-						<span th:text="${result.value.pingTestName}">Test 1</span><br />
-						<div class="caption" th:text="${result.key}">test.1</div>
+						<span data-th-text="${result.value.pingTestName}">Test 1</span><br />
+						<div class="caption" data-th-text="${result.key}">test.1</div>
 					</th>
-					<td th:classappend="${result.value.success}? pass : fail"
-						th:text="${result.value.success} ? PASS : FAIL">PASS</td>
-					<td th:text="${result.value.duration.toMillis()}">23</td>
-					<td th:text="${result.value.message}">Passed with flying colors.</td>
+					<td data-th-classappend="${result.value.success}? pass : fail"
+						data-th-text="${result.value.success} ? PASS : FAIL">PASS</td>
+					<td data-th-text="${result.value.duration.toMillis()}">23</td>
+					<td data-th-text="${result.value.message}">Passed with flying colors.</td>
 				</tr>
 			</tbody>
 			</table>
 	</section>
-	<section th:unless="${results}">
+	<section data-th-unless="${results}">
 		<p class="fail">FAIL: no ping results available</p>
 	</section>
 </body>

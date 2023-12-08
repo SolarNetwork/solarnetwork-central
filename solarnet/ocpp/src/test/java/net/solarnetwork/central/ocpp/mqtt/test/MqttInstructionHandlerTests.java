@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
@@ -96,7 +96,7 @@ public class MqttInstructionHandlerTests {
 		mqttConnection = EasyMock.createMock(MqttConnection.class);
 		objectMapper = new ObjectMapper();
 		objectMapper.setSerializationInclusion(Include.NON_NULL);
-		objectMapper.registerModule(new JaxbAnnotationModule());
+		objectMapper.registerModule(new JakartaXmlBindAnnotationModule());
 		handler = new MqttInstructionHandler<>(ChargePointAction.class, instructionDao, chargePointDao,
 				objectMapper, chargePointRouter);
 	}

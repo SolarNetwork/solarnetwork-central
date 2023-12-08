@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.dnp3.domain;
 
 import java.util.List;
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**

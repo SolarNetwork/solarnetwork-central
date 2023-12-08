@@ -4,7 +4,7 @@
 
 package net.solarnetwork.central.reg.web;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;

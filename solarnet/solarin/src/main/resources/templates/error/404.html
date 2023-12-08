@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout-error :: layout(~{::title}, ~{::main}, '404')">
+<html data-th-replace="~{layout-error :: layout(~{::title}, ~{::main}, '404')}">
 <head>
     <title data-th-text="#{error.page.404.title}">Not found</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">

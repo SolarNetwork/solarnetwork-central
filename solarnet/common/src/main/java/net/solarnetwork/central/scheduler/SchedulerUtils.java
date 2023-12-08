@@ -23,6 +23,7 @@
 package net.solarnetwork.central.scheduler;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,7 +42,7 @@ import com.cronutils.parser.CronParser;
  * Utility methods for working with scheduled jobs.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public final class SchedulerUtils {
 
@@ -81,7 +82,8 @@ public final class SchedulerUtils {
 			try {
 				try {
 					long frequency = Long.parseLong(expression);
-					PeriodicTrigger trigger = new PeriodicTrigger(frequency, timeUnit);
+					PeriodicTrigger trigger = new PeriodicTrigger(
+							Duration.of(frequency, timeUnit.toChronoUnit()));
 					trigger.setFixedRate(true);
 					return trigger;
 				} catch ( NumberFormatException e ) {
@@ -123,10 +125,7 @@ public final class SchedulerUtils {
 			}
 		} else if ( trigger instanceof PeriodicTrigger ) {
 			PeriodicTrigger calTrigger = (PeriodicTrigger) trigger;
-			long period = calTrigger.getTimeUnit().convert(calTrigger.getPeriod(),
-					TimeUnit.MILLISECONDS);
-			return String.format("every %d %s (%s)", period,
-					calTrigger.getTimeUnit().toString().toLowerCase(),
+			return String.format("every %s (%s)", calTrigger.getPeriodDuration(),
 					calTrigger.isFixedRate() ? "fix" : "delay");
 		}
 		return "Unknown schedule: " + trigger.toString();

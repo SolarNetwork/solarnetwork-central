@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-th-replace="layout :: layout(~{::title}, ~{::content}, ~{}, 'node-event')">
+<html data-th-replace="~{layout :: layout(~{::title}, ~{::content}, ~{}, 'node-event')}">
 <head>
     <title data-th-text="#{node-event.title}">Node Events</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,11 +58,11 @@
 
 <!--/* Modal forms */-->
 
-<form data-th-replace="sec/event/node/edit-hook-modal :: form"></form>
+<form data-th-replace="~{sec/event/node/edit-hook-modal :: form}"></form>
 
 <!--/* Setting templates */-->
 
-<div id="setting-templates" class="hidden" data-th-replace="setting-templates :: content"></div>
+<div id="setting-templates" class="hidden" data-th-replace="~{setting-templates :: content}"></div>
 </div>
 </body>
 </html>
