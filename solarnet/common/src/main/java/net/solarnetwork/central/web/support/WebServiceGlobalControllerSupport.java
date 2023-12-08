@@ -24,6 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
+import static net.solarnetwork.domain.Result.error;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ import org.springframework.dao.QueryTimeoutException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
@@ -54,14 +56,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.util.NumberUtils;
-import net.solarnetwork.web.domain.Response;
 
 /**
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @RestControllerAdvice
 @Order(1000)
@@ -91,7 +93,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
+	public Result<?> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
 			WebRequest request, Locale locale) {
 		log.warn("MaxUploadSizeExceededException for {}; user [{}]", requestDescription(request),
 				userPrincipalName(request));
@@ -102,7 +104,7 @@ public class WebServiceGlobalControllerSupport {
 			msg = messageSource.getMessage("error.web.upload-size-exceeded", new Object[] { maxSize },
 					msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, "WEB.00100", msg, null);
+		return error("WEB.00100", msg);
 	}
 
 	/**
@@ -120,7 +122,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(DataAccessResourceFailureException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
+	public Result<?> handleDataAccessResourceFailureException(DataAccessResourceFailureException e,
 			WebRequest request, Locale locale) {
 		log.warn("DataAccessResourceFailureException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
@@ -134,7 +136,7 @@ public class WebServiceGlobalControllerSupport {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
+		return error(code, msg);
 	}
 
 	/**
@@ -152,7 +154,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(TransientDataAccessException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleTransientDataAccessException(TransientDataAccessException e,
+	public Result<?> handleTransientDataAccessException(TransientDataAccessException e,
 			WebRequest request, Locale locale) {
 		log.warn("TransientDataAccessException in request {}; user [{}]: {}",
 				requestDescription(request), userPrincipalName(request), e.toString());
@@ -188,7 +190,7 @@ public class WebServiceGlobalControllerSupport {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
+		return error(code, msg);
 	}
 
 	/**
@@ -206,7 +208,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(TransactionException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.TOO_MANY_REQUESTS)
-	public Response<?> handleTransactionException(TransactionException e, WebRequest request,
+	public Result<?> handleTransactionException(TransactionException e, WebRequest request,
 			Locale locale) {
 		log.warn("TransactionException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.toString());
@@ -235,7 +237,7 @@ public class WebServiceGlobalControllerSupport {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
+		return error(code, msg);
 	}
 
 	/**
@@ -251,10 +253,10 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(AuthorizationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthorizationException(AuthorizationException e, WebRequest request) {
+	public Result<?> handleAuthorizationException(AuthorizationException e, WebRequest request) {
 		log.debug("AuthorizationException in request {}: {}", requestDescription(request),
 				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getReason().toString(), null);
+		return error(null, e.getReason().toString());
 	}
 
 	/**
@@ -270,11 +272,11 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
+	public Result<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
 			WebRequest request) {
 		log.info("SecurityException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**
@@ -290,10 +292,10 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(BadCredentialsException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleBadCredentialsException(BadCredentialsException e, WebRequest request) {
+	public Result<?> handleBadCredentialsException(BadCredentialsException e, WebRequest request) {
 		log.info("BadCredentialsException in request {}: {}", requestDescription(request),
 				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**
@@ -309,10 +311,10 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(AuthenticationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-	public Response<?> handleAuthenticationException(AuthenticationException e, WebRequest request) {
+	public Result<?> handleAuthenticationException(AuthenticationException e, WebRequest request) {
 		log.info("AuthenticationException in request {}: {}", requestDescription(request),
 				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**
@@ -328,9 +330,9 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(AccessDeniedException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthenticationException(AccessDeniedException e, WebRequest request) {
+	public Result<?> handleAuthenticationException(AccessDeniedException e, WebRequest request) {
 		log.info("AccessDeniedException in request {}: {}", requestDescription(request), e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**
@@ -347,10 +349,10 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(RequestRejectedException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
-	public Response<?> handleRequestRejectedException(RequestRejectedException e, WebRequest request) {
+	public Result<?> handleRequestRejectedException(RequestRejectedException e, WebRequest request) {
 		log.warn("RequestRejectedException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**
@@ -366,7 +368,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(ExecutionException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleExecutionException(ExecutionException e, WebRequest request) {
+	public Result<?> handleExecutionException(ExecutionException e, WebRequest request) {
 		log.debug("ExecutionException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		Throwable cause = e;
@@ -376,7 +378,7 @@ public class WebServiceGlobalControllerSupport {
 		if ( cause instanceof IllegalArgumentException ) {
 			return handleIllegalArgumentException((IllegalArgumentException) cause, request);
 		}
-		return new Response<Object>(Boolean.FALSE, "EE.00500", cause.getMessage(), null);
+		return error("EE.00500", cause.getMessage());
 	}
 
 	/**
@@ -392,9 +394,9 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(IllegalArgumentException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
+	public Result<?> handleIllegalArgumentException(IllegalArgumentException e, WebRequest request) {
 		log.debug("IllegalArgumentException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
+		return error(null, "Illegal argument: " + e.getMessage());
 	}
 
 	/**
@@ -411,7 +413,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleRuntimeException(RuntimeException e, WebRequest request) {
+	public Result<?> handleRuntimeException(RuntimeException e, WebRequest request) {
 		// NOTE: in Spring 4.3 the root exception will be unwrapped; support Spring 4.2 here
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
@@ -422,7 +424,7 @@ public class WebServiceGlobalControllerSupport {
 		}
 		log.error("RuntimeException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
+		return error(null, "Internal error");
 	}
 
 	/**
@@ -438,13 +440,43 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(Error.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleError(Error e, WebRequest request) {
+	public Result<?> handleError(Error e, WebRequest request) {
 		log.warn("Error in request {}", requestDescription(request), e);
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
 		}
-		return new Response<Object>(Boolean.FALSE, "E.00500", cause.getMessage(), null);
+		return error("E.00500", cause.getMessage());
+	}
+
+	/**
+	 * Handle a {@link HttpMessageConversionException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.5
+	 */
+	@ExceptionHandler(RuntimeException.class)
+	@ResponseBody
+	@ResponseStatus
+	public Result<?> handleHttpMessageConversionException(HttpMessageConversionException e,
+			WebRequest request) {
+		Throwable cause = e;
+		while ( cause.getCause() != null ) {
+			cause = cause.getCause();
+			if ( "org.apache.catalina.connector.ClientAbortException"
+					.equals(cause.getClass().getName()) ) {
+				log.debug("ClientAbortException in request {}", requestDescription(request), e);
+				return error("WEB.00201", "Client abort.");
+			}
+		}
+
+		log.error("HttpMessageConversionException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
+		return error("WEB.00200", e.getMessage());
 	}
 
 }
