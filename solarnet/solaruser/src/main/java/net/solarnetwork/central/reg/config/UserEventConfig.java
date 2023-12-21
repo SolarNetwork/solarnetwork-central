@@ -145,7 +145,7 @@ public class UserEventConfig {
 		public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
 				AsyncDaoUserEventAppenderBiz appender) {
 			var publisher = new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
-					AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
+					AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce);
 			appender.setSolarFluxPublisher(publisher);
 			return publisher;
 		}

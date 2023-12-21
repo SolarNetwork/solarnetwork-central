@@ -59,7 +59,7 @@ import net.solarnetwork.util.UuidGenerator;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
@@ -80,7 +80,7 @@ public class UserEventConfig {
 	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
 			@Qualifier(SOLARFLUX) ObjectMapper solarFluxObjectMapper) {
 		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
-				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
+				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN, false, MqttQos.AtMostOnce);
 	}
 
 	@Profile("!logging-user-event-appender")
