@@ -52,7 +52,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Asynchronous {@link UserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class AsyncDaoUserEventAppenderBiz
 		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver, Runnable {
@@ -85,6 +85,23 @@ public class AsyncDaoUserEventAppenderBiz
 	 */
 	public static Function<UserEvent, String> SOLARFLUX_TOPIC_FN = (event) -> {
 		return "user/" + event.getUserId() + "/event";
+	};
+
+	/**
+	 * A function to generate a SolarFlux MQTT topic from a user event.
+	 * 
+	 * @since 1.3
+	 */
+	public static Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
+		final StringBuilder buf = new StringBuilder("user/");
+		buf.append(event.getUserId()).append("/event");
+
+		final String[] tags = event.getTags();
+		for ( int i = 0, tagLen = tags.length; i < tagLen; i++ ) {
+			buf.append('/');
+			buf.append(tags[i]);
+		}
+		return buf.toString();
 	};
 
 	/**

@@ -25,6 +25,7 @@ package net.solarnetwork.central.biz.dao.test;
 import static java.lang.String.format;
 import static java.util.Arrays.sort;
 import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
@@ -75,7 +76,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Test cases for the {@link AsyncDaoUserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class AsyncDaoUserEventAppenderBizTests {
 
@@ -240,6 +241,51 @@ public class AsyncDaoUserEventAppenderBizTests {
 		sort(stored, Identity.sortByIdentity());
 
 		assertThat("Added and stored the same", stored, arrayContaining(added));
+	}
+
+	@Test
+	public void taggedEventTopic_oneTag() {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getLeastSignificantBits();
+		UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a" }, "msg",
+				"data");
+
+		// WHEN
+		replayAll();
+		String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
+
+		// THEN
+		then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a", userId);
+	}
+
+	@Test
+	public void taggedEventTopic_twoTags() {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getLeastSignificantBits();
+		UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a", "b" }, "msg",
+				"data");
+
+		// WHEN
+		replayAll();
+		String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
+
+		// THEN
+		then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a/b", userId);
+	}
+
+	@Test
+	public void taggedEventTopic_threeTags() {
+		// GIVEN
+		final Long userId = UUID.randomUUID().getLeastSignificantBits();
+		UserEvent evt = new UserEvent(userId, uuidGenerator.generate(), new String[] { "a", "b", "c" },
+				"msg", "data");
+
+		// WHEN
+		replayAll();
+		String topic = AsyncDaoUserEventAppenderBiz.SOLARFLUX_TAGGED_TOPIC_FN.apply(evt);
+
+		// THEN
+		then(topic).as("Topic generated wihtout tags").isEqualTo("user/%d/event/a/b/c", userId);
 	}
 
 }
