@@ -14,13 +14,14 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.0.0'
+version = '2.1.0'
 
 base {
 	archivesName = 'solarnet-datum'
 }
 
 configurations {
+	all*.exclude group: 'commons-logging'
 	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
@@ -39,6 +40,8 @@ dependencies {
 
 	// Utilities
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
 	implementation 'commons-io:commons-io:2.11.0'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.aspectj:aspectjweaver'

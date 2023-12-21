@@ -24,8 +24,6 @@ package net.solarnetwork.central.dnp3.app.config;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Controller;
@@ -41,26 +39,20 @@ import net.solarnetwork.service.PingTest;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class })
 public class WebConfig implements WebMvcConfigurer {
 
-	@Autowired(required = false)
-	private List<PingTest> pingTests;
-
-	@Bean
-	public PingController pingController() {
-		SolarDnp3PingController controller = new SolarDnp3PingController();
-		controller.setTests(pingTests);
-		return controller;
-	}
-
 	@Controller
 	@RequestMapping("/ping")
 	static class SolarDnp3PingController extends PingController {
-		// nothing new
+
+		public SolarDnp3PingController(List<PingTest> tests) {
+			super(tests);
+		}
+
 	}
 
 	@Override

@@ -42,9 +42,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -68,7 +72,6 @@ import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
 import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService;
-import net.solarnetwork.central.test.AbstractCentralTest;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -79,13 +82,15 @@ import net.solarnetwork.settings.SettingSpecifier;
  * @author matt
  * @version 2.0
  */
-public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
+public class S3DatumExportDestinationServiceTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static Properties TEST_PROPS;
 
-	@BeforeClass
+	private ExecutorService executorService;
+
+	@BeforeAll
 	public static void setupClass() {
 		Properties p = new Properties();
 		try {
@@ -99,6 +104,18 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 			throw new RuntimeException(e);
 		}
 		TEST_PROPS = p;
+	}
+
+	@BeforeEach
+	public void setup() {
+		executorService = Executors.newCachedThreadPool();
+	}
+
+	@AfterEach
+	public void teardown() {
+		if ( executorService != null ) {
+			executorService.shutdownNow();
+		}
 	}
 
 	private ListObjectsV2Result listFolder(AmazonS3 client) {
@@ -138,7 +155,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 	@Test
 	public void settingSpecifiers() {
 		// given
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService();
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
 
 		// when
 		List<SettingSpecifier> specs = service.getSettingSpecifiers();
@@ -186,7 +203,7 @@ public class S3DatumExportDestinationServiceTests extends AbstractCentralTest {
 		AmazonS3 client = getS3Client();
 		cleanS3Folder(client);
 
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService();
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
 
 		Instant ts = LocalDateTime.of(2018, 4, 11, 11, 50).atZone(ZoneId.of("Pacific/Auckland"))
 				.toInstant();

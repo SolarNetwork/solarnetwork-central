@@ -23,18 +23,18 @@
 package net.solarnetwork.central.cloud.aws.domain;
 
 import java.util.List;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceState;
-import com.amazonaws.services.ec2.model.Tag;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
 import net.solarnetwork.central.dao.BaseObjectEntity;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceState;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
 /**
  * EC2 implementation of {@link VirtualMachine}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class Ec2VirtualMachine extends BaseObjectEntity<String> implements VirtualMachine {
 
@@ -43,15 +43,29 @@ public class Ec2VirtualMachine extends BaseObjectEntity<String> implements Virtu
 	private final String displayName;
 	private VirtualMachineState state = VirtualMachineState.Unknown;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param instanceId
+	 *        the instance ID
+	 * @param displayName
+	 *        the display name
+	 */
 	public Ec2VirtualMachine(String instanceId, String displayName) {
 		super();
 		setId(instanceId);
 		this.displayName = displayName;
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param instance
+	 *        the EC2 instance
+	 */
 	public Ec2VirtualMachine(Instance instance) {
-		this(instance.getInstanceId(), displayNameForInstance(instance));
-		this.state = virtualMachineStateForInstanceState(instance.getState());
+		this(instance.instanceId(), displayNameForInstance(instance));
+		this.state = virtualMachineStateForInstanceState(instance.state());
 	}
 
 	/**
@@ -67,12 +81,12 @@ public class Ec2VirtualMachine extends BaseObjectEntity<String> implements Virtu
 	 * @return the name, never {@literal null}
 	 */
 	public static final String displayNameForInstance(Instance instance) {
-		List<Tag> tags = instance.getTags();
+		List<Tag> tags = instance.tags();
 		if ( tags == null ) {
-			return instance.getInstanceId();
+			return instance.instanceId();
 		} else {
-			return instance.getTags().stream().filter(t -> "name".equalsIgnoreCase(t.getKey()))
-					.findFirst().map(t -> t.getValue()).orElse(instance.getInstanceId());
+			return instance.tags().stream().filter(t -> "name".equalsIgnoreCase(t.key())).findFirst()
+					.map(t -> t.value()).orElse(instance.instanceId());
 		}
 	}
 
@@ -87,7 +101,7 @@ public class Ec2VirtualMachine extends BaseObjectEntity<String> implements Virtu
 		if ( state == null ) {
 			return VirtualMachineState.Unknown;
 		}
-		byte s = (byte) (state.getCode().intValue() & 0xFF);
+		byte s = (byte) (state.code().intValue() & 0xFF);
 		switch (s) {
 			case 0:
 				return VirtualMachineState.Starting;

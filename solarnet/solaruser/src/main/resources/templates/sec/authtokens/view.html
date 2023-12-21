@@ -210,13 +210,14 @@
 	<select name="nodeIds" class="form-control" multiple>
 		<!--/*/ <th:block th:each="userNode : ${userNodes}"> /*/-->
 		<option data-th-value="${userNode.node.id}">
-			<span data-th-text="${userNode.node.id}">123</span>
+			<span data-th-text="${userNode.node.id}" data-th-remove="tag">123</span>
 			<span data-th-if="${not #strings.isEmpty(userNode.name)}"
-				data-th-text="${' - ' + userNode.name}"> - Home node</span>
+				data-th-text="${' - ' + userNode.name}"
+				 data-th-remove="tag"> - Home node</span>
 		</option>
 		<!--/*/ </th:block> /*/-->
 		<!--/*-->
-		<option value="234"><span>234</span><span> - Work node</span></option>
+		<option value="234">234 - Work node</option>
 		<!--*/-->
 	</select>
 </template>

@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import java.util.concurrent.ExecutorService;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
@@ -62,10 +62,21 @@ public class TaskConfig implements SchedulingConfigurer {
 	@Primary
 	@ConfigurationProperties(prefix = "app.task.executor")
 	@Bean(destroyMethod = "shutdown")
-	public AsyncTaskExecutor taskExecutor() {
+	public ThreadPoolTaskExecutor taskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		executor.setThreadNamePrefix("SolarNet-");
 		executor.setCorePoolSize(2);
 		return executor;
 	}
+
+	/**
+	 * Expose the task executor as an ExecutorService.
+	 * 
+	 * @return the services
+	 */
+	@Bean
+	public ExecutorService taskExecutorService() {
+		return taskExecutor().getThreadPoolExecutor();
+	}
+
 }

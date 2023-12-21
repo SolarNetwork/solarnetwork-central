@@ -62,6 +62,7 @@ subprojects {
 	}
 
 	ext {
+		awsSdk2Version = '2.21+'
 		batikVersion = '1.16'
 		checkstyleVersion = '8.34'
 		jsonSchemaValidatorVersion = '1.0.73'
@@ -93,7 +94,7 @@ subprojects {
 		]
 	}
 	
-	ext['netty.version'] = '4.1.96.Final'
+	ext['netty.version'] = '4.1.101.Final'
 	
 	dependencies {
 		testImplementation libraries.junit4,

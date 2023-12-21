@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.cloud.aws.biz;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,228 +31,158 @@ import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.DescribeInstanceStatusRequest;
-import com.amazonaws.services.ec2.model.DescribeInstanceStatusResult;
-import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.DescribeTagsRequest;
-import com.amazonaws.services.ec2.model.DescribeTagsResult;
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceStateChange;
-import com.amazonaws.services.ec2.model.InstanceStatus;
-import com.amazonaws.services.ec2.model.Reservation;
-import com.amazonaws.services.ec2.model.StartInstancesRequest;
-import com.amazonaws.services.ec2.model.StartInstancesResult;
-import com.amazonaws.services.ec2.model.StopInstancesRequest;
-import com.amazonaws.services.ec2.model.StopInstancesResult;
-import com.amazonaws.services.ec2.model.TagDescription;
 import net.solarnetwork.central.cloud.aws.domain.Ec2VirtualMachine;
 import net.solarnetwork.central.cloud.biz.VirtualMachineBiz;
 import net.solarnetwork.central.cloud.domain.VirtualMachine;
 import net.solarnetwork.central.cloud.domain.VirtualMachineState;
+import net.solarnetwork.service.support.BasicIdentifiable;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeInstanceStatusResponse;
+import software.amazon.awssdk.services.ec2.model.DescribeInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeInstancesResponse;
+import software.amazon.awssdk.services.ec2.model.DescribeTagsRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeTagsResponse;
+import software.amazon.awssdk.services.ec2.model.Filter;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateChange;
+import software.amazon.awssdk.services.ec2.model.InstanceStatus;
+import software.amazon.awssdk.services.ec2.model.Reservation;
+import software.amazon.awssdk.services.ec2.model.StartInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.StartInstancesResponse;
+import software.amazon.awssdk.services.ec2.model.StopInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.StopInstancesResponse;
+import software.amazon.awssdk.services.ec2.model.TagDescription;
 
 /**
  * AWS SDK implementation of {@link VirtualMachineBiz}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
-public class AwsVirtualMachineBiz implements VirtualMachineBiz {
-
-	private String uid = UUID.randomUUID().toString();
-	private String groupUid;
-	private String displayName;
-	private String region = "us-west-2";
-	private String accessKey;
-	private String secretKey;
+public class AwsVirtualMachineBiz extends BasicIdentifiable implements VirtualMachineBiz {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private AmazonEC2 ec2Client;
+	private final Ec2Client client;
 
 	/**
-	 * Call after all properties have been configured or changed.
-	 */
-	public void init() {
-		configurationChanged(null);
-	}
-
-	/**
-	 * Callback after properties have been changed.
+	 * Constructor.
 	 * 
-	 * @param properties
-	 *        the changed properties
+	 * @param region
+	 *        the AWS region name
+	 * @param accessKey
+	 *        the access key
+	 * @param accessKeySecret
+	 *        the access key secret
 	 */
-	public void configurationChanged(Map<String, Object> properties) {
-		AmazonEC2ClientBuilder builder = AmazonEC2ClientBuilder.standard().withRegion(region);
-		if ( accessKey != null && secretKey != null ) {
-			builder.setCredentials(
-					new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)));
-		}
-		ec2Client = builder.build();
+	public AwsVirtualMachineBiz(String region, String accessKey, String accessKeySecret) {
+		this(Region.of(region), StaticCredentialsProvider
+				.create(AwsBasicCredentials.create(accessKey, accessKeySecret)));
 	}
 
-	private AmazonEC2 getEc2Client() {
-		AmazonEC2 client = ec2Client;
-		if ( client == null ) {
-			throw new RuntimeException("No EC2 client configured");
-		}
-		return client;
+	/**
+	 * Constructor.
+	 * 
+	 * @param region
+	 *        the AWS region
+	 * @param credentialsProvider
+	 *        the credentials provider
+	 */
+	public AwsVirtualMachineBiz(Region region, AwsCredentialsProvider credentialsProvider) {
+		super();
+		setUid(UUID.randomUUID().toString());
+		// @formatter:off
+		client = Ec2Client.builder()
+				.region(requireNonNullArgument(region, "region"))
+				.credentialsProvider(requireNonNullArgument(credentialsProvider, "credentialsProvider"))
+				.build();
+		// @formatter:on
 	}
 
 	@Override
 	public VirtualMachine virtualMachineForName(String name) {
-		AmazonEC2 client = getEc2Client();
-		DescribeTagsRequest tagReq = new DescribeTagsRequest().withFilters(
-				new Filter("key").withValues("Name"),
-				new Filter("resource-type").withValues("instance"));
-		DescribeTagsResult tagRes;
-		do {
+		DescribeTagsRequest tagReq = DescribeTagsRequest.builder()
+				.filters(Filter.builder().name("key").values("Name").build(),
+						Filter.builder().name("resource-type").values("instance").build())
+				.build();
+		DescribeTagsResponse tagRes;
+		while ( true ) {
 			tagRes = client.describeTags(tagReq);
-			for ( TagDescription tag : tagRes.getTags() ) {
-				if ( name.equalsIgnoreCase(tag.getValue()) ) {
-					String instanceId = tag.getResourceId();
-					return new Ec2VirtualMachine(instanceId, tag.getValue());
+			for ( TagDescription tag : tagRes.tags() ) {
+				if ( name.equalsIgnoreCase(tag.value()) ) {
+					String instanceId = tag.resourceId();
+					return new Ec2VirtualMachine(instanceId, tag.value());
 				}
 			}
-			tagReq.setNextToken(tagRes.getNextToken());
-		} while ( tagRes.getNextToken() != null );
+			if ( tagReq.nextToken() == null ) {
+				break;
+			}
+			tagReq = tagReq.toBuilder().nextToken(tagRes.nextToken()).build();
+		}
 
 		return null;
 	}
 
 	@Override
 	public Iterable<VirtualMachine> virtualMachinesForIds(Set<String> ids) {
-		AmazonEC2 client = getEc2Client();
-		DescribeInstancesRequest req = new DescribeInstancesRequest().withInstanceIds(ids);
-		DescribeInstancesResult res;
+		DescribeInstancesRequest req = DescribeInstancesRequest.builder().instanceIds(ids).build();
+		DescribeInstancesResponse res;
 		List<VirtualMachine> results = new ArrayList<>(ids.size());
-		do {
+		while ( true ) {
 			res = client.describeInstances(req);
-			for ( Reservation reservation : res.getReservations() ) {
-				for ( Instance inst : reservation.getInstances() ) {
+			for ( Reservation reservation : res.reservations() ) {
+				for ( Instance inst : reservation.instances() ) {
 					results.add(new Ec2VirtualMachine(inst));
 				}
 			}
-			req.setNextToken(res.getNextToken());
-		} while ( res.getNextToken() != null );
+			if ( res.nextToken() == null ) {
+				break;
+			}
+			req = req.toBuilder().nextToken(res.nextToken()).build();
+		}
 		return results;
 	}
 
 	@Override
 	public Map<String, VirtualMachineState> stateForVirtualMachines(Set<String> machineIds) {
-		AmazonEC2 client = getEc2Client();
-		DescribeInstanceStatusRequest req = new DescribeInstanceStatusRequest()
-				.withInstanceIds(machineIds).withIncludeAllInstances(true);
-		DescribeInstanceStatusResult res;
+		DescribeInstanceStatusRequest req = DescribeInstanceStatusRequest.builder()
+				.instanceIds(machineIds).includeAllInstances(true).build();
+		DescribeInstanceStatusResponse res;
 		Map<String, VirtualMachineState> result = new LinkedHashMap<>(machineIds.size());
-		do {
+		while ( true ) {
 			res = client.describeInstanceStatus(req);
-			for ( InstanceStatus status : res.getInstanceStatuses() ) {
-				result.put(status.getInstanceId(), Ec2VirtualMachine
-						.virtualMachineStateForInstanceState(status.getInstanceState()));
+			for ( InstanceStatus status : res.instanceStatuses() ) {
+				result.put(status.instanceId(),
+						Ec2VirtualMachine.virtualMachineStateForInstanceState(status.instanceState()));
 			}
-			req.setNextToken(res.getNextToken());
-		} while ( res.getNextToken() != null );
+			if ( res.nextToken() == null ) {
+				break;
+			}
+			req = req.toBuilder().nextToken(res.nextToken()).build();
+		}
 		return result;
 	}
 
 	@Override
 	public void changeVirtualMachinesState(Set<String> machineIds, VirtualMachineState desiredState) {
-		AmazonEC2 client = getEc2Client();
 		List<InstanceStateChange> results = null;
 		if ( desiredState == VirtualMachineState.Running ) {
-			StartInstancesRequest req = new StartInstancesRequest().withInstanceIds(machineIds);
-			StartInstancesResult res = client.startInstances(req);
-			results = res.getStartingInstances();
+			StartInstancesRequest req = StartInstancesRequest.builder().instanceIds(machineIds).build();
+			StartInstancesResponse res = client.startInstances(req);
+			results = res.startingInstances();
 		} else if ( desiredState == VirtualMachineState.Stopped ) {
-			StopInstancesRequest req = new StopInstancesRequest().withInstanceIds(machineIds);
-			StopInstancesResult res = client.stopInstances(req);
-			results = res.getStoppingInstances();
+			StopInstancesRequest req = StopInstancesRequest.builder().instanceIds(machineIds).build();
+			StopInstancesResponse res = client.stopInstances(req);
+			results = res.stoppingInstances();
 		} else {
 			throw new IllegalArgumentException("Desired state not supported: " + desiredState);
 		}
 		log.info("Changed EC2 instances {} desired state to {}: {}", machineIds, desiredState, results);
-	}
-
-	@Override
-	public String getUid() {
-		return uid;
-	}
-
-	/**
-	 * Set the service unique ID.
-	 * 
-	 * @param uid
-	 *        the unique ID
-	 */
-	public void setUid(String uid) {
-		this.uid = uid;
-	}
-
-	@Override
-	public String getGroupUid() {
-		return groupUid;
-	}
-
-	/**
-	 * Set the service group unique ID.
-	 * 
-	 * @param groupUid
-	 *        the group ID
-	 */
-	public void setGroupUid(String groupUid) {
-		this.groupUid = groupUid;
-	}
-
-	@Override
-	public String getDisplayName() {
-		return displayName;
-	}
-
-	/**
-	 * Set the service display name.
-	 * 
-	 * @param displayName
-	 *        the display name
-	 */
-	public void setDisplayName(String displayName) {
-		this.displayName = displayName;
-	}
-
-	/**
-	 * Set the AWS region.
-	 * 
-	 * @param region
-	 *        the region; defaults to {@literal us-west-2}
-	 */
-	public void setRegion(String region) {
-		this.region = region;
-	}
-
-	/**
-	 * Set the AWS access key.
-	 * 
-	 * @param accessKey
-	 *        the access key
-	 */
-	public void setAccessKey(String accessKey) {
-		this.accessKey = accessKey;
-	}
-
-	/**
-	 * Set the AWS secret key.
-	 * 
-	 * @param secretKey
-	 *        the secret key
-	 */
-	public void setSecretKey(String secretKey) {
-		this.secretKey = secretKey;
 	}
 
 }

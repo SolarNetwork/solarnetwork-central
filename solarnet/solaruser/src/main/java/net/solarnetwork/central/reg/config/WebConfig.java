@@ -40,6 +40,8 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -65,15 +67,12 @@ import net.solarnetwork.web.support.SimpleXmlView;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
 		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
-
-	@Autowired(required = false)
-	private List<PingTest> pingTests;
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
@@ -83,11 +82,14 @@ public class WebConfig implements WebMvcConfigurer {
 		configurer.setTaskExecutor(taskExecutor);
 	}
 
-	@Bean
-	public PingController pingController() {
-		PingController controller = new PingController();
-		controller.setTests(pingTests);
-		return controller;
+	@Controller
+	@RequestMapping("/ping")
+	static class SolarUserPingController extends PingController {
+
+		public SolarUserPingController(List<PingTest> tests) {
+			super(tests);
+		}
+
 	}
 
 	@Override

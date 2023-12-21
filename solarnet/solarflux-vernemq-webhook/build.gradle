@@ -12,6 +12,7 @@ description = 'SolarFlux VerneMQ Webhook'
 version = '2.0.0'
 
 configurations {
+	all*.exclude group: 'commons-logging'
 	all*.exclude group: 'com.amazonaws'
 	all*.exclude group: 'com.fasterxml.jackson.datatype', module: 'jackson-datatype-joda'
 	all*.exclude group: 'com.zaxxer', module: 'HikariCP'

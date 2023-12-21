@@ -4,6 +4,7 @@
 .gradle/
 bin/
 build/
+logback-test.xml
 var/
 /*.properties
 /solar*/src/main/resources/application-*.yml

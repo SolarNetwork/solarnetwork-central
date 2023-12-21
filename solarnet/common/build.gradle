@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '2.0.0'
+version = '2.1.0'
 
 base {
 	archivesName = 'solarnet-common'
@@ -66,9 +66,9 @@ dependencies {
 	implementation 'io.netty:netty-transport'
 
 	// Utilities
-	implementation 'com.amazonaws:aws-java-sdk-ec2:1.12.518'
-	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.518'
-	implementation 'software.amazon.awssdk:secretsmanager:2.17+'
+	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
 	implementation 'com.cronutils:cron-utils:9.1.5'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation 'commons-codec:commons-codec'
