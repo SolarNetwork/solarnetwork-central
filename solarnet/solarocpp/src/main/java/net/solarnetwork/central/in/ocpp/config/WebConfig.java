@@ -28,12 +28,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -55,26 +55,21 @@ import net.solarnetwork.web.support.SimpleXmlView;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
 		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
 
-	@Autowired(required = false)
-	private List<PingTest> pingTests;
-
-	@Bean
-	public PingController pingController() {
-		SolarOcppPingController controller = new SolarOcppPingController();
-		controller.setTests(pingTests);
-		return controller;
-	}
-
+	@Controller
 	@RequestMapping("/solarocpp/ping")
 	static class SolarOcppPingController extends PingController {
-		// nothing new
+
+		public SolarOcppPingController(List<PingTest> tests) {
+			super(tests);
+		}
+
 	}
 
 	@SuppressWarnings("deprecation")

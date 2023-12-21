@@ -45,8 +45,10 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -72,7 +74,7 @@ import net.solarnetwork.web.support.SimpleXmlHttpMessageConverter;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -81,9 +83,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 	/** A qualifier for the source ID path matcher. */
 	public static final String SOURCE_ID_PATH_MATCHER = "source-id";
-
-	@Autowired(required = false)
-	private List<PingTest> pingTests;
 
 	@Autowired(required = false)
 	@Qualifier(QUERY_CACHE)
@@ -98,11 +97,14 @@ public class WebConfig implements WebMvcConfigurer {
 		return matcher;
 	}
 
-	@Bean
-	public PingController pingController() {
-		PingController controller = new PingController();
-		controller.setTests(pingTests);
-		return controller;
+	@Controller
+	@RequestMapping("/ping")
+	static class SolarQueryPingController extends PingController {
+
+		public SolarQueryPingController(List<PingTest> tests) {
+			super(tests);
+		}
+
 	}
 
 	@Override

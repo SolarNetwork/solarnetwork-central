@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -54,14 +53,23 @@ import net.solarnetwork.web.domain.Response;
  * @author matt
  * @version 3.1
  */
-@Controller
-@RequestMapping("/ping")
 public class PingController {
 
 	private static final ExecutorService EXECUTOR = Executors
 			.newCachedThreadPool(new CustomizableThreadFactory("Ping-"));
 
-	private List<PingTest> tests = null;
+	private final List<PingTest> tests;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param tests
+	 *        the tests
+	 */
+	public PingController(List<PingTest> tests) {
+		super();
+		this.tests = tests;
+	}
 
 	private PingResults executeTests() {
 		final Instant now = Instant.now();
@@ -186,12 +194,13 @@ public class PingController {
 
 	}
 
+	/**
+	 * Get the ping tests.
+	 * 
+	 * @return the tests
+	 */
 	public List<PingTest> getTests() {
 		return tests;
-	}
-
-	public void setTests(List<PingTest> tests) {
-		this.tests = tests;
 	}
 
 }

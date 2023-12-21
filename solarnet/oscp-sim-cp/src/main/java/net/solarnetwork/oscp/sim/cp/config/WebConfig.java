@@ -25,7 +25,6 @@ package net.solarnetwork.oscp.sim.cp.config;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.RESPONSE_SENT;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -45,26 +44,20 @@ import net.solarnetwork.service.PingTest;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
 
-	@Autowired(required = false)
-	private List<PingTest> pingTests;
-
-	@Bean
-	public PingController pingController() {
-		PingController controller = new PingController();
-		controller.setTests(pingTests);
-		return controller;
-	}
-
 	@Controller
 	@RequestMapping("/ping")
 	static class SolarOscpSimCpPingController extends PingController {
-		// nothing new
+
+		public SolarOscpSimCpPingController(List<PingTest> tests) {
+			super(tests);
+		}
+
 	}
 
 	@Override

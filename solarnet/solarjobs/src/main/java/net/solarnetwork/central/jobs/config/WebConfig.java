@@ -23,10 +23,10 @@
 package net.solarnetwork.central.jobs.config;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
@@ -38,21 +38,21 @@ import net.solarnetwork.service.PingTest;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
 		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
 
-	@Autowired(required = false)
-	private List<PingTest> pingTests;
+	@Controller
+	@RequestMapping("/ping")
+	static class SolarJobsPingController extends PingController {
 
-	@Bean
-	public PingController pingController() {
-		PingController controller = new PingController();
-		controller.setTests(pingTests);
-		return controller;
+		public SolarJobsPingController(List<PingTest> tests) {
+			super(tests);
+		}
+
 	}
 
 }
