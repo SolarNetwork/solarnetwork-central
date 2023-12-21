@@ -26,6 +26,7 @@ import static net.solarnetwork.central.in.ocpp.config.SolarFluxMqttConnectionCon
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import org.apache.tomcat.util.threads.ThreadPoolExecutor;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ import net.solarnetwork.util.UuidGenerator;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
@@ -73,14 +74,26 @@ public class UserEventConfig {
 		return dao;
 	}
 
+	private static Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
+		final StringBuilder buf = new StringBuilder("user/");
+		buf.append(event.getUserId()).append("/event");
+
+		final String[] tags = event.getTags();
+		for ( int i = 0, tagLen = tags.length; i < tagLen; i++ ) {
+			buf.append('/');
+			buf.append(tags[i]);
+		}
+		return buf.toString();
+	};
+
 	@Profile("mqtt")
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarflux.user-events")
 	@Qualifier(SOLARFLUX)
 	public MqttJsonPublisher<UserEvent> userEventSolarFluxPublisher(
 			@Qualifier(SOLARFLUX) ObjectMapper solarFluxObjectMapper) {
-		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper,
-				AsyncDaoUserEventAppenderBiz.SOLARFLUX_TOPIC_FN, false, MqttQos.AtMostOnce);
+		return new MqttJsonPublisher<>("UserEvent", solarFluxObjectMapper, SOLARFLUX_TAGGED_TOPIC_FN,
+				false, MqttQos.AtMostOnce);
 	}
 
 	@Profile("!logging-user-event-appender")
