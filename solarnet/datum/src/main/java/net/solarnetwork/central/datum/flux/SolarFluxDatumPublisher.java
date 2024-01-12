@@ -44,7 +44,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Publish datum to SolarFlux.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
 		implements DatumProcessor {
@@ -65,7 +65,13 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 */
 	public static final String NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE = "user/%d/node/%d/datum/%s/%s";
 
+	/** The {@code errorLogLimitMs} property default value. */
+	public static final long ERROR_LOG_LIMIT_MS_DEFAULT = 60_000L;
+
 	private final SolarNodeOwnershipDao supportDao;
+	private long errorLogLimitMs = ERROR_LOG_LIMIT_MS_DEFAULT;
+
+	private long lastErrorTime = 0; // ignoring thread safety for performance
 
 	/**
 	 * Constructor.
@@ -141,16 +147,32 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			if ( (root instanceof RemoteServiceException)
-					|| (root instanceof net.solarnetwork.service.RemoteServiceException) ) {
-				log.error("Error publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
-						root.getMessage());
+			if ( errorLogLimitMs > 0 ) {
+				final long now = System.currentTimeMillis();
+				final long tdiff = errorLogLimitMs > 0 ? now - lastErrorTime : lastErrorTime;
+				if ( tdiff >= lastErrorTime ) {
+					logPublishError(e, root, aggregation);
+					lastErrorTime = now;
+				} else {
+					log.debug("Problem publishing {} datum to SolarFlux: {}",
+							aggDisplayName(aggregation), root.getMessage());
+				}
 			} else {
-				log.error("Error publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
-						root.toString(), e);
+				logPublishError(e, root, aggregation);
 			}
 		}
 		return false;
+	}
+
+	private void logPublishError(Throwable e, Throwable root, Aggregation aggregation) {
+		if ( (root instanceof RemoteServiceException)
+				|| (root instanceof net.solarnetwork.service.RemoteServiceException) ) {
+			log.warn("Problem publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
+					root.getMessage());
+		} else {
+			log.error("Problem publishing {} datum to SolarFlux: {}", aggDisplayName(aggregation),
+					root.toString(), e);
+		}
 	}
 
 	private static String aggDisplayName(Aggregation aggregation) {
@@ -194,4 +216,25 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 		return String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, ownership.getUserId(), nodeId,
 				aggregation.getKey(), sourceId);
 	}
+
+	/**
+	 * Get the error log limit.
+	 * 
+	 * @return the milliseconds to limit error log message to, or 0 for no
+	 *         limit; defaults to {@link #ERROR_LOG_LIMIT_MS_DEFAULT}
+	 */
+	public long getErrorLogLimitMs() {
+		return errorLogLimitMs;
+	}
+
+	/**
+	 * Set the error log limit.
+	 * 
+	 * @param errorLogLimitMs
+	 *        the milliseconds to limit error log message to, or 0 for no limit
+	 */
+	public void setErrorLogLimitMs(long errorLogLimitMs) {
+		this.errorLogLimitMs = errorLogLimitMs;
+	}
+
 }

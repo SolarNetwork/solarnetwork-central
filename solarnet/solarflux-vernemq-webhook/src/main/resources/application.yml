@@ -28,7 +28,6 @@ spring:
       validationInterval: 35000
       removeAbandoned: true
       removeAbandonedTimeout: 600
-      jdbcInterceptors: "ConnectionState;StatementCache(prepared=true,callable=false,max=50);ResetAbandonedTimer"
   jackson:
     default-property-inclusion: non_null
 
@@ -38,6 +37,7 @@ logging:
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
   level:
     net.solarnetwork: DEBUG
+    org.apache.tomcat: TRACE
 
 debugMode: true
 
@@ -48,6 +48,8 @@ spring:
     url: jdbc:postgresql://localhost:5412/solarnetwork
     username: solarauth
     password: solarauth
+    tomcat:
+      jdbcInterceptors: "ConnectionState;StatementCache(prepared=true,callable=false,max=50);ResetAbandonedTimer"
 
 debugMode: true
 
@@ -58,6 +60,9 @@ logging:
 ---
 spring:
   config.activate.on-profile: production
+  datasource:
+    tomcat:
+      jdbcInterceptors: "ConnectionState;StatementCache(prepared=true,callable=false,max=50);ResetAbandonedTimer"
 
 debugMode: false
 
