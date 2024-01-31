@@ -56,12 +56,12 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
-	private static final long serialVersionUID = 5442178658317850821L;
+	private static final long serialVersionUID = 7976017078304093207L;
 
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
@@ -76,6 +76,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger instructionsIssued;
 	private BigInteger ocppChargers;
 	private BigInteger oscpCapacityGroups;
+	private BigInteger oscpCapacity;
 	private BigInteger dnp3DataPoints;
 	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
@@ -86,6 +87,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] instructionsIssuedTiers;
 	private BigInteger[] ocppChargersTiers;
 	private BigInteger[] oscpCapacityGroupsTiers;
+	private BigInteger[] oscpCapacityTiers;
 	private BigInteger[] dnp3DataPointsTiers;
 	private NodeUsageCost[] costsTiers;
 
@@ -139,6 +141,7 @@ public class NodeUsage extends BasicLongEntity
 		setInstructionsIssued(BigInteger.ZERO);
 		setOcppChargers(BigInteger.ZERO);
 		setOscpCapacityGroups(BigInteger.ZERO);
+		setOscpCapacity(BigInteger.ZERO);
 		setDnp3DataPoints(BigInteger.ZERO);
 		setTotalCost(BigDecimal.ZERO);
 		this.costs = new NodeUsageCost();
@@ -161,6 +164,10 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(datumDaysStored);
 		builder.append(", instructionsIssued=");
 		builder.append(instructionsIssued);
+		builder.append(", oscpCapacityGroups=");
+		builder.append(oscpCapacityGroups);
+		builder.append(", oscpCapacity=");
+		builder.append(oscpCapacity);
 		builder.append(", datumPropertiesInCost=");
 		builder.append(costs.getDatumPropertiesInCost());
 		builder.append(", datumOutCost=");
@@ -173,6 +180,8 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(costs.getOcppChargersCost());
 		builder.append(", oscpCapacityGroupsCost=");
 		builder.append(costs.getOscpCapacityGroupsCost());
+		builder.append(", oscpCapacityCost=");
+		builder.append(costs.getOscpCapacityCost());
 		builder.append(", dnp3DataPointsCost=");
 		builder.append(costs.getDnp3DataPointsCost());
 		builder.append(", totalCost=");
@@ -206,6 +215,7 @@ public class NodeUsage extends BasicLongEntity
 				&& Objects.equals(instructionsIssued, other.instructionsIssued)
 				&& Objects.equals(ocppChargers, other.ocppChargers)
 				&& Objects.equals(oscpCapacityGroups, other.oscpCapacityGroups)
+				&& Objects.equals(oscpCapacity, other.oscpCapacity)
 				&& Objects.equals(dnp3DataPoints, other.dnp3DataPoints);
 		// @formatter:on
 	}
@@ -554,6 +564,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #INSTRUCTIONS_ISSUED_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
+	 * <li>{@link #OSCP_CAPACITY_KEY}</li>
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
 	 * </ol>
 	 * 
@@ -567,6 +578,7 @@ public class NodeUsage extends BasicLongEntity
 		result.put(INSTRUCTIONS_ISSUED_KEY, getInstructionsIssuedTiersCostBreakdown());
 		result.put(OCPP_CHARGERS_KEY, getOcppChargersTiersCostBreakdown());
 		result.put(OSCP_CAPACITY_GROUPS_KEY, getOscpCapacityGroupsTiersCostBreakdown());
+		result.put(OSCP_CAPACITY_KEY, getOscpCapacityTiersCostBreakdown());
 		result.put(DNP3_DATA_POINTS_KEY, getDnp3DataPointsTiersCostBreakdown());
 		return result;
 	}
@@ -584,6 +596,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #INSTRUCTIONS_ISSUED_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
+	 * <li>{@link #OSCP_CAPACITY_KEY}</li>
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
 	 * </ol>
 	 * 
@@ -603,6 +616,8 @@ public class NodeUsage extends BasicLongEntity
 				costs.getOcppChargersCost()));
 		result.put(OSCP_CAPACITY_GROUPS_KEY, new UsageInfo(OSCP_CAPACITY_GROUPS_KEY,
 				new BigDecimal(oscpCapacityGroups), costs.getOscpCapacityGroupsCost()));
+		result.put(OSCP_CAPACITY_KEY, new UsageInfo(OSCP_CAPACITY_KEY, new BigDecimal(oscpCapacity),
+				costs.getOscpCapacityCost()));
 		result.put(DNP3_DATA_POINTS_KEY, new UsageInfo(DNP3_DATA_POINTS_KEY,
 				new BigDecimal(dnp3DataPoints), costs.getDnp3DataPointsCost()));
 		return result;
@@ -1180,6 +1195,122 @@ public class NodeUsage extends BasicLongEntity
 			BigDecimal val = (instructionsIssuedCostTiers != null
 					&& i < instructionsIssuedCostTiers.length ? instructionsIssuedCostTiers[i] : null);
 			costsTiers[i].setInstructionsIssuedCost(val);
+		}
+	}
+
+	/**
+	 * Get the OSCP capacity.
+	 * 
+	 * @return the count
+	 * @since 2.5
+	 */
+	public BigInteger getOscpCapacity() {
+		return oscpCapacity;
+	}
+
+	/**
+	 * Set the count of OSCP capacity .
+	 * 
+	 * @param oscpCapacity
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.5
+	 */
+	public void setOscpCapacity(BigInteger oscpCapacity) {
+		if ( oscpCapacity == null ) {
+			oscpCapacity = BigInteger.ZERO;
+		}
+		this.oscpCapacity = oscpCapacity;
+	}
+
+	/**
+	 * Get the cost of OSCP capacity.
+	 * 
+	 * @return the cost
+	 * @since 2.5
+	 */
+	public BigDecimal getOscpCapacityCost() {
+		return costs.getOscpCapacityCost();
+	}
+
+	/**
+	 * Set the cost of OSCP capacity.
+	 * 
+	 * @param oscpCapacityCost
+	 *        the cost to set
+	 * @since 2.5
+	 */
+	public void setOscpCapacityCost(BigDecimal oscpCapacityCost) {
+		costs.setOscpCapacityCost(oscpCapacityCost);
+	}
+
+	/**
+	 * Get the OSCP capacity tier cost breakdown.
+	 * 
+	 * @return the costs, never {@literal null}
+	 * @since 2.5
+	 */
+	@JsonIgnore
+	public List<NamedCost> getOscpCapacityTiersCostBreakdown() {
+		return tiersCostBreakdown(oscpCapacityTiers, costsTiers, NodeUsageCost::getOscpCapacityCost);
+	}
+
+	/**
+	 * Get the OSCP capacity, per tier.
+	 * 
+	 * @return the counts
+	 * @since 2.5
+	 */
+	public BigInteger[] getOscpCapacityTiers() {
+		return oscpCapacityTiers;
+	}
+
+	/**
+	 * Set the OSCP capacity, per tier.
+	 * 
+	 * @param oscpCapacityTiers
+	 *        the counts to set
+	 * @since 2.5
+	 */
+	public void setOscpCapacityTiers(BigInteger[] oscpCapacityTiers) {
+		this.oscpCapacityTiers = oscpCapacityTiers;
+	}
+
+	/**
+	 * Set the OSCP capacity, per tier, as decimals.
+	 * 
+	 * @param oscpCapacityTiers
+	 *        the counts to set
+	 * @since 2.5
+	 */
+	public void setOscpCapacityTiersNumeric(BigDecimal[] oscpCapacityTiers) {
+		this.oscpCapacityTiers = decimalsToIntegers(oscpCapacityTiers);
+	}
+
+	/**
+	 * Get the cost of OSCP capacity, per tier.
+	 * 
+	 * @return the cost
+	 * @since 2.5
+	 */
+	public BigDecimal[] getOscpCapacityCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getOscpCapacityCost);
+	}
+
+	/**
+	 * Set the cost of OSCP capacity, per tier.
+	 * 
+	 * @param oscpCapacityCostTiers
+	 *        the costs to set
+	 * @since 2.5
+	 */
+	public void setOscpCapacityCostTiers(BigDecimal[] oscpCapacityCostTiers) {
+		prepCostsTiers(oscpCapacityCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (oscpCapacityCostTiers != null && i < oscpCapacityCostTiers.length
+					? oscpCapacityCostTiers[i]
+					: null);
+			costsTiers[i].setOscpCapacityCost(val);
 		}
 	}
 }

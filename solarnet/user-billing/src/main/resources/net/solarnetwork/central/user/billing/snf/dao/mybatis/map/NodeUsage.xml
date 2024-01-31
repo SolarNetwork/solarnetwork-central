@@ -33,6 +33,7 @@
 		, nu.instr_issued		AS node_usage_instr_issued
 		, nu.ocpp_chargers		AS node_usage_ocpp_chargers
 		, nu.oscp_cap_groups	AS node_usage_oscp_cap_groups
+		, nu.oscp_cap			AS node_usage_oscp_cap
 		, nu.dnp3_data_points	AS node_usage_dnp3_data_points
 		
 		, nu.prop_in_tiers 				AS node_usage_prop_in_tiers
@@ -41,6 +42,7 @@
 		, nu.instr_issued_tiers 		AS node_usage_instr_issued_tiers
 		, nu.ocpp_chargers_tiers		AS node_usage_ocpp_chargers_tiers
 		, nu.oscp_cap_groups_tiers		AS node_usage_oscp_cap_groups_tiers
+		, nu.oscp_cap_tiers				AS node_usage_oscp_cap_tiers
 		, nu.dnp3_data_points_tiers		AS node_usage_dnp3_data_points_tiers
 	</sql>
 
@@ -51,6 +53,7 @@
 		<result property="instructionsIssued" 		column="node_usage_instr_issued"/>
 		<result property="ocppChargers" 			column="node_usage_ocpp_chargers"/>
 		<result property="oscpCapacityGroups" 		column="node_usage_oscp_cap_groups"/>
+		<result property="oscpCapacity" 			column="node_usage_oscp_cap"/>
 		<result property="dnp3DataPoints" 			column="node_usage_dnp3_data_points"/>
 
 		<result property="datumPropertiesInTiersNumeric"	column="node_usage_prop_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
@@ -59,6 +62,7 @@
 		<result property="instructionsIssuedTiersNumeric" 	column="node_usage_instr_issued_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="ocppChargersTiersNumeric" 		column="node_usage_ocpp_chargers_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="oscpCapacityGroupsTiersNumeric" 	column="node_usage_oscp_cap_groups_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oscpCapacityTiersNumeric" 		column="node_usage_oscp_cap_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="dnp3DataPointsTiersNumeric" 		column="node_usage_dnp3_data_points_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
@@ -70,6 +74,7 @@
 		, nu.instr_issued_cost 		AS node_usage_instr_issued_cost
 		, nu.ocpp_chargers_cost 	AS node_usage_ocpp_chargers_cost
 		, nu.oscp_cap_groups_cost 	AS node_usage_oscp_cap_groups_cost
+		, nu.oscp_cap_cost 			AS node_usage_oscp_cap_cost
 		, nu.dnp3_data_points_cost 	AS node_usage_dnp3_data_points_cost
 		, nu.total_cost				AS node_usage_total_cost
 		
@@ -79,6 +84,7 @@
 		, nu.instr_issued_tiers_cost 		AS node_usage_instr_issued_tiers_cost
 		, nu.ocpp_chargers_tiers_cost 		AS node_usage_ocpp_chargers_tiers_cost
 		, nu.oscp_cap_groups_tiers_cost 	AS node_usage_oscp_cap_groups_tiers_cost
+		, nu.oscp_cap_tiers_cost 			AS node_usage_oscp_cap_tiers_cost
 		, nu.dnp3_data_points_tiers_cost 	AS node_usage_dnp3_data_points_tiers_cost
 	</sql>
 
@@ -89,6 +95,7 @@
 		<result property="instructionsIssuedCost"	column="node_usage_instr_issued_cost"/>
 		<result property="ocppChargersCost"			column="node_usage_ocpp_chargers_cost"/>
 		<result property="oscpCapacityGroupsCost"	column="node_usage_oscp_cap_groups_cost"/>
+		<result property="oscpCapacityCost"			column="node_usage_oscp_cap_cost"/>
 		<result property="dnp3DataPointsCost"		column="node_usage_dnp3_data_points_cost"/>
 		<result property="totalCost"				column="node_usage_total_cost"/>
 
@@ -98,6 +105,7 @@
 		<result property="instructionsIssuedCostTiers"		column="node_usage_instr_issued_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="ocppChargersCostTiers"			column="node_usage_ocpp_chargers_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="oscpCapacityGroupsCostTiers"		column="node_usage_oscp_cap_groups_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oscpCapacityCostTiers"			column="node_usage_oscp_cap_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="dnp3DataPointsCostTiers"			column="node_usage_dnp3_data_points_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 

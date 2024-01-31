@@ -33,6 +33,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DNP3_D
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.INSTRUCTIONS_ISSUED_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OCPP_CHARGERS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_GROUPS_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -103,7 +104,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -144,6 +145,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String instructionsIssuedKey = INSTRUCTIONS_ISSUED_KEY;
 	private String ocppChargersKey = OCPP_CHARGERS_KEY;
 	private String oscpCapacityGroupsKey = OSCP_CAPACITY_GROUPS_KEY;
+	private String oscpCapacityKey = OSCP_CAPACITY_KEY;
 	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
@@ -307,6 +309,15 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						new BigDecimal(usage.getOscpCapacityGroups()),
 						usage.getOscpCapacityGroupsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OSCP_CAPACITY_GROUPS_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getOscpCapacity().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oscpCapacityKey,
+						new BigDecimal(usage.getOscpCapacity()), usage.getOscpCapacityCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OSCP_CAPACITY_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -754,6 +765,30 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public void setOscpCapacityGroupsKey(String oscpCapacityGroupsKey) {
 		this.oscpCapacityGroupsKey = requireNonNullArgument(oscpCapacityGroupsKey,
 				"oscpCapacityGroupsKey");
+	}
+
+	/**
+	 * Get the item key for OSCP Capacity.
+	 * 
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsages#OSCP_CAPACITY_KEY}
+	 * @since 1.4
+	 */
+	public String getOscpCapacityKey() {
+		return oscpCapacityKey;
+	}
+
+	/**
+	 * Set the item key for OSCP Capacity.
+	 * 
+	 * @param oscpCapacityKey
+	 *        the oscpCapacityKey to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.4
+	 */
+	public void setOscpCapacityKey(String oscpCapacityKey) {
+		this.oscpCapacityKey = requireNonNullArgument(oscpCapacityKey, "oscpCapacityKey");
 	}
 
 	/**

@@ -49,8 +49,11 @@ public enum NodeUsageType implements NodeUsages {
 	/** OSCP Capacity Group usage. */
 	OscpCapacityGroups(6, OSCP_CAPACITY_GROUPS_KEY),
 
+	/** OSCP Capacity usage. */
+	OscpCapacity(7, OSCP_CAPACITY_KEY),
+
 	/** DNP3 Data Points usage. */
-	Dnp3DataPoints(7, DNP3_DATA_POINTS_KEY),
+	Dnp3DataPoints(8, DNP3_DATA_POINTS_KEY),
 
 	;
 
@@ -97,6 +100,7 @@ public enum NodeUsageType implements NodeUsages {
 			case INSTRUCTIONS_ISSUED_KEY -> InstructionsIssued;
 			case OCPP_CHARGERS_KEY -> OcppChargers;
 			case OSCP_CAPACITY_GROUPS_KEY -> OscpCapacityGroups;
+			case OSCP_CAPACITY_KEY -> OscpCapacity;
 			case DNP3_DATA_POINTS_KEY -> Dnp3DataPoints;
 			default -> throw new IllegalArgumentException("Unknown NodeUsageType key value: " + key);
 		};
