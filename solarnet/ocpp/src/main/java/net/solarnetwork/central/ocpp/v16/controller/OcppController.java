@@ -100,7 +100,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -281,7 +281,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 					}
 				});
 			} else if ( err != null ) {
-				log.warn("Error requesting configuration from charge point {}: {}",
+				log.warn("Unable to request configuration from charge point {}: {}",
 						chargePoint.getInfo().getId(), err.getMessage());
 			}
 			return true;
