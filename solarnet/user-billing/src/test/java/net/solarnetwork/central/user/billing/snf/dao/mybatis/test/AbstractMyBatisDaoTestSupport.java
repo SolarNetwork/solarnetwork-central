@@ -26,7 +26,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
@@ -196,6 +199,32 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		return streamId;
 	}
 
+	protected UUID setupDatumStream(Long nodeId, String sourceId, String iProps[], String aProps[]) {
+		jdbcTemplate.execute("""
+				INSERT INTO solardatm.da_datm_meta (stream_id, node_id, source_id, names_i, names_a)
+				VALUES (?,?,?,?,?)
+				ON CONFLICT (node_id, source_id) DO NOTHING
+				""", (PreparedStatementCallback<Void>) ps -> {
+			ps.setObject(1, UUID.randomUUID());
+			ps.setObject(2, nodeId, Types.BIGINT);
+			ps.setString(3, sourceId);
+
+			Array iPropsArray = ps.getConnection().createArrayOf("text", iProps);
+			ps.setArray(4, iPropsArray);
+			iPropsArray.free();
+
+			Array aPropsArray = ps.getConnection().createArrayOf("text", aProps);
+			ps.setArray(5, aPropsArray);
+			aPropsArray.free();
+			ps.execute();
+			return null;
+		});
+		UUID streamId = jdbcTemplate.queryForObject(
+				"select stream_id from solardatm.da_datm_meta where node_id = ? and source_id = ?",
+				UUID.class, nodeId, sourceId);
+		return streamId;
+	}
+
 	protected UUID addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
 			long datumQueryCount, int datumCount, short datumHourlyCount, short datumDailyCount,
 			boolean monthPresent) {
@@ -215,6 +244,37 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 				+ "(ts_start,stream_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
 				+ "VALUES (?,?::uuid,?,?,?,?)", new Timestamp(date.toEpochMilli()), streamId.toString(),
 				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
+	}
+
+	protected void addAggregateDatumDaily(UUID streamId, Instant date, BigDecimal[] iData,
+			BigDecimal[][] iStats, BigDecimal[] aData, BigDecimal[][] aStats) {
+		jdbcTemplate.execute("""
+				INSERT INTO solardatm.agg_datm_daily
+					(stream_id, ts_start, data_i, stat_i, data_a, read_a)
+				VALUES (?,?,?,?,?,?)
+				""", (PreparedStatementCallback<Void>) ps -> {
+			ps.setObject(1, streamId);
+			ps.setTimestamp(2, Timestamp.from(date));
+
+			Array iDataArray = ps.getConnection().createArrayOf("numeric", iData);
+			ps.setArray(3, iDataArray);
+			iDataArray.free();
+
+			Array iStatsArray = ps.getConnection().createArrayOf("numeric", iStats);
+			ps.setArray(4, iStatsArray);
+			iStatsArray.free();
+
+			Array aDataArray = ps.getConnection().createArrayOf("numeric", aData);
+			ps.setArray(5, aDataArray);
+			aDataArray.free();
+
+			Array aStatsArray = ps.getConnection().createArrayOf("numeric", aStats);
+			ps.setArray(6, aStatsArray);
+			aStatsArray.free();
+
+			ps.execute();
+			return null;
+		});
 	}
 
 	protected void assertAccountBalance(Long accountId, BigDecimal chargeTotal,

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.1' apply false
+	id 'org.springframework.boot' version '3.2.2' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OSCP'
-version = '2.0.0'
+version = '2.0.1'
 
 base {
 	archivesName = 'solarnet-oscp'

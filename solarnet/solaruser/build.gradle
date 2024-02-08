@@ -2,7 +2,7 @@ plugins {
 	//id 'checkstyle'
 	id 'java'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.2.1'
+	id 'org.springframework.boot' version '3.2.2'
 }
 
 //apply plugin: 'checkstyle'
@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '2.1.1'
+version = '2.2.0'
 
 base {
 	archivesName = 'solaruser'

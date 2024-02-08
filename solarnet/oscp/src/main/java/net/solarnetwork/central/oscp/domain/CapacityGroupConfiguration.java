@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
@@ -30,7 +31,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * Configuration for capacity groups.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<CapacityGroupConfiguration> {
 
@@ -113,6 +114,20 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 				&& Objects.equals(this.capacityProviderMeasurementDate, other.capacityProviderMeasurementDate)
 				&& Objects.equals(this.capacityOptimizerMeasurementDate, other.capacityOptimizerMeasurementDate));
 		// @formatter:on
+	}
+
+	/**
+	 * An asset ID to use to combine all capacity group assets into a single
+	 * virtual asset.
+	 * 
+	 * @return a combined virtual asset ID, or {@literal null} to report
+	 *         individual assets
+	 * @since 1.1
+	 */
+	public String combinedGroupAssetId() {
+		Map<String, Object> props = getServiceProps();
+		Object v = (props != null ? props.get(ExternalSystemServiceProperties.COMBINED_ASSET_ID) : null);
+		return (v != null ? v.toString() : null);
 	}
 
 	/**

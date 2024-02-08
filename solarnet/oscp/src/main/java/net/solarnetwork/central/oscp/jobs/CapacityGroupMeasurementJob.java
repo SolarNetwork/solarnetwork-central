@@ -59,7 +59,7 @@ import oscp.v20.UpdateGroupMeasurements;
  * Job to post OSCP measurement messages to external systems.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CapacityGroupMeasurementJob extends JobSupport {
 
@@ -157,7 +157,9 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 				default -> throw new IllegalArgumentException(
 						"OSCP role [%s] not supported.".formatted(role));
 			};
-			final String combinedAssetId = ctx.config().combinedGroupAssetId();
+			final String combinedAssetId = group.combinedGroupAssetId() != null
+					? group.combinedGroupAssetId()
+					: ctx.config().combinedGroupAssetId();
 			final MeasurementPeriod period = switch (role) {
 				case CapacityProvider -> group.getCapacityProviderMeasurementPeriod();
 				case CapacityOptimizer -> group.getCapacityOptimizerMeasurementPeriod();

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.snf.test;
 
+import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Types;
@@ -32,7 +34,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
  * Testing utilities for Flexibility Provider.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class OscpTestUtils {
 
@@ -159,6 +161,77 @@ public final class OscpTestUtils {
 			stmt.setObject(6, coId, Types.BIGINT);
 			stmt.setInt(7, 60);
 			stmt.setInt(8, 60);
+			return stmt;
+		}, holder);
+		return holder.getKeyAs(Long.class);
+	}
+
+	/**
+	 * Save a new Capacity Optimizer.
+	 * 
+	 * @param jdbcOps
+	 *        the JDBC template to use
+	 * @param userId
+	 *        the user ID
+	 * @param name
+	 *        the display name
+	 * @param ident
+	 *        the unique idnentifier
+	 * @param cgId
+	 *        the Capacity Group ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param iProps
+	 *        the instantaneous properties
+	 * @param eProps
+	 *        the accumulating properties
+	 * @return the new ID
+	 * @since 1.1
+	 */
+	public static Long saveFlexibilityAsset(JdbcOperations jdbcOps, Long userId, String name,
+			String ident, Long cgId, Long nodeId, String sourceId, String[] iProps, String[] eProps) {
+		GeneratedKeyHolder holder = new GeneratedKeyHolder();
+		jdbcOps.update((con) -> {
+			PreparedStatement stmt = con.prepareStatement("""
+					INSERT INTO solaroscp.oscp_asset_conf (
+						  user_id, enabled, cname, ident, cg_id, node_id, source_id
+						, iprops, iprops_unit, iprops_mult
+						, eprops, eprops_unit, eprops_mult
+						, audience, category)
+					VALUES (
+					      ?, ?, ?, ?, ?, ?, ?
+						, ?, ?, ?
+						, ?, ?, ?
+						, ?, ?
+						) RETURNING id
+					""", Statement.RETURN_GENERATED_KEYS);
+			stmt.setObject(1, userId, Types.BIGINT);
+			stmt.setBoolean(2, true);
+			stmt.setString(3, name);
+			stmt.setString(4, ident);
+			stmt.setObject(5, cgId, Types.BIGINT);
+			stmt.setObject(6, nodeId, Types.BIGINT);
+			stmt.setString(7, sourceId);
+
+			Array iPropsArray = con.createArrayOf("text", iProps);
+			stmt.setArray(8, iPropsArray);
+			iPropsArray.free();
+
+			stmt.setInt(9, 'P'); // kW
+			stmt.setBigDecimal(10, new BigDecimal("0.001"));
+
+			Array ePropsArray = con.createArrayOf("text", eProps);
+			stmt.setArray(11, ePropsArray);
+			ePropsArray.free();
+
+			stmt.setInt(12, 'E'); // kWh
+			stmt.setBigDecimal(13, new BigDecimal("0.001"));
+
+			stmt.setInt(14, 'o'); // Capacity Optimizer
+			stmt.setInt(15, 'v'); // Charging
+
 			return stmt;
 		}, holder);
 		return holder.getKeyAs(Long.class);
