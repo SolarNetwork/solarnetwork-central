@@ -41,6 +41,10 @@
 						data-th-data-false-text="#{settings.disabled.label}"></span>
 				</td>
 				<td class="small">
+					<dl class="dl-horizontal details-container">
+						<dt data-th-text="#{oscp.settings.groupCombinedAssetId.label}">Combined Asset ID</dt>
+						<dd data-tprop="groupCombinedAssetId"></dd>
+					</dl>
 					<h5 data-th-text="#{oscp.cg.cpDetails.label}">Provider</h5>
 					<dl class="dl-horizontal">
 						<dt data-th-text="#{oscp.cg.cp.label}">Provider</dt>
@@ -61,13 +65,13 @@
 				</td>
 				<td class="small">
 					<dl class="dl-horizontal settings-container hidden">
-						<dt data-th-text="#{ocpp.settings.sourceIdTemplate.label}">Source ID template</dt>
+						<dt data-th-text="#{oscp.settings.sourceIdTemplate.label}">Source ID template</dt>
 						<dd data-tprop="sourceIdTemplate"></dd>
-						<dt data-th-text="#{ocpp.settings.publishToSolarIn.label}">Publish SolarIn</dt>
+						<dt data-th-text="#{oscp.settings.publishToSolarIn.label}">Publish SolarIn</dt>
 						<dd><span class="label label-default" data-tprop="publishToSolarIn"
 								data-th-data-true-text="#{settings.enabled.label}"
 								data-th-data-false-text="#{settings.disabled.label}"></span></dd>
-						<dt data-th-text="#{ocpp.settings.publishToSolarFlux.label}">Publish SolarFlux</dt>
+						<dt data-th-text="#{oscp.settings.publishToSolarFlux.label}">Publish SolarFlux</dt>
 						<dd><span class="label label-default" data-tprop="publishToSolarFlux"
 								data-th-data-true-text="#{settings.enabled.label}"
 								data-th-data-false-text="#{settings.disabled.label}"></span></dd>

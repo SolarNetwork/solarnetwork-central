@@ -154,6 +154,9 @@ $(document).ready(function() {
 				if ( config.serviceProps['url-paths'] ) {
 					model.urlPaths = config.serviceProps['url-paths'];
 				}
+				if ( config.serviceProps['group-combined-asset-id'] ) {
+					model.groupCombinedAssetId = config.serviceProps['group-combined-asset-id'];
+				}
 			}
 			if ( type === 'cg' ) {
 				model.identifier = config.identifier;
