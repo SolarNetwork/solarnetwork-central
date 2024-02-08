@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.mqtt;
 
 import static java.util.Collections.singleton;
+import static net.solarnetwork.util.ByteUtils.encodeHexString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.transaction.TransactionException;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.RepeatableTaskException;
@@ -168,6 +170,11 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			parseMqttMessage(objectMapper, message, topic, nodeId, true);
 		} catch ( IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
+			if ( e instanceof JsonParseException jpe ) {
+				final byte[] payload = message.getPayload();
+				log.warn("Error parsing MQTT topic {} message [{}]: {}", topic,
+						encodeHexString(payload, 0, payload.length, false), e.getMessage());
+			}
 			throw new RepeatableTaskException("Communication error handling message on MQTT topic "
 					+ topic + ": " + e.getMessage(), e);
 		} catch ( RuntimeException e ) {
