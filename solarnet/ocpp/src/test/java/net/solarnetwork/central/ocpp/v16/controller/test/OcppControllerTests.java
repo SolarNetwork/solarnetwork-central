@@ -27,6 +27,13 @@ import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTIO
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_MESSAGE_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.as;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -35,13 +42,14 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.instanceOf;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -59,9 +67,12 @@ import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.ActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePoint;
+import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
+import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
@@ -69,17 +80,21 @@ import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import ocpp.v16.ChargePointAction;
+import ocpp.v16.ConfigurationKey;
 import ocpp.v16.cp.AvailabilityStatus;
 import ocpp.v16.cp.AvailabilityType;
 import ocpp.v16.cp.ChangeAvailabilityRequest;
 import ocpp.v16.cp.ChangeAvailabilityResponse;
+import ocpp.v16.cp.GetConfigurationRequest;
+import ocpp.v16.cp.GetConfigurationResponse;
+import ocpp.v16.cp.KeyValue;
 import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
 
 /**
  * Test cases for the {@link OcppController} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class OcppControllerTests {
 
@@ -98,7 +113,7 @@ public class OcppControllerTests {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@SuppressWarnings("unchecked")
-	@Before
+	@BeforeEach
 	public void setup() {
 		chargePointRouter = EasyMock.createMock(ChargePointRouter.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
@@ -115,7 +130,7 @@ public class OcppControllerTests {
 		controller.setChargePointActionPayloadDecoder(new ChargePointActionPayloadDecoder());
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(chargePointRouter, userNodeDao, instructionDao, authorizationDao, chargePointDao,
 				chargePointConnectorDao, chargePointBroker, instructionHandler);
@@ -356,6 +371,167 @@ public class OcppControllerTests {
 				ChangeAvailabilityRequest.class);
 		assertThat("Message payload connector ID", req.getConnectorId(), equalTo(1));
 		assertThat("Message payload type", req.getType(), equalTo(AvailabilityType.INOPERATIVE));
+	}
+
+	@Test
+	public void registerChargePoint_updateInfo() throws Exception {
+		// GIVEN
+		final String chargerIdentity = randomString();
+		Long nodeId = randomLong();
+
+		final UserNode userNode = new UserNode(new User(randomLong(), "test@localhost"),
+				new SolarNode(nodeId, randomLong()));
+
+		final Long cpId = randomLong();
+		final CentralChargePoint cp = new CentralChargePoint(cpId, userNode.getUserId(), nodeId,
+				Instant.now(), new ChargePointInfo(chargerIdentity, null, null));
+		cp.setEnabled(true);
+
+		// look up charger
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
+
+		// save info
+		expect(chargePointDao.save(cp)).andReturn(cpId);
+
+		// send GetConfigurationRequest for NumberOfConnectors
+		expect(chargePointRouter.brokerForChargePoint(cp.chargePointIdentity()))
+				.andReturn(chargePointBroker);
+
+		final int connectorCount = 1;
+		Capture<ActionMessage<Object>> actionCaptor = new Capture<>();
+		Capture<ActionMessageResultHandler<Object, Object>> resultHandlerCaptor = new Capture<>();
+		expect(chargePointBroker.sendMessageToChargePoint(capture(actionCaptor),
+				capture(resultHandlerCaptor))).andAnswer(new IAnswer<Boolean>() {
+
+					@Override
+					public Boolean answer() throws Throwable {
+						// invoke result handler
+						ActionMessage<Object> message = actionCaptor.getValue();
+				// @formatter:off
+						then(message.getMessage())
+								.as("Message sent to charge point is GetConfiguration")
+								.isInstanceOf(GetConfigurationRequest.class)
+								.asInstanceOf(type(GetConfigurationRequest.class))
+								.extracting(GetConfigurationRequest::getKey, as(list(String.class)))
+								.as("Requests only NumberOfConnectors")
+								.containsExactly(ConfigurationKey.NumberOfConnectors.getName())
+								;
+						// @formatter:on
+
+						ActionMessageResultHandler<Object, Object> resultHandler = resultHandlerCaptor
+								.getValue();
+						GetConfigurationResponse res = new GetConfigurationResponse();
+						KeyValue numConnectors = new KeyValue();
+						numConnectors.setKey(ConfigurationKey.NumberOfConnectors.getName());
+						numConnectors.setValue(String.valueOf(connectorCount));
+						res.getConfigurationKey().add(numConnectors);
+						boolean handlerResult = resultHandler.handleActionMessageResult(message, res,
+								null);
+						then(handlerResult).as("Result handled").isEqualTo(true);
+						return true;
+					}
+				});
+
+		// process GetConfigurationResponse
+		final CentralChargePoint cp2 = new CentralChargePoint(cp);
+		expect(chargePointDao.get(cp2.getId())).andReturn(cp2);
+
+		expect(chargePointDao.save(cp2)).andReturn(cp2.getId());
+
+		expect(chargePointConnectorDao.findByChargePointId(cpId)).andReturn(Collections.emptyList());
+
+		final var connKey = new ChargePointConnectorKey(cpId, 1);
+		Capture<ChargePointConnector> connCaptor = new Capture<>();
+		expect(chargePointConnectorDao.save(capture(connCaptor))).andReturn(connKey);
+
+		// WHEN
+		replayAll();
+
+		final String vendor = "SolarNetwork";
+		final String model = "SolarNode";
+		ChargePointInfo info = new ChargePointInfo(chargerIdentity, vendor, model);
+		ChargePoint result = controller.registerChargePoint(cp.chargePointIdentity(), info);
+
+		// THEN
+		// @formatter:off
+		then(cp)
+			.as("Connector count not updated in main method")
+			.returns(0, from(ChargePoint::getConnectorCount))
+			;
+		
+		then(cp2)
+			.as("GetConfigurationResponse updates connector count")
+			.returns(connectorCount, from(ChargePoint::getConnectorCount))
+			;
+		
+		then(connCaptor.getValue())
+			.as("Connector created")
+			.returns(connKey, ChargePointConnector::getId)
+			.extracting(ChargePointConnector::getInfo)
+			.as("Connector number populated")
+			.returns(1, from(StatusNotification::getConnectorId))
+			;
+
+		then(result).as("DAO entity returned").isSameAs(cp);
+		
+		then(result.getInfo())
+			.as("Info ID preserved")
+			.returns(chargerIdentity, from(ChargePointInfo::getId))
+			.as("Vendor updated")
+			.returns(vendor, from(ChargePointInfo::getChargePointVendor))
+			.as("Model updated")
+			.returns(model, from(ChargePointInfo::getChargePointModel))
+			;
+		
+		// @formatter:on
+	}
+
+	@Test
+	public void registerChargePoint_doNotUpdateInfo() throws Exception {
+		// GIVEN
+		final String chargerIdentity = randomString();
+		Long nodeId = randomLong();
+
+		final UserNode userNode = new UserNode(new User(randomLong(), "test@localhost"),
+				new SolarNode(nodeId, randomLong()));
+
+		final Long cpId = randomLong();
+		final int connectorCount = 1;
+		final String vendor = "SolarNetwork";
+		final String model = "SolarNode";
+		final CentralChargePoint cp = new CentralChargePoint(cpId, userNode.getUserId(), nodeId,
+				Instant.now(), new ChargePointInfo(chargerIdentity, vendor, model));
+		cp.setEnabled(true);
+		cp.setConnectorCount(connectorCount);
+
+		// look up charger
+		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
+
+		// WHEN
+		replayAll();
+
+		ChargePointInfo info = new ChargePointInfo(chargerIdentity, vendor, model);
+		ChargePoint result = controller.registerChargePoint(cp.chargePointIdentity(), info);
+
+		// THEN
+		// @formatter:off
+		then(cp)
+			.as("Connector count not updated in main method")
+			.returns(connectorCount, from(ChargePoint::getConnectorCount))
+			;
+		
+		then(result).as("DAO entity returned").isSameAs(cp);
+		
+		then(result.getInfo())
+			.as("Info ID preserved")
+			.returns(chargerIdentity, from(ChargePointInfo::getId))
+			.as("Vendor updated")
+			.returns(vendor, from(ChargePointInfo::getChargePointVendor))
+			.as("Model updated")
+			.returns(model, from(ChargePointInfo::getChargePointModel))
+			;
+
+		// @formatter:on
 	}
 
 }

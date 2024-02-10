@@ -100,7 +100,7 @@ import ocpp.v16.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 public class OcppController extends BasicIdentifiable implements ChargePointManager,
 		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
@@ -182,8 +182,13 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 			cp = updateChargePointInfo(cp, info);
 		}
 
-		sendToChargePoint(identity, ChargePointAction.GetConfiguration, new GetConfigurationRequest(),
-				processConfiguration(cp));
+		// request the number of connectors, if no connectors present
+		if ( cp.getConnectorCount() < 1 ) {
+			var getConfReq = new GetConfigurationRequest();
+			getConfReq.getKey().add(ConfigurationKey.NumberOfConnectors.getName());
+			sendToChargePoint(identity, ChargePointAction.GetConfiguration, getConfReq,
+					processConfiguration(cp));
+		}
 
 		return cp;
 	}
@@ -194,7 +199,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 			log.info("ChargePoint registration info is unchanged: {}", info);
 		} else {
 			log.info("Updating ChargePoint registration info {} -> {}", cp.getInfo(), info);
-			cp.copyInfoFrom(info);
+			cp.getInfo().copyFrom(info);
 			chargePointDao.save(cp);
 		}
 		return cp;
