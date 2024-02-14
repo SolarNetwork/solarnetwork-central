@@ -48,6 +48,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
@@ -134,6 +135,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		handler.setChargePointStatusDao(chargePointStatusDao);
 		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
 		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
+		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
 		return handler;
 	}
 

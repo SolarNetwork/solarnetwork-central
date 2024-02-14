@@ -61,6 +61,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
+import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
@@ -136,6 +137,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
 		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		handler.setApplicationMetadata(APP_META);
+		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
 	}
 
 	@Test

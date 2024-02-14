@@ -27,7 +27,6 @@ import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM;
-import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -72,7 +71,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -85,6 +84,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private ChargePointActionStatusDao chargePointActionStatusDao;
 	private Function<Object, Integer> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
+	private String instructionTopic;
 
 	/**
 	 * Constructor.
@@ -308,7 +308,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 		@Override
 		public void run() {
-			if ( chargePointDao == null || instructionDao == null ) {
+			final String topic = getInstructionTopic();
+			if ( chargePointDao == null || instructionDao == null || topic == null ) {
 				return;
 			}
 			try {
@@ -328,7 +329,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					} else {
 						instruction = instructionDao.get(match.getId());
 					}
-					if ( instruction != null && OCPP_V16_TOPIC.equals(instruction.getTopic()) ) {
+					if ( instruction != null && topic.equals(instruction.getTopic()) ) {
 						processInstruction(instruction, cp);
 					}
 				}
@@ -612,6 +613,28 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 */
 	public void setConnectorIdExtractor(Function<Object, Integer> connectorIdExtractor) {
 		this.connectorIdExtractor = connectorIdExtractor;
+	}
+
+	/**
+	 * Get the instruction topic to listen to for OCPP messages.
+	 * 
+	 * @return the instruction topic to listen to, or {@literal null} to not
+	 *         look for OCPP instructions
+	 * @since 2.6
+	 */
+	public String getInstructionTopic() {
+		return instructionTopic;
+	}
+
+	/**
+	 * Set the instruction topic to listen to for OCPP messages.
+	 * 
+	 * @param instructionTopic
+	 *        the instruction topic to set
+	 * @since 2.6
+	 */
+	public void setInstructionTopic(String instructionTopic) {
+		this.instructionTopic = instructionTopic;
 	}
 
 }
