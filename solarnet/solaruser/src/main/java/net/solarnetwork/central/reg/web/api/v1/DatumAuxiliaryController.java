@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.reg.web.domain.DatumAuxiliaryMove;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web controller for datum auxiliary record management.

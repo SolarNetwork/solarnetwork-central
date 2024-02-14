@@ -56,17 +56,17 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
+import net.solarnetwork.ocpp.domain.ErrorCode;
 import net.solarnetwork.ocpp.domain.PendingActionMessage;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
+import net.solarnetwork.ocpp.service.ErrorCodeResolver;
 import net.solarnetwork.ocpp.web.json.OcppWebSocketHandler;
 import net.solarnetwork.service.ServiceLifecycleObserver;
-import ocpp.domain.Action;
-import ocpp.domain.ErrorCode;
-import ocpp.domain.ErrorCodeResolver;
-import ocpp.json.ActionPayloadDecoder;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
@@ -97,11 +97,13 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 *        the error code resolver
 	 * @param executor
 	 *        an executor for tasks
+	 * @param mapper
+	 *        the object mapper to use
 	 */
 	public CentralOcppWebSocketHandler(Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
-			AsyncTaskExecutor executor) {
-		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor);
+			AsyncTaskExecutor executor, ObjectMapper mapper) {
+		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper);
 	}
 
 	/**

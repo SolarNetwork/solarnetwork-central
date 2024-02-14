@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
+import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
  * HTTP client configuration.

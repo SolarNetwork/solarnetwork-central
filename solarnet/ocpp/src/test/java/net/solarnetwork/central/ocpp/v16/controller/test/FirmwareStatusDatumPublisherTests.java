@@ -56,10 +56,10 @@ import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.cs.FirmwareStatus;
-import ocpp.v16.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.cs.FirmwareStatusNotificationResponse;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import ocpp.v16.jakarta.cs.FirmwareStatus;
+import ocpp.v16.jakarta.cs.FirmwareStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
 
 /**
  * Test cases for the {@link FirmwaresStatusDatumPublisher} class.

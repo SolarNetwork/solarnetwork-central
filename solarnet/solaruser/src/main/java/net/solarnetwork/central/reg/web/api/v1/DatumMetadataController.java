@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -39,7 +39,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for datum metadata actions.

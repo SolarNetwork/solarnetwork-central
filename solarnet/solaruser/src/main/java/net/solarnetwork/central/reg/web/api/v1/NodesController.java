@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -63,7 +63,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for user nodes web service API.

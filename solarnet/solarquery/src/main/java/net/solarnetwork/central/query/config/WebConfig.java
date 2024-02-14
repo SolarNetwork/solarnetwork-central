@@ -67,8 +67,8 @@ import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.codec.TimeZonePropertySerializer;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.DateUtils;
-import net.solarnetwork.web.support.SimpleCsvHttpMessageConverter;
-import net.solarnetwork.web.support.SimpleXmlHttpMessageConverter;
+import net.solarnetwork.web.jakarta.support.SimpleCsvHttpMessageConverter;
+import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
 
 /**
  * Web layer configuration.

@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.PingTestResultDisplay;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * A web controller for running a set of {@link PingTest} tests and returning

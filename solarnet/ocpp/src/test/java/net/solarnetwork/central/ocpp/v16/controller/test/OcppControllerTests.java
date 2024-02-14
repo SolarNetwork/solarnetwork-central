@@ -79,16 +79,16 @@ import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.ConfigurationKey;
-import ocpp.v16.cp.AvailabilityStatus;
-import ocpp.v16.cp.AvailabilityType;
-import ocpp.v16.cp.ChangeAvailabilityRequest;
-import ocpp.v16.cp.ChangeAvailabilityResponse;
-import ocpp.v16.cp.GetConfigurationRequest;
-import ocpp.v16.cp.GetConfigurationResponse;
-import ocpp.v16.cp.KeyValue;
-import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ConfigurationKey;
+import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
+import ocpp.v16.jakarta.cp.AvailabilityStatus;
+import ocpp.v16.jakarta.cp.AvailabilityType;
+import ocpp.v16.jakarta.cp.ChangeAvailabilityRequest;
+import ocpp.v16.jakarta.cp.ChangeAvailabilityResponse;
+import ocpp.v16.jakarta.cp.GetConfigurationRequest;
+import ocpp.v16.jakarta.cp.GetConfigurationResponse;
+import ocpp.v16.jakarta.cp.KeyValue;
 
 /**
  * Test cases for the {@link OcppController} class.

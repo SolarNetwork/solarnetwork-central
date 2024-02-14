@@ -56,7 +56,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthService;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
-import net.solarnetwork.web.security.AuthenticationUtils;
+import net.solarnetwork.web.jakarta.security.AuthenticationUtils;
 
 /**
  * {@link AuthService} implementation that uses JDBC to authenticate and authorize requests.

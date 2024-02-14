@@ -55,10 +55,10 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
-import net.solarnetwork.web.security.AuthenticationData;
-import net.solarnetwork.web.security.AuthenticationDataFactory;
-import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
-import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
+import net.solarnetwork.web.jakarta.security.AuthenticationData;
+import net.solarnetwork.web.jakarta.security.AuthenticationDataFactory;
+import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
+import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 
 /**
  * Authentication filter for "SolarNetworkWS" style authentication.
@@ -162,7 +162,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		AuthenticationData data;
 		try {
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
-		} catch ( net.solarnetwork.web.security.SecurityException e ) {
+		} catch ( net.solarnetwork.web.jakarta.security.SecurityException e ) {
 			deny(request, response, new MaxUploadSizeExceededException(
 					(int) settings.getMaxRequestBodySize().toBytes(), e));
 			return;

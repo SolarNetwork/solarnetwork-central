@@ -28,7 +28,7 @@ import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
@@ -88,7 +88,7 @@ import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for DNP3 management.

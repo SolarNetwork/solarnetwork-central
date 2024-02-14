@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -45,7 +45,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for datum insight.

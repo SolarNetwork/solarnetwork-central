@@ -69,7 +69,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * A base class to support web service style controllers.

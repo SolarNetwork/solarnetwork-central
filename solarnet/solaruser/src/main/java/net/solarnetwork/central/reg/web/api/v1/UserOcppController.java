@@ -26,7 +26,7 @@ import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCP
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_ACTION_STATUS_FILTER;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_STATUS_FILTER;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -77,7 +77,7 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for OCPP management.

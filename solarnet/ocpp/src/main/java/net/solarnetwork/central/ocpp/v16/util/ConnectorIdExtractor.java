@@ -23,9 +23,9 @@
 package net.solarnetwork.central.ocpp.v16.util;
 
 import java.util.function.Function;
-import ocpp.v16.cs.MeterValuesRequest;
-import ocpp.v16.cs.StartTransactionRequest;
-import ocpp.v16.cs.StatusNotificationRequest;
+import ocpp.v16.jakarta.cs.MeterValuesRequest;
+import ocpp.v16.jakarta.cs.StartTransactionRequest;
+import ocpp.v16.jakarta.cs.StatusNotificationRequest;
 
 /**
  * Extract a connector ID from OCPP v1.6 request messages.

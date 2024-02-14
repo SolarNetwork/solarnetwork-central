@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +51,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for datum expire management.

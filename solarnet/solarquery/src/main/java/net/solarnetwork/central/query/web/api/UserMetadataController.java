@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.domain.UserMetadataFilterMatch;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for read-only user metadata access.

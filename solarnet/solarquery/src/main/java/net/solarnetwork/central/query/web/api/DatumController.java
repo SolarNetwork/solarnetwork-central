@@ -45,7 +45,7 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for querying datum related data.

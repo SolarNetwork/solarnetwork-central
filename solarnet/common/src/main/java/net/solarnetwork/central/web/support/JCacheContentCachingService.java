@@ -60,7 +60,7 @@ import org.springframework.util.MultiValueMap;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.ObjectUtils;
-import net.solarnetwork.web.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * Caching service backed by a {@link javax.cache.Cache}.

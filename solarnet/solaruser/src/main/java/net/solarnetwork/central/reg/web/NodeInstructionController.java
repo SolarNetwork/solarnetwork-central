@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.web.support.WebUtils;
+import net.solarnetwork.web.jakarta.support.WebUtils;
 
 /**
  * Controller for managing node instructions.

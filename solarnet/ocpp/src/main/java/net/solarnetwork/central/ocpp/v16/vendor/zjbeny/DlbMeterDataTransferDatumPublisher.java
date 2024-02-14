@@ -41,12 +41,12 @@ import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import net.solarnetwork.ocpp.v16.cs.DataTransferProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
-import ocpp.v16.cs.DataTransferRequest;
-import ocpp.v16.cs.DataTransferResponse;
-import ocpp.v16.cs.DataTransferStatus;
+import ocpp.v16.jakarta.cs.DataTransferRequest;
+import ocpp.v16.jakarta.cs.DataTransferResponse;
+import ocpp.v16.jakarta.cs.DataTransferStatus;
 
 /**
  * Publish ZJBENY data transfer DLB meter messages as a datum stream.

@@ -35,9 +35,9 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import net.solarnetwork.ocpp.v16.cs.DiagnosticsStatusNotificationProcessor;
-import ocpp.v16.cs.DiagnosticsStatusNotificationRequest;
-import ocpp.v16.cs.DiagnosticsStatusNotificationResponse;
+import net.solarnetwork.ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationProcessor;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationResponse;
 
 /**
  * Publish diagnostics status notifications as a datum stream.

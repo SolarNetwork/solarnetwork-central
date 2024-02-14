@@ -40,7 +40,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.mqtt.MqttInstructionHandler;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import ocpp.v16.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
 
 /**
  * OCPP v1.6 MQTT configuration.

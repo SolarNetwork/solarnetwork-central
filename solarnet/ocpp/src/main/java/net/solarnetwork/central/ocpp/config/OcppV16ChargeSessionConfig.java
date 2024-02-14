@@ -30,15 +30,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;
-import net.solarnetwork.ocpp.v16.cs.MeterValuesProcessor;
-import net.solarnetwork.ocpp.v16.cs.StartTransactionProcessor;
-import net.solarnetwork.ocpp.v16.cs.StopTransactionProcessor;
-import ocpp.v16.cs.MeterValuesRequest;
-import ocpp.v16.cs.MeterValuesResponse;
-import ocpp.v16.cs.StartTransactionRequest;
-import ocpp.v16.cs.StartTransactionResponse;
-import ocpp.v16.cs.StopTransactionRequest;
-import ocpp.v16.cs.StopTransactionResponse;
+import net.solarnetwork.ocpp.v16.jakarta.cs.MeterValuesProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.StartTransactionProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.StopTransactionProcessor;
+import ocpp.v16.jakarta.cs.MeterValuesRequest;
+import ocpp.v16.jakarta.cs.MeterValuesResponse;
+import ocpp.v16.jakarta.cs.StartTransactionRequest;
+import ocpp.v16.jakarta.cs.StartTransactionResponse;
+import ocpp.v16.jakarta.cs.StopTransactionRequest;
+import ocpp.v16.jakarta.cs.StopTransactionResponse;
 
 /**
  * OCPP v1.6 charge session configuration.

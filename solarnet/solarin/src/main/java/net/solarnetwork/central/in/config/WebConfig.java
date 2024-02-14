@@ -48,8 +48,8 @@ import net.solarnetwork.codec.PropertySerializer;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.codec.TimeZonePropertySerializer;
 import net.solarnetwork.service.PingTest;
-import net.solarnetwork.web.support.JSONView;
-import net.solarnetwork.web.support.SimpleXmlView;
+import net.solarnetwork.web.jakarta.support.JSONView;
+import net.solarnetwork.web.jakarta.support.SimpleXmlView;
 
 /**
  * Web layer configuration.

@@ -49,13 +49,13 @@ import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
 import net.solarnetwork.service.PasswordEncoder;
-import ocpp.json.ActionPayloadDecoder;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.ErrorCodeResolver;
 
 /**
  * OCPP v1.6 web socket configuration.

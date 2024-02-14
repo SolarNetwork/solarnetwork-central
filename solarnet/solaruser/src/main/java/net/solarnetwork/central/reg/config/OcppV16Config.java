@@ -37,9 +37,9 @@ import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
-import ocpp.json.ActionPayloadDecoder;
-import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
-import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
+import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
+import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
 
 /**
  * Configuration for OCPP v1.6.

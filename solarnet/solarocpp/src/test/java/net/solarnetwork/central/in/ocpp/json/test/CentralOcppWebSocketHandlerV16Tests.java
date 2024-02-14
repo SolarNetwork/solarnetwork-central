@@ -64,19 +64,19 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
+import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
+import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
+import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
 import net.solarnetwork.ocpp.web.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.test.CallingThreadExecutorService;
-import ocpp.domain.Action;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.ErrorCodeResolver;
-import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
-import ocpp.v16.cs.ChargePointErrorCode;
-import ocpp.v16.cs.ChargePointStatus;
-import ocpp.v16.cs.StatusNotificationRequest;
-import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
+import ocpp.v16.jakarta.cs.ChargePointErrorCode;
+import ocpp.v16.jakarta.cs.ChargePointStatus;
+import ocpp.v16.jakarta.cs.StatusNotificationRequest;
 
 /**
  * Test cases for the {@link CentralOcppWebSocketHandler} class.

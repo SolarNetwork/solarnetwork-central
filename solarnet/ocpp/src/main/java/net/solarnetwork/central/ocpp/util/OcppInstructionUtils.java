@@ -27,9 +27,9 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import ocpp.domain.Action;
-import ocpp.domain.SchemaValidationException;
-import ocpp.json.ActionPayloadDecoder;
+import net.solarnetwork.ocpp.domain.Action;
+import net.solarnetwork.ocpp.domain.SchemaValidationException;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 
 /**
  * Utilities for OCPP instruction handling.

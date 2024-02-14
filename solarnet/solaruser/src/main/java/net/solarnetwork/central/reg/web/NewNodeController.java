@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkCertificate;
-import net.solarnetwork.web.support.WebUtils;
+import net.solarnetwork.web.jakarta.support.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

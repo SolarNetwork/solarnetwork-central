@@ -23,7 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +52,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for node instruction web service API.

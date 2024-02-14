@@ -38,8 +38,8 @@ import net.solarnetwork.central.ocpp.v16.vendor.abb.MeterTransferDataTransferDat
 import net.solarnetwork.central.ocpp.v16.vendor.hiconics.VehicleMacDataTransferDatumPublisher;
 import net.solarnetwork.central.ocpp.v16.vendor.zjbeny.DlbMeterDataTransferDatumPublisher;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
-import ocpp.v16.cs.DataTransferRequest;
-import ocpp.v16.cs.DataTransferResponse;
+import ocpp.v16.jakarta.cs.DataTransferRequest;
+import ocpp.v16.jakarta.cs.DataTransferResponse;
 
 /**
  * OCPP v1.6 vendor-specific configuration.

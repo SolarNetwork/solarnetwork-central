@@ -47,22 +47,22 @@ import net.solarnetwork.central.ocpp.v16.controller.FirmwareStatusDatumPublisher
 import net.solarnetwork.central.ocpp.v16.controller.OcppController;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.ocpp.dao.ChargeSessionDao;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.ocpp.v16.cs.AuthorizeProcessor;
-import net.solarnetwork.ocpp.v16.cs.BootNotificationProcessor;
-import net.solarnetwork.ocpp.v16.cs.StatusNotificationProcessor;
-import ocpp.json.ActionPayloadDecoder;
-import ocpp.v16.cs.AuthorizeRequest;
-import ocpp.v16.cs.AuthorizeResponse;
-import ocpp.v16.cs.BootNotificationRequest;
-import ocpp.v16.cs.BootNotificationResponse;
-import ocpp.v16.cs.DiagnosticsStatusNotificationRequest;
-import ocpp.v16.cs.DiagnosticsStatusNotificationResponse;
-import ocpp.v16.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.cs.FirmwareStatusNotificationResponse;
-import ocpp.v16.cs.StatusNotificationRequest;
-import ocpp.v16.cs.StatusNotificationResponse;
+import net.solarnetwork.ocpp.v16.jakarta.cs.AuthorizeProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.BootNotificationProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.StatusNotificationProcessor;
+import ocpp.v16.jakarta.cs.AuthorizeRequest;
+import ocpp.v16.jakarta.cs.AuthorizeResponse;
+import ocpp.v16.jakarta.cs.BootNotificationRequest;
+import ocpp.v16.jakarta.cs.BootNotificationResponse;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationResponse;
+import ocpp.v16.jakarta.cs.FirmwareStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
+import ocpp.v16.jakarta.cs.StatusNotificationRequest;
+import ocpp.v16.jakarta.cs.StatusNotificationResponse;
 
 /**
  * OCPP v1.6 controller configuration.

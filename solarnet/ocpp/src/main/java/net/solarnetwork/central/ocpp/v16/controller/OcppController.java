@@ -64,6 +64,7 @@ import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.Authorization;
 import net.solarnetwork.ocpp.domain.AuthorizationInfo;
@@ -74,27 +75,26 @@ import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
+import net.solarnetwork.ocpp.domain.ErrorCodeException;
 import net.solarnetwork.ocpp.domain.RegistrationStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
 import net.solarnetwork.ocpp.service.cs.ChargePointManager;
-import net.solarnetwork.ocpp.v16.cp.ChargePointActionMessage;
+import net.solarnetwork.ocpp.v16.jakarta.ActionErrorCode;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ConfigurationKey;
+import net.solarnetwork.ocpp.v16.jakarta.json.BaseActionPayloadDecoder;
 import net.solarnetwork.security.AuthorizationException;
 import net.solarnetwork.security.AuthorizationException.Reason;
 import net.solarnetwork.service.support.BasicIdentifiable;
-import ocpp.domain.Action;
-import ocpp.domain.ErrorCodeException;
-import ocpp.json.ActionPayloadDecoder;
-import ocpp.v16.ActionErrorCode;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.ConfigurationKey;
-import ocpp.v16.cp.GetConfigurationRequest;
-import ocpp.v16.cp.GetConfigurationResponse;
-import ocpp.v16.cp.KeyValue;
+import ocpp.v16.jakarta.cp.GetConfigurationRequest;
+import ocpp.v16.jakarta.cp.GetConfigurationResponse;
+import ocpp.v16.jakarta.cp.KeyValue;
 
 /**
  * Manage OCPP 1.6 interactions.
@@ -162,7 +162,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 		}
 		this.chargePointConnectorDao = chargePointConnectorDao;
 		this.initialRegistrationStatus = DEFAULT_INITIAL_REGISTRATION_STATUS;
-		this.objectMapper = ocpp.json.support.BaseActionPayloadDecoder.defaultObjectMapper();
+		this.objectMapper = BaseActionPayloadDecoder.defaultObjectMapper();
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -382,7 +382,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 		final ActionMessageProcessor<JsonNode, Void> handler = getInstructionHandler();
 		if ( handler != null ) {
 			log.trace("Passing OCPPv16 instruction {} to processor {}", instructionId, handler);
-			ChargePointActionMessage cpMsg = new ChargePointActionMessage(instr.chargePointIdentity,
+			BasicActionMessage<JsonNode> cpMsg = new BasicActionMessage<>(instr.chargePointIdentity,
 					instr.getId().toString(), instr.action, instr.jsonPayload);
 			ActionMessageResultHandler<JsonNode, Void> processor = (msg, res, err) -> {
 				if ( err != null ) {

@@ -37,9 +37,12 @@ dependencies {
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// SolarNetwork
-	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.jakarta:${snExternalOcppJakartaVersion}"
+	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp:${snCommonOcppVersion}"
-	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16:${snCommonOcpp16Version}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16.jakarta:${snCommonOcpp16JakartaVersion}"
+	
+	// Support
+	implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

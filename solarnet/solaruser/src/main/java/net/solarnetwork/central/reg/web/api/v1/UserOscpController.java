@@ -25,7 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration.OSCP_V20;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -60,7 +60,7 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
 import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for OSCP management.

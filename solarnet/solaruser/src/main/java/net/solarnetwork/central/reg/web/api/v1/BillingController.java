@@ -26,7 +26,7 @@ import static java.lang.String.format;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.YEAR;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.YearMonth;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
@@ -60,7 +60,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatchFilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for billing management.

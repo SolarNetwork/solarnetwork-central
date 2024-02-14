@@ -177,7 +177,7 @@ public class WebSecurityConfig {
 	}
 
 	/**
-	 * Security rules for the management API.
+	 * Security rules for the SolarIn API.
 	 */
 	@Configuration
 	@Order(2)

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,7 +61,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.service.CertificateException;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for "my nodes".

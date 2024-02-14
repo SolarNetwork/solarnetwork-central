@@ -57,19 +57,19 @@ import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.ActionMessage;
+import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.ocpp.v16.cp.ChargePointActionMessage;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.cp.AvailabilityType;
-import ocpp.v16.cp.ChangeAvailabilityRequest;
-import ocpp.v16.cp.ChangeAvailabilityResponse;
-import ocpp.v16.cp.ChangeConfigurationRequest;
-import ocpp.v16.cp.ChangeConfigurationResponse;
-import ocpp.v16.cp.ConfigurationStatus;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import ocpp.v16.jakarta.cp.AvailabilityType;
+import ocpp.v16.jakarta.cp.ChangeAvailabilityRequest;
+import ocpp.v16.jakarta.cp.ChangeAvailabilityResponse;
+import ocpp.v16.jakarta.cp.ChangeConfigurationRequest;
+import ocpp.v16.jakarta.cp.ChangeConfigurationResponse;
+import ocpp.v16.jakarta.cp.ConfigurationStatus;
 
 /**
  * Test cases for the {@link MattInstructionHandler} class.
@@ -126,7 +126,7 @@ public class MqttInstructionHandlerTests {
 		req.setConnectorId(1);
 		req.setType(AvailabilityType.INOPERATIVE);
 		JsonNode json = objectMapper.valueToTree(req);
-		ChargePointActionMessage message = new ChargePointActionMessage(clientId,
+		BasicActionMessage<JsonNode> message = new BasicActionMessage<>(clientId,
 				instructionId.toString(), ChargePointAction.ChangeAvailability, json);
 
 		handler.onMqttServerConnectionEstablished(mqttConnection, false);
@@ -181,7 +181,7 @@ public class MqttInstructionHandlerTests {
 		req.setConnectorId(1);
 		req.setType(AvailabilityType.INOPERATIVE);
 		JsonNode json = objectMapper.valueToTree(req);
-		ChargePointActionMessage actionMessage = new ChargePointActionMessage(clientId,
+		BasicActionMessage<JsonNode> actionMessage = new BasicActionMessage<>(clientId,
 				instructionId.toString(), ChargePointAction.ChangeAvailability, json);
 
 		BasicMqttMessage message = new BasicMqttMessage(handler.getMqttTopic(), false,
@@ -235,7 +235,7 @@ public class MqttInstructionHandlerTests {
 		req.setKey("foo");
 		req.setValue("bar");
 		JsonNode json = objectMapper.valueToTree(req);
-		ChargePointActionMessage actionMessage = new ChargePointActionMessage(clientId,
+		BasicActionMessage<JsonNode> actionMessage = new BasicActionMessage<>(clientId,
 				instructionId.toString(), ChargePointAction.ChangeConfiguration, json);
 
 		BasicMqttMessage message = new BasicMqttMessage(handler.getMqttTopic(), false,

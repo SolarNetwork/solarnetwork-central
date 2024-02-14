@@ -116,7 +116,7 @@ import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.KeyValuePair;
 import net.solarnetwork.test.CallingThreadExecutorService;
-import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
+import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.HandshakeAcknowledge;
 import oscp.v20.Register;
