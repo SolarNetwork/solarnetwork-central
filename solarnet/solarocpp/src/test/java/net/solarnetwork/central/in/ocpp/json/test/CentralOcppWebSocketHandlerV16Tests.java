@@ -73,7 +73,7 @@ import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
 import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
 import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
-import net.solarnetwork.ocpp.web.json.OcppWebSocketHandshakeInterceptor;
+import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.test.CallingThreadExecutorService;
 import ocpp.v16.jakarta.cs.ChargePointErrorCode;
 import ocpp.v16.jakarta.cs.ChargePointStatus;

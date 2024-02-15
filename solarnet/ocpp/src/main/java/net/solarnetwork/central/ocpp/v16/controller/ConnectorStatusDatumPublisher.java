@@ -44,7 +44,7 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * Publish status notification updates as datum.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class ConnectorStatusDatumPublisher {
 
@@ -179,7 +179,7 @@ public class ConnectorStatusDatumPublisher {
 				DatumProperty.VendorErrorCode.getPropertyName(), info.getVendorErrorCode());
 
 		ChargeSession cs = chargeSessionDao.getIncompleteChargeSessionForConnector(chargePoint.getId(),
-				info.getConnectorId());
+				info.getEvseId(), info.getConnectorId());
 		if ( cs != null && !cs.getCreated().isAfter(info.getTimestamp()) ) {
 			s.putSampleValue(DatumProperty.SessionId.getClassification(),
 					DatumProperty.SessionId.getPropertyName(), cs.getId().toString());
@@ -190,7 +190,8 @@ public class ConnectorStatusDatumPublisher {
 
 		GeneralNodeDatum d = new GeneralNodeDatum();
 		d.setNodeId(chargePoint.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, chargePoint.getInfo().getId(), info.getConnectorId()));
+		d.setSourceId(pubSupport.sourceId(cps, chargePoint.getInfo().getId(), info.getEvseId(),
+				info.getConnectorId()));
 		if ( info.getTimestamp() != null ) {
 			d.setCreated(info.getTimestamp());
 		}

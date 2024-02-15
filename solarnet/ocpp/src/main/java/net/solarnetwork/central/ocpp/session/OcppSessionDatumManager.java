@@ -89,7 +89,7 @@ import net.solarnetwork.util.StringUtils;
  * transaction data.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class OcppSessionDatumManager extends BasicIdentifiable
 		implements ChargeSessionManager, SettingsChangeObserver, ServiceLifecycleObserver {
@@ -278,7 +278,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	}
 
 	private CentralChargePoint chargePoint(ChargePointIdentity identifier, String authId,
-			final Integer txId) {
+			final String txId) {
 		CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identifier);
 		if ( cp == null ) {
 			throw new AuthorizationException(
@@ -294,7 +294,9 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			throws AuthorizationException {
 		// get next transaction ID; this is required even if authorization/session checks fail
 		// to adhere to OCPP spec
-		final int txId = chargeSessionDao.nextTransactionId();
+		final String txId = (info.getTransactionId() == null
+				? String.valueOf(chargeSessionDao.nextTransactionId())
+				: info.getTransactionId());
 
 		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(), txId);
 
@@ -354,12 +356,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public ChargeSession getActiveChargingSession(ChargePointIdentity identifier, int transactionId)
+	public ChargeSession getActiveChargingSession(ChargePointIdentity identifier, String transactionId)
 			throws AuthorizationException {
-		if ( transactionId < 1 ) {
-			// illegal transaction ID value
-			return null;
-		}
 		ChargePoint cp = chargePoint(identifier, null, transactionId);
 		return chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(), transactionId);
 	}
@@ -417,8 +415,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		sessions.put(sess.getId(), sess);
 		Map<ChargePointIdentity, CentralChargePoint> chargePoints = new HashMap<>(2);
 		chargePoints.put(info.getChargePointId(), cp);
-		addReadings(info.getChargePointId(), sess.getConnectorId(), readings, sessions, chargePoints,
-				new HashMap<>(2));
+		addReadings(info.getChargePointId(), sess.getEvseId(), sess.getConnectorId(), readings, sessions,
+				chargePoints, new HashMap<>(2));
 
 		return new AuthorizationInfo(info.getAuthorizationId(), AuthorizationStatus.Accepted, null,
 				null);
@@ -441,7 +439,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	private Datum datum(CentralChargePoint chargePoint, ChargePointSettings chargePointSettings,
 			ChargeSession sess, SampledValue reading) {
 		final String sourceId = sourceId(chargePointSettings, chargePoint.getInfo().getId(),
-				sess != null ? sess.getConnectorId() : 0, reading.getLocation());
+				sess != null ? sess.getEvseId() : 0, sess != null ? sess.getConnectorId() : 0,
+				reading.getLocation());
 		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
 	}
 
@@ -501,15 +500,15 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void addChargingSessionReadings(ChargePointIdentity chargePointId, Integer connectorId,
-			Iterable<SampledValue> readings) {
-		addReadings(chargePointId, connectorId, readings, new HashMap<>(2), new HashMap<>(2),
+	public void addChargingSessionReadings(ChargePointIdentity chargePointId, Integer evseId,
+			Integer connectorId, Iterable<SampledValue> readings) {
+		addReadings(chargePointId, evseId, connectorId, readings, new HashMap<>(2), new HashMap<>(2),
 				new HashMap<>(2));
 	}
 
 	// NOTE that the Map implementations passed here MUST support null key and values,
 	// in order to support meter values not associated with a charge session
-	private void addReadings(ChargePointIdentity chargePointId, Integer connectorId,
+	private void addReadings(ChargePointIdentity chargePointId, Integer evseId, Integer connectorId,
 			Iterable<SampledValue> readings, Map<UUID, ChargeSession> sessions,
 			Map<ChargePointIdentity, CentralChargePoint> chargePoints,
 			Map<Long, ChargePointSettings> settings) {
@@ -567,6 +566,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 					settings.put(cp.getId(), cps);
 				}
 				final String sourceId = sourceId(cps, cp.getInfo().getId(),
+						s != null ? s.getEvseId() : evseId != null ? evseId.intValue() : 0,
 						s != null ? s.getConnectorId()
 								: connectorId != null ? connectorId.intValue() : 0,
 						reading.getLocation());
@@ -628,17 +628,20 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 *        the settings
 	 * @param identifier
 	 *        the charge point identifier
+	 * @param evseId
+	 *        the EVSE ID
 	 * @param connectorId
 	 *        the connector ID
 	 * @param location
 	 *        the location
 	 * @return the source ID, never {@literal null}
 	 */
-	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int connectorId,
-			Location location) {
+	private String sourceId(ChargePointSettings chargePointSettings, String identifier, int evseId,
+			int connectorId, Location location) {
 		Map<String, Object> params = new HashMap<>(4);
 		params.put("chargerIdentifier", identifier);
 		params.put("chargePointId", chargePointSettings.getId());
+		params.put("evseId", evseId);
 		params.put("connectorId", connectorId);
 		params.put("location", location);
 		return UserSettings.removeEmptySourceIdSegments(

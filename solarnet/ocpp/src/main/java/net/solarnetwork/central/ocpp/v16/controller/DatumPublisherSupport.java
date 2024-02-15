@@ -44,7 +44,7 @@ import net.solarnetwork.security.AuthorizationException.Reason;
  * Helper class for publishing OCPP entities to a datum stream.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class DatumPublisherSupport {
 
@@ -133,11 +133,12 @@ public final class DatumPublisherSupport {
 	 *        the connector ID
 	 * @return the source ID, never {@literal null}
 	 */
-	public String sourceId(ChargePointSettings chargePointSettings, String identifier,
+	public String sourceId(ChargePointSettings chargePointSettings, String identifier, Integer evseId,
 			Integer connectorId) {
 		Map<String, Object> params = new HashMap<>(4);
 		params.put("chargerIdentifier", identifier);
 		params.put("chargePointId", chargePointSettings.getId());
+		params.put("evseId", evseId);
 		params.put("connectorId", connectorId);
 		String template = chargePointSettings.getSourceIdTemplate() != null
 				? chargePointSettings.getSourceIdTemplate()

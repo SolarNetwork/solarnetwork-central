@@ -94,7 +94,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </pre>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MeterTransferDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -223,7 +223,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		d.setSamples(s);
 		d.setCreated(ts);
 		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null));
+		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

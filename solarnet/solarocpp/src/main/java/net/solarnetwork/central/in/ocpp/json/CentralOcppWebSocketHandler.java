@@ -65,7 +65,7 @@ import net.solarnetwork.ocpp.domain.PendingActionMessage;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
 import net.solarnetwork.ocpp.service.ErrorCodeResolver;
-import net.solarnetwork.ocpp.web.json.OcppWebSocketHandler;
+import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**

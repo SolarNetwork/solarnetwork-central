@@ -69,7 +69,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </p>
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -223,7 +223,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 		d.setSamples(s);
 		d.setCreated(Instant.now());
 		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null));
+		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

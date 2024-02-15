@@ -51,7 +51,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	private Instant endDate;
 	private UUID[] chargeSessionIds;
 	private Boolean active;
-	private Integer[] transactionIds;
+	private String[] transactionIds;
 	private ChargeSessionEndReason[] endReasons;
 
 	/**
@@ -511,7 +511,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	@Override
 	@JsonIgnore
-	public Integer getTransactionId() {
+	public String getTransactionId() {
 		return (this.transactionIds == null || this.transactionIds.length < 1 ? null
 				: this.transactionIds[0]);
 	}
@@ -520,8 +520,8 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * Set a single transaction ID.
 	 * 
 	 * <p>
-	 * This is a convenience method for requests that use a transaction ID at a
-	 * time. The transaction ID is still stored on the {@code transactionIds}
+	 * This is a convenience method for requests that use one transaction ID at
+	 * a time. The transaction ID is still stored on the {@code transactionIds}
 	 * array, just as the first value. Calling this method replaces any existing
 	 * {@code transactionIds} value with a new array containing just the ID
 	 * passed into this method.
@@ -531,12 +531,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the ID of the transaction
 	 */
 	@JsonSetter
-	public void setTransactionId(Integer transactionId) {
-		this.transactionIds = (transactionId == null ? null : new Integer[] { transactionId });
+	public void setTransactionId(String transactionId) {
+		this.transactionIds = (transactionId == null ? null : new String[] { transactionId });
 	}
 
 	@Override
-	public Integer[] getTransactionIds() {
+	public String[] getTransactionIds() {
 		return transactionIds;
 	}
 
@@ -546,7 +546,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param transactionIds
 	 *        the transaction IDs to set
 	 */
-	public void setTransactionIds(Integer[] transactionIds) {
+	public void setTransactionIds(String[] transactionIds) {
 		this.transactionIds = transactionIds;
 	}
 

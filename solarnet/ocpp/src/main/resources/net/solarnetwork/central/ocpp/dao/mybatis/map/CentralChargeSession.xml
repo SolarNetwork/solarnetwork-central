@@ -57,7 +57,7 @@
 			<arg column="ocpp_charge_sess_cp_id" javaType="_long"/>
 			<arg column="ocpp_charge_sess_evse_id" javaType="_int"/>
 			<arg column="ocpp_charge_sess_conn_id" javaType="_int"/>
-			<arg column="ocpp_charge_sess_tx_id" javaType="_int"/>
+			<arg column="ocpp_charge_sess_tx_id" javaType="string"/>
 		</constructor>
 		<result column="ocpp_charge_sess_ended" property="ended"/>
 		<result column="ocpp_charge_sess_end_reason" property="endReason" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
@@ -108,7 +108,7 @@
 			AND cs.cp_id = #{filter.chargePointId}
 		</if>
 		<if test="filter.evseId != null">
-			AND cs.evse_id = #{filter.filter.evseId}
+			AND cs.evse_id = #{filter.evseId}
 		</if>
 		<if test="filter.connectorId != null">
 			AND cs.conn_id = #{filter.connectorId}
@@ -255,7 +255,7 @@
 			</if>
 			<!-- transactionId -1 sent as "any transaction" -->
 			<if test="transactionId != null and transactionId &gt;= 0">
-				AND cs.tx_id = ANY(#{transactionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
+				AND cs.tx_id = ANY(#{transactionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="endReason != null">
 				AND cs.end_reason = ANY(#{endReasonCodes,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})

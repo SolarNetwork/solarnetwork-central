@@ -43,7 +43,7 @@ import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationResponse;
  * Publish diagnostics status notifications as a datum stream.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificationProcessor {
 
@@ -132,7 +132,7 @@ public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificati
 				GeneralNodeDatum d = new GeneralNodeDatum();
 				d.setCreated(Instant.now());
 				d.setNodeId(cp.getNodeId());
-				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null));
+				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 				d.setSamples(s);
 				pubSupport.publishDatum(cps, d);
 			}

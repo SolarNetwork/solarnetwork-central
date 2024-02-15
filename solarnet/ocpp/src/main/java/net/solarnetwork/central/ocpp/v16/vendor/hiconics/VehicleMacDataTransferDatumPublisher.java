@@ -71,7 +71,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </pre>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -173,7 +173,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 		d.setSamples(s);
 		d.setCreated(ts);
 		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), connId));
+		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, connId));
 		return d;
 	}
 
