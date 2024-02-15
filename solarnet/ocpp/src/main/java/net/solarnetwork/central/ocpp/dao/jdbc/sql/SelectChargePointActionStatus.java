@@ -46,7 +46,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
  * Generate dynamic SQL for a "find charge point action status" query.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectChargePointActionStatus implements PreparedStatementCreator, SqlProvider {
 
@@ -66,6 +66,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 	 * <li>connector -&gt; conn_id</li>
 	 * <li>charger -&gt; cp_id</li>
 	 * <li>created -&gt; created</li>
+	 * <li>evse -&gt; evse_id</li>
 	 * <li>time -&gt; ts</li>
 	 * <li>user -&gt; user_id</li>
 	 * </ol>
@@ -79,6 +80,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		map.put("connector", "conn_id");
 		map.put("charger", "cp_id");
 		map.put("created", "created");
+		map.put("evse", "evse_id");
 		map.put("time", "ts");
 		map.put("user", "user_id");
 		SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
@@ -117,7 +119,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 
 	private void sqlCore(StringBuilder buf, boolean ordered) {
 		buf.append("""
-				SELECT created, user_id, cp_id, conn_id, action, msg_id, ts
+				SELECT created, user_id, cp_id, evse_id, conn_id, action, msg_id, ts
 				FROM solarev.ocpp_charge_point_action_status
 				""");
 		sqlWhere(buf);
@@ -128,6 +130,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		int idx = 0;
 		idx += whereOptimizedArrayContains(filter.getUserIds(), "user_id", where);
 		idx += whereOptimizedArrayContains(filter.getChargePointIds(), "cp_id", where);
+		idx += whereOptimizedArrayContains(filter.getEvseIds(), "evse_id", where);
 		idx += whereOptimizedArrayContains(filter.getConnectorIds(), "conn_id", where);
 		idx += whereOptimizedArrayContains(filter.getActions(), "action", where);
 		idx += whereDateRange(filter, "ts", where);
@@ -142,7 +145,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		if ( filter.hasSorts() ) {
 			idx = orderBySorts(filter.getSorts(), SORT_KEY_MAPPING, order);
 		} else {
-			order.append(", user_id, cp_id, conn_id, action");
+			order.append(", user_id, cp_id, evse_id, conn_id, action");
 		}
 		if ( order.length() > 0 ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
@@ -173,6 +176,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getChargePointIds());
+		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getEvseIds());
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getConnectorIds());
 		p = prepareOptimizedArrayParameter(con, stmt, p, filter.getActions());
 		p = prepareDateRange(filter, stmt, p);

@@ -37,11 +37,14 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * MyBatis implementation of {@link CentralChargePointConnectorDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisCentralChargePointConnectorDao
 		extends BaseMyBatisGenericDaoSupport<ChargePointConnector, ChargePointConnectorKey>
 		implements CentralChargePointConnectorDao {
+
+	/** An EVSE ID representing "all EVSEs". */
+	public static final int ALL_EVSES = -1;
 
 	/** A connector ID representing "all connectors". */
 	public static final int ALL_CONNECTORS = -1;
@@ -88,10 +91,16 @@ public class MyBatisCentralChargePointConnectorDao
 
 	@Override
 	public int updateChargePointStatus(long chargePointId, int connectorId, ChargePointStatus status) {
+		return updateChargePointStatus(chargePointId, 0, connectorId, status);
+	}
+
+	@Override
+	public int updateChargePointStatus(long chargePointId, int evseId, int connectorId,
+			ChargePointStatus status) {
 		CentralChargePointConnector filter = new CentralChargePointConnector(
-				new ChargePointConnectorKey(chargePointId, connectorId));
-		filter.setInfo(
-				StatusNotification.builder().withConnectorId(connectorId).withStatus(status).build());
+				new ChargePointConnectorKey(chargePointId, evseId, connectorId));
+		filter.setInfo(StatusNotification.builder().withEvseId(evseId).withConnectorId(connectorId)
+				.withStatus(status).build());
 		return getSqlSession().update(QueryName.UpdateStatus.getQueryName(), filter);
 	}
 

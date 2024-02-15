@@ -31,7 +31,7 @@ import net.solarnetwork.ocpp.domain.ChargeSession;
  * charging cycle from authorization to end of charging.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CentralChargeSession extends ChargeSession {
 
@@ -56,6 +56,26 @@ public class CentralChargeSession extends ChargeSession {
 	/**
 	 * Constructor.
 	 * 
+	 * @param authId
+	 *        the authorization ID
+	 * @param chargePointId
+	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the Charge Point connector ID
+	 * @param transactionId
+	 *        the transactionID
+	 * @since 1.2
+	 */
+	public CentralChargeSession(String authId, long chargePointId, int evseId, int connectorId,
+			int transactionId) {
+		super(authId, chargePointId, evseId, connectorId, transactionId);
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -72,6 +92,30 @@ public class CentralChargeSession extends ChargeSession {
 	public CentralChargeSession(UUID id, Instant created, String authId, long chargePointId,
 			int connectorId, int transactionId) {
 		super(id, created, authId, chargePointId, connectorId, transactionId);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the created date
+	 * @param authId
+	 *        the authorization ID
+	 * @param chargePointId
+	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the Charge Point connector ID
+	 * @param transactionId
+	 *        the transactionID
+	 * @since 1.2
+	 */
+	public CentralChargeSession(UUID id, Instant created, String authId, long chargePointId, int evseId,
+			int connectorId, int transactionId) {
+		super(id, created, authId, chargePointId, evseId, connectorId, transactionId);
 	}
 
 	/**
@@ -108,7 +152,23 @@ public class CentralChargeSession extends ChargeSession {
 	 * @return the session instance, suitable for using as a filter
 	 */
 	public static CentralChargeSession forConnector(long chargePointId, int connectorId) {
-		return new CentralChargeSession(null, chargePointId, connectorId, 0);
+		return forConnector(chargePointId, 0, connectorId);
+	}
+
+	/**
+	 * Create a session filter for a connector.
+	 * 
+	 * @param chargePointId
+	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the Charge Point connector ID
+	 * @return the session instance, suitable for using as a filter
+	 * @since 1.2
+	 */
+	public static CentralChargeSession forConnector(long chargePointId, int evseId, int connectorId) {
+		return new CentralChargeSession(null, chargePointId, evseId, connectorId, 0);
 	}
 
 }

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -82,19 +84,19 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 				""", cpId, userId, nodeId, cpIdent);
 	}
 
-	private void insertChargerActionStatus(Long userId, Long cpId, int connectorId, String action,
-			String messageId, Instant ts) {
+	private void insertChargerActionStatus(Long userId, Long cpId, int evseId, int connectorId,
+			String action, String messageId, Instant ts) {
 		jdbcTemplate.update(
 				"""
-						INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, conn_id, action, msg_id, ts)
-						VALUES (?, ?, ?, ?, ?, ?)
+						INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, evse_id, conn_id, action, msg_id, ts)
+						VALUES (?, ?, ?, ?, ?, ?, ?)
 						""",
-				userId, cpId, connectorId, action, messageId, Timestamp.from(ts));
+				userId, cpId, evseId, connectorId, action, messageId, Timestamp.from(ts));
 	}
 
 	private List<Map<String, Object>> allChargePointActionStatusData() {
 		List<Map<String, Object>> data = jdbcTemplate.queryForList(
-				"select * from solarev.ocpp_charge_point_action_status ORDER BY user_id, cp_id, conn_id, action");
+				"select * from solarev.ocpp_charge_point_action_status ORDER BY user_id, cp_id, evse_id, conn_id, action");
 		log.debug("solarev.ocpp_charge_point_action_status table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(Collectors.joining("\n\t", "\n\t", "\n")));
 		return data;
@@ -130,8 +132,8 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
 		// insert earlier record
-		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, 0, action, UUID.randomUUID().toString(),
-				ts.minusSeconds(1));
+		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, 0, 0, action,
+				UUID.randomUUID().toString(), ts.minusSeconds(1));
 
 		// WHEN
 		dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, null, action, messageId, ts);
@@ -142,6 +144,7 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
+		assertThat("Row evse ID matches", row, hasEntry("evse_id", 0));
 		assertThat("Row connector ID matches", row, hasEntry("conn_id", 0));
 		assertThat("Row action matches", row.get("action"), is(equalTo(action)));
 		assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
@@ -165,6 +168,33 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
+		assertThat("Row evse ID defaulted", row, hasEntry("evse_id", 0));
+		assertThat("Row connector ID matches", row, hasEntry("conn_id", connId));
+		assertThat("Row action matches", row.get("action"), is(equalTo(action)));
+		assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
+		assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
+	}
+
+	@Test
+	public void insert_evse() {
+		// GIVEN
+		final var evseId = 1;
+		final var connId = 2;
+		final var action = "foo";
+		final var messageId = UUID.randomUUID().toString();
+		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+		// WHEN
+		dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId, action, messageId,
+				ts);
+
+		// THEN
+		List<Map<String, Object>> data = allChargePointActionStatusData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
+		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
+		assertThat("Row evse ID matches", row, hasEntry("evse_id", evseId));
 		assertThat("Row connector ID matches", row, hasEntry("conn_id", connId));
 		assertThat("Row action matches", row.get("action"), is(equalTo(action)));
 		assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
@@ -180,7 +210,7 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 
 		// insert earlier record
-		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, connId, action,
+		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, 0, connId, action,
 				UUID.randomUUID().toString(), ts.minusSeconds(1));
 
 		// WHEN
@@ -192,6 +222,37 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		Map<String, Object> row = data.get(0);
 		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
+		assertThat("Row evse ID defaulted", row, hasEntry("evse_id", 0));
+		assertThat("Row connector ID matches", row, hasEntry("conn_id", connId));
+		assertThat("Row action matches", row.get("action"), is(equalTo(action)));
+		assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
+		assertThat("Row timestamp matches", row.get("ts"), is(equalTo(Timestamp.from(ts))));
+	}
+
+	@Test
+	public void update_evse() {
+		// GIVEN
+		final var evseId = 1;
+		final var connId = 2;
+		final var action = "foo";
+		final var messageId = UUID.randomUUID().toString();
+		final var ts = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+
+		// insert earlier record
+		insertChargerActionStatus(TEST_USER_ID, TEST_CHARGER_ID, evseId, connId, action,
+				UUID.randomUUID().toString(), ts.minusSeconds(1));
+
+		// WHEN
+		dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId, action, messageId,
+				ts);
+
+		// THEN
+		List<Map<String, Object>> data = allChargePointActionStatusData();
+		assertThat("Table has 1 row", data, hasSize(1));
+		Map<String, Object> row = data.get(0);
+		assertThat("Row user ID matches", row, hasEntry("user_id", TEST_USER_ID));
+		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
+		assertThat("Row evse ID matches", row, hasEntry("evse_id", evseId));
 		assertThat("Row connector ID matches", row, hasEntry("conn_id", connId));
 		assertThat("Row action matches", row.get("action"), is(equalTo(action)));
 		assertThat("Row message ID matches", row.get("msg_id"), is(equalTo(messageId)));
@@ -240,6 +301,59 @@ public class JdbcChargePointActionStatusDaoTests extends AbstractJUnit5JdbcDaoTe
 		assertThat("Status 2 action", status.getAction(), is(equalTo("Action3")));
 		assertThat("Status 2 message ID", status.getMessageId(), is(equalTo(messageIds.get(2))));
 		assertThat("Status 2 timestamp", status.getTimestamp(), is(equalTo(start.plusSeconds(2))));
+	}
+
+	@Test
+	public void findFiltered_dateRange_evse() {
+		// GIVEN
+		final Instant start = clock.instant();
+		final int count = 5;
+		for ( int evseId = 1; evseId <= count; evseId++ ) {
+			for ( int connId = 1; connId <= count; connId++ ) {
+				dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, evseId, connId,
+						"Action%d.%d".formatted(evseId, connId),
+						"Message%d.%d".formatted(evseId, connId), clock.instant());
+				clock.add(1, ChronoUnit.SECONDS);
+			}
+		}
+
+		allChargePointActionStatusData();
+
+		// WHEN
+		final int evseId = 2;
+		BasicOcppCriteria f = new BasicOcppCriteria();
+		f.setUserId(TEST_USER_ID);
+		f.setEvseId(evseId);
+
+		FilterResults<ChargePointActionStatus, ChargePointActionStatusKey> result = dao.findFiltered(f);
+		// @formatter:off
+		then(result)
+			.as("Results returned for query")
+			.isNotNull()
+			.as("Results for all connectors in EVSE returned")
+			.hasSize(count)
+			;
+		// @formatter:on
+
+		for ( int i = 0; i < count; i++ ) {
+			// @formatter:off
+			then(result).element(i)
+				.as("User ID")
+				.returns(TEST_USER_ID, from(ChargePointActionStatus::getUserId))
+				.as("Charger ID")
+				.returns(TEST_CHARGER_ID, from(ChargePointActionStatus::getChargePointId))
+				.as("EVSE ID")
+				.returns(evseId, from(ChargePointActionStatus::getEvseId))
+				.as("Results ordered by connector ID")
+				.returns(i+1, from(ChargePointActionStatus::getConnectorId))
+				.as("Action")
+				.returns("Action%d.%d".formatted(evseId, i+1), from(ChargePointActionStatus::getAction))
+				.as("Message ID")
+				.returns("Message%d.%d".formatted(evseId, i+1), from(ChargePointActionStatus::getMessageId))
+				.as("Timestamp")
+				.returns(start.plusSeconds(5*(evseId - 1)+i), from(ChargePointActionStatus::getTimestamp))
+				;
+		}
 	}
 
 }

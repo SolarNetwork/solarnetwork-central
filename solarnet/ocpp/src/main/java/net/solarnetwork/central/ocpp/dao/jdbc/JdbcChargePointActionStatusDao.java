@@ -70,9 +70,9 @@ public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDa
 	}
 
 	@Override
-	public void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
-			String action, String messageId, Instant date) {
-		var sql = new UpsertChargePointIdentifierActionTimestamp(userId, chargePointIdentifier,
+	public void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer evseId,
+			Integer connectorId, String action, String messageId, Instant date) {
+		var sql = new UpsertChargePointIdentifierActionTimestamp(userId, chargePointIdentifier, evseId,
 				connectorId, action, messageId, date);
 		jdbcOps.update(sql);
 	}

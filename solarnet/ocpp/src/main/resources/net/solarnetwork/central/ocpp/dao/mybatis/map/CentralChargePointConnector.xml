@@ -4,7 +4,8 @@
 
 	<update id="update-CentralChargePointConnector" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
 		INSERT INTO solarev.ocpp_charge_point_conn (
-			cp_id
+			  cp_id
+			, evse_id
 			, conn_id
 			, info
 			, vendor_id
@@ -16,7 +17,8 @@
 				<if test="info.timestamp != null">, ts</if>
 			</if>
 		) VALUES (
-			#{id.chargePointId}
+			  #{id.chargePointId}
+			, #{id.evseId}
 			, #{id.connectorId}
 			, #{info.info}
 			, #{info.vendorId}
@@ -28,7 +30,7 @@
 				<if test="info.timestamp != null">, #{info.timestamp}</if>
 			</if>
 		)
-		ON CONFLICT (cp_id, conn_id) DO UPDATE
+		ON CONFLICT (cp_id, evse_id, conn_id) DO UPDATE
 		SET 
 			info = EXCLUDED.info
 			, vendor_id = EXCLUDED.vendor_id
@@ -47,11 +49,13 @@
 			status = #{info.status,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
 		WHERE
 			cp_id = #{id.chargePointId}
+			<if test="id.evseId &gt;= 0">AND evse_id = #{id.evseId}</if>
 			<if test="id.connectorId &gt;= 0">AND conn_id = #{id.connectorId}</if>
 	</update>
 
 	<sql id="fragment-CentralChargePointConnector-full-result">
-		cc.cp_id AS ocpp_charge_point_conn_cp_id
+		  cc.cp_id AS ocpp_charge_point_conn_cp_id
+		, cc.evse_id AS ocpp_charge_point_conn_evse_id
 		, cc.conn_id AS ocpp_charge_point_conn_conn_id
 		, cc.created AS ocpp_charge_point_conn_created
 		, cc.status AS ocpp_charge_point_conn_status
@@ -66,12 +70,14 @@
 	<resultMap id="CentralChargePointConnector-FullResult" type="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
 		<constructor>
 			<idArg column="ocpp_charge_point_conn_cp_id" javaType="_long"/>
+			<idArg column="ocpp_charge_point_conn_evse_id" javaType="_int"/>
 			<idArg column="ocpp_charge_point_conn_conn_id" javaType="_int"/>
 			<arg column="ocpp_charge_point_user_id" javaType="Long"/>
 			<arg column="ocpp_charge_point_conn_created" javaType="java.time.Instant"/>
 		</constructor>
 		<association property="info">
 			<constructor>
+				<idArg column="ocpp_charge_point_conn_evse_id" javaType="_int"/>
 				<idArg column="ocpp_charge_point_conn_conn_id" javaType="_int"/>
 				<arg column="ocpp_charge_point_conn_status" javaType="net.solarnetwork.ocpp.domain.ChargePointStatus" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
 				<arg column="ocpp_charge_point_conn_error_code" javaType="net.solarnetwork.ocpp.domain.ChargePointErrorCode" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
@@ -93,6 +99,7 @@
 			solarev.ocpp_charge_point cp ON cp.id = cc.cp_id
 		WHERE
 			cc.cp_id = #{chargePointId}
+			AND cc.evse_id = #{evseId}
 			AND cc.conn_id = #{connectorId}
 	</select>
 	
@@ -101,6 +108,9 @@
 			<where>
 				<if test="filter.chargePointId != null">
 					AND cc.cp_id = #{filter.chargePointId}
+				</if>
+				<if test="evseId != null and evseId &gt;= 0">
+					AND cc.evse_id = #{filter.evseId}
 				</if>
 				<if test="filter.connectorId != null and filter.connectorId &gt;= 0">
 					AND cc.conn_id = #{filter.connectorId}
@@ -113,7 +123,7 @@
 	</sql>
 
 	<sql id="fragment-findall-CentralChargePointConnector-order">
-		ORDER BY ocpp_charge_point_conn_cp_id, ocpp_charge_point_conn_conn_id
+		ORDER BY ocpp_charge_point_conn_cp_id, ocpp_charge_point_conn_evse_id, ocpp_charge_point_conn_conn_id
 	</sql>
 
 	<select id="findall-CentralChargePointConnector" resultMap="CentralChargePointConnector-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
@@ -130,6 +140,7 @@
 	<delete id="delete-CentralChargePointConnector" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargePointConnector">
 		DELETE FROM solarev.ocpp_charge_point_conn
 		WHERE cp_id = #{chargePointId}
+			AND evse_id = #{evseId}
 			AND conn_id = #{connectorId}
 	</delete>
 
@@ -139,6 +150,7 @@
 		WHERE ocpp_charge_point.id = cp_id
 			AND ocpp_charge_point.user_id = #{userId}
 			AND cp_id = #{chargePointId}
+			AND evse_id = #{evseId}
 			AND conn_id = #{connectorId}
 	</delete>
 

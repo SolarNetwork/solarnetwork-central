@@ -58,6 +58,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ErrorCode;
 import net.solarnetwork.ocpp.domain.PendingActionMessage;
@@ -82,7 +83,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
 	private ChargePointActionStatusDao chargePointActionStatusDao;
-	private Function<Object, Integer> connectorIdExtractor;
+	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
 
@@ -210,11 +211,13 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			final String msgId = msg.getMessage().getMessageId();
 			final ChargePointActionStatusDao statusDao = getChargePointActionStatusDao();
 			if ( statusDao != null ) {
-				Integer connectorId = (connectorIdExtractor != null
+				ChargePointConnectorKey connectorId = (connectorIdExtractor != null
 						? connectorIdExtractor.apply(msg.getMessage().getMessage())
 						: null);
 				try {
-					statusDao.updateActionTimestamp(userId, cpIdentifier, connectorId, action.getName(),
+					statusDao.updateActionTimestamp(userId, cpIdentifier,
+							connectorId != null ? connectorId.getEvseId() : null,
+							connectorId != null ? connectorId.getConnectorId() : null, action.getName(),
 							msgId, Instant.now());
 				} catch ( RuntimeException e ) {
 					log.error("Error updating charger {} connector {} {} status",
@@ -601,7 +604,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * 
 	 * @return the function
 	 */
-	public Function<Object, Integer> getConnectorIdExtractor() {
+	public Function<Object, ChargePointConnectorKey> getConnectorIdExtractor() {
 		return connectorIdExtractor;
 	}
 
@@ -611,7 +614,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param connectorIdExtractor
 	 *        the function to set
 	 */
-	public void setConnectorIdExtractor(Function<Object, Integer> connectorIdExtractor) {
+	public void setConnectorIdExtractor(Function<Object, ChargePointConnectorKey> connectorIdExtractor) {
 		this.connectorIdExtractor = connectorIdExtractor;
 	}
 

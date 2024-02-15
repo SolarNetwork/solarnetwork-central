@@ -35,7 +35,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * DAO API for {@link ChargePointActionStatus} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ChargePointActionStatusDao extends
 		FilterableDao<ChargePointActionStatus, ChargePointActionStatusKey, ChargePointActionStatusFilter> {
@@ -63,8 +63,40 @@ public interface ChargePointActionStatusDao extends
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code connectorId} is {@literal null}
 	 */
-	void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
-			String action, String messageId, Instant date);
+	default void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
+			String action, String messageId, Instant date) {
+		updateActionTimestamp(userId, chargePointIdentifier, 0, connectorId, action, messageId, date);
+	}
+
+	/**
+	 * Update the timestamp for a specific charge point action.
+	 * 
+	 * <p>
+	 * This method will create a new entity if one does not already exist.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param chargePointIdentifier
+	 *        the charge point identifier
+	 * @param evseId
+	 *        the EVSE ID the message is related to, or {@literal null} for
+	 *        charger-wide actions
+	 * @param connectorId
+	 *        the connector ID the message is related to, or {@literal null} or
+	 *        {@literal 0} for EVSE-wide actions
+	 * @param action
+	 *        the action name
+	 * @param messageId
+	 *        the message ID
+	 * @param date
+	 *        the date
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code connectorId} is {@literal null}
+	 * @since 1.1
+	 */
+	void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer evseId,
+			Integer connectorId, String action, String messageId, Instant date);
 
 	/**
 	 * API for querying for a stream of {@link ChargePointActionStatus}.

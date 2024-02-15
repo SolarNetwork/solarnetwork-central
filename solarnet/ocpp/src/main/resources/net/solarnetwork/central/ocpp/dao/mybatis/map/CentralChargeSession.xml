@@ -5,9 +5,10 @@
 	<update id="update-CentralChargeSession" parameterType="net.solarnetwork.central.ocpp.domain.CentralChargeSession">
 		INSERT INTO solarev.ocpp_charge_sess (
 			id
-			<if test="created != null">,created</if>
+			<if test="created != null">, created</if>
 			, auth_id
 			, cp_id
+			, evse_id
 			, conn_id
 			<if test="transactionId &gt; 0">, tx_id</if>
 			, ended
@@ -19,6 +20,7 @@
 			<if test="created != null">,#{created}</if>
 			, #{authId}
 			, #{chargePointId}
+			, #{evseId}
 			, #{connectorId}
 			<if test="transactionId &gt; 0">, #{transactionId}</if>
 			, #{ended}
@@ -34,10 +36,11 @@
 	</update>
 	
 	<sql id="fragment-CentralChargeSession-full-result">
-		cs.id AS ocpp_charge_sess_id
+		  cs.id AS ocpp_charge_sess_id
 		, cs.created AS ocpp_charge_sess_created
 		, cs.auth_id AS ocpp_charge_sess_auth_id
 		, cs.cp_id AS ocpp_charge_sess_cp_id
+		, cs.evse_id AS ocpp_charge_sess_evse_id
 		, cs.conn_id AS ocpp_charge_sess_conn_id
 		, cs.tx_id AS ocpp_charge_sess_tx_id
 		, cs.ended AS ocpp_charge_sess_ended
@@ -52,6 +55,7 @@
 			<arg column="ocpp_charge_sess_created" javaType="java.time.Instant"/>
 			<arg column="ocpp_charge_sess_auth_id" javaType="string"/>
 			<arg column="ocpp_charge_sess_cp_id" javaType="_long"/>
+			<arg column="ocpp_charge_sess_evse_id" javaType="_int"/>
 			<arg column="ocpp_charge_sess_conn_id" javaType="_int"/>
 			<arg column="ocpp_charge_sess_tx_id" javaType="_int"/>
 		</constructor>
@@ -103,6 +107,9 @@
 		<if test="filter.chargePointId != null">
 			AND cs.cp_id = #{filter.chargePointId}
 		</if>
+		<if test="filter.evseId != null">
+			AND cs.evse_id = #{filter.filter.evseId}
+		</if>
 		<if test="filter.connectorId != null">
 			AND cs.conn_id = #{filter.connectorId}
 		</if>
@@ -112,7 +119,7 @@
 	</sql>
 
 	<sql id="fragment-findall-CentralChargeSession-order">
-		ORDER BY ocpp_charge_sess_cp_id, ocpp_charge_sess_conn_id, ocpp_charge_sess_created
+		ORDER BY ocpp_charge_sess_cp_id, ocpp_charge_sess_evse_id, ocpp_charge_sess_conn_id, ocpp_charge_sess_created
 	</sql>
 
 	<select id="findall-CentralChargeSession" resultMap="CentralChargeSession-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">
@@ -226,6 +233,9 @@
 			<if test="chargePointId != null">
 				AND cs.cp_id = ANY(#{chargePointIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 			</if>
+			<if test="evseId != null">
+				AND cs.evse_id = ANY(#{evseIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
+			</if>
 			<if test="connectorId != null">
 				AND cs.conn_id = ANY(#{connectorIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.IntegerArrayTypeHandler})
 			</if>
@@ -262,6 +272,7 @@
 				ORDER BY
 				 <foreach collection="sorts" item="item" separator=",">
 					<if test="item.sortKey == &quot;CHARGER&quot;">ocpp_charge_sess_cp_id</if>
+					<if test="item.sortKey == &quot;EVSE&quot;">ocpp_charge_sess_evse_id</if>
 					<if test="item.sortKey == &quot;CONNECTOR&quot;">ocpp_charge_sess_conn_id</if>
 					<if test="item.sortKey == &quot;DATE&quot;">ocpp_charge_sess_created</if>
 					<if test="item.sortKey == &quot;ID&quot;">ocpp_charge_sess_id</if>

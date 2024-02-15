@@ -26,7 +26,7 @@ package net.solarnetwork.central.ocpp.dao;
  * Search criteria for connector related data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface ChargePointConnectorCriteria {
 
@@ -55,6 +55,37 @@ public interface ChargePointConnectorCriteria {
 	 * @return {@literal true} if the connector ID is non-null
 	 */
 	default boolean hasConnectorCriteria() {
+		return getConnectorId() != null;
+	}
+
+	/**
+	 * Get the first EVSE ID.
+	 * 
+	 * <p>
+	 * This returns the first available EVSE ID from the {@link #getEvseIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the first EVSE ID, or {@literal null} if not available
+	 * @since 1.2
+	 */
+	Integer getEvseId();
+
+	/**
+	 * Get an array of EVSE IDs.
+	 * 
+	 * @return array of EVSE IDs (may be {@literal null})
+	 * @since 1.2
+	 */
+	Integer[] getEvseIds();
+
+	/**
+	 * Test if this filter has any EVSE criteria.
+	 * 
+	 * @return {@literal true} if the EVSE ID is non-null
+	 * @since 1.2
+	 */
+	default boolean hasEvseCriteria() {
 		return getConnectorId() != null;
 	}
 
