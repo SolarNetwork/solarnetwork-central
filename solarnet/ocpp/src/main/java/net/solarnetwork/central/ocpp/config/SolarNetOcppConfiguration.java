@@ -26,12 +26,19 @@ package net.solarnetwork.central.ocpp.config;
  * Marker interface for SolarNetwork OCPP configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SolarNetOcppConfiguration {
 
 	/** A qualifier for OCPP v1.6 support. */
 	String OCPP_V16 = "ocpp-v16";
+
+	/**
+	 * A qualifier for OCPP v2.0.1 support.
+	 * 
+	 * @since 1.1
+	 */
+	String OCPP_V201 = "ocpp-v201";
 
 	/** A qualifier for OCPP charge session support. */
 	String OCPP_CHARGE_SESSION = "ocpp-charge-session";
@@ -41,5 +48,12 @@ public interface SolarNetOcppConfiguration {
 
 	/** A qualifier for OCPP instruction support. */
 	String OCPP_INSTRUCTION = "instr";
+
+	/**
+	 * A qualifier for OCPP v2.0.1 support and charge session support.
+	 * 
+	 * @since 1.1
+	 */
+	String OCPP_V201_CHARGE_SESSION = OCPP_V201 + " & " + OCPP_CHARGE_SESSION;
 
 }
