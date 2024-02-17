@@ -41,7 +41,7 @@ dependencies {
 	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v201:${snExternalOcpp201Version}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp:${snCommonOcppVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16.jakarta:${snCommonOcpp16JakartaVersion}"
-	//implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v201:${snCommonOcpp201Version}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v201:${snCommonOcpp201Version}"
 	
 	// Support
 	implementation 'com.fasterxml.jackson.module:jackson-module-jakarta-xmlbind-annotations'
