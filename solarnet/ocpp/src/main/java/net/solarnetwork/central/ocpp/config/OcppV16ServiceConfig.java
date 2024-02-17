@@ -1,5 +1,5 @@
 /* ==================================================================
- * OcppV16ControllerConfig.java - 12/11/2021 1:55:49 PM
+ * OcppV16ServiceConfig.java - 12/11/2021 1:55:49 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.support.TransactionTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.common.config.VersionedQualifier;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -41,12 +42,11 @@ import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
-import net.solarnetwork.central.ocpp.v16.controller.ConnectorStatusDatumPublisher;
-import net.solarnetwork.central.ocpp.v16.controller.DiagnosticsStatusDatumPublisher;
-import net.solarnetwork.central.ocpp.v16.controller.FirmwareStatusDatumPublisher;
-import net.solarnetwork.central.ocpp.v16.controller.OcppController;
+import net.solarnetwork.central.ocpp.service.ConnectorStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.service.DiagnosticsStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.service.FirmwareStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.service.OcppController;
 import net.solarnetwork.central.user.dao.UserNodeDao;
-import net.solarnetwork.ocpp.dao.ChargeSessionDao;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
@@ -72,7 +72,7 @@ import ocpp.v16.jakarta.cs.StatusNotificationResponse;
  */
 @Configuration
 @Profile(OCPP_V16)
-public class OcppV16ControllerConfig {
+public class OcppV16ServiceConfig {
 
 	@Autowired
 	private Executor executor;
@@ -105,10 +105,10 @@ public class OcppV16ControllerConfig {
 	private ChargePointSettingsDao ocppChargePointSettingsDao;
 
 	@Autowired
-	private ChargeSessionDao ocppChargeSessionDao;
+	private ChargePointRouter ocppChargePointRouter;
 
 	@Autowired
-	private ChargePointRouter ocppChargePointRouter;
+	private ConnectorStatusDatumPublisher ocppConnectorStatusDatumPublisher;
 
 	@Autowired
 	@OcppChargePointQualifier(OCPP_V16)
@@ -119,7 +119,7 @@ public class OcppV16ControllerConfig {
 	private DatumProcessor fluxPublisher;
 
 	@Autowired(required = false)
-	@Qualifier(OCPP_INSTRUCTION)
+	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V16)
 	private ActionMessageProcessor<JsonNode, Void> ocppInstructionHandler;
 
 	@Bean
@@ -130,15 +130,9 @@ public class OcppV16ControllerConfig {
 				ocppCentralChargePointConnectorDao);
 		controller.setTransactionTemplate(transactionTemplate);
 		controller.setChargePointActionPayloadDecoder(ocppChargePointActionPayloadDecoder);
-
-		ConnectorStatusDatumPublisher publisher = new ConnectorStatusDatumPublisher(
-				ocppCentralChargePointDao, ocppChargePointSettingsDao,
-				ocppCentralChargePointConnectorDao, ocppChargeSessionDao, datumDao);
-		publisher.setFluxPublisher(fluxPublisher);
-		controller.setDatumPublisher(publisher);
+		controller.setDatumPublisher(ocppConnectorStatusDatumPublisher);
 		controller.setUserEventAppenderBiz(userEventAppenderBiz);
 		controller.setInstructionHandler(ocppInstructionHandler);
-
 		return controller;
 	}
 

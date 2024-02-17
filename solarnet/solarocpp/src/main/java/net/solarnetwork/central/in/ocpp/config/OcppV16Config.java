@@ -26,16 +26,13 @@ import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCP
 import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
-import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
@@ -48,9 +45,7 @@ import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDeco
  * @version 1.1
  */
 @Configuration
-@EnableWebSocket
 @Profile(OCPP_V16)
-@ComponentScan(basePackageClasses = SolarNetOcppConfiguration.class)
 public class OcppV16Config {
 
 	@Bean

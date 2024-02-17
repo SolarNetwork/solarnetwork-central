@@ -46,14 +46,28 @@ public interface SolarNetOcppConfiguration {
 	/** A qualifier for OCPP v1.6 support and charge session support. */
 	String OCPP_V16_CHARGE_SESSION = OCPP_V16 + " & " + OCPP_CHARGE_SESSION;
 
-	/** A qualifier for OCPP instruction support. */
-	String OCPP_INSTRUCTION = "instr";
-
 	/**
 	 * A qualifier for OCPP v2.0.1 support and charge session support.
 	 * 
 	 * @since 1.1
 	 */
 	String OCPP_V201_CHARGE_SESSION = OCPP_V201 + " & " + OCPP_CHARGE_SESSION;
+
+	/** A qualifier for OCPP instruction support. */
+	String OCPP_INSTRUCTION = "instr";
+
+	/**
+	 * A qualifier for OCPP v1.6 instruction support.
+	 * 
+	 * @since 1.1
+	 */
+	String OCPP_V16_INSTRUCTION = OCPP_V16 + "& " + OCPP_INSTRUCTION;
+
+	/**
+	 * A qualifier for OCPP v2.0.1 instruction support.
+	 * 
+	 * @since 1.1
+	 */
+	String OCPP_V201_INSTRUCTION = OCPP_V201 + "& " + OCPP_INSTRUCTION;
 
 }

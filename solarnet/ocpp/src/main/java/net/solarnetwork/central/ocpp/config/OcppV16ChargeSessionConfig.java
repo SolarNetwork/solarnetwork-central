@@ -46,7 +46,7 @@ import ocpp.v16.jakarta.cs.StopTransactionResponse;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16_CHARGE_SESSION)
 public class OcppV16ChargeSessionConfig {
 
@@ -55,19 +55,19 @@ public class OcppV16ChargeSessionConfig {
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<MeterValuesRequest, MeterValuesResponse> ocppMeterValues_v16() {
+	public ActionMessageProcessor<MeterValuesRequest, MeterValuesResponse> ocppMeterValuesProcessor_v16() {
 		return new MeterValuesProcessor(ocppChargeSessionManager);
 	}
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<StartTransactionRequest, StartTransactionResponse> ocppStartTransaction_v16() {
+	public ActionMessageProcessor<StartTransactionRequest, StartTransactionResponse> ocppStartTransactionProcessor_v16() {
 		return new StartTransactionProcessor(ocppChargeSessionManager);
 	}
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<StopTransactionRequest, StopTransactionResponse> ocppStopTransaction_v16() {
+	public ActionMessageProcessor<StopTransactionRequest, StopTransactionResponse> ocppStopTransactionProcessor_v16() {
 		return new StopTransactionProcessor(ocppChargeSessionManager);
 	}
 

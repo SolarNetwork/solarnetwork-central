@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.session.test;
+package net.solarnetwork.central.ocpp.service.test;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
@@ -74,7 +74,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
-import net.solarnetwork.central.ocpp.session.OcppSessionDatumManager;
+import net.solarnetwork.central.ocpp.service.OcppSessionDatumManager;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.AcEnergyDatum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;

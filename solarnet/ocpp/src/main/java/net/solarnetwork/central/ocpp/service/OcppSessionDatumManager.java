@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.session;
+package net.solarnetwork.central.ocpp.service;
 
 import static java.util.Collections.singleton;
 import static net.solarnetwork.domain.datum.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller.test;
+package net.solarnetwork.central.ocpp.v16.service.test;
 
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
@@ -60,7 +60,7 @@ import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
-import net.solarnetwork.central.ocpp.v16.controller.OcppController;
+import net.solarnetwork.central.ocpp.v16.service.OcppController;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller;
+package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.datum.biz.DatumProcessor;

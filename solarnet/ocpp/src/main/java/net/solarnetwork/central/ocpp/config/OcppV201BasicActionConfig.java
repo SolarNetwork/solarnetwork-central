@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppV16Config.java - 12/11/2021 4:13:54 PM
+ * OcppV201BasicActionConfig.java - 17/02/2024 6:10:31 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,41 +22,43 @@
 
 package net.solarnetwork.central.ocpp.config;
 
-import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
+import java.time.Clock;
+import java.time.ZoneOffset;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
-import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
-import net.solarnetwork.ocpp.v16.jakarta.cs.HeartbeatProcessor;
-import ocpp.v16.jakarta.cs.DataTransferRequest;
-import ocpp.v16.jakarta.cs.DataTransferResponse;
-import ocpp.v16.jakarta.cs.HeartbeatRequest;
-import ocpp.v16.jakarta.cs.HeartbeatResponse;
+import net.solarnetwork.ocpp.v201.service.DataTransferProcessor;
+import net.solarnetwork.ocpp.v201.service.HeartbeatProcessor;
+import ocpp.v201.DataTransferRequest;
+import ocpp.v201.DataTransferResponse;
+import ocpp.v201.HeartbeatRequest;
+import ocpp.v201.HeartbeatResponse;
 
 /**
- * OCPP v1.6 general configuration.
+ * OCPP v2.0.1 general configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@Profile(OCPP_V16)
-public class OcppV16BasicActionConfig {
+@Configuration(proxyBeanMethods = false)
+@Profile(OCPP_V201)
+public class OcppV201BasicActionConfig {
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
+	@OcppCentralServiceQualifier(OCPP_V201)
 	@Order(Ordered.LOWEST_PRECEDENCE)
-	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppDataTransferProcessor_v16() {
+	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppDataTransferProcessor_v201() {
 		return new DataTransferProcessor();
 	}
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<HeartbeatRequest, HeartbeatResponse> ocppHeartbeatProcessor_v16() {
-		return new HeartbeatProcessor();
+	@OcppCentralServiceQualifier(OCPP_V201)
+	public ActionMessageProcessor<HeartbeatRequest, HeartbeatResponse> ocppHeartbeatProcessor_v201() {
+		return new HeartbeatProcessor(Clock.system(ZoneOffset.UTC));
 	}
 
 }

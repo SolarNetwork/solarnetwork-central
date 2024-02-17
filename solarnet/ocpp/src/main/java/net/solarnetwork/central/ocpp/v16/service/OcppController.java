@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller;
+package net.solarnetwork.central.ocpp.v16.service;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
@@ -59,6 +59,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
+import net.solarnetwork.central.ocpp.service.ConnectorStatusDatumPublisher;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;

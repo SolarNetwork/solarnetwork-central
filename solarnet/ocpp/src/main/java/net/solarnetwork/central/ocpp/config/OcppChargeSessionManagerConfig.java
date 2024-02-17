@@ -34,7 +34,7 @@ import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargeSessionDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
-import net.solarnetwork.central.ocpp.session.OcppSessionDatumManager;
+import net.solarnetwork.central.ocpp.service.OcppSessionDatumManager;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;

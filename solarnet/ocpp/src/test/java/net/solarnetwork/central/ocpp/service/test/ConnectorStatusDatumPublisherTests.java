@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller.test;
+package net.solarnetwork.central.ocpp.service.test;
 
 import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
@@ -50,7 +50,7 @@ import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.v16.controller.ConnectorStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.service.ConnectorStatusDatumPublisher;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;

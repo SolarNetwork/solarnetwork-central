@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppMqttConfig.java - 12/11/2021 1:45:56 PM
+ * OcppV201MqttConfig.java - 18/02/2024 7:18:11 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -24,7 +24,7 @@ package net.solarnetwork.central.in.ocpp.config;
 
 import static net.solarnetwork.central.in.ocpp.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_INSTRUCTION;
-import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -41,20 +41,20 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.mqtt.MqttInstructionHandler;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v201.domain.Action;
 
 /**
- * OCPP v1.6 MQTT configuration.
+ * OCPP v2.0.1 MQTT configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-@Profile(OcppV16MqttConfig.MQTT_OCPP_V16)
-public class OcppV16MqttConfig {
+@Profile(OcppV201MqttConfig.MQTT_OCPP_V201)
+public class OcppV201MqttConfig {
 
-	/** Profile expression for MQTT with OCPP v16. */
-	public static final String MQTT_OCPP_V16 = "mqtt & " + SolarNetOcppConfiguration.OCPP_V16;
+	/** Profile expression for MQTT with OCPP v201. */
+	public static final String MQTT_OCPP_V201 = "mqtt & " + SolarNetOcppConfiguration.OCPP_V201;
 
 	@Autowired
 	private NodeInstructionDao nodeInstructionDao;
@@ -69,24 +69,23 @@ public class OcppV16MqttConfig {
 	private UserEventAppenderBiz userEventAppenderBiz;
 
 	@Autowired
-	@Qualifier(OCPP_V16)
+	@Qualifier(OCPP_V201)
 	private ObjectMapper objectMapper;
 
-	@ConfigurationProperties(prefix = "app.ocpp.v16.mqtt.instr-handler")
+	@ConfigurationProperties(prefix = "app.ocpp.v201.mqtt.instr-handler")
 	@Bean
-	@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V16)
-	public MqttInstructionHandler<ChargePointAction> instructionHandler_v16() {
-		MqttInstructionHandler<ChargePointAction> handler = new MqttInstructionHandler<>(
-				ChargePointAction.class, nodeInstructionDao, ocppCentralChargePointDao, objectMapper,
-				ocppChargePointRouter);
+	@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V201)
+	public MqttInstructionHandler<Action> instructionHandler_v201() {
+		MqttInstructionHandler<Action> handler = new MqttInstructionHandler<>(Action.class,
+				nodeInstructionDao, ocppCentralChargePointDao, objectMapper, ocppChargePointRouter);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
 		return handler;
 	}
 
 	@Bean
-	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V16)
-	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v16() {
-		return instructionHandler_v16();
+	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V201)
+	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v201() {
+		return instructionHandler_v201();
 	}
 
 }
