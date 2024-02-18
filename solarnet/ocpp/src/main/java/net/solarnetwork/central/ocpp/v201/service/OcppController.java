@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppController.java - 27/02/2020 11:52:28 am
+ * OcppController.java - 18/02/2024 2:14:39 pm
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,25 +20,16 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.service;
+package net.solarnetwork.central.ocpp.v201.service;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
-import java.time.Instant;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionSynchronization;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,25 +48,18 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointConnector;
-import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
-import net.solarnetwork.ocpp.domain.ChargePointInfo;
-import net.solarnetwork.ocpp.domain.StatusNotification;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.ocpp.v16.jakarta.ActionErrorCode;
-import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
-import net.solarnetwork.ocpp.v16.jakarta.ConfigurationKey;
-import ocpp.v16.jakarta.cp.GetConfigurationRequest;
-import ocpp.v16.jakarta.cp.GetConfigurationResponse;
-import ocpp.v16.jakarta.cp.KeyValue;
+import net.solarnetwork.ocpp.v201.domain.Action;
+import net.solarnetwork.ocpp.v201.domain.ActionErrorCode;
 
 /**
- * Manage OCPP 1.6 interactions.
+ * Manage OCPP 2.0.1 interactions.
  * 
  * @author matt
- * @version 2.9
+ * @version 1.0
  */
 public class OcppController extends BaseOcppController {
 
@@ -107,87 +91,6 @@ public class OcppController extends BaseOcppController {
 				chargePointConnectorDao, objectMapper);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	@Override
-	public ChargePoint registerChargePoint(ChargePointIdentity identity, ChargePointInfo info) {
-		ChargePoint cp = super.registerChargePoint(identity, info);
-
-		// request the number of connectors, if no connectors present
-		if ( cp.getConnectorCount() < 1 ) {
-			var getConfReq = new GetConfigurationRequest();
-			getConfReq.getKey().add(ConfigurationKey.NumberOfConnectors.getName());
-			sendToChargePoint(identity, ChargePointAction.GetConfiguration, getConfReq,
-					processConfiguration(cp), ActionErrorCode.GenericError);
-		}
-
-		return cp;
-	}
-
-	private ActionMessageResultHandler<GetConfigurationRequest, GetConfigurationResponse> processConfiguration(
-			ChargePoint chargePoint) {
-		return (msg, confs, err) -> {
-			if ( confs != null && confs.getConfigurationKey() != null
-					&& !confs.getConfigurationKey().isEmpty() ) {
-				tryWithTransaction(new TransactionCallbackWithoutResult() {
-
-					@Override
-					protected void doInTransactionWithoutResult(TransactionStatus status) {
-						ChargePoint cp = chargePointDao.get(chargePoint.getId());
-						ChargePoint orig = new ChargePoint(cp);
-						KeyValue numConnsKey = confs.getConfigurationKey().stream()
-								.filter(k -> ConfigurationKey.NumberOfConnectors.getName()
-										.equalsIgnoreCase(k.getKey()) && k.getValue() != null)
-								.findAny().orElse(null);
-						if ( numConnsKey != null ) {
-							try {
-								cp.setConnectorCount(Integer.parseInt(numConnsKey.getValue()));
-							} catch ( NumberFormatException e ) {
-								log.error("{} key invalid integer value: [{}]",
-										ConfigurationKey.NumberOfConnectors, numConnsKey.getValue());
-							}
-						}
-						if ( !cp.isSameAs(orig) ) {
-							chargePointDao.save(cp);
-							log.info("Saved configuration changes to Charge Point {}", cp.getId());
-						}
-
-						// add missing ChargePointConnector entities; remove excess
-						Collection<ChargePointConnector> connectors = chargePointConnectorDao
-								.findByChargePointId(cp.getId());
-						Map<Integer, ChargePointConnector> existing = connectors.stream().collect(
-								Collectors.toMap(cpc -> cpc.getId().getConnectorId(), cpc -> cpc));
-						for ( int i = 1; i <= cp.getConnectorCount(); i++ ) {
-							if ( !existing.containsKey(i) ) {
-								ChargePointConnector conn = new ChargePointConnector(
-										new ChargePointConnectorKey(cp.getId(), i), Instant.now());
-								conn.setInfo(StatusNotification.builder().withConnectorId(i)
-										.withTimestamp(conn.getCreated()).build());
-								log.info("Creating ChargePointConnector {} for Charge Point {}", i,
-										cp.getId());
-								chargePointConnectorDao.save(conn);
-							}
-						}
-						for ( Iterator<Entry<Integer, ChargePointConnector>> itr = existing.entrySet()
-								.iterator(); itr.hasNext(); ) {
-							Entry<Integer, ChargePointConnector> e = itr.next();
-							int connId = e.getKey().intValue();
-							if ( connId < 0 || connId > cp.getConnectorCount() ) {
-								log.info("Deleting excess ChargePointConnector {} from Charge Point {}",
-										connId, cp.getId());
-								chargePointConnectorDao.delete(e.getValue());
-								itr.remove();
-							}
-						}
-					}
-				});
-			} else if ( err != null ) {
-				log.warn("Unable to request configuration from charge point {}: {}",
-						chargePoint.getInfo().getId(), err.getMessage());
-			}
-			return true;
-		};
-	}
-
 	@Override
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		final String topic = instruction.getTopic();
@@ -209,9 +112,9 @@ public class OcppController extends BaseOcppController {
 					Collections.singletonMap("error", "ChargePoint not specified or not available."));
 			return instruction;
 		}
-		ChargePointAction action;
+		Action action;
 		try {
-			action = ChargePointAction.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
+			action = Action.valueOf(params.remove(OcppInstructionUtils.OCPP_ACTION_PARAM));
 		} catch ( IllegalArgumentException | NullPointerException e ) {
 			instruction.setState(InstructionState.Declined);
 			instruction.setResultParameters(
@@ -333,13 +236,13 @@ public class OcppController extends BaseOcppController {
 		private static final long serialVersionUID = -100774686071322459L;
 
 		private final ChargePointIdentity chargePointIdentity;
-		private final ChargePointAction action;
+		private final Action action;
 		private final ObjectNode jsonPayload;
 		private final Object payload;
 
 		private OcppNodeInstruction(NodeInstruction instruction, InstructionState state,
-				ChargePointIdentity chargePointIdentity, ChargePointAction action,
-				ObjectNode jsonPayload, Object payload) {
+				ChargePointIdentity chargePointIdentity, Action action, ObjectNode jsonPayload,
+				Object payload) {
 			super(instruction);
 			setState(state);
 			this.chargePointIdentity = chargePointIdentity;

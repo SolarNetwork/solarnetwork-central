@@ -23,20 +23,17 @@
 package net.solarnetwork.central.in.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
-import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
-import net.solarnetwork.codec.ObjectMapperFactoryBean;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
 import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
+import net.solarnetwork.ocpp.v16.jakarta.json.BaseActionPayloadDecoder;
 
 /**
  * Configuration for OCPP v1.6.
@@ -44,33 +41,28 @@ import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDeco
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)
 public class OcppV16Config {
 
 	@Bean
 	@Qualifier(OCPP_V16)
 	public ObjectMapper ocppObjectMapper_v16() {
-		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
-		factory.setFeaturesToDisable(Arrays.asList(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
-		factory.setModules(Arrays.asList(new JakartaXmlBindAnnotationModule()));
-		try {
-			return factory.getObject();
-		} catch ( Exception e ) {
-			throw new RuntimeException(e);
-		}
+		return BaseActionPayloadDecoder.defaultObjectMapper();
 	}
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionPayloadDecoder centralServiceActionPayloadDecoder_v16() {
-		return new CentralServiceActionPayloadDecoder(ocppObjectMapper_v16());
+	public ActionPayloadDecoder centralServiceActionPayloadDecoder_v16(
+			@Qualifier(OCPP_V16) ObjectMapper objectMapper) {
+		return new CentralServiceActionPayloadDecoder(objectMapper);
 	}
 
 	@Bean
 	@OcppChargePointQualifier(OCPP_V16)
-	public ActionPayloadDecoder chargePointActionPayloadDecoder_v16() {
-		return new ChargePointActionPayloadDecoder(ocppObjectMapper_v16());
+	public ActionPayloadDecoder chargePointActionPayloadDecoder_v16(
+			@Qualifier(OCPP_V16) ObjectMapper objectMapper) {
+		return new ChargePointActionPayloadDecoder(objectMapper);
 	}
 
 }

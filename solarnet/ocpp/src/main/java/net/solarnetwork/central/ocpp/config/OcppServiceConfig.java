@@ -1,5 +1,5 @@
 /* ==================================================================
- * OcppV201Config.java - 18/02/2024 7:08:24 am
+ * OcppServiceConfig.java - 19/02/2024 7:53:47 am
  * 
  * Copyright 2024 SolarNetwork.net Dev Team
  * 
@@ -20,39 +20,38 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.ocpp.config;
+package net.solarnetwork.central.ocpp.config;
 
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
-import net.solarnetwork.ocpp.v201.util.OcppUtils;
+import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.service.OcppAuthorizationService;
+import net.solarnetwork.ocpp.service.AuthorizationService;
 
 /**
- * Configuration for OCPP v2.0.1.
+ * General OCPP service configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(OCPP_V201)
-public class OcppV201Config {
+@Profile({ OCPP_V16, OCPP_V201 })
+public class OcppServiceConfig {
+
+	@Autowired
+	private CentralAuthorizationDao ocppCentralAuthorizationDao;
+
+	@Autowired
+	private CentralChargePointDao ocppCentralChargePointDao;
 
 	@Bean
-	@Qualifier(OCPP_V201)
-	public ObjectMapper ocppObjectMapper_v201() {
-		return OcppUtils.newObjectMapper();
-	}
-
-	@Bean
-	@Qualifier(OCPP_V201)
-	public ActionPayloadDecoder actionPayloadDecoder_v201(
-			@Qualifier(OCPP_V201) ObjectMapper objectMapper) {
-		return new net.solarnetwork.ocpp.v201.util.ActionPayloadDecoder(objectMapper,
-				OcppUtils.ocppSchemaFactory_v201());
+	public AuthorizationService ocppAuthorizationService() {
+		return new OcppAuthorizationService(ocppCentralAuthorizationDao, ocppCentralChargePointDao);
 	}
 
 }

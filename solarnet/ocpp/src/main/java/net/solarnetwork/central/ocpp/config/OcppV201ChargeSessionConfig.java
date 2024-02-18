@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201_CHARGE_SESSION;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -47,14 +48,14 @@ import ocpp.v201.TransactionEventResponse;
 public class OcppV201ChargeSessionConfig {
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V201)
+	@Qualifier(OCPP_V201)
 	public ActionMessageProcessor<MeterValuesRequest, MeterValuesResponse> ocppMeterValuesProcessor_v201(
 			ChargeSessionManager ocppChargeSessionManager) {
 		return new MeterValuesProcessor(ocppChargeSessionManager);
 	}
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V201)
+	@Qualifier(OCPP_V201)
 	public ActionMessageProcessor<TransactionEventRequest, TransactionEventResponse> ocppTransactionEventProcesor_v201(
 			ChargeSessionManager ocppChargeSessionManager) {
 		return new TransactionEventProcessor(ocppChargeSessionManager);

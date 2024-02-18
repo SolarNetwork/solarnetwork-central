@@ -25,6 +25,7 @@ package net.solarnetwork.central.ocpp.config;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
 import java.time.Clock;
 import java.time.ZoneOffset;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -49,14 +50,14 @@ import ocpp.v201.HeartbeatResponse;
 public class OcppV201BasicActionConfig {
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V201)
+	@Qualifier(OCPP_V201)
 	@Order(Ordered.LOWEST_PRECEDENCE)
 	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppDataTransferProcessor_v201() {
 		return new DataTransferProcessor();
 	}
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V201)
+	@Qualifier(OCPP_V201)
 	public ActionMessageProcessor<HeartbeatRequest, HeartbeatResponse> ocppHeartbeatProcessor_v201() {
 		return new HeartbeatProcessor(Clock.system(ZoneOffset.UTC));
 	}

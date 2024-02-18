@@ -42,7 +42,6 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
@@ -102,26 +101,25 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	@OcppCentralServiceQualifier(OCPP_V201)
-	private ActionPayloadDecoder centralServiceActionPayloadDecoder;
+	@Qualifier(OCPP_V201)
+	private ActionPayloadDecoder actionPayloadDecoder;
 
 	@Autowired
-	@OcppCentralServiceQualifier(OCPP_V201)
-	private List<ActionMessageProcessor<?, ?>> ocppCentralServiceActions;
+	@Qualifier(OCPP_V201)
+	private List<ActionMessageProcessor<?, ?>> ocppActions;
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	@Qualifier(OCPP_V201)
 	public CentralOcppWebSocketHandler<Action, Action> ocppWebSocketHandler_v201() {
 		CentralOcppWebSocketHandler<Action, Action> handler = new CentralOcppWebSocketHandler<>(
 				Action.class, Action.class, new ErrorCodeResolver(), taskExecutor, objectMapper,
-				new SimpleActionMessageQueue(), centralServiceActionPayloadDecoder,
-				centralServiceActionPayloadDecoder);
+				new SimpleActionMessageQueue(), actionPayloadDecoder, actionPayloadDecoder);
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
-		if ( ocppCentralServiceActions != null ) {
-			for ( ActionMessageProcessor<?, ?> processor : ocppCentralServiceActions ) {
+		if ( ocppActions != null ) {
+			for ( ActionMessageProcessor<?, ?> processor : ocppActions ) {
 				handler.addActionMessageProcessor(processor);
 			}
 		}
@@ -154,7 +152,6 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 		pathAuthInterceptor.setClientCredentialsExtractor(CentralOcppWebSocketHandshakeInterceptor
 				.pathCredentialsExtractor("/ocpp/j/v201u/(.*)/(.*)/.*"));
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
-
 	}
 
 }

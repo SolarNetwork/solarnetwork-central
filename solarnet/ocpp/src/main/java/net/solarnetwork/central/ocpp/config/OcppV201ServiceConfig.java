@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppV16ServiceConfig.java - 12/11/2021 1:55:49 PM
+ * OcppV201ServiceConfig.java - 18/02/2024 2:00:27 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,7 +23,9 @@
 package net.solarnetwork.central.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_INSTRUCTION;
-import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
+import java.time.Clock;
+import java.time.ZoneOffset;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -43,37 +45,32 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.service.ConnectorStatusDatumPublisher;
-import net.solarnetwork.central.ocpp.v16.service.DiagnosticsStatusDatumPublisher;
-import net.solarnetwork.central.ocpp.v16.service.FirmwareStatusDatumPublisher;
-import net.solarnetwork.central.ocpp.v16.service.OcppController;
+import net.solarnetwork.central.ocpp.v201.service.OcppController;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.AuthorizationService;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.ocpp.v16.jakarta.cs.AuthorizeProcessor;
-import net.solarnetwork.ocpp.v16.jakarta.cs.BootNotificationProcessor;
-import net.solarnetwork.ocpp.v16.jakarta.cs.StatusNotificationProcessor;
-import ocpp.v16.jakarta.cs.AuthorizeRequest;
-import ocpp.v16.jakarta.cs.AuthorizeResponse;
-import ocpp.v16.jakarta.cs.BootNotificationRequest;
-import ocpp.v16.jakarta.cs.BootNotificationResponse;
-import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationRequest;
-import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationResponse;
-import ocpp.v16.jakarta.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
-import ocpp.v16.jakarta.cs.StatusNotificationRequest;
-import ocpp.v16.jakarta.cs.StatusNotificationResponse;
+import net.solarnetwork.ocpp.service.cs.ChargePointManager;
+import net.solarnetwork.ocpp.v201.service.AuthorizeProcessor;
+import net.solarnetwork.ocpp.v201.service.BootNotificationProcessor;
+import net.solarnetwork.ocpp.v201.service.StatusNotificationProcessor;
+import ocpp.v201.AuthorizeRequest;
+import ocpp.v201.AuthorizeResponse;
+import ocpp.v201.BootNotificationRequest;
+import ocpp.v201.BootNotificationResponse;
+import ocpp.v201.StatusNotificationRequest;
+import ocpp.v201.StatusNotificationResponse;
 
 /**
- * OCPP v1.6 controller configuration.
+ * OCPP v2.0.1 controller configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@Profile(OCPP_V16)
-public class OcppV16ServiceConfig {
+@Configuration(proxyBeanMethods = false)
+@Profile(OCPP_V201)
+public class OcppV201ServiceConfig {
 
 	@Autowired
 	private Executor executor;
@@ -109,11 +106,11 @@ public class OcppV16ServiceConfig {
 	private ConnectorStatusDatumPublisher ocppConnectorStatusDatumPublisher;
 
 	@Autowired
-	@Qualifier(OCPP_V16)
+	@Qualifier(OCPP_V201)
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	@OcppChargePointQualifier(OCPP_V16)
+	@Qualifier(OCPP_V201)
 	private ActionPayloadDecoder ocppChargePointActionPayloadDecoder;
 
 	@Autowired(required = false)
@@ -121,12 +118,12 @@ public class OcppV16ServiceConfig {
 	private DatumProcessor fluxPublisher;
 
 	@Autowired(required = false)
-	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V16)
+	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V201)
 	private ActionMessageProcessor<JsonNode, Void> ocppInstructionHandler;
 
 	@Bean
-	@Qualifier(OCPP_V16)
-	public OcppController ocppController_v16() {
+	@Qualifier(OCPP_V201)
+	public OcppController ocppController_v201() {
 		OcppController controller = new OcppController(executor, ocppChargePointRouter, userNodeDao,
 				nodeInstructionDao, ocppCentralChargePointDao, ocppCentralChargePointConnectorDao,
 				objectMapper);
@@ -138,44 +135,48 @@ public class OcppV16ServiceConfig {
 		return controller;
 	}
 
+	/*-
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> ocppDiagnosticsStatusNotificationProcessor_v16() {
+	@OcppCentralServiceQualifier(OCPP_V201)
+	public ActionMessageProcessor<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> ocppDiagnosticsStatusNotificationProcessor_v201() {
 		DiagnosticsStatusDatumPublisher publisher = new DiagnosticsStatusDatumPublisher(
 				ocppCentralChargePointDao, ocppChargePointSettingsDao,
 				ocppCentralChargePointConnectorDao, datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 		return publisher;
 	}
-
+	
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> ocppFirmwareStatusNotificationProcessor_v16() {
+	@OcppCentralServiceQualifier(OCPP_V201)
+	public ActionMessageProcessor<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> ocppFirmwareStatusNotificationProcessor_v201() {
 		FirmwareStatusDatumPublisher publisher = new FirmwareStatusDatumPublisher(
 				ocppCentralChargePointDao, ocppChargePointSettingsDao,
 				ocppCentralChargePointConnectorDao, datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 		return publisher;
 	}
+	*/
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<AuthorizeRequest, AuthorizeResponse> ocppAuthorizeProcessor_v16(
+	@Qualifier(OCPP_V201)
+	public ActionMessageProcessor<AuthorizeRequest, AuthorizeResponse> ocppAuthorizeProcessor_v201(
 			AuthorizationService authorizationService) {
 		return new AuthorizeProcessor(authorizationService);
 	}
 
-	@ConfigurationProperties(prefix = "app.ocpp.v16.cs.boot-notification")
+	@ConfigurationProperties(prefix = "app.ocpp.v201.cs.boot-notification")
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<BootNotificationRequest, BootNotificationResponse> ocppBootNotificationProcessor_v16() {
-		return new BootNotificationProcessor(ocppController_v16());
+	@Qualifier(OCPP_V201)
+	public ActionMessageProcessor<BootNotificationRequest, BootNotificationResponse> ocppBootNotificationProcessor_v201(
+			@Qualifier(OCPP_V201) ChargePointManager chargePointManager) {
+		return new BootNotificationProcessor(Clock.system(ZoneOffset.UTC), chargePointManager);
 	}
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<StatusNotificationRequest, StatusNotificationResponse> ocppStatusNotification_v16() {
-		return new StatusNotificationProcessor(ocppController_v16());
+	@Qualifier(OCPP_V201)
+	public ActionMessageProcessor<StatusNotificationRequest, StatusNotificationResponse> ocppStatusNotification_v201(
+			@Qualifier(OCPP_V201) ChargePointManager chargePointManager) {
+		return new StatusNotificationProcessor(chargePointManager);
 	}
 
 }
