@@ -39,11 +39,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.common.config.VersionedQualifier;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
-import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
-import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.service.ConnectorStatusDatumPublisher;
 import net.solarnetwork.central.ocpp.v201.service.OcppController;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -88,16 +86,10 @@ public class OcppV201ServiceConfig {
 	private NodeInstructionDao nodeInstructionDao;
 
 	@Autowired
-	private DatumEntityDao datumDao;
-
-	@Autowired
 	private CentralChargePointDao ocppCentralChargePointDao;
 
 	@Autowired
 	private CentralChargePointConnectorDao ocppCentralChargePointConnectorDao;
-
-	@Autowired
-	private ChargePointSettingsDao ocppChargePointSettingsDao;
 
 	@Autowired
 	private ChargePointRouter ocppChargePointRouter;
@@ -134,28 +126,6 @@ public class OcppV201ServiceConfig {
 		controller.setInstructionHandler(ocppInstructionHandler);
 		return controller;
 	}
-
-	/*-
-	@Bean
-	@OcppCentralServiceQualifier(OCPP_V201)
-	public ActionMessageProcessor<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> ocppDiagnosticsStatusNotificationProcessor_v201() {
-		DiagnosticsStatusDatumPublisher publisher = new DiagnosticsStatusDatumPublisher(
-				ocppCentralChargePointDao, ocppChargePointSettingsDao,
-				ocppCentralChargePointConnectorDao, datumDao);
-		publisher.setFluxPublisher(fluxPublisher);
-		return publisher;
-	}
-	
-	@Bean
-	@OcppCentralServiceQualifier(OCPP_V201)
-	public ActionMessageProcessor<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> ocppFirmwareStatusNotificationProcessor_v201() {
-		FirmwareStatusDatumPublisher publisher = new FirmwareStatusDatumPublisher(
-				ocppCentralChargePointDao, ocppChargePointSettingsDao,
-				ocppCentralChargePointConnectorDao, datumDao);
-		publisher.setFluxPublisher(fluxPublisher);
-		return publisher;
-	}
-	*/
 
 	@Bean
 	@Qualifier(OCPP_V201)
