@@ -157,7 +157,7 @@ public final class UserLongIntegerCompositePK extends BasePK implements Serializ
 	}
 
 	/**
-	 * Get the user ID.
+	 * Get the group ID.
 	 * 
 	 * @return the user ID
 	 */
