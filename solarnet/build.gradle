@@ -72,7 +72,7 @@ subprojects {
 		snCommonMqttNettyVersion = '3.0.1'
 		snCommonOcppVersion = '4.1.0'
 		snCommonOcpp16JakartaVersion = '4.0.1'
-		snCommonOcpp201Version = '1.2.1'
+		snCommonOcpp201Version = '1.2.2'
 		snCommonOcppWebJakartaVersion = '2.2.1'
 		snCommonPkiBcVersion = '3.0.0'
 		snCommonWebJakartaVersion = '2.0.0'
