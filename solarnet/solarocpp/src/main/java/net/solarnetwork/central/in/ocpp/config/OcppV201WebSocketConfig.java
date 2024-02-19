@@ -49,6 +49,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v201.service.ConnectorKeyExtractor;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
+import net.solarnetwork.ocpp.json.WebSocketSubProtocol;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
 import net.solarnetwork.ocpp.v201.domain.Action;
@@ -113,7 +114,8 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 	public CentralOcppWebSocketHandler<Action, Action> ocppWebSocketHandler_v201() {
 		CentralOcppWebSocketHandler<Action, Action> handler = new CentralOcppWebSocketHandler<>(
 				Action.class, Action.class, new ErrorCodeResolver(), taskExecutor, objectMapper,
-				new SimpleActionMessageQueue(), actionPayloadDecoder, actionPayloadDecoder);
+				new SimpleActionMessageQueue(), actionPayloadDecoder, actionPayloadDecoder,
+				WebSocketSubProtocol.OCPP_V201.getValue());
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);
@@ -134,23 +136,23 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		WebSocketHandlerRegistration basicAuthReg = registry
-				.addHandler(ocppWebSocketHandler_v201(), "/ocpp/j/v201/**").setAllowedOrigins("*");
+				.addHandler(ocppWebSocketHandler_v201(), "/ocpp/v201/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor basicAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
-		basicAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v201/(.*)"));
+		basicAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/v201/(.*)"));
 		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		basicAuthReg.addInterceptors(basicAuthInterceptor);
 
 		WebSocketHandlerRegistration pathAuthReg = registry
-				.addHandler(ocppWebSocketHandler_v201(), "/ocpp/j/v201u/**").setAllowedOrigins("*");
+				.addHandler(ocppWebSocketHandler_v201(), "/ocpp/v201u/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
-		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v201u/.*/.*/(.*)"));
+		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/v201u/.*/.*/(.*)"));
 		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		pathAuthInterceptor.setClientCredentialsExtractor(CentralOcppWebSocketHandshakeInterceptor
-				.pathCredentialsExtractor("/ocpp/j/v201u/(.*)/(.*)/.*"));
+				.pathCredentialsExtractor("/ocpp/v201u/(.*)/(.*)/.*"));
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
 	}
 

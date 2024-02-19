@@ -51,6 +51,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
+import net.solarnetwork.ocpp.json.WebSocketSubProtocol;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
 import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
@@ -121,7 +122,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		CentralOcppWebSocketHandler<ChargePointAction, CentralSystemAction> handler = new CentralOcppWebSocketHandler<>(
 				ChargePointAction.class, CentralSystemAction.class, new ErrorCodeResolver(),
 				taskExecutor, objectMapper, new SimpleActionMessageQueue(),
-				centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder);
+				centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
+				WebSocketSubProtocol.OCPP_V16.getValue());
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);

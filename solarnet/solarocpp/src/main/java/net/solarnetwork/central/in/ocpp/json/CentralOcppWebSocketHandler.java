@@ -99,12 +99,17 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param executor
 	 *        an executor for tasks
 	 * @param mapper
+	 *        the mapper
+	 * @param subProtocols
+	 *        the WebSocket sub-protocols
+	 * @param mapper
 	 *        the object mapper to use
 	 */
 	public CentralOcppWebSocketHandler(Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
-			AsyncTaskExecutor executor, ObjectMapper mapper) {
-		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper);
+			AsyncTaskExecutor executor, ObjectMapper mapper, String... subProtocols) {
+		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
+				subProtocols);
 	}
 
 	/**
@@ -119,7 +124,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param executor
 	 *        an executor for tasks
 	 * @param mapper
-	 *        the object mapper to use
+	 *        the mapper
 	 * @param pendingMessageQueue
 	 *        a queue to hold pending messages, for individual client IDs
 	 * @param centralServiceActionPayloadDecoder
@@ -127,6 +132,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param chargePointActionPayloadDecoder
 	 *        for Central Service message the action payload decoder to use for
 	 *        Charge Point messages
+	 * @param subProtocols
+	 *        the WebSocket sub-protocols
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
 	 */
@@ -134,10 +141,10 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
 			AsyncTaskExecutor executor, ObjectMapper mapper, ActionMessageQueue pendingMessageQueue,
 			ActionPayloadDecoder centralServiceActionPayloadDecoder,
-			ActionPayloadDecoder chargePointActionPayloadDecoder) {
+			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
 		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
-				pendingMessageQueue, centralServiceActionPayloadDecoder,
-				chargePointActionPayloadDecoder);
+				pendingMessageQueue, centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
+				subProtocols);
 	}
 
 	@Override
