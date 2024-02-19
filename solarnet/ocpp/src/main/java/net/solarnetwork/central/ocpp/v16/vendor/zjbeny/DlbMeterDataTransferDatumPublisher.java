@@ -35,7 +35,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.v16.controller.DatumPublisherSupport;
+import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -69,7 +69,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </p>
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -223,7 +223,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 		d.setSamples(s);
 		d.setCreated(Instant.now());
 		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null));
+		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 		return d;
 	}
 

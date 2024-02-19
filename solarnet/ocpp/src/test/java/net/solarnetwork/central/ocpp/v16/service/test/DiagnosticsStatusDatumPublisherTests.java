@@ -1,5 +1,5 @@
 /* ==================================================================
- * FirmwareStatusDatumPublisherTests.java - 29/07/2022 10:19:33 am
+ * DiagnosticsStatusDatumPublisherTests.java - 29/07/2022 10:19:33 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller.test;
+package net.solarnetwork.central.ocpp.v16.service.test;
 
 import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
@@ -48,7 +48,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.v16.controller.FirmwareStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.service.DiagnosticsStatusDatumPublisher;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
@@ -57,24 +57,24 @@ import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
-import ocpp.v16.jakarta.cs.FirmwareStatus;
-import ocpp.v16.jakarta.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
+import ocpp.v16.jakarta.cs.DiagnosticsStatus;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationResponse;
 
 /**
- * Test cases for the {@link FirmwaresStatusDatumPublisher} class.
+ * Test cases for the {@link DiagnosticsStatusDatumPublisher} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class FirmwareStatusDatumPublisherTests {
+public class DiagnosticsStatusDatumPublisherTests {
 
 	private CentralChargePointDao chargePointDao;
 	private ChargePointSettingsDao chargePointSettingsDao;
 	private CentralChargePointConnectorDao chargePointConnectorDao;
 	private DatumEntityDao datumDao;
 	private DatumProcessor fluxPublisher;
-	private FirmwareStatusDatumPublisher publisher;
+	private DiagnosticsStatusDatumPublisher publisher;
 
 	@BeforeEach
 	public void setup() {
@@ -83,7 +83,7 @@ public class FirmwareStatusDatumPublisherTests {
 		chargePointConnectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		fluxPublisher = EasyMock.createMock(DatumProcessor.class);
-		publisher = new FirmwareStatusDatumPublisher(chargePointDao, chargePointSettingsDao,
+		publisher = new DiagnosticsStatusDatumPublisher(chargePointDao, chargePointSettingsDao,
 				chargePointConnectorDao, datumDao);
 		publisher.setFluxPublisher(fluxPublisher);
 	}
@@ -115,7 +115,7 @@ public class FirmwareStatusDatumPublisherTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
-		String sourceId = "/foo/" + cp.getInfo().getId() + "/firmware-status";
+		String sourceId = "/foo/" + cp.getInfo().getId() + "/diagnostics-status";
 		UUID streamId = UUID.randomUUID();
 		expect(datumDao.store(capture(datumCaptor))).andReturn(new DatumPK(streamId, Instant.now()));
 
@@ -125,16 +125,16 @@ public class FirmwareStatusDatumPublisherTests {
 
 		// WHEN
 		replayAll();
-		FirmwareStatusNotificationRequest req = new FirmwareStatusNotificationRequest();
-		req.setStatus(FirmwareStatus.INSTALLED);
-		ActionMessage<FirmwareStatusNotificationRequest> msg = new BasicActionMessage<>(cpi,
-				CentralSystemAction.FirmwareStatusNotification, req);
+		DiagnosticsStatusNotificationRequest req = new DiagnosticsStatusNotificationRequest();
+		req.setStatus(DiagnosticsStatus.UPLOADED);
+		ActionMessage<DiagnosticsStatusNotificationRequest> msg = new BasicActionMessage<>(cpi,
+				CentralSystemAction.DiagnosticsStatusNotification, req);
 		publisher.processActionMessage(msg, new ActionMessageResultHandler<>() {
 
 			@Override
 			public boolean handleActionMessageResult(
-					ActionMessage<FirmwareStatusNotificationRequest> message,
-					FirmwareStatusNotificationResponse result, Throwable error) {
+					ActionMessage<DiagnosticsStatusNotificationRequest> message,
+					DiagnosticsStatusNotificationResponse result, Throwable error) {
 				assertThat("Result returned", result, is(notNullValue()));
 				assertThat("No error thrown", error, is(nullValue()));
 				return false;

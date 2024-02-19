@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -101,12 +102,18 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	}
 
 	private CentralChargePointConnector createTestConnector(long chargePointId, int connectorId) {
+		return createTestConnector(chargePointId, 0, connectorId);
+	}
+
+	private CentralChargePointConnector createTestConnector(long chargePointId, int evseId,
+			int connectorId) {
 		CentralChargePointConnector cpc = new CentralChargePointConnector(
-				new ChargePointConnectorKey(chargePointId, connectorId),
+				new ChargePointConnectorKey(chargePointId, evseId, connectorId),
 				Instant.ofEpochMilli(System.currentTimeMillis()));
 		// @formatter:off
 		cpc.setInfo(StatusNotification.builder()
-				.withConnectorId(cpc.getId().getConnectorId())
+				.withEvseId(evseId)
+				.withConnectorId(connectorId)
 				.withStatus(ChargePointStatus.Available)
 				.withErrorCode(ChargePointErrorCode.NoError)
 				.withTimestamp(Instant.ofEpochMilli(System.currentTimeMillis())).build());
@@ -119,6 +126,16 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
 
 		CentralChargePointConnector cpc = createTestConnector(cp.getId(), 1);
+		ChargePointConnectorKey pk = dao.save(cpc);
+		assertThat("PK preserved", pk, equalTo(cpc.getId()));
+		last = cpc;
+	}
+
+	@Test
+	public void insert_evse() {
+		ChargePoint cp = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+
+		CentralChargePointConnector cpc = createTestConnector(cp.getId(), 1, 2);
 		ChargePointConnectorKey pk = dao.save(cpc);
 		assertThat("PK preserved", pk, equalTo(cpc.getId()));
 		last = cpc;
@@ -139,6 +156,17 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 	@Test
 	public void getByPK() {
 		insert();
+		CentralChargePointConnector entity = (CentralChargePointConnector) dao.get(last.getId());
+
+		assertThat("ID", entity.getId(), equalTo(last.getId()));
+		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("User ID", entity.getUserId(), equalTo(userId));
+		assertThat("Connector info", entity.getInfo(), equalTo(last.getInfo()));
+	}
+
+	@Test
+	public void getByPK_evse() {
+		insert_evse();
 		CentralChargePointConnector entity = (CentralChargePointConnector) dao.get(last.getId());
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
@@ -263,6 +291,41 @@ public class MyBatisCentralChargePointConnectorDaoTests extends AbstractMyBatisD
 		assertThat("Result keys",
 				results.stream().map(ChargePointConnector::getId).collect(Collectors.toList()),
 				equalTo(expectedKeys));
+	}
+
+	@Test
+	public void findForOwnerAndChargePoint_evse() {
+		// GIVEN
+		ChargePoint cp1 = createAndSaveTestChargePoint("foo", "bar", userId, nodeId);
+		ChargePointConnector obj1 = createTestConnector(cp1.getId(), 1, 1);
+		obj1 = dao.get(dao.save(obj1));
+		ChargePointConnector obj2 = createTestConnector(cp1.getId(), 2, 1);
+		obj2 = dao.get(dao.save(obj2));
+		ChargePointConnector obj3 = createTestConnector(cp1.getId(), 2, 2);
+		obj3 = dao.get(dao.save(obj3));
+
+		Long userId2 = userId - 1;
+		Long nodeId2 = nodeId - 1;
+		setupTestUser(userId2);
+		setupTestNode(nodeId2);
+		setupTestUserNode(userId2, nodeId2);
+		ChargePoint cp2 = createAndSaveTestChargePoint("foo", "bar", userId2, nodeId2);
+		ChargePointConnector obj4 = createTestConnector(cp2.getId(), 1, 1);
+		obj4 = dao.get(dao.save(obj4));
+
+		// add another for a different charge point
+		insert();
+
+		// WHEN
+		Collection<CentralChargePointConnector> results = dao.findByChargePointId(userId, cp1.getId());
+
+		// THEN
+		// @formatter:off
+		then(results).map(ChargePointConnector::getId)
+			.as("Connectors returned in order")
+			.contains(obj1.getId(), obj2.getId(), obj3.getId())
+			;
+		// @formatter:on
 	}
 
 	@Test

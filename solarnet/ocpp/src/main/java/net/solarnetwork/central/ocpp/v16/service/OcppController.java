@@ -20,11 +20,10 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller;
+package net.solarnetwork.central.ocpp.v16.service;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
 import java.time.Instant;
@@ -34,64 +33,40 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
-import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
+import net.solarnetwork.central.ocpp.service.BaseOcppController;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
-import net.solarnetwork.ocpp.domain.Action;
-import net.solarnetwork.ocpp.domain.ActionMessage;
-import net.solarnetwork.ocpp.domain.Authorization;
-import net.solarnetwork.ocpp.domain.AuthorizationInfo;
-import net.solarnetwork.ocpp.domain.AuthorizationStatus;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePoint;
 import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
-import net.solarnetwork.ocpp.domain.ErrorCodeException;
-import net.solarnetwork.ocpp.domain.RegistrationStatus;
 import net.solarnetwork.ocpp.domain.StatusNotification;
-import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import net.solarnetwork.ocpp.service.AuthorizationService;
-import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import net.solarnetwork.ocpp.service.cs.ChargePointManager;
 import net.solarnetwork.ocpp.v16.jakarta.ActionErrorCode;
 import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
 import net.solarnetwork.ocpp.v16.jakarta.ConfigurationKey;
-import net.solarnetwork.ocpp.v16.jakarta.json.BaseActionPayloadDecoder;
-import net.solarnetwork.security.AuthorizationException;
-import net.solarnetwork.security.AuthorizationException.Reason;
-import net.solarnetwork.service.support.BasicIdentifiable;
 import ocpp.v16.jakarta.cp.GetConfigurationRequest;
 import ocpp.v16.jakarta.cp.GetConfigurationResponse;
 import ocpp.v16.jakarta.cp.KeyValue;
@@ -100,30 +75,9 @@ import ocpp.v16.jakarta.cp.KeyValue;
  * Manage OCPP 1.6 interactions.
  * 
  * @author matt
- * @version 2.8
+ * @version 2.9
  */
-public class OcppController extends BasicIdentifiable implements ChargePointManager,
-		AuthorizationService, NodeInstructionQueueHook, CentralOcppUserEvents {
-
-	/** The default {@code initialRegistrationStatus} value. */
-	public static final RegistrationStatus DEFAULT_INITIAL_REGISTRATION_STATUS = RegistrationStatus.Pending;
-
-	private final Executor executor;
-	private final UserNodeDao userNodeDao;
-	private final NodeInstructionDao instructionDao;
-	private final ChargePointRouter chargePointRouter;
-	private final CentralAuthorizationDao authorizationDao;
-	private final CentralChargePointDao chargePointDao;
-	private final CentralChargePointConnectorDao chargePointConnectorDao;
-	private RegistrationStatus initialRegistrationStatus;
-	private TransactionTemplate transactionTemplate;
-	private ActionPayloadDecoder chargePointActionPayloadDecoder;
-	private ObjectMapper objectMapper;
-	private ConnectorStatusDatumPublisher datumPublisher;
-	private ActionMessageProcessor<JsonNode, Void> instructionHandler;
-	private UserEventAppenderBiz userEventAppenderBiz;
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
+public class OcppController extends BaseOcppController {
 
 	/**
 	 * Constructor.
@@ -136,96 +90,37 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 	 *        the user node DAO to use
 	 * @param instructionDao
 	 *        the instruction DAO to use
-	 * @param authorizationDao
-	 *        the {@link Authorization} DAO to use
 	 * @param chargePointDao
 	 *        the {@link ChargePoint} DAO to use
 	 * @param chargePointConnectorDao
 	 *        the {@link ChargePointConnector} DAO to use
+	 * @param objectMapper
+	 *        the object mapper to use
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
 	 */
 	public OcppController(Executor executor, ChargePointRouter chargePointRouter,
 			UserNodeDao userNodeDao, NodeInstructionDao instructionDao,
-			CentralAuthorizationDao authorizationDao, CentralChargePointDao chargePointDao,
-			CentralChargePointConnectorDao chargePointConnectorDao) {
-		super();
-		this.executor = requireNonNullArgument(executor, "executor");
-		this.chargePointRouter = requireNonNullArgument(chargePointRouter, "chargePointRouter");
-		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
-		this.instructionDao = requireNonNullArgument(instructionDao, "instructionDao");
-		this.authorizationDao = requireNonNullArgument(authorizationDao, "authorizationDao");
-		this.chargePointDao = requireNonNullArgument(chargePointDao, "chargePointDao");
-		if ( chargePointConnectorDao == null ) {
-			throw new IllegalArgumentException(
-					"The chargePointConnectorDao parameter must not be null.");
-		}
-		this.chargePointConnectorDao = chargePointConnectorDao;
-		this.initialRegistrationStatus = DEFAULT_INITIAL_REGISTRATION_STATUS;
-		this.objectMapper = BaseActionPayloadDecoder.defaultObjectMapper();
+			CentralChargePointDao chargePointDao, CentralChargePointConnectorDao chargePointConnectorDao,
+			ObjectMapper objectMapper) {
+		super(executor, chargePointRouter, userNodeDao, instructionDao, chargePointDao,
+				chargePointConnectorDao, objectMapper);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePoint registerChargePoint(ChargePointIdentity identity, ChargePointInfo info) {
-		log.info("Charge Point registration received: {}", info);
-
-		if ( info == null || info.getId() == null ) {
-			throw new IllegalArgumentException("The ChargePoint ID must be provided.");
-		}
-
-		ChargePoint cp = chargePointDao.getForIdentity(identity);
-		if ( cp == null ) {
-			throw new IllegalArgumentException("ChargePoint identifer is not known.");
-		}
-		if ( cp.isEnabled() ) {
-			cp = updateChargePointInfo(cp, info);
-		}
+		ChargePoint cp = super.registerChargePoint(identity, info);
 
 		// request the number of connectors, if no connectors present
 		if ( cp.getConnectorCount() < 1 ) {
 			var getConfReq = new GetConfigurationRequest();
 			getConfReq.getKey().add(ConfigurationKey.NumberOfConnectors.getName());
 			sendToChargePoint(identity, ChargePointAction.GetConfiguration, getConfReq,
-					processConfiguration(cp));
+					processConfiguration(cp), ActionErrorCode.GenericError);
 		}
 
 		return cp;
-	}
-
-	private ChargePoint updateChargePointInfo(ChargePoint cp, ChargePointInfo info) {
-		assert cp != null && cp.getInfo() != null;
-		if ( cp.getInfo().isSameAs(info) ) {
-			log.info("ChargePoint registration info is unchanged: {}", info);
-		} else {
-			log.info("Updating ChargePoint registration info {} -> {}", cp.getInfo(), info);
-			cp.getInfo().copyFrom(info);
-			chargePointDao.save(cp);
-		}
-		return cp;
-	}
-
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	@Override
-	public boolean isChargePointRegistrationAccepted(long chargePointId) {
-		ChargePoint cp = chargePointDao.get(chargePointId);
-		return cp != null && cp.isEnabled() && cp.getRegistrationStatus() == RegistrationStatus.Accepted;
-	}
-
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
-	@Override
-	public void updateChargePointStatus(ChargePointIdentity identity, StatusNotification info) {
-		final CentralChargePoint chargePoint = (CentralChargePoint) chargePointDao
-				.getForIdentity(identity);
-		if ( chargePoint == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, identity);
-		}
-		log.info("Received Charge Point {} status: {}", identity, info);
-		chargePointConnectorDao.saveStatusInfo(chargePoint.getId(), info);
-		ConnectorStatusDatumPublisher publisher = getDatumPublisher();
-		if ( publisher != null ) {
-			publisher.processStatusNotification(chargePoint, info);
-		}
 	}
 
 	private ActionMessageResultHandler<GetConfigurationRequest, GetConfigurationResponse> processConfiguration(
@@ -294,33 +189,6 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 	}
 
 	@Override
-	public AuthorizationInfo authorize(final ChargePointIdentity identity, final String idTag) {
-		Authorization auth = null;
-		if ( identity != null && idTag != null ) {
-			CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identity);
-			if ( cp != null ) {
-				auth = authorizationDao.getForToken(cp.getUserId(), idTag);
-			}
-		}
-		AuthorizationInfo.Builder result = AuthorizationInfo.builder().withId(idTag);
-		if ( auth != null ) {
-			result.withExpiryDate(auth.getExpiryDate()).withParentId(auth.getParentId());
-			if ( !auth.isEnabled() ) {
-				result.withStatus(AuthorizationStatus.Blocked);
-			} else if ( auth.isExpired() ) {
-				result.withStatus(AuthorizationStatus.Expired);
-			} else {
-				result.withStatus(AuthorizationStatus.Accepted);
-			}
-		} else {
-			log.info("Invliad IdTag received from charge point {}: [{}]", identity.getIdentifier(),
-					idTag);
-			result.withStatus(AuthorizationStatus.Invalid);
-		}
-		return result.build();
-	}
-
-	@Override
 	public NodeInstruction willQueueNodeInstruction(NodeInstruction instruction) {
 		final String topic = instruction.getTopic();
 		final Long nodeId = instruction.getNodeId();
@@ -351,7 +219,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 			return instruction;
 		}
 		return OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
-				chargePointActionPayloadDecoder, (e, jsonPayload, payload) -> {
+				getChargePointActionPayloadDecoder(), (e, jsonPayload, payload) -> {
 					if ( e != null ) {
 						Throwable root = e;
 						while ( root.getCause() != null ) {
@@ -457,7 +325,7 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 				}
 			}
 			return true;
-		});
+		}, ActionErrorCode.GenericError);
 	}
 
 	private static final class OcppNodeInstruction extends NodeInstruction {
@@ -479,216 +347,6 @@ public class OcppController extends BasicIdentifiable implements ChargePointMana
 			this.jsonPayload = jsonPayload;
 			this.payload = payload;
 		}
-	}
-
-	private Map<String, String> instructionParameterMap(NodeInstruction instruction) {
-		Map<String, String> params = instruction.getParams();
-		return (params != null ? params : new HashMap<>(0));
-	}
-
-	private CentralChargePoint chargePointForParameters(UserNode userNode,
-			Map<String, String> parameters) {
-		CentralChargePoint result = null;
-		try {
-			Long id = Long.valueOf(parameters.remove(OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM));
-			result = chargePointDao.get(userNode.getUserId(), id);
-		} catch ( NumberFormatException e ) {
-			// try via identifier
-			String ident = parameters.remove(OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM);
-			if ( ident != null ) {
-				result = (CentralChargePoint) chargePointDao.getForIdentifier(userNode.getUserId(),
-						ident);
-			}
-		}
-		return result;
-	}
-
-	private <T> T tryWithTransaction(TransactionCallback<T> tx) {
-		final TransactionTemplate tt = getTransactionTemplate();
-		if ( tt != null ) {
-			return tt.execute(tx);
-		} else {
-			return tx.doInTransaction(null);
-		}
-	}
-
-	private <T, R> void sendToChargePoint(ChargePointIdentity identity, Action action, T payload,
-			ActionMessageResultHandler<T, R> handler) {
-		executor.execute(() -> {
-			ActionMessage<T> msg = new BasicActionMessage<T>(identity, UUID.randomUUID().toString(),
-					action, payload);
-			ChargePointBroker broker = chargePointRouter.brokerForChargePoint(identity);
-			if ( broker != null ) {
-				if ( broker.sendMessageToChargePoint(msg, handler) ) {
-					return;
-				}
-			} else {
-				log.warn("No ChargePointBroker available for {}", identity);
-			}
-			handler.handleActionMessageResult(msg, null,
-					new ErrorCodeException(ActionErrorCode.GenericError, "Client not available."));
-		});
-	}
-
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
-		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
-		if ( biz == null ) {
-			return;
-		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
-		biz.addEvent(userId, event);
-	}
-
-	/**
-	 * Get the initial {@link RegistrationStatus} to use for newly registered
-	 * charge points.
-	 * 
-	 * @return the status, never {@literal null}
-	 */
-	public RegistrationStatus getInitialRegistrationStatus() {
-		return initialRegistrationStatus;
-	}
-
-	/**
-	 * Set the initial {@link RegistrationStatus} to use for newly registered
-	 * charge points.
-	 * 
-	 * @param initialRegistrationStatus
-	 *        the status to set
-	 * @throws IllegalArgumentException
-	 *         if {@code initialRegistrationStatus} is {@literal null}
-	 */
-	public void setInitialRegistrationStatus(RegistrationStatus initialRegistrationStatus) {
-		if ( initialRegistrationStatus == null ) {
-			throw new IllegalArgumentException(
-					"The initialRegistrationStatus parameter must not be null.");
-		}
-		this.initialRegistrationStatus = initialRegistrationStatus;
-	}
-
-	/**
-	 * Get the configured transaction template.
-	 * 
-	 * @return the transaction template
-	 */
-	public TransactionTemplate getTransactionTemplate() {
-		return transactionTemplate;
-	}
-
-	/**
-	 * Set the transaction template to use.
-	 * 
-	 * @param transactionTemplate
-	 *        the transaction template to set
-	 */
-	public void setTransactionTemplate(TransactionTemplate transactionTemplate) {
-		this.transactionTemplate = transactionTemplate;
-	}
-
-	/**
-	 * Get the ChargePoint action payload decoder.
-	 * 
-	 * @return the decoder
-	 */
-	public ActionPayloadDecoder getChargePointActionPayloadDecoder() {
-		return chargePointActionPayloadDecoder;
-	}
-
-	/**
-	 * Set the ChargePoint action payload decoder.
-	 * 
-	 * @param chargePointActionPayloadDecoder
-	 *        the decoder
-	 */
-	public void setChargePointActionPayloadDecoder(
-			ActionPayloadDecoder chargePointActionPayloadDecoder) {
-		this.chargePointActionPayloadDecoder = chargePointActionPayloadDecoder;
-	}
-
-	/**
-	 * Get the {@link ObjectMapper}.
-	 * 
-	 * @return the mapper
-	 */
-	public ObjectMapper getObjectMapper() {
-		return objectMapper;
-	}
-
-	/**
-	 * Set the {@link ObjectMapper} to use.
-	 * 
-	 * @param objectMapper
-	 *        the mapper
-	 */
-	public void setObjectMapper(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
-
-	/**
-	 * Get the configured datum publisher for status notification updates.
-	 * 
-	 * @return the datum publisher
-	 * @since 1.1
-	 */
-	public ConnectorStatusDatumPublisher getDatumPublisher() {
-		return datumPublisher;
-	}
-
-	/**
-	 * Set a datum publisher for status notification updates.
-	 * 
-	 * @param datumPublisher
-	 *        the datum publisher
-	 * @since 1.1
-	 */
-	public void setDatumPublisher(ConnectorStatusDatumPublisher datumPublisher) {
-		this.datumPublisher = datumPublisher;
-	}
-
-	/**
-	 * Get an action processor to handle instructions with.
-	 * 
-	 * @return the action processor
-	 */
-	public ActionMessageProcessor<JsonNode, Void> getInstructionHandler() {
-		return instructionHandler;
-	}
-
-	/**
-	 * Set an action processor to handle instructions with.
-	 * 
-	 * <p>
-	 * If this is configured, then instruction handling will be delegated to
-	 * this service.
-	 * </p>
-	 * 
-	 * @param instructionHandler
-	 *        the handler
-	 */
-	public void setInstructionHandler(ActionMessageProcessor<JsonNode, Void> instructionHandler) {
-		this.instructionHandler = instructionHandler;
-	}
-
-	/**
-	 * Get the user event appender service.
-	 * 
-	 * @return the service
-	 * @since 2.2
-	 */
-	public UserEventAppenderBiz getUserEventAppenderBiz() {
-		return userEventAppenderBiz;
-	}
-
-	/**
-	 * Set the user event appender service.
-	 * 
-	 * @param userEventAppenderBiz
-	 *        the service to set
-	 * @since 2.2
-	 */
-	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
-		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
 }

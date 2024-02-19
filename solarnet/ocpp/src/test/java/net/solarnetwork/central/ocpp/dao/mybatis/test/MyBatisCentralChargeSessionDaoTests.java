@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static java.lang.Integer.parseInt;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -64,7 +65,7 @@ import net.solarnetwork.ocpp.domain.UnitOfMeasure;
  * Test cases for the {@link MyBatisCentralChargeSessionDao} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -112,7 +113,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	private CentralChargeSession createTestChargeSession(long chargePointId) {
 		CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(),
 				Instant.ofEpochMilli(System.currentTimeMillis()),
-				UUID.randomUUID().toString().substring(0, 20), chargePointId, 1, 0);
+				UUID.randomUUID().toString().substring(0, 20), chargePointId, 0, 1, "0");
 		return sess;
 	}
 
@@ -139,7 +140,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
 		assertThat("Auth ID", entity.getAuthId(), equalTo(last.getAuthId()));
 		assertThat("Conn ID", entity.getConnectorId(), equalTo(last.getConnectorId()));
-		assertThat("Transaction ID generated", entity.getTransactionId(), greaterThan(0));
+		assertThat("Transaction ID generated", parseInt(entity.getTransactionId()), greaterThan(0));
 	}
 
 	@Test
@@ -151,7 +152,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
 		assertThat("Auth ID", entity.getAuthId(), equalTo(last.getAuthId()));
 		assertThat("Conn ID", entity.getConnectorId(), equalTo(last.getConnectorId()));
-		assertThat("Transaction ID generated", entity.getTransactionId(), greaterThan(0));
+		assertThat("Transaction ID generated", parseInt(entity.getTransactionId()), greaterThan(0));
 	}
 
 	@Test
@@ -180,7 +181,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 
 	@Test
 	public void findIncomplete_tx_none() {
-		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(1L, 1);
+		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(1L, "1");
 		assertThat("No incomplete session found", sess, nullValue());
 	}
 
@@ -188,14 +189,15 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	public void findIncomplete_tx_noMatchingId() {
 		insert();
 		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(last.getChargePointId() - 1,
-				1);
+				"1");
 		assertThat("No incomplete session found", sess, nullValue());
 	}
 
 	@Test
 	public void findIncomplete_tx_noMatchingTxId() {
 		insert();
-		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(last.getChargePointId(), 123);
+		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(last.getChargePointId(),
+				"123");
 		assertThat("No incomplete session found", sess, nullValue());
 	}
 
@@ -229,7 +231,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 
 		ChargeSession s = dao.get(last.getId());
 
-		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(s.getChargePointId(), -1);
+		ChargeSession sess = dao.getIncompleteChargeSessionForTransaction(s.getChargePointId(), "-1");
 		assertThat("Incomplete session found using wildcard tx ID", sess, equalTo(last));
 	}
 
@@ -238,7 +240,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		insert();
 
 		ChargeSession sess = dao.getIncompleteChargeSessionForConnector(last.getChargePointId(),
-				last.getConnectorId());
+				last.getEvseId(), last.getConnectorId());
 		assertThat("Incomplete session found", sess, equalTo(last));
 	}
 
@@ -246,8 +248,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	public void findIncompletes_conn() {
 		insert();
 
-		Collection<ChargeSession> sess = dao
-				.getIncompleteChargeSessionsForConnector(last.getChargePointId(), last.getConnectorId());
+		Collection<ChargeSession> sess = dao.getIncompleteChargeSessionsForConnector(
+				last.getChargePointId(), last.getEvseId(), last.getConnectorId());
 		assertThat("Incomplete session found", sess, contains(last));
 	}
 
@@ -260,7 +262,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		cp2 = chargePointDao.get(chargePointDao.save(cp2));
 		ChargeSession s = dao.get(last.getId());
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(),
-				Instant.ofEpochMilli(System.currentTimeMillis()), s.getAuthId(), cp2.getId(),
+				Instant.ofEpochMilli(System.currentTimeMillis()), s.getAuthId(), cp2.getId(), 0,
 				s.getConnectorId() + 1, s.getTransactionId() + 1);
 		dao.save(two);
 
@@ -276,7 +278,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		// add another for same charge point, but complete
 		ChargeSession s = dao.get(last.getId());
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(),
-				Instant.ofEpochMilli(System.currentTimeMillis()), s.getAuthId(), s.getChargePointId(),
+				Instant.ofEpochMilli(System.currentTimeMillis()), s.getAuthId(), s.getChargePointId(), 0,
 				s.getConnectorId() + 1, s.getTransactionId() + 1);
 		two.setEnded(Instant.ofEpochMilli(System.currentTimeMillis()));
 		dao.save(two);
@@ -293,7 +295,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		// add another for same charge point, also incomplete
 		ChargeSession s = dao.get(last.getId());
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated().plusSeconds(1),
-				s.getAuthId(), s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+				s.getAuthId(), s.getChargePointId(), s.getEvseId(), s.getConnectorId() + 1,
+				String.valueOf(parseInt(s.getTransactionId()) + 1));
 		dao.save(two);
 
 		Collection<ChargeSession> sess = dao
@@ -308,7 +311,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		// add another for same charge point, also incomplete
 		ChargeSession s = dao.get(last.getId());
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated().plusSeconds(1),
-				s.getAuthId(), s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+				s.getAuthId(), s.getChargePointId(), s.getEvseId(), s.getConnectorId() + 1,
+				String.valueOf(parseInt(s.getTransactionId()) + 1));
 		dao.save(two);
 
 		Collection<ChargeSession> sess = dao.getIncompleteChargeSessionsForUserForChargePoint(userId,
@@ -323,7 +327,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		// add another for same charge point, also incomplete
 		ChargeSession s = dao.get(last.getId());
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated().plusSeconds(1),
-				s.getAuthId(), s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+				s.getAuthId(), s.getChargePointId(), s.getEvseId(), s.getConnectorId() + 1,
+				String.valueOf(parseInt(s.getTransactionId()) + 1));
 		dao.save(two);
 
 		Collection<ChargeSession> sess = dao.getIncompleteChargeSessionsForUserForChargePoint(-1L,
@@ -402,7 +407,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		dao.save(s);
 
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated(), s.getAuthId(),
-				s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+				s.getChargePointId(), s.getEvseId(), s.getConnectorId() + 1,
+				String.valueOf(parseInt(s.getTransactionId()) + 1));
 		two.setPosted(s.getPosted().minusSeconds(1));
 		dao.save(two);
 
@@ -419,7 +425,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		dao.save(s);
 
 		ChargeSession two = new CentralChargeSession(UUID.randomUUID(), s.getCreated(), s.getAuthId(),
-				s.getChargePointId(), s.getConnectorId() + 1, s.getTransactionId() + 1);
+				s.getChargePointId(), s.getEvseId(), s.getConnectorId() + 1,
+				String.valueOf(parseInt(s.getTransactionId()) + 1));
 		dao.save(two);
 
 		getSqlSessionTemplate().flushStatements();
@@ -440,7 +447,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, 0);
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 0, 1, "0");
 			sessions.add(dao.get(dao.save(sess)));
 		}
 
@@ -467,7 +474,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 0, 1,
+					String.valueOf(i + 1));
 			if ( i >= 2 ) {
 				sess.setEnded(Instant.now());
 			}
@@ -497,7 +505,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 0, 1,
+					String.valueOf(i + 1));
 			if ( i >= 2 ) {
 				sess.setEnded(Instant.now());
 			}
@@ -527,15 +536,16 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 0, 1,
+					String.valueOf(i + 1));
 			sessions.add(dao.get(dao.save(sess)));
 		}
 
 		// WHEN
 		BasicOcppCriteria filter = new BasicOcppCriteria();
 		filter.setUserId(userId);
-		filter.setTransactionIds(new Integer[] { sessions.get(0).getTransactionId(),
-				sessions.get(1).getTransactionId() });
+		filter.setTransactionIds(
+				new String[] { sessions.get(0).getTransactionId(), sessions.get(1).getTransactionId() });
 		FilterResults<ChargeSession, UUID> results = dao.findFiltered(filter);
 
 		// THEN
@@ -558,7 +568,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cps.get(i).getId(), 1, i + 1);
+					UUID.randomUUID().toString().substring(0, 20), cps.get(i).getId(), 0, 1,
+					String.valueOf(i + 1));
 			sessions.add(dao.get(dao.save(sess)));
 		}
 
@@ -586,7 +597,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 0, 1,
+					String.valueOf(i + 1));
 			sessions.add(dao.get(dao.save(sess)));
 		}
 
@@ -618,7 +630,8 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		final List<ChargeSession> sessions = new ArrayList<>(sessionCount);
 		for ( int i = 0; i < sessionCount; i++ ) {
 			CentralChargeSession sess = new CentralChargeSession(UUID.randomUUID(), start.plusSeconds(i),
-					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 1, i + 1);
+					UUID.randomUUID().toString().substring(0, 20), cp.getId(), 0, 1,
+					String.valueOf(i + 1));
 			sess.setEnded(Instant.now());
 			sess.setEndReason(ChargeSessionEndReason.forCode(i));
 			sessions.add(dao.get(dao.save(sess)));

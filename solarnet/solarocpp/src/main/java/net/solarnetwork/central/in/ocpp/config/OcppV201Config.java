@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppV16Config.java - 12/11/2021 11:23:20 AM
+ * OcppV201Config.java - 18/02/2024 7:08:24 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,47 +22,37 @@
 
 package net.solarnetwork.central.in.ocpp.config;
 
-import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
-import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
-import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
-import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
-import net.solarnetwork.ocpp.v16.jakarta.json.BaseActionPayloadDecoder;
+import net.solarnetwork.ocpp.v201.util.OcppUtils;
 
 /**
- * Configuration for OCPP v1.6.
+ * Configuration for OCPP v2.0.1.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(OCPP_V16)
-public class OcppV16Config {
+@Profile(OCPP_V201)
+public class OcppV201Config {
 
 	@Bean
-	@Qualifier(OCPP_V16)
-	public ObjectMapper ocppObjectMapper_v16() {
-		return BaseActionPayloadDecoder.defaultObjectMapper();
+	@Qualifier(OCPP_V201)
+	public ObjectMapper ocppObjectMapper_v201() {
+		return OcppUtils.newObjectMapper();
 	}
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionPayloadDecoder centralServiceActionPayloadDecoder_v16(
-			@Qualifier(OCPP_V16) ObjectMapper objectMapper) {
-		return new CentralServiceActionPayloadDecoder(objectMapper);
-	}
-
-	@Bean
-	@OcppChargePointQualifier(OCPP_V16)
-	public ActionPayloadDecoder chargePointActionPayloadDecoder_v16(
-			@Qualifier(OCPP_V16) ObjectMapper objectMapper) {
-		return new ChargePointActionPayloadDecoder(objectMapper);
+	@Qualifier(OCPP_V201)
+	public ActionPayloadDecoder actionPayloadDecoder_v201(
+			@Qualifier(OCPP_V201) ObjectMapper objectMapper) {
+		return new net.solarnetwork.ocpp.v201.util.ActionPayloadDecoder(objectMapper,
+				OcppUtils.ocppSchemaFactory_v201());
 	}
 
 }

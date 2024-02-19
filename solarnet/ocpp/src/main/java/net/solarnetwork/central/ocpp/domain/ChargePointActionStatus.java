@@ -34,14 +34,15 @@ import net.solarnetwork.util.ObjectUtils;
  * OCPP "last seen" timestamp for each action of a charger.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "created", "userId", "chargePointId", "connectorId", "action", "messageId", "ts" })
+@JsonPropertyOrder({ "created", "userId", "chargePointId", "evseId", "connectorId", "action",
+		"messageId", "ts" })
 public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatusKey>
 		implements UserRelatedEntity<ChargePointActionStatusKey> {
 
-	private static final long serialVersionUID = 411869331685285543L;
+	private static final long serialVersionUID = -2984317823572410962L;
 
 	/** The message ID. */
 	private String messageId;
@@ -75,6 +76,32 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	/**
 	 * Constructor.
 	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param chargePointId
+	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID, or {@literal 0} for the charger itself
+	 * @param action
+	 *        the action name
+	 * @param created
+	 *        the creation date
+	 * @return the new instance
+	 * @throws IllegalArgumentException
+	 *         if any argument other than {@code created} is {@literal null}
+	 * @since 1.1
+	 */
+	public ChargePointActionStatus(long userId, long chargePointId, int evseId, int connectorId,
+			String action, Instant created) {
+		this(new ChargePointActionStatusKey(userId, chargePointId, evseId, connectorId, action),
+				created);
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -102,9 +129,19 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	}
 
 	/**
+	 * Get the EVSE ID.
+	 * 
+	 * @return the EVSE ID, or {@literal 0} for the charger itself
+	 * @since 1.1
+	 */
+	public int getEvseId() {
+		return getId().getEvseId();
+	}
+
+	/**
 	 * Get the connector ID.
 	 * 
-	 * @return the connector ID, or {@literal 0} for the charger itself
+	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
 	public int getConnectorId() {
 		return getId().getConnectorId();

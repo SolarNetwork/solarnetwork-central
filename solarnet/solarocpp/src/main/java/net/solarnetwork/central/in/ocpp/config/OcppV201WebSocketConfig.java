@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppV16WebSocketConfig.java - 12/11/2021 3:10:28 PM
+ * OcppV201WebSocketConfig.java - 18/02/2024 7:21:35 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.in.ocpp.config;
 
-import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,33 +42,30 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.ocpp.config.OcppCentralServiceQualifier;
-import net.solarnetwork.central.ocpp.config.OcppChargePointQualifier;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
-import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
+import net.solarnetwork.central.ocpp.v201.service.ConnectorKeyExtractor;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.json.WebSocketSubProtocol;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
-import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
-import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
-import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
+import net.solarnetwork.ocpp.v201.domain.Action;
+import net.solarnetwork.ocpp.v201.service.ErrorCodeResolver;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
- * OCPP v1.6 web socket configuration.
+ * OCPP v2.0.1 web socket configuration.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
 @EnableWebSocket
-@Profile(OCPP_V16)
-public class OcppV16WebSocketConfig implements WebSocketConfigurer {
+@Profile(OCPP_V201)
+public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 
 	@Autowired
 	private ApplicationMetadata applicationMetadata;
@@ -101,68 +98,62 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 	private ChargePointActionStatusDao chargePointActionStatusDao;
 
 	@Autowired
-	@Qualifier(OCPP_V16)
+	@Qualifier(OCPP_V201)
 	private ObjectMapper objectMapper;
 
 	@Autowired
-	@OcppCentralServiceQualifier(OCPP_V16)
-	private ActionPayloadDecoder centralServiceActionPayloadDecoder;
+	@Qualifier(OCPP_V201)
+	private ActionPayloadDecoder actionPayloadDecoder;
 
 	@Autowired
-	@OcppChargePointQualifier(OCPP_V16)
-	private ActionPayloadDecoder chargePointActionPayloadDecoder;
-
-	@Autowired
-	@OcppCentralServiceQualifier(OCPP_V16)
-	private List<ActionMessageProcessor<?, ?>> ocppCentralServiceActions;
+	@Qualifier(OCPP_V201)
+	private List<ActionMessageProcessor<?, ?>> ocppActions;
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	@Qualifier(OCPP_V16)
-	public CentralOcppWebSocketHandler<ChargePointAction, CentralSystemAction> ocppWebSocketHandler_v16() {
-		CentralOcppWebSocketHandler<ChargePointAction, CentralSystemAction> handler = new CentralOcppWebSocketHandler<>(
-				ChargePointAction.class, CentralSystemAction.class, new ErrorCodeResolver(),
-				taskExecutor, objectMapper, new SimpleActionMessageQueue(),
-				centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
-				WebSocketSubProtocol.OCPP_V16.getValue());
+	@Qualifier(OCPP_V201)
+	public CentralOcppWebSocketHandler<Action, Action> ocppWebSocketHandler_v201() {
+		CentralOcppWebSocketHandler<Action, Action> handler = new CentralOcppWebSocketHandler<>(
+				Action.class, Action.class, new ErrorCodeResolver(), taskExecutor, objectMapper,
+				new SimpleActionMessageQueue(), actionPayloadDecoder, actionPayloadDecoder,
+				WebSocketSubProtocol.OCPP_V201.getValue());
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
-		if ( ocppCentralServiceActions != null ) {
-			for ( ActionMessageProcessor<?, ?> processor : ocppCentralServiceActions ) {
+		if ( ocppActions != null ) {
+			for ( ActionMessageProcessor<?, ?> processor : ocppActions ) {
 				handler.addActionMessageProcessor(processor);
 			}
 		}
 		handler.setApplicationMetadata(applicationMetadata);
 		handler.setChargePointStatusDao(chargePointStatusDao);
 		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
-		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
-		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
+		handler.setConnectorIdExtractor(new ConnectorKeyExtractor());
+		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V201_TOPIC);
 		return handler;
 	}
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		WebSocketHandlerRegistration basicAuthReg = registry
-				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16/**").setAllowedOrigins("*");
+				.addHandler(ocppWebSocketHandler_v201(), "/ocpp/v201/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor basicAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
-		basicAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16/(.*)"));
+		basicAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/v201/(.*)"));
 		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		basicAuthReg.addInterceptors(basicAuthInterceptor);
 
 		WebSocketHandlerRegistration pathAuthReg = registry
-				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16u/**").setAllowedOrigins("*");
+				.addHandler(ocppWebSocketHandler_v201(), "/ocpp/v201u/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
 				ocppSystemUserDao, passwordEncoder);
-		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16u/.*/.*/(.*)"));
+		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/v201u/.*/.*/(.*)"));
 		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		pathAuthInterceptor.setClientCredentialsExtractor(CentralOcppWebSocketHandshakeInterceptor
-				.pathCredentialsExtractor("/ocpp/j/v16u/(.*)/(.*)/.*"));
+				.pathCredentialsExtractor("/ocpp/v201u/(.*)/(.*)/.*"));
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
-
 	}
 
 }

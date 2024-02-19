@@ -37,20 +37,21 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Basic implementation of OCPP criteria APIs.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BasicOcppCriteria extends BasicCoreCriteria
 		implements ChargePointStatusFilter, ChargePointActionStatusFilter, ChargeSessionFilter {
 
 	private Long[] chargePointIds;
 	private String[] identifiers;
+	private Integer[] evseIds;
 	private Integer[] connectorIds;
 	private String[] actions;
 	private Instant startDate;
 	private Instant endDate;
 	private UUID[] chargeSessionIds;
 	private Boolean active;
-	private Integer[] transactionIds;
+	private String[] transactionIds;
 	private ChargeSessionEndReason[] endReasons;
 
 	/**
@@ -70,6 +71,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		if ( criteria instanceof BasicOcppCriteria c ) {
 			setChargePointIds(c.chargePointIds);
 			setIdentifiers(c.identifiers);
+			setEvseIds(c.evseIds);
 			setConnectorIds(c.connectorIds);
 			setActions(c.actions);
 			setStartDate(c.startDate);
@@ -86,6 +88,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 				setIdentifiers(c.getIdentifiers());
 			}
 			if ( criteria instanceof ChargePointConnectorCriteria c ) {
+				setEvseIds(c.getEvseIds());
 				setConnectorIds(c.getConnectorIds());
 			}
 			if ( criteria instanceof ActionCriteria c ) {
@@ -133,6 +136,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		result = prime * result + Arrays.hashCode(actions);
 		result = prime * result + Arrays.hashCode(chargePointIds);
 		result = prime * result + Arrays.hashCode(identifiers);
+		result = prime * result + Arrays.hashCode(evseIds);
 		result = prime * result + Arrays.hashCode(connectorIds);
 		result = prime * result + Objects.hash(endDate, startDate, active);
 		result = prime * result + Arrays.hashCode(chargeSessionIds);
@@ -155,7 +159,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		BasicOcppCriteria other = (BasicOcppCriteria) obj;
 		return Arrays.equals(actions, other.actions)
 				&& Arrays.equals(chargePointIds, other.chargePointIds)
-				&& Arrays.equals(identifiers, other.identifiers)
+				&& Arrays.equals(identifiers, other.identifiers) && Arrays.equals(evseIds, other.evseIds)
 				&& Arrays.equals(connectorIds, other.connectorIds)
 				&& Objects.equals(endDate, other.endDate) && Objects.equals(startDate, other.startDate)
 				&& Arrays.equals(chargeSessionIds, other.chargeSessionIds)
@@ -183,7 +187,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 			builder.append(Arrays.toString(identifiers));
 			builder.append(", ");
 		}
-		if ( chargePointIds != null ) {
+		if ( evseIds != null ) {
+			builder.append("evseIds=");
+			builder.append(Arrays.toString(evseIds));
+			builder.append(", ");
+		}
+		if ( connectorIds != null ) {
 			builder.append("connectorIds=");
 			builder.append(Arrays.toString(connectorIds));
 			builder.append(", ");
@@ -268,7 +277,49 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	}
 
 	/**
-	 * Set a single charge point ID.
+	 * Set a single EVSE ID.
+	 * 
+	 * <p>
+	 * This is a convenience method for requests that use a single EVSE ID at a
+	 * time. The EVSE ID is still stored on the {@code evseIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code evseIds} value with a new array containing just the ID passed into
+	 * this method.
+	 * </p>
+	 * 
+	 * @param connectorId
+	 *        the ID of the charge point
+	 * @since 1.2
+	 */
+	@JsonSetter
+	public void setEvseId(Integer evseId) {
+		this.evseIds = (evseId == null ? null : new Integer[] { evseId });
+	}
+
+	@Override
+	@JsonIgnore
+	public Integer getEvseId() {
+		return (this.evseIds == null || this.evseIds.length < 1 ? null : this.evseIds[0]);
+	}
+
+	@Override
+	public Integer[] getEvseIds() {
+		return evseIds;
+	}
+
+	/**
+	 * Set a list of EVSE IDs to filter on.
+	 * 
+	 * @param evseIds
+	 *        The EVSE IDs to filter on.
+	 * @since 1.2
+	 */
+	public void setEvseIds(Integer[] evseIds) {
+		this.evseIds = evseIds;
+	}
+
+	/**
+	 * Set a single connector ID.
 	 * 
 	 * <p>
 	 * This is a convenience method for requests that use a single connector ID
@@ -301,7 +352,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * Set a list of charge point IDs to filter on.
 	 * 
 	 * @param connectorIds
-	 *        The charge point IDs to filter on.
+	 *        The connector IDs to filter on.
 	 */
 	public void setConnectorIds(Integer[] connectorIds) {
 		this.connectorIds = connectorIds;
@@ -460,7 +511,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	@Override
 	@JsonIgnore
-	public Integer getTransactionId() {
+	public String getTransactionId() {
 		return (this.transactionIds == null || this.transactionIds.length < 1 ? null
 				: this.transactionIds[0]);
 	}
@@ -469,8 +520,8 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * Set a single transaction ID.
 	 * 
 	 * <p>
-	 * This is a convenience method for requests that use a transaction ID at a
-	 * time. The transaction ID is still stored on the {@code transactionIds}
+	 * This is a convenience method for requests that use one transaction ID at
+	 * a time. The transaction ID is still stored on the {@code transactionIds}
 	 * array, just as the first value. Calling this method replaces any existing
 	 * {@code transactionIds} value with a new array containing just the ID
 	 * passed into this method.
@@ -480,12 +531,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 *        the ID of the transaction
 	 */
 	@JsonSetter
-	public void setTransactionId(Integer transactionId) {
-		this.transactionIds = (transactionId == null ? null : new Integer[] { transactionId });
+	public void setTransactionId(String transactionId) {
+		this.transactionIds = (transactionId == null ? null : new String[] { transactionId });
 	}
 
 	@Override
-	public Integer[] getTransactionIds() {
+	public String[] getTransactionIds() {
 		return transactionIds;
 	}
 
@@ -495,7 +546,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * @param transactionIds
 	 *        the transaction IDs to set
 	 */
-	public void setTransactionIds(Integer[] transactionIds) {
+	public void setTransactionIds(String[] transactionIds) {
 		this.transactionIds = transactionIds;
 	}
 

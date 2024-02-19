@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller.test;
+package net.solarnetwork.central.ocpp.v16.service.test;
 
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
@@ -29,6 +29,7 @@ import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_MESSA
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.ocpp.v16.jakarta.json.BaseActionPayloadDecoder.defaultObjectMapper;
 import static org.assertj.core.api.BDDAssertions.as;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -56,11 +57,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
-import net.solarnetwork.central.ocpp.v16.controller.OcppController;
+import net.solarnetwork.central.ocpp.v16.service.OcppController;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -101,7 +101,6 @@ public class OcppControllerTests {
 	private ChargePointRouter chargePointRouter;
 	private UserNodeDao userNodeDao;
 	private NodeInstructionDao instructionDao;
-	private CentralAuthorizationDao authorizationDao;
 	private CentralChargePointDao chargePointDao;
 	private CentralChargePointConnectorDao chargePointConnectorDao;
 	private ActionMessageProcessor<JsonNode, Void> instructionHandler;
@@ -118,7 +117,6 @@ public class OcppControllerTests {
 		chargePointRouter = EasyMock.createMock(ChargePointRouter.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
 		instructionDao = EasyMock.createMock(NodeInstructionDao.class);
-		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
 		chargePointConnectorDao = EasyMock.createMock(CentralChargePointConnectorDao.class);
 		instructionHandler = EasyMock.createMock(ActionMessageProcessor.class);
@@ -126,18 +124,19 @@ public class OcppControllerTests {
 		chargePointBroker = EasyMock.createMock(ChargePointBroker.class);
 
 		controller = new OcppController(new CallingThreadExecutorService(), chargePointRouter,
-				userNodeDao, instructionDao, authorizationDao, chargePointDao, chargePointConnectorDao);
+				userNodeDao, instructionDao, chargePointDao, chargePointConnectorDao,
+				defaultObjectMapper());
 		controller.setChargePointActionPayloadDecoder(new ChargePointActionPayloadDecoder());
 	}
 
 	@AfterEach
 	public void teardown() {
-		EasyMock.verify(chargePointRouter, userNodeDao, instructionDao, authorizationDao, chargePointDao,
+		EasyMock.verify(chargePointRouter, userNodeDao, instructionDao, chargePointDao,
 				chargePointConnectorDao, chargePointBroker, instructionHandler);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(chargePointRouter, userNodeDao, instructionDao, authorizationDao, chargePointDao,
+		EasyMock.replay(chargePointRouter, userNodeDao, instructionDao, chargePointDao,
 				chargePointConnectorDao, chargePointBroker, instructionHandler);
 	}
 

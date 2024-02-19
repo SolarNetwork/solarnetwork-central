@@ -1,7 +1,7 @@
 /* ==================================================================
- * ConnectorIdExtractor.java - 18/11/2022 7:49:09 am
+ * ConnectorKeyExtractor.java - 18/02/2024 7:28:06 am
  * 
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,34 +20,44 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.util;
+package net.solarnetwork.central.ocpp.v201.service;
 
 import static net.solarnetwork.ocpp.domain.ChargePointConnectorKey.keyFor;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
-import ocpp.v16.jakarta.cs.MeterValuesRequest;
-import ocpp.v16.jakarta.cs.StartTransactionRequest;
-import ocpp.v16.jakarta.cs.StatusNotificationRequest;
+import ocpp.v201.EVSE;
+import ocpp.v201.MeterValuesRequest;
+import ocpp.v201.StatusNotificationRequest;
+import ocpp.v201.TransactionEventRequest;
 
 /**
- * Extract a connector ID from OCPP v1.6 request messages.
+ * Extract a connector key from OCPP v2.0.1 request messages.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class ConnectorIdExtractor implements Function<Object, ChargePointConnectorKey> {
+public class ConnectorKeyExtractor implements Function<Object, ChargePointConnectorKey> {
+
+	private static final ToIntFunction<Number> INT_OR_ZERO = (n) -> n != null ? n.intValue() : 0;
 
 	@Override
 	public ChargePointConnectorKey apply(Object o) {
 		if ( o == null ) {
 			return null;
 		}
+		EVSE evse = null;
 		if ( o instanceof MeterValuesRequest r ) {
-			return keyFor(0, r.getConnectorId());
-		} else if ( o instanceof StartTransactionRequest r ) {
-			return keyFor(0, r.getConnectorId());
+			return keyFor(INT_OR_ZERO.applyAsInt(r.getEvseId()), 0);
 		} else if ( o instanceof StatusNotificationRequest r ) {
-			return keyFor(0, r.getConnectorId());
+			return keyFor(0, INT_OR_ZERO.applyAsInt(r.getEvseId()),
+					INT_OR_ZERO.applyAsInt(r.getConnectorId()));
+		} else if ( o instanceof TransactionEventRequest r ) {
+			evse = r.getEvse();
+		}
+		if ( evse != null ) {
+			return keyFor(0, INT_OR_ZERO.applyAsInt(evse.getId()),
+					INT_OR_ZERO.applyAsInt(evse.getConnectorId()));
 		}
 		return null;
 	}

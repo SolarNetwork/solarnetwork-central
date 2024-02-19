@@ -1,7 +1,7 @@
 /* ==================================================================
- * OcppV16Config.java - 12/11/2021 4:13:54 PM
+ * OcppServiceConfig.java - 19/02/2024 7:53:47 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -23,40 +23,35 @@
 package net.solarnetwork.central.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import net.solarnetwork.ocpp.service.ActionMessageProcessor;
-import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
-import net.solarnetwork.ocpp.v16.jakarta.cs.HeartbeatProcessor;
-import ocpp.v16.jakarta.cs.DataTransferRequest;
-import ocpp.v16.jakarta.cs.DataTransferResponse;
-import ocpp.v16.jakarta.cs.HeartbeatRequest;
-import ocpp.v16.jakarta.cs.HeartbeatResponse;
+import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
+import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
+import net.solarnetwork.central.ocpp.service.OcppAuthorizationService;
+import net.solarnetwork.ocpp.service.AuthorizationService;
 
 /**
- * OCPP v1.6 general configuration.
+ * General OCPP service configuration.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration
-@Profile(OCPP_V16)
-public class OcppV16BasicActionConfig {
+@Configuration(proxyBeanMethods = false)
+@Profile({ OCPP_V16, OCPP_V201 })
+public class OcppServiceConfig {
+
+	@Autowired
+	private CentralAuthorizationDao ocppCentralAuthorizationDao;
+
+	@Autowired
+	private CentralChargePointDao ocppCentralChargePointDao;
 
 	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	@Order(Ordered.LOWEST_PRECEDENCE)
-	public ActionMessageProcessor<DataTransferRequest, DataTransferResponse> ocppDataTransferProcessor_v16() {
-		return new DataTransferProcessor();
-	}
-
-	@Bean
-	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<HeartbeatRequest, HeartbeatResponse> ocppHeartbeatProcessor_v16() {
-		return new HeartbeatProcessor();
+	public AuthorizationService ocppAuthorizationService() {
+		return new OcppAuthorizationService(ocppCentralAuthorizationDao, ocppCentralChargePointDao);
 	}
 
 }

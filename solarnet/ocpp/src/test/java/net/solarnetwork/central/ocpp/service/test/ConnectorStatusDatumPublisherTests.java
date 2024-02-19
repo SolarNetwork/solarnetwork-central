@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller.test;
+package net.solarnetwork.central.ocpp.service.test;
 
 import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
@@ -50,7 +50,7 @@ import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralChargePointConnector;
 import net.solarnetwork.central.ocpp.domain.CentralChargeSession;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.v16.controller.ConnectorStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.service.ConnectorStatusDatumPublisher;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ChargePointErrorCode;
@@ -62,7 +62,7 @@ import net.solarnetwork.ocpp.domain.StatusNotification;
  * Test cases for the {@link ConnectorStatusDatumPublisher} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class ConnectorStatusDatumPublisherTests {
 
@@ -127,7 +127,7 @@ public class ConnectorStatusDatumPublisherTests {
 		cps.setSourceIdTemplate("/foo/{chargerIdentifier}/{connectorId}/{something}/{else}");
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
-		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), 0,
 				info.getConnectorId())).andReturn(null);
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
@@ -193,8 +193,9 @@ public class ConnectorStatusDatumPublisherTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		CentralChargeSession session = new CentralChargeSession(randomUUID(),
-				info.getTimestamp().minusSeconds(60), "foo", cp.getId(), info.getConnectorId(), 1);
-		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+				info.getTimestamp().minusSeconds(60), "foo", cp.getId(), info.getEvseId(),
+				info.getConnectorId(), "1");
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), 0,
 				info.getConnectorId())).andReturn(session);
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>();
@@ -276,7 +277,7 @@ public class ConnectorStatusDatumPublisherTests {
 		cps.setSourceIdTemplate("/foo/{chargerIdentifier}/{connectorId}/{something}/{else}");
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
-		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(),
+		expect(chargeSessionDao.getIncompleteChargeSessionForConnector(cp.getId(), 0,
 				info0.getConnectorId())).andReturn(null);
 
 		Capture<GeneralNodeDatum> datumCaptor = new Capture<>(CaptureType.ALL);
