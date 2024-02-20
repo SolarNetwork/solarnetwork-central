@@ -33,7 +33,7 @@ package net.solarnetwork.central.dao;
 public interface UserModifiableEnabledStatusDao<F> {
 
 	/**
-	 * Update the enabled status of server controls, optionally filtered.
+	 * Update the enabled status of entities, optionally filtered.
 	 * 
 	 * @param userId
 	 *        the user ID to update configurations for
