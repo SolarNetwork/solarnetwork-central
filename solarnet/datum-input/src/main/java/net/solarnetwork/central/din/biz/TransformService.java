@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.service;
+package net.solarnetwork.central.din.biz;
 
 import java.io.IOException;
 import java.util.Map;

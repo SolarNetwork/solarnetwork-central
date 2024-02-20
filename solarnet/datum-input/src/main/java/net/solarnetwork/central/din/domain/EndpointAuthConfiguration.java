@@ -23,12 +23,11 @@
 package net.solarnetwork.central.din.domain;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
-import net.solarnetwork.central.domain.UserUuidIntegerCompositePK;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 
 /**
  * Endpoint authorization configuration.
@@ -37,15 +36,11 @@ import net.solarnetwork.central.domain.UserUuidIntegerCompositePK;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "endpointId", "index", "created", "modified", "enabled", "username",
-		"password" })
+@JsonPropertyOrder({ "userId", "endpointId", "credentialId", "created", "modified", "enabled" })
 public class EndpointAuthConfiguration
-		extends BaseUserModifiableEntity<EndpointAuthConfiguration, UserUuidIntegerCompositePK> {
+		extends BaseUserModifiableEntity<EndpointAuthConfiguration, UserUuidLongCompositePK> {
 
-	private static final long serialVersionUID = 3114002600283221163L;
-
-	private String username;
-	private String password;
+	private static final long serialVersionUID = 5030060009015851154L;
 
 	/**
 	 * Constructor.
@@ -57,7 +52,7 @@ public class EndpointAuthConfiguration
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public EndpointAuthConfiguration(UserUuidIntegerCompositePK id, Instant created) {
+	public EndpointAuthConfiguration(UserUuidLongCompositePK id, Instant created) {
 		super(id, created);
 	}
 
@@ -68,45 +63,28 @@ public class EndpointAuthConfiguration
 	 *        the user ID
 	 * @param endpointId
 	 *        the endpoint ID
-	 * @param index
-	 *        the index
+	 * @param credentialId
+	 *        the credential ID
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public EndpointAuthConfiguration(Long userId, UUID endpointId, Integer index, Instant created) {
-		this(new UserUuidIntegerCompositePK(userId, endpointId, index), created);
+	public EndpointAuthConfiguration(Long userId, UUID endpointId, Long credentialId, Instant created) {
+		this(new UserUuidLongCompositePK(userId, endpointId, credentialId), created);
 	}
 
 	@Override
-	public EndpointAuthConfiguration copyWithId(UserUuidIntegerCompositePK id) {
+	public EndpointAuthConfiguration copyWithId(UserUuidLongCompositePK id) {
 		var copy = new EndpointAuthConfiguration(id, getCreated());
 		copyTo(copy);
 		return copy;
 	}
 
 	@Override
-	public void copyTo(EndpointAuthConfiguration entity) {
-		super.copyTo(entity);
-		entity.setUsername(username);
-		entity.setPassword(password);
-	}
-
-	@Override
-	public boolean isSameAs(EndpointAuthConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
-			return false;
-		}
-		return Objects.equals(this.username, other.password)
-				&& Objects.equals(this.password, other.password);
-	}
-
-	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("ServerAuth{");
+		builder.append("EndpointAuth{");
 		if ( getUserId() != null ) {
 			builder.append("userId=");
 			builder.append(getUserId());
@@ -117,14 +95,9 @@ public class EndpointAuthConfiguration
 			builder.append(getEndpointId());
 			builder.append(", ");
 		}
-		if ( getIndex() != null ) {
-			builder.append("index=");
-			builder.append(getIndex());
-			builder.append(", ");
-		}
-		if ( username != null ) {
-			builder.append("username=");
-			builder.append(username);
+		if ( getCredentialId() != null ) {
+			builder.append("credentialId=");
+			builder.append(getCredentialId());
 			builder.append(", ");
 		}
 		builder.append("enabled=");
@@ -139,56 +112,18 @@ public class EndpointAuthConfiguration
 	 * @return the endpoint ID
 	 */
 	public UUID getEndpointId() {
-		UserUuidIntegerCompositePK id = getId();
+		UserUuidLongCompositePK id = getId();
 		return (id != null ? id.getGroupId() : null);
 	}
 
 	/**
-	 * Get the index.
+	 * Get the credential ID.
 	 *
-	 * @return the index
+	 * @return the credential ID
 	 */
-	public Integer getIndex() {
-		UserUuidIntegerCompositePK id = getId();
+	public Long getCredentialId() {
+		UserUuidLongCompositePK id = getId();
 		return (id != null ? id.getEntityId() : null);
-	}
-
-	/**
-	 * Get the username.
-	 *
-	 * @return the username
-	 */
-	public String getUsername() {
-		return username;
-	}
-
-	/**
-	 * Set the username
-	 *
-	 * @param username
-	 *        the username to set
-	 */
-	public void setUsername(String name) {
-		this.username = name;
-	}
-
-	/**
-	 * Get the password.
-	 *
-	 * @return the password
-	 */
-	public String getPassword() {
-		return password;
-	}
-
-	/**
-	 * Set the password.
-	 *
-	 * @param password
-	 *        the password to set
-	 */
-	public void setPassword(String password) {
-		this.password = password;
 	}
 
 }

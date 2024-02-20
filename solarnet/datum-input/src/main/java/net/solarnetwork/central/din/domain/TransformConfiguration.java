@@ -117,7 +117,7 @@ public class TransformConfiguration
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("ServerAuth{");
+		builder.append("Transform{");
 		if ( getUserId() != null ) {
 			builder.append("userId=");
 			builder.append(getUserId());
@@ -175,7 +175,7 @@ public class TransformConfiguration
 
 	/**
 	 * Get the identifier of the
-	 * {@link net.solarnetwork.central.din.service.TransformService} to use.
+	 * {@link net.solarnetwork.central.din.biz.TransformService} to use.
 	 *
 	 * @return the service identifier
 	 */
@@ -185,7 +185,7 @@ public class TransformConfiguration
 
 	/**
 	 * Set the identifier of the
-	 * {@link net.solarnetwork.central.din.service.TransformService} to use.
+	 * {@link net.solarnetwork.central.din.biz.TransformService} to use.
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier to use
