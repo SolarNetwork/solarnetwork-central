@@ -27,6 +27,8 @@ import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,7 +56,7 @@ import net.solarnetwork.domain.Identity;
  * Common JDBC utilities.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class CommonJdbcUtils {
 
@@ -187,7 +189,7 @@ public final class CommonJdbcUtils {
 	 *        the row mapper
 	 * @throws IOException
 	 *         if any IO error occurs
-	 *         @since 1.2
+	 * @since 1.2
 	 */
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper)
@@ -218,7 +220,7 @@ public final class CommonJdbcUtils {
 	 *        the attributes (or {@literal null})
 	 * @throws IOException
 	 *         if any IO error occurs
-	 *         @since 1.2
+	 * @since 1.2
 	 */
 	public static <T> void executeStreamingQuery(JdbcOperations jdbcOps,
 			FilteredResultsProcessor<T> processor, PreparedStatementCreator sql, RowMapper<T> mapper,
@@ -306,6 +308,23 @@ public final class CommonJdbcUtils {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Get an Timestamp column value as an Instant.
+	 * 
+	 * @param rs
+	 *        the result set to read from
+	 * @param column
+	 *        the column number to get as a UUID
+	 * @return the instant, or {@literal null} if the column value is null
+	 * @throws SQLException
+	 *         if an error occurs
+	 * @since 1.3
+	 */
+	public static Instant getTimestampInstant(ResultSet rs, int column) throws SQLException {
+		Timestamp ts = rs.getTimestamp(column);
+		return (ts != null ? ts.toInstant() : null);
 	}
 
 }
