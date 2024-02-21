@@ -33,7 +33,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @version 1.0
  */
 public class BasicFilter extends BasicCoreCriteria
-		implements CredentialFilter, TransformFilter, EndpointFilter {
+		implements CredentialFilter, TransformFilter, EndpointFilter, EndpointAuthFilter {
 
 	private Long[] credentialIds;
 	private Long[] transformIds;

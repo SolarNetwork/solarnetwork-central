@@ -32,8 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
+import net.solarnetwork.central.din.domain.EndpointAuthConfiguration;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
@@ -139,7 +141,7 @@ public final class DinJdbcTestUtils {
 	 *        the node ID
 	 * @param source
 	 *        ID the source ID
-	 * @param transform
+	 * @param transformId
 	 *        ID the transform ID
 	 * @return the entity
 	 */
@@ -167,6 +169,43 @@ public final class DinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solardin.din_endpoint ORDER BY user_id, id");
 		log.debug("solardin.din_endpoint table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new endpoint auth configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param endpointId
+	 *        the endpoint ID
+	 * @param name
+	 *        the name
+	 * @param credentialId
+	 *        ID the transform ID
+	 * @return the entity
+	 */
+	public static EndpointAuthConfiguration newEndpointAuthConfiguration(Long userId, UUID endpointId,
+			Long credentialId) {
+		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(
+				new UserUuidLongCompositePK(userId, endpointId, credentialId), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setEnabled(true);
+		return conf;
+	}
+
+	/**
+	 * List endpoint autn configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allEndpointAuthConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardin.din_endpoint_auth_cred ORDER BY user_id, endpoint_id, cred_id");
+		log.debug("solardin.din_endpoint_auth_cred table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
