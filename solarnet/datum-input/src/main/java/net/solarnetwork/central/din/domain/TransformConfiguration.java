@@ -67,6 +67,7 @@ public class TransformConfiguration
 	 */
 	public TransformConfiguration(UserLongCompositePK id, Instant created) {
 		super(id, created);
+		setEnabled(true);
 	}
 
 	/**

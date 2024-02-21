@@ -31,9 +31,10 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicFilter extends BasicCoreCriteria implements CredentialFilter {
+public class BasicFilter extends BasicCoreCriteria implements CredentialFilter, TransformFilter {
 
 	private Long[] credentialIds;
+	private Long[] transformIds;
 
 	@Override
 	public BasicFilter clone() {
@@ -63,6 +64,9 @@ public class BasicFilter extends BasicCoreCriteria implements CredentialFilter {
 		if ( criteria instanceof CredentialCriteria f ) {
 			setCredentialIds(f.getCredentialIds());
 		}
+		if ( criteria instanceof TransformCriteria f ) {
+			setTransformIds(f.getTransformIds());
+		}
 	}
 
 	@Override
@@ -80,11 +84,6 @@ public class BasicFilter extends BasicCoreCriteria implements CredentialFilter {
 		setCredentialIds(credentialId != null ? new Long[] { credentialId } : null);
 	}
 
-	/**
-	 * Get the credential IDs.
-	 *
-	 * @return the credential IDs
-	 */
 	@Override
 	public Long[] getCredentialIds() {
 		return credentialIds;
@@ -98,6 +97,36 @@ public class BasicFilter extends BasicCoreCriteria implements CredentialFilter {
 	 */
 	public void setCredentialIds(Long[] credentialIds) {
 		this.credentialIds = credentialIds;
+	}
+
+	@Override
+	public Long getTransformId() {
+		return TransformFilter.super.getTransformId();
+	}
+
+	/**
+	 * Set the transform ID.
+	 *
+	 * @param transformId
+	 *        the transform ID to set
+	 */
+	public void setTransformId(Long transformId) {
+		setTransformIds(transformId != null ? new Long[] { transformId } : null);
+	}
+
+	@Override
+	public Long[] getTransformIds() {
+		return transformIds;
+	}
+
+	/**
+	 * Set the transform IDs.
+	 *
+	 * @param transformIds
+	 *        the transform IDs to set
+	 */
+	public void setTransformIds(Long[] transformIds) {
+		this.transformIds = transformIds;
 	}
 
 }

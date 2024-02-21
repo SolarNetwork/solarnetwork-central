@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
+import net.solarnetwork.central.din.domain.TransformConfiguration;
 
 /**
  * Helper methods for datum input endpoint JDBC tests.
@@ -79,6 +80,45 @@ public final class DinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solardin.din_credential ORDER BY user_id, id");
 		log.debug("solardin.din_credential table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new credential configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param name
+	 *        the name
+	 * @param serviceId
+	 *        the service ID
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 */
+	public static TransformConfiguration newTransformConfiguration(Long userId, String name,
+			String serviceId, Map<String, Object> serviceProps) {
+		TransformConfiguration conf = new TransformConfiguration(unassignedEntityIdKey(userId),
+				Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setName(name);
+		conf.setServiceIdentifier(serviceId);
+		conf.setServiceProps(serviceProps);
+		return conf;
+	}
+
+	/**
+	 * List transform configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allTransformConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.din_xform ORDER BY user_id, id");
+		log.debug("solardin.din_xform table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
