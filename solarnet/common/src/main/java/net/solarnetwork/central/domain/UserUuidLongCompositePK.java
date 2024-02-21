@@ -39,10 +39,29 @@ public class UserUuidLongCompositePK extends BasePK implements Serializable, Clo
 	private static final long serialVersionUID = 5569471640101762323L;
 
 	/**
+	 * A special "not a value" instance to be used for generated group ID values
+	 * yet to be generated.
+	 */
+	public static final UUID UNASSIGNED_GROUP_ID = new UUID(0L, 0L);
+
+	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
 	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
+
+	/**
+	 * Create a new instance using the "unassigned" entity ID value.
+	 * 
+	 * @param userId
+	 *        the user ID to use
+	 * @param groupId
+	 *        the ID of the group to use
+	 * @return the new key instance
+	 */
+	public static UserUuidLongCompositePK unassignedEntityIdKey(Long userId) {
+		return new UserUuidLongCompositePK(userId, UNASSIGNED_GROUP_ID, UNASSIGNED_ENTITY_ID);
+	}
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
@@ -197,10 +216,22 @@ public class UserUuidLongCompositePK extends BasePK implements Serializable, Clo
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 2 ) {
+		if ( index == 1 ) {
+			return (groupId != null && groupId != UNASSIGNED_GROUP_ID);
+		} else if ( index == 2 ) {
 			return (entityId != null && entityId != UNASSIGNED_ENTITY_ID);
 		}
 		return CompositeKey3.super.keyComponentIsAssigned(index);
+	}
+
+	/**
+	 * Test if the group ID is assigned.
+	 * 
+	 * @return {@literal true} if the group ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 */
+	public final boolean groupIdIsAssigned() {
+		return keyComponentIsAssigned(1);
 	}
 
 	/**
