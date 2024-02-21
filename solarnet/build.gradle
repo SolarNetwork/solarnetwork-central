@@ -80,6 +80,7 @@ subprojects {
 		snExternalOcpp16JakartaVersion = '1.0.0'
 		snExternalOcpp201Version = '1.0.0'
 		superCsvVersion = '2.4.0'
+		xzVersion = '1.9'
 
 		libraries = [
 			batik: [
