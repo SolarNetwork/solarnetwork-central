@@ -75,8 +75,8 @@ public class TransformConfigurationRowMapper implements RowMapper<TransformConfi
 	@Override
 	public TransformConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
-		Long userId = rs.getLong(++p);
-		Long entityId = rs.getLong(++p);
+		Long userId = rs.getObject(++p, Long.class);
+		Long entityId = rs.getObject(++p, Long.class);
 		Timestamp ts = rs.getTimestamp(++p);
 		TransformConfiguration conf = new TransformConfiguration(userId, entityId, ts.toInstant());
 		conf.setModified(rs.getTimestamp(++p).toInstant());

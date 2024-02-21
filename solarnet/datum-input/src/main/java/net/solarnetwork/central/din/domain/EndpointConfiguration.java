@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeId",
-		"sourceId", "xformId" })
+		"sourceId", "transformId" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK> {
 
 	private static final long serialVersionUID = 6089703923235658246L;
@@ -46,7 +46,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	private String name;
 	private Long nodeId;
 	private String sourceId;
-	private Long xformId;
+	private Long transformId;
 
 	/**
 	 * Constructor.
@@ -91,7 +91,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setName(name);
 		entity.setNodeId(nodeId);
 		entity.setSourceId(sourceId);
-		entity.setXformId(xformId);
+		entity.setTransformId(transformId);
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		return Objects.equals(this.name, other.name)
 				&& Objects.equals(this.nodeId, other.nodeId)
 				&& Objects.equals(this.sourceId, other.sourceId)
-				&& Objects.equals(this.xformId, other.xformId)
+				&& Objects.equals(this.transformId, other.transformId)
 				;
 		// @formatter:on
 	}
@@ -138,9 +138,9 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 			builder.append(sourceId);
 			builder.append(", ");
 		}
-		if ( xformId != null ) {
-			builder.append("xformId=");
-			builder.append(xformId);
+		if ( transformId != null ) {
+			builder.append("transformId=");
+			builder.append(transformId);
 			builder.append(", ");
 		}
 		builder.append("enabled=");
@@ -225,18 +225,18 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *
 	 * @return the ID
 	 */
-	public Long getXformId() {
-		return xformId;
+	public Long getTransformId() {
+		return transformId;
 	}
 
 	/**
 	 * Set the ID of the associated {@link TransformConfiguration} entity.
 	 *
-	 * @param xformId
+	 * @param transformId
 	 *        the ID to set
 	 */
-	public void setXformId(Long xformId) {
-		this.xformId = xformId;
+	public void setTransformId(Long transformId) {
+		this.transformId = transformId;
 	}
 
 }

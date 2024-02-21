@@ -1,5 +1,5 @@
 /* ==================================================================
- * CredentialConfigurationRowMapper.java - 21/02/2024 8:25:37 am
+ * EndpointConfigurationRowMapper.java - 21/02/2024 2:58:02 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -25,12 +25,13 @@ package net.solarnetwork.central.din.dao.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.UUID;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
-import net.solarnetwork.central.din.domain.CredentialConfiguration;
+import net.solarnetwork.central.din.domain.EndpointConfiguration;
 
 /**
- * Row mapper for {@link CredentialConfiguration} entities.
+ * Row mapper for {@link EndpointConfiguration} entities.
  *
  * <p>
  * The expected column order in the SQL results is:
@@ -42,25 +43,26 @@ import net.solarnetwork.central.din.domain.CredentialConfiguration;
  * <li>created (TIMESTAMP)</li>
  * <li>modified (TIMESTAMP)</li>
  * <li>enabled (BOOLEAN)</li>
- * <li>username (TEXT)</li>
- * <li>password (TEXT)</li>
- * <li>expires (TIMESTAMP)</li>
+ * <li>cname (TEXT)</li>
+ * <li>node_id (BIGINT)</li>
+ * <li>source_id (BIGINT)</li>
+ * <li>xform_id (BIGINT)</li>
  * </ol>
  *
  * @author matt
  * @version 1.0
  */
-public class CredentialConfigurationRowMapper implements RowMapper<CredentialConfiguration> {
+public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfiguration> {
 
 	/** A default instance. */
-	public static final RowMapper<CredentialConfiguration> INSTANCE = new CredentialConfigurationRowMapper();
+	public static final RowMapper<EndpointConfiguration> INSTANCE = new EndpointConfigurationRowMapper();
 
 	private final int columnOffset;
 
 	/**
 	 * Default constructor.
 	 */
-	public CredentialConfigurationRowMapper() {
+	public EndpointConfigurationRowMapper() {
 		this(0);
 	}
 
@@ -70,22 +72,23 @@ public class CredentialConfigurationRowMapper implements RowMapper<CredentialCon
 	 * @param columnOffset
 	 *        a column offset to apply
 	 */
-	public CredentialConfigurationRowMapper(int columnOffset) {
+	public EndpointConfigurationRowMapper(int columnOffset) {
 		this.columnOffset = columnOffset;
 	}
 
 	@Override
-	public CredentialConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public EndpointConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
-		Long userId = rs.getObject(++p, Long.class);
-		Long entityId = rs.getObject(++p, Long.class);
+		Long userId = rs.getLong(++p);
+		UUID entityId = CommonJdbcUtils.getUuid(rs, ++p);
 		Timestamp ts = rs.getTimestamp(++p);
-		CredentialConfiguration conf = new CredentialConfiguration(userId, entityId, ts.toInstant());
+		EndpointConfiguration conf = new EndpointConfiguration(userId, entityId, ts.toInstant());
 		conf.setModified(rs.getTimestamp(++p).toInstant());
 		conf.setEnabled(rs.getBoolean(++p));
-		conf.setUsername(rs.getString(++p));
-		conf.setPassword(rs.getString(++p));
-		conf.setExpires(CommonJdbcUtils.getTimestampInstant(rs, ++p));
+		conf.setName(rs.getString(++p));
+		conf.setNodeId(rs.getObject(++p, Long.class));
+		conf.setSourceId(rs.getString(++p));
+		conf.setTransformId(rs.getObject(++p, Long.class));
 		return conf;
 	}
 

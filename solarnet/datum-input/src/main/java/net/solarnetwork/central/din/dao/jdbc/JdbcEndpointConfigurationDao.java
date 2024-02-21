@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcTransformConfigurationDao.java - 21/02/2024 1:35:26 pm
+ * JdbcEndpointConfigurationDao.java - 21/02/2024 3:29:48 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -28,26 +28,25 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
-import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
+import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
 import net.solarnetwork.central.din.dao.BasicFilter;
-import net.solarnetwork.central.din.dao.TransformConfigurationDao;
-import net.solarnetwork.central.din.dao.TransformFilter;
-import net.solarnetwork.central.din.dao.jdbc.sql.InsertTransformConfiguration;
-import net.solarnetwork.central.din.dao.jdbc.sql.SelectTransformConfiguration;
-import net.solarnetwork.central.din.dao.jdbc.sql.UpdateTransformConfiguration;
-import net.solarnetwork.central.din.domain.TransformConfiguration;
-import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
+import net.solarnetwork.central.din.dao.EndpointFilter;
+import net.solarnetwork.central.din.dao.jdbc.sql.SelectEndpointConfiguration;
+import net.solarnetwork.central.din.dao.jdbc.sql.UpsertEndpointConfiguration;
+import net.solarnetwork.central.din.domain.EndpointConfiguration;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
- * JDBC implementation of {@link TransformConfigurationDao}.
+ * JDBC implementation of {@link EndpointConfigurationDao}.
  *
  * @author matt
  * @version 1.0
  */
-public class JdbcTransformConfigurationDao implements TransformConfigurationDao {
+public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 
 	private final JdbcOperations jdbcOps;
 
@@ -59,79 +58,83 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public JdbcTransformConfigurationDao(JdbcOperations jdbcOps) {
+	public JdbcEndpointConfigurationDao(JdbcOperations jdbcOps) {
 		super();
 		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
 	}
 
 	@Override
-	public Class<? extends TransformConfiguration> getObjectType() {
-		return TransformConfiguration.class;
+	public Class<? extends EndpointConfiguration> getObjectType() {
+		return EndpointConfiguration.class;
 	}
 
 	@Override
-	public UserLongCompositePK create(Long userId, TransformConfiguration entity) {
-		final var sql = new InsertTransformConfiguration(userId, entity);
+	public UserUuidPK create(Long userId, EndpointConfiguration entity) {
+		final var sql = new UpsertEndpointConfiguration(userId, entity);
 
-		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
-
-		return pk;
-	}
-
-	@Override
-	public Collection<TransformConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
-		var filter = new BasicFilter();
-		filter.setUserId(requireNonNullArgument(userId, "userId"));
-		var sql = new SelectTransformConfiguration(filter);
-		var results = executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
-		return stream(results.spliterator(), false).toList();
-	}
-
-	@Override
-	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
-		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
-		var sql = new SelectTransformConfiguration(filter);
-		return executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
-	}
-
-	@Override
-	public UserLongCompositePK save(TransformConfiguration entity) {
-		if ( !entity.getId().entityIdIsAssigned() ) {
-			return create(entity.getId().getUserId(), entity);
-		}
-		final UpdateTransformConfiguration sql = new UpdateTransformConfiguration(entity.getId(),
-				entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0 ? entity.getId() : null);
 	}
 
 	@Override
-	public TransformConfiguration get(UserLongCompositePK id) {
+	public Collection<EndpointConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+		var filter = new BasicFilter();
+		filter.setUserId(requireNonNullArgument(userId, "userId"));
+		var sql = new SelectEndpointConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);
+		return stream(results.spliterator(), false).toList();
+	}
+
+	@Override
+	public FilterResults<EndpointConfiguration, UserUuidPK> findFiltered(EndpointFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		var sql = new SelectEndpointConfiguration(filter);
+		return executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);
+	}
+
+	@Override
+	public UserUuidPK save(EndpointConfiguration entity) {
+		final var sql = new UpsertEndpointConfiguration(entity.getUserId(), entity);
+
+		int count = jdbcOps.update(sql);
+		return (count > 0 ? entity.getId() : null);
+	}
+
+	@Override
+	public EndpointConfiguration get(UserUuidPK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
-		filter.setTransformId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
-		var sql = new SelectTransformConfiguration(filter);
-		var results = executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
+		filter.setEndpointId(requireNonNullArgument(id.getUuid(), "id.uuid"));
+		var sql = new SelectEndpointConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
 	@Override
-	public Collection<TransformConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<EndpointConfiguration> getAll(List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
-	private static final String TABLE_NAME = "solardin.din_xform";
+	private static final String TABLE_NAME = "solardin.din_endpoint";
 	private static final String ID_COLUMN_NAME = "id";
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 
 	@Override
-	public void delete(TransformConfiguration entity) {
+	public void delete(EndpointConfiguration entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
 				requireNonNullArgument(entity, "entity").getId(), TABLE_NAME, PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
+	}
+
+	@Override
+	public int updateEnabledStatus(Long userId, EndpointFilter filter, boolean enabled) {
+		UserUuidPK key = filter != null && filter.hasEndpointCriteria()
+				? new UserUuidPK(userId, filter.getEndpointId())
+				: UserUuidPK.unassignedUuidKey(userId);
+		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
+		return jdbcOps.update(sql);
 	}
 
 }

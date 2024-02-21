@@ -27,11 +27,14 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEnti
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
+import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * Helper methods for datum input endpoint JDBC tests.
@@ -119,6 +122,51 @@ public final class DinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solardin.din_xform ORDER BY user_id, id");
 		log.debug("solardin.din_xform table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new endpoint configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param endpointId
+	 *        the endpoint ID
+	 * @param name
+	 *        the name
+	 * @param nodeId
+	 *        the node ID
+	 * @param source
+	 *        ID the source ID
+	 * @param transform
+	 *        ID the transform ID
+	 * @return the entity
+	 */
+	public static EndpointConfiguration newEndpointConfiguration(Long userId, UUID endpointId,
+			String name, Long nodeId, String sourceId, Long transformId) {
+		EndpointConfiguration conf = new EndpointConfiguration(new UserUuidPK(userId, endpointId),
+				Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setEnabled(true);
+		conf.setName(name);
+		conf.setNodeId(nodeId);
+		conf.setSourceId(sourceId);
+		conf.setTransformId(transformId);
+		return conf;
+	}
+
+	/**
+	 * List endpoint configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allEndpointConfigurationData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.din_endpoint ORDER BY user_id, id");
+		log.debug("solardin.din_endpoint table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

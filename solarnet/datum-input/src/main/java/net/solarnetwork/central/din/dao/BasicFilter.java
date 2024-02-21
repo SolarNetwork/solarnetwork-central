@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao;
 
+import java.util.UUID;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
@@ -31,10 +32,12 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicFilter extends BasicCoreCriteria implements CredentialFilter, TransformFilter {
+public class BasicFilter extends BasicCoreCriteria
+		implements CredentialFilter, TransformFilter, EndpointFilter {
 
 	private Long[] credentialIds;
 	private Long[] transformIds;
+	private UUID[] endpointIds;
 
 	@Override
 	public BasicFilter clone() {
@@ -66,6 +69,9 @@ public class BasicFilter extends BasicCoreCriteria implements CredentialFilter, 
 		}
 		if ( criteria instanceof TransformCriteria f ) {
 			setTransformIds(f.getTransformIds());
+		}
+		if ( criteria instanceof EndpointCriteria f ) {
+			setEndpointIds(f.getEndpointIds());
 		}
 	}
 
@@ -127,6 +133,36 @@ public class BasicFilter extends BasicCoreCriteria implements CredentialFilter, 
 	 */
 	public void setTransformIds(Long[] transformIds) {
 		this.transformIds = transformIds;
+	}
+
+	@Override
+	public UUID getEndpointId() {
+		return EndpointFilter.super.getEndpointId();
+	}
+
+	/**
+	 * Set the endpoint ID.
+	 *
+	 * @param endpointId
+	 *        the endpoint ID to set
+	 */
+	public void setEndpointId(UUID endpointId) {
+		setEndpointIds(endpointId != null ? new UUID[] { endpointId } : null);
+	}
+
+	@Override
+	public UUID[] getEndpointIds() {
+		return endpointIds;
+	}
+
+	/**
+	 * Set the endpoint IDs.
+	 *
+	 * @param endpointIds
+	 *        the endpoint IDs to set
+	 */
+	public void setEndpointIds(UUID[] endpointIds) {
+		this.endpointIds = endpointIds;
 	}
 
 }

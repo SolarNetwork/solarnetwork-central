@@ -127,9 +127,8 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	}
 
 	private static final String TABLE_NAME = "solardin.din_credential";
-	private static final String CREDENTIAL_ID_COLUMN_NAME = "id";
-	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id",
-			CREDENTIAL_ID_COLUMN_NAME };
+	private static final String ID_COLUMN_NAME = "id";
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 
 	@Override
 	public void delete(CredentialConfiguration entity) {
