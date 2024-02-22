@@ -27,6 +27,7 @@ import java.util.Map;
 import org.springframework.util.MimeType;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 
@@ -38,6 +39,12 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  */
 public interface TransformService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
+
+	/** The JSON MIME type. */
+	public static final MimeType JSON_TYPE = MimeType.valueOf("application/json");
+
+	/** The XML MIME type. */
+	public static final MimeType XML_TYPE = MimeType.valueOf("text/xml");
 
 	/**
 	 * Test if the service supports a given input object.
@@ -58,12 +65,16 @@ public interface TransformService
 	 *        the input
 	 * @param type
 	 *        the content type of the input
+	 * @param config
+	 *        the transform configuration, with service properties specific to
+	 *        the service implementation
 	 * @param parameters
 	 *        optional transformation parameters, implementation specific
 	 * @return the output datum
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	Iterable<Datum> transform(Object input, MimeType type, Map<String, ?> parameters) throws IOException;
+	Iterable<Datum> transform(Object input, MimeType type, IdentifiableConfiguration config,
+			Map<String, ?> parameters) throws IOException;
 
 }
