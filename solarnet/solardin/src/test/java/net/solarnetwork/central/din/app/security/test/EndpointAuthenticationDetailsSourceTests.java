@@ -54,7 +54,7 @@ public class EndpointAuthenticationDetailsSourceTests {
 		final String path = "/foo/endpoint/%s/datum".formatted(endpointId);
 		final String url = "http://localhost".concat(path);
 		final MockHttpServletRequest req = new MockHttpServletRequest("GET", url);
-		req.setPathInfo(path);
+		req.setServletPath(path);
 
 		// WHEN
 		EndpointAuthenticationDetails result = service.buildDetails(req);
