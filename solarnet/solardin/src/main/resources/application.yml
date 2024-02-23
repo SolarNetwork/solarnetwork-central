@@ -1,0 +1,159 @@
+app:
+  meta.name: SolarDIN
+  cache.persistence.path: "var/cache"
+  datasource:
+    hikari:
+      minimumIdle: 1
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+      readOnly: false
+    url: "jdbc:postgresql://localhost/solarnetwork_unittest"
+    username: "solartest"
+    password: "solartest"
+    initialize: false
+  datum:
+    datum-metadata-cache:
+      ttl: 300
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 10
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 5
+  mqtt.client:
+    io-thread-count: 2
+    wire-logging-enabled: false
+  node-ownership-cache:
+    ttl: 60
+    heap-max-entries: 10000
+    disk-max-size-mb: 100
+  scheduler-manager:
+    blocked-job-max-seconds: 1800
+    ping-test-maximum-execution-milliseconds: 2000
+  security:
+    endpoint-id-url-pattern: "/endpoint/([^/]+)/"
+  solarflux:
+    connection:
+      uid: "SolarFlux-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://solarflux.solarnetwork:1883"
+        client-id: "solardin-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
+    datum-publish:
+      publish-qos-level: 0
+    user-events:
+      publish-qos-level: 0
+  solarqueue:
+    connection:
+      uid: "SolarQueue-${app.meta.instance-id}"
+      mqtt-stats.log-frequency: 200
+      mqtt-config:
+        server-uri: "mqtt://queue.solarnetwork:1883"
+        client-id: "solardin-${app.meta.instance-id}"
+        username: "USERNAME_HERE"
+        password: "PASSWORD_HERE"
+        clean-session: true
+        connect-timeout-seconds: 10
+        keep-alive-seconds: 60
+        read-timeout-seconds: 0
+        write-timeout-seconds: -1
+    instr-publish:
+      publish-qos-level: 1
+  task.executor:
+    thread-name-prefix: "SolarNet-"
+    core-pool-size: 10
+    allow-core-thread-time-out: false
+  task.scheduler:
+    thread-name-prefix: "SolarNet-Sched-"
+    pool-size: 2
+  user.events:
+    async-appender:
+      threads: 1
+      stat-frequency: 500
+      queue-lag-alert-threshold: 500
+
+logging:
+  level:
+    ROOT: "INFO"
+    org.mybatis.spring.mapper.ClassPathMapperScanner: "OFF"
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+
+management:
+  endpoints:
+    web:
+      base-path: "/ops"
+      exposure:
+        include: "*"
+      
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 100
+    default-statement-timeout: 30
+  configuration-properties:
+    node-cache-flush: 900000
+    user-cache-flush: 900000
+    user-auth-token-cache-flush: 900000
+    user-node-cache-flush: 900000
+  mapper-locations: "classpath*:net/solarnetwork/**/mybatis/map/*.xml"
+  type-aliases-package: >-
+     net.solarnetwork.central.domain
+     net.solarnetwork.central.datum.export.domain
+     net.solarnetwork.central.instructor.domain
+     net.solarnetwork.central.user.domain
+
+server:
+  compression:
+    enabled: true
+    mime-types: "application/json,application/javascript,image/svg+xml,text/css,text/html,text/plain,text/xml"
+    min-response-size: 2048
+  error.whitelabel.enabled: false
+  port: 9087
+  tomcat.threads:
+    min-spare: 10
+    max: 50
+
+spring:
+  jmx.enabled: false
+  mvc.format:
+    date: "iso"
+    date-time: "iso"
+    time: "iso"
+
+---
+spring:
+  config.activate.on-profile: "development"
+  thymeleaf.cache: false
+
+app:
+  datasource:
+    url: "jdbc:postgresql://localhost/solarnetwork"
+    username: "solarnet"
+    password: "solarnet"
+
+debug: true
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true
+
+---
+spring:
+  config.activate.on-profile: "production"
+
+server:
+  forward-headers-strategy: "NATIVE"
+  tomcat.redirect-context-root: true

@@ -1,0 +1,63 @@
+plugins {
+	id 'java'
+    id 'eclipse'
+	id 'org.springframework.boot' version '3.2.2'
+}
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+description = 'SolarDIN'
+version = '1.0.0'
+
+base {
+	archivesName = 'solardin'
+}
+
+configurations {
+    all*.exclude group: 'commons-logging'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-datum')
+	implementation project(':solarnet-datum-input')
+	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-user')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
+	
+	// SolarNetwork
+	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+	
+	// Utilities
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'org.aspectj:aspectjweaver'
+
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+}
+
+bootJar {
+	manifest {
+		attributes 	'Implementation-Title': 'SolarNetwork Datum Input',
+					'Implementation-Version': archiveVersion
+	}
+}
