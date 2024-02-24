@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz.dao.test;
+package net.solarnetwork.central.datum.biz.dao.test;
 
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -59,6 +59,8 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
+import net.solarnetwork.central.datum.biz.dao.CollectorStats;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
@@ -72,8 +74,6 @@ import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.BasePK;
-import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
-import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.dao.Entity;

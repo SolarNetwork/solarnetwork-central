@@ -63,7 +63,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final EndpointConfigurationDao endpointDao;
 	private final TransformConfigurationDao transformDao;
-	private final DatumEntityDao datumDao;
+	private final DatumEntityDao datumDao; // TODO: change to support async collector
 	private final Map<String, TransformService> transformServices;
 
 	/**

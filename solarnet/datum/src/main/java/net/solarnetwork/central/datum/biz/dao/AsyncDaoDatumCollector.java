@@ -1,26 +1,26 @@
 /* ==================================================================
  * AsyncDaoDatumCollector.java - 25/03/2020 10:43:56 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz.dao;
+package net.solarnetwork.central.datum.biz.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
@@ -66,7 +66,17 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Data collector that processes datum and location datum asynchronously.
- * 
+ *
+ * <p>
+ * This service works through the {@link Cache} API of datum objects, by
+ * listening for cache creation events to add those datum to an internal
+ * persistence queue for eventual storage via the {@link DatumEntityDao} API.
+ * Once persisted there, the datum cache entry is removed. By configuring the
+ * {@link Cache} with non-volatile persistence as well, the cache acts as a
+ * write-ahead-log cache of datum updates. The internal persistence queue serves
+ * as a limiter to avoid overwhelming the {@link DatumEntityDao} backend.
+ * </p>
+ *
  * @author matt
  * @version 2.2
  */
@@ -111,7 +121,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumCache
 	 *        the cache to use
 	 * @param datumDao
@@ -126,7 +136,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumCache
 	 *        the cache to use
 	 * @param datumDao
@@ -366,7 +376,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Get the number of threads to use.
-	 * 
+	 *
 	 * @return the number of threads
 	 */
 	public int getConcurrency() {
@@ -428,7 +438,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Set the number of threads to use.
-	 * 
+	 *
 	 * @param concurrency
 	 *        the number of threads; anything less than {@literal 1} will be
 	 *        treated as {@literal 1}
@@ -442,7 +452,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Get the datum cache.
-	 * 
+	 *
 	 * @return the cache
 	 */
 	public Cache<Serializable, Serializable> getDatumCache() {
@@ -451,7 +461,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Get an exception handler for the background threads.
-	 * 
+	 *
 	 * @return the configured handler
 	 */
 	public UncaughtExceptionHandler getExceptionHandler() {
@@ -460,7 +470,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Set an exception handler for the background threads.
-	 * 
+	 *
 	 * @param exceptionHandler
 	 *        the handler to use
 	 */
@@ -470,7 +480,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Get the queue size.
-	 * 
+	 *
 	 * @return the queue size
 	 */
 	public int getQueueSize() {
@@ -479,7 +489,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Set the queue size.
-	 * 
+	 *
 	 * @param queueSize
 	 *        the queue size; anything less than {@literal 1} will be treated as
 	 *        {@literal 1}
@@ -495,7 +505,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	/**
 	 * Get the maximum number of seconds to wait for threads to finish during
 	 * shutdown.
-	 * 
+	 *
 	 * @return the wait secs
 	 */
 	public int getShutdownWaitSecs() {
@@ -505,7 +515,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	/**
 	 * Set the maximum number of seconds to wait for threads to finish during
 	 * shutdown.
-	 * 
+	 *
 	 * @param shutdownWaitSecs
 	 *        the wait secs; anything less than {@literal 0} will be treated as
 	 *        {@literal 0}
@@ -519,7 +529,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Get the datum cache removal alert threshold.
-	 * 
+	 *
 	 * @return the threshold
 	 */
 	public int getDatumCacheRemovalAlertThreshold() {
@@ -528,7 +538,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 
 	/**
 	 * Set the datum cache removal alert threshold.
-	 * 
+	 *
 	 * <p>
 	 * This threshold represents the <i>difference</i> between the
 	 * {@link CollectorStats.BasicCount#BufferAdds} and
@@ -537,7 +547,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	 * datum are not getting persisted fast enough. Passing this threshold will
 	 * trigger a failure {@link PingTest} result in {@link #performPingTest()}.
 	 * </p>
-	 * 
+	 *
 	 * @param datumCacheRemovalAlertThreshold
 	 *        the threshold to set
 	 */

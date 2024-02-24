@@ -22,11 +22,20 @@
 
 package net.solarnetwork.central.din.app.config;
 
+import java.io.Serializable;
 import java.util.Collection;
+import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
+import net.solarnetwork.central.datum.biz.dao.CollectorStats;
+import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.biz.impl.DaoDatumInputEndpointBiz;
@@ -40,7 +49,10 @@ import net.solarnetwork.central.din.dao.TransformConfigurationDao;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class DatumInputServiceConfig {
+public class DatumInputServiceConfig implements DatumInputConfiguration {
+
+	@Autowired
+	private PlatformTransactionManager txManager;
 
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
@@ -56,6 +68,25 @@ public class DatumInputServiceConfig {
 
 	@Autowired
 	private Collection<TransformService> transformServices;
+
+	@Bean
+	@ConfigurationProperties(prefix = "app.solarin.async-collector")
+	public AsyncDatumCollectorSettings asyncDatumCollectorSettings() {
+		return new AsyncDatumCollectorSettings();
+	}
+
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	public AsyncDaoDatumCollector asyncDaoDatumCollector(AsyncDatumCollectorSettings settings,
+			@Qualifier(DATUM_BUFFER) Cache<Serializable, Serializable> buffer) {
+		TransactionTemplate tt = new TransactionTemplate(txManager);
+		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.getStatFrequency());
+		AsyncDaoDatumCollector collector = new AsyncDaoDatumCollector(buffer, datumDao, tt, stats);
+		collector.setConcurrency(settings.getThreads());
+		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());
+		collector.setQueueSize(settings.getQueueSize());
+		collector.setDatumCacheRemovalAlertThreshold(settings.getDatumCacheRemovalAlertThreshold());
+		return collector;
+	}
 
 	@Bean
 	public DaoDatumInputEndpointBiz datumInputEndpointBiz() {

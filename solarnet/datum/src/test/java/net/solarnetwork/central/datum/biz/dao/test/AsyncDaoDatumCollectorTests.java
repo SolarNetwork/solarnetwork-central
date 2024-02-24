@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.biz.dao.test;
+package net.solarnetwork.central.datum.biz.dao.test;
 
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.anyObject;
@@ -63,15 +63,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
+import net.solarnetwork.central.datum.biz.dao.CollectorStats;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasePK;
-import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
-import net.solarnetwork.central.in.biz.dao.CollectorStats;
-import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -83,15 +82,14 @@ import net.solarnetwork.service.PingTest;
  * @author matt
  * @version 2.0
  */
-public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements UncaughtExceptionHandler {
+public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
 
 	private DatumEntityDao datumDao;
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
-	private BufferingDelegatingCache<Serializable, Serializable> datumCache;
-	private Cache<Serializable, Serializable> delegateDatumCache;
+	private Cache<Serializable, Serializable> datumCache;
 	private CollectorStats stats;
 
 	private AsyncDaoDatumCollector collector;
@@ -126,9 +124,7 @@ public class AsyncDaoDatumCollectorTests_BufferingDelegatingCache implements Unc
 		factory.setHeapMaxEntries(10);
 		factory.setDiskMaxSizeMB(10);
 		factory.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
-		delegateDatumCache = factory.getObject();
-
-		datumCache = new BufferingDelegatingCache<>(delegateDatumCache, 5);
+		datumCache = factory.getObject();
 
 		uncaughtExceptions = new ArrayList<>(2);
 

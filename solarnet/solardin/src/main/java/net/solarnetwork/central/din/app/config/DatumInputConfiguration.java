@@ -39,7 +39,10 @@ public interface DatumInputConfiguration {
 	/** A qualifier for caching support. */
 	String CACHING = "caching";
 
-	/** A qualifier for not caching support. */
-	String NOT_CACHING = "!" + CACHING;
+	/** A qualifier for datum support. */
+	String DATUM = "datum";
+
+	/** A qualifier to use for datum buffer objects. */
+	String DATUM_BUFFER = DATUM + "-buffer";
 
 }

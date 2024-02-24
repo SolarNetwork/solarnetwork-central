@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
+import java.io.Serializable;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +30,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.datum.support.DatumCacheSettings;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.CacheSettings;
 
 /**
@@ -75,6 +78,27 @@ public class DatumInputCacheConfig implements DatumInputConfiguration {
 			@Qualifier(TRANSFORM_CONF) CacheSettings settings) {
 		return settings.createCache(cacheManager, UserLongCompositePK.class,
 				TransformConfiguration.class, TRANSFORM_CONF + "-cache");
+	}
+
+	@Bean
+	@Qualifier(DATUM)
+	@ConfigurationProperties(prefix = "app.solarin.datum-buffer")
+	public DatumCacheSettings datumCacheSettings() {
+		return new DatumCacheSettings();
+	}
+
+	@Bean
+	@Qualifier(DATUM)
+	public Cache<Serializable, Serializable> datumCache(@Qualifier(DATUM) DatumCacheSettings settings) {
+		return settings.createCache(cacheManager, Serializable.class, Serializable.class, DATUM_BUFFER);
+	}
+
+	@Bean
+	@Qualifier(DATUM_BUFFER)
+	public Cache<Serializable, Serializable> bufferingDatumCache(
+			@Qualifier(DATUM) Cache<Serializable, Serializable> cache,
+			@Qualifier(DATUM) DatumCacheSettings settings) {
+		return new BufferingDelegatingCache<>(cache, settings.getTempMaxEntries());
 	}
 
 }

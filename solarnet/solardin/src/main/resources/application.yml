@@ -71,6 +71,17 @@ app:
       publish-qos-level: 0
     user-events:
       publish-qos-level: 0
+  solarin:
+    async-collector:
+      threads: 2
+      shutdown-wait-secs: 30
+      queue-size: 200
+      stat-frequency: 200
+      datum-cache-removal-alert-threshold: 500
+    datum-buffer:
+      temp-max-entries: 100
+      heap-max-entries: 0
+      disk-max-size-mb: 2000
   solarqueue:
     connection:
       uid: "SolarQueue-${app.meta.instance-id}"

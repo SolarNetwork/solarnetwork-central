@@ -40,16 +40,17 @@ import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
+import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
+import net.solarnetwork.central.datum.biz.dao.CollectorStats;
+import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
+import net.solarnetwork.central.datum.support.DatumCacheSettings;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
-import net.solarnetwork.central.in.biz.dao.AsyncDaoDatumCollector;
-import net.solarnetwork.central.in.biz.dao.CollectorStats;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
-import net.solarnetwork.central.support.CacheSettings;
 
 /**
  * Business service configuration for the SolarIn application.
@@ -106,26 +107,6 @@ public class SolarInBizConfig {
 		return new TransactionTemplate(txManager);
 	}
 
-	/** Settings for the datum cache. */
-	public static class DatumCacheSettings extends CacheSettings {
-
-		private int tempMaxEntries = 100;
-
-		public DatumCacheSettings() {
-			super();
-			setDiskPersistent(true);
-		}
-
-		public int getTempMaxEntries() {
-			return tempMaxEntries;
-		}
-
-		public void setTempMaxEntries(int tempMaxEntries) {
-			this.tempMaxEntries = tempMaxEntries;
-		}
-
-	}
-
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarin.datum-buffer")
 	public DatumCacheSettings datumCacheSettings() {
@@ -148,113 +129,7 @@ public class SolarInBizConfig {
 	@Bean
 	public Cache<Serializable, Serializable> bufferingDatumCache() {
 		DatumCacheSettings settings = datumCacheSettings();
-		return new BufferingDelegatingCache<>(datumCache(), settings.tempMaxEntries);
-	}
-
-	/** Settings for the AsyncDaoDatumCollector. */
-	public static class AsyncDatumCollectorSettings {
-
-		private int threads = 2;
-		private int shutdownWaitSecs = 30;
-		private int queueSize = 200;
-		private int statFrequency = 200;
-		private int datumCacheRemovalAlertThreshold = 500;
-
-		/**
-		 * Get the thread count.
-		 * 
-		 * @return the thread count
-		 */
-		public int getThreads() {
-			return threads;
-		}
-
-		/**
-		 * Set the thread count.
-		 * 
-		 * @param threads
-		 *        the thread count to set
-		 */
-		public void setThreads(int threads) {
-			this.threads = threads;
-		}
-
-		/**
-		 * Get the shutdown wait time, in seconds.
-		 * 
-		 * @return the seconds
-		 */
-		public int getShutdownWaitSecs() {
-			return shutdownWaitSecs;
-		}
-
-		/**
-		 * Set the shutdown wait time, in seconds.
-		 * 
-		 * @param shutdownWaitSecs
-		 *        the seconds to set
-		 */
-		public void setShutdownWaitSecs(int shutdownWaitSecs) {
-			this.shutdownWaitSecs = shutdownWaitSecs;
-		}
-
-		/**
-		 * Get the queue size.
-		 * 
-		 * @return the queueSize
-		 */
-		public int getQueueSize() {
-			return queueSize;
-		}
-
-		/**
-		 * Set the queue size.
-		 * 
-		 * @param queueSize
-		 *        the queueSize to set
-		 */
-		public void setQueueSize(int queueSize) {
-			this.queueSize = queueSize;
-		}
-
-		/**
-		 * Get the statistic frequency.
-		 * 
-		 * @return the frequency
-		 */
-		public int getStatFrequency() {
-			return statFrequency;
-		}
-
-		/**
-		 * Set the statistic frequency.
-		 * 
-		 * @param statFrequency
-		 *        the frequency to set
-		 */
-		public void setStatFrequency(int statFrequency) {
-			this.statFrequency = statFrequency;
-		}
-
-		/**
-		 * Get the cache removal alert threshold.
-		 * 
-		 * @return the threshold
-		 */
-		public int getDatumCacheRemovalAlertThreshold() {
-			return datumCacheRemovalAlertThreshold;
-		}
-
-		/**
-		 * Set the cache removal alert threshold.
-		 * 
-		 * @param datumCacheRemovalAlertThreshold
-		 *        the threshold to set
-		 */
-		public void setDatumCacheRemovalAlertThreshold(int datumCacheRemovalAlertThreshold) {
-			this.datumCacheRemovalAlertThreshold = datumCacheRemovalAlertThreshold;
-		}
-
+		return new BufferingDelegatingCache<>(datumCache(), settings.getTempMaxEntries());
 	}
 
 	@Bean
@@ -266,13 +141,13 @@ public class SolarInBizConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public AsyncDaoDatumCollector asyncDaoDatumCollector() {
 		AsyncDatumCollectorSettings settings = asyncDatumCollectorSettings();
-		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.statFrequency);
+		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.getStatFrequency());
 		AsyncDaoDatumCollector collector = new AsyncDaoDatumCollector(bufferingDatumCache(), datumDao,
 				transactionTemplate(), stats);
-		collector.setConcurrency(settings.threads);
-		collector.setShutdownWaitSecs(settings.shutdownWaitSecs);
-		collector.setQueueSize(settings.queueSize);
-		collector.setDatumCacheRemovalAlertThreshold(settings.datumCacheRemovalAlertThreshold);
+		collector.setConcurrency(settings.getThreads());
+		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());
+		collector.setQueueSize(settings.getQueueSize());
+		collector.setDatumCacheRemovalAlertThreshold(settings.getDatumCacheRemovalAlertThreshold());
 		return collector;
 	}
 
