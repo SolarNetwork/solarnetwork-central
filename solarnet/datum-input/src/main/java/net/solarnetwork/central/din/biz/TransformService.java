@@ -47,6 +47,17 @@ public interface TransformService
 	public static final MimeType XML_TYPE = MimeType.valueOf("text/xml");
 
 	/**
+	 * A parameter key for a transform instance cache key.
+	 *
+	 * <p>
+	 * This key is meant to provide the transform with a context-specific cache
+	 * key that can be applied to a given transform invocation. The key must
+	 * uniquely identify the transform configuration.
+	 * </p>
+	 */
+	public static final String PARAM_CONFIGURATION_CACHE_KEY = "cache-key";
+
+	/**
 	 * Test if the service supports a given input object.
 	 *
 	 * @param input

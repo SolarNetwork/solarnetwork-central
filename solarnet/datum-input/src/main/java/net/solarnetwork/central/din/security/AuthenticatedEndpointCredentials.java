@@ -59,7 +59,7 @@ public class AuthenticatedEndpointCredentials extends User implements EndpointUs
 	public AuthenticatedEndpointCredentials(Long userId, UUID endpointId, String username,
 			String password, boolean enabled, boolean expired) {
 		super(username, password, enabled, true, !expired, true,
-				createAuthorityList(SecurityConstants.ROLE_DIN));
+				createAuthorityList(SecurityUtils.ROLE_DIN));
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.endpointId = ObjectUtils.requireNonNullArgument(endpointId, "endpointId");
 	}

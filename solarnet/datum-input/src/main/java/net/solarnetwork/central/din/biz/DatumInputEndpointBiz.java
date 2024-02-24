@@ -22,6 +22,13 @@
 
 package net.solarnetwork.central.din.biz;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.UUID;
+import org.springframework.util.MimeType;
+import net.solarnetwork.domain.datum.DatumId;
+
 /**
  * API for a datum input endpoint service.
  *
@@ -30,4 +37,23 @@ package net.solarnetwork.central.din.biz;
  */
 public interface DatumInputEndpointBiz {
 
+	/**
+	 * Import datum.
+	 *
+	 * @param userId
+	 *        the endpoint owner user ID
+	 * @param endpointId
+	 *        the endpoint ID to import to
+	 * @param contentType
+	 *        the data content type
+	 * @param in
+	 *        the data stream to import
+	 * @return the collection of datum IDs successfully imported
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType, InputStream in)
+			throws IOException;
 }

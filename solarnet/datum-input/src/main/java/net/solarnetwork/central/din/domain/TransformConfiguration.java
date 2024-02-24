@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
  * Transform configuration.
@@ -45,7 +46,8 @@ import net.solarnetwork.codec.JsonUtils;
 @JsonPropertyOrder({ "userId", "transformId", "created", "modified", "enabled", "name",
 		"serviceIdentifier", "serviceProperties" })
 public class TransformConfiguration
-		extends BaseUserModifiableEntity<TransformConfiguration, UserLongCompositePK> {
+		extends BaseUserModifiableEntity<TransformConfiguration, UserLongCompositePK>
+		implements IdentifiableConfiguration {
 
 	private static final long serialVersionUID = -4398071329872156479L;
 
@@ -155,11 +157,7 @@ public class TransformConfiguration
 		return (id != null ? id.getEntityId() : null);
 	}
 
-	/**
-	 * Get the name.
-	 *
-	 * @return the name
-	 */
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -174,12 +172,7 @@ public class TransformConfiguration
 		this.name = name;
 	}
 
-	/**
-	 * Get the identifier of the
-	 * {@link net.solarnetwork.central.din.biz.TransformService} to use.
-	 *
-	 * @return the service identifier
-	 */
+	@Override
 	public String getServiceIdentifier() {
 		return serviceIdentifier;
 	}
@@ -260,15 +253,7 @@ public class TransformConfiguration
 		servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
 	}
 
-	/**
-	 * Get the service properties map.
-	 *
-	 * <p>
-	 * This is an alias for {@link #getServiceProps()}.
-	 * </p>
-	 *
-	 * @return the service properties
-	 */
+	@Override
 	public Map<String, ?> getServiceProperties() {
 		return getServiceProps();
 	}

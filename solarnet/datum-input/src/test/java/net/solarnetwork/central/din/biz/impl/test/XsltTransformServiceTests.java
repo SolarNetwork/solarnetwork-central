@@ -25,7 +25,9 @@ package net.solarnetwork.central.din.biz.impl.test;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -106,6 +108,55 @@ public class XsltTransformServiceTests {
 
 		// WHEN
 		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf, null);
+
+		// THEN
+		DatumSamples expectedSamples = new DatumSamples();
+		expectedSamples.putInstantaneousSampleValue("foo", 123);
+		expectedSamples.putInstantaneousSampleValue("bim", 234);
+		expectedSamples.putStatusSampleValue("msg", "Hello");
+
+		// @formatter:off
+		then(results)
+				.as("Single datum produced")
+				.hasSize(1)
+				.element(0)
+				.as("Created date parsed")
+				.returns(Instant.parse("2024-02-22T12:00:00Z"), from(Datum::getTimestamp))
+				.as("Kind unknown")
+				.returns(null, Datum::getKind)
+				.as("Node ID not populated")
+				.returns(null, Datum::getObjectId)
+				.as("Source ID not populated")
+				.returns(null, Datum::getSourceId)
+				.extracting(Datum::asSampleOperations)
+				.as("Samples populated")
+				.isEqualTo(expectedSamples)
+				;
+		// @formatter:on
+
+		then(primaryCache).as("Templates not cached").isEmpty();
+	}
+
+	@Test
+	public void xmlObject_stream() throws IOException {
+		// GIVEN
+		final String xmlInput = """
+				<data ts="2024-02-22T12:00:00Z">
+					<prop name="foo">123</prop>
+					<prop name="bim">234</prop>
+					<prop name="msg">Hello</prop>
+				</data>
+				""";
+		final var xmlInputStream = new ByteArrayInputStream(xmlInput.getBytes(StandardCharsets.UTF_8));
+
+		final String xslt = ClassUtils.getResourceAsString("test-xform-01.xsl", getClass());
+
+		final BasicIdentifiableConfiguration conf = new BasicIdentifiableConfiguration();
+		conf.setServiceProps(singletonMap(XsltTransformService.SETTING_XSLT, xslt));
+
+		// WHEN
+		Iterable<Datum> results = service.transform(xmlInputStream, XsltTransformService.XML_TYPE, conf,
+				null);
 
 		// THEN
 		DatumSamples expectedSamples = new DatumSamples();
@@ -287,7 +338,7 @@ public class XsltTransformServiceTests {
 				XsltTransformService.SETTING_XSLT_CACHE_DURATION, 600L));
 
 		// WHEN
-		var params = Collections.singletonMap(XsltTransformService.PARAM_XSLT_CACHE_KEY, "a");
+		var params = Collections.singletonMap(XsltTransformService.PARAM_CONFIGURATION_CACHE_KEY, "a");
 		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
 				params);
 		Iterable<Datum> results2 = service.transform(xmlInput2, XsltTransformService.XML_TYPE, conf,

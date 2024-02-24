@@ -24,9 +24,12 @@ package net.solarnetwork.central.din.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +52,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.util.MimeType;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -68,7 +72,13 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
  * {@link TransformService} that uses XSLT to transform input data into datum
- * JSON. JSON.
+ * JSON.
+ *
+ * <p>
+ * This service supports string and {@link InputStream} input data. If
+ * {@link InputStream} is provided, it is assumed to be a UTF-8 character
+ * stream.
+ * </p>
  *
  * @author matt
  * @version 1.0
@@ -81,9 +91,6 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 
 	/** The setting key for the XSLT stylesheet cache seconds. */
 	public static final String SETTING_XSLT_CACHE_DURATION = "cache-seconds";
-
-	/** The parameter key for the XSLT stylesheet cache key. */
-	public static final String PARAM_XSLT_CACHE_KEY = "cache-key";
 
 	/** The XSLT input parameter for input JSON. */
 	public static final String XSLT_PARAM_JSON = "input-json";
@@ -172,7 +179,7 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 	@Override
 	public Iterable<Datum> transform(Object input, MimeType type, IdentifiableConfiguration config,
 			Map<String, ?> parameters) throws IOException {
-		String inputText = input.toString();
+		String inputText = inputText(input);
 		Map<String, ?> props = config.getServiceProperties();
 		Object xslt = (props != null ? props.get(SETTING_XSLT) : null);
 		if ( xslt == null ) {
@@ -220,6 +227,13 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 		}
 	}
 
+	private String inputText(Object input) throws IOException {
+		if ( input instanceof InputStream stream ) {
+			return FileCopyUtils.copyToString(new InputStreamReader(stream, StandardCharsets.UTF_8));
+		}
+		return input.toString();
+	}
+
 	private DocumentBuilder documentBuilder() throws ParserConfigurationException {
 		DocumentBuilder db = documentBuilderFactory.newDocumentBuilder();
 		db.setEntityResolver(this);
@@ -241,8 +255,8 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 		Templates t = null;
 
 		if ( cacheTtlSeconds > 0 ) {
-			if ( parameters != null && parameters.get(PARAM_XSLT_CACHE_KEY) != null ) {
-				xsltCacheKey = parameters.get(PARAM_XSLT_CACHE_KEY).toString();
+			if ( parameters != null && parameters.get(PARAM_CONFIGURATION_CACHE_KEY) != null ) {
+				xsltCacheKey = parameters.get(PARAM_CONFIGURATION_CACHE_KEY).toString();
 			} else {
 				xsltCacheKey = DigestUtils.sha256Hex(xslt);
 				xsltSharedKey = xsltCacheKey;
