@@ -26,11 +26,10 @@ import static net.solarnetwork.domain.Result.success;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.din.security.SecurityEndpointCredential;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -43,9 +42,16 @@ import net.solarnetwork.domain.Result;
  * @author matt
  * @version 1.0
  */
-@Controller("v1IdentityController")
+@RestController("v1IdentityController")
 @GlobalExceptionRestController
 public class IdentityController {
+
+	/**
+	 * Constructor.
+	 */
+	public IdentityController() {
+		super();
+	}
 
 	/**
 	 * Check who the caller is.
@@ -56,7 +62,6 @@ public class IdentityController {
 	 *
 	 * @return a result that details who the authenticated caller is
 	 */
-	@ResponseBody
 	@RequestMapping(value = "/api/v1/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
 	public Result<Map<String, ?>> validate(@PathVariable("endpointId") UUID endpointId) {
 		SecurityActor actor = SecurityUtils.getCurrentActor();

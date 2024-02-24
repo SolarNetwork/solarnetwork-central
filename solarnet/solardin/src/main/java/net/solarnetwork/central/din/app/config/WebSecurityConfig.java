@@ -51,7 +51,7 @@ import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationProvider;
-import net.solarnetwork.central.din.security.SecurityConstants;
+import net.solarnetwork.central.din.security.SecurityUtils;
 import net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -175,7 +175,7 @@ public class WebSecurityConfig {
 
 					.authorizeHttpRequests((matchers) -> {
 						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-							.requestMatchers("/**").hasAnyAuthority(SecurityConstants.ROLE_DIN)
+							.requestMatchers("/**").hasAnyAuthority(SecurityUtils.ROLE_DIN)
 							.anyRequest().denyAll();
 					})
 			;

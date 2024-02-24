@@ -25,6 +25,14 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 5
+  din:
+    xslt:
+      templates-cache:
+        ttl: 86400
+  job.din:
+    xslt-templates-cache-prune:
+      maximum-wait-ms: 240000
+      schedule: "0 0 1 * * *"
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
