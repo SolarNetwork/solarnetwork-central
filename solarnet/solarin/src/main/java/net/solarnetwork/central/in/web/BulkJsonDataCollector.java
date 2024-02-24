@@ -43,6 +43,7 @@ import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
@@ -51,9 +52,6 @@ import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DatumSamples;
-import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.web.jakarta.domain.Response;
 
@@ -61,7 +59,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * JSON implementation of bulk upload service.
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do",
@@ -168,9 +166,9 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			if ( tree.isArray() ) {
 				for ( JsonNode child : tree ) {
 					Object o = handleNode(child);
-					if ( o instanceof GeneralDatum ) {
+					if ( o instanceof Datum ) {
 						// convert to legacy form for compatibility between node 1.0/2.0
-						o = convertGeneralDatum((GeneralDatum) o);
+						o = DatumUtils.convertGeneralDatum((Datum) o);
 					}
 					if ( o instanceof StreamDatum ) {
 						parsedStreamDatum.add((StreamDatum) o);
@@ -237,30 +235,6 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		}
 
 		return new Response<BulkUploadResult>(result);
-	}
-
-	private Object convertGeneralDatum(GeneralDatum gd) {
-		if ( gd.getKind() == ObjectDatumKind.Node ) {
-			GeneralLocationDatum gld = new GeneralLocationDatum();
-			gld.setCreated(gd.getTimestamp());
-			gld.setSourceId(gd.getSourceId());
-			gld.setLocationId(gd.getObjectId());
-			gld.setSamples(new DatumSamples());
-			gld.getSamples().setI(gd.getSamples().getI());
-			gld.getSamples().setA(gd.getSamples().getA());
-			gld.getSamples().setS(gd.getSamples().getS());
-			gld.getSamples().setTags(gd.getSamples().getTags());
-			return gld;
-		}
-		GeneralNodeDatum gnd = new GeneralNodeDatum();
-		gnd.setCreated(gd.getTimestamp());
-		gnd.setSourceId(gd.getSourceId());
-		gnd.setSamples(new DatumSamples());
-		gnd.getSamples().setI(gd.getSamples().getI());
-		gnd.getSamples().setA(gd.getSamples().getA());
-		gnd.getSamples().setS(gd.getSamples().getS());
-		gnd.getSamples().setTags(gd.getSamples().getTags());
-		return gnd;
 	}
 
 	private Object handleNode(JsonNode node) {
