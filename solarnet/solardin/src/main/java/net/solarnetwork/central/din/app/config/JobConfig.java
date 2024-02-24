@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
-import static net.solarnetwork.central.din.app.config.DatumInputTransformServiceConfig.XSLT_TEMPLATES_QUALIFIER;
+import static net.solarnetwork.central.din.config.DatumInputTransformServiceConfig.XSLT_TEMPLATES_QUALIFIER;
 import javax.xml.transform.Templates;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;

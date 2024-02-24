@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.app.config;
+package net.solarnetwork.central.din.config;
 
 import java.time.Duration;
 import javax.xml.XMLConstants;
@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.solarnetwork.central.din.biz.impl.XsltTransformService;
@@ -76,8 +77,14 @@ public class DatumInputTransformServiceConfig implements URIResolver {
 		TransformerFactoryImpl tf = new net.sf.saxon.TransformerFactoryImpl();
 		tf.setURIResolver(this);
 
-		return new XsltTransformService(dbf, tf, objectMapper,
+		var service = new XsltTransformService(dbf, tf, objectMapper,
 				Duration.ofSeconds(templatesCacheSettings.getTtl()), templatesCache);
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(XsltTransformService.class.getName());
+		service.setMessageSource(msgSource);
+
+		return service;
 	}
 
 	@Override
