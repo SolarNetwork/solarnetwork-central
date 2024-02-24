@@ -38,4 +38,10 @@ import net.solarnetwork.domain.Differentiable;
 public interface DatumInputConfigurationEntity<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated>
 		extends UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>, Serializable, Cloneable {
 
+	/**
+	 * Erase any sensitive credentials.
+	 */
+	default void eraseCredentials() {
+		// extending classes can implement as needed
+	}
 }

@@ -79,6 +79,11 @@ public class CredentialConfiguration
 	}
 
 	@Override
+	public void eraseCredentials() {
+		this.password = null;
+	}
+
+	@Override
 	public CredentialConfiguration copyWithId(UserLongCompositePK id) {
 		var copy = new CredentialConfiguration(id, getCreated());
 		copyTo(copy);

@@ -108,14 +108,23 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			Long userId, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
+		Collection<C> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return findAllForUser(userId, credentialDao);
+			result = findAllForUser(userId, credentialDao);
 		} else if ( TransformConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return findAllForUser(userId, transformDao);
+			result = findAllForUser(userId, transformDao);
 		} else if ( EndpointConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return findAllForUser(userId, endpointDao);
+			result = findAllForUser(userId, endpointDao);
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return findAllForUser(userId, endpointAuthDao);
+			result = findAllForUser(userId, endpointAuthDao);
+		}
+		if ( result != null ) {
+			// remove credentials before returning
+			for ( C c : result ) {
+				c.eraseCredentials();
+			}
+			return result;
+
 		}
 		throw new UnsupportedOperationException(
 				"Configuration type %s not supported.".formatted(configurationClass));
