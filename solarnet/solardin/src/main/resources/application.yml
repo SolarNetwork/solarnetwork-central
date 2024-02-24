@@ -26,6 +26,15 @@ app:
       heap-max-entries: 10000
       disk-max-size-mb: 5
   din:
+    cache:
+      endpoint-conf-cache:
+        ttl: 600
+        heap-max-entries: 10000
+        disk-max-size-mb: 0
+      transform-conf-cache:
+        ttl: 600
+        heap-max-entries: 10000
+        disk-max-size-mb: 0
     xslt:
       templates-cache:
         ttl: 86400

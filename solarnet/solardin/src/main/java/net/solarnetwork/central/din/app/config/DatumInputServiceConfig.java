@@ -59,7 +59,6 @@ public class DatumInputServiceConfig {
 
 	@Bean
 	public DaoDatumInputEndpointBiz datumInputEndpointBiz() {
-		// TODO: add caching endpoint/transform DAO proxies
 		return new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
 				transformServices);
 	}
