@@ -36,10 +36,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "credentialId", "created", "modified", "enabled", "username",
-		"password" })
+@JsonPropertyOrder({ "userId", "credentialId", "created", "modified", "enabled", "username", "password",
+		"expires" })
 public class CredentialConfiguration
-		extends BaseUserModifiableEntity<CredentialConfiguration, UserLongCompositePK> {
+		extends BaseUserModifiableEntity<CredentialConfiguration, UserLongCompositePK>
+		implements DatumInputConfigurationEntity<CredentialConfiguration, UserLongCompositePK> {
 
 	private static final long serialVersionUID = 4246051639093121204L;
 

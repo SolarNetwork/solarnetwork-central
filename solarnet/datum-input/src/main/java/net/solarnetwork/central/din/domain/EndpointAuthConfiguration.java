@@ -38,7 +38,8 @@ import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "credentialId", "created", "modified", "enabled" })
 public class EndpointAuthConfiguration
-		extends BaseUserModifiableEntity<EndpointAuthConfiguration, UserUuidLongCompositePK> {
+		extends BaseUserModifiableEntity<EndpointAuthConfiguration, UserUuidLongCompositePK>
+		implements DatumInputConfigurationEntity<EndpointAuthConfiguration, UserUuidLongCompositePK> {
 
 	private static final long serialVersionUID = 5030060009015851154L;
 

@@ -39,7 +39,8 @@ import net.solarnetwork.central.domain.UserUuidPK;
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeId",
 		"sourceId", "transformId" })
-public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK> {
+public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
+		implements DatumInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
 	private static final long serialVersionUID = 6089703923235658246L;
 

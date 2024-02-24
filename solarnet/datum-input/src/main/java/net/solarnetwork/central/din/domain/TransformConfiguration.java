@@ -47,7 +47,8 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 		"serviceIdentifier", "serviceProperties" })
 public class TransformConfiguration
 		extends BaseUserModifiableEntity<TransformConfiguration, UserLongCompositePK>
-		implements IdentifiableConfiguration {
+		implements DatumInputConfigurationEntity<TransformConfiguration, UserLongCompositePK>,
+		IdentifiableConfiguration {
 
 	private static final long serialVersionUID = -4398071329872156479L;
 
