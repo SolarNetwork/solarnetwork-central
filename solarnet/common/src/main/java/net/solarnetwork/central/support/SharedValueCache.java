@@ -65,4 +65,8 @@ public interface SharedValueCache<K, V, S> {
 	 */
 	V put(K key, S shareKey, Function<S, V> valueProvider, long ttl);
 
+	/**
+	 * Prune shared values no longer in use.
+	 */
+	void prune();
 }
