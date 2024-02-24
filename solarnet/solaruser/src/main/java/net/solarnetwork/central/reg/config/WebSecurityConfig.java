@@ -1,21 +1,21 @@
 /* ==================================================================
  * WebSecurityConfig.java - 9/10/2021 3:10:26 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -68,9 +68,9 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
 
 /**
  * Security configuration.
- * 
+ *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @Configuration
 @EnableWebSecurity
@@ -99,6 +99,9 @@ public class WebSecurityConfig {
 
 	/** The DNP3 authority. */
 	public static final String DNP3_AUTHORITY = "ROLE_DNP3";
+
+	/** The datum input authority. */
+	public static final String DATUM_INPUT_AUTHORITY = "ROLE_DATUM_INPUT";
 
 	/** A HTTP header to indicate the response contains the login form page. */
 	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
@@ -192,6 +195,7 @@ public class WebSecurityConfig {
 						matchers.requestMatchers("/*.do").permitAll()
 								.requestMatchers("/register/**").permitAll()
 								.requestMatchers("/u/sec/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+								.requestMatchers("/u/sec/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
 								.requestMatchers("/u/sec/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
 								.requestMatchers("/u/sec/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 								.requestMatchers("/u/sec/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
@@ -316,6 +320,7 @@ public class WebSecurityConfig {
 					.authorizeHttpRequests((matchers) -> {
 						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 								.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
@@ -390,7 +395,7 @@ public class WebSecurityConfig {
 
 					.authorizeHttpRequests((matchers) -> {
 						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-								.requestMatchers(HttpMethod.GET, 
+								.requestMatchers(HttpMethod.GET,
 										"/",
 										"/error",
 										"/session-expired",

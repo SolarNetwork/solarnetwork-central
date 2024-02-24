@@ -28,6 +28,7 @@ configurations {
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-datum-input')
 	implementation project(':solarnet-dnp3')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
@@ -35,6 +36,7 @@ dependencies {
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-datum-input')
 	implementation project(':solarnet-user-dnp3')
 	implementation project(':solarnet-user-ocpp')
 	implementation project(':solarnet-user-oscp')
