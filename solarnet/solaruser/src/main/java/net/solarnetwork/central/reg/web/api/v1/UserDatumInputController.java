@@ -22,18 +22,23 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Collection;
 import java.util.Locale;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
+import net.solarnetwork.central.din.domain.CredentialConfiguration;
+import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
+import net.solarnetwork.central.din.domain.TransformConfiguration;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.util.ObjectUtils;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for DNP3 management.
@@ -59,17 +64,43 @@ public class UserDatumInputController {
 	 */
 	public UserDatumInputController(UserDatumInputBiz userDatumInputBiz) {
 		super();
-		this.userDatumInputBiz = ObjectUtils.requireNonNullArgument(userDatumInputBiz,
-				"userDatumInputBiz");
+		this.userDatumInputBiz = requireNonNullArgument(userDatumInputBiz, "userDatumInputBiz");
 	}
 
+	/**
+	 * List the available transform services.
+	 *
+	 * @param locale
+	 *        the desired locale
+	 * @return the services
+	 */
 	@RequestMapping(value = "/services/transform", method = RequestMethod.GET)
-	public Response<Iterable<LocalizedServiceInfo>> availableTransformServices(Locale locale) {
+	public Result<Iterable<LocalizedServiceInfo>> availableTransformServices(Locale locale) {
 		Iterable<LocalizedServiceInfo> result = null;
 		if ( userDatumInputBiz != null ) {
 			result = userDatumInputBiz.availableTransformServices(locale);
 		}
-		return response(result);
+		return success(result);
+	}
+
+	private <C extends DatumInputConfigurationEntity<?, ?>> Result<Collection<C>> listConfigurationsForCurrentUser(
+			Class<C> clazz) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		Collection<C> result = null;
+		if ( userDatumInputBiz != null ) {
+			result = userDatumInputBiz.configurationsForUser(userId, clazz);
+		}
+		return success(result);
+	}
+
+	@RequestMapping(value = "/credentials", method = RequestMethod.GET)
+	public Result<Collection<CredentialConfiguration>> listCredentialConfigurations() {
+		return listConfigurationsForCurrentUser(CredentialConfiguration.class);
+	}
+
+	@RequestMapping(value = "/transforms", method = RequestMethod.GET)
+	public Result<Collection<TransformConfiguration>> listTransformConfigurations() {
+		return listConfigurationsForCurrentUser(TransformConfiguration.class);
 	}
 
 }
