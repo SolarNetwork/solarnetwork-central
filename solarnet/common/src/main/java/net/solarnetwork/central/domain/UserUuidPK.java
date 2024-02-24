@@ -32,10 +32,10 @@ import com.fasterxml.uuid.UUIDComparator;
  * Immutable primary key for user-related entities using a UUID primary key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public final class UserUuidPK extends BasePK
-		implements Serializable, Cloneable, Comparable<UserUuidPK>, CompositeKey2<Long, UUID> {
+public final class UserUuidPK extends BasePK implements Serializable, Cloneable, Comparable<UserUuidPK>,
+		CompositeKey2<Long, UUID>, UserIdRelated {
 
 	private static final long serialVersionUID = 417842772182618447L;
 
@@ -130,6 +130,7 @@ public final class UserUuidPK extends BasePK
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	public final Long getUserId() {
 		return userId;
 	}

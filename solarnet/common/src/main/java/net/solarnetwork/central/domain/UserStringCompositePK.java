@@ -30,10 +30,10 @@ import java.util.Objects;
  * Immutable primary key for user-related entities using a String entity key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserStringCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserStringCompositePK>, CompositeKey2<Long, String> {
+		Comparable<UserStringCompositePK>, CompositeKey2<Long, String>, UserIdRelated {
 
 	private static final long serialVersionUID = -1781395410683839439L;
 
@@ -139,6 +139,7 @@ public final class UserStringCompositePK extends BasePK implements Serializable,
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	public final Long getUserId() {
 		return userId;
 	}

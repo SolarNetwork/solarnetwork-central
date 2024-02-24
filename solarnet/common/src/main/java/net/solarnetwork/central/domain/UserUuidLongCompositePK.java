@@ -34,7 +34,7 @@ import java.util.UUID;
  * @version 1.0
  */
 public class UserUuidLongCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserUuidLongCompositePK>, CompositeKey3<Long, UUID, Long> {
+		Comparable<UserUuidLongCompositePK>, CompositeKey3<Long, UUID, Long>, UserIdRelated {
 
 	private static final long serialVersionUID = 5569471640101762323L;
 
@@ -177,6 +177,7 @@ public class UserUuidLongCompositePK extends BasePK implements Serializable, Clo
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	public final Long getUserId() {
 		return userId;
 	}

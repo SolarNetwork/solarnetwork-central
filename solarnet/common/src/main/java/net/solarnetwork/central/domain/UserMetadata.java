@@ -29,15 +29,16 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * API for user metadata.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-public interface UserMetadata {
+public interface UserMetadata extends UserIdRelated {
 
 	/**
 	 * Get the user ID.
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	Long getUserId();
 
 	/**

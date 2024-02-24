@@ -30,10 +30,10 @@ import java.util.Objects;
  * Basic implementation of a Long, Long, String composite key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class UserLongStringCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserLongStringCompositePK>, CompositeKey3<Long, Long, String> {
+		Comparable<UserLongStringCompositePK>, CompositeKey3<Long, Long, String>, UserIdRelated {
 
 	private static final long serialVersionUID = 6089539799437151759L;
 
@@ -153,6 +153,7 @@ public final class UserLongStringCompositePK extends BasePK implements Serializa
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	public final Long getUserId() {
 		return userId;
 	}

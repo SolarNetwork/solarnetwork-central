@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserRelatedEntity.java - 25/03/2018 1:55:08 PM
+ * UserIdRelated.java - 25/02/2024 8:14:45 am
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,21 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao;
-
-import net.solarnetwork.central.domain.UserIdRelated;
-import net.solarnetwork.dao.Entity;
+package net.solarnetwork.central.domain;
 
 /**
- * API for an entity associated with a user ID.
+ * API for objects related to a user entity by way of a user ID.
  * 
- * @param <PK>
- *        the primary key type
  * @author matt
- * @version 1.1
- * @since 2.0
+ * @version 1.0
  */
-public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
+public interface UserIdRelated {
 
 	/**
-	 * Get the user ID this entity relates to.
+	 * Get the user ID.
 	 * 
 	 * @return the user ID
 	 */
-	@Override
 	Long getUserId();
 
 }
