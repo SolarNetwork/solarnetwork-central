@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.din.biz.impl;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.util.Collection;
@@ -44,8 +46,12 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.user.din.domain.DatumInputConfigurationInput;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 
@@ -104,7 +110,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <C extends DatumInputConfigurationEntity<?, ?>> Collection<C> configurationsForUser(
+	public <C extends DatumInputConfigurationEntity<C, ?>> Collection<C> configurationsForUser(
 			Long userId, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
@@ -130,40 +136,84 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 				"Configuration type %s not supported.".formatted(configurationClass));
 	}
 
-	@SuppressWarnings("unchecked")
-	private <C extends DatumInputConfigurationEntity<?, ?>> Collection<C> findAllForUser(Long user,
-			GenericCompositeKey2Dao<?, ?, Long, ?> dao) {
-		return (Collection<C>) dao.findAll(user, null);
-	}
-
-	@SuppressWarnings("unchecked")
-	private <C extends DatumInputConfigurationEntity<?, ?>> Collection<C> findAllForUser(Long user,
-			GenericCompositeKey3Dao<?, ?, Long, ?, ?> dao) {
-		return (Collection<C>) dao.findAll(user, null, null);
-	}
-
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <C extends DatumInputConfigurationEntity<?, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForUser(
+	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForId(
 			K id, Class<C> configurationClass) {
-		// TODO Auto-generated method stub
-		return null;
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(id.getUserId(), "id.userId");
+		requireNonNullArgument(configurationClass, "configurationClass");
+		GenericDao<C, K> dao = genericDao(configurationClass);
+		C result = requireNonNullObject(dao.get(id), id);
+		// remove credentials before returning
+		result.eraseCredentials();
+		return result;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public <T extends DatumInputConfigurationInput<C, K>, C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C saveConfiguration(
 			K id, T input) {
-		// TODO Auto-generated method stub
-		return null;
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(id.getUserId(), "id.userId");
+		requireNonNullArgument(input, "input");
+		C config = input.toEntity(id);
+
+		@SuppressWarnings("unchecked")
+		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
+		return dao.get(dao.save(config));
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public <C extends DatumInputConfigurationEntity<?, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
+	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
 			K id, Class<C> configurationClass) {
-		// TODO Auto-generated method stub
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(id.getUserId(), "id.userId");
+		requireNonNullArgument(configurationClass, "configurationClass");
+		if ( CredentialConfiguration.class.isAssignableFrom(configurationClass) ) {
+			credentialDao.delete(new CredentialConfiguration((UserLongCompositePK) id, now()));
+		} else if ( TransformConfiguration.class.isAssignableFrom(configurationClass) ) {
+			transformDao.delete(new TransformConfiguration((UserLongCompositePK) id, now()));
+		} else if ( EndpointConfiguration.class.isAssignableFrom(configurationClass) ) {
+			endpointDao.delete(new EndpointConfiguration((UserUuidPK) id, now()));
+		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(configurationClass) ) {
+			endpointAuthDao.delete(new EndpointAuthConfiguration((UserUuidLongCompositePK) id, now()));
+		} else {
+			throw new UnsupportedOperationException(
+					"Configuration type %s not supported.".formatted(configurationClass));
+		}
+	}
 
+	@SuppressWarnings("unchecked")
+	private <C extends DatumInputConfigurationEntity<C, ?>> Collection<C> findAllForUser(Long user,
+			GenericCompositeKey2Dao<?, ?, Long, ?> dao) {
+		return (Collection<C>) dao.findAll(user, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <C extends DatumInputConfigurationEntity<C, ?>> Collection<C> findAllForUser(Long user,
+			GenericCompositeKey3Dao<?, ?, Long, ?, ?> dao) {
+		return (Collection<C>) dao.findAll(user, null, null);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> GenericDao<C, K> genericDao(
+			Class<C> clazz) {
+		GenericDao<C, K> result = null;
+		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) (credentialDao);
+		} else if ( TransformConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) (transformDao);
+		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) (endpointDao);
+		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) (endpointAuthDao);
+		}
+		if ( result != null ) {
+			return result;
+		}
+		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
 	}
 
 	/**

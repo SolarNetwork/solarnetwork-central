@@ -62,12 +62,12 @@ public class UserDatumInputSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Match methods like {@code *ForUser(userKey, ...)}.
+	 * Match methods like {@code *ForId(userKey, ...)}.
 	 *
-	 * @param userId
-	 *        the user ID
+	 * @param userKey
+	 *        the user key
 	 */
-	@Pointcut("execution(* net.solarnetwork.central.user.din.biz.UserDatumInputBiz.*ForUser(..)) && args(userKey,..)")
+	@Pointcut("execution(* net.solarnetwork.central.user.din.biz.UserDatumInputBiz.*ForId(..)) && args(userKey,..)")
 	public void readForUserKey(UserIdRelated userKey) {
 	}
 

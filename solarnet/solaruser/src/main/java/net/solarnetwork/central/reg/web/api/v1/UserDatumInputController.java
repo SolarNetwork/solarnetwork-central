@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.Locale;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +36,7 @@ import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
 import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
-import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -83,9 +85,9 @@ public class UserDatumInputController {
 		return success(result);
 	}
 
-	private <C extends DatumInputConfigurationEntity<?, ?>> Result<Collection<C>> listConfigurationsForCurrentUser(
+	private <C extends DatumInputConfigurationEntity<C, ?>> Result<Collection<C>> listConfigurationsForCurrentUser(
 			Class<C> clazz) {
-		final Long userId = SecurityUtils.getCurrentActorUserId();
+		final Long userId = getCurrentActorUserId();
 		Collection<C> result = null;
 		if ( userDatumInputBiz != null ) {
 			result = userDatumInputBiz.configurationsForUser(userId, clazz);
@@ -98,9 +100,23 @@ public class UserDatumInputController {
 		return listConfigurationsForCurrentUser(CredentialConfiguration.class);
 	}
 
+	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.GET)
+	public Result<CredentialConfiguration> getCredentialConfiguration(
+			@PathVariable("credentialId") Long credentialId) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
+		return success(userDatumInputBiz.configurationForId(id, CredentialConfiguration.class));
+	}
+
 	@RequestMapping(value = "/transforms", method = RequestMethod.GET)
 	public Result<Collection<TransformConfiguration>> listTransformConfigurations() {
 		return listConfigurationsForCurrentUser(TransformConfiguration.class);
+	}
+
+	@RequestMapping(value = "/transforms/{transformId}", method = RequestMethod.GET)
+	public Result<TransformConfiguration> getTransformConfiguration(
+			@PathVariable("transformId") Long transformId) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
+		return success(userDatumInputBiz.configurationForId(id, TransformConfiguration.class));
 	}
 
 }

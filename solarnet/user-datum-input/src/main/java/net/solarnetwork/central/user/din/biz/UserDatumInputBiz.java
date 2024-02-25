@@ -61,11 +61,11 @@ public interface UserDatumInputBiz {
 	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
-	<C extends DatumInputConfigurationEntity<?, ?>> Collection<C> configurationsForUser(Long userId,
+	<C extends DatumInputConfigurationEntity<C, ?>> Collection<C> configurationsForUser(Long userId,
 			Class<C> configurationClass);
 
 	/**
-	 * Get a specific configuration kind for a given user.
+	 * Get a specific configuration kind for a given ID.
 	 *
 	 * @param <C>
 	 *        the configuration type
@@ -77,7 +77,7 @@ public interface UserDatumInputBiz {
 	 *        the configuration type to get
 	 * @return the configuration, or {@literal null} if not available
 	 */
-	<C extends DatumInputConfigurationEntity<?, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForUser(
+	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C configurationForId(
 			K id, Class<C> configurationClass);
 
 	/**
@@ -111,7 +111,7 @@ public interface UserDatumInputBiz {
 	 * @param configurationClass
 	 *        the type of the configuration to delete
 	 */
-	<C extends DatumInputConfigurationEntity<?, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
+	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
 			K id, Class<C> configurationClass);
 
 }
