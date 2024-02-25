@@ -73,7 +73,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 		final var sql = new UpsertEndpointConfiguration(userId, entity);
 
 		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		return (count > 0 ? new UserUuidPK(userId, sql.getEndpointId()) : null);
 	}
 
 	@Override
@@ -98,7 +98,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 		final var sql = new UpsertEndpointConfiguration(entity.getUserId(), entity);
 
 		int count = jdbcOps.update(sql);
-		return (count > 0 ? entity.getId() : null);
+		return (count > 0 ? new UserUuidPK(entity.getUserId(), sql.getEndpointId()) : null);
 	}
 
 	@Override

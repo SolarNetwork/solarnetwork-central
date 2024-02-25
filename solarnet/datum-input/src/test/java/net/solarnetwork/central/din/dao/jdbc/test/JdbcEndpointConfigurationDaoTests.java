@@ -114,6 +114,53 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	}
 
 	@Test
+	public void insert_generateUuid() {
+		// GIVEN
+		EndpointConfiguration conf = newEndpointConfiguration(userId, UserUuidPK.UNASSIGNED_UUID_ID,
+				randomString(), randomLong(), randomString(), null);
+
+		// WHEN
+		UserUuidPK result = dao.create(userId, conf);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(userId, UserUuidPK::getUserId)
+			.as("ID generated")
+			.doesNotReturn(null, UserUuidPK::getUuid)
+			.as("UUID not unassigned value")
+			.doesNotReturn(UserUuidPK.UNASSIGNED_UUID_ID, UserUuidPK::getUuid)
+			;
+
+		List<Map<String, Object>> data = allEndpointConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+			.as("Row user ID")
+			.containsEntry("user_id", userId)
+			.as("Row ID generated")
+			.containsKey("id")
+			.as("Row creation date")
+			.containsEntry("created", Timestamp.from(conf.getCreated()))
+			.as("Row modification date")
+			.containsEntry("modified", Timestamp.from(conf.getModified()))
+			.as("Row enabled")
+			.containsEntry("enabled", conf.isEnabled())
+			.as("Row name")
+			.containsEntry("cname", conf.getName())
+			.as("Row node ID")
+			.containsEntry("node_id", conf.getNodeId())
+			.as("Row source ID")
+			.containsEntry("source_id", conf.getSourceId())
+			.as("No transform ID")
+			.containsEntry("xform_id", null)
+			;
+		// @formatter:on
+		last = conf.copyWithId(result);
+	}
+
+	@Test
 	public void insert_withTransform() {
 		// GIVEN
 		TransformConfiguration xform = DinJdbcTestUtils.newTransformConfiguration(userId, randomString(),
@@ -157,6 +204,98 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("source_id", conf.getSourceId())
 			.as("Row transform ID")
 			.containsEntry("xform_id", conf.getTransformId())
+			;
+		// @formatter:on
+		last = conf.copyWithId(result);
+	}
+
+	@Test
+	public void save_insert() {
+		// GIVEN
+		EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(), randomString(),
+				randomLong(), randomString(), null);
+
+		// WHEN
+		UserUuidPK result = dao.save(conf);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(userId, UserUuidPK::getUserId)
+			.as("ID generated")
+			.doesNotReturn(null, UserUuidPK::getUuid)
+			;
+
+		List<Map<String, Object>> data = allEndpointConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+			.as("Row user ID")
+			.containsEntry("user_id", userId)
+			.as("Row ID generated")
+			.containsKey("id")
+			.as("Row creation date")
+			.containsEntry("created", Timestamp.from(conf.getCreated()))
+			.as("Row modification date")
+			.containsEntry("modified", Timestamp.from(conf.getModified()))
+			.as("Row enabled")
+			.containsEntry("enabled", conf.isEnabled())
+			.as("Row name")
+			.containsEntry("cname", conf.getName())
+			.as("Row node ID")
+			.containsEntry("node_id", conf.getNodeId())
+			.as("Row source ID")
+			.containsEntry("source_id", conf.getSourceId())
+			.as("No transform ID")
+			.containsEntry("xform_id", null)
+			;
+		// @formatter:on
+		last = conf.copyWithId(result);
+	}
+
+	@Test
+	public void save_generateUuid() {
+		// GIVEN
+		EndpointConfiguration conf = newEndpointConfiguration(userId, UserUuidPK.UNASSIGNED_UUID_ID,
+				randomString(), randomLong(), randomString(), null);
+
+		// WHEN
+		UserUuidPK result = dao.save(conf);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(userId, UserUuidPK::getUserId)
+			.as("ID generated")
+			.doesNotReturn(null, UserUuidPK::getUuid)
+			.as("UUID not unassigned value")
+			.doesNotReturn(UserUuidPK.UNASSIGNED_UUID_ID, UserUuidPK::getUuid)
+			;
+
+		List<Map<String, Object>> data = allEndpointConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+			.as("Row user ID")
+			.containsEntry("user_id", userId)
+			.as("Row ID generated")
+			.containsKey("id")
+			.as("Row creation date")
+			.containsEntry("created", Timestamp.from(conf.getCreated()))
+			.as("Row modification date")
+			.containsEntry("modified", Timestamp.from(conf.getModified()))
+			.as("Row enabled")
+			.containsEntry("enabled", conf.isEnabled())
+			.as("Row name")
+			.containsEntry("cname", conf.getName())
+			.as("Row node ID")
+			.containsEntry("node_id", conf.getNodeId())
+			.as("Row source ID")
+			.containsEntry("source_id", conf.getSourceId())
+			.as("No transform ID")
+			.containsEntry("xform_id", null)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);

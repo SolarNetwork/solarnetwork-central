@@ -29,9 +29,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.UUID;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
+import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
  * Support for INSERT ... ON CONFLICT {@link EndpointConfiguration} entities.
@@ -59,6 +61,7 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 			""";
 
 	private final Long userId;
+	private final UUID endpointId;
 	private final EndpointConfiguration entity;
 
 	/**
@@ -75,7 +78,9 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.entity = requireNonNullArgument(entity, "entity");
-		requireNonNullArgument(entity.getEndpointId(), "entity.endpointId");
+		this.endpointId = UserUuidPK.UNASSIGNED_UUID_ID.equals(entity.getEndpointId())
+				? UUID.randomUUID()
+				: entity.getEndpointId();
 	}
 
 	@Override
@@ -92,13 +97,27 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, mod);
 		stmt.setObject(++p, userId);
-		stmt.setObject(++p, entity.getEndpointId());
+		stmt.setObject(++p, endpointId);
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setObject(++p, entity.getNodeId());
 		stmt.setString(++p, entity.getSourceId());
 		stmt.setObject(++p, entity.getTransformId());
 		return stmt;
+	}
+
+	/**
+	 * Get the endpoint ID.
+	 *
+	 * <p>
+	 * If the given entity did not have an assigned UUID, a random one will be
+	 * generated and returned by this method.
+	 * </p>
+	 *
+	 * @return the endpoint ID
+	 */
+	public UUID getEndpointId() {
+		return endpointId;
 	}
 
 }
