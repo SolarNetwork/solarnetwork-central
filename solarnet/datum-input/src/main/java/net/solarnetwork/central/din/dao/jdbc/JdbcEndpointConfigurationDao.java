@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
+import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -66,6 +67,11 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 	@Override
 	public Class<? extends EndpointConfiguration> getObjectType() {
 		return EndpointConfiguration.class;
+	}
+
+	@Override
+	public EndpointConfiguration entityKey(UserUuidPK id) {
+		return new EndpointConfiguration(id, now());
 	}
 
 	@Override

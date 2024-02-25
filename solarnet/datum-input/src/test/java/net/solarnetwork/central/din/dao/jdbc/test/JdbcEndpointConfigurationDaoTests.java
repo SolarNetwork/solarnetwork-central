@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao.jdbc.test;
 
+import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.allEndpointConfigurationData;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.newEndpointConfiguration;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.din.dao.BasicFilter;
@@ -45,6 +45,7 @@ import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -69,9 +70,24 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	}
 
 	@Test
+	public void entityKey() {
+		UserUuidPK id = new UserUuidPK(randomLong(), randomUUID());
+		EndpointConfiguration result = dao.entityKey(id);
+
+		// @formatter:off
+		then(result)
+			.as("Entity for key returned")
+			.isNotNull()
+			.as("ID of entity from provided value")
+			.returns(id, Entity::getId)
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void insert() {
 		// GIVEN
-		EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(), randomString(),
+		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
 				randomLong(), randomString(), null);
 
 		// WHEN
@@ -167,7 +183,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 				randomString(), null);
 		xform = transformDao.get(transformDao.create(userId, xform));
 
-		EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(), randomString(),
+		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
 				randomLong(), randomString(), xform.getTransformId());
 
 		// WHEN
@@ -212,7 +228,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	@Test
 	public void save_insert() {
 		// GIVEN
-		EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(), randomString(),
+		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
 				randomLong(), randomString(), null);
 
 		// WHEN
@@ -397,7 +413,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 					userId = userIds.get(u);
 				}
 
-				EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(),
+				EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(),
 						randomString(), randomLong(), randomString(), null);
 				UserUuidPK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
@@ -433,7 +449,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 					userId = userIds.get(u);
 				}
 
-				EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(),
+				EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(),
 						randomString(), randomLong(), randomString(), null);
 				UserUuidPK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
@@ -471,7 +487,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 					userId = userIds.get(u);
 				}
 
-				EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(),
+				EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(),
 						randomString(), randomLong(), randomString(), null);
 				UserUuidPK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
@@ -510,7 +526,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 					userId = userIds.get(u);
 				}
 
-				EndpointConfiguration conf = newEndpointConfiguration(userId, UUID.randomUUID(),
+				EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(),
 						randomString(), randomLong(), randomString(), null);
 				UserUuidPK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);

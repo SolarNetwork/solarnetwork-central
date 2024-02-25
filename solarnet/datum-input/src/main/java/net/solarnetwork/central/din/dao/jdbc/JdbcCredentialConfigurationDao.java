@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao.jdbc;
 
+import static java.time.Instant.now;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -68,6 +69,11 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 	@Override
 	public Class<? extends CredentialConfiguration> getObjectType() {
 		return CredentialConfiguration.class;
+	}
+
+	@Override
+	public CredentialConfiguration entityKey(UserLongCompositePK id) {
+		return new CredentialConfiguration(id, now());
 	}
 
 	@Override

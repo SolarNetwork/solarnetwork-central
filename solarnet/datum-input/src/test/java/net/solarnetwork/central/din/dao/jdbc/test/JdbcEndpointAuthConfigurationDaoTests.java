@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao.jdbc.test;
 
+import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.allEndpointAuthConfigurationData;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.newEndpointAuthConfiguration;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.newEndpointConfiguration;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -71,6 +73,22 @@ public class JdbcEndpointAuthConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		credentialDao = new JdbcCredentialConfigurationDao(jdbcTemplate);
 		endpointDao = new JdbcEndpointConfigurationDao(jdbcTemplate);
+	}
+
+	@Test
+	public void entityKey() {
+		UserUuidLongCompositePK id = new UserUuidLongCompositePK(randomLong(), randomUUID(),
+				randomLong());
+		EndpointAuthConfiguration result = dao.entityKey(id);
+
+		// @formatter:off
+		then(result)
+			.as("Entity for key returned")
+			.isNotNull()
+			.as("ID of entity from provided value")
+			.returns(id, Entity::getId)
+			;
+		// @formatter:on
 	}
 
 	@Test

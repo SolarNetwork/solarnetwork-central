@@ -24,6 +24,7 @@ package net.solarnetwork.central.din.dao.jdbc.test;
 
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.allCredentialConfigurationData;
 import static net.solarnetwork.central.din.dao.jdbc.test.DinJdbcTestUtils.newCredentialConfiguration;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -42,6 +43,7 @@ import net.solarnetwork.central.din.domain.CredentialConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
 
 /**
@@ -61,6 +63,21 @@ public class JdbcCredentialConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 	public void setup() {
 		dao = new JdbcCredentialConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+	}
+
+	@Test
+	public void entityKey() {
+		UserLongCompositePK id = new UserLongCompositePK(randomLong(), randomLong());
+		CredentialConfiguration result = dao.entityKey(id);
+
+		// @formatter:off
+		then(result)
+			.as("Entity for key returned")
+			.isNotNull()
+			.as("ID of entity from provided value")
+			.returns(id, Entity::getId)
+			;
+		// @formatter:on
 	}
 
 	@Test
