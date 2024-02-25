@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @version 1.0
  */
 public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends CompositeKey3<K1, K2, K3>, K1, K2, K3>
-		extends GenericDao<T, K> {
+		extends GenericDao<T, K>, GenericCompositeKeyFilterableDao<T, K> {
 
 	/**
 	 * Create an entity using a specific first key component, assuming the
@@ -82,5 +82,10 @@ public interface GenericCompositeKey3Dao<T extends Entity<K>, K extends Composit
 	 * @return list of all persisted entities, or empty list if none available
 	 */
 	Collection<T> findAll(K1 keyComponent1, K2 keyComponent2, List<SortDescriptor> sorts);
+
+	@Override
+	default Collection<T> findAllForKey(K filter, List<SortDescriptor> sorts) {
+		return findAll(filter.keyComponent1(), filter.keyComponent2(), sorts);
+	}
 
 }
