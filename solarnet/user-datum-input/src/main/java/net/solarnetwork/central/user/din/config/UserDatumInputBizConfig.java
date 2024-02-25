@@ -36,6 +36,7 @@ import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
 import net.solarnetwork.central.user.din.biz.impl.DaoUserDatumInputBiz;
+import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * Configuration for User datum input services.
@@ -68,11 +69,15 @@ public class UserDatumInputBizConfig {
 	@Autowired
 	private Validator validator;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
 	@Bean
 	public DaoUserDatumInputBiz userDatumInputBiz() {
 		DaoUserDatumInputBiz biz = new DaoUserDatumInputBiz(nodeOwnershipDao, credentialDao,
 				transformDao, endpointDao, endpointAuthDao, transformServices);
 		biz.setValidator(validator);
+		biz.setPasswordEncoder(passwordEncoder);
 		return biz;
 	}
 

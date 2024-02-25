@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.din.biz.impl;
 
-import static java.time.Instant.now;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
@@ -30,7 +29,10 @@ import java.util.Collection;
 import java.util.Locale;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindingResult;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -46,14 +48,13 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
-import net.solarnetwork.central.domain.UserLongCompositePK;
-import net.solarnetwork.central.domain.UserUuidLongCompositePK;
-import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.user.din.domain.DatumInputConfigurationInput;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
+import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * DAO based implementation of {@Link UserDatumInputBiz}.
@@ -71,6 +72,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	private final Collection<TransformService> transformServices;
 
 	private Validator validator;
+	private PasswordEncoder passwordEncoder;
 
 	/**
 	 * Constructor.
@@ -157,11 +159,23 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
 		requireNonNullArgument(input, "input");
+
+		validateInput(input);
+
 		C config = input.toEntity(id);
+
+		if ( passwordEncoder != null && config instanceof CredentialConfiguration c ) {
+			if ( !passwordEncoder.isPasswordEncrypted(c.getPassword()) ) {
+				c.setPassword(passwordEncoder.encode(c.getPassword()));
+			}
+		}
 
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
-		return dao.get(dao.save(config));
+		C result = requireNonNullObject(dao.get(dao.save(config)), id);
+		result.eraseCredentials();
+		return result;
+
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -171,17 +185,27 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
-		if ( CredentialConfiguration.class.isAssignableFrom(configurationClass) ) {
-			credentialDao.delete(new CredentialConfiguration((UserLongCompositePK) id, now()));
-		} else if ( TransformConfiguration.class.isAssignableFrom(configurationClass) ) {
-			transformDao.delete(new TransformConfiguration((UserLongCompositePK) id, now()));
-		} else if ( EndpointConfiguration.class.isAssignableFrom(configurationClass) ) {
-			endpointDao.delete(new EndpointConfiguration((UserUuidPK) id, now()));
-		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(configurationClass) ) {
-			endpointAuthDao.delete(new EndpointAuthConfiguration((UserUuidLongCompositePK) id, now()));
-		} else {
-			throw new UnsupportedOperationException(
-					"Configuration type %s not supported.".formatted(configurationClass));
+		GenericDao<C, K> dao = genericDao(configurationClass);
+		C pk = dao.entityKey(id);
+		dao.delete(pk);
+	}
+
+	private void validateInput(final Object input) {
+		validateInput(input, getValidator());
+	}
+
+	private static void validateInput(final Object input, final Validator v) {
+		if ( input == null || v == null ) {
+			return;
+		}
+		var violations = v.validate(input);
+		if ( violations == null || violations.isEmpty() ) {
+			return;
+		}
+		BindingResult errors = ExceptionUtils
+				.toBindingResult(new ConstraintViolationException(violations), v);
+		if ( errors.hasErrors() ) {
+			throw new ValidationException(errors);
 		}
 	}
 
@@ -233,6 +257,25 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 */
 	public void setValidator(Validator validator) {
 		this.validator = validator;
+	}
+
+	/**
+	 * Get the password encoder.
+	 *
+	 * @return the password encoder
+	 */
+	public PasswordEncoder getPasswordEncoder() {
+		return passwordEncoder;
+	}
+
+	/**
+	 * Set the password encoder.
+	 *
+	 * @param passwordEncoder
+	 *        the encoder to set
+	 */
+	public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+		this.passwordEncoder = passwordEncoder;
 	}
 
 }
