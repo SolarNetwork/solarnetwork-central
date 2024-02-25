@@ -38,6 +38,18 @@ public final class UserLongStringCompositePK extends BasePK implements Serializa
 	private static final long serialVersionUID = 6089539799437151759L;
 
 	/**
+	 * A special "not a value" instance to be used for generated user ID values
+	 * yet to be generated.
+	 */
+	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+
+	/**
+	 * A special "not a value" instance to be used for generated group ID values
+	 * yet to be generated.
+	 */
+	public static final Long UNASSIGNED_GROUP_ID = Long.MIN_VALUE;
+
+	/**
 	 * A special "not a value" instance to be used for generated entity ID
 	 * values yet to be generated.
 	 */
@@ -193,10 +205,34 @@ public final class UserLongStringCompositePK extends BasePK implements Serializa
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 2 ) {
-			return (entityId != null && entityId != UNASSIGNED_ENTITY_ID);
+		if ( index == 0 ) {
+			return userId != UNASSIGNED_USER_ID;
+		} else if ( index == 1 ) {
+			return groupId != UNASSIGNED_GROUP_ID;
+		} else if ( index == 2 ) {
+			return entityId != UNASSIGNED_ENTITY_ID;
 		}
 		return CompositeKey3.super.keyComponentIsAssigned(index);
+	}
+
+	/**
+	 * Test if the user ID is assigned.
+	 * 
+	 * @return {@literal true} if the user ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 */
+	public final boolean userIdIsAssigned() {
+		return keyComponentIsAssigned(0);
+	}
+
+	/**
+	 * Test if the group ID is assigned.
+	 * 
+	 * @return {@literal true} if the group ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 */
+	public final boolean groupIdIsAssigned() {
+		return keyComponentIsAssigned(1);
 	}
 
 	/**
@@ -207,6 +243,50 @@ public final class UserLongStringCompositePK extends BasePK implements Serializa
 	 */
 	public final boolean entityIdIsAssigned() {
 		return keyComponentIsAssigned(2);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T keyComponentValue(int index, Object val) {
+		try {
+			if ( index == 0 || index == 1 ) {
+				if ( val == null ) {
+					return (T) UNASSIGNED_GROUP_ID;
+				} else if ( val instanceof Long n ) {
+					return (T) n;
+				} else if ( val instanceof Number n ) {
+					return (T) Long.valueOf(n.longValue());
+				} else {
+					return (T) Long.valueOf(val.toString());
+				}
+			} else if ( index == 2 ) {
+				if ( val == null ) {
+					return (T) UNASSIGNED_ENTITY_ID;
+				} else if ( val instanceof String s ) {
+					return (T) s;
+				} else {
+					return (T) val.toString();
+				}
+			}
+		} catch ( NumberFormatException e ) {
+			throw new IllegalArgumentException(
+					"Key component %d does not support value %s.".formatted(index, val));
+		}
+		throw new IllegalArgumentException("Key component %d out of range.".formatted(index));
+	}
+
+	@Override
+	public UserLongStringCompositePK createKey(CompositeKey template, Object... components) {
+		Object v1 = (components != null && components.length > 0 ? components[0]
+				: template != null ? template.keyComponent(0) : null);
+		Object v2 = (components != null && components.length > 1 ? components[1]
+				: template != null ? template.keyComponent(1) : null);
+		Object v3 = (components != null && components.length > 2 ? components[2]
+				: template != null ? template.keyComponent(2) : null);
+		Long k1 = (v1 != null ? keyComponentValue(0, v1) : UNASSIGNED_USER_ID);
+		Long k2 = (v2 != null ? keyComponentValue(1, v2) : UNASSIGNED_GROUP_ID);
+		String k3 = (v3 != null ? keyComponentValue(2, v3) : UNASSIGNED_ENTITY_ID);
+		return new UserLongStringCompositePK(k1, k2, k3);
 	}
 
 }
