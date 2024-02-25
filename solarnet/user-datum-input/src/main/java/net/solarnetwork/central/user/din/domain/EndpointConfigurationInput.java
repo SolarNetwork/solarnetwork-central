@@ -28,6 +28,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
+import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.UserUuidPK;
 
 /**
@@ -68,6 +69,9 @@ public class EndpointConfigurationInput
 	protected void populateConfiguration(EndpointConfiguration conf) {
 		super.populateConfiguration(conf);
 		conf.setName(name);
+		conf.setNodeId(nodeId);
+		conf.setSourceId(sourceId);
+		conf.setTransformId(transformId);
 	}
 
 	/**
@@ -129,6 +133,25 @@ public class EndpointConfigurationInput
 	 */
 	public void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
+	}
+
+	/**
+	 * Get the ID of the associated {@link TransformConfiguration} entity.
+	 *
+	 * @return the ID
+	 */
+	public Long getTransformId() {
+		return transformId;
+	}
+
+	/**
+	 * Set the ID of the associated {@link TransformConfiguration} entity.
+	 *
+	 * @param transformId
+	 *        the ID to set
+	 */
+	public void setTransformId(Long transformId) {
+		this.transformId = transformId;
 	}
 
 }
