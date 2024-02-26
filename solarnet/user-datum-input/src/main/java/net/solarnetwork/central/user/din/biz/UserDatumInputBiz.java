@@ -106,6 +106,23 @@ public interface UserDatumInputBiz {
 			K id, T input);
 
 	/**
+	 * Update the enabled status of configurations, optionally filtered.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 * @param id
+	 *        the ID of the configuration to save; at a minimum the user ID
+	 *        component must be provided
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param configurationClass
+	 *        the configuration type to get
+	 */
+	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void enableConfiguration(
+			K id, boolean enabled, Class<C> configurationClass);
+
+	/**
 	 * Delete a specific datum input configuration.
 	 *
 	 * @param <C>

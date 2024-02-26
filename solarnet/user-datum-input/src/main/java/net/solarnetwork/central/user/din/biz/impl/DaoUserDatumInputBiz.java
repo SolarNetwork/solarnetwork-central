@@ -41,8 +41,11 @@ import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
+import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.din.biz.TransformService;
+import net.solarnetwork.central.din.dao.BasicFilter;
 import net.solarnetwork.central.din.dao.CredentialConfigurationDao;
+import net.solarnetwork.central.din.dao.DatumInputFilter;
 import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
@@ -54,6 +57,7 @@ import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
@@ -156,6 +160,33 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		// remove credentials before returning
 		result.eraseCredentials();
 		return result;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void enableConfiguration(
+			K id, boolean enabled, Class<C> configurationClass) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(id.getUserId(), "id.userId");
+		requireNonNullArgument(configurationClass, "configurationClass");
+
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(id.getUserId());
+		if ( id instanceof UserLongCompositePK pk && pk.entityIdIsAssigned() ) {
+			if ( CredentialConfiguration.class.isAssignableFrom(configurationClass) ) {
+				filter.setCredentialId(pk.getEntityId());
+			}
+		} else if ( id instanceof UserUuidPK pk && pk.uuidIsAssigned()
+				&& EndpointConfiguration.class.isAssignableFrom(configurationClass) ) {
+			filter.setEndpointId(pk.getUuid());
+		} else if ( id instanceof UserUuidLongCompositePK pk
+				&& EndpointAuthConfiguration.class.isAssignableFrom(configurationClass) ) {
+			filter.setEndpointId(pk.getGroupId());
+			filter.setCredentialId(pk.getEntityId());
+		}
+
+		UserModifiableEnabledStatusDao<DatumInputFilter> dao = statusDao(configurationClass);
+		dao.updateEnabledStatus(id.getUserId(), filter, enabled);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -303,6 +334,22 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			result = (GenericDao<C, K>) (endpointDao);
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (GenericDao<C, K>) (endpointAuthDao);
+		}
+		if ( result != null ) {
+			return result;
+		}
+		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <F extends DatumInputFilter> UserModifiableEnabledStatusDao<F> statusDao(Class<?> clazz) {
+		UserModifiableEnabledStatusDao<F> result = null;
+		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (UserModifiableEnabledStatusDao<F>) (credentialDao);
+		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (UserModifiableEnabledStatusDao<F>) (endpointDao);
+		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (UserModifiableEnabledStatusDao<F>) (endpointAuthDao);
 		}
 		if ( result != null ) {
 			return result;

@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.din.dao;
 
-import net.solarnetwork.central.common.dao.UserModifiableFilter;
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * A filter for transform entities.
@@ -30,6 +31,7 @@ import net.solarnetwork.central.common.dao.UserModifiableFilter;
  * @author matt
  * @version 1.0
  */
-public interface TransformFilter extends UserModifiableFilter, TransformCriteria {
+public interface TransformFilter
+		extends DatumInputFilter, UserCriteria, PaginationCriteria, TransformCriteria {
 
 }

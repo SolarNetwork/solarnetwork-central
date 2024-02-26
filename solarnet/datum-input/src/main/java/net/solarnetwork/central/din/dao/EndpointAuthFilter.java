@@ -30,6 +30,7 @@ import net.solarnetwork.central.common.dao.UserModifiableFilter;
  * @author matt
  * @version 1.0
  */
-public interface EndpointAuthFilter extends UserModifiableFilter, EndpointCriteria, CredentialCriteria {
+public interface EndpointAuthFilter
+		extends DatumInputFilter, UserModifiableFilter, EndpointCriteria, CredentialCriteria {
 
 }

@@ -135,6 +135,14 @@ public class UserDatumInputController {
 		return success(result);
 	}
 
+	@RequestMapping(value = "/credentials/{credentialId}/enabled/{enabled}", method = RequestMethod.POST)
+	public Result<CredentialConfiguration> enableCredentialConfiguration(
+			@PathVariable("credentialId") Long credentialId, @PathVariable("enabled") boolean enabled) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
+		userDatumInputBiz.enableConfiguration(id, enabled, CredentialConfiguration.class);
+		return success();
+	}
+
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.DELETE)
 	public Result<Void> deleteCredentialConfiguration(@PathVariable("credentialId") Long credentialId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
@@ -248,6 +256,14 @@ public class UserDatumInputController {
 		return success(result);
 	}
 
+	@RequestMapping(value = "/endpoints/{endpointId}/enabled/{enabled}", method = RequestMethod.POST)
+	public Result<CredentialConfiguration> enableEndpointConfiguration(
+			@PathVariable("endpointId") UUID endpointId, @PathVariable("enabled") boolean enabled) {
+		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
+		userDatumInputBiz.enableConfiguration(id, enabled, EndpointConfiguration.class);
+		return success();
+	}
+
 	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.DELETE)
 	public Result<Void> deleteEndpointConfiguration(@PathVariable("endpointId") UUID endpointId) {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
@@ -277,6 +293,16 @@ public class UserDatumInputController {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
 				credentialId);
 		return success(userDatumInputBiz.configurationForId(id, EndpointAuthConfiguration.class));
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}/enabled/{enabled}", method = RequestMethod.POST)
+	public Result<CredentialConfiguration> enableEndpointAuthConfiguration(
+			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
+			@PathVariable("enabled") boolean enabled) {
+		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
+				credentialId);
+		userDatumInputBiz.enableConfiguration(id, enabled, EndpointAuthConfiguration.class);
+		return success();
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.DELETE)
