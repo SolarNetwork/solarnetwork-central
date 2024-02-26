@@ -319,11 +319,18 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 	private List<Datum> parseDatumList(String json) throws IOException {
 		JsonNode root = objectMapper.readTree(json);
 		if ( root.isObject() ) {
-			return Collections.singletonList(objectMapper.treeToValue(root, Datum.class));
+			Datum d = objectMapper.treeToValue(root, Datum.class);
+			if ( !(d == null || d.asSampleOperations().isEmpty()) ) {
+				return Collections.singletonList(d);
+			}
+			return Collections.emptyList();
 		}
 		List<Datum> result = new ArrayList<>(root.size());
 		for ( JsonNode n : root ) {
-			result.add(objectMapper.treeToValue(n, Datum.class));
+			Datum d = objectMapper.treeToValue(n, Datum.class);
+			if ( !(d == null || d.asSampleOperations().isEmpty()) ) {
+				result.add(d);
+			}
 		}
 		return result;
 	}
