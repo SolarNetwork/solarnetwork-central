@@ -120,6 +120,15 @@ public class UserDatumInputController {
 		return success(userDatumInputBiz.configurationForId(id, CredentialConfiguration.class));
 	}
 
+	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.PUT)
+	public Result<CredentialConfiguration> updateCredentialConfiguration(
+			@PathVariable("credentialId") Long credentialId,
+			@Valid @RequestBody CredentialConfigurationInput input) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
+		CredentialConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
+	}
+
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.DELETE)
 	public Result<Void> deleteCredentialConfiguration(@PathVariable("credentialId") Long credentialId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
@@ -147,6 +156,15 @@ public class UserDatumInputController {
 		return success(userDatumInputBiz.configurationForId(id, TransformConfiguration.class));
 	}
 
+	@RequestMapping(value = "/transforms/{transformId}", method = RequestMethod.PUT)
+	public Result<TransformConfiguration> updateTransformConfiguration(
+			@PathVariable("transformId") Long transformId,
+			@Valid @RequestBody TransformConfigurationInput input) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
+		TransformConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
+	}
+
 	@RequestMapping(value = "/transforms/{transformId}", method = RequestMethod.DELETE)
 	public Result<Void> deleteTransformConfiguration(@PathVariable("transformId") Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
@@ -172,6 +190,15 @@ public class UserDatumInputController {
 			@PathVariable("endpointId") UUID endpointId) {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
 		return success(userDatumInputBiz.configurationForId(id, EndpointConfiguration.class));
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.PUT)
+	public Result<EndpointConfiguration> updateEndpointConfiguration(
+			@PathVariable("endpointId") UUID endpointId,
+			@Valid @RequestBody EndpointConfigurationInput input) {
+		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
+		EndpointConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.DELETE)
