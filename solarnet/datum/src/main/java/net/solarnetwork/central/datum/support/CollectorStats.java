@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz.dao;
+package net.solarnetwork.central.datum.support;
 
 import java.util.concurrent.atomic.AtomicLongArray;
 import org.slf4j.Logger;

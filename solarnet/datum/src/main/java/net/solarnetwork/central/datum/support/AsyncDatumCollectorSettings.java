@@ -23,7 +23,7 @@
 package net.solarnetwork.central.datum.support;
 
 /**
- * Settings for the AsyncDaoDatumCollector.
+ * Settings for the AsyncDatumCollector.
  * 
  * @author matt
  * @version 1.0

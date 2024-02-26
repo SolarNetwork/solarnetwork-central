@@ -1,5 +1,5 @@
 /* ==================================================================
- * AsyncDaoDatumCollector.java - 25/03/2020 10:43:56 am
+ * AsyncDatumCollector.java - 25/03/2020 10:43:56 am
  *
  * Copyright 2020 SolarNetwork.net Dev Team
  *
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz.dao;
+package net.solarnetwork.central.datum.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
@@ -56,6 +56,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.support.CollectorStats.BasicCount;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -80,7 +81,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * @author matt
  * @version 2.2
  */
-public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
+public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
 		CacheEntryRemovedListener<Serializable, Serializable>, PingTest, ServiceLifecycleObserver {
 
@@ -129,7 +130,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	 * @param transactionTemplate
 	 *        the transaction template
 	 */
-	public AsyncDaoDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
+	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
 			TransactionTemplate transactionTemplate) {
 		this(datumCache, datumDao, transactionTemplate, new CollectorStats("AsyncDaoDatum", 200));
 	}
@@ -148,7 +149,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public AsyncDaoDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
+	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
 			TransactionTemplate transactionTemplate, CollectorStats stats) {
 		super();
 		this.datumCache = requireNonNullArgument(datumCache, "datumCache");
@@ -247,11 +248,11 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	@Override
 	public Result performPingTest() throws Exception {
 		// verify buffer removals not lagging behind additions
-		long addCount = stats.get(CollectorStats.BasicCount.BufferAdds);
-		long removeCount = stats.get(CollectorStats.BasicCount.BufferRemovals);
+		long addCount = stats.get(BasicCount.BufferAdds);
+		long removeCount = stats.get(BasicCount.BufferRemovals);
 		long lagDiff = addCount - removeCount;
-		Map<String, Number> statMap = new LinkedHashMap<>(CollectorStats.BasicCount.values().length);
-		for ( CollectorStats.BasicCount s : CollectorStats.BasicCount.values() ) {
+		Map<String, Number> statMap = new LinkedHashMap<>(BasicCount.values().length);
+		for ( BasicCount s : BasicCount.values() ) {
 			statMap.put(s.toString(), stats.get(s));
 		}
 		if ( datumCache instanceof BufferingDelegatingCache ) {
@@ -298,38 +299,34 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 													@Override
 													protected void doInTransactionWithoutResult(
 															TransactionStatus status) {
-														if ( entity instanceof DatumEntity ) {
-															datumDao.store((DatumEntity) entity);
-														} else if ( entity instanceof GeneralNodeDatum ) {
-															datumDao.store((GeneralNodeDatum) entity);
-														} else if ( entity instanceof GeneralLocationDatum ) {
-															datumDao.store(
-																	(GeneralLocationDatum) entity);
+														if ( entity instanceof DatumEntity d ) {
+															datumDao.store(d);
+														} else if ( entity instanceof GeneralNodeDatum d ) {
+															datumDao.store(d);
+														} else if ( entity instanceof GeneralLocationDatum d ) {
+															datumDao.store(d);
 														}
 													}
 												});
 										log.trace("REMOVE: |{}", key);
 										datumCache.remove(key);
 										if ( entity instanceof DatumEntity ) {
-											stats.incrementAndGet(
-													CollectorStats.BasicCount.StreamDatumStored);
+											stats.incrementAndGet(BasicCount.StreamDatumStored);
 										} else if ( entity instanceof GeneralNodeDatum ) {
-											stats.incrementAndGet(CollectorStats.BasicCount.DatumStored);
+											stats.incrementAndGet(BasicCount.DatumStored);
 										} else if ( entity instanceof GeneralLocationDatum ) {
-											stats.incrementAndGet(
-													CollectorStats.BasicCount.LocationDatumStored);
+											stats.incrementAndGet(BasicCount.LocationDatumStored);
 										}
 									} else {
 										log.trace("MISS: |{}", key);
 									}
 								} catch ( Throwable t ) {
 									if ( entity instanceof DatumEntity ) {
-										stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumFail);
+										stats.incrementAndGet(BasicCount.StreamDatumFail);
 									} else if ( entity instanceof GeneralNodeDatum ) {
-										stats.incrementAndGet(CollectorStats.BasicCount.DatumFail);
+										stats.incrementAndGet(BasicCount.DatumFail);
 									} else if ( entity instanceof GeneralLocationDatum ) {
-										stats.incrementAndGet(
-												CollectorStats.BasicCount.LocationDatumFail);
+										stats.incrementAndGet(BasicCount.LocationDatumFail);
 									}
 									Throwable root = t;
 									while ( root.getCause() != null ) {
@@ -390,13 +387,13 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_CRE: |{}", key);
-			stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
+			stats.incrementAndGet(BasicCount.BufferAdds);
 			if ( key instanceof DatumPK ) {
-				stats.incrementAndGet(CollectorStats.BasicCount.StreamDatumReceived);
+				stats.incrementAndGet(BasicCount.StreamDatumReceived);
 			} else if ( key instanceof GeneralNodeDatumPK ) {
-				stats.incrementAndGet(CollectorStats.BasicCount.DatumReceived);
+				stats.incrementAndGet(BasicCount.DatumReceived);
 			} else {
-				stats.incrementAndGet(CollectorStats.BasicCount.LocationDatumReceived);
+				stats.incrementAndGet(BasicCount.LocationDatumReceived);
 			}
 			queueLock.lock();
 			try {
@@ -414,8 +411,8 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_UPT: |{}", key);
-			stats.incrementAndGet(CollectorStats.BasicCount.BufferRemovals);
-			stats.incrementAndGet(CollectorStats.BasicCount.BufferAdds);
+			stats.incrementAndGet(BasicCount.BufferRemovals);
+			stats.incrementAndGet(BasicCount.BufferAdds);
 		}
 	}
 
@@ -426,7 +423,7 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_REM: |{}", key);
-			long c = stats.incrementAndGet(CollectorStats.BasicCount.BufferRemovals);
+			long c = stats.incrementAndGet(BasicCount.BufferRemovals);
 			if ( log.isTraceEnabled()
 					&& (stats.getLogFrequency() > 0 && ((c % stats.getLogFrequency()) == 0)) ) {
 				Set<Serializable> allKeys = StreamSupport.stream(datumCache.spliterator(), false)
@@ -541,11 +538,11 @@ public class AsyncDaoDatumCollector implements CacheEntryCreatedListener<Seriali
 	 *
 	 * <p>
 	 * This threshold represents the <i>difference</i> between the
-	 * {@link CollectorStats.BasicCount#BufferAdds} and
-	 * {@link CollectorStats.BasicCount#BufferRemovals} statistics. If the
-	 * {@code BufferRemovals} count lags behind {@code BufferAdds} it means
-	 * datum are not getting persisted fast enough. Passing this threshold will
-	 * trigger a failure {@link PingTest} result in {@link #performPingTest()}.
+	 * {@link BasicCount#BufferAdds} and {@link BasicCount#BufferRemovals}
+	 * statistics. If the {@code BufferRemovals} count lags behind
+	 * {@code BufferAdds} it means datum are not getting persisted fast enough.
+	 * Passing this threshold will trigger a failure {@link PingTest} result in
+	 * {@link #performPingTest()}.
 	 * </p>
 	 *
 	 * @param datumCacheRemovalAlertThreshold

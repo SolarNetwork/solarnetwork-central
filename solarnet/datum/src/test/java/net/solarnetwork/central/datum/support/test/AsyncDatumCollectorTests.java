@@ -1,5 +1,5 @@
 /* ==================================================================
- * AsyncDaoDatumCollectorTests.java - 25/03/2020 2:08:17 pm
+ * AsyncDatumCollectorTests.java - 25/03/2020 2:08:17 pm
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.biz.dao.test;
+package net.solarnetwork.central.datum.support.test;
 
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.anyObject;
@@ -63,10 +63,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
-import net.solarnetwork.central.datum.biz.dao.CollectorStats;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.support.AsyncDatumCollector;
+import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -77,12 +77,12 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.PingTest;
 
 /**
- * Test cases for the {@link AsyncDaoDatumCollector}.
+ * Test cases for the {@link AsyncDatumCollector}.
  * 
  * @author matt
  * @version 2.0
  */
-public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
+public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
 
@@ -92,10 +92,10 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 	private Cache<Serializable, Serializable> datumCache;
 	private CollectorStats stats;
 
-	private AsyncDaoDatumCollector collector;
+	private AsyncDatumCollector collector;
 	private List<Throwable> uncaughtExceptions;
 
-	private static final Logger log = LoggerFactory.getLogger(AsyncDaoDatumCollector.class);
+	private static final Logger log = LoggerFactory.getLogger(AsyncDatumCollector.class);
 
 	public static CacheManager createCacheManager() {
 		try {
@@ -128,9 +128,9 @@ public class AsyncDaoDatumCollectorTests implements UncaughtExceptionHandler {
 
 		uncaughtExceptions = new ArrayList<>(2);
 
-		stats = new CollectorStats("AsyncDaoDatumCollector", 1);
+		stats = new CollectorStats("AsyncDatumCollector", 1);
 
-		collector = new AsyncDaoDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
+		collector = new AsyncDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
 				stats);
 		collector.setConcurrency(2);
 		collector.setQueueSize(5);

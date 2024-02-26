@@ -40,9 +40,9 @@ import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
-import net.solarnetwork.central.datum.biz.dao.CollectorStats;
+import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
+import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.support.DatumCacheSettings;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -139,10 +139,10 @@ public class SolarInBizConfig {
 	}
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public AsyncDaoDatumCollector asyncDaoDatumCollector() {
+	public AsyncDatumCollector asyncDaoDatumCollector() {
 		AsyncDatumCollectorSettings settings = asyncDatumCollectorSettings();
 		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.getStatFrequency());
-		AsyncDaoDatumCollector collector = new AsyncDaoDatumCollector(bufferingDatumCache(), datumDao,
+		AsyncDatumCollector collector = new AsyncDatumCollector(bufferingDatumCache(), datumDao,
 				transactionTemplate(), stats);
 		collector.setConcurrency(settings.getThreads());
 		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());

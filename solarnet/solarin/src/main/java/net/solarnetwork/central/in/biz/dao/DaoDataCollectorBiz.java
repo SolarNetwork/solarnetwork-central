@@ -42,7 +42,6 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.biz.dao.AsyncDaoDatumCollector;
 import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -51,6 +50,7 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterM
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
@@ -593,7 +593,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	 * If this cache is configured, then datum are stored here <b>instead</b> of
 	 * directly storing via one of the configured DAO instances. Some other
 	 * process must persist the entities from the cache, e.g.
-	 * {@link AsyncDaoDatumCollector}.
+	 * {@link AsyncDatumCollector}.
 	 * </p>
 	 * 
 	 * @param datumCache
