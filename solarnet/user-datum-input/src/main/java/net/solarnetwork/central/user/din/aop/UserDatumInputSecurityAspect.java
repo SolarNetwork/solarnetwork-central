@@ -81,12 +81,22 @@ public class UserDatumInputSecurityAspect extends AuthorizationSupport {
 	public void updateConfigurationForUserKey(UserIdRelated userKey) {
 	}
 
+	/**
+	 * Match preview transform.
+	 *
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.din.biz.UserDatumInputBiz.previewTransform(..)) && args(userKey,..)")
+	public void previewTransform(UserIdRelated userKey) {
+	}
+
 	@Before("readForUserId(userId)")
 	public void userIdReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("readForUserKey(userKey)")
+	@Before("readForUserKey(userKey) || previewTransform(userKey)")
 	public void userKeyReadAccessCheck(UserIdRelated userKey) {
 		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
 	}

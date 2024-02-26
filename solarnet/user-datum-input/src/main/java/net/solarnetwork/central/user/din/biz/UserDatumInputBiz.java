@@ -22,14 +22,20 @@
 
 package net.solarnetwork.central.user.din.biz;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.UUID;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.din.domain.DatumInputConfigurationInput;
+import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
@@ -113,5 +119,27 @@ public interface UserDatumInputBiz {
 	 */
 	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
 			K id, Class<C> configurationClass);
+
+	/**
+	 * Execute a transform on input data.
+	 *
+	 * <p>
+	 * This method can be used to test out a given transform. The resulting
+	 * datum is not persisted, just returned for inspection.
+	 * </p>
+	 *
+	 * @param id
+	 *        the transform configuration ID to execute
+	 * @param endpointId
+	 *        an optional endpoint ID to associate with the transformation
+	 * @param contentType
+	 *        the data content type
+	 * @param in
+	 *        the input data to transform
+	 * @throws IOException
+	 *         if an IO error occurs
+	 */
+	TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId, MimeType contentType,
+			InputStream in) throws IOException;
 
 }

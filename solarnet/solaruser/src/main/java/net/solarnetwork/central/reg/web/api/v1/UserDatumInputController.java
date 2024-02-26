@@ -25,12 +25,17 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -49,6 +54,7 @@ import net.solarnetwork.central.user.din.domain.CredentialConfigurationInput;
 import net.solarnetwork.central.user.din.domain.EndpointAuthConfigurationInput;
 import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
+import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -170,6 +176,47 @@ public class UserDatumInputController {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		userDatumInputBiz.deleteConfiguration(id, TransformConfiguration.class);
 		return success();
+	}
+
+	@RequestMapping(value = "/transforms/{transformId}/preview", method = RequestMethod.POST, consumes = {
+			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
+	public Result<TransformOutput> previewTransform(@PathVariable("transformId") Long transformId,
+			@RequestHeader(value = "Content-Type", required = true) String contentType,
+			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in)
+			throws IOException {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
+
+		final MediaType mediaType = MediaType.parseMediaType(contentType);
+
+		InputStream input = in;
+		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+			input = new GZIPInputStream(in);
+		}
+
+		var result = userDatumInputBiz.previewTransform(id, null, mediaType, input);
+
+		return success(result);
+	}
+
+	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}", method = RequestMethod.POST, consumes = {
+			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
+	public Result<TransformOutput> previewEndpointTransform(
+			@PathVariable("transformId") Long transformId, @PathVariable("endpointId") UUID endpointId,
+			@RequestHeader(value = "Content-Type", required = true) String contentType,
+			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in)
+			throws IOException {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
+
+		final MediaType mediaType = MediaType.parseMediaType(contentType);
+
+		InputStream input = in;
+		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+			input = new GZIPInputStream(in);
+		}
+
+		var result = userDatumInputBiz.previewTransform(id, endpointId, mediaType, input);
+
+		return success(result);
 	}
 
 	@RequestMapping(value = "/endpoints", method = RequestMethod.GET)

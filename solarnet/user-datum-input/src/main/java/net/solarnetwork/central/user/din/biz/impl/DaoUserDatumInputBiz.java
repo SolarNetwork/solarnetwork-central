@@ -24,11 +24,17 @@ package net.solarnetwork.central.user.din.biz.impl;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MimeType;
 import org.springframework.validation.BindingResult;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -47,11 +53,16 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.user.din.domain.DatumInputConfigurationInput;
+import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.service.PasswordEncoder;
 
@@ -184,6 +195,69 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		GenericDao<C, K> dao = genericDao(configurationClass);
 		C pk = dao.entityKey(id);
 		dao.delete(pk);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId,
+			MimeType contentType, InputStream in) throws IOException {
+		final UserLongCompositePK xformPk = new UserLongCompositePK(id.getUserId(),
+				requireNonNullArgument(id.getEntityId(), "transformId"));
+		final TransformConfiguration xform = requireNonNullObject(transformDao.get(xformPk), xformPk);
+
+		final EndpointConfiguration endpoint = (endpointId != null
+				? requireNonNullObject(endpointDao.get(new UserUuidPK(id.getUserId(), endpointId)),
+						endpointId)
+				: null);
+
+		final String xformServiceId = requireNonNullArgument(xform.getServiceIdentifier(),
+				"transform.serviceIdentifier");
+		final TransformService xformService = requireNonNullObject(transformService(xformServiceId),
+				xformServiceId);
+
+		if ( !xformService.supportsInput(requireNonNullArgument(in, "in"),
+				requireNonNullArgument(contentType, "contentType")) ) {
+			throw new IllegalArgumentException(
+					"Transform service %s does not support input type %s with %s."
+							.formatted(xformServiceId, contentType, in.getClass().getSimpleName()));
+		}
+
+		var xsltOutput = new StringBuilder();
+		Iterable<Datum> datum = null;
+		String msg = null;
+		try {
+			var params = Map.of("userId", id.getUserId(), "transformId", id.getEntityId(),
+					TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident(),
+					TransformService.PARAM_XSLT_OUTPUT_KEY, xsltOutput, "preview", true);
+			datum = xformService.transform(in, contentType, xform, params);
+			if ( datum != null && endpoint != null
+					&& (endpoint.getNodeId() != null || endpoint.getSourceId() != null) ) {
+				datum = StreamSupport.stream(datum.spliterator(), false)
+						.map(d -> d.copyWithId(DatumId.nodeId(
+								endpoint.getNodeId() != null ? endpoint.getNodeId() : d.getObjectId(),
+								endpoint.getSourceId() != null ? endpoint.getSourceId()
+										: d.getSourceId(),
+								d.getTimestamp())))
+						.toList();
+			}
+		} catch ( Exception e ) {
+			Throwable root = e;
+			while ( root.getCause() != null ) {
+				root = root.getCause();
+			}
+			msg = e.getMessage() + " " + root.getMessage();
+		}
+
+		return new TransformOutput(datum, xsltOutput.toString(), msg);
+	}
+
+	private TransformService transformService(String serviceId) {
+		for ( TransformService service : transformServices ) {
+			if ( serviceId.equals(service.getId()) ) {
+				return service;
+			}
+		}
+		return null;
 	}
 
 	private void validateInput(final Object input) {
