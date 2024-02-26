@@ -167,7 +167,8 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
-		C result = requireNonNullObject(dao.get(dao.save(config)), id);
+		K updatedId = requireNonNullObject(dao.save(config), id);
+		C result = requireNonNullObject(dao.get(updatedId), updatedId);
 		result.eraseCredentials();
 		return result;
 
