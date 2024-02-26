@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -353,7 +354,8 @@ public class DaoUserDatumInputBizTests {
 		input.setEnabled(true);
 		input.setName(randomString());
 		input.setServiceIdentifier(randomString());
-		input.setServicePropsJson("{\"foo\":\"bar\"}");
+
+		input.setServiceProperties(Map.of("foo", "bar"));
 		UserLongCompositePK unassignedId = UserLongCompositePK.unassignedEntityIdKey(userId);
 		TransformConfiguration result = biz.saveConfiguration(unassignedId, input);
 
@@ -371,7 +373,7 @@ public class DaoUserDatumInputBizTests {
 			.as("Service ID from input")
 			.returns(input.getServiceIdentifier(), from(TransformConfiguration::getServiceIdentifier))
 			.as("Service props from input")
-			.returns(input.getServicePropsJson(), from(TransformConfiguration::getServicePropsJson))
+			.returns(input.getServiceProperties(), from(TransformConfiguration::getServiceProperties))
 			;
 
 		and.then(result).as("Result provided from DAO").isSameAs(conf);

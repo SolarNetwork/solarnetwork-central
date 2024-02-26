@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.din.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.util.Map;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -49,7 +50,7 @@ public class TransformConfigurationInput
 	@Size(max = 128)
 	private String serviceIdentifier;
 
-	private String servicePropsJson;
+	private Map<String, Object> serviceProperties;
 
 	/**
 	 * Constructor.
@@ -70,7 +71,7 @@ public class TransformConfigurationInput
 		super.populateConfiguration(conf);
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceIdentifier);
-		conf.setServicePropsJson(servicePropsJson);
+		conf.setServiceProps(serviceProperties);
 	}
 
 	/**
@@ -114,23 +115,22 @@ public class TransformConfigurationInput
 	}
 
 	/**
-	 * Get the service properties object as a JSON string.
+	 * Get the service properties.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return the service properties
 	 */
-	public String getServicePropsJson() {
-		return servicePropsJson;
+	public Map<String, Object> getServiceProperties() {
+		return serviceProperties;
 	}
 
 	/**
-	 * Set the service properties object via a JSON string.
+	 * Set the service properties to use.
 	 *
-	 * @param json
-	 *        the JSON to parse as service properties
+	 * @param serviceProperties
+	 *        the service properties to set
 	 */
-	public void setServicePropsJson(String json) {
-		servicePropsJson = json;
+	public void setServiceProperties(Map<String, Object> serviceProperties) {
+		this.serviceProperties = serviceProperties;
 	}
 
 }

@@ -29,15 +29,19 @@ import java.util.Collection;
 import java.util.Locale;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
 import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
+import net.solarnetwork.central.user.din.domain.CredentialConfigurationInput;
+import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -78,26 +82,28 @@ public class UserDatumInputController {
 	 */
 	@RequestMapping(value = "/services/transform", method = RequestMethod.GET)
 	public Result<Iterable<LocalizedServiceInfo>> availableTransformServices(Locale locale) {
-		Iterable<LocalizedServiceInfo> result = null;
-		if ( userDatumInputBiz != null ) {
-			result = userDatumInputBiz.availableTransformServices(locale);
-		}
+		Iterable<LocalizedServiceInfo> result = userDatumInputBiz.availableTransformServices(locale);
 		return success(result);
 	}
 
 	private <C extends DatumInputConfigurationEntity<C, ?>> Result<Collection<C>> listConfigurationsForCurrentUser(
 			Class<C> clazz) {
 		final Long userId = getCurrentActorUserId();
-		Collection<C> result = null;
-		if ( userDatumInputBiz != null ) {
-			result = userDatumInputBiz.configurationsForUser(userId, clazz);
-		}
+		Collection<C> result = userDatumInputBiz.configurationsForUser(userId, clazz);
 		return success(result);
 	}
 
 	@RequestMapping(value = "/credentials", method = RequestMethod.GET)
 	public Result<Collection<CredentialConfiguration>> listCredentialConfigurations() {
 		return listConfigurationsForCurrentUser(CredentialConfiguration.class);
+	}
+
+	@RequestMapping(value = "/credentials", method = RequestMethod.POST)
+	public Result<CredentialConfiguration> createCredentialConfiguration(
+			@Valid @RequestBody CredentialConfigurationInput input) {
+		UserLongCompositePK id = UserLongCompositePK.unassignedEntityIdKey(getCurrentActorUserId());
+		CredentialConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.GET)
@@ -107,9 +113,24 @@ public class UserDatumInputController {
 		return success(userDatumInputBiz.configurationForId(id, CredentialConfiguration.class));
 	}
 
+	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteCredentialConfiguration(@PathVariable("credentialId") Long credentialId) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), credentialId);
+		userDatumInputBiz.deleteConfiguration(id, CredentialConfiguration.class);
+		return success();
+	}
+
 	@RequestMapping(value = "/transforms", method = RequestMethod.GET)
 	public Result<Collection<TransformConfiguration>> listTransformConfigurations() {
 		return listConfigurationsForCurrentUser(TransformConfiguration.class);
+	}
+
+	@RequestMapping(value = "/transforms", method = RequestMethod.POST)
+	public Result<TransformConfiguration> createTransformConfiguration(
+			@Valid @RequestBody TransformConfigurationInput input) {
+		UserLongCompositePK id = UserLongCompositePK.unassignedEntityIdKey(getCurrentActorUserId());
+		TransformConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/transforms/{transformId}", method = RequestMethod.GET)
@@ -117,6 +138,13 @@ public class UserDatumInputController {
 			@PathVariable("transformId") Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		return success(userDatumInputBiz.configurationForId(id, TransformConfiguration.class));
+	}
+
+	@RequestMapping(value = "/transforms/{transformId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteTransformConfiguration(@PathVariable("transformId") Long transformId) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
+		userDatumInputBiz.deleteConfiguration(id, TransformConfiguration.class);
+		return success();
 	}
 
 }
