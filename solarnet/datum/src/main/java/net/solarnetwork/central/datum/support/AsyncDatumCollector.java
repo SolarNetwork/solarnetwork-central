@@ -57,10 +57,12 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.support.CollectorStats.BasicCount;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
@@ -79,12 +81,18 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * as a limiter to avoid overwhelming the {@link DatumWriteOnlyDao} back-end.
  * </p>
  *
+ * <p>
+ * Note this class also implements {@link DatumWriteOnlyDao}. The methods of
+ * that API store the datum in the configured cache.
+ * </p>
+ *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
-		CacheEntryRemovedListener<Serializable, Serializable>, PingTest, ServiceLifecycleObserver {
+		CacheEntryRemovedListener<Serializable, Serializable>, PingTest, ServiceLifecycleObserver,
+		DatumWriteOnlyDao {
 
 	/** The {@code concurrency} property default value. */
 	public final int DEFAULT_CONCURRENCY = 2;
@@ -268,6 +276,22 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		}
 		return new PingTestResult(true, String.format("Processed %d datum; lag %d.", addCount, lagDiff),
 				statMap);
+	}
+
+	@Override
+	public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
+		GeneralObjectDatumKey id = requireNonNullArgument(entity.getId(), "entity.id");
+		datumCache.put(id, (Serializable) entity);
+		// note the stream ID is not known at this point
+		return new ObjectDatumPK(id.getKind(), id.getObjectId(), id.getSourceId(), id.getTimestamp(),
+				null);
+	}
+
+	@Override
+	public DatumPK store(DatumEntity datum) {
+		DatumPK id = requireNonNullArgument(datum.getId(), "entity.id");
+		datumCache.put(id, datum);
+		return id;
 	}
 
 	private static final AtomicInteger COUNTER = new AtomicInteger(0);
