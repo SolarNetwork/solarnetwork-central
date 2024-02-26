@@ -27,6 +27,7 @@ import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,10 +38,16 @@ import jakarta.validation.Valid;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
 import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
+import net.solarnetwork.central.din.domain.EndpointAuthConfiguration;
+import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.user.din.domain.CredentialConfigurationInput;
+import net.solarnetwork.central.user.din.domain.EndpointAuthConfigurationInput;
+import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -144,6 +151,66 @@ public class UserDatumInputController {
 	public Result<Void> deleteTransformConfiguration(@PathVariable("transformId") Long transformId) {
 		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
 		userDatumInputBiz.deleteConfiguration(id, TransformConfiguration.class);
+		return success();
+	}
+
+	@RequestMapping(value = "/endpoints", method = RequestMethod.GET)
+	public Result<Collection<EndpointConfiguration>> listEndpointConfigurations() {
+		return listConfigurationsForCurrentUser(EndpointConfiguration.class);
+	}
+
+	@RequestMapping(value = "/endpoints", method = RequestMethod.POST)
+	public Result<EndpointConfiguration> createEndpointConfiguration(
+			@Valid @RequestBody EndpointConfigurationInput input) {
+		UserUuidPK id = UserUuidPK.unassignedUuidKey(getCurrentActorUserId());
+		EndpointConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.GET)
+	public Result<EndpointConfiguration> getEndpointConfiguration(
+			@PathVariable("endpointId") UUID endpointId) {
+		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
+		return success(userDatumInputBiz.configurationForId(id, EndpointConfiguration.class));
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteEndpointConfiguration(@PathVariable("endpointId") UUID endpointId) {
+		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
+		userDatumInputBiz.deleteConfiguration(id, EndpointConfiguration.class);
+		return success();
+	}
+
+	@RequestMapping(value = "/endpoints/auths", method = RequestMethod.GET)
+	public Result<Collection<EndpointAuthConfiguration>> listEndpointAuthConfigurations() {
+		return listConfigurationsForCurrentUser(EndpointAuthConfiguration.class);
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.PUT)
+	public Result<EndpointAuthConfiguration> createEndpointAuthConfiguration(
+			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
+			@Valid @RequestBody EndpointAuthConfigurationInput input) {
+		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
+				credentialId);
+		EndpointAuthConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
+		return success(result);
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.GET)
+	public Result<EndpointAuthConfiguration> getEndpointAuthConfiguration(
+			@PathVariable("endpointId") UUID endpointId,
+			@PathVariable("credentialId") Long credentialId) {
+		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
+				credentialId);
+		return success(userDatumInputBiz.configurationForId(id, EndpointAuthConfiguration.class));
+	}
+
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteEndpointAuthConfiguration(@PathVariable("endpointId") UUID endpointId,
+			@PathVariable("credentialId") Long credentialId) {
+		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
+				credentialId);
+		userDatumInputBiz.deleteConfiguration(id, EndpointAuthConfiguration.class);
 		return success();
 	}
 

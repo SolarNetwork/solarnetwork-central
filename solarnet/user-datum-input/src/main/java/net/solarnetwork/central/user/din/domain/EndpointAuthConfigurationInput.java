@@ -48,6 +48,7 @@ public class EndpointAuthConfigurationInput
 		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(requireNonNullArgument(id, "id"),
 				date);
 		populateConfiguration(conf);
+		conf.setModified(date);
 		return conf;
 	}
 
