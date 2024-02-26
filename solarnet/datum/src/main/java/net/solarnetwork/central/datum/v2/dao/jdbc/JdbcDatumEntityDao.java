@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao.java - 19/11/2020 3:12:06 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -76,6 +76,8 @@ import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ObjectSourcePK;
@@ -142,9 +144,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 
 /**
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
- * 
+ *
  * @author matt
- * @version 2.4
+ * @version 2.5
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -167,7 +169,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * The {@code maxMinuteAggregationHours} property default value.
-	 * 
+	 *
 	 * <p>
 	 * This represents a 5 week time span to that full months can be queried.
 	 * </p>
@@ -186,7 +188,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @throws IllegalArgumentException
@@ -209,6 +211,16 @@ public class JdbcDatumEntityDao
 		requireNonNullArgument(entity.getTimestamp(), "timestamp");
 		jdbcTemplate.update(new InsertDatum(entity));
 		return entity.getId();
+	}
+
+	@Override
+	public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
+		if ( entity instanceof GeneralNodeDatum d ) {
+			return store(d);
+		} else if ( entity instanceof GeneralLocationDatum d ) {
+			return store(d);
+		}
+		throw new IllegalArgumentException("Unsupported entity " + entity);
 	}
 
 	@Override
@@ -819,7 +831,7 @@ public class JdbcDatumEntityDao
 
 		/**
 		 * Set the stream ID.
-		 * 
+		 *
 		 * @param streamId
 		 *        the stream ID to set
 		 */
@@ -1010,7 +1022,7 @@ public class JdbcDatumEntityDao
 
 		/**
 		 * Add statistics for a given datum.
-		 * 
+		 *
 		 * @param d
 		 *        the datum to calculate the datum/property counts from
 		 */
@@ -1050,7 +1062,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the stream metadata cache.
-	 * 
+	 *
 	 * @return the cache, or {@literal null}
 	 */
 	public Cache<UUID, ObjectDatumStreamMetadata> getStreamMetadataCache() {
@@ -1059,7 +1071,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the stream metadata cache.
-	 * 
+	 *
 	 * @param streamMetadataCache
 	 *        the cache to set
 	 */
@@ -1069,7 +1081,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the stream metadata ID cache.
-	 * 
+	 *
 	 * @return the cache, or {@literal null}
 	 * @since 2.1
 	 */
@@ -1079,7 +1091,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the stream metadata ID cache.
-	 * 
+	 *
 	 * @param streamMetadataIdCache
 	 *        the cache to set
 	 * @since 2.1
@@ -1091,7 +1103,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the bulk load transaction manager.
-	 * 
+	 *
 	 * @return the manager
 	 */
 	public PlatformTransactionManager getBulkLoadTransactionManager() {
@@ -1100,7 +1112,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the bulk load transaction manager.
-	 * 
+	 *
 	 * @param bulkLoadTransactionManager
 	 *        the manager to set
 	 */
@@ -1110,7 +1122,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the bulk load data source.
-	 * 
+	 *
 	 * @return the data source
 	 */
 	public DataSource getBulkLoadDataSource() {
@@ -1119,7 +1131,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the bulk load data source.
-	 * 
+	 *
 	 * @param bulkLoadDataSource
 	 *        the data source to set
 	 */
@@ -1129,7 +1141,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the bulk load JDBC call.
-	 * 
+	 *
 	 * @return the bulk load JDBC call; defaults to
 	 *         {@link #DEFAULT_BULK_LOADING_JDBC_CALL}
 	 */
@@ -1139,7 +1151,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the bulk load JDBC call.
-	 * 
+	 *
 	 * @param bulkLoadJdbcCall
 	 *        the call to set
 	 */
@@ -1149,7 +1161,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the bulk load "mark stale" JDBC call.
-	 * 
+	 *
 	 * @return the call; defaults to
 	 *         {@link #DEFAULT_BULK_LOADING_MARK_STALE_JDBC_CALL}
 	 */
@@ -1159,7 +1171,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the bulk load "mark stale" JDBC call.
-	 * 
+	 *
 	 * @param bulkLoadMarkStaleJdbcCall
 	 *        the call to set
 	 */
@@ -1169,7 +1181,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Get the bulk load "update audit counts" JDBC call.
-	 * 
+	 *
 	 * @return the call; defaults to {@link #DEFAULT_BULK_LOADING_AUDIT_CALL}
 	 */
 	public String getBulkLoadAuditJdbcCall() {
@@ -1178,7 +1190,7 @@ public class JdbcDatumEntityDao
 
 	/**
 	 * Set the bulk load "update audit counts" JDBC call.
-	 * 
+	 *
 	 * @param bulkLoadAuditJdbcCall
 	 *        the call to set
 	 */
@@ -1189,7 +1201,7 @@ public class JdbcDatumEntityDao
 	/**
 	 * Get the maximum number of hours to allow in minute-level aggregation
 	 * queries.
-	 * 
+	 *
 	 * @return the maximum hours; defaults to
 	 *         {@link #DEFAULT_MAX_MINUTE_AGG_HOURS}
 	 */
@@ -1200,7 +1212,7 @@ public class JdbcDatumEntityDao
 	/**
 	 * Set the maximum number of hours to allow in minute-level aggregation
 	 * queries.
-	 * 
+	 *
 	 * @param maxMinuteAggregationHours
 	 *        the maximum hours to set; anything less than {@literal 1} means
 	 *        there is no maximum
