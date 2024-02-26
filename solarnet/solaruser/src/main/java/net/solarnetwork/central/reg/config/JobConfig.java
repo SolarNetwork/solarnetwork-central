@@ -1,5 +1,5 @@
 /* ==================================================================
- * JobConfig.java - 24/02/2024 11:49:04 am
+ * JobConfig.java - 27/02/2024 7:05:11 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.app.config;
+package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.din.config.DatumInputTransformServiceConfig.XSLT_TEMPLATES_QUALIFIER;
 import javax.xml.transform.Templates;
@@ -28,20 +28,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.common.job.SharedValueCacheCleaner;
-import net.solarnetwork.central.din.app.jobs.SolarDinJobs;
+import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.support.SharedValueCache;
 
 /**
- * Configuration for jobs.
+ * SolarUser jobs.
  *
  * @author matt
  * @version 1.0
  */
-@Configuration
-@Profile(SolarDinJobs.JOBS_PROFILE)
+@Configuration(proxyBeanMethods = false)
 public class JobConfig {
 
 	/**
@@ -55,7 +53,8 @@ public class JobConfig {
 	@Bean
 	public ManagedJob xsltTemplatesCacheCleanerJob(
 			@Qualifier(XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
-		return new SharedValueCacheCleaner(cache, "XSLT-Templates", SolarDinJobs.JOBS_GROUP);
+		return new SharedValueCacheCleaner(cache, "XSLT-Templates",
+				SolarNetDatumInputConfiguration.DATUM_INPUT);
 	}
 
 }

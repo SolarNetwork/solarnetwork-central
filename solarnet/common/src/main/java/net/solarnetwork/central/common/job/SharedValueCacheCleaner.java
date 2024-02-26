@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.app.jobs;
+package net.solarnetwork.central.common.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -43,13 +43,15 @@ public class SharedValueCacheCleaner extends JobSupport {
 	 *        the cache
 	 * @param cacheName
 	 *        the cache name
+	 * @param groupId
+	 *        the group ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SharedValueCacheCleaner(SharedValueCache<?, ?, ?> cache, String cacheName) {
+	public SharedValueCacheCleaner(SharedValueCache<?, ?, ?> cache, String cacheName, String groupId) {
 		super();
 		this.cache = requireNonNullArgument(cache, "cache");
-		setGroupId(SolarDinJobs.JOBS_GROUP);
+		setGroupId(groupId);
 		setId("SharedValueCacheCleaner-" + requireNonNullArgument(cacheName, "cacheName"));
 	}
 

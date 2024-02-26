@@ -44,6 +44,10 @@ app:
       ttl: 900
       heap-max-entries: 10000
       disk-max-size-mb: 100
+  din:
+    xslt:
+      templates-cache:
+        ttl: 15
   dnp3:
     server-import-csv-example-resources:
        "[text/csv]": "classpath:net/solarnetwork/central/user/dnp3/support/SolarDNP3 Configuration Example.csv"
@@ -58,6 +62,10 @@ app:
     security-token-spool.cleaner:
       minutes-older: 10
       schedule: 120000
+    din:
+      xslt-templates-cache-prune:
+        maximum-wait-ms: 240000
+        schedule: 3600000
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
