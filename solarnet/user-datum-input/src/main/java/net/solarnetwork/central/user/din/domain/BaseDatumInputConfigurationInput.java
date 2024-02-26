@@ -50,12 +50,7 @@ public abstract class BaseDatumInputConfigurationInput<C extends BaseUserModifia
 	 */
 	protected void populateConfiguration(C conf) {
 		requireNonNullArgument(conf, "conf");
-
-		// if the most-specific key component is not assigned, set the modified date to the creation date
-		if ( !conf.getId().keyComponentIsAssigned(conf.getId().keyComponentLength() - 1) ) {
-			conf.setModified(conf.getCreated());
-		}
-
+		conf.setModified(conf.getCreated());
 		conf.setEnabled(enabled);
 	}
 
