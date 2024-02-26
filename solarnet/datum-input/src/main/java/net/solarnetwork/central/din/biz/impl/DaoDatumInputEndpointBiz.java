@@ -36,7 +36,7 @@ import org.springframework.util.MimeType;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.support.DatumUtils;
-import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.din.biz.DatumInputEndpointBiz;
 import net.solarnetwork.central.din.biz.TransformService;
@@ -63,7 +63,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final EndpointConfigurationDao endpointDao;
 	private final TransformConfigurationDao transformDao;
-	private final DatumEntityDao datumDao; // TODO: change to support async collector
+	private final DatumWriteOnlyDao datumDao; // TODO: change to support async collector
 	private final Map<String, TransformService> transformServices;
 
 	/**
@@ -84,7 +84,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 	 */
 	public DaoDatumInputEndpointBiz(SolarNodeOwnershipDao nodeOwnershipDao,
 			EndpointConfigurationDao endpointDao, TransformConfigurationDao transformDao,
-			DatumEntityDao datumDao, Collection<TransformService> transformServices) {
+			DatumWriteOnlyDao datumDao, Collection<TransformService> transformServices) {
 		super();
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");
@@ -143,7 +143,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 					throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 				}
 
-				DatumPK pk = datumDao.store(gnd);
+				DatumPK pk = datumDao.persist(gnd);
 				result.add(DatumId.nodeId(nodeId, sourceId, pk.getTimestamp()));
 			}
 		}

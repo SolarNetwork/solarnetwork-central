@@ -51,7 +51,7 @@ import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.biz.impl.DaoDatumInputEndpointBiz;
@@ -87,7 +87,7 @@ public class DaoDatumInputEndpointBizTests {
 	private TransformConfigurationDao transformDao;
 
 	@Mock
-	private DatumEntityDao datumDao;
+	private DatumWriteOnlyDao datumDao;
 
 	@Mock
 	private TransformService xformService;
@@ -145,14 +145,14 @@ public class DaoDatumInputEndpointBizTests {
 
 		// persist datum
 		final DatumPK datumPk = new DatumPK(UUID.randomUUID(), now().plusSeconds(100));
-		given(datumDao.store(any(GeneralNodeDatum.class))).willReturn(datumPk);
+		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in);
 
 		// THEN
 		// @formatter:off
-		then(datumDao).should().store(datumCaptor.capture());
+		then(datumDao).should().persist(datumCaptor.capture());
 		and.then(datumCaptor.getValue())
 			.as("Persisted node ID")
 			.returns(nodeId, GeneralNodeDatum::getNodeId)
