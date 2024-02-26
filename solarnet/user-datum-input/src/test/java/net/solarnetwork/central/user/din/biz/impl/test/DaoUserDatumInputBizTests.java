@@ -47,7 +47,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
-import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
@@ -79,9 +78,6 @@ import net.solarnetwork.service.PasswordEncoder;
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DaoUserDatumInputBizTests {
-
-	@Mock
-	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private CredentialConfigurationDao credentialDao;
@@ -120,8 +116,8 @@ public class DaoUserDatumInputBizTests {
 
 	@BeforeEach
 	public void setup() {
-		biz = new DaoUserDatumInputBiz(nodeOwnershipDao, credentialDao, transformDao, endpointDao,
-				endpointAuthDao, Collections.singleton(transformService));
+		biz = new DaoUserDatumInputBiz(credentialDao, transformDao, endpointDao, endpointAuthDao,
+				Collections.singleton(transformService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());

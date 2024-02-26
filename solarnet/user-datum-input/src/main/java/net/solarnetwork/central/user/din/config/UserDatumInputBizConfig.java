@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import jakarta.validation.Validator;
-import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
@@ -47,9 +46,6 @@ import net.solarnetwork.service.PasswordEncoder;
 @Configuration(proxyBeanMethods = false)
 @Profile(DATUM_INPUT)
 public class UserDatumInputBizConfig {
-
-	@Autowired
-	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Autowired
 	private CredentialConfigurationDao credentialDao;
@@ -74,8 +70,8 @@ public class UserDatumInputBizConfig {
 
 	@Bean
 	public DaoUserDatumInputBiz userDatumInputBiz() {
-		DaoUserDatumInputBiz biz = new DaoUserDatumInputBiz(nodeOwnershipDao, credentialDao,
-				transformDao, endpointDao, endpointAuthDao, transformServices);
+		DaoUserDatumInputBiz biz = new DaoUserDatumInputBiz(credentialDao, transformDao, endpointDao,
+				endpointAuthDao, transformServices);
 		biz.setValidator(validator);
 		biz.setPasswordEncoder(passwordEncoder);
 		return biz;

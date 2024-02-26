@@ -35,7 +35,6 @@ import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
-import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
@@ -64,7 +63,6 @@ import net.solarnetwork.service.PasswordEncoder;
  */
 public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
-	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final CredentialConfigurationDao credentialDao;
 	private final TransformConfigurationDao transformDao;
 	private final EndpointConfigurationDao endpointDao;
@@ -77,8 +75,6 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	/**
 	 * Constructor.
 	 *
-	 * @param nodeOwnershipDao
-	 *        the node ownership DAO
 	 * @param credentialDao
 	 *        the credential DAO
 	 * @param transformDao
@@ -92,12 +88,11 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoUserDatumInputBiz(SolarNodeOwnershipDao nodeOwnershipDao,
-			CredentialConfigurationDao credentialDao, TransformConfigurationDao transformDao,
-			EndpointConfigurationDao endpointDao, EndpointAuthConfigurationDao endpointAuthDao,
+	public DaoUserDatumInputBiz(CredentialConfigurationDao credentialDao,
+			TransformConfigurationDao transformDao, EndpointConfigurationDao endpointDao,
+			EndpointAuthConfigurationDao endpointAuthDao,
 			Collection<TransformService> transformServices) {
 		super();
-		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.credentialDao = requireNonNullArgument(credentialDao, "credentialDao");
 		this.transformDao = requireNonNullArgument(transformDao, "transformDao");
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");
