@@ -36,4 +36,13 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 public interface DatumWriteOnlyDao
 		extends GenericWriteOnlyDao<GeneralObjectDatum<? extends GeneralObjectDatumKey>, DatumPK> {
 
+	/**
+	 * Store a datum.
+	 *
+	 * @param datum
+	 *        the datum to store
+	 * @return the stored primary key
+	 */
+	DatumPK store(DatumEntity datum);
+
 }

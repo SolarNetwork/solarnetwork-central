@@ -34,7 +34,6 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -59,27 +58,18 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.CollectorStats;
-import net.solarnetwork.central.datum.v2.dao.DatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
-import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.PingTest;
 
@@ -334,57 +324,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		}
 	}
 
-	private final class TestDatumDao implements DatumEntityDao {
-
-		@Override
-		public Class<? extends DatumEntity> getObjectType() {
-			return null;
-		}
-
-		@Override
-		public DatumPK save(DatumEntity entity) {
-			stored.add(entity);
-			return null;
-		}
-
-		@Override
-		public DatumEntity get(DatumPK id) {
-			return null;
-		}
-
-		@Override
-		public Collection<DatumEntity> getAll(List<SortDescriptor> sorts) {
-			return null;
-		}
-
-		@Override
-		public void delete(DatumEntity entity) {
-		}
-
-		@Override
-		public LoadingContext<GeneralNodeDatum> createBulkLoadingContext(LoadingOptions options,
-				LoadingExceptionHandler<GeneralNodeDatum> exceptionHandler) {
-			return null;
-		}
-
-		@Override
-		public ExportResult bulkExport(ExportCallback<GeneralNodeDatumFilterMatch> callback,
-				ExportOptions options) {
-			return null;
-		}
-
-		@Override
-		public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
-				List<SortDescriptor> sorts, Integer offset, Integer max) {
-			return null;
-		}
-
-		@Override
-		public void findFilteredStream(DatumCriteria filter,
-				StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
-				Integer offset, Integer max) throws IOException {
-
-		}
+	private final class TestDatumDao implements DatumWriteOnlyDao {
 
 		@Override
 		public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
@@ -395,23 +335,6 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		@Override
 		public DatumPK store(DatumEntity datum) {
 			doStore(datum);
-			return null;
-		}
-
-		@Override
-		public DatumPK store(GeneralNodeDatum datum) {
-			doStore(datum);
-			return null;
-		}
-
-		@Override
-		public DatumPK store(GeneralLocationDatum datum) {
-			doStore(datum);
-			return null;
-		}
-
-		@Override
-		public Iterable<DatumDateInterval> findAvailableInterval(ObjectStreamCriteria filter) {
 			return null;
 		}
 

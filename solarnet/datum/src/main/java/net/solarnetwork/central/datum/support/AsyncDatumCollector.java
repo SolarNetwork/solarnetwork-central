@@ -56,9 +56,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.support.CollectorStats.BasicCount;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.service.PingTest;
@@ -71,11 +72,11 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * <p>
  * This service works through the {@link Cache} API of datum objects, by
  * listening for cache creation events to add those datum to an internal
- * persistence queue for eventual storage via the {@link DatumEntityDao} API.
+ * persistence queue for eventual storage via the {@link DatumWriteOnlyDao} API.
  * Once persisted there, the datum cache entry is removed. By configuring the
  * {@link Cache} with non-volatile persistence as well, the cache acts as a
  * write-ahead-log cache of datum updates. The internal persistence queue serves
- * as a limiter to avoid overwhelming the {@link DatumEntityDao} backend.
+ * as a limiter to avoid overwhelming the {@link DatumWriteOnlyDao} back-end.
  * </p>
  *
  * @author matt
@@ -100,7 +101,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	private final double QUEUE_REFILL_THRESHOLD = 0.1;
 
 	private final Cache<Serializable, Serializable> datumCache;
-	private final DatumEntityDao datumDao;
+	private final DatumWriteOnlyDao datumDao;
 	private final TransactionTemplate transactionTemplate;
 	private final CollectorStats stats;
 	private final CacheEntryListenerConfiguration<Serializable, Serializable> listenerConfiguration;
@@ -130,7 +131,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 * @param transactionTemplate
 	 *        the transaction template
 	 */
-	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
+	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
 			TransactionTemplate transactionTemplate) {
 		this(datumCache, datumDao, transactionTemplate, new CollectorStats("AsyncDaoDatum", 200));
 	}
@@ -149,7 +150,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumEntityDao datumDao,
+	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
 			TransactionTemplate transactionTemplate, CollectorStats stats) {
 		super();
 		this.datumCache = requireNonNullArgument(datumCache, "datumCache");
@@ -301,10 +302,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 															TransactionStatus status) {
 														if ( entity instanceof DatumEntity d ) {
 															datumDao.store(d);
-														} else if ( entity instanceof GeneralNodeDatum d ) {
-															datumDao.store(d);
-														} else if ( entity instanceof GeneralLocationDatum d ) {
-															datumDao.store(d);
+														} else if ( entity instanceof GeneralObjectDatum<?> d ) {
+															datumDao.persist(d);
 														}
 													}
 												});

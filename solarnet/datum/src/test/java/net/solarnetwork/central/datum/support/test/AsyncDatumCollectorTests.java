@@ -1,21 +1,21 @@
 /* ==================================================================
  * AsyncDatumCollectorTests.java - 25/03/2020 2:08:17 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -68,7 +68,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
-import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.support.JCacheFactoryBean;
@@ -78,7 +78,7 @@ import net.solarnetwork.service.PingTest;
 
 /**
  * Test cases for the {@link AsyncDatumCollector}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -86,7 +86,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
 
-	private DatumEntityDao datumDao;
+	private DatumWriteOnlyDao datumDao;
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
 	private Cache<Serializable, Serializable> datumCache;
@@ -114,7 +114,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Before
 	public void setup() throws Exception {
-		datumDao = EasyMock.createMock(DatumEntityDao.class);
+		datumDao = EasyMock.createMock(DatumWriteOnlyDao.class);
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 
 		cacheManager = createCacheManager();
@@ -198,7 +198,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
+		expect(datumDao.persist(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
 		txManager.commit(txStatus);
 
 		// WHEN
@@ -222,7 +222,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 			GeneralNodeDatum d = createDatum();
 			TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 			expect(txManager.getTransaction(anyObject())).andReturn(txStatus);
-			expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
+			expect(datumDao.persist(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
 			txManager.commit(txStatus);
 			txStatuses[i] = txStatus;
 			datum.add(d);
@@ -260,7 +260,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 			GeneralNodeDatum d = createDatum();
 			TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 			expect(txManager.getTransaction(anyObject())).andReturn(txStatus);
-			expect(datumDao.store(d)).andAnswer(new IAnswer<DatumPK>() {
+			expect(datumDao.persist(d)).andAnswer(new IAnswer<DatumPK>() {
 
 				@Override
 				public DatumPK answer() throws Throwable {
@@ -322,7 +322,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 		txManager.commit(anyObject(TransactionStatus.class));
 		expectLastCall().atLeastOnce();
 
-		expect(datumDao.store(d1)).andAnswer(new IAnswer<DatumPK>() {
+		expect(datumDao.persist(d1)).andAnswer(new IAnswer<DatumPK>() {
 
 			@Override
 			public DatumPK answer() throws Throwable {
@@ -387,7 +387,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus);
-		expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
+		expect(datumDao.persist(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
 		txManager.commit(txStatus);
 
 		// WHEN
@@ -410,8 +410,8 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 		TransactionStatus txStatus = EasyMock.createMock(TransactionStatus.class);
 		expect(txManager.getTransaction(EasyMock.anyObject())).andReturn(txStatus).times(2);
-		expect(datumDao.store(d1)).andReturn(new DatumPK(UUID.randomUUID(), d1.getCreated()));
-		expect(datumDao.store(d2)).andReturn(new DatumPK(UUID.randomUUID(), d2.getCreated()));
+		expect(datumDao.persist(d1)).andReturn(new DatumPK(UUID.randomUUID(), d1.getCreated()));
+		expect(datumDao.persist(d2)).andReturn(new DatumPK(UUID.randomUUID(), d2.getCreated()));
 		txManager.commit(txStatus);
 		expectLastCall().times(2);
 
