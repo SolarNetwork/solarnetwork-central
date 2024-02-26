@@ -88,10 +88,13 @@ public class BasicSharedValueCache<K, V, S> implements SharedValueCache<K, V, S>
 	/**
 	 * Prune shared values no longer in use.
 	 */
+	@Override
 	public void prune() {
 		Set<V> inUse = new HashSet<>(32);
-		for ( CachedResult<V> entry : cache.values() ) {
+		for ( Iterator<CachedResult<V>> itr = cache.values().iterator(); itr.hasNext(); ) {
+			CachedResult<V> entry = itr.next();
 			if ( !entry.isValid() ) {
+				itr.remove();
 				continue;
 			}
 			V value = entry.getResult();
