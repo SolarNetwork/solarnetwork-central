@@ -58,6 +58,16 @@ public interface TransformService
 	public static final String PARAM_CONFIGURATION_CACHE_KEY = "cache-key";
 
 	/**
+	 * A parameter key for a transform debug output {@link Appendable}.
+	 *
+	 * <p>
+	 * The provided {@link Appendable} will have the raw XSLT transform result
+	 * appended.
+	 * </p>
+	 */
+	public static final String PARAM_XSLT_OUTPUT_KEY = "xslt-output";
+
+	/**
 	 * Test if the service supports a given input object.
 	 *
 	 * @param input

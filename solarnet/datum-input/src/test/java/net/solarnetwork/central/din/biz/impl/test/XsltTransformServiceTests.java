@@ -45,6 +45,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.biz.impl.XsltTransformService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
@@ -135,6 +136,59 @@ public class XsltTransformServiceTests {
 		// @formatter:on
 
 		then(primaryCache).as("Templates not cached").isEmpty();
+	}
+
+	@Test
+	public void xmlObject_xsltOutput() throws IOException {
+		// GIVEN
+		final String xmlInput = """
+				<data ts="2024-02-22T12:00:00Z">
+					<prop name="foo">123</prop>
+					<prop name="bim">234</prop>
+					<prop name="msg">Hello</prop>
+				</data>
+				""";
+
+		final String xslt = ClassUtils.getResourceAsString("test-xform-01.xsl", getClass());
+
+		final BasicIdentifiableConfiguration conf = new BasicIdentifiableConfiguration();
+		conf.setServiceProps(singletonMap(XsltTransformService.SETTING_XSLT, xslt));
+
+		// WHEN
+		StringBuilder output = new StringBuilder();
+		Map<String, Object> params = Map.of(TransformService.PARAM_XSLT_OUTPUT_KEY, output);
+		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
+				params);
+
+		// THEN
+		DatumSamples expectedSamples = new DatumSamples();
+		expectedSamples.putInstantaneousSampleValue("foo", 123);
+		expectedSamples.putInstantaneousSampleValue("bim", 234);
+		expectedSamples.putStatusSampleValue("msg", "Hello");
+
+		// @formatter:off
+		then(results)
+				.as("Single datum produced")
+				.hasSize(1)
+				.element(0)
+				.as("Created date parsed")
+				.returns(Instant.parse("2024-02-22T12:00:00Z"), from(Datum::getTimestamp))
+				.as("Kind unknown")
+				.returns(null, Datum::getKind)
+				.as("Node ID not populated")
+				.returns(null, Datum::getObjectId)
+				.as("Source ID not populated")
+				.returns(null, Datum::getSourceId)
+				.extracting(Datum::asSampleOperations)
+				.as("Samples populated")
+				.isEqualTo(expectedSamples)
+				;
+		// @formatter:on
+
+		then(primaryCache).as("Templates not cached").isEmpty();
+
+		then(output.toString()).as("XSLT output appended").isEqualTo("""
+				{"created":"2024-02-22T12:00:00Z","i":{"foo":123,"bim":234},"s":{"msg":"Hello"}}""");
 	}
 
 	@Test

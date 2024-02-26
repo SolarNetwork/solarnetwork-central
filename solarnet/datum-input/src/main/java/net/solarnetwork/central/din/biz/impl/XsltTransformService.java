@@ -216,7 +216,12 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 			try (StringWriter jsonOut = new StringWriter(1024)) {
 				Result jsonResult = new StreamResult(jsonOut);
 				xform.transform(inputSource, jsonResult);
-				return parseDatumList(jsonOut.toString());
+				String json = jsonOut.toString();
+				if ( parameters != null
+						&& parameters.get(PARAM_XSLT_OUTPUT_KEY) instanceof Appendable out ) {
+					out.append(json);
+				}
+				return parseDatumList(json);
 			} catch ( TransformerException e ) {
 				log.debug("Error executing XSLT transform: {}", e.getMessage(), e);
 				throw new IOException("Error executing XSLT transform.", e);
