@@ -37,6 +37,7 @@ import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
 import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.biz.impl.DaoDatumInputEndpointBiz;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
@@ -75,6 +76,7 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 		return new AsyncDatumCollectorSettings();
 	}
 
+	@Qualifier(CACHING)
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public AsyncDatumCollector asyncDaoDatumCollector(AsyncDatumCollectorSettings settings,
 			@Qualifier(DATUM_BUFFER) Cache<Serializable, Serializable> buffer) {
@@ -89,7 +91,8 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	}
 
 	@Bean
-	public DaoDatumInputEndpointBiz datumInputEndpointBiz() {
+	public DaoDatumInputEndpointBiz datumInputEndpointBiz(
+			@Qualifier(CACHING) DatumWriteOnlyDao datumDao) {
 		return new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
 				transformServices);
 	}
