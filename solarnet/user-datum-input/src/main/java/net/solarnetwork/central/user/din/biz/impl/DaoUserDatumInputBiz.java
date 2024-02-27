@@ -269,7 +269,10 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			while ( root.getCause() != null ) {
 				root = root.getCause();
 			}
-			msg = e.getMessage() + " " + root.getMessage();
+			msg = e.getMessage();
+			if ( !msg.equals(root.getMessage()) ) {
+				msg += " " + root.getMessage();
+			}
 		}
 
 		return new TransformOutput(datum, xsltOutput.toString(), msg);

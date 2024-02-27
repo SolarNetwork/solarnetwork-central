@@ -89,8 +89,7 @@ public class DatumInputTransformServiceConfig implements URIResolver {
 
 	@Override
 	public Source resolve(String href, String base) throws TransformerException {
-		throw new UnsupportedOperationException(
-				"External resources are not allowed (" + href + ") from (" + base + ")");
+		throw new UnsupportedOperationException("External resources are not allowed (" + href + ").");
 	}
 
 }
