@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarFlux VerneMQ Webhook'
-version = '2.0.0'
+version = '2.0.1'
 
 configurations {
 	all*.exclude group: 'commons-logging'
