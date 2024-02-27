@@ -125,6 +125,9 @@ public class BasicCoreCriteria extends SimplePagination implements UserModifiabl
 	 *        the criteria to copy
 	 */
 	public void copyFrom(PaginationCriteria criteria) {
+		if ( criteria == null ) {
+			return;
+		}
 		setMax(criteria.getMax());
 		setOffset(criteria.getOffset());
 		setSorts(criteria.getSorts());
