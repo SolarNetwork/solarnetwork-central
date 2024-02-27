@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarOSCP Flexibility Provider'
-version = '2.1.2'
+version = '2.1.3'
 
 base {
 	archivesName = 'solaroscp-fp'
