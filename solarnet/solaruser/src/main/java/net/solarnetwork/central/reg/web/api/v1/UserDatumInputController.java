@@ -31,7 +31,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Collection;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
@@ -46,8 +45,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
+import net.solarnetwork.central.din.dao.BasicFilter;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
-import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
 import net.solarnetwork.central.din.domain.EndpointAuthConfiguration;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
@@ -61,6 +60,7 @@ import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
 
@@ -104,16 +104,12 @@ public class UserDatumInputController {
 		return success(result);
 	}
 
-	private <C extends DatumInputConfigurationEntity<C, ?>> Result<Collection<C>> listConfigurationsForCurrentUser(
-			Class<C> clazz) {
-		final Long userId = getCurrentActorUserId();
-		Collection<C> result = userDatumInputBiz.configurationsForUser(userId, clazz);
-		return success(result);
-	}
-
 	@RequestMapping(value = "/credentials", method = RequestMethod.GET)
-	public Result<Collection<CredentialConfiguration>> listCredentialConfigurations() {
-		return listConfigurationsForCurrentUser(CredentialConfiguration.class);
+	public Result<FilterResults<CredentialConfiguration, UserLongCompositePK>> listCredentialConfigurations(
+			@RequestBody(required = false) BasicFilter filter) {
+		FilterResults<CredentialConfiguration, UserLongCompositePK> result = userDatumInputBiz
+				.configurationsForUser(getCurrentActorUserId(), filter, CredentialConfiguration.class);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/credentials", method = RequestMethod.POST)
@@ -158,8 +154,11 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/transforms", method = RequestMethod.GET)
-	public Result<Collection<TransformConfiguration>> listTransformConfigurations() {
-		return listConfigurationsForCurrentUser(TransformConfiguration.class);
+	public Result<FilterResults<TransformConfiguration, UserLongCompositePK>> listTransformConfigurations(
+			@RequestBody(required = false) BasicFilter filter) {
+		FilterResults<TransformConfiguration, UserLongCompositePK> result = userDatumInputBiz
+				.configurationsForUser(getCurrentActorUserId(), filter, TransformConfiguration.class);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/transforms", method = RequestMethod.POST)
@@ -237,8 +236,11 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/endpoints", method = RequestMethod.GET)
-	public Result<Collection<EndpointConfiguration>> listEndpointConfigurations() {
-		return listConfigurationsForCurrentUser(EndpointConfiguration.class);
+	public Result<FilterResults<EndpointConfiguration, UserUuidPK>> listEndpointConfigurations(
+			@RequestBody(required = false) BasicFilter filter) {
+		FilterResults<EndpointConfiguration, UserUuidPK> result = userDatumInputBiz
+				.configurationsForUser(getCurrentActorUserId(), filter, EndpointConfiguration.class);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/endpoints", method = RequestMethod.POST)
@@ -283,8 +285,11 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/endpoints/auths", method = RequestMethod.GET)
-	public Result<Collection<EndpointAuthConfiguration>> listEndpointAuthConfigurations() {
-		return listConfigurationsForCurrentUser(EndpointAuthConfiguration.class);
+	public Result<FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK>> listEndpointAuthConfigurations(
+			@RequestBody(required = false) BasicFilter filter) {
+		FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> result = userDatumInputBiz
+				.configurationsForUser(getCurrentActorUserId(), filter, EndpointAuthConfiguration.class);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.PUT)

@@ -39,8 +39,6 @@ import org.springframework.validation.BindingResult;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
-import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
-import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.dao.BasicFilter;
@@ -63,6 +61,8 @@ import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.din.biz.UserDatumInputBiz;
 import net.solarnetwork.central.user.din.domain.DatumInputConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformOutput;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
@@ -122,30 +122,19 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <C extends DatumInputConfigurationEntity<C, ?>> Collection<C> configurationsForUser(
-			Long userId, Class<C> configurationClass) {
+	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
+			Long userId, DatumInputFilter filter, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
-		Collection<C> result = null;
-		if ( CredentialConfiguration.class.isAssignableFrom(configurationClass) ) {
-			result = findAllForUser(userId, credentialDao);
-		} else if ( TransformConfiguration.class.isAssignableFrom(configurationClass) ) {
-			result = findAllForUser(userId, transformDao);
-		} else if ( EndpointConfiguration.class.isAssignableFrom(configurationClass) ) {
-			result = findAllForUser(userId, endpointDao);
-		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(configurationClass) ) {
-			result = findAllForUser(userId, endpointAuthDao);
+		BasicFilter f = new BasicFilter(filter);
+		f.setUserId(userId);
+		FilterableDao<C, K, DatumInputFilter> dao = filterableDao(configurationClass);
+		FilterResults<C, K> result = dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
+		// remove credentials before returning
+		for ( C c : result ) {
+			c.eraseCredentials();
 		}
-		if ( result != null ) {
-			// remove credentials before returning
-			for ( C c : result ) {
-				c.eraseCredentials();
-			}
-			return result;
-
-		}
-		throw new UnsupportedOperationException(
-				"Configuration type %s not supported.".formatted(configurationClass));
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -315,18 +304,6 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <C extends DatumInputConfigurationEntity<C, ?>> Collection<C> findAllForUser(Long user,
-			GenericCompositeKey2Dao<?, ?, Long, ?> dao) {
-		return (Collection<C>) dao.findAll(user, null);
-	}
-
-	@SuppressWarnings("unchecked")
-	private <C extends DatumInputConfigurationEntity<C, ?>> Collection<C> findAllForUser(Long user,
-			GenericCompositeKey3Dao<?, ?, Long, ?, ?> dao) {
-		return (Collection<C>) dao.findAll(user, null, null);
-	}
-
-	@SuppressWarnings("unchecked")
 	private <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> GenericDao<C, K> genericDao(
 			Class<C> clazz) {
 		GenericDao<C, K> result = null;
@@ -354,6 +331,25 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			result = (UserModifiableEnabledStatusDao<F>) (endpointDao);
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (UserModifiableEnabledStatusDao<F>) (endpointAuthDao);
+		}
+		if ( result != null ) {
+			return result;
+		}
+		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated, F extends DatumInputFilter> FilterableDao<C, K, F> filterableDao(
+			Class<C> clazz) {
+		FilterableDao<C, K, F> result = null;
+		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) (credentialDao);
+		} else if ( TransformConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) (transformDao);
+		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) (endpointDao);
+		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) (endpointAuthDao);
 		}
 		if ( result != null ) {
 			return result;

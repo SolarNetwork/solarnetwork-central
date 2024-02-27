@@ -25,17 +25,18 @@ package net.solarnetwork.central.user.din.biz;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.din.biz.TransformService;
+import net.solarnetwork.central.din.dao.DatumInputFilter;
 import net.solarnetwork.central.din.domain.DatumInputConfigurationEntity;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.din.domain.DatumInputConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformOutput;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
@@ -63,12 +64,14 @@ public interface UserDatumInputBiz {
 	 *        the configuration type
 	 * @param userId
 	 *        the user ID to get configurations for
+	 * @param filter
+	 *        an optional filter
 	 * @param configurationClass
 	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
-	<C extends DatumInputConfigurationEntity<C, ?>> Collection<C> configurationsForUser(Long userId,
-			Class<C> configurationClass);
+	<C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> FilterResults<C, K> configurationsForUser(
+			Long userId, DatumInputFilter filter, Class<C> configurationClass);
 
 	/**
 	 * Get a specific configuration kind for a given ID.

@@ -29,12 +29,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -48,6 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.din.biz.TransformService;
+import net.solarnetwork.central.din.dao.BasicFilter;
 import net.solarnetwork.central.din.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
@@ -64,7 +64,9 @@ import net.solarnetwork.central.user.din.domain.CredentialConfigurationInput;
 import net.solarnetwork.central.user.din.domain.EndpointAuthConfigurationInput;
 import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.service.PasswordEncoder;
@@ -112,6 +114,9 @@ public class DaoUserDatumInputBizTests {
 	@Captor
 	private ArgumentCaptor<EndpointAuthConfiguration> endpointAuthCaptor;
 
+	@Captor
+	private ArgumentCaptor<BasicFilter> filterCaptor;
+
 	private DaoUserDatumInputBiz biz;
 
 	@BeforeEach
@@ -148,15 +153,23 @@ public class DaoUserDatumInputBizTests {
 		// GIVEN
 		Long userId = randomLong();
 		CredentialConfiguration conf = new CredentialConfiguration(userId, randomLong(), now());
-		List<CredentialConfiguration> daoResults = Arrays.asList(conf);
-
-		given(credentialDao.findAll(userId, null)).willReturn(daoResults);
+		final BasicFilterResults<CredentialConfiguration, UserLongCompositePK> daoResults = new BasicFilterResults<>(
+				Arrays.asList(conf));
+		given(credentialDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
+				.willReturn(daoResults);
 
 		// WHEN
-		Collection<CredentialConfiguration> result = biz.configurationsForUser(userId,
-				CredentialConfiguration.class);
+		FilterResults<CredentialConfiguration, UserLongCompositePK> result = biz
+				.configurationsForUser(userId, null, CredentialConfiguration.class);
 
 		// THEN
+		then(credentialDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(), isNull());
+
+		BasicFilter expectedFilter = new BasicFilter();
+		expectedFilter.setUserId(userId);
+
+		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+
 		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
 	}
 
@@ -165,15 +178,23 @@ public class DaoUserDatumInputBizTests {
 		// GIVEN
 		Long userId = randomLong();
 		TransformConfiguration conf = new TransformConfiguration(userId, randomLong(), now());
-		List<TransformConfiguration> daoResults = Arrays.asList(conf);
-
-		given(transformDao.findAll(userId, null)).willReturn(daoResults);
+		final BasicFilterResults<TransformConfiguration, UserLongCompositePK> daoResults = new BasicFilterResults<>(
+				Arrays.asList(conf));
+		given(transformDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
+				.willReturn(daoResults);
 
 		// WHEN
-		Collection<TransformConfiguration> result = biz.configurationsForUser(userId,
-				TransformConfiguration.class);
+		FilterResults<TransformConfiguration, UserLongCompositePK> result = biz
+				.configurationsForUser(userId, null, TransformConfiguration.class);
 
 		// THEN
+		then(transformDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(), isNull());
+
+		BasicFilter expectedFilter = new BasicFilter();
+		expectedFilter.setUserId(userId);
+
+		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+
 		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
 	}
 
@@ -182,15 +203,23 @@ public class DaoUserDatumInputBizTests {
 		// GIVEN
 		Long userId = randomLong();
 		EndpointConfiguration conf = new EndpointConfiguration(userId, randomUUID(), now());
-		List<EndpointConfiguration> daoResults = Arrays.asList(conf);
-
-		given(endpointDao.findAll(userId, null)).willReturn(daoResults);
+		final BasicFilterResults<EndpointConfiguration, UserUuidPK> daoResults = new BasicFilterResults<>(
+				Arrays.asList(conf));
+		given(endpointDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
+				.willReturn(daoResults);
 
 		// WHEN
-		Collection<EndpointConfiguration> result = biz.configurationsForUser(userId,
+		FilterResults<EndpointConfiguration, UserUuidPK> result = biz.configurationsForUser(userId, null,
 				EndpointConfiguration.class);
 
 		// THEN
+		then(endpointDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(), isNull());
+
+		BasicFilter expectedFilter = new BasicFilter();
+		expectedFilter.setUserId(userId);
+
+		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+
 		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
 	}
 
@@ -200,15 +229,24 @@ public class DaoUserDatumInputBizTests {
 		Long userId = randomLong();
 		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(userId, randomUUID(),
 				randomLong(), now());
-		List<EndpointAuthConfiguration> daoResults = Arrays.asList(conf);
-
-		given(endpointAuthDao.findAll(userId, null, null)).willReturn(daoResults);
+		final BasicFilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> daoResults = new BasicFilterResults<>(
+				Arrays.asList(conf));
+		given(endpointAuthDao.findFiltered(any(BasicFilter.class), isNull(), isNull(), isNull()))
+				.willReturn(daoResults);
 
 		// WHEN
-		Collection<EndpointAuthConfiguration> result = biz.configurationsForUser(userId,
-				EndpointAuthConfiguration.class);
+		FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> result = biz
+				.configurationsForUser(userId, null, EndpointAuthConfiguration.class);
 
 		// THEN
+		then(endpointAuthDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(),
+				isNull());
+
+		BasicFilter expectedFilter = new BasicFilter();
+		expectedFilter.setUserId(userId);
+
+		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+
 		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
 	}
 
