@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.dao;
 
+import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
@@ -73,6 +74,33 @@ public class BasicFilter extends BasicCoreCriteria
 		if ( criteria instanceof EndpointCriteria f ) {
 			setEndpointIds(f.getEndpointIds());
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(credentialIds);
+		result = prime * result + Arrays.hashCode(endpointIds);
+		result = prime * result + Arrays.hashCode(transformIds);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !super.equals(obj) ) {
+			return false;
+		}
+		if ( !(obj instanceof BasicFilter) ) {
+			return false;
+		}
+		BasicFilter other = (BasicFilter) obj;
+		return Arrays.equals(credentialIds, other.credentialIds)
+				&& Arrays.equals(endpointIds, other.endpointIds)
+				&& Arrays.equals(transformIds, other.transformIds);
 	}
 
 	@Override
