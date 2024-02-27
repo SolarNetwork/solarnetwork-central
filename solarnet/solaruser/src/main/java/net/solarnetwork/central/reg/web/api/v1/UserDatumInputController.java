@@ -300,7 +300,7 @@ public class UserDatumInputController {
 				credentialId);
 		EndpointAuthConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
 		URI loc = uriWithoutHost(fromMethodCall(on(UserDatumInputController.class)
-				.getEndpointAuthConfiguration(endpointId, result.getCredentialId())));
+				.getEndpointAuthConfiguration(endpointId, credentialId)));
 		return ResponseEntity.created(loc).body(success(result));
 	}
 
