@@ -192,6 +192,7 @@ app:
     service-urls:
       node-dashboard: "http://localhost/node-dashboard"
       node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
+      solardin: "http://localhost:9087"
       solarin-mqtt: "mqtts://localhost:8883"
       solarquery: "http://localhost/solarquery"
       solaruser: "http://localhost/solaruser"
