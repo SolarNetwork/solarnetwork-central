@@ -27,7 +27,6 @@ import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM;
-import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_V16_TOPIC;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -56,23 +55,24 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.domain.BasicActionMessage;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
+import net.solarnetwork.ocpp.domain.ErrorCode;
 import net.solarnetwork.ocpp.domain.PendingActionMessage;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
-import net.solarnetwork.ocpp.web.json.OcppWebSocketHandler;
+import net.solarnetwork.ocpp.service.ErrorCodeResolver;
+import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
 import net.solarnetwork.service.ServiceLifecycleObserver;
-import ocpp.domain.Action;
-import ocpp.domain.ErrorCode;
-import ocpp.domain.ErrorCodeResolver;
-import ocpp.json.ActionPayloadDecoder;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -83,8 +83,9 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
 	private ChargePointActionStatusDao chargePointActionStatusDao;
-	private Function<Object, Integer> connectorIdExtractor;
+	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
+	private String instructionTopic;
 
 	/**
 	 * Constructor.
@@ -97,11 +98,18 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 *        the error code resolver
 	 * @param executor
 	 *        an executor for tasks
+	 * @param mapper
+	 *        the mapper
+	 * @param subProtocols
+	 *        the WebSocket sub-protocols
+	 * @param mapper
+	 *        the object mapper to use
 	 */
 	public CentralOcppWebSocketHandler(Class<C> chargePointActionClass,
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
-			AsyncTaskExecutor executor) {
-		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor);
+			AsyncTaskExecutor executor, ObjectMapper mapper, String... subProtocols) {
+		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
+				subProtocols);
 	}
 
 	/**
@@ -116,7 +124,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param executor
 	 *        an executor for tasks
 	 * @param mapper
-	 *        the object mapper to use
+	 *        the mapper
 	 * @param pendingMessageQueue
 	 *        a queue to hold pending messages, for individual client IDs
 	 * @param centralServiceActionPayloadDecoder
@@ -124,6 +132,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param chargePointActionPayloadDecoder
 	 *        for Central Service message the action payload decoder to use for
 	 *        Charge Point messages
+	 * @param subProtocols
+	 *        the WebSocket sub-protocols
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
 	 */
@@ -131,10 +141,10 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
 			AsyncTaskExecutor executor, ObjectMapper mapper, ActionMessageQueue pendingMessageQueue,
 			ActionPayloadDecoder centralServiceActionPayloadDecoder,
-			ActionPayloadDecoder chargePointActionPayloadDecoder) {
+			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
 		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
-				pendingMessageQueue, centralServiceActionPayloadDecoder,
-				chargePointActionPayloadDecoder);
+				pendingMessageQueue, centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
+				subProtocols);
 	}
 
 	@Override
@@ -208,11 +218,13 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			final String msgId = msg.getMessage().getMessageId();
 			final ChargePointActionStatusDao statusDao = getChargePointActionStatusDao();
 			if ( statusDao != null ) {
-				Integer connectorId = (connectorIdExtractor != null
+				ChargePointConnectorKey connectorId = (connectorIdExtractor != null
 						? connectorIdExtractor.apply(msg.getMessage().getMessage())
 						: null);
 				try {
-					statusDao.updateActionTimestamp(userId, cpIdentifier, connectorId, action.getName(),
+					statusDao.updateActionTimestamp(userId, cpIdentifier,
+							connectorId != null ? connectorId.getEvseId() : null,
+							connectorId != null ? connectorId.getConnectorId() : null, action.getName(),
 							msgId, Instant.now());
 				} catch ( RuntimeException e ) {
 					log.error("Error updating charger {} connector {} {} status",
@@ -306,7 +318,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 		@Override
 		public void run() {
-			if ( chargePointDao == null || instructionDao == null ) {
+			final String topic = getInstructionTopic();
+			if ( chargePointDao == null || instructionDao == null || topic == null ) {
 				return;
 			}
 			try {
@@ -326,7 +339,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					} else {
 						instruction = instructionDao.get(match.getId());
 					}
-					if ( instruction != null && OCPP_V16_TOPIC.equals(instruction.getTopic()) ) {
+					if ( instruction != null && topic.equals(instruction.getTopic()) ) {
 						processInstruction(instruction, cp);
 					}
 				}
@@ -598,7 +611,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * 
 	 * @return the function
 	 */
-	public Function<Object, Integer> getConnectorIdExtractor() {
+	public Function<Object, ChargePointConnectorKey> getConnectorIdExtractor() {
 		return connectorIdExtractor;
 	}
 
@@ -608,8 +621,30 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * @param connectorIdExtractor
 	 *        the function to set
 	 */
-	public void setConnectorIdExtractor(Function<Object, Integer> connectorIdExtractor) {
+	public void setConnectorIdExtractor(Function<Object, ChargePointConnectorKey> connectorIdExtractor) {
 		this.connectorIdExtractor = connectorIdExtractor;
+	}
+
+	/**
+	 * Get the instruction topic to listen to for OCPP messages.
+	 * 
+	 * @return the instruction topic to listen to, or {@literal null} to not
+	 *         look for OCPP instructions
+	 * @since 2.6
+	 */
+	public String getInstructionTopic() {
+		return instructionTopic;
+	}
+
+	/**
+	 * Set the instruction topic to listen to for OCPP messages.
+	 * 
+	 * @param instructionTopic
+	 *        the instruction topic to set
+	 * @since 2.6
+	 */
+	public void setInstructionTopic(String instructionTopic) {
+		this.instructionTopic = instructionTopic;
 	}
 
 }

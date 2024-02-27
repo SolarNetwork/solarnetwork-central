@@ -1,5 +1,5 @@
 /* ==================================================================
- * FirmwareStatusDatumPublisher.java - 29/07/2022 12:57:14 pm
+ * DiagnosticsStatusDatumPublisher.java - 29/07/2022 9:16:28 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller;
+package net.solarnetwork.central.ocpp.v16.service;
 
 import java.time.Instant;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -31,24 +31,25 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
+import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import net.solarnetwork.ocpp.v16.cs.FirmwareStatusNotificationProcessor;
-import ocpp.v16.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.cs.FirmwareStatusNotificationResponse;
+import net.solarnetwork.ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationProcessor;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.DiagnosticsStatusNotificationResponse;
 
 /**
- * Publish firmware status notifications as a datum stream.
+ * Publish diagnostics status notifications as a datum stream.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProcessor {
+public class DiagnosticsStatusDatumPublisher extends DiagnosticsStatusNotificationProcessor {
 
 	/** The {@code sourceIdSuffix} property default value. */
-	public static final String DEFAULT_SOURCE_ID_SUFFIX = "/firmware-status";
+	public static final String DEFAULT_SOURCE_ID_SUFFIX = "/diagnostics-status";
 
 	private final DatumPublisherSupport pubSupport;
 
@@ -66,7 +67,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public FirmwareStatusDatumPublisher(CentralChargePointDao chargePointDao,
+	public DiagnosticsStatusDatumPublisher(CentralChargePointDao chargePointDao,
 			ChargePointSettingsDao chargePointSettingsDao,
 			CentralChargePointConnectorDao chargePointConnectorDao, DatumEntityDao datumDao) {
 		super();
@@ -114,10 +115,10 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 	}
 
 	@Override
-	public void processActionMessage(ActionMessage<FirmwareStatusNotificationRequest> message,
-			ActionMessageResultHandler<FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse> resultHandler) {
+	public void processActionMessage(ActionMessage<DiagnosticsStatusNotificationRequest> message,
+			ActionMessageResultHandler<DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse> resultHandler) {
 		if ( message != null && message.getMessage() != null ) {
-			FirmwareStatusNotificationRequest notif = message.getMessage();
+			DiagnosticsStatusNotificationRequest notif = message.getMessage();
 			DatumSamples s = new DatumSamples();
 			if ( notif.getStatus() != null ) {
 				s.putSampleValue(DatumProperty.Status.getClassification(),
@@ -132,7 +133,7 @@ public class FirmwareStatusDatumPublisher extends FirmwareStatusNotificationProc
 				GeneralNodeDatum d = new GeneralNodeDatum();
 				d.setCreated(Instant.now());
 				d.setNodeId(cp.getNodeId());
-				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null));
+				d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, null));
 				d.setSamples(s);
 				pubSupport.publishDatum(cps, d);
 			}

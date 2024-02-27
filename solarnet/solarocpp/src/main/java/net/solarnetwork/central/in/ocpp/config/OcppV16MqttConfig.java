@@ -34,13 +34,14 @@ import org.springframework.context.annotation.Profile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.common.config.VersionedQualifier;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.mqtt.MqttInstructionHandler;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.ChargePointRouter;
-import ocpp.v16.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
 
 /**
  * OCPP v1.6 MQTT configuration.
@@ -73,7 +74,7 @@ public class OcppV16MqttConfig {
 
 	@ConfigurationProperties(prefix = "app.ocpp.v16.mqtt.instr-handler")
 	@Bean
-	@Qualifier(SOLARQUEUE)
+	@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V16)
 	public MqttInstructionHandler<ChargePointAction> instructionHandler_v16() {
 		MqttInstructionHandler<ChargePointAction> handler = new MqttInstructionHandler<>(
 				ChargePointAction.class, nodeInstructionDao, ocppCentralChargePointDao, objectMapper,
@@ -83,7 +84,7 @@ public class OcppV16MqttConfig {
 	}
 
 	@Bean
-	@Qualifier(OCPP_INSTRUCTION)
+	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V16)
 	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v16() {
 		return instructionHandler_v16();
 	}

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.session.test;
+package net.solarnetwork.central.ocpp.service.test;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
@@ -74,7 +74,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
-import net.solarnetwork.central.ocpp.session.OcppSessionDatumManager;
+import net.solarnetwork.central.ocpp.service.OcppSessionDatumManager;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.AcEnergyDatum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
@@ -100,7 +100,7 @@ import net.solarnetwork.ocpp.service.AuthorizationService;
  * Test cases for the {@link OcppSessionDatumManager} class.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class OcppSessionDatumManagerTests {
 
@@ -185,6 +185,7 @@ public class OcppSessionDatumManagerTests {
 
 		// get TX ID
 		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
+		final String txId = String.valueOf(transactionId);
 		expect(chargeSessionDao.nextTransactionId()).andReturn(transactionId);
 
 		// verify authorization
@@ -225,7 +226,7 @@ public class OcppSessionDatumManagerTests {
 			public ChargeSession answer() throws Throwable {
 				ChargeSession old = sessionCaptor.getValue();
 				return new ChargeSession(old.getId(), old.getCreated(), old.getAuthId(),
-						old.getChargePointId(), old.getConnectorId(), transactionId);
+						old.getChargePointId(), old.getEvseId(), old.getConnectorId(), txId);
 			}
 		});
 
@@ -276,7 +277,7 @@ public class OcppSessionDatumManagerTests {
 		assertThat("Charge Point ID returned", sess.getChargePointId(), equalTo(cp.getId()));
 		assertThat("Auth ID returned", sess.getAuthId(), equalTo(idTag));
 		assertThat("Connector ID returned", sess.getConnectorId(), equalTo(connectorId));
-		assertThat("Transaction ID returned", sess.getTransactionId(), equalTo(transactionId));
+		assertThat("Transaction ID returned", sess.getTransactionId(), equalTo(txId));
 
 		List<SampledValue> samples = StreamSupport.stream(readingsCaptor.getValue().spliterator(), false)
 				.collect(Collectors.toList());
@@ -348,6 +349,7 @@ public class OcppSessionDatumManagerTests {
 
 		// get TX ID
 		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
+		final String txId = String.valueOf(transactionId);
 		expect(chargeSessionDao.nextTransactionId()).andReturn(transactionId);
 
 		// get ChargePoint
@@ -374,7 +376,7 @@ public class OcppSessionDatumManagerTests {
 			public ChargeSession answer() throws Throwable {
 				ChargeSession old = sessionCaptor.getValue();
 				return new ChargeSession(old.getId(), old.getCreated(), old.getAuthId(),
-						old.getChargePointId(), old.getConnectorId(), transactionId);
+						old.getChargePointId(), old.getConnectorId(), txId);
 			}
 		});
 
@@ -401,7 +403,7 @@ public class OcppSessionDatumManagerTests {
 		}).isInstanceOf(AuthorizationException.class)
 				.asInstanceOf(InstanceOfAssertFactories.type(AuthorizationException.class))
 				.as("Transaction ID provided")
-				.returns(transactionId, AuthorizationException::getTransactionId)
+				.returns(txId, AuthorizationException::getTransactionId)
 				.extracting(AuthorizationException::getInfo)
 				.as("Auth info given as returned from authorize()")
 				.isSameAs(authInfo)
@@ -420,6 +422,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		final int transactionId = new SecureRandom().nextInt(60_000) + 1;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(chargePointId)).andReturn(cp);
@@ -429,9 +432,9 @@ public class OcppSessionDatumManagerTests {
 		cps.setSourceIdTemplate(UserSettings.DEFAULT_SOURCE_ID_TEMPLATE);
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
-		expect(chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(), transactionId))
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
+		expect(chargeSessionDao.getIncompleteChargeSessionForTransaction(cp.getId(), txId))
 				.andReturn(sess);
 
 		Capture<ChargeSession> updatedCaptor = new Capture<>();
@@ -477,7 +480,7 @@ public class OcppSessionDatumManagerTests {
 				.withTimestampEnd(Instant.now())
 				.withAuthorizationId(idTag)
 				.withChargePointId(chargePointId)
-				.withTransactionId(transactionId)
+				.withTransactionId(txId)
 				.withMeterEnd(54321)
 				.withReason(ChargeSessionEndReason.Local)
 				.build();
@@ -526,7 +529,7 @@ public class OcppSessionDatumManagerTests {
 		assertThat("Datum prop transaction ID",
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.TransactionId.getPropertyName()),
-				equalTo(String.valueOf(sess.getTransactionId())));
+				equalTo(sess.getTransactionId()));
 		assertThat("Datum prop auth token",
 				datum.getSamples().getStatusSampleString(
 						OcppSessionDatumManager.DatumProperty.AuthorizationToken.getPropertyName()),
@@ -561,6 +564,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -571,8 +575,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -648,7 +652,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3456")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId,
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId,
 				asList(r1, r2, r3, r4, r5, r6));
 
 		// then
@@ -703,6 +707,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -713,8 +718,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -747,7 +752,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("305.6")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -785,6 +790,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -796,8 +802,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -826,7 +832,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3.6")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -851,6 +857,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -862,8 +869,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -902,7 +909,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("3.5")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1, r2));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1, r2));
@@ -928,6 +935,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -939,8 +947,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -1047,7 +1055,7 @@ public class OcppSessionDatumManagerTests {
 				.withUnit(UnitOfMeasure.Celsius)
 				.build());
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, sampledValues);
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, sampledValues);
 
 		// THEN
 		SampledValue[] sortedSampledValues = sampledValues
@@ -1084,6 +1092,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -1095,8 +1104,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -1129,7 +1138,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1159,6 +1168,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -1170,8 +1180,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -1200,7 +1210,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1228,6 +1238,7 @@ public class OcppSessionDatumManagerTests {
 				Instant.now(), new ChargePointInfo(identifier));
 		int connectorId = 1;
 		int transactionId = 123;
+		final String txId = String.valueOf(transactionId);
 
 		// get ChargePoint
 		expect(chargePointDao.getForIdentity(cp.chargePointIdentity())).andReturn(cp);
@@ -1240,8 +1251,8 @@ public class OcppSessionDatumManagerTests {
 		expect(chargePointSettingsDao.resolveSettings(cp.getUserId(), cp.getId())).andReturn(cps);
 
 		// get current session
-		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(),
-				connectorId, transactionId);
+		ChargeSession sess = new ChargeSession(UUID.randomUUID(), Instant.now(), idTag, cp.getId(), 0,
+				connectorId, txId);
 		expect(chargeSessionDao.get(sess.getId())).andReturn(sess);
 
 		// get current readings for session
@@ -1265,7 +1276,7 @@ public class OcppSessionDatumManagerTests {
 				.withValue("1234")
 				.build();
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1));
 
 		// then
 		assertThat("Persisted readings same as passed in", readingsCaptor.getValue(), contains(r1));
@@ -1324,7 +1335,7 @@ public class OcppSessionDatumManagerTests {
 				.build();
 		
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, null, asList(r1, r2));
 
 		// then
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
@@ -1402,7 +1413,7 @@ public class OcppSessionDatumManagerTests {
 				.build();
 		
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, null, asList(r1, r2));
 
 		// then
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();
@@ -1491,7 +1502,7 @@ public class OcppSessionDatumManagerTests {
 		final Integer connectorId =3;
 		
 		// @formatter:on
-		manager.addChargingSessionReadings(cp.chargePointIdentity(), connectorId, asList(r1, r2));
+		manager.addChargingSessionReadings(cp.chargePointIdentity(), null, connectorId, asList(r1, r2));
 
 		// then
 		List<GeneralNodeDatum> persistedDatum = datumCaptor.getValues();

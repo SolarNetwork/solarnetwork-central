@@ -57,7 +57,7 @@ import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.CachedResult;
-import net.solarnetwork.web.support.LoggingHttpRequestInterceptor;
+import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
  * Factory for {@link SSLContext} objects configured with an associated

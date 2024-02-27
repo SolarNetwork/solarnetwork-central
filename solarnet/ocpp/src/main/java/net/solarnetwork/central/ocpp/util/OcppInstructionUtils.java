@@ -27,21 +27,24 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import ocpp.domain.Action;
-import ocpp.domain.SchemaValidationException;
-import ocpp.json.ActionPayloadDecoder;
+import net.solarnetwork.ocpp.domain.Action;
+import net.solarnetwork.ocpp.domain.SchemaValidationException;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 
 /**
  * Utilities for OCPP instruction handling.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.2
  */
 public final class OcppInstructionUtils {
 
 	/** A node instruction topic for OCPP v1.6 actions. */
 	public static final String OCPP_V16_TOPIC = "OCPP_v16";
+
+	/** A node instruction topic for OCPP v2.0.1 actions. */
+	public static final String OCPP_V201_TOPIC = "OCPP_v201";
 
 	/** A node instruction parameter name for an OCPP action name. */
 	public static final String OCPP_ACTION_PARAM = "action";

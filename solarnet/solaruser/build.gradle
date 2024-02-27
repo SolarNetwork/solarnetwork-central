@@ -11,14 +11,14 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '2.3.0'
+version = '2.4.0'
 
 base {
 	archivesName = 'solaruser'
 }
 
 configurations {
-	all*.exclude group: 'javax.servlet'
+	all*.exclude group: 'commons-logging'
 	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
@@ -46,7 +46,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf';
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.webflow:spring-webflow:3.0.0'
@@ -55,9 +55,6 @@ dependencies {
 	// Template support
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	
-	// Use Commons FileUpload instead of built-in Servlet, so SecurityTokenAuthenticationFilter works as expected
-	implementation 'commons-fileupload:commons-fileupload:1.5'
-
 	// Utils
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
@@ -66,10 +63,14 @@ dependencies {
 	implementation 'org.tukaani:xz:1.9'
 		
 	// SolarNetwork
-	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.jakarta:${snExternalOcppJakartaVersion}"
+	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"
+	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v201:${snExternalOcpp201Version}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
-	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp:${snCommonOcppVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v16.jakarta:${snCommonOcpp16JakartaVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.v201:${snCommonOcpp201Version}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.ocpp.web.jakarta:${snCommonOcppWebJakartaVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')

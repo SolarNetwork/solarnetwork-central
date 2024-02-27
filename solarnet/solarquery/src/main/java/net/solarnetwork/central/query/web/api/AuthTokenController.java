@@ -39,8 +39,8 @@ import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.domain.Response;
-import net.solarnetwork.web.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * REST controller for authorization token API.

@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.common.security.web.test;
 
-import static net.solarnetwork.web.security.AuthenticationData.nullSafeHeaderValue;
-import static net.solarnetwork.web.security.AuthenticationUtils.uriEncode;
+import static net.solarnetwork.web.jakarta.security.AuthenticationData.nullSafeHeaderValue;
+import static net.solarnetwork.web.jakarta.security.AuthenticationUtils.uriEncode;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
@@ -45,9 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.util.StringUtils;
-import net.solarnetwork.web.security.AuthenticationScheme;
-import net.solarnetwork.web.security.SecurityHttpServletRequestWrapper;
-import net.solarnetwork.web.security.WebConstants;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
+import net.solarnetwork.web.jakarta.security.WebConstants;
 
 /**
  * Utilities for unit tests.

@@ -26,7 +26,7 @@ package net.solarnetwork.central.ocpp.dao;
  * Search criteria for charge session transaction related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ChargeSessionTransactionCriteria {
 
@@ -40,14 +40,14 @@ public interface ChargeSessionTransactionCriteria {
 	 * 
 	 * @return the first transaction ID, or {@literal null} if not available
 	 */
-	Integer getTransactionId();
+	String getTransactionId();
 
 	/**
 	 * Get an array of transaction IDs.
 	 * 
 	 * @return array of transaction IDs (may be {@literal null})
 	 */
-	Integer[] getTransactionIds();
+	String[] getTransactionIds();
 
 	/**
 	 * Test if this filter has any transaction criteria.

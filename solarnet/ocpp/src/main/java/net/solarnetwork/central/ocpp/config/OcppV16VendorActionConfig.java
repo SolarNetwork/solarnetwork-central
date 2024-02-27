@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -38,8 +39,8 @@ import net.solarnetwork.central.ocpp.v16.vendor.abb.MeterTransferDataTransferDat
 import net.solarnetwork.central.ocpp.v16.vendor.hiconics.VehicleMacDataTransferDatumPublisher;
 import net.solarnetwork.central.ocpp.v16.vendor.zjbeny.DlbMeterDataTransferDatumPublisher;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
-import ocpp.v16.cs.DataTransferRequest;
-import ocpp.v16.cs.DataTransferResponse;
+import ocpp.v16.jakarta.cs.DataTransferRequest;
+import ocpp.v16.jakarta.cs.DataTransferResponse;
 
 /**
  * OCPP v1.6 vendor-specific configuration.
@@ -48,6 +49,7 @@ import ocpp.v16.cs.DataTransferResponse;
  * @version 1.0
  */
 @Configuration
+@Profile(OCPP_V16)
 public class OcppV16VendorActionConfig {
 
 	@Autowired(required = false)

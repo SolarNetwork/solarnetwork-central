@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.jobs.web.api;
 
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.util.Collection;
 import java.util.Iterator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ import net.solarnetwork.central.jobs.web.domain.JobFilter;
 import net.solarnetwork.central.scheduler.JobInfo;
 import net.solarnetwork.central.scheduler.SchedulerManager;
 import net.solarnetwork.central.scheduler.SchedulerStatus;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * REST controller for job scheduler management.

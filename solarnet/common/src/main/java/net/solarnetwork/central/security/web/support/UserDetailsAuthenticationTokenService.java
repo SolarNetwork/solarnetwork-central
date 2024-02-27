@@ -29,7 +29,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
-import net.solarnetwork.web.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * Implementation of {@link AuthenticationTokenService} that uses a

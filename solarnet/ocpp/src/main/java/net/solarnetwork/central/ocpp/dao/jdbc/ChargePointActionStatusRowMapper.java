@@ -1,5 +1,5 @@
 /* ==================================================================
- * ChargePointStatusRowMapper.java - 17/11/2022 8:22:08 am
+ * ChargePointActionStatusRowMapper.java - 17/11/2022 8:22:08 am
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -27,10 +27,9 @@ import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
-import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 
 /**
- * Map datum rows into {@link ChargePointStatus} instances.
+ * Map datum rows into {@link ChargePointActionStatus} instances.
  * 
  * <p>
  * The expected column order in the SQL results is:
@@ -40,6 +39,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * <li>created</li>
  * <li>user_id</li>
  * <li>cp_id</li>
+ * <li>evse_id</li>
  * <li>conn_id</li>
  * <li>action</li>
  * <li>msg_id</li>
@@ -47,7 +47,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * </ol>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargePointActionStatusRowMapper implements RowMapper<ChargePointActionStatus> {
 
@@ -59,11 +59,12 @@ public class ChargePointActionStatusRowMapper implements RowMapper<ChargePointAc
 		Instant created = rs.getTimestamp(1).toInstant();
 		long userId = rs.getLong(2);
 		long cpId = rs.getLong(3);
-		int connId = rs.getInt(4);
-		String action = rs.getString(5);
-		String messageId = rs.getString(6);
-		Instant date = rs.getTimestamp(7).toInstant();
-		var status = new ChargePointActionStatus(userId, cpId, connId, action, created);
+		int evseId = rs.getInt(4);
+		int connId = rs.getInt(5);
+		String action = rs.getString(6);
+		String messageId = rs.getString(7);
+		Instant date = rs.getTimestamp(8).toInstant();
+		var status = new ChargePointActionStatus(userId, cpId, evseId, connId, action, created);
 		status.setMessageId(messageId);
 		status.setTimestamp(date);
 		return status;

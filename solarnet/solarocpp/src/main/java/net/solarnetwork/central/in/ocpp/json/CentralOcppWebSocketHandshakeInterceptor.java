@@ -37,14 +37,14 @@ import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.ocpp.domain.SystemUser;
-import net.solarnetwork.ocpp.web.json.OcppWebSocketHandshakeInterceptor;
+import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {

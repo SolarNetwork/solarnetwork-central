@@ -61,22 +61,23 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
+import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
+import net.solarnetwork.ocpp.domain.Action;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
-import net.solarnetwork.ocpp.web.json.OcppWebSocketHandshakeInterceptor;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
+import net.solarnetwork.ocpp.v16.jakarta.cp.json.ChargePointActionPayloadDecoder;
+import net.solarnetwork.ocpp.v16.jakarta.cs.json.CentralServiceActionPayloadDecoder;
+import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.test.CallingThreadExecutorService;
-import ocpp.domain.Action;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.ErrorCodeResolver;
-import ocpp.v16.cp.json.ChargePointActionPayloadDecoder;
-import ocpp.v16.cs.ChargePointErrorCode;
-import ocpp.v16.cs.ChargePointStatus;
-import ocpp.v16.cs.StatusNotificationRequest;
-import ocpp.v16.cs.json.CentralServiceActionPayloadDecoder;
+import ocpp.v16.jakarta.cs.ChargePointErrorCode;
+import ocpp.v16.jakarta.cs.ChargePointStatus;
+import ocpp.v16.jakarta.cs.StatusNotificationRequest;
 
 /**
  * Test cases for the {@link CentralOcppWebSocketHandler} class.
@@ -136,6 +137,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
 		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		handler.setApplicationMetadata(APP_META);
+		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
 	}
 
 	@Test
@@ -236,8 +238,8 @@ public class CentralOcppWebSocketHandlerV16Tests {
 
 		// THEN
 		then(chargePointActionStatusDao).should().updateActionTimestamp(eq(userId),
-				eq(cpIdentity.getIdentifier()), eq(req.getConnectorId()), eq("StatusNotification"),
-				eq(messageId), dateCaptor.capture());
+				eq(cpIdentity.getIdentifier()), eq(0), eq(req.getConnectorId()),
+				eq("StatusNotification"), eq(messageId), dateCaptor.capture());
 
 		// 3 events: connected, received, sent(error)
 		then(userEventAppenderBiz).should(times(3)).addEvent(eq(userId), logEventCaptor.capture());

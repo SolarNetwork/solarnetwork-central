@@ -25,7 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfiguration;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -67,7 +67,7 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.web.domain.Response;
+import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for datum export management.

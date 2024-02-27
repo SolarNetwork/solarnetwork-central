@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.v16.controller.test;
+package net.solarnetwork.central.ocpp.v16.service.test;
 
 import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
@@ -48,7 +48,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.v16.controller.FirmwareStatusDatumPublisher;
+import net.solarnetwork.central.ocpp.v16.service.FirmwareStatusDatumPublisher;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
@@ -56,10 +56,10 @@ import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.cs.FirmwareStatus;
-import ocpp.v16.cs.FirmwareStatusNotificationRequest;
-import ocpp.v16.cs.FirmwareStatusNotificationResponse;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import ocpp.v16.jakarta.cs.FirmwareStatus;
+import ocpp.v16.jakarta.cs.FirmwareStatusNotificationRequest;
+import ocpp.v16.jakarta.cs.FirmwareStatusNotificationResponse;
 
 /**
  * Test cases for the {@link FirmwaresStatusDatumPublisher} class.

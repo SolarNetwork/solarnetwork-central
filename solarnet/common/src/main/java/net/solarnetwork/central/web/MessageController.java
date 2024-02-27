@@ -29,8 +29,8 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import net.solarnetwork.web.support.MessagesSource;
-import net.solarnetwork.web.support.WebUtils;
+import net.solarnetwork.web.jakarta.support.MessagesSource;
+import net.solarnetwork.web.jakarta.support.WebUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;

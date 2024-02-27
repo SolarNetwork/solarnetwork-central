@@ -31,18 +31,21 @@ import net.solarnetwork.util.ObjectUtils;
  * A primary key for a Charge Point action status.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ChargePointActionStatusKey extends BasePK
 		implements Serializable, Cloneable, Comparable<ChargePointActionStatusKey> {
 
-	private static final long serialVersionUID = 635218697257392391L;
+	private static final long serialVersionUID = -5822582739610295086L;
 
 	/** The user ID. */
 	private final long userId;
 
 	/** The charge point ID. */
 	private final long chargePointId;
+
+	/** The connector ID. */
+	private final int evseId;
 
 	/** The connector ID. */
 	private final int connectorId;
@@ -67,6 +70,29 @@ public class ChargePointActionStatusKey extends BasePK
 	 */
 	public static ChargePointActionStatusKey keyFor(long userId, long chargePointId, int connectorId,
 			String action) {
+		return keyFor(userId, chargePointId, 0, connectorId, action);
+	}
+
+	/**
+	 * Create a new key instance.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param chargePointId
+	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID, or {@literal 0} for the charger itself
+	 * @param action
+	 *        the action name
+	 * @return the new key
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 1.1
+	 */
+	public static ChargePointActionStatusKey keyFor(long userId, long chargePointId, int evseId,
+			int connectorId, String action) {
 		return new ChargePointActionStatusKey(userId, chargePointId, connectorId, action);
 	}
 
@@ -85,9 +111,32 @@ public class ChargePointActionStatusKey extends BasePK
 	 *         if any argument is {@literal null}
 	 */
 	public ChargePointActionStatusKey(long userId, long chargePointId, int connectorId, String action) {
+		this(userId, chargePointId, 0, connectorId, action);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param chargePointId
+	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID, or {@literal 0} for the charger itself
+	 * @param action
+	 *        the action name
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 1.1
+	 */
+	public ChargePointActionStatusKey(long userId, long chargePointId, int evseId, int connectorId,
+			String action) {
 		super();
 		this.userId = userId;
 		this.chargePointId = chargePointId;
+		this.evseId = evseId;
 		this.connectorId = connectorId;
 		this.action = ObjectUtils.requireNonNullArgument(action, "action");
 	}
@@ -102,6 +151,10 @@ public class ChargePointActionStatusKey extends BasePK
 		if ( result != 0 ) {
 			return result;
 		}
+		result = Integer.compare(evseId, o.evseId);
+		if ( result != 0 ) {
+			return result;
+		}
 		result = Integer.compare(connectorId, o.connectorId);
 		if ( result != 0 ) {
 			return result;
@@ -113,6 +166,7 @@ public class ChargePointActionStatusKey extends BasePK
 	protected void populateIdValue(StringBuilder buf) {
 		buf.append("u=").append(userId);
 		buf.append(";cp=").append(chargePointId);
+		buf.append(";e=").append(evseId);
 		buf.append(";c=").append(connectorId);
 		buf.append(";a=").append(action);
 	}
@@ -121,6 +175,7 @@ public class ChargePointActionStatusKey extends BasePK
 	protected void populateStringValue(StringBuilder buf) {
 		buf.append("userId=").append(userId);
 		buf.append(", chargePointId=").append(chargePointId);
+		buf.append("; evseId=").append(evseId);
 		buf.append("; connectorId=").append(connectorId);
 		buf.append("; action=").append(action);
 	}
@@ -132,7 +187,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(userId, chargePointId, connectorId, action);
+		return Objects.hash(userId, chargePointId, evseId, connectorId, action);
 	}
 
 	@Override
@@ -144,7 +199,7 @@ public class ChargePointActionStatusKey extends BasePK
 			return false;
 		}
 		ChargePointActionStatusKey other = (ChargePointActionStatusKey) obj;
-		return userId == other.userId && chargePointId == other.chargePointId
+		return userId == other.userId && chargePointId == other.chargePointId && evseId == other.evseId
 				&& connectorId == other.connectorId && action.equals(other.action);
 	}
 
@@ -167,9 +222,18 @@ public class ChargePointActionStatusKey extends BasePK
 	}
 
 	/**
+	 * Get the EVSE ID.
+	 * 
+	 * @return the EVSE ID, or {@literal 0} for the charger itself
+	 */
+	public int getEvseId() {
+		return evseId;
+	}
+
+	/**
 	 * Get the connector ID.
 	 * 
-	 * @return the connector ID, or {@literal 0} for the charger itself
+	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
 	public int getConnectorId() {
 		return connectorId;

@@ -67,8 +67,8 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.web.security.AuthenticationScheme;
-import net.solarnetwork.web.security.SecurityTokenAuthenticationEntryPoint;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 
 /**
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.

@@ -29,12 +29,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
-import net.solarnetwork.ocpp.v16.cs.DataTransferProcessor;
-import net.solarnetwork.ocpp.v16.cs.HeartbeatProcessor;
-import ocpp.v16.cs.DataTransferRequest;
-import ocpp.v16.cs.DataTransferResponse;
-import ocpp.v16.cs.HeartbeatRequest;
-import ocpp.v16.cs.HeartbeatResponse;
+import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.HeartbeatProcessor;
+import ocpp.v16.jakarta.cs.DataTransferRequest;
+import ocpp.v16.jakarta.cs.DataTransferResponse;
+import ocpp.v16.jakarta.cs.HeartbeatRequest;
+import ocpp.v16.jakarta.cs.HeartbeatResponse;
 
 /**
  * OCPP v1.6 general configuration.
@@ -55,7 +55,7 @@ public class OcppV16BasicActionConfig {
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<HeartbeatRequest, HeartbeatResponse> ocppHeartbeat_v16() {
+	public ActionMessageProcessor<HeartbeatRequest, HeartbeatResponse> ocppHeartbeatProcessor_v16() {
 		return new HeartbeatProcessor();
 	}
 

@@ -39,14 +39,14 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "chargePointId", "connectorId", "userId", "created", "info" })
+@JsonPropertyOrder({ "chargePointId", "evseId", "connectorId", "userId", "created", "info" })
 public class CentralChargePointConnector extends ChargePointConnector
 		implements UserRelatedEntity<ChargePointConnectorKey> {
 
-	private static final long serialVersionUID = 7965306118631142342L;
+	private static final long serialVersionUID = 8009006297002891630L;
 
 	private final Long userId;
 
@@ -117,7 +117,25 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 *        the created date
 	 */
 	public CentralChargePointConnector(long chargePointId, int connectorId, Instant created) {
-		super(new ChargePointConnectorKey(chargePointId, connectorId), created);
+		this(chargePointId, 0, connectorId, created);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID
+	 * @param created
+	 *        the created date
+	 * @since 1.2
+	 */
+	public CentralChargePointConnector(long chargePointId, int evseId, int connectorId,
+			Instant created) {
+		super(new ChargePointConnectorKey(chargePointId, evseId, connectorId), created);
 		this.userId = null;
 	}
 
@@ -133,13 +151,37 @@ public class CentralChargePointConnector extends ChargePointConnector
 	 * @param created
 	 *        the created date
 	 */
-	@JsonCreator
 	public CentralChargePointConnector(
 			@JsonProperty(value = "chargePointId", required = true) long chargePointId,
 			@JsonProperty(value = "connectorId", required = true) int connectorId,
 			@JsonProperty(value = "userId", required = true) Long userId,
 			@JsonProperty("created") Instant created) {
-		super(new ChargePointConnectorKey(chargePointId, connectorId), created);
+		this(chargePointId, 0, connectorId, userId, created);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID
+	 * @param userId
+	 *        the user ID
+	 * @param created
+	 *        the created date
+	 * @since 1.2
+	 */
+	@JsonCreator
+	public CentralChargePointConnector(
+			@JsonProperty(value = "chargePointId", required = true) long chargePointId,
+			@JsonProperty(value = "evseId", required = false, defaultValue = "0") int evseId,
+			@JsonProperty(value = "connectorId", required = true) int connectorId,
+			@JsonProperty(value = "userId", required = true) Long userId,
+			@JsonProperty("created") Instant created) {
+		super(new ChargePointConnectorKey(chargePointId, evseId, connectorId), created);
 		this.userId = userId;
 	}
 
@@ -172,6 +214,17 @@ public class CentralChargePointConnector extends ChargePointConnector
 	public Long getChargePointId() {
 		ChargePointConnectorKey id = getId();
 		return (id != null ? id.getChargePointId() : null);
+	}
+
+	/**
+	 * Get the EVSE ID.
+	 * 
+	 * @return the EVSE ID
+	 * @since 1.2
+	 */
+	public Integer getEvseId() {
+		ChargePointConnectorKey id = getId();
+		return (id != null ? id.getEvseId() : null);
 	}
 
 	/**

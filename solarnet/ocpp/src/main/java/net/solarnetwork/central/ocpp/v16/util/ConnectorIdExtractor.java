@@ -22,30 +22,32 @@
 
 package net.solarnetwork.central.ocpp.v16.util;
 
+import static net.solarnetwork.ocpp.domain.ChargePointConnectorKey.keyFor;
 import java.util.function.Function;
-import ocpp.v16.cs.MeterValuesRequest;
-import ocpp.v16.cs.StartTransactionRequest;
-import ocpp.v16.cs.StatusNotificationRequest;
+import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
+import ocpp.v16.jakarta.cs.MeterValuesRequest;
+import ocpp.v16.jakarta.cs.StartTransactionRequest;
+import ocpp.v16.jakarta.cs.StatusNotificationRequest;
 
 /**
  * Extract a connector ID from OCPP v1.6 request messages.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class ConnectorIdExtractor implements Function<Object, Integer> {
+public class ConnectorIdExtractor implements Function<Object, ChargePointConnectorKey> {
 
 	@Override
-	public Integer apply(Object o) {
+	public ChargePointConnectorKey apply(Object o) {
 		if ( o == null ) {
 			return null;
 		}
 		if ( o instanceof MeterValuesRequest r ) {
-			return r.getConnectorId();
+			return keyFor(0, r.getConnectorId());
 		} else if ( o instanceof StartTransactionRequest r ) {
-			return r.getConnectorId();
+			return keyFor(0, r.getConnectorId());
 		} else if ( o instanceof StatusNotificationRequest r ) {
-			return r.getConnectorId();
+			return keyFor(0, r.getConnectorId());
 		}
 		return null;
 	}

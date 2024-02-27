@@ -31,7 +31,7 @@ import net.solarnetwork.ocpp.domain.ChargeSession;
  * charging cycle from authorization to end of charging.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 public class CentralChargeSession extends ChargeSession {
 
@@ -44,13 +44,17 @@ public class CentralChargeSession extends ChargeSession {
 	 *        the authorization ID
 	 * @param chargePointId
 	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
 	 * @param connectorId
 	 *        the Charge Point connector ID
 	 * @param transactionId
 	 *        the transactionID
+	 * @since 1.3
 	 */
-	public CentralChargeSession(String authId, long chargePointId, int connectorId, int transactionId) {
-		super(authId, chargePointId, connectorId, transactionId);
+	public CentralChargeSession(String authId, long chargePointId, int evseId, int connectorId,
+			String transactionId) {
+		super(authId, chargePointId, evseId, connectorId, transactionId);
 	}
 
 	/**
@@ -64,14 +68,17 @@ public class CentralChargeSession extends ChargeSession {
 	 *        the authorization ID
 	 * @param chargePointId
 	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
 	 * @param connectorId
 	 *        the Charge Point connector ID
 	 * @param transactionId
 	 *        the transactionID
+	 * @since 1.3
 	 */
-	public CentralChargeSession(UUID id, Instant created, String authId, long chargePointId,
-			int connectorId, int transactionId) {
-		super(id, created, authId, chargePointId, connectorId, transactionId);
+	public CentralChargeSession(UUID id, Instant created, String authId, long chargePointId, int evseId,
+			int connectorId, String transactionId) {
+		super(id, created, authId, chargePointId, evseId, connectorId, transactionId);
 	}
 
 	/**
@@ -82,7 +89,7 @@ public class CentralChargeSession extends ChargeSession {
 	 * @return the session instance, suitable for using as a filter
 	 */
 	public static CentralChargeSession forChargePoint(long chargePointId) {
-		return new CentralChargeSession(null, chargePointId, 0, 0);
+		return new CentralChargeSession(null, chargePointId, 0, 0, null);
 	}
 
 	/**
@@ -93,9 +100,10 @@ public class CentralChargeSession extends ChargeSession {
 	 * @param transactionId
 	 *        the transactionID
 	 * @return the session instance, suitable for using as a filter
+	 * @since 1.3
 	 */
-	public static CentralChargeSession forTransaction(long chargePointId, int transactionId) {
-		return new CentralChargeSession(null, chargePointId, 0, transactionId);
+	public static CentralChargeSession forTransaction(long chargePointId, String transactionId) {
+		return new CentralChargeSession(null, chargePointId, 0, 0, transactionId);
 	}
 
 	/**
@@ -103,12 +111,15 @@ public class CentralChargeSession extends ChargeSession {
 	 * 
 	 * @param chargePointId
 	 *        the Charge Point ID
+	 * @param evseId
+	 *        the EVSE ID
 	 * @param connectorId
 	 *        the Charge Point connector ID
 	 * @return the session instance, suitable for using as a filter
+	 * @since 1.3
 	 */
-	public static CentralChargeSession forConnector(long chargePointId, int connectorId) {
-		return new CentralChargeSession(null, chargePointId, connectorId, 0);
+	public static CentralChargeSession forConnector(long chargePointId, int evseId, int connectorId) {
+		return new CentralChargeSession(null, chargePointId, evseId, connectorId, null);
 	}
 
 }

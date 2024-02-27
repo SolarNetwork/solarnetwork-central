@@ -9,13 +9,14 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarOSCP Capacity Provider Simulator'
-version = '2.1.0'
+version = '2.1.1'
 
 base {
 	archivesName = 'solaroscp-sim-cp'
 }
 
 configurations {
+    all*.exclude group: 'commons-logging'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }

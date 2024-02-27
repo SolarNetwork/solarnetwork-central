@@ -48,14 +48,16 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
+import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
+import net.solarnetwork.ocpp.json.WebSocketSubProtocol;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
+import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
 import net.solarnetwork.service.PasswordEncoder;
-import ocpp.json.ActionPayloadDecoder;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.ChargePointAction;
-import ocpp.v16.ErrorCodeResolver;
 
 /**
  * OCPP v1.6 web socket configuration.
@@ -120,7 +122,8 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		CentralOcppWebSocketHandler<ChargePointAction, CentralSystemAction> handler = new CentralOcppWebSocketHandler<>(
 				ChargePointAction.class, CentralSystemAction.class, new ErrorCodeResolver(),
 				taskExecutor, objectMapper, new SimpleActionMessageQueue(),
-				centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder);
+				centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
+				WebSocketSubProtocol.OCPP_V16.getValue());
 		handler.setTaskScheduler(taskScheduler);
 		handler.setChargePointDao(ocppCentralChargePointDao);
 		handler.setInstructionDao(nodeInstructionDao);
@@ -134,6 +137,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		handler.setChargePointStatusDao(chargePointStatusDao);
 		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
 		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
+		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
 		return handler;
 	}
 

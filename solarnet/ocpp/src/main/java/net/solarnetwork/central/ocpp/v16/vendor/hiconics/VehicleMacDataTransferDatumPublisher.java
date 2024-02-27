@@ -35,16 +35,16 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.ChargePointSettings;
-import net.solarnetwork.central.ocpp.v16.controller.DatumPublisherSupport;
+import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import net.solarnetwork.ocpp.v16.cs.DataTransferProcessor;
+import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
 import net.solarnetwork.util.ObjectUtils;
-import ocpp.v16.cs.DataTransferRequest;
-import ocpp.v16.cs.DataTransferResponse;
-import ocpp.v16.cs.DataTransferStatus;
+import ocpp.v16.jakarta.cs.DataTransferRequest;
+import ocpp.v16.jakarta.cs.DataTransferResponse;
+import ocpp.v16.jakarta.cs.DataTransferStatus;
 
 /**
  * Publish Hiconics data transfer vehicle MAC messages as a datum stream.
@@ -71,7 +71,7 @@ import ocpp.v16.cs.DataTransferStatus;
  * </pre>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -173,7 +173,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 		d.setSamples(s);
 		d.setCreated(ts);
 		d.setNodeId(cp.getNodeId());
-		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), connId));
+		d.setSourceId(pubSupport.sourceId(cps, cp.getInfo().getId(), null, connId));
 		return d;
 	}
 

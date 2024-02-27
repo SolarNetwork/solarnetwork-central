@@ -23,7 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.web.domain.Response.response;
+import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,8 +71,8 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.web.domain.Response;
-import net.solarnetwork.web.support.MultipartFileResource;
+import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.web.jakarta.support.MultipartFileResource;
 
 /**
  * Web service API for datum import management.

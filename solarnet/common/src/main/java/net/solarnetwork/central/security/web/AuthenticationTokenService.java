@@ -24,7 +24,7 @@ package net.solarnetwork.central.security.web;
 
 import java.util.Map;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.web.security.AuthenticationScheme;
+import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * API for a service that performs functions on authentication data tokens.

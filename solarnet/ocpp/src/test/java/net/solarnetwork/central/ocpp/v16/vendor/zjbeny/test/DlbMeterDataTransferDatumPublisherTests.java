@@ -57,10 +57,10 @@ import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ChargePointInfo;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
-import ocpp.v16.CentralSystemAction;
-import ocpp.v16.cs.DataTransferRequest;
-import ocpp.v16.cs.DataTransferResponse;
-import ocpp.v16.cs.DataTransferStatus;
+import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
+import ocpp.v16.jakarta.cs.DataTransferRequest;
+import ocpp.v16.jakarta.cs.DataTransferResponse;
+import ocpp.v16.jakarta.cs.DataTransferStatus;
 
 /**
  * Test cases for the {@link DlbMeterDataTransferDatumPublisher} class.
