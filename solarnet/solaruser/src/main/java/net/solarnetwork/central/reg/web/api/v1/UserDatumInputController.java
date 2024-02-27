@@ -23,16 +23,21 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -112,11 +117,13 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/credentials", method = RequestMethod.POST)
-	public Result<CredentialConfiguration> createCredentialConfiguration(
+	public ResponseEntity<Result<CredentialConfiguration>> createCredentialConfiguration(
 			@Valid @RequestBody CredentialConfigurationInput input) {
 		UserLongCompositePK id = UserLongCompositePK.unassignedEntityIdKey(getCurrentActorUserId());
 		CredentialConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
-		return success(result);
+		URI loc = uriWithoutHost(fromMethodCall(on(UserDatumInputController.class)
+				.getCredentialConfiguration(result.getCredentialId())));
+		return ResponseEntity.created(loc).body(success(result));
 	}
 
 	@RequestMapping(value = "/credentials/{credentialId}", method = RequestMethod.GET)
@@ -156,11 +163,13 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/transforms", method = RequestMethod.POST)
-	public Result<TransformConfiguration> createTransformConfiguration(
+	public ResponseEntity<Result<TransformConfiguration>> createTransformConfiguration(
 			@Valid @RequestBody TransformConfigurationInput input) {
 		UserLongCompositePK id = UserLongCompositePK.unassignedEntityIdKey(getCurrentActorUserId());
 		TransformConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
-		return success(result);
+		URI loc = uriWithoutHost(fromMethodCall(
+				on(UserDatumInputController.class).getTransformConfiguration(result.getTransformId())));
+		return ResponseEntity.created(loc).body(success(result));
 	}
 
 	@RequestMapping(value = "/transforms/{transformId}", method = RequestMethod.GET)
@@ -233,11 +242,13 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/endpoints", method = RequestMethod.POST)
-	public Result<EndpointConfiguration> createEndpointConfiguration(
+	public ResponseEntity<Result<EndpointConfiguration>> createEndpointConfiguration(
 			@Valid @RequestBody EndpointConfigurationInput input) {
 		UserUuidPK id = UserUuidPK.unassignedUuidKey(getCurrentActorUserId());
 		EndpointConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
-		return success(result);
+		URI loc = uriWithoutHost(fromMethodCall(
+				on(UserDatumInputController.class).getEndpointConfiguration(result.getEndpointId())));
+		return ResponseEntity.created(loc).body(success(result));
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}", method = RequestMethod.GET)
@@ -277,13 +288,15 @@ public class UserDatumInputController {
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.PUT)
-	public Result<EndpointAuthConfiguration> createEndpointAuthConfiguration(
+	public ResponseEntity<Result<EndpointAuthConfiguration>> createEndpointAuthConfiguration(
 			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
 			@Valid @RequestBody EndpointAuthConfigurationInput input) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,
 				credentialId);
 		EndpointAuthConfiguration result = userDatumInputBiz.saveConfiguration(id, input);
-		return success(result);
+		URI loc = uriWithoutHost(fromMethodCall(on(UserDatumInputController.class)
+				.getEndpointAuthConfiguration(endpointId, result.getCredentialId())));
+		return ResponseEntity.created(loc).body(success(result));
 	}
 
 	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.GET)
