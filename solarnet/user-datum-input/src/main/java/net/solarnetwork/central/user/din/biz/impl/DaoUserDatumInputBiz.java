@@ -257,9 +257,13 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		Iterable<Datum> datum = null;
 		String msg = null;
 		try {
-			var params = Map.of("userId", id.getUserId(), "transformId", id.getEntityId(),
+			var params = Map.of(TransformService.PARAM_USER_ID_KEY, id.getUserId(),
+					TransformService.PARAM_ENDPOINT_ID_KEY,
+					(endpointId != null ? endpointId : UserUuidPK.UNASSIGNED_UUID_ID).toString(),
+					TransformService.PARAM_TRANSFORM_ID_KEY, id.getEntityId(),
 					TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident(),
-					TransformService.PARAM_XSLT_OUTPUT_KEY, xsltOutput, "preview", true);
+					TransformService.PARAM_XSLT_OUTPUT_KEY, xsltOutput,
+					TransformService.PARAM_PREVIEW_KEY, true);
 			datum = xformService.transform(in, contentType, xform, params);
 			if ( datum != null && endpoint != null
 					&& (endpoint.getNodeId() != null || endpoint.getSourceId() != null) ) {

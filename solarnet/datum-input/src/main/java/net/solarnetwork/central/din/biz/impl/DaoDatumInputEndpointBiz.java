@@ -118,7 +118,9 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 							.formatted(xformServiceId, contentType, in.getClass().getSimpleName()));
 		}
 
-		var params = Map.of("userId", userId, "endpointId", endpointId,
+		var params = Map.of(TransformService.PARAM_USER_ID_KEY, userId,
+				TransformService.PARAM_ENDPOINT_ID_KEY, endpointId.toString(),
+				TransformService.PARAM_TRANSFORM_ID_KEY, endpoint.getTransformId(),
 				TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
 		Iterable<Datum> datum = xformService.transform(in, contentType, xform, params);
 

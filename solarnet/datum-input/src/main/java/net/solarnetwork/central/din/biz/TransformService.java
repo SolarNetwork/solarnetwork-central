@@ -67,6 +67,18 @@ public interface TransformService
 	 */
 	public static final String PARAM_XSLT_OUTPUT_KEY = "xslt-output";
 
+	/** A parameter key for a SolarNetwork user ID. */
+	public static final String PARAM_USER_ID_KEY = "user-id";
+
+	/** A parameter key for a endpoint ID. */
+	public static final String PARAM_ENDPOINT_ID_KEY = "endpoint-id";
+
+	/** A parameter key for a transform ID. */
+	public static final String PARAM_TRANSFORM_ID_KEY = "transform-id";
+
+	/** A parameter key for a preview boolean flag. */
+	public static final String PARAM_PREVIEW_KEY = "preview";
+
 	/**
 	 * Test if the service supports a given input object.
 	 *
