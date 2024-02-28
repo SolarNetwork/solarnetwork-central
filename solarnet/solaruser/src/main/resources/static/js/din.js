@@ -5,7 +5,7 @@ function dinManagement() {
 	 *
 	 * @typedef {Object} DinEntityModel
 	 * @property {object} _contextItem the configuration entity
-	 * @property {string} entityType the system type (e.g. 'c', 't', 'e')
+	 * @property {string} entityType the system type (e.g. 'c', 't', 'e', 'ea')
 	 * @property {string} [id] the entity ID
 	 * @property {string} [createdDisplay] the entity creation date as a display string
 	 * @property {boolean} [enabled] the enabled state
@@ -15,7 +15,7 @@ function dinManagement() {
 	 * A DIN system configuration.
 	 *
 	 * @typedef {Object} DinSystem
-	 * @property {string} type one of 'c', 't', 'e'
+	 * @property {string} type one of 'c', 't', 'e', 'ea'
 	 * @property {jQuery} container the element that holds the rendered list of entities
 	 * @property {Array<Object>} configs the entities
 	 * @property {Map<Number, DinEntityModel>} configsMap a mapping of entity IDs to associated entities
@@ -36,7 +36,7 @@ function dinManagement() {
 			configsMap: new Map()
 		});
 	}
-
+	
 	/**
 	 * Default edit form setup handler.
 	 *
@@ -45,9 +45,12 @@ function dinManagement() {
 	function modalEditFormShowSetup() {
 		var modal = $(this)
 			, config = SolarReg.Templates.findContextItem(this)
-			, enabled = (config && config.enabled === true ? true : false);
+			, enabled = (config && config.enabled === true ? true : false)
+			, type = (this.dataset ? this.dataset.systemType : undefined);
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
-		SolarReg.Settings.prepareEditServiceForm(modal, [], []);
+		SolarReg.Settings.prepareEditServiceForm(modal
+			, type == TRANSFORM_SYS ? Array.from(transformServices.values()) : []
+			, settingTemplates);
 	}
 
 	/**
@@ -94,6 +97,25 @@ function dinManagement() {
 		});
 	}
 
+	/**
+	 * Handle a service identifier menu change.
+	 * 
+	 * @param {Event} event the event
+	 * @param {Map<String,ServiceInfo>} services the service mapping
+	 */
+	function handleServiceIdentifierChange(event, services) {
+		let target = event.target;
+		if ( target.name === 'serviceIdentifier' ) {
+			let service = services.get($(event.target).val());
+			if (service) {
+				let modal = $(target.form);
+				let config = SolarReg.Templates.findContextItem(modal);
+				let container = modal.find('.service-props-container').first();
+				SolarReg.Settings.renderServiceInfoSettings(service, container, settingTemplates, config);
+			}
+		}
+	}
+
 	/* ============================
 	   Globals
 	   ============================ */
@@ -102,13 +124,26 @@ function dinManagement() {
 	const TRANSFORM_SYS = 't';
 	const ENDPOINT_SYS = 'e';
 
+	/**
+	 * Mapping of system keys to associated systems.
+	 * 
+	 * @type {Object<String,DinSystem>}
+	 */
 	const systems = Object.freeze({
 		c: createSystem($('#din-credentials-container'), CREDENTIAL_SYS),
 		t: createSystem($('#din-transforms-container'), TRANSFORM_SYS),
 		e: createSystem($('#din-endpoints-container'), ENDPOINT_SYS),
 	});
+	
+	/**
+	 * A map of service ID to Object of ServiceInfo properties.
+	 * @type {Map<String, ServiceInfo>}
+	 */
+	const transformServices = new Map();
 
 	const endpointSystems = new Map(); // map of server ID to Object of Dnp3System properties
+	
+	const settingTemplates = $('#setting-templates');
 
 	/* ============================
 	   DIN entity delete
@@ -176,10 +211,73 @@ function dinManagement() {
 		});
 
 	/* ============================
+	   Transforms
+	   ============================ */
+
+	function renderTransformConfigs(configs, preserve) {
+		/** @type {DinSystem} */
+		const sys = systems[TRANSFORM_SYS];
+		if (!sys) {
+			return;
+		}
+		configs = Array.isArray(configs) ? configs : [];
+		if (!preserve) {
+			sys.configsMap.clear();
+		}
+
+		var items = configs.map(function(config) {
+			var model = createTransformModel(config);
+			sys.configsMap.set(config.id, model);
+			return model;
+		});
+
+		SolarReg.Templates.populateTemplateItems(sys.container, items, preserve);
+		SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
+	}
+
+	function createTransformModel(config) {
+		config.id = config.transformId;
+		config.systemType = TRANSFORM_SYS;
+		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+		Object.assign(model, config);
+		model.createdDisplay = moment(config.created).format('D MMM YYYY');
+		if (config.serviceIdentifier) {
+			let serviceInfo = transformServices.get(config.serviceIdentifier);
+			if (serviceInfo) {
+				model.transformServiceNameDisplay = serviceInfo.localizedName;
+			}
+		}
+		return model;
+	}
+
+	systems[TRANSFORM_SYS].container.find('.list-container').on('click', function(/** @type {MouseEvent} */ event) {
+		SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+	});
+
+	// ***** Transform add
+	$('#din-transform-add-button').on('click', function() {
+		$('#din-transform-edit-modal').modal('show');
+	});
+
+	// ***** Transform edit
+	$('#din-transform-edit-modal')
+		.on('show.bs.modal', modalEditFormShowSetup)
+		.on('change', function(event) {
+			handleServiceIdentifierChange(event, transformServices);
+		})
+		.on('submit', function transformEditModalFormSubmit(event) {
+			return modalEditFormSubmit(event, renderTransformConfigs);
+		})
+		.on('hidden.bs.modal', modalEditFormHiddenCleanup)
+		.find('button.toggle').each(function() {
+			SolarReg.Settings.setupSettingToggleButton($(this), false);
+		});
+
+	/* ============================
 	   Init
 	   ============================ */
 	(function init() {
-		var loadCountdown = 2;
+		var loadCountdown = 4;
 		var credentialConfs = [];
 		var transformConfs = [];
 		var endpointConfs = [];
@@ -188,11 +286,26 @@ function dinManagement() {
 			loadCountdown -= 1;
 			if (loadCountdown === 0) {
 				renderCredentialConfigs(credentialConfs);
-				// TODO renderTransformConfigs(transformConfs);
+				renderTransformConfigs(transformConfs);
 				// TODO renderEndpointConfigs(endpointConfs);
 				SolarReg.showPageLoaded();
 			}
 		}
+
+		// list all transform services
+		$.getJSON(SolarReg.solarUserURL('/sec/din/services/transform'), function(json) {
+			console.debug('Got DIN Transform Services: %o', json);
+			if (json && json.success === true) {
+				/** @type {Array<ServiceInfo>} */
+				let services = json.data;
+				if (Array.isArray(services)) {
+					for (let service of services) {
+						transformServices.set(service.id, service);
+					}
+				}
+			}
+			liftoff();
+		});
 
 		// list all credentials
 		$.getJSON(SolarReg.solarUserURL('/sec/din/credentials'), function(json) {

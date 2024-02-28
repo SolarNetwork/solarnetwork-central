@@ -27,13 +27,17 @@
 
 <div class="page-loaded hidden">
 	<div data-th-replace="~{sec/din/din-credential-list :: content}"></div>
-	<!--div data-th-replace="~{sec/din/din-transform-list :: content}"></div-->
+	<div data-th-replace="~{sec/din/din-transform-list :: content}"></div>
 </div>
 
 <!--/* Modal forms */-->
 
 <form data-th-replace="~{sec/din/din-credential-edit-modal :: form}"></form>
-<!--form data-th-replace="~{sec/din/din-transform-edit-modal :: form}"></form-->
+<form data-th-replace="~{sec/din/din-transform-edit-modal :: form}"></form>
+
+<!--/* Setting templates */-->
+
+<div id="setting-templates" class="hidden" data-th-replace="~{setting-templates :: content}"></div>
 
 </div>
 </body>
