@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "credentialId", "created", "modified", "enabled", "username", "password",
-		"expires" })
+		"expires", "expired" })
 public class CredentialConfiguration
 		extends BaseUserModifiableEntity<CredentialConfiguration, UserLongCompositePK>
 		implements DatumInputConfigurationEntity<CredentialConfiguration, UserLongCompositePK> {
@@ -207,6 +207,16 @@ public class CredentialConfiguration
 	 */
 	public void setExpires(Instant expires) {
 		this.expires = expires;
+	}
+
+	/**
+	 * Test if the entity is expired.
+	 *
+	 * @return {@literal true} if {@code expires} is set and is before the
+	 *         current time
+	 */
+	public boolean isExpired() {
+		return expires != null && expires.isBefore(Instant.now());
 	}
 
 }
