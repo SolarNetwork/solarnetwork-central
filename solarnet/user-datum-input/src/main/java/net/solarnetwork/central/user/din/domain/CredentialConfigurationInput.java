@@ -24,11 +24,13 @@ package net.solarnetwork.central.user.din.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.din.domain.CredentialConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.util.DateUtils;
 
 /**
  * DTO for datum input credential configuration.
@@ -49,7 +51,7 @@ public class CredentialConfigurationInput
 	@Size(max = 64)
 	private String password;
 
-	private Instant expires;
+	private String expires;
 
 	/**
 	 * Constructor.
@@ -71,7 +73,13 @@ public class CredentialConfigurationInput
 		super.populateConfiguration(conf);
 		conf.setUsername(username);
 		conf.setPassword(password);
-		conf.setExpires(expires);
+		if ( expires != null ) {
+			var ts = DateUtils.parseIsoTimestamp(expires, ZoneOffset.UTC);
+			if ( ts == null ) {
+				throw new IllegalArgumentException("Invalid expiration date format.");
+			}
+			conf.setExpires(ts.toInstant());
+		}
 	}
 
 	/**
@@ -115,9 +123,9 @@ public class CredentialConfigurationInput
 	/**
 	 * Get the expiration date.
 	 *
-	 * @return the expiration date
+	 * @return the expiration date as an ISO-8601 string
 	 */
-	public Instant getExpires() {
+	public String getExpires() {
 		return expires;
 	}
 
@@ -125,9 +133,9 @@ public class CredentialConfigurationInput
 	 * Set the expiration date.
 	 *
 	 * @param expires
-	 *        the expiration date to set
+	 *        the expiration date to set, as an ISO-8601 string
 	 */
-	public void setExpires(Instant expires) {
+	public void setExpires(String expires) {
 		this.expires = expires;
 	}
 
