@@ -637,7 +637,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		? serializer(form)
 		: SolarReg.Settings.encodeServiceItemForm(form));
 	const urlFn = SolarReg.Settings.settingsFormUrlFunction(options);
-	const urlId = (!!modal.data('settingsUrlId') || (options && options.urlId));
+	const urlId = (!!form.dataset.settingsUrlId || (options && options.urlId));
 	const submitUrl = urlFn.call(form, decodeURI(form.action), body);
 	const origXhr = $.ajaxSettings.xhr;
 	var xhrMethod = (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST');
