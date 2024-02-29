@@ -13,7 +13,10 @@ SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *
  *                              `deleted flag set to `true` if the form item has been deleted
  */
 SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container, callback) {
-	var id = (form.elements && form.elements['id'] ? form.elements['id'].value : undefined);
+	const config = SolarReg.Templates.findContextItem(form);
+	var id = (form.elements && form.elements['id'] 
+		? form.elements['id'].value 
+		: (config ? config.id : undefined));
 	var f = $(form),
 		deleted = f.hasClass('deleted'),
 		idNum = Number(id);
