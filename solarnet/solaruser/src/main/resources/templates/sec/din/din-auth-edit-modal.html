@@ -10,7 +10,8 @@
 <body>
 <form id="din-auth-edit-modal" class="edit-config din" data-th-classappend="'modal fade'"
 		method="post" tabindex="-1" role="dialog" data-th-action="@{/u/sec/din/endpoints/{endpointId}/auths}"
-		data-settings-id-query-param="identifier" data-system-type="auth">
+		data-system-type="auth" data-ajax-method="put" data-settings-url-id="true"
+		data-settings-url-id-create-property="credentialId">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -58,7 +59,6 @@
 		 	</div>
 		 </div>
  	</div>
-	<input type="hidden" name="id">
 	<input type="hidden" name="endpointId">
 </form>
 </body>

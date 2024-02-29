@@ -61,7 +61,7 @@ function dinManagement() {
 			$(menu).empty();
 			for (let entity of systems[TRANSFORM_SYS].configs) {
 				++idx;
-				if (entity.transformId == config.transformId) {
+				if (config && entity.transformId == config.transformId) {
 					selectedIdx = idx;
 				}
 				form.elements.transformId.options.add(new Option(entity.name, entity.transformId));
@@ -482,7 +482,7 @@ function dinManagement() {
 	}
 
 	function createEndpointDetailModel(config, type) {
-		config.id = config.identifier ? config.identifier : config.index;
+		config.id = config.credentialId; // only credential details
 		config.systemType = type;
 		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 		SolarReg.fill(model, config);
@@ -497,7 +497,7 @@ function dinManagement() {
 		return model;
 	}
 
-	function endpointModalEditFormShowSetup(event) {
+	function endpointEditModalFormShowSetup(event) {
 		const form = this;
 		const config = SolarReg.Templates.findContextItem(form);
 		
@@ -525,8 +525,11 @@ function dinManagement() {
 			if (selectedIdx > -1) {
 				form.elements.credentialId.selectedIndex = selectedIdx;
 			}
-		}
 
+			// make credentialId disabled to avoid changing primary key
+			form.elements.credentialId.disabled = !!config.id;
+		}
+		
 		return modalEditFormShowSetup.call(form, event);
 	}
 		
@@ -541,7 +544,7 @@ function dinManagement() {
 
 	// ***** Endpoint auth edit
 	$('#din-auth-edit-modal')
-		.on('show.bs.modal', endpointModalEditFormShowSetup)
+		.on('show.bs.modal', endpointEditModalFormShowSetup)
 		.on('submit', endpointEditModalFormSubmit)
 		.on('hidden.bs.modal', modalEditFormHiddenCleanup)
 		.find('button.toggle').each(function() {
