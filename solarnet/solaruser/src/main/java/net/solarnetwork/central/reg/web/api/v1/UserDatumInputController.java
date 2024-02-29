@@ -106,7 +106,7 @@ public class UserDatumInputController {
 
 	@RequestMapping(value = "/credentials", method = RequestMethod.GET)
 	public Result<FilterResults<CredentialConfiguration, UserLongCompositePK>> listCredentialConfigurations(
-			@RequestBody(required = false) BasicFilter filter) {
+			BasicFilter filter) {
 		FilterResults<CredentialConfiguration, UserLongCompositePK> result = userDatumInputBiz
 				.configurationsForUser(getCurrentActorUserId(), filter, CredentialConfiguration.class);
 		return success(result);
@@ -155,7 +155,7 @@ public class UserDatumInputController {
 
 	@RequestMapping(value = "/transforms", method = RequestMethod.GET)
 	public Result<FilterResults<TransformConfiguration, UserLongCompositePK>> listTransformConfigurations(
-			@RequestBody(required = false) BasicFilter filter) {
+			BasicFilter filter) {
 		FilterResults<TransformConfiguration, UserLongCompositePK> result = userDatumInputBiz
 				.configurationsForUser(getCurrentActorUserId(), filter, TransformConfiguration.class);
 		return success(result);
@@ -237,7 +237,7 @@ public class UserDatumInputController {
 
 	@RequestMapping(value = "/endpoints", method = RequestMethod.GET)
 	public Result<FilterResults<EndpointConfiguration, UserUuidPK>> listEndpointConfigurations(
-			@RequestBody(required = false) BasicFilter filter) {
+			BasicFilter filter) {
 		FilterResults<EndpointConfiguration, UserUuidPK> result = userDatumInputBiz
 				.configurationsForUser(getCurrentActorUserId(), filter, EndpointConfiguration.class);
 		return success(result);
@@ -286,7 +286,7 @@ public class UserDatumInputController {
 
 	@RequestMapping(value = "/endpoints/auths", method = RequestMethod.GET)
 	public Result<FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK>> listEndpointAuthConfigurations(
-			@RequestBody(required = false) BasicFilter filter) {
+			BasicFilter filter) {
 		FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> result = userDatumInputBiz
 				.configurationsForUser(getCurrentActorUserId(), filter, EndpointAuthConfiguration.class);
 		return success(result);
