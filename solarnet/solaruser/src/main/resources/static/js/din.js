@@ -43,7 +43,8 @@ function dinManagement() {
 	 * @this {HTMLFormElement} the modal form
 	 */
 	function modalEditFormShowSetup() {
-		var modal = $(this)
+		const form = this
+			, modal = $(this)
 			, config = SolarReg.Templates.findContextItem(this)
 			, enabled = (config && config.enabled === true ? true : false)
 			, type = (this.dataset ? this.dataset.systemType : undefined);
@@ -51,6 +52,24 @@ function dinManagement() {
 		SolarReg.Settings.prepareEditServiceForm(modal
 			, type == TRANSFORM_SYS ? transformServices : []
 			, settingTemplates);
+			
+		// populate transforms, if available
+		if (form.elements.transformId) {
+			let menu = form.elements.transformId;
+			let selectedIdx = -1;
+			let idx = -1;
+			$(menu).empty();
+			for (let entity of systems[TRANSFORM_SYS].configs) {
+				++idx;
+				if (entity.transformId == config.transformId) {
+					selectedIdx = idx;
+				}
+				form.elements.transformId.options.add(new Option(entity.name, entity.transformId));
+			}
+			if (selectedIdx > -1) {
+				form.elements.transformId.selectedIndex = selectedIdx;
+			}
+		}
 	}
 
 	/**
@@ -82,7 +101,7 @@ function dinManagement() {
 		if ( systems[systemType] ) {
 			sys = systems[systemType];
 		} else if ( config && config.endpointId ) {
-			sys = serverSystems.get(config.endpointId);
+			sys = endpointSystems.get(config.endpointId);
 			sys = sys ? sys[systemType] : undefined;
 		}
 		if (!sys) {
@@ -116,6 +135,16 @@ function dinManagement() {
 		}
 	}
 
+	function updateProgressAmount(bar, barAmount, percentComplete) {
+		var value = (percentComplete * 100).toFixed(0);
+		if (bar) {
+			bar.attr('aria-valuenow', value).css('width', value + '%');
+		}
+		if (barAmount) {
+			barAmount.text(value);
+		}
+	}
+
 	/* ============================
 	   Globals
 	   ============================ */
@@ -123,6 +152,7 @@ function dinManagement() {
 	const CREDENTIAL_SYS = 'c';
 	const TRANSFORM_SYS = 't';
 	const ENDPOINT_SYS = 'e';
+	const ENDPOINT_AUTH_SYS = 'auth';
 
 	/**
 	 * Mapping of system keys to associated systems.
@@ -141,7 +171,7 @@ function dinManagement() {
 	 */
 	const transformServices = [];
 
-	const endpointSystems = new Map(); // map of server ID to Object of Dnp3System properties
+	const endpointSystems = new Map(); // map of endpoint ID to Object of DinSystem properties
 	
 	const settingTemplates = $('#setting-templates');
 
@@ -268,6 +298,258 @@ function dinManagement() {
 		});
 
 	/* ============================
+	   Endpoints
+	   ============================ */
+
+	function renderEndpointConfigs(configs, preserve) {
+		/** @type {DinSystem} */
+		const sys = systems[ENDPOINT_SYS];
+		if (!sys) {
+			return;
+		}
+		configs = Array.isArray(configs) ? configs : [];
+		if (!preserve) {
+			sys.configsMap.clear();
+		}
+
+		var items = configs.map(function(config) {
+			var model = createEndpointModel(config);
+			sys.configsMap.set(config.id, model);
+			return model;
+		});
+
+		SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, function endpointTemplateCallback(item, el) {
+			// update all accordian item IDs to be unique, with the associated endpoint ID
+			let id = item.id;
+			el.find('div.panel-heading').attr('id', 'endpoint-heading-' + id);
+			el.find('.panel-title a').attr('href', '#endpoint-body-' + id).attr('aria-controls', 'endpoint-body-' + id);
+			el.find('div.panel-collapse ').attr('id', 'endpoint-body-' + id).attr('aria-labelledby', 'endpoint-heading-' + id);
+			
+			// populate inner details
+			SolarReg.Templates.replaceTemplateProperties(el.find('.endpoint-details'), item);
+		});
+		SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
+	}
+
+	function createEndpointModel(config) {
+		config.id = config.endpointId;
+		config.systemType = ENDPOINT_SYS;
+		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+		SolarReg.fill(model, config);
+		model.createdDisplay = moment(config.created).format('D MMM YYYY');
+		
+		if (config.transformId) {
+			let xform = systems[TRANSFORM_SYS].configsMap.get(config.transformId);
+			if (xform) {
+				model.transformDisplay = xform.name + ' (' + config.transformId +')';
+			}
+		}
+		return model;
+	}
+
+	systems[ENDPOINT_SYS].container.find('.list-container').on('click', function(/** @type {MouseEvent} */ event) {
+		SolarReg.Settings.handleEditServiceItemAction(event, [], []);
+	});
+
+	// ***** Endpoint add
+	$('#din-endpoint-add-button').on('click', function() {
+		$('#din-endpoint-edit-modal').modal('show');
+	});
+
+	// ***** Endpoint edit
+	$('#din-endpoint-edit-modal')
+		.on('show.bs.modal', modalEditFormShowSetup)
+		.on('submit', function endpointEditModalFormSubmit(event) {
+			return modalEditFormSubmit(event, renderEndpointConfigs);
+		})
+		.on('hidden.bs.modal', modalEditFormHiddenCleanup)
+		.find('button.toggle').each(function() {
+			SolarReg.Settings.setupSettingToggleButton($(this), false);
+		});
+
+	// ***** Endpoints accordian
+	$('#din-endpoints-container').on('show.bs.collapse', function handleEndpointCollapseShow(event) {
+		const target = event.target;
+		const config = SolarReg.Templates.findContextItem(target);
+		if ( config ) {
+			console.debug('Show endpoint details: %o', config);
+			renderEndpointDetails(config, $(target));
+		}
+	});
+
+	systems[ENDPOINT_SYS].container.on('click', function handleEndpointsClick(/** @type {MouseEvent} */ event) {
+		console.debug('Click on endpoints %o', event);
+
+		// check if clicked on accordian title bar, to toggle visibility
+		const target = $(event.target);
+		if ( target.hasClass('panel-title') || target.hasClass('panel-heading') ) {
+			// toggle this panel
+			let dest = target.parent().find('a[data-parent="#din-endpoints-accordian"]').attr('href');
+			if ( dest ) {
+				$(dest).collapse('toggle');
+			}
+			return;
+		}
+		
+		// check if clicked on add entity button for a related entity
+		const btn = target.closest('button');
+		if ( btn.hasClass('add-entity') ) {
+			let modal = $(btn.data('editModal'));
+			let config = SolarReg.Templates.findContextItem(btn);
+			// open the edit form, passing the endpoint ID in the context item
+			if ( modal && config ) {
+				SolarReg.Templates.setContextItem(modal, {endpointId:config.id});
+				modal.modal('show');
+				event.preventDefault();
+			}
+			return;
+		}
+	});
+
+	function renderEndpointDetails(item, el) {
+		if ( endpointSystems.has(item.id) ) {
+			// already loaded
+			return;
+		}
+		const eSystems = Object.freeze({
+			auth: createSystem(el.find('.endpoint-auths'), ENDPOINT_AUTH_SYS),
+		});
+		endpointSystems.set(item.id, eSystems);
+
+		// load data
+		const progressBar = $('.loading .progress-bar', el);
+		const progressBarAmount = $('.amount', progressBar);
+		const loadTotal = 1;
+		var loadCountdown = loadTotal;
+		var authConfs = [];
+
+		function liftoff() {
+			loadCountdown -= 1;
+			updateProgressAmount(progressBar, progressBarAmount, (loadTotal-loadCountdown) / loadTotal);
+			if (loadCountdown === 0) {
+				renderEndpointDetailConfigs(authConfs, eSystems.auth);
+				el.find('.loading').addClass('hidden');
+				el.find('.section.hidden').removeClass('hidden');
+				console.debug('Endpoint %o data loaded.', item);
+			}
+		}
+
+		// list all auths
+		$.getJSON(SolarReg.solarUserURL('/sec/din/endpoints/auths?endpointId='+item.id), function(json) {
+			console.debug('Got DIN endpoint %d auths: %o', item.id, json);
+			if (json && json.success === true) {
+				authConfs = json.data ? json.data.results : undefined;
+				if ( authConfs ) {
+					// assign identifier property
+					for (let auth of authConfs) {
+						auth.identifier = auth.credentialId;
+					}
+				}
+			}
+			liftoff();
+		});
+
+	}
+
+	/**
+	 * Render endpoint detail configurations.
+	 *
+	 * @argument {Array<Object>} configs the entities
+	 * @argument {DinSystem} sys the endpoint system
+	 * @argument {Boolean} preserve true to preserve existing template instances
+	 */
+	function renderEndpointDetailConfigs(configs, sys, preserve) {
+		configs = Array.isArray(configs) ? configs : [];
+		if (!preserve) {
+			sys.configsMap.clear();
+		}
+
+		var items = configs.map(function(config) {
+			var model = createEndpointDetailModel(config, sys.type);
+			sys.configsMap.set(config.id, model);
+			return model;
+		});
+
+		// show detail table headers only if at least one item
+		if ( items.length > 0 ) {
+			sys.container.find('thead.hidden').removeClass('hidden');
+		} else {
+			sys.container.find('thead').addClass('hidden');
+		}
+
+		SolarReg.Templates.populateTemplateItems(sys.container, items, preserve, undefined, sys.type+'-');
+		SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
+	}
+
+	function createEndpointDetailModel(config, type) {
+		config.id = config.identifier ? config.identifier : config.index;
+		config.systemType = type;
+		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
+		SolarReg.fill(model, config);
+		model.createdDisplay = moment(config.created).format('D MMM YYYY');
+		if (config.credentialId) {
+			let cred = systems[CREDENTIAL_SYS].configsMap.get(config.credentialId);
+			if (cred) {
+				model.credential = cred;
+				model.username = cred.username;
+			}
+		}
+		return model;
+	}
+
+	function endpointModalEditFormShowSetup(event) {
+		const form = this;
+		const config = SolarReg.Templates.findContextItem(form);
+		
+		if (form.elements.credentialId) {
+			// populate select with current credentials list, minus other credentials also configured
+			let endpointAuths = new Map();
+			let endpointAuthsSys = endpointSystems.get(config.endpointId)[ENDPOINT_AUTH_SYS];
+			if (endpointAuthsSys) {
+				endpointAuths = endpointAuthsSys.configsMap;
+			}
+			
+			let selectedIdx = -1;
+			let idx = -1;
+			$(form.elements.credentialId).empty();
+			for (let entity of systems[CREDENTIAL_SYS].configs) {
+				++idx;
+				if (entity.credentialId == config.credentialId) {
+					selectedIdx = idx;
+				} else if(endpointAuths.has(entity.credentialId)) {
+					// skip this as already in use and can't select duplicates
+					continue;
+				}
+				form.elements.credentialId.options.add(new Option(entity.username, entity.credentialId));
+			}
+			if (selectedIdx > -1) {
+				form.elements.credentialId.selectedIndex = selectedIdx;
+			}
+		}
+
+		return modalEditFormShowSetup.call(form, event);
+	}
+		
+	function endpointEditModalFormSubmit(event) {
+		const config = SolarReg.Templates.findContextItem(this);
+		const sys = endpointSystems.get(config.endpointId ? config.endpointId : config.id);
+		const systemType = this.dataset.systemType;
+		return modalEditFormSubmit.call(this, event, function(configs, preserve) {
+			renderEndpointDetailConfigs(configs, sys[systemType], preserve);
+		});
+	}
+
+	// ***** Endpoint auth edit
+	$('#din-auth-edit-modal')
+		.on('show.bs.modal', endpointModalEditFormShowSetup)
+		.on('submit', endpointEditModalFormSubmit)
+		.on('hidden.bs.modal', modalEditFormHiddenCleanup)
+		.find('button.toggle').each(function() {
+			SolarReg.Settings.setupSettingToggleButton($(this), false);
+		});
+
+
+	/* ============================
 	   Init
 	   ============================ */
 	(function init() {
@@ -281,7 +563,7 @@ function dinManagement() {
 			if (loadCountdown === 0) {
 				renderCredentialConfigs(credentialConfs);
 				renderTransformConfigs(transformConfs);
-				// TODO renderEndpointConfigs(endpointConfs);
+				renderEndpointConfigs(endpointConfs);
 				SolarReg.showPageLoaded();
 			}
 		}

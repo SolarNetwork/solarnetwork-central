@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Datum Endpoint Endpoints</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<section id="din-endpoints" data-th-fragment="content">
+	<h2>
+		<span data-th-text="#{din.endpoints.header}">Endpoints</span>
+		<button type="button" id="din-endpoint-add-button" class="btn btn-primary pull-right" data-th-title="#{din.endpoint.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{din.endpoints.intro(0)}">
+		Your Endpoints are shown here. Use the + button to add new configurations.
+	</p>
+	<div id="din-endpoints-container" data-th-classappend="hidden">
+		<div class="panel panel-default" data-th-classappend="template">
+			<div class="panel-heading template-target" role="tab" id="endpoint-heading-0">
+				<h4 class="panel-title">
+					<button class="btn btn-link pull-right action edit edit-link" data-edit-modal="#din-endpoint-edit-modal" data-th-title="#{din.endpoint.edit.action}">
+						<i class="glyphicon glyphicon-edit" aria-hidden="true"></i>
+					</button>
+					<span class="label label-success pull-right" data-th-class="|label pull-right|" data-tprop="enabled"
+							data-th-data-true-text="#{settings.enabled.label}"
+							data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+					<a role="button" data-tprop="name" data-toggle="collapse" data-parent="#din-endpoints-accordian" href="#endpoint-body-0" aria-expanded="true" aria-controls="endpoint-body-0">
+						<!--/*-->
+						Test Endpoint
+						<!--*/-->
+					</a>
+				</h4>
+			</div>
+			<div id="endpoint-body-0" class="panel-collapse collapse" role="tabpanel" aria-labelledby="endpoint-heading-0">
+				<div class="panel-body">
+					<div class="loading">
+					   <div class="progress">
+						   <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+							   <span class="amount">0</span>%
+						   </div>
+					   </div>
+				   </div>
+
+				   <div class="row section endpoint-details show-empty">
+						<label class="col-sm-3 talign" data-th-text="#{din.endpoint.details.header}">Details</label>
+						<div class="col-sm-9">
+							<table class="table">
+								<thead>
+									<tr>
+										<th data-th-text="#{din.endpoint.transformId.label}">Transform</th>
+										<th data-th-text="#{din.endpoint.nodeId.label}">Node ID</th>
+										<th data-th-text="#{din.endpoint.sourceId.label}">Source ID</th>
+									</tr>
+								</thead>
+								<tbody class="show-empty">
+									<tr>
+										<td data-tprop="transformDisplay"></td>
+										<td data-tprop="nodeId"></td>
+										<td data-tprop="sourceId"></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				   <div class="row section endpoint-auths show-empty">
+						<label class="col-sm-3 talign" data-th-text="#{din.auths.header}">Authorized Credentials</label>
+						<div class="col-sm-9">
+							<table class="table">
+								<thead data-th-classappend="hidden">
+									<tr>
+										<th data-th-text="#{din.auth.credentialId.label}">Credential</th>
+										<th data-th-text="#{din.auth.username.label}">Username</th>
+										<th data-th-text="#{din.auth.enabled.label}">Enabled</th>
+									</tr>
+									<tr data-th-class="template">
+										<td><a href="#" class="edit-link" data-tprop="auth-credentialId" data-edit-modal="#din-auth-edit-modal"></a></td>
+										<td data-tprop="auth-username"></td>
+										<td>
+											<span class="label label-success" data-th-class="label" data-tprop="auth-enabled"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								</thead>
+								<tbody class="list-container show-empty">
+								<!--/*-->
+									<tr>
+										<td><a href="#" class="edit-link">test-user</a></td>
+										<td>
+											<span class="label label-success" data-th-class="label"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}">Enabled</span>
+										</td>
+									</tr>
+								<!--*/-->
+								</tbody>
+							</table>
+							<div>
+								<button class="btn btn-sm btn-default add-entity"
+										data-edit-modal="#din-auth-edit-modal"
+										data-th-title="#{din.auth.add}"><i class="glyphicon glyphicon-plus"></i></button>
+							</div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<div id="din-endpoints-accordian" class="panel-group list-container" role="tablist" aria-multiselectable="true">
+		</div>
+	</div>
+</section>
+</body>
+</html>
