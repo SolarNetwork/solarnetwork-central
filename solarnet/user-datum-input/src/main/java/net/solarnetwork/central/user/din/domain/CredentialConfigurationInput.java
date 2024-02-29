@@ -73,7 +73,7 @@ public class CredentialConfigurationInput
 		super.populateConfiguration(conf);
 		conf.setUsername(username);
 		conf.setPassword(password);
-		if ( expires != null ) {
+		if ( expires != null && !expires.isBlank() ) {
 			var ts = DateUtils.parseIsoTimestamp(expires, ZoneOffset.UTC);
 			if ( ts == null ) {
 				throw new IllegalArgumentException("Invalid expiration date format.");
