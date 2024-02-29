@@ -49,7 +49,7 @@ function dinManagement() {
 			, type = (this.dataset ? this.dataset.systemType : undefined);
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
 		SolarReg.Settings.prepareEditServiceForm(modal
-			, type == TRANSFORM_SYS ? Array.from(transformServices.values()) : []
+			, type == TRANSFORM_SYS ? transformServices : []
 			, settingTemplates);
 	}
 
@@ -106,7 +106,7 @@ function dinManagement() {
 	function handleServiceIdentifierChange(event, services) {
 		let target = event.target;
 		if ( target.name === 'serviceIdentifier' ) {
-			let service = services.get($(event.target).val());
+			let service = SolarReg.findByIdentifier(services, $(event.target).val());
 			if (service) {
 				let modal = $(target.form);
 				let config = SolarReg.Templates.findContextItem(modal);
@@ -137,9 +137,9 @@ function dinManagement() {
 	
 	/**
 	 * A map of service ID to Object of ServiceInfo properties.
-	 * @type {Map<String, ServiceInfo>}
+	 * @type {Array<ServiceInfo>}
 	 */
-	const transformServices = new Map();
+	const transformServices = [];
 
 	const endpointSystems = new Map(); // map of server ID to Object of Dnp3System properties
 	
@@ -183,7 +183,7 @@ function dinManagement() {
 		config.id = config.credentialId;
 		config.systemType = CREDENTIAL_SYS;
 		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-		Object.assign(model, config);
+		SolarReg.fill(model, config);
 		model.createdDisplay = moment(config.created).format('D MMM YYYY');
 		if (config.expires) {
 			model.expiresDisplay = moment(config.expires).format('D MMM YYYY');
@@ -238,15 +238,9 @@ function dinManagement() {
 	function createTransformModel(config) {
 		config.id = config.transformId;
 		config.systemType = TRANSFORM_SYS;
-		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
-		Object.assign(model, config);
+		var model = SolarReg.Settings.serviceConfigurationItem(config, transformServices);
+		SolarReg.fill(model, config);
 		model.createdDisplay = moment(config.created).format('D MMM YYYY');
-		if (config.serviceIdentifier) {
-			let serviceInfo = transformServices.get(config.serviceIdentifier);
-			if (serviceInfo) {
-				model.transformServiceNameDisplay = serviceInfo.localizedName;
-			}
-		}
 		return model;
 	}
 
@@ -296,12 +290,8 @@ function dinManagement() {
 		$.getJSON(SolarReg.solarUserURL('/sec/din/services/transform'), function(json) {
 			console.debug('Got DIN Transform Services: %o', json);
 			if (json && json.success === true) {
-				/** @type {Array<ServiceInfo>} */
-				let services = json.data;
-				if (Array.isArray(services)) {
-					for (let service of services) {
-						transformServices.set(service.id, service);
-					}
+				if (Array.isArray(json.data)) {
+					transformServices.push(...json.data);
 				}
 			}
 			liftoff();

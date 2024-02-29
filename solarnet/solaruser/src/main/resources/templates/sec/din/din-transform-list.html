@@ -28,9 +28,14 @@
 			<tr class="template">
 				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#din-transform-edit-modal"></a></td>
 				<td data-tprop="name"></td>
-				<td data-tprop="transformServiceNameDisplay"></td>
+				<td data-tprop="type"></td>
 				<td>
-					<!-- TODO: details -->
+					<dl class="service-props-container">
+					</dl>
+					<dl class="service-props-template hidden">
+						<dt class="template" data-tprop="serviceProperties.name"></dt>
+						<dd class="template" data-tprop="serviceProperties.value"></dd>
+					</dl>
 				</td>
 			</tr>
 		</thead>
