@@ -290,3 +290,7 @@ h5, h6 {
 	max-height: 10rem;
 	overflow-y: scroll;
 }
+
+.border-rule-right {
+	border-right: 1px solid #eee;
+}

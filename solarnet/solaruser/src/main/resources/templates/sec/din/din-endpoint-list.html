@@ -22,6 +22,9 @@
 		<div class="panel panel-default" data-th-classappend="template">
 			<div class="panel-heading template-target" role="tab" id="endpoint-heading-0">
 				<h4 class="panel-title">
+					<button class="btn btn-link pull-right action transform-preview action-link" data-action-modal="#din-endpoint-transform-preview-modal" data-th-title="#{din.endpoint.transform.preview.action}">
+						<i class="glyphicon glyphicon-play" aria-hidden="true"></i>
+					</button>
 					<button class="btn btn-link pull-right action edit edit-link" data-edit-modal="#din-endpoint-edit-modal" data-th-title="#{din.endpoint.edit.action}">
 						<i class="glyphicon glyphicon-edit" aria-hidden="true"></i>
 					</button>
@@ -51,6 +54,7 @@
 							<table class="table">
 								<thead>
 									<tr>
+										<th data-th-text="#{din.endpoint.id.label}">ID</th>
 										<th data-th-text="#{din.endpoint.transformId.label}">Transform</th>
 										<th data-th-text="#{din.endpoint.nodeId.label}">Node ID</th>
 										<th data-th-text="#{din.endpoint.sourceId.label}">Source ID</th>
@@ -58,6 +62,19 @@
 								</thead>
 								<tbody class="show-empty">
 									<tr>
+										<td>
+										<div class="input-group form-group-sm">
+							 				<input type="text" class="form-control copyable" readonly data-tattr="endpointId@value">
+							 				<span class="input-group-btn">
+												<button type="button" class="btn btn-default btn-sm copy"
+													data-toggle="tooltip" data-placement="top"
+													title="Copy to Clipboard"
+													data-th-title="#{copy.tooltip}">
+													<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+												</button>
+											</span>
+							 			</div>
+										</td>
 										<td data-tprop="transformDisplay"></td>
 										<td data-tprop="nodeId"></td>
 										<td data-tprop="sourceId"></td>

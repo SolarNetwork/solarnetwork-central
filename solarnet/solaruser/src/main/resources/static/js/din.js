@@ -218,6 +218,7 @@ function dinManagement() {
 		if (config.expires) {
 			model.expiresDisplay = moment(config.expires).format('D MMM YYYY');
 		}
+		model.valid = !config.expired;
 		return model;
 	}
 
@@ -550,7 +551,111 @@ function dinManagement() {
 		.find('button.toggle').each(function() {
 			SolarReg.Settings.setupSettingToggleButton($(this), false);
 		});
+	
+	/* ============================
+	   Endpoint Transform Preview
+	   ============================ */
 
+	$('#din-endpoint-transform-preview-modal')
+		.on('show.bs.modal', function endpointTransformPreviewModalFormShowSetup() {
+			const form = this
+				, modal = $(form)
+				, config = SolarReg.Templates.findContextItem(form);
+			console.debug('Endpoint preview for %o', config);
+			
+			const previewConfig = Object.assign({}, config);
+			
+			const xform = systems[TRANSFORM_SYS].configsMap.get(config.transformId);
+			if (xform) {
+				previewConfig.transformDisplay = xform.name;
+			}
+			SolarReg.Templates.setContextItem(modal, previewConfig);
+			SolarReg.Templates.replaceTemplateProperties(modal.find('.endpoint-details-container'), previewConfig);
+			
+			const container = $('#din-endpoint-transform-output-container');
+			container.children().addClass('hidden');
+			container.find('.before').removeClass('hidden');
+		})
+		.on('submit', function endpointTransformPreviewModalFormSubmit(event) {
+			event.preventDefault();
+			const form = this
+				, config = SolarReg.Templates.findContextItem(form)
+				, container = $('#din-endpoint-transform-output-container')
+				, submitBtn = container.find('button[type=submit]')
+				, inputData = form.elements.inputData.value
+				, inputType = form.elements.inputType.value
+				, errorContainer = container.find('.error-container')
+				;
+				
+			submitBtn.prop('disabled', true);
+			
+			const url = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), config));
+			
+			$.ajax({
+				type: 'POST',
+				url: url,
+				contentType: inputType,
+				data: inputData,
+				dataType: 'json',
+				beforeSend: function(xhr) {
+					SolarReg.csrf(xhr);
+				}
+			}).done(function(json) {
+				container.children().addClass('hidden');
+				if ( json && json.success === true ) {
+					
+					if (json.data && json.data.message) {
+						errorContainer.text(msg).removeClass('hidden');
+					} else if (json.data && Array.isArray(json.data.datum) && json.data.datum.length > 0) {
+						// render datum
+						const datumContainer = container.find('.datum-container');
+						SolarReg.Templates.populateTemplateItems(datumContainer, json.data.datum, false, function(datum, el) {
+							// render datum properties
+							for ( let classifier of ['i', 'a', 's', 't']) {
+								const propContainer = el.find('.'+classifier+'-props');
+								if (datum[classifier]) {
+									const propItem = (classifier === 't'
+										? {serviceProperties:{'tags':datum[classifier]}}
+										: {serviceProperties:datum[classifier]});
+									SolarReg.Templates.replaceTemplateProperties(propContainer, propItem);
+									propContainer.removeClass('hidden');
+								} else {
+									propContainer.addClass('hidden');
+								}
+							}
+						});
+					} else {
+						// TODO: i18n
+						let msg = 'No datum generated.';
+						if (json.data.transformOutput) {
+							msg += ' The transform produced the following output data: ' +json.data.transformOutput;
+						}
+						errorContainer.text(msg).removeClass('hidden');
+					}
+				} else {
+					let msg = SolarReg.formatResponseMessage(json);
+					if ( !msg ) {
+						msg = 'Unknown error.';
+					}
+					errorContainer.text(msg).removeClass('hidden');
+				}
+			}).fail(function(xhr, statusText, error) {
+				container.children().addClass('hidden');
+				errorContainer.text(SolarReg.extractResponseMessage(xhr, statusText, error)).removeClass('hidden');
+			}).always(function() {
+				submitBtn.prop('disabled', false);
+			});
+			return false;
+		})
+		.on('hidden.bs.modal', modalEditFormHiddenCleanup);
+
+	$('#din-endpoint-transform-input-type-shortcuts')
+		.on('change', function endpointTransformPreviewDataTypeShortcutChange(event) {
+			const shortcutValue = $(event.target).val();
+			if (shortcutValue) {
+				$('#din-endpoint-transform-input-type').val(shortcutValue);
+			}
+		});
 
 	/* ============================
 	   Init
