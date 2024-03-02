@@ -74,12 +74,15 @@ public class OcppV16MqttConfig {
 
 	@ConfigurationProperties(prefix = "app.ocpp.v16.mqtt.instr-handler")
 	@Bean
+	@Qualifier(SOLARQUEUE)
 	@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V16)
 	public MqttInstructionHandler<ChargePointAction> instructionHandler_v16() {
 		MqttInstructionHandler<ChargePointAction> handler = new MqttInstructionHandler<>(
 				ChargePointAction.class, nodeInstructionDao, ocppCentralChargePointDao, objectMapper,
 				ocppChargePointRouter);
+		handler.setDisplayName("OCPP 1.6 Instructions");
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
+		handler.setMqttTopic("instr/OCPP_v16");
 		return handler;
 	}
 
