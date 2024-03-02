@@ -74,11 +74,14 @@ public class OcppV201MqttConfig {
 
 	@ConfigurationProperties(prefix = "app.ocpp.v201.mqtt.instr-handler")
 	@Bean
+	@Qualifier(SOLARQUEUE)
 	@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V201)
 	public MqttInstructionHandler<Action> instructionHandler_v201() {
 		MqttInstructionHandler<Action> handler = new MqttInstructionHandler<>(Action.class,
 				nodeInstructionDao, ocppCentralChargePointDao, objectMapper, ocppChargePointRouter);
+		handler.setDisplayName("OCPP 2.0.1 Instructions");
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
+		handler.setMqttTopic("instr/OCPP_v201");
 		return handler;
 	}
 
