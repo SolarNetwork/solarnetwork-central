@@ -86,7 +86,7 @@ public class SelectEndpointConfiguration
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				SELECT de.user_id, de.id, de.created, de.modified, de.enabled
-					, de.cname, de.node_id, de.source_id, de.xform_id
+					, de.cname, de.node_id, de.source_id, de.xform_id, de.pub_flux
 				FROM solardin.din_endpoint de
 				""");
 	}

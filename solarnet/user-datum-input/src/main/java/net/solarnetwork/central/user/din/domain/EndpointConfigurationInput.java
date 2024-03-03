@@ -51,6 +51,8 @@ public class EndpointConfigurationInput
 	@NotNull
 	private Long transformId;
 
+	private boolean publishToSolarFlux = true;
+
 	/**
 	 * Constructor.
 	 */
@@ -72,6 +74,7 @@ public class EndpointConfigurationInput
 		conf.setNodeId(nodeId);
 		conf.setSourceId(sourceId);
 		conf.setTransformId(transformId);
+		conf.setPublishToSolarFlux(publishToSolarFlux);
 	}
 
 	/**
@@ -152,6 +155,27 @@ public class EndpointConfigurationInput
 	 */
 	public void setTransformId(Long transformId) {
 		this.transformId = transformId;
+	}
+
+	/**
+	 * Get the "publish to SolarFlux" toggle.
+	 *
+	 * @return {@literal true} if data from this endpoint should be published to
+	 *         SolarFlux; defaults to {@literal true}
+	 */
+	public boolean isPublishToSolarFlux() {
+		return publishToSolarFlux;
+	}
+
+	/**
+	 * Set the "publish to SolarFlux" toggle.
+	 *
+	 * @param publishToSolarFlux
+	 *        {@literal true} if data from this endpoint should be published to
+	 *        SolarFlux
+	 */
+	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
 }

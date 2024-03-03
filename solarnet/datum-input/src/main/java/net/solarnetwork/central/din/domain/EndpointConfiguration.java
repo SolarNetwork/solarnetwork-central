@@ -38,16 +38,17 @@ import net.solarnetwork.central.domain.UserUuidPK;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeId",
-		"sourceId", "transformId" })
+		"sourceId", "transformId", "destination", "publishToSolarFlux" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements DatumInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
-	private static final long serialVersionUID = 6089703923235658246L;
+	private static final long serialVersionUID = 4649918940365085501L;
 
 	private String name;
 	private Long nodeId;
 	private String sourceId;
 	private Long transformId;
+	private boolean publishToSolarFlux = true;
 
 	/**
 	 * Constructor.
@@ -93,6 +94,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setNodeId(nodeId);
 		entity.setSourceId(sourceId);
 		entity.setTransformId(transformId);
+		entity.setPublishToSolarFlux(publishToSolarFlux);
 	}
 
 	@Override
@@ -106,6 +108,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 				&& Objects.equals(this.nodeId, other.nodeId)
 				&& Objects.equals(this.sourceId, other.sourceId)
 				&& Objects.equals(this.transformId, other.transformId)
+				&& publishToSolarFlux == other.publishToSolarFlux
 				;
 		// @formatter:on
 	}
@@ -238,6 +241,27 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 */
 	public void setTransformId(Long transformId) {
 		this.transformId = transformId;
+	}
+
+	/**
+	 * Get the "publish to SolarFlux" toggle.
+	 *
+	 * @return {@literal true} if data from this endpoint should be published to
+	 *         SolarFlux; defaults to {@literal true}
+	 */
+	public boolean isPublishToSolarFlux() {
+		return publishToSolarFlux;
+	}
+
+	/**
+	 * Set the "publish to SolarFlux" toggle.
+	 *
+	 * @param publishToSolarFlux
+	 *        {@literal true} if data from this endpoint should be published to
+	 *        SolarFlux
+	 */
+	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
+		this.publishToSolarFlux = publishToSolarFlux;
 	}
 
 }

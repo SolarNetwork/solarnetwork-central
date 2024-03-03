@@ -89,6 +89,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 		// GIVEN
 		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
 				randomLong(), randomString(), null);
+		conf.setPublishToSolarFlux(false);
 
 		// WHEN
 		UserUuidPK result = dao.create(userId, conf);
@@ -124,6 +125,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("source_id", conf.getSourceId())
 			.as("No transform ID")
 			.containsEntry("xform_id", null)
+			.as("Publish to SolarFlux flag")
+			.containsEntry("pub_flux", false)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);

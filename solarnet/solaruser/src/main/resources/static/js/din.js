@@ -48,7 +48,14 @@ function dinManagement() {
 			, config = SolarReg.Templates.findContextItem(this)
 			, enabled = (config && config.enabled === true ? true : false)
 			, type = (this.dataset ? this.dataset.systemType : undefined);
+		
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
+		
+		if (config.publishToSolarFlux !== undefined) {
+			SolarReg.Settings.handleSettingToggleButtonChange(
+				modal.find('button[name=publishToSolarFlux]'), !!config.publishToSolarFlux);
+		}
+		
 		SolarReg.Settings.prepareEditServiceForm(modal
 			, type == TRANSFORM_SYS ? transformServices : []
 			, settingTemplates);

@@ -54,6 +54,23 @@
 		 			</div>
 		 		</div>
 		 		<div class="form-group">
+		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.publishToSolarFlux.label}">
+		 				Publish SolarFlux
+		 			</label>
+		 			<div class="col-sm-8">
+						<button type="button" name="publishToSolarFlux" class="form-control setting-form-element toggle btn btn-default"
+							data-toggle="setting-toggle" aria-pressed="false"
+							data-th-data-on-text="#{settings.enabled.label}"
+							data-th-data-off-text="#{settings.disabled.label}"
+							data-th-text="#{settings.toggle.disabled}">
+							Disabled
+						</button>
+						<div class="help-block" data-th-utext="#{din.endpoint.publishToSolarFlux.caption}">
+							Publish datum streams to SolarFlux.
+						</div>
+		 			</div>
+		 		</div>
+		 		<div class="form-group">
 		 			<label class="col-sm-3 control-label" data-th-text="#{din.endpoint.enabled.label}">
 		 				Enabled
 		 			</label>

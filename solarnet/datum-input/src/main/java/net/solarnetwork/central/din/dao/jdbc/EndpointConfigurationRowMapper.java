@@ -47,6 +47,7 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
  * <li>node_id (BIGINT)</li>
  * <li>source_id (BIGINT)</li>
  * <li>xform_id (BIGINT)</li>
+ * <li>pub_flux (BOOLEAN)</li>
  * </ol>
  *
  * @author matt
@@ -89,6 +90,7 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 		conf.setNodeId(rs.getObject(++p, Long.class));
 		conf.setSourceId(rs.getString(++p));
 		conf.setTransformId(rs.getObject(++p, Long.class));
+		conf.setPublishToSolarFlux(rs.getBoolean(++p));
 		return conf;
 	}
 

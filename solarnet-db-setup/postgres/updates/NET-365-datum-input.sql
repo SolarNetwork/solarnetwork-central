@@ -67,6 +67,7 @@ CREATE TABLE solardin.din_xform (
  * @column node_id		the default node ID to use, if the transform does not provide one
  * @column source_id	the default source ID to use, if the transform does not provide one
  * @column xform_id		the din_xform ID to use
+ * @column pub_flux		flag to publish to SolarFlux
  */
 CREATE TABLE solardin.din_endpoint (
 	user_id			BIGINT NOT NULL,
@@ -78,6 +79,7 @@ CREATE TABLE solardin.din_endpoint (
 	node_id			BIGINT,
 	source_id		CHARACTER VARYING(64),
 	xform_id		BIGINT,
+	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
 	CONSTRAINT din_endpoint_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT din_endpoint_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE

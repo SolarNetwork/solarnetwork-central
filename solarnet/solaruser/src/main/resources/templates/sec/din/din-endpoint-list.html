@@ -58,6 +58,7 @@
 										<th data-th-text="#{din.endpoint.transformId.label}">Transform</th>
 										<th data-th-text="#{din.endpoint.nodeId.label}">Node ID</th>
 										<th data-th-text="#{din.endpoint.sourceId.label}">Source ID</th>
+										<th data-th-text="#{din.endpoint.publishToSolarFlux.label}">Publish SolarFlux</th>
 									</tr>
 								</thead>
 								<tbody class="show-empty">
@@ -78,6 +79,9 @@
 										<td data-tprop="transformDisplay"></td>
 										<td data-tprop="nodeId"></td>
 										<td data-tprop="sourceId"></td>
+										<td><span class="label label-default" data-tprop="publishToSolarFlux"
+												data-th-data-true-text="#{settings.enabled.label}"
+												data-th-data-false-text="#{settings.disabled.label}"></span></td>
 									</tr>
 								</tbody>
 							</table>
