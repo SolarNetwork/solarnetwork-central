@@ -13,7 +13,10 @@ SolarReg.Settings.modalAlertBeforeSelector = '.modal-body:not(.hidden):first > *
  *                              `deleted flag set to `true` if the form item has been deleted
  */
 SolarReg.Settings.resetEditServiceForm = function resetEditServiceForm(form, container, callback) {
-	var id = (form.elements && form.elements['id'] ? form.elements['id'].value : undefined);
+	const config = SolarReg.Templates.findContextItem(form);
+	var id = (form.elements && form.elements['id'] 
+		? form.elements['id'].value 
+		: (config ? config.id : undefined));
 	var f = $(form),
 		deleted = f.hasClass('deleted'),
 		idNum = Number(id);
@@ -256,8 +259,10 @@ SolarReg.Settings.serviceFormItem = function formItem(service, setting, config) 
 		result.description = SolarReg.Templates.serviceInfoMessage(service, setting.key +'.desc');
 		if ( config && config[setting.key] !== undefined ) {
 			result.value = config[setting.key];
+		} else if (setting.defaultValue !== undefined) {
+			result.value = ''+setting.defaultValue;
 		} else {
-			result.value = ''+setting.defaultValue || '';
+			result.value = '';
 		}
 	}
 	return result;
@@ -637,7 +642,7 @@ SolarReg.Settings.handlePostEditServiceForm = function handlePostEditServiceForm
 		? serializer(form)
 		: SolarReg.Settings.encodeServiceItemForm(form));
 	const urlFn = SolarReg.Settings.settingsFormUrlFunction(options);
-	const urlId = (!!modal.data('settingsUrlId') || (options && options.urlId));
+	const urlId = (!!form.dataset.settingsUrlId || (options && options.urlId));
 	const submitUrl = urlFn.call(form, decodeURI(form.action), body);
 	const origXhr = $.ajaxSettings.xhr;
 	var xhrMethod = (form.dataset.ajaxMethod ? form.dataset.ajaxMethod.toUpperCase() : 'POST');

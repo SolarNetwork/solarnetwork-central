@@ -37,10 +37,10 @@ import net.solarnetwork.domain.SortDescriptor;
  * Basic implementation of some core criteria APIs.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
-public class BasicCoreCriteria extends SimplePagination
-		implements PaginationCriteria, LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria,
+public class BasicCoreCriteria extends SimplePagination implements UserModifiableFilter,
+		PaginationCriteria, LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria,
 		SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria, NodeOwnershipCriteria {
 
 	private Long[] locationIds;
@@ -125,6 +125,9 @@ public class BasicCoreCriteria extends SimplePagination
 	 *        the criteria to copy
 	 */
 	public void copyFrom(PaginationCriteria criteria) {
+		if ( criteria == null ) {
+			return;
+		}
 		setMax(criteria.getMax());
 		setOffset(criteria.getOffset());
 		setSorts(criteria.getSorts());
