@@ -51,7 +51,7 @@ function dinManagement() {
 		
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
 		
-		if (config.publishToSolarFlux !== undefined) {
+		if (config && config.publishToSolarFlux !== undefined) {
 			SolarReg.Settings.handleSettingToggleButtonChange(
 				modal.find('button[name=publishToSolarFlux]'), !!config.publishToSolarFlux);
 		}
