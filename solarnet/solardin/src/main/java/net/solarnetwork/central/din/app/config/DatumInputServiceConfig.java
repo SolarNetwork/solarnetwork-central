@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
+import static net.solarnetwork.central.din.app.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
 import java.io.Serializable;
 import java.util.Collection;
 import javax.cache.Cache;
@@ -33,6 +34,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
 import net.solarnetwork.central.datum.support.CollectorStats;
@@ -70,6 +72,10 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	@Autowired
 	private Collection<TransformService> transformServices;
 
+	@Autowired(required = false)
+	@Qualifier(SOLARFLUX)
+	private DatumProcessor fluxPublisher;
+
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarin.async-collector")
 	public AsyncDatumCollectorSettings asyncDatumCollectorSettings() {
@@ -93,8 +99,10 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	@Bean
 	public DaoDatumInputEndpointBiz datumInputEndpointBiz(
 			@Qualifier(CACHING) DatumWriteOnlyDao datumDao) {
-		return new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
+		var biz = new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
 				transformServices);
+		biz.setFluxPublisher(fluxPublisher);
+		return biz;
 	}
 
 }

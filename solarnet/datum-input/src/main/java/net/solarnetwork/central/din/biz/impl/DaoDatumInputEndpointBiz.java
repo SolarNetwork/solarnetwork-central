@@ -32,8 +32,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
@@ -60,11 +63,14 @@ import net.solarnetwork.domain.datum.DatumId;
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 
+	private final Logger log = LoggerFactory.getLogger(getClass());
+
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final EndpointConfigurationDao endpointDao;
 	private final TransformConfigurationDao transformDao;
 	private final DatumWriteOnlyDao datumDao;
 	private final Map<String, TransformService> transformServices;
+	private DatumProcessor fluxPublisher;
 
 	/**
 	 * Constructor.
@@ -110,6 +116,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 				"transform.serviceIdentifier");
 		final TransformService xformService = requireNonNullObject(transformServices.get(xformServiceId),
 				xformServiceId);
+		final DatumProcessor fluxPublisher = (endpoint.isPublishToSolarFlux() ? getFluxPublisher()
+				: null);
 
 		if ( !xformService.supportsInput(requireNonNullArgument(in, "in"),
 				requireNonNullArgument(contentType, "contentType")) ) {
@@ -147,9 +155,36 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 
 				DatumPK pk = datumDao.persist(gnd);
 				result.add(DatumId.nodeId(nodeId, sourceId, pk.getTimestamp()));
+
+				try {
+					if ( fluxPublisher != null && fluxPublisher.isConfigured() ) {
+						fluxPublisher.processDatum(gnd);
+					}
+				} catch ( Exception e ) {
+					log.warn("Error publishing endpoint %s datum %s: %s", endpoint.getId(), gnd,
+							e.toString(), e);
+				}
 			}
 		}
 		return result;
 	}
 
+	/**
+	 * Get the SolarFlux publisher.
+	 *
+	 * @return the publisher, or {@literal null}
+	 */
+	public DatumProcessor getFluxPublisher() {
+		return fluxPublisher;
+	}
+
+	/**
+	 * Set the SolarFlux publisher.
+	 *
+	 * @param fluxPublisher
+	 *        the publisher to set
+	 */
+	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+		this.fluxPublisher = fluxPublisher;
+	}
 }
