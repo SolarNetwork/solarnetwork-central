@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.web;
 
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -29,16 +30,18 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.domain.NetworkAssociationDetails;
 import net.solarnetwork.domain.NetworkIdentity;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for {@link NetworkIdentityBiz} requests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller
 public class NetworkIdentityController {
@@ -83,6 +86,37 @@ public class NetworkIdentityController {
 	public String getNetworkIdentityKey(Model model,
 			@RequestParam(value = "username", required = false) String username,
 			@RequestParam(value = "key", required = false) String confirmationKey) {
+		NetworkIdentity ident = lookupNetworkIdentity(username, confirmationKey);
+		model.addAttribute(ident);
+		return viewName;
+	}
+
+	/**
+	 * Get the network identity, optionally as a {@link NetworkAssociation}.
+	 * 
+	 * <p>
+	 * If both {@code username} and {@code confirmationKey} are non-null, then a
+	 * {@link NetworkAssociation} will be returned, rather than a plain
+	 * {@link NetworkIdentity}.
+	 * </p>
+	 * 
+	 * @param username
+	 *        the optional network association username
+	 * @param confirmationKey
+	 *        the optional network association confirmation key
+	 * @return the identity information
+	 * @since 1.2
+	 */
+	@RequestMapping(value = "/solarin/identity.do", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public Result<NetworkIdentity> getNetworkIdentityKeyJson(
+			@RequestParam(value = "username", required = false) String username,
+			@RequestParam(value = "key", required = false) String confirmationKey) {
+		NetworkIdentity ident = lookupNetworkIdentity(username, confirmationKey);
+		return success(ident);
+	}
+
+	private NetworkIdentity lookupNetworkIdentity(final String username, final String confirmationKey) {
 		NetworkIdentity ident = networkIdentityBiz.getNetworkIdentity();
 		if ( username != null && confirmationKey != null ) {
 			NetworkAssociation association = networkIdentityBiz.getNetworkAssociation(username,
@@ -98,22 +132,43 @@ public class NetworkIdentityController {
 				ident = details;
 			}
 		}
-		model.addAttribute(ident);
-		return viewName;
+		return ident;
 	}
 
+	/**
+	 * Get the network identity service.
+	 * 
+	 * @return the service
+	 */
 	public NetworkIdentityBiz getNetworkIdentityBiz() {
 		return networkIdentityBiz;
 	}
 
+	/**
+	 * Set the network identity service.
+	 * 
+	 * @param networkIdentityBiz
+	 *        the service to set
+	 */
 	public void setNetworkIdentityBiz(NetworkIdentityBiz networkIdentityBiz) {
 		this.networkIdentityBiz = networkIdentityBiz;
 	}
 
+	/**
+	 * Get the view name to use for the XML result.
+	 * 
+	 * @return the view name
+	 */
 	public String getViewName() {
 		return viewName;
 	}
 
+	/**
+	 * Set the view name to use for the XML result.
+	 * 
+	 * @param viewName
+	 *        the view name to use
+	 */
 	public void setViewName(String viewName) {
 		this.viewName = viewName;
 	}

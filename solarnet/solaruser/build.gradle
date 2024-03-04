@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '2.4.1'
+version = '2.5.0'
 
 base {
 	archivesName = 'solaruser'
@@ -28,6 +28,7 @@ configurations {
 dependencies {
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
+	implementation project(':solarnet-datum-input')
 	implementation project(':solarnet-dnp3')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-ocpp')
@@ -35,6 +36,7 @@ dependencies {
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
 	implementation project(':solarnet-user-datum')
+	implementation project(':solarnet-user-datum-input')
 	implementation project(':solarnet-user-dnp3')
 	implementation project(':solarnet-user-ocpp')
 	implementation project(':solarnet-user-oscp')
@@ -60,7 +62,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation 'org.ehcache:ehcache'
-	implementation 'org.tukaani:xz:1.9'
+	implementation "org.tukaani:xz:${xzVersion}"
 		
 	// SolarNetwork
 	implementation "net.solarnetwork.external:net.solarnetwork.external.ocpp.v16.jakarta:${snExternalOcpp16JakartaVersion}"

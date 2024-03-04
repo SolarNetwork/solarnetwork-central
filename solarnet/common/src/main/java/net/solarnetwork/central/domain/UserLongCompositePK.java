@@ -30,12 +30,18 @@ import java.util.Objects;
  * Immutable primary key for user-related entities using a Long entity key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public final class UserLongCompositePK extends BasePK
-		implements Serializable, Cloneable, Comparable<UserLongCompositePK>, CompositeKey2<Long, Long> {
+public final class UserLongCompositePK extends BasePK implements Serializable, Cloneable,
+		Comparable<UserLongCompositePK>, CompositeKey2<Long, Long>, UserIdRelated {
 
 	private static final long serialVersionUID = 2537083574768869025L;
+
+	/**
+	 * A special "not a value" instance to be used for generated user ID values
+	 * yet to be generated.
+	 */
+	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
 
 	/**
 	 * A special "not a value" instance to be used for generated entity ID
@@ -139,6 +145,7 @@ public final class UserLongCompositePK extends BasePK
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	public final Long getUserId() {
 		return userId;
 	}
@@ -164,10 +171,23 @@ public final class UserLongCompositePK extends BasePK
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 1 ) {
-			return (entityId != null && entityId != UNASSIGNED_ENTITY_ID);
+		if ( index == 0 ) {
+			return userId != UNASSIGNED_USER_ID;
+		} else if ( index == 1 ) {
+			return entityId != UNASSIGNED_ENTITY_ID;
 		}
 		return CompositeKey2.super.keyComponentIsAssigned(index);
+	}
+
+	/**
+	 * Test if the entity ID is assigned.
+	 * 
+	 * @return {@literal true} if the entity ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 * @since 1.2
+	 */
+	public final boolean userIdIsAssigned() {
+		return keyComponentIsAssigned(0);
 	}
 
 	/**
@@ -178,6 +198,39 @@ public final class UserLongCompositePK extends BasePK
 	 */
 	public final boolean entityIdIsAssigned() {
 		return keyComponentIsAssigned(1);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T keyComponentValue(int index, Object val) {
+		try {
+			if ( index == 0 || index == 1 ) {
+				if ( val == null ) {
+					return (T) UNASSIGNED_ENTITY_ID;
+				} else if ( val instanceof Long n ) {
+					return (T) n;
+				} else if ( val instanceof Number n ) {
+					return (T) Long.valueOf(n.longValue());
+				} else {
+					return (T) Long.valueOf(val.toString());
+				}
+			}
+		} catch ( NumberFormatException e ) {
+			throw new IllegalArgumentException(
+					"Key component %d does not support value %s.".formatted(index, val));
+		}
+		throw new IllegalArgumentException("Key component %d out of range.".formatted(index));
+	}
+
+	@Override
+	public UserLongCompositePK createKey(CompositeKey template, Object... components) {
+		Object v1 = (components != null && components.length > 0 ? components[0]
+				: template != null ? template.keyComponent(0) : null);
+		Object v2 = (components != null && components.length > 1 ? components[1]
+				: template != null ? template.keyComponent(1) : null);
+		Long k1 = (v1 != null ? keyComponentValue(0, v1) : UNASSIGNED_USER_ID);
+		Long k2 = (v2 != null ? keyComponentValue(1, v2) : UNASSIGNED_ENTITY_ID);
+		return new UserLongCompositePK(k1, k2);
 	}
 
 }

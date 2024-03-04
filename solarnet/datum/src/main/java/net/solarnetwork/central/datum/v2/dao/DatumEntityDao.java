@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumEntityDao.java - 23/10/2020 10:49:09 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,14 +40,14 @@ import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * DAO API for {@link DatumEntity} objects.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.8
  */
-public interface DatumEntityDao
-		extends GenericDao<DatumEntity, DatumPK>, FilterableDao<Datum, DatumPK, DatumCriteria>,
-		BulkLoadingDao<GeneralNodeDatum>, BulkExportingDao<GeneralNodeDatumFilterMatch> {
+public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
+		FilterableDao<Datum, DatumPK, DatumCriteria>, BulkLoadingDao<GeneralNodeDatum>,
+		BulkExportingDao<GeneralNodeDatumFilterMatch>, DatumWriteOnlyDao {
 
 	/**
 	 * The {@link BulkLoadingDao} export options parameter for a
@@ -57,7 +57,7 @@ public interface DatumEntityDao
 
 	/**
 	 * API for querying for a filtered set of results from all possible results.
-	 * 
+	 *
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -71,7 +71,7 @@ public interface DatumEntityDao
 
 	/**
 	 * API for querying for a stream of {@link StreamDatum}.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param processor
@@ -91,7 +91,7 @@ public interface DatumEntityDao
 
 	/**
 	 * API for querying for a stream of {@link StreamDatum}.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param processor
@@ -107,7 +107,7 @@ public interface DatumEntityDao
 
 	/**
 	 * API for querying for a stream of {@link StreamDatum}.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param processor
@@ -125,7 +125,7 @@ public interface DatumEntityDao
 
 	/**
 	 * Store a datum, treating as input from a node.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to store
 	 * @return the stored primary key
@@ -136,7 +136,7 @@ public interface DatumEntityDao
 	/**
 	 * Store a general node datum, saving as a datum entity, treating as input
 	 * from a node.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to store
 	 * @return the stored primary key
@@ -146,7 +146,7 @@ public interface DatumEntityDao
 	/**
 	 * Store a general location datum, saving as a datum entity, treating as
 	 * input from a node.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to store
 	 * @return the stored primary key
@@ -155,7 +155,7 @@ public interface DatumEntityDao
 
 	/**
 	 * Find date intervals for the available data for a set of datum streams.
-	 * 
+	 *
 	 * @param filter
 	 *        the search filter
 	 * @return the matching date intervals

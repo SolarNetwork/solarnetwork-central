@@ -71,14 +71,18 @@
 					</ul>
 				</li>
 				<li class="dropdown" data-th-classappend="${
-						   navloc == 'dnp3'
+						   navloc == 'din'
+						|| navloc == 'dnp3'
 						|| navloc == 'ocpp'
 						|| navloc == 'oscp'
-						}?active" sec:authorize="hasAnyRole('ROLE_DNP3', 'ROLE_OCPP', 'ROLE_OSCP')">
+						}?active" sec:authorize="hasAnyRole('ROLE_DATUM_INPUT', 'ROLE_DNP3', 'ROLE_OCPP', 'ROLE_OSCP')">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
 						<span data-th-text="#{nav.label.integrations}" data-th-remove="tag">Integrations</span> <b class="caret"></b>
 					</a>
 					<ul class="dropdown-menu">
+						<li data-th-classappend="${navloc == 'din'}?active" sec:authorize="hasRole('ROLE_DATUM_INPUT')">
+							<a data-th-href="@{/u/sec/din}" data-th-text="#{link.din}">DIN</a>
+						</li>
 						<li data-th-classappend="${navloc == 'dnp3'}?active" sec:authorize="hasRole('ROLE_DNP3')">
 							<a data-th-href="@{/u/sec/dnp3}" data-th-text="#{link.dnp3}">DNP3</a>
 						</li>

@@ -280,3 +280,17 @@ h5, h6 {
 .panel-title .pull-right + .pull-right {
 	margin-right: 6px;
 }
+
+.modal-body + .modal-body.service-props-container {
+	padding-top: 0 !important;
+}
+
+/** Constrain DIN transform settings (e.g. XSLT) */
+#din-transforms-container .service-props-container dd {
+	max-height: 10rem;
+	overflow-y: scroll;
+}
+
+.border-rule-right {
+	border-right: 1px solid #eee;
+}

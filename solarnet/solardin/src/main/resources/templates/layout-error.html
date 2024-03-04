@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html data-th-fragment="layout (title, body, code)">
+<head>
+    <title data-th-replace="${title}">Oops!</title>
+	<link rel="icon" type="image/png" href="../static/img/favicon.png" data-th-href="@{/img/favicon.png}">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../static/css/bootstrap.css" data-th-href="@{/css/bootstrap.css}">
+	<link rel="stylesheet" href="../static/css/bootstrap-theme.css" data-th-href="@{/css/bootstrap-theme.css}">
+</head>
+<body>
+	<nav class="navbar navbar-default">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#" data-th-href="${homeUrl}" style="padding-top: 10px !important; padding-bottom: 10px !important;">
+					<img src="../static/img/logo.svg" data-th-src="@{/img/logo.svg}" data-th-alt="#{app.name}" width="214" height="30">
+				</a>
+		    </div>
+		</div>
+	</nav>
+	<div class="container">
+		<main data-th-replace="${body}">
+			<h1>Oops!</h1>
+			<p>Egads! That wasn't supposed to happen.</p>
+		</main>
+		<footer data-th-if="${code}">
+			<p class="text-muted"><small data-th-text="${code}">500</small>
+		</footer>
+	</div>
+</body>
+</html>

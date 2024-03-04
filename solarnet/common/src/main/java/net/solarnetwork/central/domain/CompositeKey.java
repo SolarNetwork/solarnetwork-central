@@ -26,7 +26,7 @@ package net.solarnetwork.central.domain;
  * API for a composite key.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CompositeKey {
 
@@ -59,10 +59,49 @@ public interface CompositeKey {
 	 * Get the key component for a specific index.
 	 * 
 	 * @param index
-	 *        the index of the key to get, starting from {@literal 0}
+	 *        the index of the key component to get, starting from {@literal 0}
 	 * @return the associated key component, or {@literal null} if the component
 	 *         is not assigned, or the index is out of range
 	 */
 	Object keyComponent(int index);
+
+	/**
+	 * Convert a value into a key component value.
+	 * 
+	 * @param <T>
+	 *        the expected key component type
+	 * @param index
+	 *        the index of the key component to convert the value for
+	 * @param val
+	 *        the value to convert, or {@literal null} to use an "unassigned"
+	 *        value
+	 * @return the key component value
+	 * @throws IllegalArgumentException
+	 *         if {@code val} is not a supported type, or {@code index} is out
+	 *         of range of the key component length
+	 * @since 1.2
+	 */
+	<T> T keyComponentValue(int index, Object val);
+
+	/**
+	 * Create a new key instance based on a template and component arguments.
+	 * 
+	 * <p>
+	 * If less component values are provided than the length of the given key
+	 * type, then "unassigned" values will be used for those components.
+	 * </p>
+	 * 
+	 * @param template
+	 *        the template key, or the implementation <b>may</b> support
+	 *        {@literal null} to create a new key from scratch, or else
+	 *        {@link UnsupportedOperationException} will be thrown
+	 * @param components
+	 *        the component values to use
+	 * @return the new key instance
+	 * @since 1.2
+	 * @throws IllegalArgumentException
+	 *         if the component values are not appropriate for the key type
+	 */
+	CompositeKey createKey(CompositeKey template, Object... components);
 
 }

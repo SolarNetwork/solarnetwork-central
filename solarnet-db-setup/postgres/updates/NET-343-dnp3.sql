@@ -1,3 +1,5 @@
+CREATE SCHEMA IF NOT EXISTS solardnp3;
+
 /**
  * Account-wide DNP3 trusted X.509 certificate roots.
  *

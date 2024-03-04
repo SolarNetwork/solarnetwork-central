@@ -1,6 +1,6 @@
 plugins {
-    id 'java-library'
-    id 'eclipse'
+	id 'java-library'
+	id 'eclipse'
 	id 'org.springframework.boot' version '3.2.2' apply false
 }
 
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.2.0'
+version = '2.3.0'
 
 base {
 	archivesName = 'solarnet-datum'
@@ -51,12 +51,12 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation 'io.moquette:moquette-broker:0.15'
-    testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
-   	testImplementation 'org.tukaani:xz:1.9'
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
+	testImplementation 'io.moquette:moquette-broker:0.15'
+	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	testImplementation "org.tukaani:xz:${xzVersion}"
 }
 
 jar.manifest {
-    attributes('Implementation-Version': version)
+	attributes('Implementation-Version': version)
 }

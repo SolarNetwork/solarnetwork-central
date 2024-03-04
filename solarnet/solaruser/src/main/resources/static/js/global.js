@@ -335,6 +335,24 @@ SolarReg.showPageLoaded = function showPageLoaded() {
 	$('.page-loaded').removeClass('hidden');
 };
 
+/**
+ * Copy all enumerable properties one one object into another, as long as they do not already
+ * exist in the destination object.
+ * 
+ * @param {object} dest the destination object to copy properties to
+ * @param {src} object the source t copy properties from
+ */
+SolarReg.fill = function fill(dest, src) {
+	if (!(dest && src)) {
+		return;
+	}
+	for (let prop in src) {
+		if (dest[prop] === undefined ) {
+			dest[prop] = src[prop];
+		}
+	}
+};
+
 $(document).ready(function() {
 	$('body').on('hidden', '.modal.dynamic', function () {
 		$(this).removeData('modal');
