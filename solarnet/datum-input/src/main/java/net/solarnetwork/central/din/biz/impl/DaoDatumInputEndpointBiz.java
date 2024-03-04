@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -59,7 +60,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 
@@ -102,7 +103,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 
 	@Override
 	public Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType,
-			InputStream in) throws IOException {
+			InputStream in, Map<String, String> parameters) throws IOException {
 		final UserUuidPK endpointPk = new UserUuidPK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(endpointId, "endpointId"));
 		final EndpointConfiguration endpoint = requireNonNullObject(endpointDao.get(endpointPk),
@@ -126,10 +127,15 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 							.formatted(xformServiceId, contentType, in.getClass().getSimpleName()));
 		}
 
-		var params = Map.of(TransformService.PARAM_USER_ID_KEY, userId,
-				TransformService.PARAM_ENDPOINT_ID_KEY, endpointId.toString(),
-				TransformService.PARAM_TRANSFORM_ID_KEY, endpoint.getTransformId(),
-				TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+		var params = new HashMap<String, Object>(8);
+		if ( parameters != null ) {
+			params.putAll(parameters);
+		}
+		params.put(TransformService.PARAM_USER_ID, userId);
+		params.put(TransformService.PARAM_ENDPOINT_ID, endpointId.toString());
+		params.put(TransformService.PARAM_TRANSFORM_ID, endpoint.getTransformId());
+		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+
 		Iterable<Datum> datum = xformService.transform(in, contentType, xform, params);
 
 		var result = new ArrayList<DatumId>(8);
@@ -139,9 +145,17 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 				// use the endpoint's node/source IDs if provided
 				if ( endpoint.getNodeId() != null ) {
 					gnd.setNodeId(endpoint.getNodeId());
+				} else if ( parameters.containsKey(PARAM_NODE_ID) ) {
+					try {
+						gnd.setNodeId(Long.valueOf(parameters.get(PARAM_NODE_ID)));
+					} catch ( IllegalArgumentException e ) {
+						// ignore and continue
+					}
 				}
 				if ( endpoint.getSourceId() != null ) {
 					gnd.setSourceId(endpoint.getSourceId());
+				} else if ( parameters.containsKey(PARAM_SOURCE_ID) ) {
+					gnd.setSourceId(parameters.get(PARAM_SOURCE_ID));
 				}
 
 				// verify ownership node is owner of endpoint

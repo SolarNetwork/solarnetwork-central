@@ -218,7 +218,7 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 				xform.transform(inputSource, jsonResult);
 				String json = jsonOut.toString();
 				if ( parameters != null
-						&& parameters.get(PARAM_XSLT_OUTPUT_KEY) instanceof Appendable out ) {
+						&& parameters.get(PARAM_XSLT_OUTPUT) instanceof Appendable out ) {
 					out.append(json);
 				}
 				return parseDatumList(json);

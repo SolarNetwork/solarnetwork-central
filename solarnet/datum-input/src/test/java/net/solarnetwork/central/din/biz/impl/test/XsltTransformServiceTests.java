@@ -37,15 +37,13 @@ import java.util.concurrent.ConcurrentMap;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
 import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.URIResolver;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.solarnetwork.central.din.biz.TransformService;
+import net.solarnetwork.central.din.biz.impl.DataUriResolver;
 import net.solarnetwork.central.din.biz.impl.XsltTransformService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
@@ -75,14 +73,7 @@ public class XsltTransformServiceTests {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newNSInstance();
 		dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 		TransformerFactoryImpl tf = new net.sf.saxon.TransformerFactoryImpl();
-		tf.setURIResolver(new URIResolver() {
-
-			@Override
-			public Source resolve(String href, String base) throws TransformerException {
-				throw new UnsupportedOperationException(
-						"External resources are not allowed (" + href + ") from (" + base + ")");
-			}
-		});
+		tf.setURIResolver(new DataUriResolver());
 
 		primaryCache = new ConcurrentHashMap<>();
 		sharedCache = new ConcurrentHashMap<>();
@@ -156,7 +147,7 @@ public class XsltTransformServiceTests {
 
 		// WHEN
 		StringBuilder output = new StringBuilder();
-		Map<String, Object> params = Map.of(TransformService.PARAM_XSLT_OUTPUT_KEY, output);
+		Map<String, Object> params = Map.of(TransformService.PARAM_XSLT_OUTPUT, output);
 		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
 				params);
 
@@ -652,6 +643,57 @@ public class XsltTransformServiceTests {
 				.returns(null, Datum::getSourceId)
 				.extracting(Datum::asSampleOperations)
 				.as("Samples populated")
+				.isEqualTo(expectedSamples)
+				;
+		// @formatter:on
+
+		then(primaryCache).as("Templates not cached").isEmpty();
+	}
+
+	@Test
+	public void xmlWithPreviousInput() throws IOException {
+		// GIVEN
+		final String xmlInput = """
+				<data ts="2024-02-22T12:00:00Z">
+					<prop name="foo">123</prop>
+				</data>
+				""";
+
+		final String previousXmlInput = """
+				<data ts="2024-02-22T11:59:00Z">
+					<prop name="foo">100</prop>
+				</data>
+				""";
+
+		final String xslt = ClassUtils.getResourceAsString("test-xform-04.xsl", getClass());
+
+		final BasicIdentifiableConfiguration conf = new BasicIdentifiableConfiguration();
+		conf.setServiceProps(singletonMap(XsltTransformService.SETTING_XSLT, xslt));
+
+		// WHEN
+		var params = Map.of(TransformService.PARAM_PREVIOUS_INPUT, previousXmlInput);
+		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
+				params);
+
+		// THEN
+		DatumSamples expectedSamples = new DatumSamples();
+		expectedSamples.putInstantaneousSampleValue("foo", 23);
+
+		// @formatter:off
+		then(results)
+				.as("Single datum produced")
+				.hasSize(1)
+				.element(0)
+				.as("Created date parsed")
+				.returns(Instant.parse("2024-02-22T12:00:00Z"), from(Datum::getTimestamp))
+				.as("Kind unknown")
+				.returns(null, Datum::getKind)
+				.as("Node ID not populated")
+				.returns(null, Datum::getObjectId)
+				.as("Source ID not populated")
+				.returns(null, Datum::getSourceId)
+				.extracting(Datum::asSampleOperations)
+				.as("Samples populated, using both input XML with previous XML")
 				.isEqualTo(expectedSamples)
 				;
 		// @formatter:on
