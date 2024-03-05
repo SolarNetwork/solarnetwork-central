@@ -70,6 +70,9 @@ public class DatumInputTransformServiceConfig {
 			@Qualifier(XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> templatesCache)
 			throws ParserConfigurationException {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newNSInstance();
+
+		// disable external access, see
+		// https://docs.oracle.com/en/java/javase/17/security/java-api-xml-processing-jaxp-security-guide.html
 		dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 
 		TransformerFactoryImpl tf = new net.sf.saxon.TransformerFactoryImpl();
