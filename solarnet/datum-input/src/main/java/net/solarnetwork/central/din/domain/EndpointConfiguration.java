@@ -224,6 +224,9 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 *        the source ID to set
 	 */
 	public void setSourceId(String sourceId) {
+		if ( sourceId != null && sourceId.isBlank() ) {
+			sourceId = null;
+		}
 		this.sourceId = sourceId;
 	}
 
