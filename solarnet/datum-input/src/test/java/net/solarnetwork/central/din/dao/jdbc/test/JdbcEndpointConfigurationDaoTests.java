@@ -52,7 +52,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link JdbcEndpointConfigurationDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -90,6 +90,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
 				randomLong(), randomString(), null);
 		conf.setPublishToSolarFlux(false);
+		conf.setPreviousInputTracking(true);
 
 		// WHEN
 		UserUuidPK result = dao.create(userId, conf);
@@ -127,6 +128,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("xform_id", null)
 			.as("Publish to SolarFlux flag")
 			.containsEntry("pub_flux", false)
+			.as("Track previous flag")
+			.containsEntry("track_prev", true)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -174,6 +177,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("source_id", conf.getSourceId())
 			.as("No transform ID")
 			.containsEntry("xform_id", null)
+			.as("Publish to SolarFlux flag")
+			.containsEntry("pub_flux", true)
+			.as("Track previous flag")
+			.containsEntry("track_prev", false)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -223,6 +230,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("source_id", conf.getSourceId())
 			.as("Row transform ID")
 			.containsEntry("xform_id", conf.getTransformId())
+			.as("Publish to SolarFlux flag")
+			.containsEntry("pub_flux", true)
+			.as("Track previous flag")
+			.containsEntry("track_prev", false)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -268,6 +279,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("source_id", conf.getSourceId())
 			.as("No transform ID")
 			.containsEntry("xform_id", null)
+			.as("Publish to SolarFlux flag")
+			.containsEntry("pub_flux", true)
+			.as("Track previous flag")
+			.containsEntry("track_prev", false)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -315,6 +330,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("source_id", conf.getSourceId())
 			.as("No transform ID")
 			.containsEntry("xform_id", null)
+			.as("Publish to SolarFlux flag")
+			.containsEntry("pub_flux", true)
+			.as("Track previous flag")
+			.containsEntry("track_prev", false)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);

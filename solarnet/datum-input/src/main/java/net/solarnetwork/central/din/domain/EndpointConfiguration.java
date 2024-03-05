@@ -34,21 +34,22 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * Datum input endpoint configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeId",
-		"sourceId", "transformId", "destination", "publishToSolarFlux" })
+		"sourceId", "transformId", "destination", "publishToSolarFlux", "previousInputTracking" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements DatumInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
-	private static final long serialVersionUID = 4649918940365085501L;
+	private static final long serialVersionUID = -6465528397271907221L;
 
 	private String name;
 	private Long nodeId;
 	private String sourceId;
 	private Long transformId;
 	private boolean publishToSolarFlux = true;
+	private boolean previousInputTracking = false;
 
 	/**
 	 * Constructor.
@@ -95,6 +96,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setSourceId(sourceId);
 		entity.setTransformId(transformId);
 		entity.setPublishToSolarFlux(publishToSolarFlux);
+		entity.setPreviousInputTracking(previousInputTracking);
 	}
 
 	@Override
@@ -109,6 +111,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 				&& Objects.equals(this.sourceId, other.sourceId)
 				&& Objects.equals(this.transformId, other.transformId)
 				&& publishToSolarFlux == other.publishToSolarFlux
+				&& previousInputTracking == other.previousInputTracking
 				;
 		// @formatter:on
 	}
@@ -262,6 +265,28 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 */
 	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
+	}
+
+	/**
+	 * Get the flag to track previous input values.
+	 *
+	 * @return {@literal true} to track previous input values; defaults to
+	 *         {@literal false}
+	 * @since 1.1
+	 */
+	public boolean isPreviousInputTracking() {
+		return previousInputTracking;
+	}
+
+	/**
+	 * Set the flag to track previous input values.
+	 *
+	 * @param previousInputTracking
+	 *        {@literal true} to track previous input values
+	 * @since 1.1
+	 */
+	public void setPreviousInputTracking(boolean previousInputTracking) {
+		this.previousInputTracking = previousInputTracking;
 	}
 
 }

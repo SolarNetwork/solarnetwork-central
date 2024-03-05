@@ -29,10 +29,12 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.din.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointAuthConfigurationDao;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
+import net.solarnetwork.central.din.dao.InputDataEntityDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
 import net.solarnetwork.central.din.dao.jdbc.JdbcCredentialConfigurationDao;
 import net.solarnetwork.central.din.dao.jdbc.JdbcEndpointAuthConfigurationDao;
 import net.solarnetwork.central.din.dao.jdbc.JdbcEndpointConfigurationDao;
+import net.solarnetwork.central.din.dao.jdbc.JdbcInputDataEntityDao;
 import net.solarnetwork.central.din.dao.jdbc.JdbcTransformConfigurationDao;
 
 /**
@@ -85,6 +87,16 @@ public class DatumInputDaoConfig {
 	@Bean
 	public TransformConfigurationDao dinTransformConfigurationDao() {
 		return new JdbcTransformConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The datum input data DAO.
+	 *
+	 * @return the DAO
+	 */
+	@Bean
+	public InputDataEntityDao dinInputDataEntityDao() {
+		return new JdbcInputDataEntityDao(jdbcOperations);
 	}
 
 }

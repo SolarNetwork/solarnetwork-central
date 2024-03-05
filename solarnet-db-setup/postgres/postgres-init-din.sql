@@ -5,6 +5,28 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA solardin REVOKE ALL ON SEQUENCES FROM PUBLIC;
 ALTER DEFAULT PRIVILEGES IN SCHEMA solardin REVOKE ALL ON FUNCTIONS FROM PUBLIC;
 
 /**
+ * Account-wide datum input data, to support "previous" input tracking.
+ *
+ * @column user_id 		the ID of the account owner
+ * @column node_id 		the ID of the datum stream node
+ * @column source_id	the ID of the datum stream source
+ * @column created		the creation date
+ * @column input_data	the input data
+ */
+CREATE TABLE solardin.din_input_data (
+	user_id			BIGINT NOT NULL,
+	node_id			BIGINT NOT NULL,
+	source_id		CHARACTER VARYING(64) NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	input_data		bytea,
+	CONSTRAINT din_input_data_pk PRIMARY KEY (user_id, node_id, source_id),
+	CONSTRAINT din_input_data_user_fk FOREIGN KEY (user_id)
+		REFERENCES solaruser.user_user (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+
+/**
  * Account-wide datum input username/password credentials.
  *
  * @column user_id 		the ID of the account owner
@@ -82,6 +104,8 @@ CREATE TABLE solardin.din_endpoint (
 	node_id			BIGINT,
 	source_id		CHARACTER VARYING(64),
 	xform_id		BIGINT,
+	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
+	track_prev 		BOOLEAN NOT NULL DEFAULT FALSE,
 	CONSTRAINT din_endpoint_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT din_endpoint_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.biz;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import org.springframework.util.MimeType;
 import net.solarnetwork.domain.Identity;
@@ -80,7 +81,8 @@ public interface TransformService
 	public static final String PARAM_PREVIEW = "preview";
 
 	/**
-	 * A parameter key for the previous transform input data.
+	 * A parameter key for the previous transform input data, as an
+	 * {@link InputStream}.
 	 *
 	 * @since 1.1
 	 */

@@ -701,4 +701,56 @@ public class XsltTransformServiceTests {
 		then(primaryCache).as("Templates not cached").isEmpty();
 	}
 
+	@Test
+	public void xmlWithPreviousInput_inputStream() throws IOException {
+		// GIVEN
+		final String xmlInput = """
+				<data ts="2024-02-22T12:00:00Z">
+					<prop name="foo">123</prop>
+				</data>
+				""";
+
+		final String previousXmlInput = """
+				<data ts="2024-02-22T11:59:00Z">
+					<prop name="foo">100</prop>
+				</data>
+				""";
+
+		final String xslt = ClassUtils.getResourceAsString("test-xform-04.xsl", getClass());
+
+		final BasicIdentifiableConfiguration conf = new BasicIdentifiableConfiguration();
+		conf.setServiceProps(singletonMap(XsltTransformService.SETTING_XSLT, xslt));
+
+		// WHEN
+		var params = Map.of(TransformService.PARAM_PREVIOUS_INPUT,
+				new ByteArrayInputStream(previousXmlInput.getBytes(StandardCharsets.UTF_8)));
+		Iterable<Datum> results = service.transform(xmlInput, XsltTransformService.XML_TYPE, conf,
+				params);
+
+		// THEN
+		DatumSamples expectedSamples = new DatumSamples();
+		expectedSamples.putInstantaneousSampleValue("foo", 23);
+
+		// @formatter:off
+		then(results)
+				.as("Single datum produced")
+				.hasSize(1)
+				.element(0)
+				.as("Created date parsed")
+				.returns(Instant.parse("2024-02-22T12:00:00Z"), from(Datum::getTimestamp))
+				.as("Kind unknown")
+				.returns(null, Datum::getKind)
+				.as("Node ID not populated")
+				.returns(null, Datum::getObjectId)
+				.as("Source ID not populated")
+				.returns(null, Datum::getSourceId)
+				.extracting(Datum::asSampleOperations)
+				.as("Samples populated, using both input XML with previous XML")
+				.isEqualTo(expectedSamples)
+				;
+		// @formatter:on
+
+		then(primaryCache).as("Templates not cached").isEmpty();
+	}
+
 }

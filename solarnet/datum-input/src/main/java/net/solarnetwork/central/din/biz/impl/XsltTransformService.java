@@ -81,7 +81,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
 		implements TransformService, EntityResolver {
@@ -191,7 +191,13 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 			Transformer xform = templates.newTransformer();
 			if ( parameters != null ) {
 				for ( Entry<String, ?> e : parameters.entrySet() ) {
-					xform.setParameter(e.getKey(), e.getValue());
+					String key = e.getKey();
+					if ( PARAM_PREVIOUS_INPUT.equals(key) ) {
+						String previousInputText = inputText(parameters.get(key));
+						xform.setParameter(key, previousInputText);
+					} else {
+						xform.setParameter(key, e.getValue());
+					}
 				}
 			}
 			xform.setOutputProperty(OutputKeys.METHOD, "text");

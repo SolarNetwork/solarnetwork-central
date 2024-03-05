@@ -48,10 +48,11 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
  * <li>source_id (BIGINT)</li>
  * <li>xform_id (BIGINT)</li>
  * <li>pub_flux (BOOLEAN)</li>
+ * <li>track_prev (BOOLEAN)</li>
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfiguration> {
 
@@ -91,6 +92,7 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 		conf.setSourceId(rs.getString(++p));
 		conf.setTransformId(rs.getObject(++p, Long.class));
 		conf.setPublishToSolarFlux(rs.getBoolean(++p));
+		conf.setPreviousInputTracking(rs.getBoolean(++p));
 		return conf;
 	}
 

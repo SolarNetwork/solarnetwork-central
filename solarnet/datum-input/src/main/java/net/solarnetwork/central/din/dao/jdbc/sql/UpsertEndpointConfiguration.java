@@ -39,18 +39,18 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * Support for INSERT ... ON CONFLICT {@link EndpointConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UpsertEndpointConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.din_endpoint (
 				  created,modified,user_id,id
-				, enabled,cname,node_id,source_id,xform_id,pub_flux
+				, enabled,cname,node_id,source_id,xform_id,pub_flux,track_prev
 			)
 			VALUES (
 				  ?,?,?,?
-				, ?,?,?,?,?,?)
+				, ?,?,?,?,?,?,?)
 			ON CONFLICT (user_id, id) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
@@ -59,6 +59,7 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 					, source_id = EXCLUDED.source_id
 					, xform_id = EXCLUDED.xform_id
 					, pub_flux = EXCLUDED.pub_flux
+					, track_prev = EXCLUDED.track_prev
 			""";
 
 	private final Long userId;
@@ -105,6 +106,7 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 		stmt.setString(++p, entity.getSourceId());
 		stmt.setObject(++p, entity.getTransformId());
 		stmt.setBoolean(++p, entity.isPublishToSolarFlux());
+		stmt.setBoolean(++p, entity.isPreviousInputTracking());
 		return stmt;
 	}
 
