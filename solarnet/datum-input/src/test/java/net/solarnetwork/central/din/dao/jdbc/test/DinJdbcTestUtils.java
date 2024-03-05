@@ -196,7 +196,7 @@ public final class DinJdbcTestUtils {
 	}
 
 	/**
-	 * List endpoint autn configuration rows.
+	 * List endpoint auth configuration rows.
 	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
@@ -206,6 +206,21 @@ public final class DinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
 				"select * from solardin.din_endpoint_auth_cred ORDER BY user_id, endpoint_id, cred_id");
 		log.debug("solardin.din_endpoint_auth_cred table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * List input data entity rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allInputDataEntityData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solardin.din_input_data ORDER BY user_id, node_id, source_id");
+		log.debug("solardin.din_input_data table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

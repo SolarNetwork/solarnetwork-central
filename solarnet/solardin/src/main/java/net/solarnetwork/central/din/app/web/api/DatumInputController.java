@@ -26,6 +26,8 @@ import static net.solarnetwork.domain.Result.success;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.springframework.http.MediaType;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 import net.solarnetwork.central.din.biz.DatumInputEndpointBiz;
 import net.solarnetwork.central.din.security.SecurityEndpointCredential;
 import net.solarnetwork.central.din.security.SecurityUtils;
@@ -46,7 +49,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Datum input controller.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1DatumInputController")
 @GlobalExceptionRestController
@@ -87,8 +90,8 @@ public class DatumInputController {
 			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
 	public Result<Collection<DatumId>> postDatum(@PathVariable("endpointId") UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
-			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in)
-			throws IOException {
+			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
+			InputStream in) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
 		final MediaType mediaType = MediaType.parseMediaType(contentType);
@@ -98,7 +101,16 @@ public class DatumInputController {
 			input = new GZIPInputStream(in);
 		}
 
-		var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input);
+		var params = new HashMap<String, String>(8);
+		for ( Iterator<String> itr = req.getParameterNames(); itr.hasNext(); ) {
+			var paramName = itr.next();
+			String[] vals = req.getParameterValues(paramName);
+			if ( vals != null && vals.length > 0 ) {
+				params.put(paramName, vals[0]);
+			}
+		}
+
+		var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
 
 		return success(result);
 	}

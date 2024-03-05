@@ -23,6 +23,7 @@
 package net.solarnetwork.central.din.biz;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import org.springframework.util.MimeType;
 import net.solarnetwork.domain.Identity;
@@ -35,7 +36,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * A service that can transform input data into datum instances.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface TransformService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -65,19 +66,27 @@ public interface TransformService
 	 * appended.
 	 * </p>
 	 */
-	public static final String PARAM_XSLT_OUTPUT_KEY = "xslt-output";
+	public static final String PARAM_XSLT_OUTPUT = "xslt-output";
 
 	/** A parameter key for a SolarNetwork user ID. */
-	public static final String PARAM_USER_ID_KEY = "user-id";
+	public static final String PARAM_USER_ID = "user-id";
 
 	/** A parameter key for a endpoint ID. */
-	public static final String PARAM_ENDPOINT_ID_KEY = "endpoint-id";
+	public static final String PARAM_ENDPOINT_ID = "endpoint-id";
 
 	/** A parameter key for a transform ID. */
-	public static final String PARAM_TRANSFORM_ID_KEY = "transform-id";
+	public static final String PARAM_TRANSFORM_ID = "transform-id";
 
 	/** A parameter key for a preview boolean flag. */
-	public static final String PARAM_PREVIEW_KEY = "preview";
+	public static final String PARAM_PREVIEW = "preview";
+
+	/**
+	 * A parameter key for the previous transform input data, as an
+	 * {@link InputStream}.
+	 *
+	 * @since 1.1
+	 */
+	public static final String PARAM_PREVIOUS_INPUT = "previous-input";
 
 	/**
 	 * Test if the service supports a given input object.

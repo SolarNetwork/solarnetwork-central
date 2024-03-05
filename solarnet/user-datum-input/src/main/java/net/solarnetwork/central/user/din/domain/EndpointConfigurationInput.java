@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * DTO for datum input endpoint configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EndpointConfigurationInput
 		extends BaseDatumInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
@@ -52,6 +52,7 @@ public class EndpointConfigurationInput
 	private Long transformId;
 
 	private boolean publishToSolarFlux = true;
+	private boolean previousInputTracking = false;
 
 	/**
 	 * Constructor.
@@ -75,6 +76,7 @@ public class EndpointConfigurationInput
 		conf.setSourceId(sourceId);
 		conf.setTransformId(transformId);
 		conf.setPublishToSolarFlux(publishToSolarFlux);
+		conf.setPreviousInputTracking(previousInputTracking);
 	}
 
 	/**
@@ -176,6 +178,28 @@ public class EndpointConfigurationInput
 	 */
 	public void setPublishToSolarFlux(boolean publishToSolarFlux) {
 		this.publishToSolarFlux = publishToSolarFlux;
+	}
+
+	/**
+	 * Get the flag to track previous input values.
+	 *
+	 * @return {@literal true} to track previous input values; defaults to
+	 *         {@literal false}
+	 * @since 1.1
+	 */
+	public boolean isPreviousInputTracking() {
+		return previousInputTracking;
+	}
+
+	/**
+	 * Set the flag to track previous input values.
+	 *
+	 * @param previousInputTracking
+	 *        {@literal true} to track previous input values
+	 * @since 1.1
+	 */
+	public void setPreviousInputTracking(boolean previousInputTracking) {
+		this.previousInputTracking = previousInputTracking;
 	}
 
 }

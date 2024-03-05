@@ -43,6 +43,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.biz.impl.DaoDatumInputEndpointBiz;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
+import net.solarnetwork.central.din.dao.InputDataEntityDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
 
 /**
@@ -68,6 +69,9 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 
 	@Autowired
 	private DatumEntityDao datumDao;
+
+	@Autowired
+	private InputDataEntityDao inputDataDao;
 
 	@Autowired
 	private Collection<TransformService> transformServices;
@@ -100,7 +104,7 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	public DaoDatumInputEndpointBiz datumInputEndpointBiz(
 			@Qualifier(CACHING) DatumWriteOnlyDao datumDao) {
 		var biz = new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
-				transformServices);
+				inputDataDao, transformServices);
 		biz.setFluxPublisher(fluxPublisher);
 		return biz;
 	}

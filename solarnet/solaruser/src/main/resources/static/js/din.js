@@ -47,14 +47,13 @@ function dinManagement() {
 			, modal = $(this)
 			, config = SolarReg.Templates.findContextItem(this)
 			, enabled = (config && config.enabled === true ? true : false)
+			, pubSolarFlux = (!config || config.publishToSolarFlux === true ? true : false)
+			, prevTrack = (config && config.previousInputTracking === true ? true : false)
 			, type = (this.dataset ? this.dataset.systemType : undefined);
 		
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
-		
-		if (config && config.publishToSolarFlux !== undefined) {
-			SolarReg.Settings.handleSettingToggleButtonChange(
-				modal.find('button[name=publishToSolarFlux]'), !!config.publishToSolarFlux);
-		}
+		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), pubSolarFlux);		
+		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=previousInputTracking]'), prevTrack);
 		
 		SolarReg.Settings.prepareEditServiceForm(modal
 			, type == TRANSFORM_SYS ? transformServices : []
@@ -114,12 +113,16 @@ function dinManagement() {
 		if (!sys) {
 			return;
 		}
+		const modal = $(this);
 		const container = sys.container.find('.list-container');
 		SolarReg.Settings.resetEditServiceForm(this, container, (id, deleted) => {
 			if (deleted) {
 				SolarReg.deleteServiceConfiguration(id, sys.configs, sys.container);
 				sys.configsMap.delete(id);
 			}
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), false);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), true);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=previousInputTracking]'), false);
 		});
 	}
 

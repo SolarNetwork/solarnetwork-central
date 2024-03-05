@@ -26,10 +26,7 @@ import java.time.Duration;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Source;
 import javax.xml.transform.Templates;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.URIResolver;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -37,6 +34,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.solarnetwork.central.din.biz.impl.DataUriResolver;
 import net.solarnetwork.central.din.biz.impl.XsltTransformService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.CacheSettings;
@@ -49,7 +47,7 @@ import net.solarnetwork.central.support.SharedValueCache;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class DatumInputTransformServiceConfig implements URIResolver {
+public class DatumInputTransformServiceConfig {
 
 	public static final String XSLT_TEMPLATES_QUALIFIER = "xslt-templates";
 
@@ -72,10 +70,13 @@ public class DatumInputTransformServiceConfig implements URIResolver {
 			@Qualifier(XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> templatesCache)
 			throws ParserConfigurationException {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newNSInstance();
+
+		// disable external access, see
+		// https://docs.oracle.com/en/java/javase/17/security/java-api-xml-processing-jaxp-security-guide.html
 		dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
 
 		TransformerFactoryImpl tf = new net.sf.saxon.TransformerFactoryImpl();
-		tf.setURIResolver(this);
+		tf.setURIResolver(new DataUriResolver());
 
 		var service = new XsltTransformService(dbf, tf, objectMapper,
 				Duration.ofSeconds(templatesCacheSettings.getTtl()), templatesCache);
@@ -85,11 +86,6 @@ public class DatumInputTransformServiceConfig implements URIResolver {
 		service.setMessageSource(msgSource);
 
 		return service;
-	}
-
-	@Override
-	public Source resolve(String href, String base) throws TransformerException {
-		throw new UnsupportedOperationException("External resources are not allowed (" + href + ").");
 	}
 
 }
