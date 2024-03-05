@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -238,11 +239,18 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 		}
 	}
 
+	private static final Pattern DOCTYPE_PAT = Pattern.compile("<!DOCTYPE[^>]*>",
+			Pattern.CASE_INSENSITIVE);
+
 	private String inputText(Object input) throws IOException {
+		String result = null;
 		if ( input instanceof InputStream stream ) {
-			return FileCopyUtils.copyToString(new InputStreamReader(stream, StandardCharsets.UTF_8));
+			result = FileCopyUtils.copyToString(new InputStreamReader(stream, StandardCharsets.UTF_8));
+		} else {
+			result = input.toString();
 		}
-		return input.toString();
+		// remove <!DOCTYPE> declaration
+		return DOCTYPE_PAT.matcher(result).replaceFirst("");
 	}
 
 	private DocumentBuilder documentBuilder() throws ParserConfigurationException {
@@ -253,7 +261,6 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 
 	@Override
 	public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
