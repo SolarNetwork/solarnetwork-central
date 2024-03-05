@@ -54,7 +54,7 @@ public class UpsertInputDataReturnPrevious implements PreparedStatementCreator, 
 				SET created = COALESCE(EXCLUDED.created, CURRENT_TIMESTAMP)
 					, input_data = EXCLUDED.input_data
 			RETURNING (SELECT input_data FROM prev)
-					""";
+			""";
 
 	private UserLongStringCompositePK key;
 	private byte[] data;
