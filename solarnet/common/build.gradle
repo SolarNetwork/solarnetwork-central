@@ -72,6 +72,7 @@ dependencies {
 	implementation 'com.cronutils:cron-utils:9.1.5'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation 'commons-codec:commons-codec'
+	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'
