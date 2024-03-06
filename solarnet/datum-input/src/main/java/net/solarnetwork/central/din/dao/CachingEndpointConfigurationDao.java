@@ -77,6 +77,19 @@ public class CachingEndpointConfigurationDao
 	}
 
 	@Override
+	public EndpointConfiguration getForEndpointId(UUID endpointId) {
+		UserUuidPK id = new UserUuidPK(UserUuidPK.UNASSIGNED_USER_ID, endpointId);
+		EndpointConfiguration result = cache.get(id);
+		if ( result == null ) {
+			result = delegate.getForEndpointId(endpointId);
+			if ( result != null ) {
+				cache.put(id, result);
+			}
+		}
+		return result;
+	}
+
+	@Override
 	public int updateEnabledStatus(Long userId, EndpointFilter filter, boolean enabled) {
 		int result = delegate.updateEnabledStatus(userId, filter, enabled);
 		evictKeysMatching((id) -> {

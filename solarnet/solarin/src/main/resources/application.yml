@@ -1,6 +1,8 @@
 app:
+  meta:
+    name: SolarIn
+    key: in
   cache.persistence.path: "var/cache"
-  meta.name: SolarIn
   datasource:
     hikari:
       minimumIdle: 1

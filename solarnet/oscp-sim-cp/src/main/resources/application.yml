@@ -1,5 +1,7 @@
 app:
-  meta.name: "OSCP-Sim-CP"
+  meta:
+    name: "OSCP-Sim-CP"
+    key: "oscp-sim-cp"
   cache.persistence.path: "var/cache"
   httpclient:
     connection-timeout: "5s"

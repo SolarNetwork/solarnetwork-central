@@ -104,8 +104,10 @@ public class WebSecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager() {
-		return new ProviderManager(authenticationProvider());
+	public AuthenticationManager authenticationManager(AuthenticationEventPublisher authEventPublisher) {
+		var mgr = new ProviderManager(authenticationProvider());
+		mgr.setAuthenticationEventPublisher(authEventPublisher);
+		return mgr;
 	}
 
 	@Bean

@@ -22,13 +22,21 @@
 
 package net.solarnetwork.central.din.app.security.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
+import net.solarnetwork.central.din.domain.EndpointConfiguration;
 
 /**
  * Test cases for the {@link EndpointAuthenticationDetailsSource} class.
@@ -36,25 +44,33 @@ import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSo
  * @author matt
  * @version 1.0
  */
+@ExtendWith(MockitoExtension.class)
 public class EndpointAuthenticationDetailsSourceTests {
+
+	@Mock
+	private EndpointConfigurationDao endpointDao;
 
 	private EndpointAuthenticationDetailsSource service;
 
 	@BeforeEach
 	public void setup() {
-		service = new EndpointAuthenticationDetailsSource(
+		service = new EndpointAuthenticationDetailsSource(endpointDao,
 				EndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN);
 	}
 
 	@Test
 	public void ok() {
 		// GIVEN
+		final Long userId = randomLong();
 		final UUID endpointId = UUID.randomUUID();
 
 		final String path = "/foo/endpoint/%s/datum".formatted(endpointId);
 		final String url = "http://localhost".concat(path);
 		final MockHttpServletRequest req = new MockHttpServletRequest("GET", url);
 		req.setServletPath(path);
+
+		final EndpointConfiguration endpoint = new EndpointConfiguration(userId, endpointId, now());
+		given(endpointDao.getForEndpointId(endpointId)).willReturn(endpoint);
 
 		// WHEN
 		EndpointAuthenticationDetails result = service.buildDetails(req);
@@ -63,6 +79,8 @@ public class EndpointAuthenticationDetailsSourceTests {
 		then(result)
 			.as("Details created")
 			.isNotNull()
+			.as("User ID populated")
+			.returns(userId, EndpointAuthenticationDetails::getUserId)
 			.as("Endpoint ID populated")
 			.returns(endpointId, EndpointAuthenticationDetails::getEndpointId)
 			;

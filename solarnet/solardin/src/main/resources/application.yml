@@ -1,5 +1,7 @@
 app:
-  meta.name: SolarDIN
+  meta:
+    name: SolarDIN
+    key: din
   cache.persistence.path: "var/cache"
   datasource:
     hikari:

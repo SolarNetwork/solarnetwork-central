@@ -1,5 +1,7 @@
 app:
-  meta.name: "SolarJobs"
+  meta:
+    name: "SolarJobs"
+    key: jobs
   billing:
     delivery-timeout-secs: 60
     invoice:

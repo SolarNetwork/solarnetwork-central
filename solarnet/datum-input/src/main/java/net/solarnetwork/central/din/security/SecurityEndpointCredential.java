@@ -23,21 +23,23 @@
 package net.solarnetwork.central.din.security;
 
 import java.util.UUID;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.SecurityActor;
 
 /**
  * API for an authenticated endpoint credential security details.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface SecurityEndpointCredential extends SecurityActor {
+public interface SecurityEndpointCredential extends SecurityActor, UserIdRelated {
 
 	/**
 	 * Get the account owner user ID.
 	 *
 	 * @return the user ID
 	 */
+	@Override
 	Long getUserId();
 
 	/**

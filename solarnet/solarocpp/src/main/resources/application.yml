@@ -1,5 +1,7 @@
 app:
-  meta.name: SolarOCPP
+  meta:
+    name: SolarOCPP
+    key: ocpp
   cache.persistence.path: "var/cache"
   datasource:
     hikari:

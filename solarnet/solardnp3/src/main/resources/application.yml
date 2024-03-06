@@ -1,5 +1,7 @@
 app:
-  meta.name: SolarDNP3
+  meta:
+    name: SolarDNP3
+    key: dnp3
   cache.persistence.path: "var/cache"
   datasource:
     hikari:

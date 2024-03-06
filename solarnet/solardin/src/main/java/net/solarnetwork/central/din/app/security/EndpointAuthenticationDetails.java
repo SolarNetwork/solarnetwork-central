@@ -22,20 +22,25 @@
 
 package net.solarnetwork.central.din.app.security;
 
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import jakarta.servlet.http.HttpServletRequest;
+import net.solarnetwork.central.domain.UserIdRelated;
+import net.solarnetwork.central.support.EventDetailsProvider;
 
 /**
  * Endpoint authentication details.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class EndpointAuthenticationDetails extends WebAuthenticationDetails {
+public class EndpointAuthenticationDetails extends WebAuthenticationDetails
+		implements UserIdRelated, EventDetailsProvider {
 
 	private static final long serialVersionUID = 1532466056959330725L;
 
+	private final Long userId;
 	private final UUID endpointId;
 
 	/**
@@ -43,11 +48,14 @@ public class EndpointAuthenticationDetails extends WebAuthenticationDetails {
 	 *
 	 * @param request
 	 *        the request
+	 * @param userId
+	 *        the user ID
 	 * @param endpointId
 	 *        the endpoint ID
 	 */
-	public EndpointAuthenticationDetails(HttpServletRequest request, UUID endpointId) {
+	public EndpointAuthenticationDetails(HttpServletRequest request, Long userId, UUID endpointId) {
 		super(request);
+		this.userId = userId;
 		this.endpointId = endpointId;
 	}
 
@@ -58,12 +66,32 @@ public class EndpointAuthenticationDetails extends WebAuthenticationDetails {
 	 *        the remote address
 	 * @param sessionId
 	 *        the session ID
+	 * @param userId
+	 *        the user ID
 	 * @param endpointId
 	 *        the endpoint ID
 	 */
-	public EndpointAuthenticationDetails(String remoteAddress, String sessionId, UUID endpointId) {
+	public EndpointAuthenticationDetails(String remoteAddress, String sessionId, Long userId,
+			UUID endpointId) {
 		super(remoteAddress, sessionId);
+		this.userId = userId;
 		this.endpointId = endpointId;
+	}
+
+	@Override
+	public Map<String, ?> eventDetails() {
+		return Map.of("endpointId", endpointId);
+	}
+
+	/**
+	 * Get the user ID.
+	 *
+	 * @return the user ID
+	 * @since 1.1
+	 */
+	@Override
+	public Long getUserId() {
+		return userId;
 	}
 
 	/**

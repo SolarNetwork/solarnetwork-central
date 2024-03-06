@@ -1,5 +1,7 @@
 app:
-  meta.name: "SolarOSCP-FP"
+  meta:
+    name: "SolarOSCP-FP"
+    key: "oscp-fp"
   cache.persistence.path: "var/cache"
   datasource:
     hikari:

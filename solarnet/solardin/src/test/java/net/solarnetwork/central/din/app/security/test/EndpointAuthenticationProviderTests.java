@@ -109,7 +109,7 @@ public class EndpointAuthenticationProviderTests {
 		final String passwordEncoded = passwordEncoder.encode(password);
 
 		var auth = UsernamePasswordAuthenticationToken.unauthenticated(username, password);
-		var authDetails = new EndpointAuthenticationDetails("127.0.0.1", null, endpointId);
+		var authDetails = new EndpointAuthenticationDetails("127.0.0.1", null, userId, endpointId);
 		auth.setDetails(authDetails);
 
 		AuthenticatedEndpointCredentials details = new AuthenticatedEndpointCredentials(userId,
@@ -148,7 +148,7 @@ public class EndpointAuthenticationProviderTests {
 		final String passwordEncoded = passwordEncoder.encode(password);
 
 		var auth = UsernamePasswordAuthenticationToken.unauthenticated(username, "bad.password");
-		var authDetails = new EndpointAuthenticationDetails("127.0.0.1", null, endpointId);
+		var authDetails = new EndpointAuthenticationDetails("127.0.0.1", null, userId, endpointId);
 		auth.setDetails(authDetails);
 
 		AuthenticatedEndpointCredentials details = new AuthenticatedEndpointCredentials(userId,
@@ -171,11 +171,12 @@ public class EndpointAuthenticationProviderTests {
 	@Test
 	public void auth_userNotFound() {
 		// GIVEN
+		final Long userId = randomLong();
 		final UUID endpointId = UUID.randomUUID();
 		final String username = randomString();
 
 		var auth = UsernamePasswordAuthenticationToken.unauthenticated(username, "bad.password");
-		var authDetails = new EndpointAuthenticationDetails("127.0.0.1", null, endpointId);
+		var authDetails = new EndpointAuthenticationDetails("127.0.0.1", null, userId, endpointId);
 		auth.setDetails(authDetails);
 
 		given(authDao.credentialsForEndpoint(endpointId, username)).willReturn(null);

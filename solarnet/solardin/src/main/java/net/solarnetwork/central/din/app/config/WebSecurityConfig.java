@@ -22,10 +22,12 @@
 
 package net.solarnetwork.central.din.app.config;
 
+import static net.solarnetwork.central.din.app.config.DatumInputConfiguration.CACHING;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -49,25 +51,34 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationProvider;
+import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.security.SecurityUtils;
 import net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
+import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 
 /**
  * Security configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
 
 	private static final String OPS_AUTHORITY = Role.ROLE_OPS.toString();
+
+	@Value("${app.meta.key}")
+	private String appKey = "";
+
+	@Value("${app.security.auth-events.pub-success:false}")
+	private boolean authPubSuccess = false;
 
 	@Autowired
 	private DataSource dataSource;
@@ -107,14 +118,25 @@ public class WebSecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager() {
-		return new ProviderManager(authenticationProvider());
+	public AuthenticationManager authenticationManager(AuthenticationEventPublisher authEventPublisher) {
+		var mgr = new ProviderManager(authenticationProvider());
+		mgr.setAuthenticationEventPublisher(authEventPublisher);
+		return mgr;
 	}
 
 	@Bean
 	public AuthenticationEventPublisher authenticationEventPublisher(
 			ApplicationEventPublisher appEventPublisher) {
 		return new DefaultAuthenticationEventPublisher(appEventPublisher);
+	}
+
+	@Bean
+	public AuthenticationUserEventPublisher authenticationUserEventPublisher(
+			UserEventAppenderBiz userEventAppenderBiz) {
+		AuthenticationUserEventPublisher pub = new AuthenticationUserEventPublisher(appKey,
+				userEventAppenderBiz);
+		pub.setFailureOnly(!authPubSuccess);
+		return pub;
 	}
 
 	/**
@@ -133,18 +155,27 @@ public class WebSecurityConfig {
 		@Autowired
 		private JdbcOperations jdbcOperations;
 
+		@Qualifier(CACHING)
+		@Autowired
+		private EndpointConfigurationDao endpointDao;
+
+		@Autowired
+		private AuthenticationEventPublisher authEventPublisher;
+
 		@Bean
 		public EndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
 			Pattern pat = EndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
 			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
 				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
 			}
-			return new EndpointAuthenticationDetailsSource(pat);
+			return new EndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
 		private AuthenticationManager endpointAuthenticationManager() {
 			JdbcCredentialAuthorizationDao dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
-			return new ProviderManager(new EndpointAuthenticationProvider(dao, passwordEncoder));
+			var mgr = new ProviderManager(new EndpointAuthenticationProvider(dao, passwordEncoder));
+			mgr.setAuthenticationEventPublisher(authEventPublisher);
+			return mgr;
 		}
 
 		@Order(1)

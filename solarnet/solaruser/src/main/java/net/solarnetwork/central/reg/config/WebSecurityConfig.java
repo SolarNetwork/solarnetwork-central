@@ -31,6 +31,7 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,9 +58,11 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
+import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
@@ -108,6 +111,12 @@ public class WebSecurityConfig {
 
 	private static final Logger log = LoggerFactory.getLogger(WebSecurityConfig.class);
 
+	@Value("${app.meta.key}")
+	private String appKey = "";
+
+	@Value("${app.security.auth-events.pub-success:false}")
+	private boolean authPubSuccess = false;
+
 	@Autowired
 	private DataSource dataSource;
 
@@ -141,14 +150,25 @@ public class WebSecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager() {
-		return new ProviderManager(authenticationProvider());
+	public AuthenticationManager authenticationManager(AuthenticationEventPublisher authEventPublisher) {
+		var mgr = new ProviderManager(authenticationProvider());
+		mgr.setAuthenticationEventPublisher(authEventPublisher);
+		return mgr;
 	}
 
 	@Bean
 	public AuthenticationEventPublisher authenticationEventPublisher(
 			ApplicationEventPublisher appEventPublisher) {
 		return new DefaultAuthenticationEventPublisher(appEventPublisher);
+	}
+
+	@Bean
+	public AuthenticationUserEventPublisher authenticationUserEventPublisher(
+			UserEventAppenderBiz userEventAppenderBiz) {
+		AuthenticationUserEventPublisher pub = new AuthenticationUserEventPublisher(appKey,
+				userEventAppenderBiz);
+		pub.setFailureOnly(!authPubSuccess);
+		return pub;
 	}
 
 	/**

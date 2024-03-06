@@ -28,6 +28,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
@@ -113,6 +114,15 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
 		filter.setEndpointId(requireNonNullArgument(id.getUuid(), "id.uuid"));
+		var sql = new SelectEndpointConfiguration(filter);
+		var results = executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);
+		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
+	@Override
+	public EndpointConfiguration getForEndpointId(UUID endpointId) {
+		var filter = new BasicFilter();
+		filter.setEndpointId(requireNonNullArgument(endpointId, "endpointId"));
 		var sql = new SelectEndpointConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).findFirst().orElse(null);
