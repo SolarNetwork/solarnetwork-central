@@ -76,15 +76,30 @@ public class CachingEndpointConfigurationDao
 		return delegate.findAll(keyComponent1, sorts);
 	}
 
+	private static UserUuidPK endpointOnlyKey(UUID endpointId) {
+		return new UserUuidPK(UserUuidPK.UNASSIGNED_USER_ID, endpointId);
+	}
+
 	@Override
 	public EndpointConfiguration getForEndpointId(UUID endpointId) {
-		UserUuidPK id = new UserUuidPK(UserUuidPK.UNASSIGNED_USER_ID, endpointId);
+		UserUuidPK id = endpointOnlyKey(endpointId);
 		EndpointConfiguration result = cache.get(id);
 		if ( result == null ) {
 			result = delegate.getForEndpointId(endpointId);
 			if ( result != null ) {
 				cache.put(id, result);
+				cache.put(result.getId(), result);
 			}
+		}
+		return result;
+	}
+
+	@Override
+	public UserUuidPK save(EndpointConfiguration entity) {
+		UserUuidPK result = super.save(entity);
+		if ( result != null ) {
+			UserUuidPK id = endpointOnlyKey(result.getUuid());
+			cache.remove(id);
 		}
 		return result;
 	}
