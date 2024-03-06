@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
-import org.apache.commons.io.input.BoundedInputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,10 +38,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.din.biz.DatumInputEndpointBiz;
 import net.solarnetwork.central.din.security.SecurityEndpointCredential;
 import net.solarnetwork.central.din.security.SecurityUtils;
+import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.util.ObjectUtils;
@@ -117,31 +116,10 @@ public class DatumInputController {
 		}
 
 		// limit input size
-		input = new ExceptionThrowingBoundedInputStream(input, maxDatumInputLength);
+		input = new MaxUploadSizeInputStream(input, maxDatumInputLength);
 		var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
 
 		return success(result);
-	}
-
-	private static final class ExceptionThrowingBoundedInputStream extends BoundedInputStream {
-
-		/**
-		 * Constructor.
-		 *
-		 * @param inputStream
-		 *        the stream to wrap
-		 * @param maxLength
-		 *        the maximum length
-		 */
-		public ExceptionThrowingBoundedInputStream(InputStream inputStream, long maxLength) {
-			super(inputStream, maxLength);
-		}
-
-		@Override
-		protected void onMaxLength(long maxLength, long count) throws IOException {
-			throw new MaxUploadSizeExceededException(getMaxLength());
-		}
-
 	}
 
 }
