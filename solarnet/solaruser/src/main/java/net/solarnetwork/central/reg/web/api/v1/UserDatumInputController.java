@@ -32,11 +32,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +54,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
@@ -238,9 +244,32 @@ public class UserDatumInputController {
 	/**
 	 * Preview transform input DTO.
 	 */
-	public static record PreviewTransformInput(@JsonProperty(value = "contentType") String contentType,
-			@JsonProperty(value = "data") String data,
+	public static record PreviewTransformInput(@JsonProperty("contentType") String contentType,
+			@JsonProperty("data") String data, @JsonProperty("query") String query,
 			@JsonProperty(value = "parameters", required = false) Map<String, Object> parameters) {
+
+		private Map<String, String> queryParameters() {
+			if ( query != null && !query.isBlank() ) {
+				try {
+					URI uri = new URI("http://localhost/?" + query);
+					var qMap = UriComponentsBuilder.fromUri(uri).build(true).getQueryParams();
+					if ( qMap != null ) {
+						Map<String, String> decoded = new HashMap<>(qMap.size());
+						for ( Entry<String, List<String>> entry : qMap.entrySet() ) {
+							List<String> vals = entry.getValue();
+							if ( vals != null && !vals.isEmpty() ) {
+								decoded.put(entry.getKey(),
+										URLDecoder.decode(vals.get(0), StandardCharsets.UTF_8));
+							}
+						}
+						return decoded;
+					}
+				} catch ( URISyntaxException e ) {
+					// ignore
+				}
+			}
+			return Collections.emptyMap();
+		}
 
 	}
 
@@ -257,8 +286,15 @@ public class UserDatumInputController {
 				new ByteArrayInputStream(previewInput.data().getBytes(encoding)), maxDatumInputLength);
 
 		Map<String, Object> parameters = null;
-		if ( previewInput.parameters() != null ) {
+		Map<String, String> queryParameters = previewInput.queryParameters();
+		if ( queryParameters != null ) {
 			parameters = new HashMap<>(8);
+			parameters.putAll(queryParameters);
+		}
+		if ( previewInput.parameters() != null ) {
+			if ( parameters == null ) {
+				parameters = new HashMap<>(8);
+			}
 			parameters.putAll(previewInput.parameters());
 		}
 		var result = userDatumInputBiz.previewTransform(id, endpointId, mediaType, input, parameters);

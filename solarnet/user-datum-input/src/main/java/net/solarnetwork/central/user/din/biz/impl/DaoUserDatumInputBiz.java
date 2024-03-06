@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.din.biz.impl;
 
+import static net.solarnetwork.central.din.biz.DatumInputEndpointBiz.PARAM_NODE_ID;
+import static net.solarnetwork.central.din.biz.DatumInputEndpointBiz.PARAM_SOURCE_ID;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -218,6 +220,26 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		dao.delete(pk);
 	}
 
+	private static Long nodeId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
+		Long nodeId = endpoint.getNodeId();
+		if ( parameters != null && parameters.containsKey(PARAM_NODE_ID) ) {
+			try {
+				nodeId = Long.valueOf(parameters.get(PARAM_NODE_ID).toString());
+			} catch ( IllegalArgumentException e ) {
+				// ignore
+			}
+		}
+		return nodeId;
+	}
+
+	private static String sourceId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
+		String sourceId = endpoint.getSourceId();
+		if ( parameters != null && parameters.containsKey(PARAM_SOURCE_ID) ) {
+			sourceId = parameters.get(PARAM_SOURCE_ID).toString();
+		}
+		return sourceId;
+	}
+
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId,
@@ -243,6 +265,9 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 							.formatted(xformServiceId, contentType, in.getClass().getSimpleName()));
 		}
 
+		Long nodeId = nodeId(endpoint, parameters);
+		String sourceId = sourceId(endpoint, parameters);
+
 		var xsltOutput = new StringBuilder();
 		Iterable<Datum> datum = null;
 		String msg = null;
@@ -259,14 +284,10 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			params.put(TransformService.PARAM_XSLT_OUTPUT, xsltOutput);
 			params.put(TransformService.PARAM_PREVIEW, true);
 			datum = xformService.transform(in, contentType, xform, params);
-			if ( datum != null && endpoint != null
-					&& (endpoint.getNodeId() != null || endpoint.getSourceId() != null) ) {
+			if ( datum != null && endpoint != null && (nodeId != null || sourceId != null) ) {
 				datum = StreamSupport.stream(datum.spliterator(), false)
-						.map(d -> d.copyWithId(DatumId.nodeId(
-								endpoint.getNodeId() != null ? endpoint.getNodeId() : d.getObjectId(),
-								endpoint.getSourceId() != null ? endpoint.getSourceId()
-										: d.getSourceId(),
-								d.getTimestamp())))
+						.map(d -> d.copyWithId(DatumId.nodeId(nodeId != null ? nodeId : d.getObjectId(),
+								sourceId != null ? sourceId : d.getSourceId(), d.getTimestamp())))
 						.toList();
 			}
 		} catch ( Exception e ) {
