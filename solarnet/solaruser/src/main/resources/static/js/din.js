@@ -593,6 +593,7 @@ function dinManagement() {
 				, container = $('#din-endpoint-transform-output-container')
 				, submitBtn = container.find('button[type=submit]')
 				, inputData = form.elements.inputData.value
+				, previousInputData = form.elements.previousInputData.value
 				, inputType = form.elements.inputType.value
 				, errorContainer = container.find('.error-container')
 				;
@@ -601,11 +602,21 @@ function dinManagement() {
 			
 			const url = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), config));
 			
+			const reqBody = {
+				contentType: inputType,	
+				data: inputData
+			};
+			if (previousInputData) {
+				reqBody.parameters = {
+					'previous-input': previousInputData
+				};
+			}
+			
 			$.ajax({
 				type: 'POST',
 				url: url,
-				contentType: inputType,
-				data: inputData,
+				contentType: 'application/json',
+				data: JSON.stringify(reqBody),
 				dataType: 'json',
 				beforeSend: function(xhr) {
 					SolarReg.csrf(xhr);

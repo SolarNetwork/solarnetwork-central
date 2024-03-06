@@ -47,6 +47,7 @@ app:
       heap-max-entries: 10000
       disk-max-size-mb: 100
   din:
+    max-datum-input-length: 8196
     xslt:
       templates-cache:
         ttl: 15
