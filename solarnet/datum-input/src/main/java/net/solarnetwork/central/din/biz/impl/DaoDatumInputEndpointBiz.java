@@ -22,7 +22,10 @@
 
 package net.solarnetwork.central.din.biz.impl;
 
+import static net.solarnetwork.central.biz.UserEventAppenderBiz.addEvent;
+import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -50,6 +54,7 @@ import net.solarnetwork.central.din.biz.TransformService;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.dao.InputDataEntityDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
+import net.solarnetwork.central.din.domain.CentralDinUserEvents;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
@@ -65,9 +70,9 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
+public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -78,6 +83,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 	private final InputDataEntityDao previousInputDataDao;
 	private final Map<String, TransformService> transformServices;
 	private DatumProcessor fluxPublisher;
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -130,9 +136,17 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 
 		if ( !xformService.supportsInput(requireNonNullArgument(in, "in"),
 				requireNonNullArgument(contentType, "contentType")) ) {
-			throw new IllegalArgumentException(
-					"Transform service %s does not support input type %s with %s."
-							.formatted(xformServiceId, contentType, in.getClass().getSimpleName()));
+			String msg = "Transform service %s does not support input type %s with %s."
+					.formatted(xformServiceId, contentType, in.getClass().getSimpleName());
+			// @formatter:off
+			addEvent(userEventAppenderBiz, userId, event(DATUM_TAGS, msg, getJSONString(Map.of(
+						ENDPOINT_ID_DATA_KEY, endpointId,
+						TRANSFORM_ID_DATA_KEY, endpoint.getTransformId(),
+						TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId,
+						CONTENT_TYPE_DATA_KEY, contentType.toString()),
+						null), ERROR_TAG));
+			// @formatter:on
+			throw new IllegalArgumentException(msg);
 		}
 
 		var params = new HashMap<String, Object>(8);
@@ -144,36 +158,56 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 		params.put(TransformService.PARAM_TRANSFORM_ID, endpoint.getTransformId());
 		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
 
-		// check for previous input support
-		final InputDataEntityDao previousInputDao = (endpoint.isPreviousInputTracking()
-				? this.previousInputDataDao
-				: null);
-		if ( previousInputDao != null && parameters.containsKey(PARAM_NODE_ID)
-				&& parameters.containsKey(PARAM_SOURCE_ID) ) {
-			// track previous input using user/node/source key; node and source MUST
-			// be provided as input parameters; if no previous input has been cached
-			// then immediately return an empty result, to wait for next input
-			try {
-				Long nodeId = Long.valueOf(parameters.get(PARAM_NODE_ID));
-				String sourceId = parameters.get(PARAM_SOURCE_ID);
-				if ( nodeId != null && sourceId != null ) {
-					UserLongStringCompositePK key = new UserLongStringCompositePK(userId, nodeId,
-							sourceId);
-					byte[] inputData = FileCopyUtils.copyToByteArray(in);
-					byte[] previousInput = previousInputDao.getAndPut(key, inputData);
-					if ( previousInput == null ) {
-						return Collections.emptyList();
+		Iterable<Datum> datum;
+		try {
+			// check for previous input support
+			final InputDataEntityDao previousInputDao = (endpoint.isPreviousInputTracking()
+					? this.previousInputDataDao
+					: null);
+			if ( previousInputDao != null && parameters.containsKey(PARAM_NODE_ID)
+					&& parameters.containsKey(PARAM_SOURCE_ID) ) {
+				// track previous input using user/node/source key; node and source MUST
+				// be provided as input parameters; if no previous input has been cached
+				// then immediately return an empty result, to wait for next input
+				try {
+					Long nodeId = Long.valueOf(parameters.get(PARAM_NODE_ID));
+					String sourceId = parameters.get(PARAM_SOURCE_ID);
+					if ( nodeId != null && sourceId != null ) {
+						UserLongStringCompositePK key = new UserLongStringCompositePK(userId, nodeId,
+								sourceId);
+						byte[] inputData = FileCopyUtils.copyToByteArray(in);
+						byte[] previousInput = previousInputDao.getAndPut(key, inputData);
+						if ( previousInput == null ) {
+							return Collections.emptyList();
+						}
+						in = new ByteArrayInputStream(inputData);
+						params.put(TransformService.PARAM_PREVIOUS_INPUT,
+								new ByteArrayInputStream(previousInput));
 					}
-					in = new ByteArrayInputStream(inputData);
-					params.put(TransformService.PARAM_PREVIOUS_INPUT,
-							new ByteArrayInputStream(previousInput));
+				} catch ( IllegalArgumentException e ) {
+					// ignore and continue
 				}
-			} catch ( IllegalArgumentException e ) {
-				// ignore and continue
+			}
+
+			datum = xformService.transform(in, contentType, xform, params);
+		} catch ( Exception e ) {
+			String msg = "Error executing transform: " + e.getMessage();
+			// @formatter:off
+			addEvent(userEventAppenderBiz, userId, event(DATUM_TAGS, msg, getJSONString(Map.of(
+						ENDPOINT_ID_DATA_KEY, endpointId,
+						TRANSFORM_ID_DATA_KEY, endpoint.getTransformId(),
+						TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId,
+						CONTENT_TYPE_DATA_KEY, contentType.toString()),
+						null), ERROR_TAG));
+			// @formatter:on
+			if ( e instanceof IOException ioe ) {
+				throw ioe;
+			} else if ( e instanceof RuntimeException re ) {
+				throw re;
+			} else {
+				throw new RuntimeException(e);
 			}
 		}
-
-		Iterable<Datum> datum = xformService.transform(in, contentType, xform, params);
 
 		var result = new ArrayList<DatumId>(8);
 		for ( Datum d : datum ) {
@@ -237,6 +271,27 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz {
 	 */
 	public void setFluxPublisher(DatumProcessor fluxPublisher) {
 		this.fluxPublisher = fluxPublisher;
+	}
+
+	/**
+	 * Get the user event appender service.
+	 *
+	 * @return the service
+	 * @since 1.2
+	 */
+	public UserEventAppenderBiz getUserEventAppenderBiz() {
+		return userEventAppenderBiz;
+	}
+
+	/**
+	 * Set the user event appender service.
+	 *
+	 * @param userEventAppenderBiz
+	 *        the service to set
+	 * @since 1.2
+	 */
+	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
 }
