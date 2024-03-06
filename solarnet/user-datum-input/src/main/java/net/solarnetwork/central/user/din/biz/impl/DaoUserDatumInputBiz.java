@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -220,7 +221,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId,
-			MimeType contentType, InputStream in) throws IOException {
+			MimeType contentType, InputStream in, Map<String, ?> parameters) throws IOException {
 		final UserLongCompositePK xformPk = new UserLongCompositePK(id.getUserId(),
 				requireNonNullArgument(id.getEntityId(), "transformId"));
 		final TransformConfiguration xform = requireNonNullObject(transformDao.get(xformPk), xformPk);
@@ -246,13 +247,17 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		Iterable<Datum> datum = null;
 		String msg = null;
 		try {
-			var params = Map.of(TransformService.PARAM_USER_ID, id.getUserId(),
-					TransformService.PARAM_ENDPOINT_ID,
-					(endpointId != null ? endpointId : UserUuidPK.UNASSIGNED_UUID_ID).toString(),
-					TransformService.PARAM_TRANSFORM_ID, id.getEntityId(),
-					TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident(),
-					TransformService.PARAM_XSLT_OUTPUT, xsltOutput,
-					TransformService.PARAM_PREVIEW, true);
+			var params = new HashMap<String, Object>(8);
+			if ( parameters != null ) {
+				params.putAll(parameters);
+			}
+			params.put(TransformService.PARAM_USER_ID, id.getUserId());
+			params.put(TransformService.PARAM_ENDPOINT_ID,
+					(endpointId != null ? endpointId : UserUuidPK.UNASSIGNED_UUID_ID).toString());
+			params.put(TransformService.PARAM_TRANSFORM_ID, id.getEntityId());
+			params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+			params.put(TransformService.PARAM_XSLT_OUTPUT, xsltOutput);
+			params.put(TransformService.PARAM_PREVIEW, true);
 			datum = xformService.transform(in, contentType, xform, params);
 			if ( datum != null && endpoint != null
 					&& (endpoint.getNodeId() != null || endpoint.getSourceId() != null) ) {

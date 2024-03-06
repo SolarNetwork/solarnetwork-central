@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.din.biz.TransformService;
@@ -156,10 +157,12 @@ public interface UserDatumInputBiz {
 	 *        the data content type
 	 * @param in
 	 *        the input data to transform
+	 * @param optional
+	 *        parameters
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
 	TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId, MimeType contentType,
-			InputStream in) throws IOException;
+			InputStream in, Map<String, ?> parameters) throws IOException;
 
 }
