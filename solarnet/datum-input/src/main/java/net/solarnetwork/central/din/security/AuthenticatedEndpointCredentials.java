@@ -23,17 +23,20 @@
 package net.solarnetwork.central.din.security;
 
 import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.core.userdetails.User;
+import net.solarnetwork.central.support.EventDetailsProvider;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
  * User details for an authenticated endpoint credential.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class AuthenticatedEndpointCredentials extends User implements EndpointUserDetails {
+public class AuthenticatedEndpointCredentials extends User
+		implements EndpointUserDetails, EventDetailsProvider {
 
 	private static final long serialVersionUID = -6640758003140500968L;
 
@@ -62,6 +65,11 @@ public class AuthenticatedEndpointCredentials extends User implements EndpointUs
 				createAuthorityList(SecurityUtils.ROLE_DIN));
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.endpointId = ObjectUtils.requireNonNullArgument(endpointId, "endpointId");
+	}
+
+	@Override
+	public Map<String, ?> eventDetails() {
+		return Map.of("endpointId", endpointId);
 	}
 
 	@Override

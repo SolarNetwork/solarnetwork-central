@@ -1,5 +1,7 @@
 app:
-  meta.name: SolarQuery
+  meta:
+    name: SolarQuery
+    key: query
   cache.persistence.path: "var/cache"
   datasource:
     hikari:

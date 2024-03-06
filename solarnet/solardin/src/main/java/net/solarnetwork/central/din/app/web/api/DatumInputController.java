@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -40,7 +41,7 @@ import org.springframework.web.context.request.WebRequest;
 import net.solarnetwork.central.din.biz.DatumInputEndpointBiz;
 import net.solarnetwork.central.din.security.SecurityEndpointCredential;
 import net.solarnetwork.central.din.security.SecurityUtils;
-import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.util.ObjectUtils;
@@ -49,26 +50,30 @@ import net.solarnetwork.util.ObjectUtils;
  * Datum input controller.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestController("v1DatumInputController")
-@GlobalExceptionRestController
 @RequestMapping("/api/v1/endpoint/{endpointId}")
 public class DatumInputController {
 
 	private final DatumInputEndpointBiz inputBiz;
+	private final long maxDatumInputLength;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param inputBiz
 	 *        the input service
+	 * @param maxDatumInputLength
+	 *        the maximum datum input length
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DatumInputController(DatumInputEndpointBiz inputBiz) {
+	public DatumInputController(DatumInputEndpointBiz inputBiz,
+			@Value("${app.din.max-datum-input-length}") long maxDatumInputLength) {
 		super();
 		this.inputBiz = ObjectUtils.requireNonNullArgument(inputBiz, "inputBiz");
+		this.maxDatumInputLength = maxDatumInputLength;
 	}
 
 	/**
@@ -110,6 +115,8 @@ public class DatumInputController {
 			}
 		}
 
+		// limit input size
+		input = new MaxUploadSizeInputStream(input, maxDatumInputLength);
 		var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
 
 		return success(result);

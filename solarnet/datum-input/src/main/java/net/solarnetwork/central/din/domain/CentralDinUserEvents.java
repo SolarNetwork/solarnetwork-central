@@ -1,5 +1,5 @@
 /* ==================================================================
- * SecurityEndpointCredential.java - 23/02/2024 2:19:21 pm
+ * CentralDinUserEvents.java - 7/03/2024 5:18:54 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,40 +20,38 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.security;
-
-import java.util.UUID;
-import net.solarnetwork.central.domain.UserIdRelated;
-import net.solarnetwork.central.security.SecurityActor;
+package net.solarnetwork.central.din.domain;
 
 /**
- * API for an authenticated endpoint credential security details.
+ * Constants for central datum input (DIN) user events.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SecurityEndpointCredential extends SecurityActor, UserIdRelated {
+public interface CentralDinUserEvents {
 
-	/**
-	 * Get the account owner user ID.
-	 *
-	 * @return the user ID
-	 */
-	@Override
-	Long getUserId();
+	/** A user event tag for DIN. */
+	String DIN_TAG = "din";
 
-	/**
-	 * Get the endpoint ID.
-	 *
-	 * @return the endpoint ID
-	 */
-	UUID getEndpointId();
+	/** A user event tag for DIN "error" . */
+	String ERROR_TAG = "error";
 
-	/**
-	 * Get the email used to authenticate the user with.
-	 *
-	 * @return email
-	 */
-	String getUsername();
+	/** A user event tag for DIN datum handling . */
+	String DATUM_TAG = "datum";
+
+	/** User event data key for an endpoint ID. */
+	String ENDPOINT_ID_DATA_KEY = "endpointId";
+
+	/** User event data key for a content MIME type. */
+	String CONTENT_TYPE_DATA_KEY = "contentType";
+
+	/** User event data key for an transform ID. */
+	String TRANSFORM_ID_DATA_KEY = "transformId";
+
+	/** User event data key for an transform service ID. */
+	String TRANSFORM_SERVICE_ID_DATA_KEY = "transformServiceId";
+
+	/** User event tags for datum events. */
+	String[] DATUM_TAGS = new String[] { DIN_TAG, DATUM_TAG };
 
 }

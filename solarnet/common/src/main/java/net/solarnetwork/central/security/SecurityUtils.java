@@ -41,12 +41,13 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.domain.UserIdRelated;
 
 /**
  * Security helper methods.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class SecurityUtils {
 
@@ -252,7 +253,7 @@ public class SecurityUtils {
 	 * @return The user ID of the current {@link SecurityActor} (never
 	 *         {@literal null}).
 	 * @throws SecurityException
-	 *         If the actor is not available.
+	 *         If the user ID is not available.
 	 * @since 1.3
 	 */
 	public static Long getCurrentActorUserId() throws SecurityException {
@@ -267,16 +268,19 @@ public class SecurityUtils {
 	 * @return the ID of the user associated with the actor, never
 	 *         {@literal null}
 	 * @throws SecurityException
-	 *         if the actor is not available
+	 *         if the user ID is not available
 	 * @since 2.1
 	 */
 	public static Long getActorUserId(Authentication auth) throws SecurityException {
+		if ( auth instanceof UserIdRelated u ) {
+			return u.getUserId();
+		} else if ( auth.getDetails() instanceof UserIdRelated u ) {
+			return u.getUserId();
+		}
 		SecurityActor actor = getActor(auth);
 		Long userId = null;
-		if ( actor instanceof SecurityUser ) {
-			userId = ((SecurityUser) actor).getUserId();
-		} else if ( actor instanceof SecurityToken ) {
-			userId = ((SecurityToken) actor).getUserId();
+		if ( actor instanceof UserIdRelated u ) {
+			userId = u.getUserId();
 		}
 		if ( userId != null ) {
 			return userId;

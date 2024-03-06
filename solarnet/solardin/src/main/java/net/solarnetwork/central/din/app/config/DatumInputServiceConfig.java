@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
@@ -80,6 +81,9 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	@Qualifier(SOLARFLUX)
 	private DatumProcessor fluxPublisher;
 
+	@Autowired
+	private UserEventAppenderBiz userEventAppenderBiz;
+
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarin.async-collector")
 	public AsyncDatumCollectorSettings asyncDatumCollectorSettings() {
@@ -106,6 +110,7 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 		var biz = new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
 				inputDataDao, transformServices);
 		biz.setFluxPublisher(fluxPublisher);
+		biz.setUserEventAppenderBiz(userEventAppenderBiz);
 		return biz;
 	}
 

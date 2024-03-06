@@ -1,5 +1,7 @@
 app:
-  meta.name: SolarUser
+  meta:
+    name: SolarUser
+    key: user
   billing:
     delivery-timeout-secs: 60
     invoice:
@@ -45,6 +47,7 @@ app:
       heap-max-entries: 10000
       disk-max-size-mb: 100
   din:
+    max-datum-input-length: 8196
     xslt:
       templates-cache:
         ttl: 15
@@ -120,6 +123,9 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+  security:
+    auth-events:
+      pub-success: true
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"

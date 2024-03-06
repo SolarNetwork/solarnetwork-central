@@ -593,7 +593,9 @@ function dinManagement() {
 				, container = $('#din-endpoint-transform-output-container')
 				, submitBtn = container.find('button[type=submit]')
 				, inputData = form.elements.inputData.value
+				, previousInputData = form.elements.previousInputData.value
 				, inputType = form.elements.inputType.value
+				, queryParams = form.elements.queryParams.value
 				, errorContainer = container.find('.error-container')
 				;
 				
@@ -601,11 +603,24 @@ function dinManagement() {
 			
 			const url = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), config));
 			
+			const reqBody = {
+				contentType: inputType,	
+				data: inputData
+			};
+			if (queryParams) {
+				reqBody.query = queryParams;
+			}
+			if (previousInputData) {
+				reqBody.parameters = {
+					'previous-input': previousInputData
+				};
+			}
+			
 			$.ajax({
 				type: 'POST',
 				url: url,
-				contentType: inputType,
-				data: inputData,
+				contentType: 'application/json',
+				data: JSON.stringify(reqBody),
 				dataType: 'json',
 				beforeSend: function(xhr) {
 					SolarReg.csrf(xhr);
@@ -617,6 +632,16 @@ function dinManagement() {
 					if (json.data && json.data.message) {
 						errorContainer.text(msg).removeClass('hidden');
 					} else if (json.data && Array.isArray(json.data.datum) && json.data.datum.length > 0) {
+						// provide empty node/source for display if none provided, to replace any
+						// previously shown values
+						for (let d of json.data.datum) {
+							if (d.nodeId === undefined) {
+								d.nodeId = '';
+							}
+							if (d.sourceId === undefined) {
+								d.sourceId = '';
+							}
+						}
 						// render datum
 						const datumContainer = container.find('.datum-container');
 						SolarReg.Templates.populateTemplateItems(datumContainer, json.data.datum, false, function(datum, el) {

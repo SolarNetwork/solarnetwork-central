@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityUser.java - Nov 22, 2012 8:57:58 AM
+ * EventDetailsProvider.java - 6/03/2024 6:36:39 pm
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,38 +20,24 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.security;
+package net.solarnetwork.central.support;
 
-import net.solarnetwork.central.domain.UserIdRelated;
+import java.util.Map;
 
 /**
- * API for user details.
+ * General API for something can can provide event "details" in the form of a
+ * map.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SecurityUser extends SecurityActor, UserIdRelated {
+public interface EventDetailsProvider {
 
 	/**
-	 * Get a friendly display name.
+	 * Get the event details.
 	 * 
-	 * @return display name
+	 * @return the event details, never {@literal null}
 	 */
-	String getDisplayName();
-
-	/**
-	 * Get the email used to authenticate the user with.
-	 * 
-	 * @return email
-	 */
-	String getEmail();
-
-	/**
-	 * Get a unique user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	Long getUserId();
+	Map<String, ?> eventDetails();
 
 }

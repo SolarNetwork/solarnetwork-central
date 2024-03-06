@@ -1,7 +1,7 @@
 /* ==================================================================
- * SecurityUser.java - Nov 22, 2012 8:57:58 AM
+ * ExceptionThrowingBoundedInputStream.java - 7/03/2024 6:40:27 am
  * 
- * Copyright 2007-2012 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,38 +20,37 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.security;
+package net.solarnetwork.central.web;
 
-import net.solarnetwork.central.domain.UserIdRelated;
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.commons.io.input.BoundedInputStream;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
- * API for user details.
+ * Bounded input stream that throws a {@lnk MaxUploadSizeExceededException} when
+ * reading beyond the configured maximum length.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SecurityUser extends SecurityActor, UserIdRelated {
+public class MaxUploadSizeInputStream extends BoundedInputStream {
 
 	/**
-	 * Get a friendly display name.
-	 * 
-	 * @return display name
+	 * Constructor.
+	 *
+	 * @param inputStream
+	 *        the stream to wrap
+	 * @param maxLength
+	 *        the maximum length
 	 */
-	String getDisplayName();
+	public MaxUploadSizeInputStream(InputStream inputStream, long maxLength) {
+		super(inputStream, maxLength);
+	}
 
-	/**
-	 * Get the email used to authenticate the user with.
-	 * 
-	 * @return email
-	 */
-	String getEmail();
-
-	/**
-	 * Get a unique user ID.
-	 * 
-	 * @return the user ID
-	 */
 	@Override
-	Long getUserId();
+	protected void onMaxLength(long maxLength, long count) throws IOException {
+		throw new MaxUploadSizeExceededException(getMaxLength());
+	}
 
 }

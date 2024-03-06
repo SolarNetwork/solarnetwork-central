@@ -1,5 +1,7 @@
 app:
-  meta.name: SolarDIN
+  meta:
+    name: SolarDIN
+    key: din
   cache.persistence.path: "var/cache"
   datasource:
     hikari:
@@ -35,6 +37,7 @@ app:
         ttl: 600
         heap-max-entries: 10000
         disk-max-size-mb: 0
+    max-datum-input-length: 8196
     xslt:
       templates-cache:
         ttl: 86400

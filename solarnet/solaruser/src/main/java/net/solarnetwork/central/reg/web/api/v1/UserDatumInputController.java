@@ -28,12 +28,23 @@ import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +54,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
 import net.solarnetwork.central.din.dao.BasicFilter;
@@ -60,6 +73,7 @@ import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -68,7 +82,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for DNP3 management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(SolarNetDatumInputConfiguration.DATUM_INPUT)
 @GlobalExceptionRestController
@@ -77,6 +91,7 @@ import net.solarnetwork.domain.Result;
 public class UserDatumInputController {
 
 	private final UserDatumInputBiz userDatumInputBiz;
+	private final long maxDatumInputLength;
 
 	/**
 	 * Constructor.
@@ -86,9 +101,11 @@ public class UserDatumInputController {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserDatumInputController(UserDatumInputBiz userDatumInputBiz) {
+	public UserDatumInputController(UserDatumInputBiz userDatumInputBiz,
+			@Value("${app.din.max-datum-input-length}") long maxDatumInputLength) {
 		super();
 		this.userDatumInputBiz = requireNonNullArgument(userDatumInputBiz, "userDatumInputBiz");
+		this.maxDatumInputLength = maxDatumInputLength;
 	}
 
 	/**
@@ -200,18 +217,7 @@ public class UserDatumInputController {
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in)
 			throws IOException {
-		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
-
-		final MediaType mediaType = MediaType.parseMediaType(contentType);
-
-		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
-			input = new GZIPInputStream(in);
-		}
-
-		var result = userDatumInputBiz.previewTransform(id, null, mediaType, input);
-
-		return success(result);
+		return previewEndpointTransform(transformId, null, contentType, encoding, in);
 	}
 
 	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}", method = RequestMethod.POST, consumes = {
@@ -230,7 +236,68 @@ public class UserDatumInputController {
 			input = new GZIPInputStream(in);
 		}
 
-		var result = userDatumInputBiz.previewTransform(id, endpointId, mediaType, input);
+		var result = userDatumInputBiz.previewTransform(id, endpointId, mediaType, input, null);
+
+		return success(result);
+	}
+
+	/**
+	 * Preview transform input DTO.
+	 */
+	public static record PreviewTransformInput(@JsonProperty("contentType") String contentType,
+			@JsonProperty("data") String data, @JsonProperty("query") String query,
+			@JsonProperty(value = "parameters", required = false) Map<String, Object> parameters) {
+
+		private Map<String, String> queryParameters() {
+			if ( query != null && !query.isBlank() ) {
+				try {
+					URI uri = new URI("http://localhost/?" + query);
+					var qMap = UriComponentsBuilder.fromUri(uri).build(true).getQueryParams();
+					if ( qMap != null ) {
+						Map<String, String> decoded = new HashMap<>(qMap.size());
+						for ( Entry<String, List<String>> entry : qMap.entrySet() ) {
+							List<String> vals = entry.getValue();
+							if ( vals != null && !vals.isEmpty() ) {
+								decoded.put(entry.getKey(),
+										URLDecoder.decode(vals.get(0), StandardCharsets.UTF_8));
+							}
+						}
+						return decoded;
+					}
+				} catch ( URISyntaxException e ) {
+					// ignore
+				}
+			}
+			return Collections.emptyMap();
+		}
+
+	}
+
+	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}/params", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	public Result<TransformOutput> previewEndpointTransform(
+			@PathVariable("transformId") Long transformId, @PathVariable("endpointId") UUID endpointId,
+			@RequestBody PreviewTransformInput previewInput) throws IOException {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), transformId);
+
+		MediaType mediaType = MediaType.parseMediaType(previewInput.contentType());
+		Charset encoding = (mediaType.getCharset() != null ? mediaType.getCharset()
+				: StandardCharsets.UTF_8);
+		InputStream input = new MaxUploadSizeInputStream(
+				new ByteArrayInputStream(previewInput.data().getBytes(encoding)), maxDatumInputLength);
+
+		Map<String, Object> parameters = null;
+		Map<String, String> queryParameters = previewInput.queryParameters();
+		if ( queryParameters != null ) {
+			parameters = new HashMap<>(8);
+			parameters.putAll(queryParameters);
+		}
+		if ( previewInput.parameters() != null ) {
+			if ( parameters == null ) {
+				parameters = new HashMap<>(8);
+			}
+			parameters.putAll(previewInput.parameters());
+		}
+		var result = userDatumInputBiz.previewTransform(id, endpointId, mediaType, input, parameters);
 
 		return success(result);
 	}

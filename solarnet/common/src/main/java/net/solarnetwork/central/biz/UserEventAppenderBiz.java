@@ -29,17 +29,43 @@ import net.solarnetwork.central.domain.UserEvent;
  * Service API for appending user events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserEventAppenderBiz {
 
 	/**
 	 * Add an event.
 	 * 
+	 * @param userId
+	 *        the user account ID
 	 * @param info
 	 *        the event info to add
 	 * @return the generated event
 	 */
 	UserEvent addEvent(Long userId, LogEventInfo info);
+
+	/**
+	 * Helper function to add an event to an optional appender.
+	 * 
+	 * <p>
+	 * If {@code biz} is {@literal null}, this method simply returns
+	 * {@literal null}.
+	 * </p>
+	 * 
+	 * @param biz
+	 *        the optional appender
+	 * @param userId
+	 *        the user account ID
+	 * @param info
+	 *        the event info to add
+	 * @return the generated event, or {@literal null} if {@code biz} is
+	 *         {@literal null}
+	 */
+	static UserEvent addEvent(UserEventAppenderBiz biz, Long userId, LogEventInfo info) {
+		if ( biz == null ) {
+			return null;
+		}
+		return biz.addEvent(userId, info);
+	}
 
 }

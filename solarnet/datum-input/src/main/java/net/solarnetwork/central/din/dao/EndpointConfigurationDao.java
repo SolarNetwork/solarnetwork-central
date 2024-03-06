@@ -33,11 +33,20 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link EndpointConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface EndpointConfigurationDao
 		extends GenericCompositeKey2Dao<EndpointConfiguration, UserUuidPK, Long, UUID>,
 		FilterableDao<EndpointConfiguration, UserUuidPK, EndpointFilter>,
 		UserModifiableEnabledStatusDao<EndpointFilter> {
+
+	/**
+	 * Look up an endpoint for a specific endpoint ID.
+	 *
+	 * @param endpointId
+	 *        the endpoint ID
+	 * @return the configuration, or {@literal null} if not found
+	 */
+	EndpointConfiguration getForEndpointId(UUID endpointId);
 
 }

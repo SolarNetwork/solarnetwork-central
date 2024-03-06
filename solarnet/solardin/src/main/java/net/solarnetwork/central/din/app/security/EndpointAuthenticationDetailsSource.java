@@ -22,18 +22,19 @@
 
 package net.solarnetwork.central.din.app.security;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import jakarta.servlet.http.HttpServletRequest;
-import net.solarnetwork.util.ObjectUtils;
+import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 
 /**
  * Authentication details source for {@link EndpointAuthenticationDetails}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EndpointAuthenticationDetailsSource
 		implements AuthenticationDetailsSource<HttpServletRequest, EndpointAuthenticationDetails> {
@@ -42,6 +43,7 @@ public class EndpointAuthenticationDetailsSource
 			Pattern.CASE_INSENSITIVE);
 
 	private final Pattern endpointIdPattern;
+	private final EndpointConfigurationDao endpointDao;
 
 	/**
 	 * Constructor.
@@ -49,39 +51,53 @@ public class EndpointAuthenticationDetailsSource
 	 * <p>
 	 * The {@link #DEFAULT_ENDPOINT_ID_PATTERN} pattern will be used.
 	 * </p>
+	 *
+	 * @param endpointDao
+	 *        the endpoint DAO
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public EndpointAuthenticationDetailsSource() {
-		this(DEFAULT_ENDPOINT_ID_PATTERN);
+	public EndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao) {
+		this(endpointDao, DEFAULT_ENDPOINT_ID_PATTERN);
 	}
 
 	/**
 	 * Constructor.
 	 *
+	 * @param endpointDao
+	 *        the endpoint DAO
 	 * @param endpointIdPattern
 	 *        the pattern whose single group returns the endpoint ID from a
 	 *        request URL path
 	 */
-	public EndpointAuthenticationDetailsSource(Pattern endpointIdPattern) {
+	public EndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao,
+			Pattern endpointIdPattern) {
 		super();
-		this.endpointIdPattern = ObjectUtils.requireNonNullArgument(endpointIdPattern,
-				"endpointIdPattern");
+		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");
+		this.endpointIdPattern = requireNonNullArgument(endpointIdPattern, "endpointIdPattern");
 	}
 
 	@Override
 	public EndpointAuthenticationDetails buildDetails(HttpServletRequest req) {
 		UUID endpointId = null;
+		Long userId = null;
 		String path = req.getServletPath();
 		if ( path != null ) {
 			Matcher m = endpointIdPattern.matcher(path);
 			if ( m.find() ) {
 				try {
 					endpointId = UUID.fromString(m.group(1));
+
+					var endpoint = endpointDao.getForEndpointId(endpointId);
+					if ( endpoint != null ) {
+						userId = endpoint.getUserId();
+					}
 				} catch ( IllegalArgumentException e ) {
 					// ignore
 				}
 			}
 		}
-		return new EndpointAuthenticationDetails(req, endpointId);
+		return new EndpointAuthenticationDetails(req, userId, endpointId);
 	}
 
 }
