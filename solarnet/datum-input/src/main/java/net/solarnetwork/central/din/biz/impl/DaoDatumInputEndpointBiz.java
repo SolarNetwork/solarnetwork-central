@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -57,6 +58,7 @@ import net.solarnetwork.central.din.dao.TransformConfigurationDao;
 import net.solarnetwork.central.din.domain.CentralDinUserEvents;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
@@ -70,7 +72,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -115,6 +117,20 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
 	}
 
+	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
+			TransformConfiguration xform, MimeType contentType, Map<String, String> parameters) {
+		var eventData = new LinkedHashMap<>(8);
+		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
+		eventData.put(TRANSFORM_ID_DATA_KEY, endpoint.getTransformId());
+		eventData.put(TRANSFORM_SERVICE_ID_DATA_KEY, xform.getServiceIdentifier());
+		eventData.put(CONTENT_TYPE_DATA_KEY, contentType.toString());
+
+		if ( parameters != null ) {
+			eventData.put(PARAMETERS_DATA_KEY, parameters);
+		}
+		return event(DATUM_TAGS, msg, getJSONString(eventData, null), ERROR_TAG);
+	}
+
 	@Override
 	public Collection<DatumId> importDatum(Long userId, UUID endpointId, MimeType contentType,
 			InputStream in, Map<String, String> parameters) throws IOException {
@@ -139,12 +155,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			String msg = "Transform service %s does not support input type %s with %s."
 					.formatted(xformServiceId, contentType, in.getClass().getSimpleName());
 			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, event(DATUM_TAGS, msg, getJSONString(Map.of(
-						ENDPOINT_ID_DATA_KEY, endpointId,
-						TRANSFORM_ID_DATA_KEY, endpoint.getTransformId(),
-						TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId,
-						CONTENT_TYPE_DATA_KEY, contentType.toString()),
-						null), ERROR_TAG));
+			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, parameters));
 			// @formatter:on
 			throw new IllegalArgumentException(msg);
 		}
@@ -193,12 +204,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
 			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, event(DATUM_TAGS, msg, getJSONString(Map.of(
-						ENDPOINT_ID_DATA_KEY, endpointId,
-						TRANSFORM_ID_DATA_KEY, endpoint.getTransformId(),
-						TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId,
-						CONTENT_TYPE_DATA_KEY, contentType.toString()),
-						null), ERROR_TAG));
+			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, parameters));
 			// @formatter:on
 			if ( e instanceof IOException ioe ) {
 				throw ioe;
@@ -235,7 +241,10 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				SolarNodeOwnership owner = requireNonNullObject(
 						nodeOwnershipDao.ownershipForNodeId(nodeId), nodeId);
 				if ( !userId.equals(owner.getUserId()) ) {
-					throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+					var ex = new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
+					addEvent(userEventAppenderBiz, userId,
+							importErrorEvent(ex.getMessage(), endpoint, xform, contentType, parameters));
+					throw ex;
 				}
 
 				DatumPK pk = datumDao.persist(gnd);
