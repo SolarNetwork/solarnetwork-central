@@ -26,9 +26,14 @@ import static java.lang.String.format;
 import static net.solarnetwork.central.query.config.DatumQueryBizConfig.STREAM_DATUM_FILTER;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.time.Period;
 import java.util.List;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -43,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
@@ -53,12 +59,13 @@ import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProce
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.config.JsonConfig;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.io.ProvidedOutputStream;
 
 /**
  * Controller for querying datum stream related data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Controller("v1DatumStreamController")
 @RequestMapping("/api/v1/sec/datum/stream")
@@ -89,25 +96,49 @@ public class DatumStreamController {
 		this.cborObjectMapper = requireNonNullArgument(cborObjectMapper, "cborObjectMapper");
 	}
 
+	private static final Pattern GZIP_ENCODING = Pattern.compile("\\bgzip\\b", Pattern.CASE_INSENSITIVE);
+
+	private static final OutputStream responseOutputStream(HttpServletResponse response,
+			String acceptEncoding) {
+		return new ProvidedOutputStream(() -> {
+			try {
+				OutputStream out = response.getOutputStream();
+				if ( acceptEncoding != null && GZIP_ENCODING.matcher(acceptEncoding).find() ) {
+					out = new GZIPOutputStream(out);
+					response.setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+				}
+				return out;
+			} catch ( IOException e ) {
+				throw new IllegalStateException(e);
+			}
+		});
+	}
+
+	private static final Writer responseWriter(HttpServletResponse response, String acceptEncoding) {
+		return new OutputStreamWriter(responseOutputStream(response, acceptEncoding),
+				StandardCharsets.UTF_8);
+	}
+
 	private StreamDatumFilteredResultsProcessor processorForType(final List<MediaType> acceptTypes,
-			final HttpServletResponse response) throws IOException {
+			final String acceptEncoding, final HttpServletResponse response) throws IOException {
 		StreamDatumFilteredResultsProcessor processor = null;
 		for ( MediaType acceptType : acceptTypes ) {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-						cborObjectMapper.createGenerator(response.getOutputStream()),
+						cborObjectMapper.createGenerator(responseOutputStream(response, acceptEncoding)),
 						cborObjectMapper.getSerializerProvider(),
 						MimeType.valueOf(MediaType.APPLICATION_CBOR_VALUE));
 				break;
 			} else if ( MediaType.APPLICATION_JSON.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperStreamDatumFilteredResultsProcessor(
-						objectMapper.createGenerator(response.getOutputStream()),
+						objectMapper.createGenerator(responseOutputStream(response, acceptEncoding)),
 						objectMapper.getSerializerProvider(),
 						MimeType.valueOf(MediaType.APPLICATION_JSON_VALUE));
 				break;
 			} else if ( CsvStreamDatumFilteredResultsProcessor.TEXT_CSV_MIME_TYPE
 					.isCompatibleWith(acceptType) ) {
-				processor = new CsvStreamDatumFilteredResultsProcessor(response.getWriter());
+				processor = new CsvStreamDatumFilteredResultsProcessor(
+						responseWriter(response, acceptEncoding));
 				break;
 			} else {
 				throw new IllegalArgumentException(
@@ -125,14 +156,17 @@ public class DatumStreamController {
 	 *        the query criteria
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param acceptEncoding
+	 *        the HTTP accept-encoding header value
 	 * @param response
 	 *        the HTTP response
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/datum", method = RequestMethod.GET)
 	public void listDatum(final StreamDatumFilterCommand cmd,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response,
-			BindingResult validationResult) throws IOException {
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
+			@RequestHeader(HttpHeaders.ACCEPT_ENCODING) final String acceptEncoding,
+			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
 			if ( validationResult.hasErrors() ) {
@@ -140,7 +174,8 @@ public class DatumStreamController {
 			}
 		}
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
-		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes, response)) {
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
+				acceptEncoding, response)) {
 			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
 					cmd.getMax());
 		}
@@ -151,8 +186,14 @@ public class DatumStreamController {
 	 * 
 	 * @param cmd
 	 *        the query criteria
+	 * @param readingType
+	 *        the reading type
+	 * @param tolerance
+	 *        the tolerance
 	 * @param accept
 	 *        the HTTP accept header value
+	 * @param acceptEncoding
+	 *        the HTTP accept-encoding header value
 	 * @param response
 	 *        the HTTP response
 	 */
@@ -161,8 +202,10 @@ public class DatumStreamController {
 	public void listReadings(final StreamDatumFilterCommand cmd,
 			final @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response,
-			BindingResult validationResult) throws IOException {
+			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
+			@RequestHeader(HttpHeaders.ACCEPT_ENCODING) final String acceptEncoding,
+
+			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult, readingType, tolerance);
 			if ( validationResult.hasErrors() ) {
@@ -170,7 +213,8 @@ public class DatumStreamController {
 			}
 		}
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
-		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes, response)) {
+		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
+				acceptEncoding, response)) {
 			queryBiz.findFilteredStreamReadings(cmd, readingType, tolerance, processor,
 					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		}
