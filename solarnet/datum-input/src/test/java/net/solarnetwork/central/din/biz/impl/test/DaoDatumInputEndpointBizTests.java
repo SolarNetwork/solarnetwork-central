@@ -30,6 +30,8 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
 import static net.solarnetwork.domain.datum.GeneralDatum.nodeDatum;
 import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -41,6 +43,7 @@ import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +53,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -62,12 +66,16 @@ import net.solarnetwork.central.din.biz.impl.DaoDatumInputEndpointBiz;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.dao.InputDataEntityDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
+import net.solarnetwork.central.din.domain.CentralDinUserEvents;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 import net.solarnetwork.central.din.domain.TransformConfiguration;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -78,11 +86,11 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link DaoDatumInputEndpointBiz} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class DaoDatumInputEndpointBizTests {
+public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 	@Mock
 	private SolarNodeOwnershipDao nodeOwnershipDao;
@@ -105,6 +113,9 @@ public class DaoDatumInputEndpointBizTests {
 	@Mock
 	private InputDataEntityDao inputDataDao;
 
+	@Mock
+	private UserEventAppenderBiz userEventAppender;
+
 	@Captor
 	private ArgumentCaptor<Map<String, ?>> paramsCaptor;
 
@@ -120,6 +131,9 @@ public class DaoDatumInputEndpointBizTests {
 	@Captor
 	private ArgumentCaptor<InputStream> inputCaptor;
 
+	@Captor
+	private ArgumentCaptor<LogEventInfo> logEventCaptor;
+
 	private String xformServiceId;
 	private DaoDatumInputEndpointBiz service;
 
@@ -130,6 +144,7 @@ public class DaoDatumInputEndpointBizTests {
 		service = new DaoDatumInputEndpointBiz(nodeOwnershipDao, endpointDao, transformDao, datumDao,
 				inputDataDao, singleton(xformService));
 		service.setFluxPublisher(fluxProcessor);
+		service.setUserEventAppenderBiz(userEventAppender);
 	}
 
 	@Test
@@ -341,6 +356,91 @@ public class DaoDatumInputEndpointBizTests {
 		and.then(result)
 			.as("Single result returned for persisted datum")
 			.contains(nodeId(nodeId, sourceId, datumPk.getTimestamp()))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void nodeSourceInputParameters_notAuthorized() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final var transform = new TransformConfiguration(userId, randomLong(), now());
+		transform.setServiceIdentifier(xformServiceId);
+
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setPublishToSolarFlux(false);
+
+		// load transform configuration
+		given(endpointDao.get(new UserUuidPK(userId, endpoint.getEndpointId()))).willReturn(endpoint);
+		given(transformDao.get(new UserLongCompositePK(userId, transform.getTransformId())))
+				.willReturn(transform);
+
+		// transform input
+		final var in = new ByteArrayInputStream(new byte[0]);
+		final MimeType type = MediaType.APPLICATION_JSON;
+		given(xformService.supportsInput(in, type)).willReturn(true);
+		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
+		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
+		given(xformService.transform(eq(in), eq(type), eq(transform), paramsCaptor.capture()))
+				.willReturn(asList(xformOutput));
+
+		// verify datum ownership
+		final var owner = new BasicSolarNodeOwnership(nodeId, userId + 1, "NZ", ZoneOffset.UTC, false,
+				false);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner);
+
+		// WHEN
+		var parameters = Map.of(DatumInputEndpointBiz.PARAM_NODE_ID, nodeId.toString(),
+				DatumInputEndpointBiz.PARAM_SOURCE_ID, sourceId);
+		AuthorizationException error = catchThrowableOfType(() -> {
+			service.importDatum(userId, endpoint.getEndpointId(), type, in, parameters);
+		}, AuthorizationException.class);
+
+		// THEN
+		// @formatter:off
+		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
+		and.then(logEventCaptor.getValue())
+			.satisfies(event -> {
+				Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+				and.then(data)
+					.as("Event data contains endpoint ID")
+					.containsEntry(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId().toString())
+					.as("Event data contains transform ID")
+					.containsEntry(TRANSFORM_ID_DATA_KEY, transform.getTransformId())
+					.as("Event data contains transform service ID")
+					.containsEntry(TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId)
+					.as("Event data contains content type")
+					.containsEntry(CONTENT_TYPE_DATA_KEY, type.toString())
+					.hasEntrySatisfying(PARAMETERS_DATA_KEY, (p) -> {
+						and.then(p)
+							.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+							.as("Extra parameters has node ID")
+							.containsEntry(DatumInputEndpointBiz.PARAM_NODE_ID, nodeId.toString())
+							.as("Extra parameters has source ID")
+							.containsEntry(DatumInputEndpointBiz.PARAM_SOURCE_ID, sourceId)
+							;
+					})
+					;
+
+				String[] tags = event.getTags();
+				and.then(tags)
+					.as("Event tags as expected, with error")
+					.contains(DIN_TAG, DATUM_TAG, ERROR_TAG)
+					;
+			})
+			;
+
+		then(fluxProcessor).shouldHaveNoInteractions();
+
+		and.then(error)
+			.as("Error reason is denied for node not owned by user")
+			.returns(AuthorizationException.Reason.ACCESS_DENIED, from(AuthorizationException::getReason))
+			.as("Object ID is node ID")
+			.returns(nodeId, from(AuthorizationException::getId))
 			;
 		// @formatter:on
 	}

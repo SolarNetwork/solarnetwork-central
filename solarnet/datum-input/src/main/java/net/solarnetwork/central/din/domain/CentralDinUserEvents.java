@@ -26,7 +26,7 @@ package net.solarnetwork.central.din.domain;
  * Constants for central datum input (DIN) user events.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CentralDinUserEvents {
 
@@ -53,5 +53,13 @@ public interface CentralDinUserEvents {
 
 	/** User event tags for datum events. */
 	String[] DATUM_TAGS = new String[] { DIN_TAG, DATUM_TAG };
+
+	/**
+	 * User event data key for a {@code Map} of additional parameters, for
+	 * example input parameters to a transformation.
+	 *
+	 * @since 1.1
+	 */
+	String PARAMETERS_DATA_KEY = "parameters";
 
 }
