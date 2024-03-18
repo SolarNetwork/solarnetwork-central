@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum Input'
-version = '1.2.0'
+version = '1.2.1'
 
 base {
 	archivesName = 'solarnet-datum-input'
