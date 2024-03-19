@@ -1,21 +1,21 @@
 /* ==================================================================
  * Configuration.java - 5/03/2018 8:31:01 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -38,51 +38,51 @@ import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 
 /**
  * A complete configuration for a scheduled export job.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.23
  */
 public interface Configuration {
 
 	/**
 	 * Get a name for this configuration.
-	 * 
+	 *
 	 * @return a configuration name
 	 */
 	String getName();
 
 	/**
 	 * Get the configuration of what data to export.
-	 * 
+	 *
 	 * @return the data configuration
 	 */
 	DataConfiguration getDataConfiguration();
 
 	/**
 	 * Get the configuration of the output format of the exported data.
-	 * 
+	 *
 	 * @return the output configuration
 	 */
 	OutputConfiguration getOutputConfiguration();
 
 	/**
 	 * Get the configuration for the destination of the exported data.
-	 * 
+	 *
 	 * @return the destination configuration
 	 */
 	DestinationConfiguration getDestinationConfiguration();
 
 	/**
 	 * Get the schedule at which to export the data.
-	 * 
+	 *
 	 * @return the desired export schedule
 	 */
 	ScheduleType getSchedule();
 
 	/**
 	 * Get the desired time zone for the export.
-	 * 
+	 *
 	 * @return the time zone
 	 */
 	String getTimeZoneId();
@@ -90,13 +90,13 @@ public interface Configuration {
 	/**
 	 * Get the minimum number of hours offset before the scheduled export should
 	 * run.
-	 * 
+	 *
 	 * <p>
 	 * When configuring an hourly export, for example, a delay of this many
 	 * hours is added before exporting the data, to give some leeway to data
 	 * that might be posted more slowly.
 	 * </p>
-	 * 
+	 *
 	 * @return an hour delay offset, or {@literal 0} for no delay
 	 */
 	int getHourDelayOffset();
@@ -112,7 +112,7 @@ public interface Configuration {
 
 	/**
 	 * A runtime property for the configuration name.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	String PROP_JOB_NAME = "jobName";
@@ -120,7 +120,7 @@ public interface Configuration {
 	/**
 	 * A regular expression to remove unfriendly characters from file names
 	 * (like the {@link #PROP_JOB_NAME} parameter).
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	Pattern PROP_NAME_SANITIZER = Pattern.compile("(?U)[^\\w\\._-]+");
@@ -128,10 +128,17 @@ public interface Configuration {
 	/**
 	 * A runtime property for the job export process time, as a millisecond Unix
 	 * epoch integer.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	String PROP_CURRENT_TIME = "now";
+
+	/**
+	 * A runtime property for the export job/task ID.
+	 *
+	 * @since 1.2
+	 */
+	String PROP_EXPORT_ID = "id";
 
 	// @formatter:off
 	/** A formatter for week, in {@literal YYYY'W'WWD} form. */
@@ -146,7 +153,9 @@ public interface Configuration {
 
 	/**
 	 * Get runtime properties to use for an export at a specific time.
-	 * 
+	 *
+	 * @param request
+	 *        the export request
 	 * @param exportTime
 	 *        the time of the export
 	 * @param dateFormatter
@@ -157,12 +166,17 @@ public interface Configuration {
 	 *        use
 	 * @return the properties, never {@literal null}
 	 */
-	default Map<String, Object> createRuntimeProperties(Instant exportTime,
+	default Map<String, Object> createRuntimeProperties(DatumExportRequest request,
 			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
 		Map<String, Object> result = new LinkedHashMap<String, Object>(8);
 
+		if ( request != null && request.getId() != null ) {
+			result.put(PROP_EXPORT_ID, request.getId());
+		}
+
 		ZoneId zone = (getTimeZoneId() != null ? ZoneId.of(getTimeZoneId()) : ZoneOffset.UTC);
-		ZonedDateTime ts = (exportTime != null ? exportTime : Instant.now()).atZone(zone);
+		ZonedDateTime ts = (request != null && request.getExportDate() != null ? request.getExportDate()
+				: Instant.now()).atZone(zone);
 		result.put(PROP_DATE_TIME, ts);
 
 		DateTimeFormatter fmt = (dateFormatter != null ? dateFormatter
@@ -200,11 +214,11 @@ public interface Configuration {
 	/**
 	 * Get a default {@link DateTimeFormatter} based on the configured schedule
 	 * type in the time zone specified by {@link #getTimeZoneId()}.
-	 * 
+	 *
 	 * <p>
 	 * If no time zone is available, {@literal UTC} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @return the formatter, never {@literal null}
 	 */
 	default DateTimeFormatter createDateTimeFormatterForSchedule() {

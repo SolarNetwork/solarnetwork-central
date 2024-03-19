@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoDatumExportBiz.java - 18/04/2018 5:57:03 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -92,9 +92,9 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * DAO-based implementation of {@link DatumExportBiz}.
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
 
@@ -123,7 +123,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param taskDao
 	 *        the task DAO
 	 * @param datumDao
@@ -154,12 +154,12 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Initialize after properties configured.
-	 * 
+	 *
 	 * <p>
 	 * Call this method once all properties have been configured on the
 	 * instance.
 	 * </p>
-	 * 
+	 *
 	 * @since 2.0
 	 */
 	@Override
@@ -176,7 +176,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Shutdown after the service is no longer needed.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
@@ -216,12 +216,12 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 		/**
 		 * Construct from a task info.
-		 * 
+		 *
 		 * <p>
 		 * Once this task has been submitted to an executor, call
 		 * {@link #setDelegate(Future)} with the resulting {@code Future}.
 		 * </p>
-		 * 
+		 *
 		 * @param info
 		 *        the info
 		 */
@@ -233,7 +233,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 		/**
 		 * Set the delegate {@code Future}.
-		 * 
+		 *
 		 * @param delegate
 		 *        the delegate
 		 */
@@ -435,8 +435,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			DatumExportOutputFormatService outputService = optionalService(outputFormatServices,
 					config.getOutputConfiguration());
 			DateTimeFormatter dateFormatter = config.createDateTimeFormatterForSchedule();
-			Map<String, Object> runtimeProps = config.createRuntimeProperties(info.getExportDate(),
-					dateFormatter, outputService);
+			Map<String, Object> runtimeProps = config.createRuntimeProperties(info, dateFormatter,
+					outputService);
 			log.info("Uploading datum export job {} resources to {}: {}", info.getId(),
 					config.getOutputConfiguration(), resources);
 			destService.export(config, resources, runtimeProps, this);
@@ -578,7 +578,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Get a {@link SecurityToken} for a given token ID.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to get, or {@literal null}
 	 * @return the token, or {@literal null} if {@code token} is {@literal null}
@@ -599,7 +599,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Get a {@link SecurityPolicy} for a given token ID.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to get, or {@literal null}
 	 * @return the policy, or {@literal null} if {@code token} is
@@ -615,7 +615,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Set the optional output format services.
-	 * 
+	 *
 	 * @param outputFormatServices
 	 *        the optional services
 	 */
@@ -625,7 +625,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Set the optional destination services.
-	 * 
+	 *
 	 * @param destinationServices
 	 *        the optional services
 	 */
@@ -636,7 +636,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	/**
 	 * The minimum amount of time to maintain completed export tasks for the
 	 * purposes of returning their status in {@link #statusForJob(String)}.
-	 * 
+	 *
 	 * @param completedTaskMinimumCacheTime
 	 *        the cache time, in milliseconds; defaults to 4 hours
 	 */
@@ -646,7 +646,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Configure a service for posting status events.
-	 * 
+	 *
 	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
@@ -656,7 +656,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	/**
 	 * Configure an auditor for export results.
-	 * 
+	 *
 	 * @param queryAuditor
 	 *        the auditor
 	 * @since 1.2
