@@ -65,7 +65,7 @@ import net.solarnetwork.io.ProvidedOutputStream;
  * Controller for querying datum stream related data.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Controller("v1DatumStreamController")
 @RequestMapping("/api/v1/sec/datum/stream")
@@ -165,7 +165,7 @@ public class DatumStreamController {
 	@RequestMapping(value = "/datum", method = RequestMethod.GET)
 	public void listDatum(final StreamDatumFilterCommand cmd,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
-			@RequestHeader(HttpHeaders.ACCEPT_ENCODING) final String acceptEncoding,
+			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding,
 			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
@@ -203,7 +203,7 @@ public class DatumStreamController {
 			final @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
-			@RequestHeader(HttpHeaders.ACCEPT_ENCODING) final String acceptEncoding,
+			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding,
 
 			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
