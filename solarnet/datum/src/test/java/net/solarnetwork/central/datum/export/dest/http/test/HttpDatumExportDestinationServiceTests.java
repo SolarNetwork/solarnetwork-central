@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -173,6 +174,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		config.setDestinationConfiguration(destConfig);
 
 		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		taskInfo.setConfig(config);
 		taskInfo.setId(UUID.randomUUID());
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
@@ -191,10 +193,13 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 	public void parameters() throws Exception {
 		// GIVEN
 		final UUID jobId = UUID.randomUUID();
+		final String jobName = "My: Job";
 		final Resource data = getTestDataResource();
 		final String dataContent = FileCopyUtils
 				.copyToString(new InputStreamReader(data.getInputStream(), UTF_8));
 		final String method = "POST";
+
+		final String jobNameUrlEncoded = URLEncoder.encode(jobName, UTF_8).replace("+", "%20");
 
 		Handler handler = new Handler.Abstract.NonBlocking() {
 
@@ -206,8 +211,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 				then(request)
 					.as("HTTP method from configuration")
 					.returns(method, from(Request::getMethod))
-					.as("HTTP path from URL with {id} parameter resolved to job ID")
-					.returns("/save/%s".formatted(jobId), from(r -> r.getHttpURI().getPath()))
+					.as("HTTP path from URL with {name} parameter resolved to job name, URL encoded")
+					.returns("/save/%s".formatted(jobNameUrlEncoded), from(r -> r.getHttpURI().getPath()))
 					;
 
 				HttpFields headers = request.getHeaders();
@@ -250,7 +255,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 				.toInstant();
 
 		BasicConfiguration config = new BasicConfiguration();
-		config.setName(UUID.randomUUID().toString());
+		config.setName(jobName);
 
 		Map<String, Object> destProps = new HashMap<>();
 		destProps.put("method", method);
@@ -266,6 +271,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		config.setDestinationConfiguration(destConfig);
 
 		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		taskInfo.setConfig(config);
 		taskInfo.setId(jobId);
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
@@ -274,7 +280,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		DatumExportResource rsrc = getExportResource(data);
 
 		doWithHttpServer(handler, (server, port, baseUrl) -> {
-			destProps.put("url", baseUrl + "/save/{id}");
+			destProps.put("url", baseUrl + "/save/{name}");
 			service.export(config, singleton(rsrc), runtimeProps, null);
 			return null;
 		});
@@ -379,6 +385,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		config.setDestinationConfiguration(destConfig);
 
 		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		taskInfo.setConfig(config);
 		taskInfo.setId(jobId);
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,

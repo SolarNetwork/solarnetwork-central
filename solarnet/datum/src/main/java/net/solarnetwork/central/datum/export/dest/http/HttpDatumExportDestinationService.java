@@ -47,6 +47,7 @@ import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportDestinationService;
+import net.solarnetwork.central.web.support.UrlEncodingOnAccessMap;
 import net.solarnetwork.io.ConcatenatingInputStream;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -114,7 +115,9 @@ public class HttpDatumExportDestinationService extends BaseDatumExportDestinatio
 			throw new IOException("Service configuration is not valid.");
 		}
 
-		final String destUrl = expandTemplateString(props.getUrl(), runtimeProperties);
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		final String destUrl = expandTemplateString(props.getUrl(),
+				new UrlEncodingOnAccessMap<String>((Map) runtimeProperties));
 
 		ClassicRequestBuilder req = ClassicRequestBuilder.create(props.method().toString())
 				.setUri(destUrl);
