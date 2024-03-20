@@ -144,7 +144,7 @@ public class HttpDatumExportDestinationService extends BaseDatumExportDestinatio
 			for ( DatumExportResource r : resources ) {
 				String fileName = expandTemplateString(props.getMultipartFilenameTemplate(),
 						runtimeProperties);
-				multipart.addBinaryBody("%s-%d".formatted(fileName, ++idx), r.getInputStream(),
+				multipart.addBinaryBody("export%d".formatted(++idx), r.getInputStream(),
 						ContentType.parse(r.getContentType()), fileName);
 			}
 			req.setEntity(multipart.build());
