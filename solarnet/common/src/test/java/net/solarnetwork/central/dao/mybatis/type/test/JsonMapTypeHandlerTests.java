@@ -39,6 +39,7 @@ import net.solarnetwork.central.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
  * @author matt
  * @version 2.0
  */
+@SuppressWarnings("resource")
 public class JsonMapTypeHandlerTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
