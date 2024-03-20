@@ -1,21 +1,21 @@
 /* ==================================================================
  * Dnp3UserEvents.java - 11/08/2023 6:42:44 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,9 +32,9 @@ import net.solarnetwork.dao.Entity;
 
 /**
  * Constants and helpers for DNP3 user event handling.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface Dnp3UserEvents {
 
@@ -115,7 +115,7 @@ public interface Dnp3UserEvents {
 
 	/**
 	 * Get a user log event for a configuration.
-	 * 
+	 *
 	 * @param entity
 	 *        the entity
 	 * @param baseTags
@@ -133,7 +133,7 @@ public interface Dnp3UserEvents {
 
 	/**
 	 * Get a user log event for a configuration.
-	 * 
+	 *
 	 * @param entity
 	 *        the entity
 	 * @param baseTags
@@ -154,7 +154,7 @@ public interface Dnp3UserEvents {
 
 	/**
 	 * Get an event data map from entity properties.
-	 * 
+	 *
 	 * @param entity
 	 *        the entity
 	 * @return the data map
@@ -165,7 +165,7 @@ public interface Dnp3UserEvents {
 
 	/**
 	 * Get an event data map from entity properties.
-	 * 
+	 *
 	 * @param entity
 	 *        the entity
 	 * @param extraData
@@ -180,7 +180,7 @@ public interface Dnp3UserEvents {
 		if ( extraData != null ) {
 			data.putAll(extraData);
 		}
-		final boolean isCert = (entity instanceof TrustedIssuerCertificate c);
+		final boolean isCert = (entity instanceof TrustedIssuerCertificate);
 		final int keyLength = id.keyComponentLength();
 		for ( int i = 1; i < keyLength; i++ ) { // skip first key: presume user ID
 			Object v = id.keyComponent(i);
