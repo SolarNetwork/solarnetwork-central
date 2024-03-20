@@ -317,11 +317,12 @@ public class ConfigurationTests {
 		// THEN
 		// @formatter:off
 		then(props)
-			.as("Props created with name")
+			.as("Props created with job name")
 			.containsEntry(Configuration.PROP_JOB_NAME, conf.getName())
+			.as("Props created with name")
+			.containsEntry(Configuration.PROP_NAME, conf.getName())
 			;
 		// @formatter:on
-
 	}
 
 	@Test
@@ -339,8 +340,9 @@ public class ConfigurationTests {
 		then(props)
 			.as("Props created with sanitized name, preserving as many language characters as possible")
 			.containsEntry(Configuration.PROP_JOB_NAME, "All_the_fun_characters_ⲁあアピⰄ_oh_yeah_")
+			.as("Props created with name")
+			.containsEntry(Configuration.PROP_NAME, conf.getName())
 			;
 		// @formatter:on
-
 	}
 }

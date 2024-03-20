@@ -111,7 +111,8 @@ public interface Configuration {
 	String PROP_FILENAME_EXTENSION = "ext";
 
 	/**
-	 * A runtime property for the configuration name.
+	 * A runtime property for the configuration name, normalized with
+	 * {@link #PROP_NAME_SANITIZER}.
 	 *
 	 * @since 1.1
 	 */
@@ -139,6 +140,13 @@ public interface Configuration {
 	 * @since 1.2
 	 */
 	String PROP_EXPORT_ID = "id";
+
+	/**
+	 * A runtime property for the configuration name.
+	 *
+	 * @since 1.2
+	 */
+	String PROP_NAME = "name";
 
 	// @formatter:off
 	/** A formatter for week, in {@literal YYYY'W'WWD} form. */
@@ -203,6 +211,7 @@ public interface Configuration {
 		}
 
 		if ( getName() != null ) {
+			result.put(PROP_NAME, getName());
 			result.put(PROP_JOB_NAME, PROP_NAME_SANITIZER.matcher(getName()).replaceAll("_"));
 		}
 
