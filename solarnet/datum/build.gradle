@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'eclipse'
-	id 'org.springframework.boot' version '3.2.2' apply false
+	id 'org.springframework.boot' version '3.2.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.3.0'
+version = '2.4.0'
 
 base {
 	archivesName = 'solarnet-datum'
@@ -39,12 +39,13 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 
 	// Utilities
+	implementation 'commons-io:commons-io:2.11.0'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
+	implementation 'org.aspectj:aspectjweaver'
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
-	implementation 'commons-io:commons-io:2.11.0'
-	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
-	implementation 'org.aspectj:aspectjweaver'
 	
 	// SolarNetwork
 	api 'net.solarnetwork.common:net.solarnetwork.common.s3:2.0.0'
@@ -54,6 +55,7 @@ dependencies {
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 	testImplementation 'io.moquette:moquette-broker:0.15'
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
+	testImplementation 'org.eclipse.jetty:jetty-server'
 	testImplementation "org.tukaani:xz:${xzVersion}"
 }
 

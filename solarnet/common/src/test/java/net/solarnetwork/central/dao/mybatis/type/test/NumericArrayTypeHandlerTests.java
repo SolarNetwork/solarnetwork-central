@@ -37,6 +37,7 @@ import net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler;
  * @author matt
  * @version 2.0
  */
+@SuppressWarnings("resource")
 public class NumericArrayTypeHandlerTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test

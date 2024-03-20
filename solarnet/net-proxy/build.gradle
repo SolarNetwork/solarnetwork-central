@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.2' apply false
+	id 'org.springframework.boot' version '3.2.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -24,6 +24,7 @@ configurations {
 	all*.exclude group: 'commons-logging'
 	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
 	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 

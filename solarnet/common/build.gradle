@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.2' apply false
+	id 'org.springframework.boot' version '3.2.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '2.4.0'
+version = '2.5.0'
 
 base {
 	archivesName = 'solarnet-common'
@@ -75,6 +75,7 @@ dependencies {
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.10.0'
 	implementation 'org.slf4j:slf4j-api'

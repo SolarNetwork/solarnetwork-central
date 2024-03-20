@@ -64,7 +64,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
@@ -170,7 +170,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			parseMqttMessage(objectMapper, message, topic, nodeId, true);
 		} catch ( IOException e ) {
 			log.debug("Communication error handling message on MQTT topic {}", topic, e);
-			if ( e instanceof JsonParseException jpe ) {
+			if ( e instanceof JsonParseException ) {
 				final byte[] payload = message.getPayload();
 				log.warn("Error parsing MQTT topic {} message [{}]: {}", topic,
 						encodeHexString(payload, 0, payload.length, false), e.getMessage());

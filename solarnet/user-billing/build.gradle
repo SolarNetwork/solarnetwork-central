@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.2' apply false
+	id 'org.springframework.boot' version '3.2.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -63,6 +63,7 @@ dependencies {
 	
 	
 	// Utilities
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.jsoup:jsoup:1.14.3'
 	implementation 'org.slf4j:slf4j-api'
 	

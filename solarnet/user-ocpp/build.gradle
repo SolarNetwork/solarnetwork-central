@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.2' apply false
+	id 'org.springframework.boot' version '3.2.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -22,8 +22,9 @@ base {
 
 configurations {
 	all*.exclude group: 'log4j', module: 'log4j'
-	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'net.solarnetwork.external', module: 'net.solarnetwork.external.ocpp'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 dependencies {

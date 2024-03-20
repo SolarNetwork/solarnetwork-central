@@ -1,21 +1,21 @@
 /* ==================================================================
  * ConfigurationTests.java - 25/04/2018 7:03:57 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,6 +37,7 @@ import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
+import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
@@ -44,7 +45,7 @@ import net.solarnetwork.central.datum.export.support.BaseDatumExportOutputFormat
 
 /**
  * Test cases for the {@link Configuration} interface.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -94,6 +95,13 @@ public class ConfigurationTests {
 		assertThat(result, Matchers.equalTo("2018-04"));
 	}
 
+	private DatumExportTaskInfo testTask() {
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		taskInfo.setId(UUID.randomUUID());
+		taskInfo.setExportDate(TEST_DATE.toInstant());
+		return taskInfo;
+	}
+
 	@Test
 	public void runtimePropsHourlyNoOutputService() {
 		// GIVEN
@@ -101,13 +109,16 @@ public class ConfigurationTests {
 		BasicConfiguration conf = createConfiguration(TEST_TZ, ScheduleType.Hourly);
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null, null);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, null);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Expected props created")
-			.hasSize(3)
+			.hasSize(4)
+			.as("Task ID provided")
+			.containsEntry(Configuration.PROP_EXPORT_ID, task.getId())
 			.as("Date time provided")
 			.containsEntry(Configuration.PROP_DATE_TIME, TEST_DATE.withZoneSameInstant(ZoneId.of(TEST_TZ)))
 			.as("Formatted date")
@@ -152,14 +163,16 @@ public class ConfigurationTests {
 		DatumExportOutputFormatService outputService = createOutputService("json");
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null,
-				outputService);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, outputService);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Expected props created")
-			.hasSize(4)
+			.hasSize(5)
+			.as("Task ID provided")
+			.containsEntry(Configuration.PROP_EXPORT_ID, task.getId())
 			.as("File extension provided")
 			.containsEntry(Configuration.PROP_FILENAME_EXTENSION, "json")
 			.as("Date time provided")
@@ -184,14 +197,16 @@ public class ConfigurationTests {
 		DatumExportOutputFormatService outputService = createOutputService("json");
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null,
-				outputService);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, outputService);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Expected props created")
-			.hasSize(4)
+			.hasSize(5)
+			.as("Task ID provided")
+			.containsEntry(Configuration.PROP_EXPORT_ID, task.getId())
 			.as("File extension provided")
 			.containsEntry(Configuration.PROP_FILENAME_EXTENSION, "json.gz")
 			.as("Date time provided")
@@ -212,13 +227,16 @@ public class ConfigurationTests {
 		BasicConfiguration conf = createConfiguration(TEST_TZ, ScheduleType.Daily);
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null, null);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, null);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Expected props created")
-			.hasSize(3)
+			.hasSize(4)
+			.as("Task ID provided")
+			.containsEntry(Configuration.PROP_EXPORT_ID, task.getId())
 			.as("Date time provided")
 			.containsEntry(Configuration.PROP_DATE_TIME, TEST_DATE.withZoneSameInstant(ZoneId.of(TEST_TZ)))
 			.as("Formatted date")
@@ -237,13 +255,16 @@ public class ConfigurationTests {
 		BasicConfiguration conf = createConfiguration(TEST_TZ, ScheduleType.Weekly);
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null, null);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, null);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Expected props created")
-			.hasSize(3)
+			.hasSize(4)
+			.as("Task ID provided")
+			.containsEntry(Configuration.PROP_EXPORT_ID, task.getId())
 			.as("Date time provided")
 			.containsEntry(Configuration.PROP_DATE_TIME, TEST_DATE.withZoneSameInstant(ZoneId.of(TEST_TZ)))
 			.as("Formatted date")
@@ -262,13 +283,16 @@ public class ConfigurationTests {
 		BasicConfiguration conf = createConfiguration(TEST_TZ, ScheduleType.Monthly);
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null, null);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, null);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Expected props created")
-			.hasSize(3)
+			.hasSize(4)
+			.as("Task ID provided")
+			.containsEntry(Configuration.PROP_EXPORT_ID, task.getId())
 			.as("Date time provided")
 			.containsEntry(Configuration.PROP_DATE_TIME, TEST_DATE.withZoneSameInstant(ZoneId.of(TEST_TZ)))
 			.as("Formatted date")
@@ -287,16 +311,18 @@ public class ConfigurationTests {
 		conf.setName(UUID.randomUUID().toString());
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null, null);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, null);
 
 		// THEN
 		// @formatter:off
 		then(props)
-			.as("Props created with name")
+			.as("Props created with job name")
 			.containsEntry(Configuration.PROP_JOB_NAME, conf.getName())
+			.as("Props created with name")
+			.containsEntry(Configuration.PROP_NAME, conf.getName())
 			;
 		// @formatter:on
-
 	}
 
 	@Test
@@ -306,15 +332,17 @@ public class ConfigurationTests {
 		conf.setName("All the fun characters:/ ⲁあアピⰄ⠷☃😀 / oh yeah!");
 
 		// WHEN
-		Map<String, Object> props = conf.createRuntimeProperties(TEST_DATE.toInstant(), null, null);
+		DatumExportTaskInfo task = testTask();
+		Map<String, Object> props = conf.createRuntimeProperties(task, null, null);
 
 		// THEN
 		// @formatter:off
 		then(props)
 			.as("Props created with sanitized name, preserving as many language characters as possible")
 			.containsEntry(Configuration.PROP_JOB_NAME, "All_the_fun_characters_ⲁあアピⰄ_oh_yeah_")
+			.as("Props created with name")
+			.containsEntry(Configuration.PROP_NAME, conf.getName())
 			;
 		// @formatter:on
-
 	}
 }

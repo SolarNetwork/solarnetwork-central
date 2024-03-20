@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicConfigurationFilter.java - 11/08/2022 11:25:48 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Basic implementation of {@link ConfigurationFilter}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -46,7 +46,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Create a filter for one or more user IDs.
-	 * 
+	 *
 	 * @param userIds
 	 *        the user IDs to create the filter for
 	 * @return the new filter instance
@@ -66,7 +66,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 */
@@ -100,7 +100,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 				setProviderIds(c.getProviderIds());
 			}
 			if ( criteria instanceof OptimizerCriteria c ) {
-				setOptimizerIds(getLocationIds());
+				setOptimizerIds(c.getOptimizerIds());
 			}
 			if ( criteria instanceof IdentifierCriteria c ) {
 				setIdentifiers(c.getIdentifiers());
@@ -154,7 +154,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the configuration IDs.
-	 * 
+	 *
 	 * @param configurationIds
 	 *        the IDs of the configurations to find
 	 */
@@ -164,7 +164,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set a single configuration ID.
-	 * 
+	 *
 	 * @param configurationId
 	 *        the ID of the configuration to set
 	 */
@@ -179,7 +179,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the group IDs.
-	 * 
+	 *
 	 * @param groupIds
 	 *        the group IDs to set
 	 */
@@ -189,7 +189,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set a single group ID.
-	 * 
+	 *
 	 * @param groupId
 	 *        the ID of the group to set
 	 */
@@ -204,7 +204,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the provider IDs.
-	 * 
+	 *
 	 * @param providerIds
 	 *        the provider IDs to set
 	 */
@@ -214,7 +214,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set a single provider ID.
-	 * 
+	 *
 	 * @param providerId
 	 *        the ID of the provider to set
 	 */
@@ -229,7 +229,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the optimizer IDs.
-	 * 
+	 *
 	 * @param optimizerIds
 	 *        the optimizer IDs to set
 	 */
@@ -239,7 +239,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set a single optimizer ID.
-	 * 
+	 *
 	 * @param optimizerId
 	 *        the ID of the optimizer to set
 	 */
@@ -254,7 +254,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the provider IDs.
-	 * 
+	 *
 	 * @param identifiers
 	 *        the identifiers to set
 	 */
@@ -264,7 +264,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set a single identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *        the identifier to set
 	 */
@@ -279,7 +279,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the lock results flag.
-	 * 
+	 *
 	 * @param lockResults
 	 *        {@literal true} to request locked results
 	 */
@@ -294,7 +294,7 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the "skip locked results" flag.
-	 * 
+	 *
 	 * @param skipLockedResults
 	 *        {@literal true} to skip locked results
 	 */

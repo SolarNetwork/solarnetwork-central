@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.2' apply false
+	id 'org.springframework.boot' version '3.2.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OSCP'
-version = '2.0.3'
+version = '2.0.4'
 
 base {
 	archivesName = 'solarnet-oscp'
@@ -23,6 +23,7 @@ base {
 configurations {
 	all*.exclude group: 'javax.servlet'
 	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'net.sf.supercsv'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
