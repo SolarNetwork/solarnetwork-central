@@ -101,10 +101,9 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		// THEN
 		// @formatter:off
 		then(specs)
-			.as("Settings provided")
-			.hasSize(4)
 			.map((s) -> ((KeyedSettingSpecifier<?>)s).getKey())
-			.containsExactly("method", "url", "multipartFilenameTemplate", "headersValue")
+			.as("Expected settings provided")
+			.containsExactly("method", "url", "username", "password", "multipartFilenameTemplate", "headersValue")
 			;
 		// @formatter:on
 	}

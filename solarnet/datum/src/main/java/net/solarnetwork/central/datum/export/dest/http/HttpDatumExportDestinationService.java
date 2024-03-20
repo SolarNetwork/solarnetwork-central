@@ -25,14 +25,18 @@ package net.solarnetwork.central.datum.export.dest.http;
 import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.auth.StandardAuthScheme;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.entity.InputStreamEntity;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
@@ -79,10 +83,12 @@ public class HttpDatumExportDestinationService extends BaseDatumExportDestinatio
 
 	@Override
 	public List<SettingSpecifier> getSettingSpecifiers() {
-		List<SettingSpecifier> result = new ArrayList<>(4);
+		List<SettingSpecifier> result = new ArrayList<>(6);
 		result.add(new BasicTextFieldSettingSpecifier("method",
 				HttpDestinationProperties.DEFAULT_METHOD.toString()));
 		result.add(new BasicTextFieldSettingSpecifier("url", ""));
+		result.add(new BasicTextFieldSettingSpecifier("username", ""));
+		result.add(new BasicTextFieldSettingSpecifier("password", "", true));
 		result.add(new BasicTextFieldSettingSpecifier("multipartFilenameTemplate", ""));
 		result.add(new BasicTextAreaSettingSpecifier("headersValue", "", false));
 		return result;
@@ -112,6 +118,15 @@ public class HttpDatumExportDestinationService extends BaseDatumExportDestinatio
 
 		ClassicRequestBuilder req = ClassicRequestBuilder.create(props.method().toString())
 				.setUri(destUrl);
+
+		if ( props.hasCredentials() ) {
+			// assuming HTTP Basic here
+			req.setHeader(HttpHeaders.AUTHORIZATION,
+					StandardAuthScheme.BASIC + " "
+							+ Base64.getEncoder()
+									.encodeToString((props.getUsername() + ":" + props.getPassword())
+											.getBytes(StandardCharsets.UTF_8)));
+		}
 
 		if ( props.getHeaders() != null ) {
 			for ( Entry<String, String> header : props.getHeaders().entrySet() ) {

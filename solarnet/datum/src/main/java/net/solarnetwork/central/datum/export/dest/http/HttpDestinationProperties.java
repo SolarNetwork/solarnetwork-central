@@ -39,6 +39,8 @@ public class HttpDestinationProperties {
 
 	private String method = DEFAULT_METHOD.toString();
 	private String url;
+	private String username;
+	private String password;
 	private String multipartFilenameTemplate;
 	private Map<String, String> headers;
 
@@ -111,6 +113,55 @@ public class HttpDestinationProperties {
 	}
 
 	/**
+	 * Get the username.
+	 *
+	 * @return the username
+	 */
+	public String getUsername() {
+		return username;
+	}
+
+	/**
+	 * Set the username.
+	 *
+	 * @param username
+	 *        the username to set
+	 */
+	public void setUsername(String username) {
+		this.username = username != null && !username.isBlank() ? username : null;
+	}
+
+	/**
+	 * Get the password.
+	 *
+	 * @return the password
+	 */
+	public String getPassword() {
+		return password;
+	}
+
+	/**
+	 * Set the password.
+	 *
+	 * @param password
+	 *        the password to set
+	 */
+	public void setPassword(String password) {
+		this.password = password != null && !password.isBlank() ? password : null;
+	}
+
+	/**
+	 * Test if the {@code username} and {@code password} properties are
+	 * configured.
+	 *
+	 * @return {@literal true} if both {@code username} and {@code password} are
+	 *         configured
+	 */
+	public boolean hasCredentials() {
+		return (username != null && !username.isBlank() && password != null && !password.isBlank());
+	}
+
+	/**
 	 * Get the multipart filename template.
 	 *
 	 * @return the multipart filename template
@@ -131,7 +182,8 @@ public class HttpDestinationProperties {
 	 *        normal HTTP request
 	 */
 	public void setMultipartFilenameTemplate(String multipartFilenameTemplate) {
-		this.multipartFilenameTemplate = multipartFilenameTemplate;
+		this.multipartFilenameTemplate = multipartFilenameTemplate != null
+				&& !multipartFilenameTemplate.isBlank() ? multipartFilenameTemplate : null;
 	}
 
 	/**
