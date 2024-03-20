@@ -1,21 +1,21 @@
 /* ==================================================================
  * S3DatumExportDestinationServiceTests.java - 11/04/2018 10:55:17 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -71,6 +71,7 @@ import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDatumExportResource;
 import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
+import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormatService;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
@@ -78,7 +79,7 @@ import net.solarnetwork.settings.SettingSpecifier;
 
 /**
  * Test cases for the {@link S3DatumExportDestinationService} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -218,7 +219,10 @@ public class S3DatumExportDestinationServiceTests {
 		destConfig.setServiceProps(destProps);
 		config.setDestinationConfiguration(destConfig);
 
-		Map<String, Object> runtimeProps = config.createRuntimeProperties(ts, null,
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		taskInfo.setId(UUID.randomUUID());
+		taskInfo.setExportDate(ts);
+		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
 
 		DatumExportResource rsrc = getTestResource();

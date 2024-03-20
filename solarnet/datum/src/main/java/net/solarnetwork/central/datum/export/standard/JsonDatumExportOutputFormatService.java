@@ -1,21 +1,21 @@
 /* ==================================================================
  * JsonDatumExportOutputFormatService.java - 12/04/2018 6:53:40 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,9 +49,9 @@ import net.solarnetwork.service.ProgressListener;
 
 /**
  * JSON implementation of {@link DatumExportOutputFormatService}
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.23
  */
 public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
@@ -67,7 +67,7 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 
 	/**
 	 * Construct with an {@link ObjectMapper}.
-	 * 
+	 *
 	 * @param objectMapper
 	 *        the object mapper to use
 	 */
@@ -150,8 +150,9 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 				if ( decompressTemp ) {
 					outputResource = new DecompressingResource(outputResource);
 				}
-				return Collections.singleton(new BasicDatumExportResource(
-						new DeleteOnCloseFileResource(outputResource), getContentType(config)));
+				return Collections.singleton(
+						new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
+								getContentType(config), getExportContentType()));
 			}
 			return Collections.emptyList();
 		}

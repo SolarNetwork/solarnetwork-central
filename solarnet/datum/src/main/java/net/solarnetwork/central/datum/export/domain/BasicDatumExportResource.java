@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicDatumExportResource.java - 11/04/2018 11:58:27 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,28 +29,45 @@ import org.springframework.core.io.Resource;
 /**
  * Basic implementation of {@link DatumExportResource} that delegates many
  * operations to a Spring {@link Resource}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
 public class BasicDatumExportResource implements DatumExportResource {
 
 	private final Resource delegate;
 	private final String contentType;
+	private final String encodedContentType;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param delegate
 	 *        the resource to delegate to
 	 * @param contentType
 	 *        the content type
 	 */
 	public BasicDatumExportResource(Resource delegate, String contentType) {
+		this(delegate, contentType, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param delegate
+	 *        the resource to delegate to
+	 * @param contentType
+	 *        the content type
+	 * @param encodedContentType
+	 *        the encoded content type
+	 * @since 1.1
+	 */
+	public BasicDatumExportResource(Resource delegate, String contentType, String encodedContentType) {
 		super();
 		this.delegate = delegate;
 		this.contentType = contentType;
+		this.encodedContentType = encodedContentType != null ? encodedContentType : contentType;
 	}
 
 	@Override
@@ -90,9 +107,14 @@ public class BasicDatumExportResource implements DatumExportResource {
 		return contentType;
 	}
 
+	@Override
+	public String getEncodedContentType() {
+		return encodedContentType;
+	}
+
 	/**
 	 * Get the delegate resource.
-	 * 
+	 *
 	 * @return the delegate
 	 */
 	public Resource getDelegate() {

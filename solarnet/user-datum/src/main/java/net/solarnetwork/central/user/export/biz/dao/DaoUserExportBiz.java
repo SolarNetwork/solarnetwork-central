@@ -29,9 +29,11 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -76,7 +78,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
@@ -303,16 +305,29 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 				entity.getClass());
 		List<SettingSpecifier> settings = settingsForService(entity.getServiceIdentifier(), providers);
 		Set<String> secureEntrySettings = SettingUtils.secureKeys(settings);
-		for ( String secureKey : secureEntrySettings ) {
-			Object val = serviceProps.get(secureKey);
-			String secureVal = (val != null ? val.toString() : "");
-			if ( secureVal.isEmpty()
-					|| StringUtils.DIGEST_PREFIX_PATTERN.matcher(secureVal).matches() ) {
-				// secure value is provided that is empty or is already a digest value; do not change existing value
-				Object existingVal = existingServiceProps.get(secureKey);
-				if ( existingVal != null ) {
-					serviceProps.put(secureKey, existingVal);
+		for ( Iterator<Entry<String, Object>> propItr = serviceProps.entrySet().iterator(); propItr
+				.hasNext(); ) {
+			Entry<String, Object> prop = propItr.next();
+			String propName = prop.getKey();
+			String propStringVal = prop.getValue() != null ? prop.getValue().toString() : null;
+			if ( secureEntrySettings.contains(propName) ) {
+				if ( propStringVal != null && !propStringVal.isEmpty() && propStringVal.isBlank() ) {
+					// provided non-empty but blank password: remove password from config
+					propItr.remove();
+				} else if ( propStringVal == null || propStringVal.isEmpty()
+						|| StringUtils.DIGEST_PREFIX_PATTERN.matcher(propStringVal).matches() ) {
+					// secure value is provided that is empty or is already a digest value; do not change existing value
+					Object existingVal = existingServiceProps.get(propName);
+					if ( existingVal != null && !existingVal.toString().isBlank() ) {
+						serviceProps.put(propName, existingVal);
+					} else {
+						// remove blank property
+						propItr.remove();
+					}
 				}
+			} else if ( prop.getValue() == null || (propStringVal != null && propStringVal.isBlank()) ) {
+				// remove blank property
+				propItr.remove();
 			}
 		}
 		return entity;

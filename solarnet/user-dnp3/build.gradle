@@ -35,6 +35,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	
+	// Utilities
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	
 	// Testing
 	testImplementation project(':solarnet-common-test')
 }
