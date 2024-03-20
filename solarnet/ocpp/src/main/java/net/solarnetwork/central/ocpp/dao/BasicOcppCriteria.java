@@ -37,7 +37,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Basic implementation of OCPP criteria APIs.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class BasicOcppCriteria extends BasicCoreCriteria
 		implements ChargePointStatusFilter, ChargePointActionStatusFilter, ChargeSessionFilter {
@@ -106,7 +106,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 				setTransactionIds(c.getTransactionIds());
 			}
 			if ( criteria instanceof ChargeSessionEndReasonCriteria c ) {
-				setEndReasons(endReasons);
+				setEndReasons(c.getEndReasons());
 			}
 		}
 	}
