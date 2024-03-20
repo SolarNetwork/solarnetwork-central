@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvDatumExportOutputFormatService.java - 11/04/2018 12:08:19 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -77,9 +77,9 @@ import net.solarnetwork.util.ClassUtils;
 /**
  * Comma-separated-values implementation of
  * {@link DatumExportOutputFormatService}
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.23
  */
 public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputFormatService {
@@ -326,11 +326,12 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 						OutputStream out = (decompressTemp ? new GZIPOutputStream(rawOut)
 								: createCompressedOutputStream(rawOut));) {
 					if ( headers != null ) {
-						ICsvMapWriter concatenatedWriter = new CsvMapWriter(
+						try (ICsvMapWriter concatenatedWriter = new CsvMapWriter(
 								new OutputStreamWriter(StreamUtils.nonClosing(out), "UTF-8"),
-								CsvPreference.STANDARD_PREFERENCE);
-						concatenatedWriter.writeHeader(headers);
-						concatenatedWriter.flush();
+								CsvPreference.STANDARD_PREFERENCE)) {
+							concatenatedWriter.writeHeader(headers);
+							concatenatedWriter.flush();
+						}
 					}
 					FileCopyUtils.copy(new GZIPInputStream(new FileInputStream(temporaryFile)), out);
 				}
@@ -345,8 +346,9 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			if ( decompressTemp ) {
 				outputResource = new DecompressingResource(outputResource);
 			}
-			return Collections.singleton(new BasicDatumExportResource(
-					new DeleteOnCloseFileResource(outputResource), getContentType(config)));
+			return Collections.singleton(
+					new BasicDatumExportResource(new DeleteOnCloseFileResource(outputResource),
+							getContentType(config), getExportContentType()));
 		}
 
 		@Override
