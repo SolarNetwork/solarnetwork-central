@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.dest.http.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.io.ByteArrayOutputStream;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -390,6 +392,88 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		taskInfo.setExportDate(ts);
 		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
 				new CsvDatumExportOutputFormatService());
+
+		doWithHttpServer(handler, (server, port, baseUrl) -> {
+			destProps.put("url", baseUrl + "/save");
+			service.export(config, singleton(rsrc), runtimeProps, null);
+			return null;
+		});
+	}
+
+	@Test
+	public void basicAuthorization() throws Exception {
+		// GIVEN
+		final Resource data = getTestDataResource();
+		final String dataContent = FileCopyUtils
+				.copyToString(new InputStreamReader(data.getInputStream(), UTF_8));
+		final String method = "PUT";
+		final String username = randomString();
+		final String password = randomString();
+
+		Handler handler = new Handler.Abstract.NonBlocking() {
+
+			@Override
+			public boolean handle(Request request, Response response, Callback callback)
+					throws Exception {
+
+				// @formatter:off
+				then(request)
+					.as("HTTP method from configuration")
+					.returns(method, from(Request::getMethod))
+					.as("HTTP path from URL")
+					.returns("/save", from(r -> r.getHttpURI().getPath()))
+					;
+
+				HttpFields headers = request.getHeaders();
+				then(headers.get(HttpHeader.AUTHORIZATION))
+					.as("HTTP Basic authorization header included")
+					.isEqualTo("Basic " +Base64.getEncoder().encodeToString((username+":"+password).getBytes(UTF_8)))
+					;
+				// @formatter:on
+
+				CompletableFuture<String> f = Content.Source.asStringAsync(request, UTF_8);
+				f.whenComplete((content, failure) -> {
+					if ( failure == null ) {
+						// @formatter:off
+						then(content)
+							.as("Posted expected content")
+							.isEqualTo(dataContent)
+							;
+						// @formatter:on
+						callback.succeeded();
+					} else {
+						callback.failed(failure);
+					}
+				});
+
+				return true;
+			}
+		};
+
+		// WHEN
+		Instant ts = LocalDateTime.of(2018, 4, 11, 11, 50).atZone(ZoneId.of("Pacific/Auckland"))
+				.toInstant();
+
+		BasicConfiguration config = new BasicConfiguration();
+		config.setName(UUID.randomUUID().toString());
+
+		BasicDestinationConfiguration destConfig = new BasicDestinationConfiguration();
+		destConfig.setServiceIdentifier(service.getId());
+		Map<String, Object> destProps = new HashMap<>();
+		destProps.put("method", method);
+		destProps.put("username", username);
+		destProps.put("password", password);
+		destConfig.setServiceProps(destProps);
+		config.setDestinationConfiguration(destConfig);
+
+		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
+		taskInfo.setConfig(config);
+		taskInfo.setId(UUID.randomUUID());
+		taskInfo.setExportDate(ts);
+		Map<String, Object> runtimeProps = config.createRuntimeProperties(taskInfo, null,
+				new CsvDatumExportOutputFormatService());
+
+		DatumExportResource rsrc = getExportResource(data);
 
 		doWithHttpServer(handler, (server, port, baseUrl) -> {
 			destProps.put("url", baseUrl + "/save");
