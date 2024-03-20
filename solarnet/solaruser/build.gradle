@@ -61,6 +61,7 @@ dependencies {
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
+    implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 		
@@ -77,7 +78,6 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 }
 
 bootJar {

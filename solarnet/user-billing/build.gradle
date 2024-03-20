@@ -63,6 +63,7 @@ dependencies {
 	
 	
 	// Utilities
+	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.jsoup:jsoup:1.14.3'
 	implementation 'org.slf4j:slf4j-api'
 	
