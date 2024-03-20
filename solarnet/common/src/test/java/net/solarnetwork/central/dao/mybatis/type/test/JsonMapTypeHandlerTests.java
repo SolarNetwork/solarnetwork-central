@@ -50,8 +50,10 @@ public class JsonMapTypeHandlerTests extends AbstractMyBatisDaoTestSupport {
 		bean.setMap(m);
 
 		// WHEN
-		SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory());
-		String result = sqlSession.selectOne("test-set-json-map", bean);
+		String result = null;
+		try (SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory())) {
+			result = sqlSession.selectOne("test-set-json-map", bean);
+		}
 
 		// THEN
 		assertThat("Map set as query parameter as JSON object", result, equalTo("{\"foo\":\"bar\"}"));
@@ -60,8 +62,10 @@ public class JsonMapTypeHandlerTests extends AbstractMyBatisDaoTestSupport {
 	@Test
 	public void testResultParameter() {
 		// WHEN
-		SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory());
-		JsonMapBean result = sqlSession.selectOne("test-get-json-map");
+		JsonMapBean result = null;
+		try (SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory())) {
+			result = sqlSession.selectOne("test-get-json-map");
+		}
 
 		// THEN
 		assertThat("Result map", result.getMap(), equalTo(Collections.singletonMap("foo", "bar")));

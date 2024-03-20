@@ -42,8 +42,10 @@ public class NumericArrayTypeHandlerTests extends AbstractMyBatisDaoTestSupport 
 	@Test
 	public void testResultParameter() {
 		// WHEN
-		SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory());
-		BeanWithArrays result = sqlSession.selectOne("test-get-numeric-array");
+		BeanWithArrays result = null;
+		try (SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory())) {
+			result = sqlSession.selectOne("test-get-numeric-array");
+		}
 
 		// THEN
 		// @formatter:off
@@ -67,10 +69,12 @@ public class NumericArrayTypeHandlerTests extends AbstractMyBatisDaoTestSupport 
 		// @formatter:on
 
 		// WHEN
-		SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory());
-		BeanWithArrays bean = new BeanWithArrays();
-		bean.setBigDecimals(data);
-		BeanWithArrays result = sqlSession.selectOne("test-set-numeric-array", bean);
+		BeanWithArrays result = null;
+		try (SqlSession sqlSession = new SqlSessionTemplate(getSqlSessionFactory())) {
+			BeanWithArrays bean = new BeanWithArrays();
+			bean.setBigDecimals(data);
+			result = sqlSession.selectOne("test-set-numeric-array", bean);
+		}
 
 		// THEN
 		assertThat("Result array", result.getBigDecimals(), arrayContaining(data));
