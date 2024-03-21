@@ -285,22 +285,18 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	}
 
 	private <T extends BaseExportConfigurationEntity> T mergeServiceProperties(T entity) {
-		if ( entity == null || entity.getId() == null ) {
+		if ( entity == null ) {
 			return entity;
 		}
 		Map<String, Object> serviceProps = entity.getServiceProps();
 		if ( serviceProps == null || serviceProps.isEmpty() ) {
 			return entity;
 		}
-		BaseExportConfigurationEntity existing = configurationForUser(entity.getUserId(),
-				entity.getClass(), entity.getId());
-		if ( existing == null ) {
-			return entity;
-		}
-		Map<String, Object> existingServiceProps = existing.getServiceProps();
-		if ( existingServiceProps == null || existingServiceProps.isEmpty() ) {
-			return entity;
-		}
+		BaseExportConfigurationEntity existing = (entity.getId() != null
+				? configurationForUser(entity.getUserId(), entity.getClass(), entity.getId())
+				: null);
+		Map<String, Object> existingServiceProps = (existing != null ? existing.getServiceProps()
+				: null);
 		Iterable<? extends SettingSpecifierProvider> providers = providersForServiceProperties(
 				entity.getClass());
 		List<SettingSpecifier> settings = settingsForService(entity.getServiceIdentifier(), providers);
@@ -317,7 +313,9 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 				} else if ( propStringVal == null || propStringVal.isEmpty()
 						|| StringUtils.DIGEST_PREFIX_PATTERN.matcher(propStringVal).matches() ) {
 					// secure value is provided that is empty or is already a digest value; do not change existing value
-					Object existingVal = existingServiceProps.get(propName);
+					Object existingVal = (existingServiceProps != null
+							? existingServiceProps.get(propName)
+							: null);
 					if ( existingVal != null && !existingVal.toString().isBlank() ) {
 						serviceProps.put(propName, existingVal);
 					} else {
