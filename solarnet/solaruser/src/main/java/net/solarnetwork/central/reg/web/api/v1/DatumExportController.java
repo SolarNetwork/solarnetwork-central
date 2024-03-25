@@ -1,27 +1,28 @@
 /* ==================================================================
  * DatumExportController.java - 29/03/2018 6:22:43 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfiguration;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
@@ -71,9 +72,9 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for datum export management.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.26
  */
 @GlobalExceptionRestController
@@ -86,7 +87,7 @@ public class DatumExportController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param exportBiz
 	 *        the export exportBiz to use
 	 */
@@ -103,6 +104,9 @@ public class DatumExportController {
 		List<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = localizedServiceSettings(exportBiz.availableOutputFormatServices(), locale);
+			if ( result != null ) {
+				result.sort(LocalizedServiceInfo.SORT_BY_NAME);
+			}
 		}
 		return response(result);
 	}
@@ -113,6 +117,9 @@ public class DatumExportController {
 		List<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = localizedServiceSettings(exportBiz.availableDestinationServices(), locale);
+			if ( result != null ) {
+				result.sort(LocalizedServiceInfo.SORT_BY_NAME);
+			}
 		}
 		return response(result);
 	}
@@ -123,6 +130,10 @@ public class DatumExportController {
 		Iterable<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = exportBiz.availableOutputCompressionTypes(locale);
+			if ( result != null ) {
+				result = stream(result.spliterator(), false).sorted(LocalizedServiceInfo.SORT_BY_NAME)
+						.toList();
+			}
 		}
 		return response(result);
 	}
@@ -370,7 +381,7 @@ public class DatumExportController {
 
 	/**
 	 * Submit an ad hoc export job request.
-	 * 
+	 *
 	 * @param config
 	 *        the export job configuration
 	 * @return the task info
@@ -401,7 +412,7 @@ public class DatumExportController {
 	 * Submit an ad hoc export job request that refers to existing format and
 	 * destination configurations, instead of submitting ad-hoc versions of
 	 * those.
-	 * 
+	 *
 	 * @param config
 	 *        the export job configuration
 	 * @return the task info
@@ -438,7 +449,7 @@ public class DatumExportController {
 
 	/**
 	 * Get the available ad hoc export tasks for the active actor.
-	 * 
+	 *
 	 * @param stateKeys
 	 *        an optional list of {@link DatumExportState} keys (or names) to
 	 *        filter the results by, or {@literal null} for any state
