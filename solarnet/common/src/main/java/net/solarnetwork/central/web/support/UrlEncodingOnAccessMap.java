@@ -75,11 +75,12 @@ public class UrlEncodingOnAccessMap<K> implements Map<K, String> {
 
 	@Override
 	public String get(Object key) {
-		String val = delegate.get(key);
+		// specifically support non-String values, assuming delegate might be raw Map type
+		Object val = delegate.get(key);
 		if ( val != null ) {
 			return URLEncoder.encode(val.toString(), StandardCharsets.UTF_8).replace("+", "%20");
 		}
-		return val;
+		return null;
 	}
 
 	@Override
