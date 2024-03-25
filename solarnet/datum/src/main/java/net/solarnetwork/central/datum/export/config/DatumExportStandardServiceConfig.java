@@ -32,6 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.dest.ftp.FtpDatumExportDestinationService;
+import net.solarnetwork.central.datum.export.dest.ftp.FtpDestinationProperties;
 import net.solarnetwork.central.datum.export.dest.http.HttpDatumExportDestinationService;
 import net.solarnetwork.central.datum.export.dest.http.HttpDestinationProperties;
 import net.solarnetwork.central.datum.export.dest.s3.S3DatumExportDestinationService;
@@ -99,6 +101,17 @@ public class DatumExportStandardServiceConfig {
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(HttpDestinationProperties.class.getName());
+		service.setMessageSource(msgSource);
+
+		return service;
+	}
+
+	@Bean
+	public DatumExportDestinationService ftpDatumExportDestinationService() {
+		FtpDatumExportDestinationService service = new FtpDatumExportDestinationService();
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(FtpDestinationProperties.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;

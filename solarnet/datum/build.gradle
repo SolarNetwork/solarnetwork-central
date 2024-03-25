@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.4.0'
+version = '2.5.0'
 
 base {
 	archivesName = 'solarnet-datum'
@@ -39,7 +39,8 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 
 	// Utilities
-	implementation 'commons-io:commons-io:2.11.0'
+	implementation "commons-io:commons-io:${commonsIoVersion}"
+	implementation 'commons-net:commons-net:3.10.0'
 	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
@@ -57,6 +58,7 @@ dependencies {
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.mqtt.netty:${snCommonMqttNettyVersion}"
 	testImplementation 'org.eclipse.jetty:jetty-server'
 	testImplementation "org.tukaani:xz:${xzVersion}"
+	testImplementation 'org.mockftpserver:MockFtpServer:3.1.0'
 }
 
 jar.manifest {
