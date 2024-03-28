@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeId",
-		"sourceId", "transformId", "destination", "publishToSolarFlux", "previousInputTracking" })
+		"sourceId", "transformId", "publishToSolarFlux", "previousInputTracking" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements DatumInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
