@@ -1,0 +1,66 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+	id 'org.springframework.boot' version '3.2.3' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: Instructor Input'
+version = '1.0.0'
+
+base {
+	archivesName = 'solarnet-instructor-input'
+}
+
+configurations {
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'net.sf.supercsv'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-user')
+
+	// Spring
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.security:spring-security-core'
+	
+	// DAO
+	runtimeOnly "org.postgresql:postgresql"
+	
+	// JSON
+	implementation 'com.fasterxml.jackson.core:jackson-annotations'
+	implementation 'com.fasterxml.jackson.core:jackson-core'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	
+	// JCache
+	implementation 'javax.cache:cache-api'
+	implementation 'org.ehcache:ehcache'
+	
+	// Utilities
+	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation 'jakarta.annotation:jakarta.annotation-api'
+	implementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
+	implementation 'org.apache.commons:commons-lang3'
+	implementation 'org.hibernate.validator:hibernate-validator'
+	implementation 'org.slf4j:slf4j-api'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}
