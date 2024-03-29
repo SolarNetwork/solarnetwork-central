@@ -31,6 +31,7 @@ dependencies {
 	implementation project(':solarnet-datum-input')
 	implementation project(':solarnet-dnp3')
 	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-instructor-input')
 	implementation project(':solarnet-ocpp')
 	implementation project(':solarnet-oscp')
 	implementation project(':solarnet-user')
@@ -38,6 +39,7 @@ dependencies {
 	implementation project(':solarnet-user-datum')
 	implementation project(':solarnet-user-datum-input')
 	implementation project(':solarnet-user-dnp3')
+	implementation project(':solarnet-user-instructor-input')
 	implementation project(':solarnet-user-ocpp')
 	implementation project(':solarnet-user-oscp')
 

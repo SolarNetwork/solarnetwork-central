@@ -39,7 +39,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Domain object for an individual instruction.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class Instruction extends BaseEntity {
 
@@ -88,6 +88,11 @@ public class Instruction extends BaseEntity {
 		setParameters(other.getParameters());
 		setResultParameters(other.getResultParameters());
 		setState(other.getState());
+	}
+
+	@Override
+	public Instruction clone() {
+		return (Instruction) super.clone();
 	}
 
 	/**

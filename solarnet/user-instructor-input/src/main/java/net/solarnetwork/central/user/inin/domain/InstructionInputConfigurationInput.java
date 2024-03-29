@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointFilter.java - 21/02/2024 2:55:29 pm
+ * InstructionInputConfigurationInput.java - 25/02/2024 7:29:31 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,16 +20,47 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.inin.dao;
+package net.solarnetwork.central.user.inin.domain;
 
-import net.solarnetwork.central.common.dao.UserModifiableFilter;
+import java.time.Instant;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 
 /**
- * A filter for endpoint entities.
+ * API for datum input configuration input.
  *
+ * @param <T>
+ *        the entity type
+ * @param <K>
+ *        the primary key type
  * @author matt
  * @version 1.0
  */
-public interface EndpointFilter extends InstructionInputFilter, UserModifiableFilter, EndpointCriteria {
+public interface InstructionInputConfigurationInput<T extends UserRelatedEntity<K>, K> {
+
+	/**
+	 * Create an entity from the input properties and a given primary key.
+	 *
+	 * @param id
+	 *        the primary key to use
+	 * @param date
+	 *        the creation date to use
+	 * @return the new entity
+	 */
+	T toEntity(K id, Instant date);
+
+	/**
+	 * Create an entity from the input properties and a given primary key.
+	 *
+	 * <p>
+	 * The current date will be used.
+	 * </p>
+	 *
+	 * @param id
+	 *        the primary key to use
+	 * @return the new entity
+	 */
+	default T toEntity(K id) {
+		return toEntity(id, Instant.now());
+	}
 
 }

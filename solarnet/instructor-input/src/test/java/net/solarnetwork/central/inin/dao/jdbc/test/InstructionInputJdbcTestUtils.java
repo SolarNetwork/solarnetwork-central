@@ -39,6 +39,8 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointAuthConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformPhase;
 
 /**
@@ -145,13 +147,13 @@ public final class InstructionInputJdbcTestUtils {
 	 */
 	public static TransformConfiguration newTransformConfiguration(TransformPhase phase, Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
-		TransformConfiguration conf = new TransformConfiguration(unassignedEntityIdKey(userId),
-				Instant.now());
+		TransformConfiguration conf = (phase == TransformPhase.Request
+				? new RequestTransformConfiguration(unassignedEntityIdKey(userId), Instant.now())
+				: new ResponseTransformConfiguration(unassignedEntityIdKey(userId), Instant.now()));
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
-		conf.setPhase(phase);
 		return conf;
 	}
 

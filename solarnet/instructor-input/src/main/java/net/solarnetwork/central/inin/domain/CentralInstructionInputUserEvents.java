@@ -33,6 +33,9 @@ public interface CentralInstructionInputUserEvents {
 	/** A user event tag for ININ. */
 	String ININ_TAG = "inin";
 
+	/** A user event tag for ININ instruction handling. */
+	String INSTRUCTION_TAG = "instruction";
+
 	/** A user event tag for ININ "error" . */
 	String ERROR_TAG = "error";
 
@@ -48,6 +51,9 @@ public interface CentralInstructionInputUserEvents {
 	/** User event data key for a request transform service ID. */
 	String REQ_TRANSFORM_SERVICE_ID_DATA_KEY = "reqTransformServiceId";
 
+	/** User event data key for an output MIME type. */
+	String OUTPUT_TYPE_DATA_KEY = "outputType";
+
 	/** User event data key for a response transform ID. */
 	String RES_TRANSFORM_ID_DATA_KEY = "resTransformId";
 
@@ -55,7 +61,7 @@ public interface CentralInstructionInputUserEvents {
 	String RES_TRANSFORM_SERVICE_ID_DATA_KEY = "resTransformServiceId";
 
 	/** User event tags for instruction events. */
-	String[] INSTRUCTION_TAGS = new String[] { ININ_TAG };
+	String[] INSTRUCTION_TAGS = new String[] { INSTRUCTION_TAG, ININ_TAG };
 
 	/**
 	 * User event data key for a {@code Map} of additional parameters, for

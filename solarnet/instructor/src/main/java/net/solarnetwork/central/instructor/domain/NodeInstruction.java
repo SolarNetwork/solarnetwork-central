@@ -32,7 +32,7 @@ import net.solarnetwork.domain.InstructionStatus;
  * Instruction for a specific node.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class NodeInstruction extends Instruction implements EntityMatch {
 
@@ -72,7 +72,25 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	public NodeInstruction(NodeInstruction other) {
 		super(other);
 		setNodeId(other.getNodeId());
+	}
 
+	/**
+	 * Create a copy with a specific node ID.
+	 * 
+	 * @param nodeId
+	 *        the node ID to assign to the copy
+	 * @return the new copy
+	 * @since 2.3
+	 */
+	public NodeInstruction copyWithNodeId(Long nodeId) {
+		NodeInstruction copy = new NodeInstruction(this);
+		copy.setNodeId(nodeId);
+		return copy;
+	}
+
+	@Override
+	public NodeInstruction clone() {
+		return (NodeInstruction) super.clone();
 	}
 
 	public InstructionStatus toStatus() {

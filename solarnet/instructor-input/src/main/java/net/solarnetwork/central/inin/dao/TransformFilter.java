@@ -32,6 +32,6 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @version 1.0
  */
 public interface TransformFilter
-		extends DatumInputFilter, UserCriteria, PaginationCriteria, TransformCriteria {
+		extends InstructionInputFilter, UserCriteria, PaginationCriteria, TransformCriteria {
 
 }

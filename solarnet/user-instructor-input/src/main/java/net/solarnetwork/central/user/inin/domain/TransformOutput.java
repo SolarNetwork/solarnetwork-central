@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumInputFilter.java - 27/02/2024 9:53:35 am
+ * TransformOutput.java - 26/02/2024 8:02:27 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,17 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.inin.dao;
+package net.solarnetwork.central.user.inin.domain;
 
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
 /**
- * Base filter for datum input entities.
+ * A transform output result DTO.
  *
+ * @param instructions
+ *        the generated instructions
+ * @param response
+ *        the generated response, Base64 encoded if binary
+ * @param transformOutput
+ *        any transform debug output
+ * @param message
+ *        any messages
  * @author matt
  * @version 1.0
  */
-public interface DatumInputFilter extends UserCriteria, PaginationCriteria {
+public record TransformOutput(Iterable<NodeInstruction> instructions, String response,
+		String transformOutput, String message) {
 
 }

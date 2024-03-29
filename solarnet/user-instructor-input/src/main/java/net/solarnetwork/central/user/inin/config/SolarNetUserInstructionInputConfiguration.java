@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointFilter.java - 21/02/2024 2:55:29 pm
+ * SolarNetUserInstructionInputConfiguration.java - 29/03/2024 9:08:27 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,16 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.inin.dao;
-
-import net.solarnetwork.central.common.dao.UserModifiableFilter;
+package net.solarnetwork.central.user.inin.config;
 
 /**
- * A filter for endpoint entities.
+ * Marker interface for the User instruction input configuration package.
  *
  * @author matt
  * @version 1.0
  */
-public interface EndpointFilter extends InstructionInputFilter, UserModifiableFilter, EndpointCriteria {
-
+public interface SolarNetUserInstructionInputConfiguration {
+	// nothing here
 }

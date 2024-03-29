@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointFilter.java - 21/02/2024 2:55:29 pm
+ * InstructionInputFilter.java - 27/02/2024 9:53:35 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -22,14 +22,15 @@
 
 package net.solarnetwork.central.inin.dao;
 
-import net.solarnetwork.central.common.dao.UserModifiableFilter;
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
- * A filter for endpoint entities.
+ * Base filter for datum input entities.
  *
  * @author matt
  * @version 1.0
  */
-public interface EndpointFilter extends InstructionInputFilter, UserModifiableFilter, EndpointCriteria {
+public interface InstructionInputFilter extends UserCriteria, PaginationCriteria {
 
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -42,18 +43,16 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id", "serviceProps" })
-@JsonPropertyOrder({ "userId", "transformId", "created", "modified", "enabled", "name", "phase",
-		"serviceIdentifier", "serviceProperties" })
-public class TransformConfiguration
+public abstract sealed class TransformConfiguration
 		extends BaseUserModifiableEntity<TransformConfiguration, UserLongCompositePK>
 		implements InstructionInputConfigurationEntity<TransformConfiguration, UserLongCompositePK>,
-		IdentifiableConfiguration {
+		IdentifiableConfiguration permits TransformConfiguration.RequestTransformConfiguration,
+		TransformConfiguration.ResponseTransformConfiguration {
 
 	private static final long serialVersionUID = -2206409216936875018L;
 
+	private final TransformPhase phase;
 	private String name;
-	private TransformPhase phase;
 	private String serviceIdentifier;
 	private String servicePropsJson;
 
@@ -66,11 +65,14 @@ public class TransformConfiguration
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param phase
+	 *        the phase
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public TransformConfiguration(UserLongCompositePK id, Instant created) {
+	protected TransformConfiguration(UserLongCompositePK id, Instant created, TransformPhase phase) {
 		super(id, created);
+		this.phase = requireNonNullArgument(phase, "phase");
 		setEnabled(true);
 	}
 
@@ -83,25 +85,118 @@ public class TransformConfiguration
 	 *        the transform ID
 	 * @param created
 	 *        the creation date
+	 * @param phase
+	 *        the phase
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public TransformConfiguration(Long userId, Long transformId, Instant created) {
-		this(new UserLongCompositePK(userId, transformId), created);
+	protected TransformConfiguration(Long userId, Long transformId, Instant created,
+			TransformPhase phase) {
+		this(new UserLongCompositePK(userId, transformId), created, phase);
 	}
 
-	@Override
-	public TransformConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new TransformConfiguration(id, getCreated());
-		copyTo(copy);
-		return copy;
+	/**
+	 * A request transform configuration.
+	 */
+	@JsonIgnoreProperties({ "id", "serviceProps" })
+	@JsonPropertyOrder({ "userId", "transformId", "created", "modified", "enabled", "name", "phase",
+			"serviceIdentifier", "serviceProperties" })
+	public static final class RequestTransformConfiguration extends TransformConfiguration {
+
+		private static final long serialVersionUID = -2376857425680066351L;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param id
+		 *        the ID
+		 * @param created
+		 *        the creation date
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public RequestTransformConfiguration(UserLongCompositePK id, Instant created) {
+			super(id, created, TransformPhase.Request);
+		}
+
+		/**
+		 * Constructor.
+		 *
+		 * @param userId
+		 *        the user ID
+		 * @param transformId
+		 *        the transform ID
+		 * @param created
+		 *        the creation date
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public RequestTransformConfiguration(Long userId, Long transformId, Instant created) {
+			this(new UserLongCompositePK(userId, transformId), created);
+		}
+
+		@Override
+		public RequestTransformConfiguration copyWithId(UserLongCompositePK id) {
+			var copy = new RequestTransformConfiguration(id, getCreated());
+			copyTo(copy);
+			return copy;
+		}
+
+	}
+
+	/**
+	 * A request transform configuration.
+	 */
+	@JsonIgnoreProperties({ "id", "serviceProps" })
+	@JsonPropertyOrder({ "userId", "transformId", "created", "modified", "enabled", "name", "phase",
+			"serviceIdentifier", "serviceProperties" })
+	public static final class ResponseTransformConfiguration extends TransformConfiguration {
+
+		private static final long serialVersionUID = -7774474475322183244L;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param id
+		 *        the ID
+		 * @param created
+		 *        the creation date
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public ResponseTransformConfiguration(UserLongCompositePK id, Instant created) {
+			super(id, created, TransformPhase.Response);
+		}
+
+		/**
+		 * Constructor.
+		 *
+		 * @param userId
+		 *        the user ID
+		 * @param transformId
+		 *        the transform ID
+		 * @param created
+		 *        the creation date
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public ResponseTransformConfiguration(Long userId, Long transformId, Instant created) {
+			this(new UserLongCompositePK(userId, transformId), created);
+		}
+
+		@Override
+		public ResponseTransformConfiguration copyWithId(UserLongCompositePK id) {
+			var copy = new ResponseTransformConfiguration(id, getCreated());
+			copyTo(copy);
+			return copy;
+		}
+
 	}
 
 	@Override
 	public void copyTo(TransformConfiguration entity) {
 		super.copyTo(entity);
 		entity.setName(name);
-		entity.setPhase(phase);
 		entity.setServiceIdentifier(serviceIdentifier);
 		entity.setServicePropsJson(servicePropsJson);
 	}
@@ -188,16 +283,6 @@ public class TransformConfiguration
 	 */
 	public TransformPhase getPhase() {
 		return phase;
-	}
-
-	/**
-	 * Set the phase.
-	 *
-	 * @param phase
-	 *        the phase to set
-	 */
-	public void setPhase(TransformPhase phase) {
-		this.phase = phase;
 	}
 
 	@Override

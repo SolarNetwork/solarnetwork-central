@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointFilter.java - 21/02/2024 2:55:29 pm
+ * EndpointAuthAuthConfigurationInput.java - 25/02/2024 7:51:34 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,16 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.inin.dao;
+package net.solarnetwork.central.user.inin.domain;
 
-import net.solarnetwork.central.common.dao.UserModifiableFilter;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
+import net.solarnetwork.central.inin.domain.EndpointAuthConfiguration;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 
 /**
- * A filter for endpoint entities.
+ * DTO for datum input endpoint authorization configuration.
  *
  * @author matt
  * @version 1.0
  */
-public interface EndpointFilter extends InstructionInputFilter, UserModifiableFilter, EndpointCriteria {
+public class EndpointAuthConfigurationInput
+		extends BaseInstructionInputConfigurationInput<EndpointAuthConfiguration, UserUuidLongCompositePK> {
+
+	/**
+	 * Constructor.
+	 */
+	public EndpointAuthConfigurationInput() {
+		super();
+	}
+
+	@Override
+	public EndpointAuthConfiguration toEntity(UserUuidLongCompositePK id, Instant date) {
+		EndpointAuthConfiguration conf = new EndpointAuthConfiguration(requireNonNullArgument(id, "id"),
+				date);
+		populateConfiguration(conf);
+		return conf;
+	}
 
 }

@@ -29,6 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -39,6 +40,8 @@ import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.UpdateTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformPhase;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -77,12 +80,19 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public TransformConfiguration entityKey(UserLongCompositePK id) {
-		return new TransformConfiguration(id, now());
+		return (phase == TransformPhase.Request ? new RequestTransformConfiguration(id, now())
+				: new ResponseTransformConfiguration(id, now()));
+	}
+
+	private void validatePhase(TransformConfiguration entity) {
+		if ( entity.getPhase() != phase ) {
+			throw new IllegalArgumentException("Invalid phase value: only " + phase + " supported.");
+		}
 	}
 
 	@Override
 	public UserLongCompositePK create(Long userId, TransformConfiguration entity) {
-		entity.setPhase(phase);
+		validatePhase(entity);
 		final var sql = new InsertTransformConfiguration(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
@@ -96,7 +106,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectTransformConfiguration(phase, filter);
-		var results = executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
+		var results = executeFilterQuery(jdbcOps, filter, sql, rowMapper());
 		return stream(results.spliterator(), false).toList();
 	}
 
@@ -105,7 +115,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 			TransformFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(phase, filter);
-		return executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
+		return executeFilterQuery(jdbcOps, filter, sql, rowMapper());
 	}
 
 	@Override
@@ -113,7 +123,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
-		entity.setPhase(phase);
+		validatePhase(entity);
 		final UpdateTransformConfiguration sql = new UpdateTransformConfiguration(entity.getId(),
 				entity);
 		int count = jdbcOps.update(sql);
@@ -127,8 +137,13 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
 		filter.setTransformId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
 		var sql = new SelectTransformConfiguration(phase, filter);
-		var results = executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);
+		var results = executeFilterQuery(jdbcOps, filter, sql, rowMapper());
 		return stream(results.spliterator(), false).findFirst().orElse(null);
+	}
+
+	private RowMapper<TransformConfiguration> rowMapper() {
+		return (phase == TransformPhase.Request ? TransformConfigurationRowMapper.REQ_INSTANCE
+				: TransformConfigurationRowMapper.RES_INSTANCE);
 	}
 
 	@Override
