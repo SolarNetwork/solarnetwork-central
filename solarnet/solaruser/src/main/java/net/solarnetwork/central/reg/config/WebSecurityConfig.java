@@ -73,7 +73,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @Configuration
 @EnableWebSecurity
@@ -105,6 +105,9 @@ public class WebSecurityConfig {
 
 	/** The datum input authority. */
 	public static final String DATUM_INPUT_AUTHORITY = "ROLE_DATUM_INPUT";
+
+	/** The instruction input authority. */
+	public static final String INSTRUCTION_INPUT_AUTHORITY = "ROLE_INSTRUCTION_INPUT";
 
 	/** A HTTP header to indicate the response contains the login form page. */
 	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
@@ -220,6 +223,7 @@ public class WebSecurityConfig {
 								.requestMatchers("/u/sec/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 								.requestMatchers("/u/sec/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 								.requestMatchers("/u/sec/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+								.requestMatchers("/u/sec/inin/**").hasAnyAuthority(INSTRUCTION_INPUT_AUTHORITY)
 								.requestMatchers("/u/sec/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
 								.requestMatchers("/u/sec/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
 								.requestMatchers("/u/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
@@ -345,6 +349,7 @@ public class WebSecurityConfig {
 								.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/inin/**").hasAnyAuthority(INSTRUCTION_INPUT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
 								.requestMatchers("/api/v1/sec/**").hasAnyAuthority(Role.ROLE_USER.toString())
