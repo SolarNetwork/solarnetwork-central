@@ -22,15 +22,24 @@
 
 package net.solarnetwork.central.inin.biz.impl;
 
+import static net.solarnetwork.central.inin.biz.TransformConstants.PARAM_CONFIGURATION_CACHE_KEY;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
 import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.springframework.util.MimeType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.inin.biz.ResponseTransformService;
@@ -46,11 +55,17 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 /**
  * XSLT implementation of {@link ResponseTransformService}.
  *
+ * <p>
+ * The {@code instructions} passed to
+ * {@link #transformOutput(Iterable, MimeType, IdentifiableConfiguration, Map, OutputStream)}
+ * will be converted to JSON and passed to the XSTL templates as the
+ * {@link BaseXsltService#XSLT_PARAM_JSON} input parameter.
+ * </p>
+ *
  * @author matt
  * @version 1.0
  */
-public abstract class XsltResponseTransformService extends BaseXsltService
-		implements ResponseTransformService {
+public class XsltResponseTransformService extends BaseXsltService implements ResponseTransformService {
 
 	/**
 	 * Constructor.
@@ -125,8 +140,48 @@ public abstract class XsltResponseTransformService extends BaseXsltService
 	public void transformOutput(Iterable<NodeInstruction> instructions, MimeType type,
 			IdentifiableConfiguration config, Map<String, ?> parameters, OutputStream out)
 			throws IOException {
-		// TODO Auto-generated method stub
+		if ( instructions == null ) {
+			return;
+		}
+		final String json = objectMapper.writeValueAsString(instructions);
+		Map<String, ?> props = config.getServiceProperties();
+		Object xslt = (props != null ? props.get(SETTING_XSLT) : null);
+		if ( xslt == null ) {
+			return;
+		}
+		Templates templates = templates(xslt.toString(), config, parameters);
+		try {
+			// configure transform
+			Transformer xform = templates.newTransformer();
+			if ( parameters != null ) {
+				for ( Entry<String, ?> e : parameters.entrySet() ) {
+					String key = e.getKey();
+					xform.setParameter(key, e.getValue());
+				}
+			}
 
+			// get JSON + (empty) XML input for XSLT transform
+			xform.setParameter(XSLT_PARAM_JSON, json);
+			Source inputSource = new DOMSource();
+
+			// execute transform
+			try {
+				Result result = new StreamResult(out);
+				xform.transform(inputSource, result);
+			} catch ( TransformerException e ) {
+				log.debug("Error executing XSLT transform: {}", e.getMessage(), e);
+				throw new IOException("Error executing XSLT transform.", e);
+			}
+		} catch ( TransformerConfigurationException e ) {
+			log.debug("Error executing XSLT: {}", e.getMessage(), e);
+			throw new IOException("Error executing XSLT.", e);
+		}
+	}
+
+	private Templates templates(String xslt, IdentifiableConfiguration config, Map<String, ?> parameters)
+			throws IOException {
+		return templates(xslt, config,
+				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}
 
 }
