@@ -33,8 +33,8 @@ import net.solarnetwork.dao.FilterableDao;
  * @author matt
  * @version 1.0
  */
-public interface TransformConfigurationDao
-		extends GenericCompositeKey2Dao<TransformConfiguration, UserLongCompositePK, Long, Long>,
-		FilterableDao<TransformConfiguration, UserLongCompositePK, TransformFilter> {
+public interface TransformConfigurationDao<C extends TransformConfiguration<C>>
+		extends GenericCompositeKey2Dao<C, UserLongCompositePK, Long, Long>,
+		FilterableDao<C, UserLongCompositePK, TransformFilter> {
 
 }

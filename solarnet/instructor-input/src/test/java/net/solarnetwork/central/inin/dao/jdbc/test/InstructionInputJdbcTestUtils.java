@@ -38,7 +38,6 @@ import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.domain.CredentialConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointAuthConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
-import net.solarnetwork.central.inin.domain.TransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformPhase;
@@ -107,9 +106,15 @@ public final class InstructionInputJdbcTestUtils {
 	 *        the service properties
 	 * @return the entity
 	 */
-	public static TransformConfiguration newRequestTransformConfiguration(Long userId, String name,
-			String serviceId, Map<String, Object> serviceProps) {
-		return newTransformConfiguration(TransformPhase.Request, userId, name, serviceId, serviceProps);
+	public static RequestTransformConfiguration newRequestTransformConfiguration(Long userId,
+			String name, String serviceId, Map<String, Object> serviceProps) {
+		RequestTransformConfiguration conf = new RequestTransformConfiguration(
+				unassignedEntityIdKey(userId), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setName(name);
+		conf.setServiceIdentifier(serviceId);
+		conf.setServiceProps(serviceProps);
+		return conf;
 	}
 
 	/**
@@ -125,31 +130,10 @@ public final class InstructionInputJdbcTestUtils {
 	 *        the service properties
 	 * @return the entity
 	 */
-	public static TransformConfiguration newResponseTransformConfiguration(Long userId, String name,
-			String serviceId, Map<String, Object> serviceProps) {
-		return newTransformConfiguration(TransformPhase.Response, userId, name, serviceId, serviceProps);
-	}
-
-	/**
-	 * Create a new transform configuration instance.
-	 *
-	 * @param phase
-	 *        the phase
-	 * @param userId
-	 *        the user ID
-	 * @param name
-	 *        the name
-	 * @param serviceId
-	 *        the service ID
-	 * @param serviceProps
-	 *        the service properties
-	 * @return the entity
-	 */
-	public static TransformConfiguration newTransformConfiguration(TransformPhase phase, Long userId,
+	public static ResponseTransformConfiguration newResponseTransformConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
-		TransformConfiguration conf = (phase == TransformPhase.Request
-				? new RequestTransformConfiguration(unassignedEntityIdKey(userId), Instant.now())
-				: new ResponseTransformConfiguration(unassignedEntityIdKey(userId), Instant.now()));
+		ResponseTransformConfiguration conf = new ResponseTransformConfiguration(
+				unassignedEntityIdKey(userId), Instant.now());
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);

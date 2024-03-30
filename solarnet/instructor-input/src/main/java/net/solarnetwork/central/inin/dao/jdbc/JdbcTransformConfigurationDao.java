@@ -49,49 +49,123 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * JDBC implementation of {@link TransformConfigurationDao}.
  *
+ * @param <C>
+ *        the transform configuration type
  * @author matt
  * @version 1.0
  */
-public class JdbcTransformConfigurationDao implements TransformConfigurationDao {
+public abstract sealed class JdbcTransformConfigurationDao<C extends TransformConfiguration<C>>
+		implements TransformConfigurationDao<C> {
+
+	/**
+	 * JDBC implementation of {@link TransformConfigurationDao} for request
+	 * configurations.
+	 */
+	public static final class JdbcRequestTransformConfigurationDao
+			extends JdbcTransformConfigurationDao<RequestTransformConfiguration> {
+
+		private static final String TABLE_NAME = "solardin.inin_req_xform";
+
+		/**
+		 * Constructor.
+		 *
+		 * @param jdbcOps
+		 *        the JDBC operations
+		 */
+		public JdbcRequestTransformConfigurationDao(JdbcOperations jdbcOps) {
+			super(jdbcOps, RequestTransformConfiguration.class, TransformPhase.Request);
+		}
+
+		@Override
+		public RequestTransformConfiguration entityKey(UserLongCompositePK id) {
+			return new RequestTransformConfiguration(id, now());
+		}
+
+		@Override
+		protected RowMapper<RequestTransformConfiguration> rowMapper() {
+			return TransformConfigurationRowMapper.REQ_INSTANCE;
+		}
+
+		@Override
+		protected String tableName() {
+			return TABLE_NAME;
+		}
+
+	}
+
+	/**
+	 * JDBC implementation of {@link TransformConfigurationDao} for response
+	 * configurations.
+	 */
+	public static final class JdbcResponseTransformConfigurationDao
+			extends JdbcTransformConfigurationDao<ResponseTransformConfiguration> {
+
+		private static final String TABLE_NAME = "solardin.inin_res_xform";
+
+		/**
+		 * Constructor.
+		 *
+		 * @param jdbcOps
+		 *        the JDBC operations
+		 */
+		public JdbcResponseTransformConfigurationDao(JdbcOperations jdbcOps) {
+			super(jdbcOps, ResponseTransformConfiguration.class, TransformPhase.Response);
+		}
+
+		@Override
+		public ResponseTransformConfiguration entityKey(UserLongCompositePK id) {
+			return new ResponseTransformConfiguration(id, now());
+		}
+
+		@Override
+		protected RowMapper<ResponseTransformConfiguration> rowMapper() {
+			return TransformConfigurationRowMapper.RES_INSTANCE;
+		}
+
+		@Override
+		protected String tableName() {
+			return TABLE_NAME;
+		}
+
+	}
 
 	private final JdbcOperations jdbcOps;
 	private final TransformPhase phase;
+	private final Class<C> entityType;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
+	 * @param entityType
+	 *        the entity type
 	 * @param phase
 	 *        the phase
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public JdbcTransformConfigurationDao(JdbcOperations jdbcOps, TransformPhase phase) {
+	public JdbcTransformConfigurationDao(JdbcOperations jdbcOps, Class<C> entityType,
+			TransformPhase phase) {
 		super();
 		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
+		this.entityType = requireNonNullArgument(entityType, "entityType");
 		this.phase = requireNonNullArgument(phase, "phase");
 	}
 
 	@Override
-	public Class<? extends TransformConfiguration> getObjectType() {
-		return TransformConfiguration.class;
+	public Class<? extends C> getObjectType() {
+		return entityType;
 	}
 
-	@Override
-	public TransformConfiguration entityKey(UserLongCompositePK id) {
-		return (phase == TransformPhase.Request ? new RequestTransformConfiguration(id, now())
-				: new ResponseTransformConfiguration(id, now()));
-	}
-
-	private void validatePhase(TransformConfiguration entity) {
+	private void validatePhase(C entity) {
 		if ( entity.getPhase() != phase ) {
 			throw new IllegalArgumentException("Invalid phase value: only " + phase + " supported.");
 		}
 	}
 
 	@Override
-	public UserLongCompositePK create(Long userId, TransformConfiguration entity) {
+	public UserLongCompositePK create(Long userId, C entity) {
 		validatePhase(entity);
 		final var sql = new InsertTransformConfiguration(userId, entity);
 
@@ -102,7 +176,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 	}
 
 	@Override
-	public Collection<TransformConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+	public Collection<C> findAll(Long userId, List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
 		var sql = new SelectTransformConfiguration(phase, filter);
@@ -111,15 +185,15 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 	}
 
 	@Override
-	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+	public FilterResults<C, UserLongCompositePK> findFiltered(TransformFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(phase, filter);
 		return executeFilterQuery(jdbcOps, filter, sql, rowMapper());
 	}
 
 	@Override
-	public UserLongCompositePK save(TransformConfiguration entity) {
+	public UserLongCompositePK save(C entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
@@ -131,7 +205,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 	}
 
 	@Override
-	public TransformConfiguration get(UserLongCompositePK id) {
+	public C get(UserLongCompositePK id) {
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
@@ -141,25 +215,32 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 		return stream(results.spliterator(), false).findFirst().orElse(null);
 	}
 
-	private RowMapper<TransformConfiguration> rowMapper() {
-		return (phase == TransformPhase.Request ? TransformConfigurationRowMapper.REQ_INSTANCE
-				: TransformConfigurationRowMapper.RES_INSTANCE);
-	}
+	/**
+	 * Get a row mapper.
+	 *
+	 * @return the mapper
+	 */
+	protected abstract RowMapper<C> rowMapper();
 
 	@Override
-	public Collection<TransformConfiguration> getAll(List<SortDescriptor> sorts) {
+	public Collection<C> getAll(List<SortDescriptor> sorts) {
 		throw new UnsupportedOperationException();
 	}
 
-	private static final String TABLE_NAME = "solardin.inin_%s_xform";
 	private static final String ID_COLUMN_NAME = "id";
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 
+	/**
+	 * Get the table name.
+	 *
+	 * @return the table name
+	 */
+	protected abstract String tableName();
+
 	@Override
-	public void delete(TransformConfiguration entity) {
+	public void delete(C entity) {
 		DeleteForCompositeKey sql = new DeleteForCompositeKey(
-				requireNonNullArgument(entity, "entity").getId(),
-				TABLE_NAME.formatted(phase == TransformPhase.Request ? "req" : "res"), PK_COLUMN_NAMES);
+				requireNonNullArgument(entity, "entity").getId(), tableName(), PK_COLUMN_NAMES);
 		jdbcOps.update(sql);
 	}
 

@@ -35,12 +35,14 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * Caching proxy for {@link TransformConfigurationDao}.
  *
+ * @param <C>
+ *        the configuration type
  * @author matt
  * @version 1.0
  */
-public class CachingTransformConfigurationDao
-		extends CachingGenericDao<TransformConfiguration, UserLongCompositePK, TransformConfigurationDao>
-		implements TransformConfigurationDao {
+public class CachingTransformConfigurationDao<C extends TransformConfiguration<C>>
+		extends CachingGenericDao<C, UserLongCompositePK, TransformConfigurationDao<C>>
+		implements TransformConfigurationDao<C> {
 
 	/**
 	 * Constructor.
@@ -54,24 +56,24 @@ public class CachingTransformConfigurationDao
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CachingTransformConfigurationDao(TransformConfigurationDao delegate,
-			Cache<UserLongCompositePK, TransformConfiguration> cache, Executor executor) {
+	public CachingTransformConfigurationDao(TransformConfigurationDao<C> delegate,
+			Cache<UserLongCompositePK, C> cache, Executor executor) {
 		super(delegate, cache, executor);
 	}
 
 	@Override
-	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+	public FilterResults<C, UserLongCompositePK> findFiltered(TransformFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
 	@Override
-	public UserLongCompositePK create(Long keyComponent1, TransformConfiguration entity) {
+	public UserLongCompositePK create(Long keyComponent1, C entity) {
 		return delegate.create(keyComponent1, entity);
 	}
 
 	@Override
-	public Collection<TransformConfiguration> findAll(Long keyComponent1, List<SortDescriptor> sorts) {
+	public Collection<C> findAll(Long keyComponent1, List<SortDescriptor> sorts) {
 		return delegate.findAll(keyComponent1, sorts);
 	}
 

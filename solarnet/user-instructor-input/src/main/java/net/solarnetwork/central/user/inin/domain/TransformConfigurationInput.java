@@ -36,11 +36,13 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTrans
 /**
  * Base DTO for datum input transform configuration.
  *
+ * @param <C>
+ *        the configuration type
  * @author matt
  * @version 1.0
  */
-public abstract sealed class TransformConfigurationInput
-		extends BaseInstructionInputConfigurationInput<TransformConfiguration, UserLongCompositePK>
+public abstract sealed class TransformConfigurationInput<C extends TransformConfiguration<C>>
+		extends BaseInstructionInputConfigurationInput<C, UserLongCompositePK>
 		permits TransformConfigurationInput.RequestTransformConfigurationInput,
 		TransformConfigurationInput.ResponseTransformConfigurationInput {
 
@@ -64,7 +66,7 @@ public abstract sealed class TransformConfigurationInput
 	}
 
 	@Override
-	protected void populateConfiguration(TransformConfiguration conf) {
+	protected void populateConfiguration(C conf) {
 		super.populateConfiguration(conf);
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceIdentifier);
@@ -74,7 +76,8 @@ public abstract sealed class TransformConfigurationInput
 	/**
 	 * DTO for datum input request transform configuration.
 	 */
-	public static final class RequestTransformConfigurationInput extends TransformConfigurationInput {
+	public static final class RequestTransformConfigurationInput
+			extends TransformConfigurationInput<RequestTransformConfiguration> {
 
 		/**
 		 * Constructor.
@@ -96,7 +99,8 @@ public abstract sealed class TransformConfigurationInput
 	/**
 	 * DTO for datum input response transform configuration.
 	 */
-	public static final class ResponseTransformConfigurationInput extends TransformConfigurationInput {
+	public static final class ResponseTransformConfigurationInput
+			extends TransformConfigurationInput<ResponseTransformConfiguration> {
 
 		/**
 		 * Constructor.

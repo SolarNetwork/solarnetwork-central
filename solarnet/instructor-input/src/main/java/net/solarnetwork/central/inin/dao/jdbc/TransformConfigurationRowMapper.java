@@ -25,12 +25,11 @@ package net.solarnetwork.central.inin.dao.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
-import net.solarnetwork.central.inin.domain.TransformPhase;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Row mapper for {@link TransformConfiguration} entities.
@@ -52,51 +51,84 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 1.0
  */
-public class TransformConfigurationRowMapper implements RowMapper<TransformConfiguration> {
+public abstract sealed class TransformConfigurationRowMapper<C extends TransformConfiguration<C>>
+		implements RowMapper<C> {
 
 	/** A default request instance. */
-	public static final RowMapper<TransformConfiguration> REQ_INSTANCE = new TransformConfigurationRowMapper(
-			TransformPhase.Request);
+	public static final RowMapper<RequestTransformConfiguration> REQ_INSTANCE = new RequestTransformConfigurationRowMapper();
 
 	/** A default request instance. */
-	public static final RowMapper<TransformConfiguration> RES_INSTANCE = new TransformConfigurationRowMapper(
-			TransformPhase.Response);
-
-	private final TransformPhase phase;
-	private final int columnOffset;
+	public static final RowMapper<ResponseTransformConfiguration> RES_INSTANCE = new ResponseTransformConfigurationRowMapper();
 
 	/**
-	 * Default constructor.
-	 *
-	 * @param phase
-	 *        the phase
+	 * Row mapper for {@link RequestTransformConfiguration} entities.
 	 */
-	public TransformConfigurationRowMapper(TransformPhase phase) {
-		this(phase, 0);
+	public static final class RequestTransformConfigurationRowMapper
+			extends TransformConfigurationRowMapper<RequestTransformConfiguration> {
+
+		/**
+		 * Constructor.
+		 */
+		public RequestTransformConfigurationRowMapper() {
+			super();
+		}
+
+		@Override
+		protected RequestTransformConfiguration newConfiguration(Long userId, Long entityId,
+				Instant ts) {
+			return new RequestTransformConfiguration(userId, entityId, ts);
+		}
+
+	}
+
+	/**
+	 * Row mapper for {@link ResponseTransformConfiguration} entities.
+	 */
+	public static final class ResponseTransformConfigurationRowMapper
+			extends TransformConfigurationRowMapper<ResponseTransformConfiguration> {
+
+		/**
+		 * Constructor.
+		 */
+		public ResponseTransformConfigurationRowMapper() {
+			super();
+		}
+
+		@Override
+		protected ResponseTransformConfiguration newConfiguration(Long userId, Long entityId,
+				Instant ts) {
+			return new ResponseTransformConfiguration(userId, entityId, ts);
+		}
+
 	}
 
 	/**
 	 * Constructor.
-	 *
-	 * @param phase
-	 *        the phase
-	 * @param columnOffset
-	 *        a column offset to apply
 	 */
-	public TransformConfigurationRowMapper(TransformPhase phase, int columnOffset) {
-		this.phase = ObjectUtils.requireNonNullArgument(phase, "phase");
-		this.columnOffset = columnOffset;
+	public TransformConfigurationRowMapper() {
+		super();
 	}
 
+	/**
+	 * Construct a new entity instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param entityId
+	 *        the entity ID
+	 * @param ts
+	 *        the timestamp
+	 * @return the new instance
+	 */
+	protected abstract C newConfiguration(Long userId, Long entityId, Instant ts);
+
 	@Override
-	public TransformConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
-		int p = columnOffset;
+	public C mapRow(ResultSet rs, int rowNum) throws SQLException {
+		int p = 0;
 		Long userId = rs.getObject(++p, Long.class);
 		Long entityId = rs.getObject(++p, Long.class);
 		Timestamp ts = rs.getTimestamp(++p);
-		TransformConfiguration conf = (phase == TransformPhase.Request
-				? new RequestTransformConfiguration(userId, entityId, ts.toInstant())
-				: new ResponseTransformConfiguration(userId, entityId, ts.toInstant()));
+		C conf = newConfiguration(userId, entityId, ts.toInstant());
 		conf.setModified(rs.getTimestamp(++p).toInstant());
 		conf.setName(rs.getString(++p));
 		conf.setServiceIdentifier(rs.getString(++p));

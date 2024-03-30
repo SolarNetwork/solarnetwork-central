@@ -40,13 +40,15 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 /**
  * Transform configuration.
  *
+ * @param <C>
+ *        the transform configuration type
  * @author matt
  * @version 1.0
  */
-public abstract sealed class TransformConfiguration
-		extends BaseUserModifiableEntity<TransformConfiguration, UserLongCompositePK>
-		implements InstructionInputConfigurationEntity<TransformConfiguration, UserLongCompositePK>,
-		IdentifiableConfiguration permits TransformConfiguration.RequestTransformConfiguration,
+public abstract sealed class TransformConfiguration<C extends TransformConfiguration<C>>
+		extends BaseUserModifiableEntity<C, UserLongCompositePK>
+		implements InstructionInputConfigurationEntity<C, UserLongCompositePK>, IdentifiableConfiguration
+		permits TransformConfiguration.RequestTransformConfiguration,
 		TransformConfiguration.ResponseTransformConfiguration {
 
 	private static final long serialVersionUID = -2206409216936875018L;
@@ -101,7 +103,8 @@ public abstract sealed class TransformConfiguration
 	@JsonIgnoreProperties({ "id", "serviceProps" })
 	@JsonPropertyOrder({ "userId", "transformId", "created", "modified", "enabled", "name", "phase",
 			"serviceIdentifier", "serviceProperties" })
-	public static final class RequestTransformConfiguration extends TransformConfiguration {
+	public static final class RequestTransformConfiguration
+			extends TransformConfiguration<RequestTransformConfiguration> {
 
 		private static final long serialVersionUID = -2376857425680066351L;
 
@@ -150,7 +153,8 @@ public abstract sealed class TransformConfiguration
 	@JsonIgnoreProperties({ "id", "serviceProps" })
 	@JsonPropertyOrder({ "userId", "transformId", "created", "modified", "enabled", "name", "phase",
 			"serviceIdentifier", "serviceProperties" })
-	public static final class ResponseTransformConfiguration extends TransformConfiguration {
+	public static final class ResponseTransformConfiguration
+			extends TransformConfiguration<ResponseTransformConfiguration> {
 
 		private static final long serialVersionUID = -7774474475322183244L;
 
@@ -194,7 +198,7 @@ public abstract sealed class TransformConfiguration
 	}
 
 	@Override
-	public void copyTo(TransformConfiguration entity) {
+	public void copyTo(C entity) {
 		super.copyTo(entity);
 		entity.setName(name);
 		entity.setServiceIdentifier(serviceIdentifier);
@@ -202,16 +206,16 @@ public abstract sealed class TransformConfiguration
 	}
 
 	@Override
-	public boolean isSameAs(TransformConfiguration other) {
+	public boolean isSameAs(C other) {
 		boolean result = super.isSameAs(other);
 		if ( !result ) {
 			return false;
 		}
 		// @formatter:off
-		return Objects.equals(this.name, other.name)
-				&& Objects.equals(this.phase, other.phase)
-				&& Objects.equals(this.serviceIdentifier, other.serviceIdentifier)
-				&& Objects.equals(this.servicePropsJson, other.servicePropsJson)
+		return Objects.equals(this.name, other.getName())
+				&& Objects.equals(this.phase, other.getPhase())
+				&& Objects.equals(this.serviceIdentifier, other.getServiceIdentifier())
+				&& Objects.equals(this.servicePropsJson, other.getServicePropsJson())
 				;
 		// @formatter:on
 	}

@@ -40,7 +40,8 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao;
-import net.solarnetwork.central.inin.domain.TransformConfiguration;
+import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao.JdbcResponseTransformConfigurationDao;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformPhase;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -57,21 +58,21 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5JdbcDaoTestSupport {
 
-	private JdbcTransformConfigurationDao dao;
+	private JdbcResponseTransformConfigurationDao dao;
 	private Long userId;
 
-	private TransformConfiguration last;
+	private ResponseTransformConfiguration last;
 
 	@BeforeEach
 	public void setup() {
-		dao = new JdbcTransformConfigurationDao(jdbcTemplate, TransformPhase.Response);
+		dao = new JdbcResponseTransformConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 	}
 
 	@Test
 	public void entityKey() {
 		UserLongCompositePK id = new UserLongCompositePK(randomLong(), randomLong());
-		TransformConfiguration result = dao.entityKey(id);
+		ResponseTransformConfiguration result = dao.entityKey(id);
 
 		// @formatter:off
 		then(result)
@@ -87,7 +88,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 	public void insert() {
 		// GIVEN
 		Map<String, Object> props = Collections.singletonMap("foo", "bar");
-		TransformConfiguration conf = newResponseTransformConfiguration(userId, randomString(),
+		ResponseTransformConfiguration conf = newResponseTransformConfiguration(userId, randomString(),
 				randomString(), props);
 
 		// WHEN
@@ -135,7 +136,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		insert();
 
 		// WHEN
-		TransformConfiguration result = dao.get(last.getId());
+		ResponseTransformConfiguration result = dao.get(last.getId());
 
 		// THEN
 		then(result).as("Retrieved entity matches source").isEqualTo(last);
@@ -147,7 +148,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		insert();
 
 		// WHEN
-		TransformConfiguration conf = last.copyWithId(last.getId());
+		ResponseTransformConfiguration conf = last.copyWithId(last.getId());
 		conf.setEnabled(false);
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomString());
@@ -157,7 +158,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
-		TransformConfiguration updated = dao.get(result);
+		ResponseTransformConfiguration updated = dao.get(result);
 
 		// THEN
 		List<Map<String, Object>> data = allResponseTransformConfigurationData(jdbcTemplate);
@@ -189,7 +190,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		final int count = 3;
 		final int userCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<TransformConfiguration> confs = new ArrayList<>(count);
+		final List<ResponseTransformConfiguration> confs = new ArrayList<>(count);
 
 		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
 
@@ -203,8 +204,8 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 					userId = userIds.get(u);
 				}
 
-				TransformConfiguration conf = newResponseTransformConfiguration(userId, randomString(),
-						randomString(), props);
+				ResponseTransformConfiguration conf = newResponseTransformConfiguration(userId,
+						randomString(), randomString(), props);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
@@ -213,11 +214,12 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 
 		// WHEN
 		final Long userId = userIds.get(1);
-		Collection<TransformConfiguration> results = dao.findAll(userId, null);
+		Collection<ResponseTransformConfiguration> results = dao.findAll(userId, null);
 
 		// THEN
-		TransformConfiguration[] expected = confs.stream().filter(e -> userId.equals(e.getUserId()))
-				.toArray(TransformConfiguration[]::new);
+		ResponseTransformConfiguration[] expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId()))
+				.toArray(ResponseTransformConfiguration[]::new);
 		then(results).as("Results for single user returned").contains(expected);
 	}
 
@@ -227,7 +229,7 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		final int count = 3;
 		final int userCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<TransformConfiguration> confs = new ArrayList<>(count);
+		final List<ResponseTransformConfiguration> confs = new ArrayList<>(count);
 
 		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
 
@@ -241,8 +243,8 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 					userId = userIds.get(u);
 				}
 
-				TransformConfiguration conf = newResponseTransformConfiguration(userId, randomString(),
-						randomString(), props);
+				ResponseTransformConfiguration conf = newResponseTransformConfiguration(userId,
+						randomString(), randomString(), props);
 				UserLongCompositePK id = dao.create(userId, conf);
 				conf = conf.copyWithId(id);
 				confs.add(conf);
@@ -253,11 +255,13 @@ public class JdbcTransformConfigurationDao_ResonseTests extends AbstractJUnit5Jd
 		final Long userId = userIds.get(1);
 		final BasicFilter filter = new BasicFilter();
 		filter.setUserId(userId);
-		FilterResults<TransformConfiguration, UserLongCompositePK> results = dao.findFiltered(filter);
+		FilterResults<ResponseTransformConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
 
 		// THEN
-		TransformConfiguration[] expected = confs.stream().filter(e -> userId.equals(e.getUserId()))
-				.toArray(TransformConfiguration[]::new);
+		ResponseTransformConfiguration[] expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId()))
+				.toArray(ResponseTransformConfiguration[]::new);
 		then(results).as("Results for single user returned").contains(expected);
 	}
 

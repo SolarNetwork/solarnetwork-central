@@ -42,10 +42,11 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcEndpointConfigurationDao;
-import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao;
+import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao.JdbcRequestTransformConfigurationDao;
+import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao.JdbcResponseTransformConfigurationDao;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
-import net.solarnetwork.central.inin.domain.TransformConfiguration;
-import net.solarnetwork.central.inin.domain.TransformPhase;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.dao.Entity;
@@ -61,8 +62,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 
 	private JdbcEndpointConfigurationDao dao;
 	private Long userId;
-	private JdbcTransformConfigurationDao reqTransformDao;
-	private JdbcTransformConfigurationDao resTransformDao;
+	private JdbcRequestTransformConfigurationDao reqTransformDao;
+	private JdbcResponseTransformConfigurationDao resTransformDao;
 
 	private EndpointConfiguration last;
 
@@ -70,8 +71,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	public void setup() {
 		dao = new JdbcEndpointConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-		reqTransformDao = new JdbcTransformConfigurationDao(jdbcTemplate, TransformPhase.Request);
-		resTransformDao = new JdbcTransformConfigurationDao(jdbcTemplate, TransformPhase.Response);
+		reqTransformDao = new JdbcRequestTransformConfigurationDao(jdbcTemplate);
+		resTransformDao = new JdbcResponseTransformConfigurationDao(jdbcTemplate);
 	}
 
 	@Test
@@ -196,11 +197,11 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	@Test
 	public void insert_withTransforms() {
 		// GIVEN
-		TransformConfiguration reqXform = InstructionInputJdbcTestUtils
+		RequestTransformConfiguration reqXform = InstructionInputJdbcTestUtils
 				.newRequestTransformConfiguration(userId, randomString(), randomString(), null);
 		reqXform = reqTransformDao.get(reqTransformDao.create(userId, reqXform));
 
-		TransformConfiguration resXform = InstructionInputJdbcTestUtils
+		ResponseTransformConfiguration resXform = InstructionInputJdbcTestUtils
 				.newResponseTransformConfiguration(userId, randomString(), randomString(), null);
 		resXform = resTransformDao.get(resTransformDao.create(userId, resXform));
 

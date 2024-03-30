@@ -67,7 +67,6 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointAuthConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
 import net.solarnetwork.central.inin.domain.InstructionInputConfigurationEntity;
-import net.solarnetwork.central.inin.domain.TransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -93,8 +92,8 @@ import net.solarnetwork.util.StringUtils;
 public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 
 	private final CredentialConfigurationDao credentialDao;
-	private final TransformConfigurationDao requestTransformDao;
-	private final TransformConfigurationDao responseTransformDao;
+	private final TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao;
+	private final TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao;
 	private final EndpointConfigurationDao endpointDao;
 	private final EndpointAuthConfigurationDao endpointAuthDao;
 	private final Collection<RequestTransformService> requestTransformServices;
@@ -124,9 +123,9 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 	 *         if any argument is {@literal null}
 	 */
 	public DaoUserInstructionInputBiz(CredentialConfigurationDao credentialDao,
-			TransformConfigurationDao requestTransformDao,
-			TransformConfigurationDao responseTransformDao, EndpointConfigurationDao endpointDao,
-			EndpointAuthConfigurationDao endpointAuthDao,
+			TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao,
+			TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao,
+			EndpointConfigurationDao endpointDao, EndpointAuthConfigurationDao endpointAuthDao,
 			Collection<RequestTransformService> requestTransformServices,
 			Collection<ResponseTransformService> responseTransformServices) {
 		super();
@@ -280,13 +279,13 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 
 		final UserLongCompositePK reqXformPk = new UserLongCompositePK(id.getUserId(),
 				requireNonNullArgument(endpoint.getRequestTransformId(), "endpoint.requestTransformId"));
-		final TransformConfiguration reqXform = requireNonNullObject(requestTransformDao.get(reqXformPk),
-				reqXformPk);
+		final RequestTransformConfiguration reqXform = requireNonNullObject(
+				requestTransformDao.get(reqXformPk), reqXformPk);
 
 		final UserLongCompositePK resXformPk = new UserLongCompositePK(id.getUserId(),
 				requireNonNullArgument(endpoint.getResponseTransformId(),
 						"endpoint.responseTransformId"));
-		final TransformConfiguration resXform = requireNonNullObject(
+		final ResponseTransformConfiguration resXform = requireNonNullObject(
 				responseTransformDao.get(resXformPk), resXformPk);
 
 		final String reqXformServiceId = requireNonNullArgument(reqXform.getServiceIdentifier(),

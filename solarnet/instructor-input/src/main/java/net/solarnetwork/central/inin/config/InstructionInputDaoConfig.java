@@ -34,8 +34,10 @@ import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcCredentialConfigurationDao;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcEndpointAuthConfigurationDao;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcEndpointConfigurationDao;
-import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao;
-import net.solarnetwork.central.inin.domain.TransformPhase;
+import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao.JdbcRequestTransformConfigurationDao;
+import net.solarnetwork.central.inin.dao.jdbc.JdbcTransformConfigurationDao.JdbcResponseTransformConfigurationDao;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 
 /**
  * Instruction input DAO configuration.
@@ -86,8 +88,8 @@ public class InstructionInputDaoConfig {
 	 */
 	@Bean
 	@Qualifier(SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT_REQUEST)
-	public TransformConfigurationDao ininRequestTransformConfigurationDao() {
-		return new JdbcTransformConfigurationDao(jdbcOperations, TransformPhase.Request);
+	public TransformConfigurationDao<RequestTransformConfiguration> ininRequestTransformConfigurationDao() {
+		return new JdbcRequestTransformConfigurationDao(jdbcOperations);
 	}
 
 	/**
@@ -97,8 +99,8 @@ public class InstructionInputDaoConfig {
 	 */
 	@Bean
 	@Qualifier(SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT_RESPONSE)
-	public TransformConfigurationDao ininResponseTransformConfigurationDao() {
-		return new JdbcTransformConfigurationDao(jdbcOperations, TransformPhase.Response);
+	public TransformConfigurationDao<ResponseTransformConfiguration> ininResponseTransformConfigurationDao() {
+		return new JdbcResponseTransformConfigurationDao(jdbcOperations);
 	}
 
 }
