@@ -13,7 +13,7 @@ subprojects {
 
 	java {
 		toolchain {
-	        languageVersion = JavaLanguageVersion.of(17)
+	        languageVersion = JavaLanguageVersion.of(21)
 	    }
 	}
 
@@ -26,11 +26,13 @@ subprojects {
 		compileJava,
 		compileTestJava
 	].each() {
-    	it.options.release = 17
+    	it.options.release = 21
 		it.options.compilerArgs += [
 			"-Xlint:all",
 			"-Xlint:-options",
 			"-Xlint:-path",
+			"-Xlint:-serial",
+			"-Xlint:-this-escape",
 			"-Xlint:-try",
 			"-parameters"
 		]
@@ -43,7 +45,8 @@ subprojects {
 	compileTestJava {
 		options.compilerArgs += [
 			"-Xlint:-serial",
-            "-Xlint:-static"
+            "-Xlint:-static",
+			"-Xlint:-this-escape"
 		]
 	}
 
@@ -57,8 +60,8 @@ subprojects {
 	javadoc.options {
 		encoding = 'UTF-8'
 		use = true
-		links 'https://docs.oracle.com/javase/17/docs/api/'
-		source = "17"
+		links 'https://docs.oracle.com/javase/21/docs/api/'
+		source = "21"
 	}
 
 	ext {
@@ -140,7 +143,7 @@ subprojects {
     pluginManager.withPlugin('eclipse') { 
 		eclipse {
 			jdt {
-				javaRuntimeName 'JavaSE-17'
+				javaRuntimeName 'JavaSE-21'
 				file {
 					withProperties { properties ->
 						// set properties for the file org.eclipse.jdt.core.prefs to enable -parameters for Spring 6

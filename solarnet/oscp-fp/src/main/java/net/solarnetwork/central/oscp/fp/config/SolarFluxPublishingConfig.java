@@ -1,21 +1,21 @@
 /* ==================================================================
  * SolarFluxPublishingConfig.java - 10/11/2021 9:22:14 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.fp.config;
 
 import static net.solarnetwork.central.oscp.fp.config.SolarFluxMqttConnectionConfig.SOLARFLUX;
+import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -33,13 +34,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.domain.UserEvent;
+import net.solarnetwork.central.oscp.domain.DatumPublishEvent;
 import net.solarnetwork.central.oscp.mqtt.OscpActionDatumPublisher;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Configuration for SolarFlux publishing.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -59,7 +61,7 @@ public class SolarFluxPublishingConfig {
 
 	/**
 	 * A mapper for SolarFlux publishing.
-	 * 
+	 *
 	 * @return the mapper
 	 */
 	@Bean
@@ -75,7 +77,7 @@ public class SolarFluxPublishingConfig {
 
 	/**
 	 * Publish OSCP action events as SolarFlux datum.
-	 * 
+	 *
 	 * @param mapper
 	 *        the mapper to use
 	 * @return the publisher
@@ -87,6 +89,21 @@ public class SolarFluxPublishingConfig {
 			@Qualifier(SOLARFLUX) ObjectMapper mapper) {
 		OscpActionDatumPublisher processor = new OscpActionDatumPublisher(mapper);
 		return processor;
+	}
+
+	/**
+	 * Publish OSCP action events as SolarFlux datum, using the {@link Consumer}
+	 * API.
+	 *
+	 * @param publisher
+	 *        the publisher
+	 * @return the consumer
+	 */
+	@Bean
+	@Qualifier(SOLARFLUX)
+	public Consumer<DatumPublishEvent> solarFluxOscpActionDatumPublishConsumer(
+			@Qualifier(SOLARFLUX) OscpActionDatumPublisher publisher) {
+		return publisher.asConsumer();
 	}
 
 }

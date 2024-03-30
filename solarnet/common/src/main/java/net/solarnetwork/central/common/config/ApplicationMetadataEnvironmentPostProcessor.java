@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.config;
 
 import static java.lang.String.format;
+import static org.springframework.util.StringUtils.arrayToDelimitedString;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -52,7 +53,7 @@ import net.solarnetwork.util.ByteUtils;
  * Load up application metadata into the environment.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -141,7 +142,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 				appInstanceId = hostname.toString();
 			} else {
 				// next from `hostname` commmand
-				hostname = exec("hostname");
+				hostname = exec(new String[] { "hostname" });
 				if ( hostname != null && !hostname.toString().isBlank() ) {
 					appInstanceId = hostname.toString();
 				}
@@ -165,11 +166,11 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 		props.put(APP_PROP_PREFIX + key, value);
 	}
 
-	private String exec(String command) {
+	private String exec(String[] command) {
 		try (InputStream in = Runtime.getRuntime().exec(command).getInputStream()) {
 			return StreamUtils.copyToString(in, ByteUtils.UTF8).trim();
 		} catch ( Exception e ) {
-			logger.warn(format("Error executing [%s]", command), e);
+			logger.warn(format("Error executing [%s]", arrayToDelimitedString(command, " ")), e);
 			return null;
 		}
 	}

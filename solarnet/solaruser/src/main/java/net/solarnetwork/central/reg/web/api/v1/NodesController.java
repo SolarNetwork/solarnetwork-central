@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodesController.java - Jan 23, 2015 3:42:36 PM
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -67,7 +67,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for user nodes web service API.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -83,7 +83,7 @@ public class NodesController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userBiz
 	 *        The {@link UserBiz}.
 	 * @param certificateService
@@ -102,7 +102,7 @@ public class NodesController {
 
 	/**
 	 * Get a listing of nodes for the active user.
-	 * 
+	 *
 	 * @return The list of nodes available to the active user.
 	 */
 	@RequestMapping(value = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/" }, method = RequestMethod.GET)
@@ -116,7 +116,7 @@ public class NodesController {
 
 	/**
 	 * Get a listing of pending node confirmations for the active user.
-	 * 
+	 *
 	 * @return The list of pending node confirmations for the active user.
 	 */
 	@RequestMapping(value = { "/u/sec/my-nodes/pending",
@@ -132,7 +132,7 @@ public class NodesController {
 
 	/**
 	 * Get a list of all archived nodes.
-	 * 
+	 *
 	 * @return All archived nodes.
 	 * @since 1.1
 	 */
@@ -146,7 +146,7 @@ public class NodesController {
 
 	/**
 	 * Update the archived status of a set of nodes.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        The node IDs to update the archived status of.
 	 * @param archived
@@ -166,7 +166,7 @@ public class NodesController {
 	/**
 	 * Manually create a new node, without going through the
 	 * invitation/association process.
-	 * 
+	 *
 	 * @param timeZoneId
 	 *        the time zone ID
 	 * @param countryCode
@@ -188,7 +188,7 @@ public class NodesController {
 				lang = locale.getLanguage();
 			}
 		}
-		final Locale locale = new Locale(lang, countryCode);
+		final Locale locale = Locale.of(lang, countryCode);
 		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
 		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), keystorePassword,
 				timeZone, locale);
@@ -197,7 +197,7 @@ public class NodesController {
 
 	/**
 	 * Handle an {@link CertificateException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @return an error response object
@@ -213,7 +213,7 @@ public class NodesController {
 
 	/**
 	 * Get a certificate as a PEM encoded value file attachment.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node to get the certificate for
 	 * @return the response data
@@ -245,7 +245,7 @@ public class NodesController {
 
 	/**
 	 * Get a certificate as a {@link UserNodeCertificate} object.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node to get the certificate for
 	 * @param password
@@ -293,7 +293,7 @@ public class NodesController {
 
 	/**
 	 * Renew a certificate.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param password
@@ -356,7 +356,7 @@ public class NodesController {
 
 		/**
 		 * Get a hexidecimal string value of the certificate serial number.
-		 * 
+		 *
 		 * @return The certificate serial number.
 		 */
 		public String getCertificateSerialNumber() {
@@ -365,7 +365,7 @@ public class NodesController {
 
 		/**
 		 * Get the date the certificate is valid from.
-		 * 
+		 *
 		 * @return The valid from date.
 		 */
 		public Instant getCertificateValidFromDate() {
@@ -374,7 +374,7 @@ public class NodesController {
 
 		/**
 		 * Get the date the certificate is valid until.
-		 * 
+		 *
 		 * @return The valid until date.
 		 */
 		public Instant getCertificateValidUntilDate() {
@@ -383,7 +383,7 @@ public class NodesController {
 
 		/**
 		 * Get the certificate subject DN.
-		 * 
+		 *
 		 * @return The certificate subject DN.
 		 */
 		public String getCertificateSubjectDN() {
@@ -392,7 +392,7 @@ public class NodesController {
 
 		/**
 		 * Get the certificate issuer DN.
-		 * 
+		 *
 		 * @return The certificate issuer DN.
 		 */
 		public String getCertificateIssuerDN() {
@@ -401,7 +401,7 @@ public class NodesController {
 
 		/**
 		 * Get a date after which the certificate may be renewed.
-		 * 
+		 *
 		 * @return A renewal minimum date.
 		 */
 		public Instant getCertificateRenewAfterDate() {
@@ -410,7 +410,7 @@ public class NodesController {
 
 		/**
 		 * Get the status of the installation process, if available.
-		 * 
+		 *
 		 * @return The installation status, or <em>null</em>.
 		 */
 		public UserNodeCertificateInstallationStatus getInstallationStatus() {
