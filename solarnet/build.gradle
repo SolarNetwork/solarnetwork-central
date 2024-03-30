@@ -31,6 +31,8 @@ subprojects {
 			"-Xlint:all",
 			"-Xlint:-options",
 			"-Xlint:-path",
+			"-Xlint:-serial",
+			"-Xlint:-this-escape",
 			"-Xlint:-try",
 			"-parameters"
 		]
@@ -43,7 +45,8 @@ subprojects {
 	compileTestJava {
 		options.compilerArgs += [
 			"-Xlint:-serial",
-            "-Xlint:-static"
+            "-Xlint:-static",
+			"-Xlint:-this-escape"
 		]
 	}
 
