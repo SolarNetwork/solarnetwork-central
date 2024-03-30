@@ -47,6 +47,8 @@ import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.domain.CentralInstructionInputUserEvents;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
 /**
@@ -62,7 +64,8 @@ public class DaoInstructionInputEndpointBiz
 
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final EndpointConfigurationDao endpointDao;
-	private final TransformConfigurationDao transformDao;
+	private final TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao;
+	private final TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao;
 	private final Map<String, RequestTransformService> requestTransformServices;
 	private final Map<String, ResponseTransformService> responseTransformServices;
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -74,8 +77,10 @@ public class DaoInstructionInputEndpointBiz
 	 *        the node ownership DAO
 	 * @param endpointDao
 	 *        the endpoint DAO
-	 * @param transformDao
-	 *        the transform DAO
+	 * @param requestTransformDao
+	 *        the request transform DAO
+	 * @param responseTransformDao
+	 *        the response transform DAO
 	 * @param requestTransformServices
 	 *        the request transform services
 	 * @param responseTransformServices
@@ -84,13 +89,16 @@ public class DaoInstructionInputEndpointBiz
 	 *         if any argument is {@literal null}
 	 */
 	public DaoInstructionInputEndpointBiz(SolarNodeOwnershipDao nodeOwnershipDao,
-			EndpointConfigurationDao endpointDao, TransformConfigurationDao transformDao,
+			EndpointConfigurationDao endpointDao,
+			TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao,
+			TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao,
 			Collection<RequestTransformService> requestTransformServices,
 			Collection<ResponseTransformService> responseTransformServices) {
 		super();
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");
-		this.transformDao = requireNonNullArgument(transformDao, "transformDao");
+		this.requestTransformDao = requireNonNullArgument(requestTransformDao, "requestTransformDao");
+		this.responseTransformDao = requireNonNullArgument(responseTransformDao, "responseTransformDao");
 		this.requestTransformServices = requireNonNullArgument(requestTransformServices,
 				"requestTransformServices").stream()
 						.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
@@ -126,6 +134,16 @@ public class DaoInstructionInputEndpointBiz
 			MimeType contentType, InputStream in, Map<String, String> parameters) throws IOException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	/**
+	 * Set the user event appender service.
+	 *
+	 * @param userEventAppenderBiz
+	 *        the service to set
+	 */
+	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
+		this.userEventAppenderBiz = userEventAppenderBiz;
 	}
 
 }

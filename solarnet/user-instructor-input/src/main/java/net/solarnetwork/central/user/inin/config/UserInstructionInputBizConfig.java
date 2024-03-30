@@ -38,6 +38,8 @@ import net.solarnetwork.central.inin.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.inin.dao.EndpointAuthConfigurationDao;
 import net.solarnetwork.central.inin.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.user.inin.biz.impl.DaoUserInstructionInputBiz;
 import net.solarnetwork.service.PasswordEncoder;
 
@@ -56,11 +58,11 @@ public class UserInstructionInputBizConfig {
 
 	@Autowired
 	@Qualifier(INSTRUCTION_INPUT_REQUEST)
-	private TransformConfigurationDao requestTransformDao;
+	private TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao;
 
 	@Autowired
 	@Qualifier(INSTRUCTION_INPUT_RESPONSE)
-	private TransformConfigurationDao responseTransformDao;
+	private TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao;
 
 	@Autowired
 	private EndpointConfigurationDao endpointDao;
