@@ -48,7 +48,7 @@ import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
  */
 public class LocalizedInvoiceTests {
 
-	private static final Locale EN_NZ = new Locale("en", "NZ");
+	private static final Locale EN_NZ = Locale.of("en", "NZ");
 	private static final BigDecimal AMOUNT_1 = new BigDecimal("1.99");
 	private static final BigDecimal AMOUNT_2 = new BigDecimal("2.99");
 	private static final BigDecimal AMOUNT_3 = new BigDecimal("3.99");

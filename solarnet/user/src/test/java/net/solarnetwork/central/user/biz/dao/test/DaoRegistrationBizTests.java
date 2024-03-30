@@ -363,7 +363,7 @@ public class DaoRegistrationBizTests {
 		replayAll();
 
 		NewNodeRequest req = new NewNodeRequest(testUser.getId(), "foobar",
-				TimeZone.getTimeZone(loc.getTimeZoneId()), new Locale("en", loc.getCountry()));
+				TimeZone.getTimeZone(loc.getTimeZoneId()), Locale.of("en", loc.getCountry()));
 		UserNode result = registrationBiz.createNodeManually(req);
 
 		// then

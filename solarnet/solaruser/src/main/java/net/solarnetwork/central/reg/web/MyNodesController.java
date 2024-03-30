@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyNodesController.java - Nov 22, 2012 7:25:44 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.ui.Model;
@@ -44,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
@@ -65,7 +65,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for "my nodes".
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -85,7 +85,7 @@ public class MyNodesController extends ControllerSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userBiz
 	 *        The {@link UserBiz} to use.
 	 * @param registrationBiz
@@ -104,7 +104,7 @@ public class MyNodesController extends ControllerSupport {
 
 	/**
 	 * Set a {@link MailService} to use.
-	 * 
+	 *
 	 * @param mailService
 	 *        The service to use.
 	 */
@@ -115,7 +115,7 @@ public class MyNodesController extends ControllerSupport {
 	/**
 	 * The {@link MessageSource} to use in conjunction with
 	 * {@link #setMailService(MailService)}.
-	 * 
+	 *
 	 * @param messageSource
 	 *        A message source to use.
 	 */
@@ -136,7 +136,7 @@ public class MyNodesController extends ControllerSupport {
 
 	/**
 	 * View a "home" page for the "my nodes" section.
-	 * 
+	 *
 	 * @return model and view
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
@@ -170,7 +170,7 @@ public class MyNodesController extends ControllerSupport {
 
 	/**
 	 * Generate a new node confirmation code.
-	 * 
+	 *
 	 * @param userId
 	 *        the optional user ID to generate the code for; defaults to the
 	 *        acting user
@@ -196,7 +196,7 @@ public class MyNodesController extends ControllerSupport {
 				lang = locale.getLanguage();
 			}
 		}
-		final Locale locale = new Locale(lang, countryCode);
+		final Locale locale = Locale.of(lang, countryCode);
 		final NetworkAssociation details = registrationBiz
 				.createNodeAssociation(new NewNodeRequest(userId, securityPhrase, timeZone, locale));
 		return new ModelAndView("sec/mynodes/invitation", "details", details);
@@ -221,11 +221,11 @@ public class MyNodesController extends ControllerSupport {
 
 	/**
 	 * CertificateException handler.
-	 * 
+	 *
 	 * <p>
 	 * Logs a WARN log and returns HTTP 403 (Forbidden).
 	 * </p>
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param res
@@ -254,7 +254,7 @@ public class MyNodesController extends ControllerSupport {
 
 	/**
 	 * Request an ownership transfer of a node to another SolarNetwork account.
-	 * 
+	 *
 	 * @param userId
 	 *        The user ID of the current node owner.
 	 * @param nodeId
