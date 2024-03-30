@@ -29,6 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
@@ -36,9 +37,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformFilter;
-import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration;
+import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration.InsertRequestTransformConfiguration;
+import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration.InsertResponseTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectTransformConfiguration;
-import net.solarnetwork.central.inin.dao.jdbc.sql.UpdateTransformConfiguration;
+import net.solarnetwork.central.inin.dao.jdbc.sql.UpdateTransformConfiguration.UpdateRequestTransformConfiguration;
+import net.solarnetwork.central.inin.dao.jdbc.sql.UpdateTransformConfiguration.UpdateResponseTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
@@ -91,6 +94,16 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 			return TABLE_NAME;
 		}
 
+		@Override
+		protected PreparedStatementCreator createSql(Long userId, RequestTransformConfiguration entity) {
+			return new InsertRequestTransformConfiguration(userId, entity);
+		}
+
+		@Override
+		protected PreparedStatementCreator saveSql(RequestTransformConfiguration entity) {
+			return new UpdateRequestTransformConfiguration(entity.getId(), entity);
+		}
+
 	}
 
 	/**
@@ -125,6 +138,17 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		@Override
 		protected String tableName() {
 			return TABLE_NAME;
+		}
+
+		@Override
+		protected PreparedStatementCreator createSql(Long userId,
+				ResponseTransformConfiguration entity) {
+			return new InsertResponseTransformConfiguration(userId, entity);
+		}
+
+		@Override
+		protected PreparedStatementCreator saveSql(ResponseTransformConfiguration entity) {
+			return new UpdateResponseTransformConfiguration(entity.getId(), entity);
 		}
 
 	}
@@ -164,10 +188,21 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		}
 	}
 
+	/**
+	 * Get the SQL to create a new entity.
+	 *
+	 * @param userId
+	 *        the uesr ID
+	 * @param entity
+	 *        the entity
+	 * @return the SQL
+	 */
+	protected abstract PreparedStatementCreator createSql(Long userId, C entity);
+
 	@Override
 	public UserLongCompositePK create(Long userId, C entity) {
 		validatePhase(entity);
-		final var sql = new InsertTransformConfiguration(userId, entity);
+		final var sql = createSql(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
 		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
@@ -192,14 +227,22 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		return executeFilterQuery(jdbcOps, filter, sql, rowMapper());
 	}
 
+	/**
+	 * Get the SQL to save an entity.
+	 *
+	 * @param entity
+	 *        the entity to save
+	 * @return the SQL
+	 */
+	protected abstract PreparedStatementCreator saveSql(C entity);
+
 	@Override
 	public UserLongCompositePK save(C entity) {
 		if ( !entity.getId().entityIdIsAssigned() ) {
 			return create(entity.getId().getUserId(), entity);
 		}
 		validatePhase(entity);
-		final UpdateTransformConfiguration sql = new UpdateTransformConfiguration(entity.getId(),
-				entity);
+		final var sql = saveSql(entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0 ? entity.getId() : null);
 	}

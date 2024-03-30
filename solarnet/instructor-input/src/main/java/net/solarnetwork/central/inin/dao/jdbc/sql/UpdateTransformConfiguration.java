@@ -33,7 +33,8 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
-import net.solarnetwork.central.inin.domain.TransformPhase;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 
 /**
  * Support for UPDATE {@link TransformConfiguration} entities.
@@ -41,7 +42,70 @@ import net.solarnetwork.central.inin.domain.TransformPhase;
  * @author matt
  * @version 1.0
  */
-public class UpdateTransformConfiguration implements PreparedStatementCreator, SqlProvider {
+public abstract sealed class UpdateTransformConfiguration<C extends TransformConfiguration<C>>
+		implements PreparedStatementCreator, SqlProvider
+		permits UpdateTransformConfiguration.UpdateRequestTransformConfiguration,
+		UpdateTransformConfiguration.UpdateResponseTransformConfiguration {
+
+	/**
+	 * Support for UPDATE {@link RequestTransformConfiguration} entities.
+	 */
+	public static final class UpdateRequestTransformConfiguration
+			extends UpdateTransformConfiguration<RequestTransformConfiguration> {
+
+		private static final String SQL_REQ = SQL.formatted("req");
+
+		/**
+		 * Constructor.
+		 *
+		 * @param id
+		 *        the ID
+		 * @param entity
+		 *        the entity
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public UpdateRequestTransformConfiguration(UserLongCompositePK id,
+				RequestTransformConfiguration entity) {
+			super(id, entity);
+		}
+
+		@Override
+		public String getSql() {
+			return SQL_REQ;
+		}
+
+	}
+
+	/**
+	 * Support for UPDATE {@link ResponseTransformConfiguration} entities.
+	 */
+	public static final class UpdateResponseTransformConfiguration
+			extends UpdateTransformConfiguration<ResponseTransformConfiguration> {
+
+		private static final String SQL_RES = SQL.formatted("res");
+
+		/**
+		 * Constructor.
+		 *
+		 * @param id
+		 *        the ID
+		 * @param entity
+		 *        the entity
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public UpdateResponseTransformConfiguration(UserLongCompositePK id,
+				ResponseTransformConfiguration entity) {
+			super(id, entity);
+		}
+
+		@Override
+		public String getSql() {
+			return SQL_RES;
+		}
+
+	}
 
 	private static final String SQL = """
 			UPDATE solardin.inin_%s_xform
@@ -52,11 +116,8 @@ public class UpdateTransformConfiguration implements PreparedStatementCreator, S
 			WHERE user_id = ? AND id = ?
 			""";
 
-	private static final String SQL_REQ = SQL.formatted("req");
-	private static final String SQL_RES = SQL.formatted("res");
-
 	private final UserLongCompositePK id;
-	private final TransformConfiguration entity;
+	private final C entity;
 
 	/**
 	 * Constructor.
@@ -68,7 +129,7 @@ public class UpdateTransformConfiguration implements PreparedStatementCreator, S
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UpdateTransformConfiguration(UserLongCompositePK id, TransformConfiguration entity) {
+	public UpdateTransformConfiguration(UserLongCompositePK id, C entity) {
 		super();
 		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");
@@ -76,11 +137,6 @@ public class UpdateTransformConfiguration implements PreparedStatementCreator, S
 		if ( !id.entityIdIsAssigned() ) {
 			throw new IllegalArgumentException("Entity ID must be assigned");
 		}
-	}
-
-	@Override
-	public String getSql() {
-		return (entity.getPhase() == TransformPhase.Request ? SQL_REQ : SQL_RES);
 	}
 
 	@Override

@@ -32,7 +32,8 @@ import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
-import net.solarnetwork.central.inin.domain.TransformPhase;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
+import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 
 /**
  * Support for INSERT {@link TransformConfiguration} entities.
@@ -40,7 +41,68 @@ import net.solarnetwork.central.inin.domain.TransformPhase;
  * @author matt
  * @version 1.0
  */
-public class InsertTransformConfiguration implements PreparedStatementCreator, SqlProvider {
+public abstract sealed class InsertTransformConfiguration<C extends TransformConfiguration<C>>
+		implements PreparedStatementCreator, SqlProvider
+		permits InsertTransformConfiguration.InsertRequestTransformConfiguration,
+		InsertTransformConfiguration.InsertResponseTransformConfiguration {
+
+	/**
+	 * Support for INSERT {@link RequestTransformConfiguration} entities.
+	 */
+	public static final class InsertRequestTransformConfiguration
+			extends InsertTransformConfiguration<RequestTransformConfiguration> {
+
+		private static final String SQL_REQ = SQL.formatted("req");
+
+		/**
+		 * Constructor.
+		 *
+		 * @param userId
+		 *        the user ID
+		 * @param entity
+		 *        the entity
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public InsertRequestTransformConfiguration(Long userId, RequestTransformConfiguration entity) {
+			super(userId, entity);
+		}
+
+		@Override
+		public String getSql() {
+			return SQL_REQ;
+		}
+
+	}
+
+	/**
+	 * Support for INSERT {@link ResponseTransformConfiguration} entities.
+	 */
+	public static final class InsertResponseTransformConfiguration
+			extends InsertTransformConfiguration<ResponseTransformConfiguration> {
+
+		private static final String SQL_RES = SQL.formatted("res");
+
+		/**
+		 * Constructor.
+		 *
+		 * @param userId
+		 *        the user ID
+		 * @param entity
+		 *        the entity
+		 * @throws IllegalArgumentException
+		 *         if any argument is {@literal null}
+		 */
+		public InsertResponseTransformConfiguration(Long userId, ResponseTransformConfiguration entity) {
+			super(userId, entity);
+		}
+
+		@Override
+		public String getSql() {
+			return SQL_RES;
+		}
+
+	}
 
 	private static final String SQL = """
 			INSERT INTO solardin.inin_%s_xform (
@@ -49,11 +111,8 @@ public class InsertTransformConfiguration implements PreparedStatementCreator, S
 			VALUES (?,?,?,?,?,?::jsonb)
 			""";
 
-	private static final String SQL_REQ = SQL.formatted("req");
-	private static final String SQL_RES = SQL.formatted("res");
-
 	private final Long userId;
-	private final TransformConfiguration entity;
+	private final C entity;
 
 	/**
 	 * Constructor.
@@ -65,16 +124,11 @@ public class InsertTransformConfiguration implements PreparedStatementCreator, S
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public InsertTransformConfiguration(Long userId, TransformConfiguration entity) {
+	public InsertTransformConfiguration(Long userId, C entity) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.entity = requireNonNullArgument(entity, "entity");
 		requireNonNullArgument(entity.getPhase(), "entity.phase");
-	}
-
-	@Override
-	public String getSql() {
-		return (entity.getPhase() == TransformPhase.Request ? SQL_REQ : SQL_RES);
 	}
 
 	@Override
