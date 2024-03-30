@@ -39,7 +39,7 @@ working directory of the application, or via profile-specific files like
 
 # Building
 
-The build is managed by Gradle, and requires a Java Development Kit version 17+ to build (and run).
+The build is managed by Gradle, and requires a Java Development Kit version 21+ to build (and run).
 
 ```sh
 # Unix-like OS:
