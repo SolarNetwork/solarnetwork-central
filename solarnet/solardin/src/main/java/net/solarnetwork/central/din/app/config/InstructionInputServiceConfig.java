@@ -38,6 +38,7 @@ import net.solarnetwork.central.inin.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
+import net.solarnetwork.central.instructor.biz.InstructorBiz;
 
 /**
  * Core instruction service configuration.
@@ -47,6 +48,9 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTrans
  */
 @Configuration(proxyBeanMethods = false)
 public class InstructionInputServiceConfig {
+
+	@Autowired
+	private InstructorBiz instructor;
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -73,8 +77,9 @@ public class InstructionInputServiceConfig {
 
 	@Bean
 	public DaoInstructionInputEndpointBiz instructionInputEndpointBiz() {
-		var biz = new DaoInstructionInputEndpointBiz(nodeOwnershipDao, endpointDao, requestTransformDao,
-				responseTransformDao, requestTransformServices, responseTransformServices);
+		var biz = new DaoInstructionInputEndpointBiz(instructor, nodeOwnershipDao, endpointDao,
+				requestTransformDao, responseTransformDao, requestTransformServices,
+				responseTransformServices);
 		biz.setUserEventAppenderBiz(userEventAppenderBiz);
 		return biz;
 	}
