@@ -24,6 +24,7 @@ package net.solarnetwork.central.inin.biz;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -62,5 +63,28 @@ public interface InstructionInputEndpointBiz {
 	 */
 	Collection<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
 			InputStream in, Map<String, String> parameters) throws IOException;
+
+	/**
+	 * Generate instructions response.
+	 *
+	 * @param userId
+	 *        the endpoint owner user ID
+	 * @param endpointId
+	 *        the endpoint ID to import to
+	 * @param instructions
+	 *        the instructions to generate the response for
+	 * @param outputType
+	 *        the response content type
+	 * @param out
+	 *        the output destination
+	 * @param parameters
+	 *        optional parameters
+	 * @throws IOException
+	 *         if any IO error occurs
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	void generateResponse(Long userId, UUID endpointId, Collection<NodeInstruction> instructions,
+			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException;
 
 }

@@ -27,6 +27,7 @@ dependencies {
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-datum-input')
 	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-instructor-input')
 	implementation project(':solarnet-user')
 
 	// Spring

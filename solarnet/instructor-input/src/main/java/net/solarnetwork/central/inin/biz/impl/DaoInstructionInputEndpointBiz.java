@@ -27,6 +27,7 @@ import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,7 +47,6 @@ import net.solarnetwork.central.inin.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.domain.CentralInstructionInputUserEvents;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
-import net.solarnetwork.central.inin.domain.TransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
@@ -108,7 +108,7 @@ public class DaoInstructionInputEndpointBiz
 	}
 
 	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
-			TransformConfiguration requestXform, TransformConfiguration responseXform,
+			RequestTransformConfiguration requestXform, ResponseTransformConfiguration responseXform,
 			MimeType contentType, MimeType outputType, Map<String, String> parameters) {
 		var eventData = new LinkedHashMap<>(8);
 		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
@@ -134,6 +134,13 @@ public class DaoInstructionInputEndpointBiz
 			MimeType contentType, InputStream in, Map<String, String> parameters) throws IOException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void generateResponse(Long userId, UUID endpointId, Collection<NodeInstruction> instructions,
+			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException {
+		// TODO Auto-generated method stub
+
 	}
 
 	/**
