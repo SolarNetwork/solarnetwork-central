@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointAuthenticationDetailsSource.java - 23/02/2024 11:40:02 am
+ * DatumEndpointAuthenticationDetailsSource.java - 23/02/2024 11:40:02 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -36,7 +36,7 @@ import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
  * @author matt
  * @version 1.1
  */
-public class EndpointAuthenticationDetailsSource
+public class DatumEndpointAuthenticationDetailsSource
 		implements AuthenticationDetailsSource<HttpServletRequest, EndpointAuthenticationDetails> {
 
 	public static final Pattern DEFAULT_ENDPOINT_ID_PATTERN = Pattern.compile("/endpoint/([^/]+)",
@@ -57,7 +57,7 @@ public class EndpointAuthenticationDetailsSource
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public EndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao) {
+	public DatumEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao) {
 		this(endpointDao, DEFAULT_ENDPOINT_ID_PATTERN);
 	}
 
@@ -70,7 +70,7 @@ public class EndpointAuthenticationDetailsSource
 	 *        the pattern whose single group returns the endpoint ID from a
 	 *        request URL path
 	 */
-	public EndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao,
+	public DatumEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao,
 			Pattern endpointIdPattern) {
 		super();
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");

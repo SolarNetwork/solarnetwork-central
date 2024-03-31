@@ -41,12 +41,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationProvider;
+import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
 import net.solarnetwork.central.din.security.AuthenticatedEndpointCredentials;
 import net.solarnetwork.central.din.security.CredentialAuthorizationDao;
 
 /**
- * Test cases for the {@link EndpointAuthenticationProvider} class.
+ * Test cases for the {@link DatumEndpointAuthenticationProvider} class.
  *
  * @author matt
  * @version 1.0
@@ -59,11 +59,11 @@ public class EndpointAuthenticationProviderTests {
 
 	private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-	private EndpointAuthenticationProvider provider;
+	private DatumEndpointAuthenticationProvider provider;
 
 	@BeforeEach
 	public void setup() {
-		provider = new EndpointAuthenticationProvider(authDao, passwordEncoder);
+		provider = new DatumEndpointAuthenticationProvider(authDao, passwordEncoder);
 	}
 
 	@Test

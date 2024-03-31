@@ -53,8 +53,8 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSource;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationProvider;
+import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao;
 import net.solarnetwork.central.security.Role;
@@ -198,17 +198,17 @@ public class WebSecurityConfig {
 		private AuthenticationEventPublisher authEventPublisher;
 
 		@Bean
-		public EndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
-			Pattern pat = EndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
+		public DatumEndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
+			Pattern pat = DatumEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
 			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
 				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
 			}
-			return new EndpointAuthenticationDetailsSource(endpointDao, pat);
+			return new DatumEndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
 		private AuthenticationManager endpointAuthenticationManager() {
 			JdbcCredentialAuthorizationDao dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
-			var mgr = new ProviderManager(new EndpointAuthenticationProvider(dao, passwordEncoder));
+			var mgr = new ProviderManager(new DatumEndpointAuthenticationProvider(dao, passwordEncoder));
 			mgr.setAuthenticationEventPublisher(authEventPublisher);
 			return mgr;
 		}
@@ -274,18 +274,18 @@ public class WebSecurityConfig {
 		private AuthenticationEventPublisher authEventPublisher;
 
 		@Bean
-		public EndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
-			Pattern pat = EndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
+		public DatumEndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
+			Pattern pat = DatumEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
 			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
 				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
 			}
-			return new EndpointAuthenticationDetailsSource(endpointDao, pat);
+			return new DatumEndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
 		private AuthenticationManager endpointAuthenticationManager() {
 			net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao dao = new net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao(
 					jdbcOperations);
-			var mgr = new ProviderManager(new EndpointAuthenticationProvider(dao, passwordEncoder));
+			var mgr = new ProviderManager(new DatumEndpointAuthenticationProvider(dao, passwordEncoder));
 			mgr.setAuthenticationEventPublisher(authEventPublisher);
 			return mgr;
 		}

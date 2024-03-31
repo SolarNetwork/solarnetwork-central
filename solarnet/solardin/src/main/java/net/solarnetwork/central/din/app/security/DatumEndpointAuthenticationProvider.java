@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointAuthenticationProvider.java - 23/02/2024 1:30:06 pm
+ * DatumEndpointAuthenticationProvider.java - 23/02/2024 1:30:06 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -38,7 +38,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 1.0
  */
-public class EndpointAuthenticationProvider implements AuthenticationProvider {
+public class DatumEndpointAuthenticationProvider implements AuthenticationProvider {
 
 	private final CredentialAuthorizationDao authDao;
 	private final PasswordEncoder passwordEncoder;
@@ -53,7 +53,7 @@ public class EndpointAuthenticationProvider implements AuthenticationProvider {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public EndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
+	public DatumEndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
 			PasswordEncoder passwordEncoder) {
 		super();
 		this.authDao = ObjectUtils.requireNonNullArgument(authDao, "authDao");
