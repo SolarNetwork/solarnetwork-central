@@ -128,6 +128,52 @@ public class JdbcCredentialConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 	}
 
 	@Test
+	public void insert_noPassword() {
+		// GIVEN
+		CredentialConfiguration conf = newCredentialConfiguration(userId, randomString(), null);
+		conf.setExpires(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		conf.setOauth(true);
+
+		// WHEN
+		UserLongCompositePK result = dao.create(userId, conf);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(userId, UserLongCompositePK::getUserId)
+			.as("ID generated")
+			.doesNotReturn(null, UserLongCompositePK::getEntityId)
+			;
+
+		List<Map<String, Object>> data = allCredentialConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+			.as("Row user ID")
+			.containsEntry("user_id", userId)
+			.as("Row ID generated")
+			.containsKey("id")
+			.as("Row creation date")
+			.containsEntry("created", Timestamp.from(conf.getCreated()))
+			.as("Row modification date")
+			.containsEntry("modified", Timestamp.from(conf.getModified()))
+			.as("Row enabled")
+			.containsEntry("enabled", conf.isEnabled())
+			.as("Row username")
+			.containsEntry("username", conf.getUsername())
+			.as("Row password not present")
+			.containsEntry("password", null)
+			.as("Row expires")
+			.containsEntry("expires", Timestamp.from(conf.getExpires()))
+			.as("OAuth flag")
+			.containsEntry("oauth", true)
+			;
+		// @formatter:on
+		last = conf.copyWithId(result);
+	}
+
+	@Test
 	public void get() {
 		// GIVEN
 		insert();
@@ -136,7 +182,33 @@ public class JdbcCredentialConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 		CredentialConfiguration result = dao.get(last.getId());
 
 		// THEN
-		then(result).as("Retrieved entity matches source").isEqualTo(last);
+		// @formatter:off
+		then(result)
+			.as("Retrieved entity matches source")
+			.isEqualTo(last)
+			.as("Same values returned as stored")
+			.satisfies(c -> c.isSameAs(last))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void get_noPassword() {
+		// GIVEN
+		insert_noPassword();
+
+		// WHEN
+		CredentialConfiguration result = dao.get(last.getId());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Retrieved entity matches source")
+			.isEqualTo(last)
+			.as("Same values returned as stored")
+			.satisfies(c -> c.isSameAs(last))
+			;
+		// @formatter:on
 	}
 
 	@Test

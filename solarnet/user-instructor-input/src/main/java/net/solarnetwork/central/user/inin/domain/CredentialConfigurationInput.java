@@ -46,8 +46,6 @@ public class CredentialConfigurationInput
 	@Size(max = 256)
 	private String username;
 
-	@NotNull
-	@NotBlank
 	@Size(max = 64)
 	private String password;
 
