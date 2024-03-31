@@ -62,7 +62,7 @@ public class IdentityController {
 	 *
 	 * @return a result that details who the authenticated caller is
 	 */
-	@RequestMapping(value = "/api/v1/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
+	@RequestMapping(value = "/api/v1/*/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
 	public Result<Map<String, ?>> validate(@PathVariable("endpointId") UUID endpointId) {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);

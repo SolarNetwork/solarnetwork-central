@@ -39,7 +39,7 @@ import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 public class EndpointAuthenticationDetailsSource
 		implements AuthenticationDetailsSource<HttpServletRequest, EndpointAuthenticationDetails> {
 
-	public static final Pattern DEFAULT_ENDPOINT_ID_PATTERN = Pattern.compile("/endpoint/([^/]+)/",
+	public static final Pattern DEFAULT_ENDPOINT_ID_PATTERN = Pattern.compile("/endpoint/([^/]+)",
 			Pattern.CASE_INSENSITIVE);
 
 	private final Pattern endpointIdPattern;

@@ -74,7 +74,7 @@ app:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
   security:
-    endpoint-id-url-pattern: "/endpoint/([^/]+)/"
+    endpoint-id-url-pattern: "/endpoint/([^/]+)"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
