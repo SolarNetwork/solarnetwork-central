@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.din.app.config;
 
-import static net.solarnetwork.central.inin.config.SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT_REQUEST;
-import static net.solarnetwork.central.inin.config.SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT_RESPONSE;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -47,7 +45,7 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class InstructionInputServiceConfig {
+public class InstructionInputServiceConfig implements InstructionInputConfiguration {
 
 	@Autowired
 	private InstructorBiz instructor;
@@ -58,15 +56,16 @@ public class InstructionInputServiceConfig {
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
 
+	@Qualifier(CACHING)
 	@Autowired
 	private EndpointConfigurationDao endpointDao;
 
+	@Qualifier(CACHING)
 	@Autowired
-	@Qualifier(INSTRUCTION_INPUT_REQUEST)
 	private TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao;
 
+	@Qualifier(CACHING)
 	@Autowired
-	@Qualifier(INSTRUCTION_INPUT_RESPONSE)
 	private TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao;
 
 	@Autowired
