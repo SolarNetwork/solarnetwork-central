@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumInputConfiguration.java - 24/02/2024 4:11:38 pm
+ * SolarDinAppConfiguration.java - 1/04/2024 7:12:22 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -23,23 +23,14 @@
 package net.solarnetwork.central.din.app.config;
 
 /**
- * Marker interface for datum input configuration.
+ * Global SolarDIN application configuration marker interface.
  *
  * @author matt
  * @version 1.0
  */
-public interface DatumInputConfiguration extends SolarDinAppConfiguration {
+public interface SolarDinAppConfiguration {
 
-	/** A qualifier for endpoint configuration. */
-	String ENDPOINT_CONF = "endpoint-conf";
-
-	/** A qualifier for transform configuration. */
-	String TRANSFORM_CONF = "transform-conf";
-
-	/** A qualifier for datum support. */
-	String DATUM = "datum";
-
-	/** A qualifier to use for datum buffer objects. */
-	String DATUM_BUFFER = DATUM + "-buffer";
+	/** A qualifier for caching support. */
+	String CACHING = "caching";
 
 }

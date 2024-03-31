@@ -24,6 +24,7 @@ package net.solarnetwork.central.din.app.config;
 
 import static net.solarnetwork.central.din.app.config.DatumInputConfiguration.CACHING;
 import static net.solarnetwork.central.din.security.SecurityUtils.ROLE_DIN;
+import static net.solarnetwork.central.inin.security.SecurityUtils.ROLE_ININ;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
@@ -55,6 +56,8 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
+import net.solarnetwork.central.din.app.security.InstructionEndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.app.security.InstructionEndpointAuthenticationProvider;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao;
 import net.solarnetwork.central.security.Role;
@@ -198,7 +201,7 @@ public class WebSecurityConfig {
 		private AuthenticationEventPublisher authEventPublisher;
 
 		@Bean
-		public DatumEndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
+		public DatumEndpointAuthenticationDetailsSource datumEndpointAuthenticationDetailsSource() {
 			Pattern pat = DatumEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
 			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
 				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
@@ -206,8 +209,8 @@ public class WebSecurityConfig {
 			return new DatumEndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
-		private AuthenticationManager endpointAuthenticationManager() {
-			JdbcCredentialAuthorizationDao dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
+		private AuthenticationManager datumEndpointAuthenticationManager() {
+			var dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
 			var mgr = new ProviderManager(new DatumEndpointAuthenticationProvider(dao, passwordEncoder));
 			mgr.setAuthenticationEventPublisher(authEventPublisher);
 			return mgr;
@@ -215,7 +218,7 @@ public class WebSecurityConfig {
 
 		@Order(2)
 		@Bean
-		public SecurityFilterChain filterChainApi(HttpSecurity http) throws Exception {
+		public SecurityFilterChain datumFilterChainApi(HttpSecurity http) throws Exception {
 			// @formatter:off
 			http
 					// limit this configuration to specific paths
@@ -234,10 +237,10 @@ public class WebSecurityConfig {
 
 					.httpBasic((basic) -> {
 						basic.realmName("SolarDIN")
-							.authenticationDetailsSource(endpointAuthenticationDetailsSource());
+							.authenticationDetailsSource(datumEndpointAuthenticationDetailsSource());
 					})
 
-					.authenticationManager(endpointAuthenticationManager())
+					.authenticationManager(datumEndpointAuthenticationManager())
 
 					.authorizeHttpRequests((matchers) -> matchers
 							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -250,9 +253,9 @@ public class WebSecurityConfig {
 		}
 	}
 
-	/*-
+	/**
 	 * Instruction API security rules, for stateless REST access.
-	 *
+	 */
 	@Configuration
 	@Order(3)
 	public static class InstructionApiWebSecurityConfig {
@@ -274,30 +277,31 @@ public class WebSecurityConfig {
 		private AuthenticationEventPublisher authEventPublisher;
 
 		@Bean
-		public DatumEndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
-			Pattern pat = DatumEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
+		public InstructionEndpointAuthenticationDetailsSource instructionEndpointAuthenticationDetailsSource() {
+			Pattern pat = InstructionEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
 			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
 				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
 			}
-			return new DatumEndpointAuthenticationDetailsSource(endpointDao, pat);
+			return new InstructionEndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
-		private AuthenticationManager endpointAuthenticationManager() {
-			net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao dao = new net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao(
+		private AuthenticationManager instructionEndpointAuthenticationManager() {
+			var dao = new net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao(
 					jdbcOperations);
-			var mgr = new ProviderManager(new DatumEndpointAuthenticationProvider(dao, passwordEncoder));
+			var mgr = new ProviderManager(
+					new InstructionEndpointAuthenticationProvider(dao, passwordEncoder));
 			mgr.setAuthenticationEventPublisher(authEventPublisher);
 			return mgr;
 		}
 
 		@Order(3)
 		@Bean
-		public SecurityFilterChain filterChainApi(HttpSecurity http) throws Exception {
+		public SecurityFilterChain instructionFilterChainApi(HttpSecurity http) throws Exception {
 			// @formatter:off
 			http
 					// limit this configuration to specific paths
 					.securityMatchers((matchers) -> {
-						matchers.requestMatchers("/api/v1/instr/endpoint/**");
+						matchers.requestMatchers("/api/v1/instr/**");
 					})
 
 					// CSRF not needed for stateless calls
@@ -311,10 +315,10 @@ public class WebSecurityConfig {
 
 					.httpBasic((basic) -> {
 						basic.realmName("SolarININ")
-							.authenticationDetailsSource(endpointAuthenticationDetailsSource());
+							.authenticationDetailsSource(instructionEndpointAuthenticationDetailsSource());
 					})
 
-					.authenticationManager(endpointAuthenticationManager())
+					.authenticationManager(instructionEndpointAuthenticationManager())
 
 					.authorizeHttpRequests((matchers) -> matchers
 							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -326,7 +330,6 @@ public class WebSecurityConfig {
 			return http.build();
 		}
 	}
-	*/
 
 	/**
 	 * Last set of security rules, for public resources else deny all others.

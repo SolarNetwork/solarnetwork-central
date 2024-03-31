@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import net.solarnetwork.central.din.security.SecurityEndpointCredential;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -40,7 +39,7 @@ import net.solarnetwork.domain.Result;
  * User identity controller.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1IdentityController")
 @GlobalExceptionRestController
@@ -62,11 +61,32 @@ public class IdentityController {
 	 *
 	 * @return a result that details who the authenticated caller is
 	 */
-	@RequestMapping(value = "/api/v1/*/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
-	public Result<Map<String, ?>> validate(@PathVariable("endpointId") UUID endpointId) {
+	@RequestMapping(value = "/api/v1/datum/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
+	public Result<Map<String, ?>> validateDatum(@PathVariable("endpointId") UUID endpointId) {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
-		if ( actor instanceof SecurityEndpointCredential user ) {
+		if ( actor instanceof net.solarnetwork.central.din.security.SecurityEndpointCredential user ) {
+			data.put("userId", user.getUserId());
+			data.put("endpointId", user.getEndpointId());
+			data.put("username", user.getUsername());
+		}
+		return success(data);
+	}
+
+	/**
+	 * Check who the caller is.
+	 *
+	 * <p>
+	 * This is a convenient way to verify the credentials of a user.
+	 * </p>
+	 *
+	 * @return a result that details who the authenticated caller is
+	 */
+	@RequestMapping(value = "/api/v1/instr/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
+	public Result<Map<String, ?>> validateInstruction(@PathVariable("endpointId") UUID endpointId) {
+		SecurityActor actor = SecurityUtils.getCurrentActor();
+		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
+		if ( actor instanceof net.solarnetwork.central.inin.security.SecurityEndpointCredential user ) {
 			data.put("userId", user.getUserId());
 			data.put("endpointId", user.getEndpointId());
 			data.put("username", user.getUsername());

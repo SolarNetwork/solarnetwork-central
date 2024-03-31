@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumEndpointAuthenticationDetailsSource.java - 23/02/2024 11:40:02 am
+ * InstructionEndpointAuthenticationDetailsSource.java - 23/02/2024 11:40:02 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -28,16 +28,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import jakarta.servlet.http.HttpServletRequest;
-import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
+import net.solarnetwork.central.inin.dao.EndpointConfigurationDao;
 
 /**
- * Authentication details source for datum
+ * Authentication details source for instruction
  * {@link EndpointAuthenticationDetails}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class DatumEndpointAuthenticationDetailsSource
+public class InstructionEndpointAuthenticationDetailsSource
 		implements AuthenticationDetailsSource<HttpServletRequest, EndpointAuthenticationDetails> {
 
 	public static final Pattern DEFAULT_ENDPOINT_ID_PATTERN = Pattern.compile("/endpoint/([^/]+)",
@@ -58,7 +58,7 @@ public class DatumEndpointAuthenticationDetailsSource
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DatumEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao) {
+	public InstructionEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao) {
 		this(endpointDao, DEFAULT_ENDPOINT_ID_PATTERN);
 	}
 
@@ -71,7 +71,7 @@ public class DatumEndpointAuthenticationDetailsSource
 	 *        the pattern whose single group returns the endpoint ID from a
 	 *        request URL path
 	 */
-	public DatumEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao,
+	public InstructionEndpointAuthenticationDetailsSource(EndpointConfigurationDao endpointDao,
 			Pattern endpointIdPattern) {
 		super();
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");

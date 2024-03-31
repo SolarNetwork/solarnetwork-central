@@ -23,23 +23,20 @@
 package net.solarnetwork.central.din.app.config;
 
 /**
- * Marker interface for datum input configuration.
+ * Marker interface for instruction input configuration.
  *
  * @author matt
  * @version 1.0
  */
-public interface DatumInputConfiguration extends SolarDinAppConfiguration {
+public interface InstructionInputConfiguration extends SolarDinAppConfiguration {
 
 	/** A qualifier for endpoint configuration. */
-	String ENDPOINT_CONF = "endpoint-conf";
+	String INSTR_ENDPOINT_CONF = "instr-endpoint-conf";
 
-	/** A qualifier for transform configuration. */
-	String TRANSFORM_CONF = "transform-conf";
+	/** A qualifier for request transform configuration. */
+	String REQ_TRANSFORM_CONF = "req-transform-conf";
 
-	/** A qualifier for datum support. */
-	String DATUM = "datum";
-
-	/** A qualifier to use for datum buffer objects. */
-	String DATUM_BUFFER = DATUM + "-buffer";
+	/** A qualifier for response transform configuration. */
+	String RES_TRANSFORM_CONF = "res-transform-conf";
 
 }
