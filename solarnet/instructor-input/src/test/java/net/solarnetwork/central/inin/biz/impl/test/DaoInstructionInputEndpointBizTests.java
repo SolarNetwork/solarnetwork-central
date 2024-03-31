@@ -28,17 +28,24 @@ import static java.util.Collections.singleton;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +65,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.biz.RequestTransformService;
 import net.solarnetwork.central.inin.biz.ResponseTransformService;
+import net.solarnetwork.central.inin.biz.TransformConstants;
 import net.solarnetwork.central.inin.biz.impl.DaoInstructionInputEndpointBiz;
 import net.solarnetwork.central.inin.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
@@ -68,6 +76,7 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTrans
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link DaoInstructionInputEndpointBiz} class.
@@ -115,6 +124,9 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 	@Captor
 	private ArgumentCaptor<LogEventInfo> logEventCaptor;
 
+	@Captor
+	private ArgumentCaptor<Iterable<NodeInstruction>> instructionsCaptor;
+
 	private String requestXformServiceId;
 	private String responseXformServiceId;
 	private DaoInstructionInputEndpointBiz service;
@@ -154,8 +166,8 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		final MimeType type = MediaType.APPLICATION_JSON;
 		given(requestXformService.supportsInput(in, type)).willReturn(true);
 		final NodeInstruction xformOutput = new NodeInstruction(randomString(), Instant.now(), nodeId);
-		given(requestXformService.transformInput(eq(in), eq(type), eq(transform),
-				paramsCaptor.capture())).willReturn(asList(xformOutput));
+		given(requestXformService.transformInput(eq(in), eq(type), eq(transform), any()))
+				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
 		final var owner = new BasicSolarNodeOwnership(nodeId, userId, "NZ", ZoneOffset.UTC, false,
@@ -165,6 +177,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		// enqueue instruction
 		final NodeInstruction queuedInstruction = xformOutput.clone();
 		queuedInstruction.setId(randomLong());
+		queuedInstruction.setState(InstructionState.Queuing);
 		given(instructor.queueInstruction(eq(nodeId), same(xformOutput))).willReturn(queuedInstruction);
 
 		// WHEN
@@ -174,6 +187,21 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 
 		// THEN
 		// @formatter:off
+		then(requestXformService).should().transformInput(eq(in),  eq(type), eq(transform), paramsCaptor.capture());
+		and.then(paramsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("User ID transform parameter provided")
+			.containsEntry(TransformConstants.PARAM_USER_ID, userId)
+			.as("Endpoint ID transform parameter provided")
+			.containsEntry(TransformConstants.PARAM_ENDPOINT_ID, endpoint.getEndpointId().toString())
+			.as("Transform ID transform parameter provided")
+			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
+			.as("Transform cache key provided")
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.as("Service parameters passed as transform parameters")
+			.containsAllEntriesOf(params)
+			;
+
 		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
 		and.then(logEventCaptor.getValue())
 			.as("Event published for instruction input")
@@ -189,6 +217,13 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 					.as("Event data contains content type")
 					.containsEntry(CONTENT_TYPE_DATA_KEY, type.toString())
 					.containsEntry(PARAMETERS_DATA_KEY, params)
+					.hasEntrySatisfying(INSTRUCTION_DATA_KEY, o -> {
+						and.then(o)
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Event data instruction has ID")
+							.containsEntry("id", queuedInstruction.getId())
+							;
+					})
 					;
 
 				String[] tags = event.getTags();
@@ -208,4 +243,120 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		// @formatter:on
 	}
 
+	@Test
+	public void outputResult() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+
+		final var transform = new ResponseTransformConfiguration(userId, randomLong(), now());
+		transform.setServiceIdentifier(responseXformServiceId);
+
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		endpoint.setNodeIds(singleton(nodeId));
+		endpoint.setResponseTransformId(transform.getTransformId());
+
+		// load transform configuration
+		given(endpointDao.get(new UserUuidPK(userId, endpoint.getEndpointId()))).willReturn(endpoint);
+		given(responseTransformDao.get(new UserLongCompositePK(userId, transform.getTransformId())))
+				.willReturn(transform);
+
+		// transform instruction
+		final MimeType type = MediaType.APPLICATION_JSON;
+		given(responseXformService.supportsOutputType(type)).willReturn(true);
+
+		final var instruction = new NodeInstruction(randomString(), Instant.now(), nodeId);
+		instruction.setId(randomLong());
+		instruction.setState(InstructionState.Queuing);
+
+		// lookup instruction result
+		final var finishedInstruction = instruction.clone();
+		finishedInstruction.setState(InstructionState.Completed);
+		finishedInstruction.setResultParameters(Map.of("all", "done"));
+		given(instructor.getInstruction(instruction.getId())).willReturn(finishedInstruction);
+
+		// WHEN
+		final Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
+		final List<NodeInstruction> instructions = asList(instruction);
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		service.generateResponse(userId, endpoint.getEndpointId(), instructions, type, out, params);
+
+		// THEN
+		// @formatter:off
+		final String response = "Hello, world.";
+		then(responseXformService).should()
+			.transformOutput(
+					instructionsCaptor.capture(),
+					eq(type),
+					same(transform),
+					paramsCaptor.capture(),
+					assertArg((OutputStream o) -> {
+						if (out.size() < 1 ) {
+							out.write(response.getBytes(StandardCharsets.UTF_8));
+						}
+					}));
+
+
+		and.then(instructionsCaptor.getValue())
+			.as("Transform passed finished instruction")
+			.hasSize(1)
+			.element(0)
+			.as("Finished instruction instance passed to transform")
+			.isSameAs(finishedInstruction)
+			;
+
+		and.then(paramsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("User ID transform parameter provided")
+			.containsEntry(TransformConstants.PARAM_USER_ID, userId)
+			.as("Endpoint ID transform parameter provided")
+			.containsEntry(TransformConstants.PARAM_ENDPOINT_ID, endpoint.getEndpointId().toString())
+			.as("Transform ID transform parameter provided")
+			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
+			.as("Transform cache key provided")
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.as("Service parameters passed as transform parameters")
+			.containsAllEntriesOf(params)
+			;
+
+		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
+		and.then(logEventCaptor.getValue())
+			.as("Event published for instruction input")
+			.satisfies(event -> {
+				Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+				and.then(data)
+					.as("Event data contains endpoint ID")
+					.containsEntry(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId().toString())
+					.as("Event data contains transform ID")
+					.containsEntry(RES_TRANSFORM_ID_DATA_KEY, transform.getTransformId())
+					.as("Event data contains transform service ID")
+					.containsEntry(RES_TRANSFORM_SERVICE_ID_DATA_KEY, responseXformServiceId)
+					.as("Event data contains content type")
+					.containsEntry(OUTPUT_TYPE_DATA_KEY, type.toString())
+					.containsEntry(PARAMETERS_DATA_KEY, params)
+					.hasEntrySatisfying(INSTRUCTION_DATA_KEY, o -> {
+						and.then(o)
+							.asInstanceOf(map(String.class, Object.class))
+							.as("Event data instruction has ID")
+							.containsEntry("id", finishedInstruction.getId())
+							.as("Event data instruction state from finished instance")
+							.containsEntry("state", finishedInstruction.getState().toString())
+							;
+					})
+					;
+
+				String[] tags = event.getTags();
+				and.then(tags)
+					.as("Event tags as expected, for input")
+					.containsExactly(INSTRUCTION_TAG, ININ_TAG, INSTRUCTION_EXECUTED_TAG)
+					;
+			})
+			;
+
+		and.then(out.toString(StandardCharsets.UTF_8))
+			.as("Response generated")
+			.isEqualTo(response)
+			;
+		// @formatter:on
+	}
 }

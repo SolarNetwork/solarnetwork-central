@@ -214,7 +214,7 @@ public class DaoInstructionInputEndpointBiz
 
 		Iterable<NodeInstruction> instructions;
 		try {
-			instructions = xformService.transformInput(in, contentType, xform, parameters);
+			instructions = xformService.transformInput(in, contentType, xform, params);
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
 			addEvent(userEventAppenderBiz, userId,
@@ -248,7 +248,7 @@ public class DaoInstructionInputEndpointBiz
 			var queued = instructor.queueInstruction(instruction.getNodeId(), instruction);
 			if ( queued != null ) {
 				addEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, xform, null,
-						contentType, null, parameters, instruction, INSTRUCTION_IMPORTED_TAG));
+						contentType, null, parameters, queued, INSTRUCTION_IMPORTED_TAG));
 				result.add(queued);
 			}
 		}
@@ -267,7 +267,7 @@ public class DaoInstructionInputEndpointBiz
 				endpointPk);
 
 		final UserLongCompositePK xformPk = new UserLongCompositePK(userId,
-				requireNonNullArgument(endpoint.getRequestTransformId(), "responseTransformId"));
+				requireNonNullArgument(endpoint.getResponseTransformId(), "responseTransformId"));
 		final ResponseTransformConfiguration xform = requireNonNullObject(
 				responseTransformDao.get(xformPk), xformPk);
 
@@ -353,7 +353,7 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
 
 		try {
-			xformService.transformOutput(finalInstructions, outputType, xform, parameters, out);
+			xformService.transformOutput(finalInstructions, outputType, xform, params, out);
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
 			addEvent(userEventAppenderBiz, userId,
