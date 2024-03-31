@@ -39,16 +39,20 @@ import net.solarnetwork.central.domain.UserUuidPK;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeIds",
-		"requestTransformId", "responseTransformId" })
+		"requestTransformId", "responseTransformId", "maxExecutionSeconds" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements InstructionInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
-	private static final long serialVersionUID = 3228123407170960387L;
+	private static final long serialVersionUID = 4283219512151426023L;
+
+	/** The {@code maxExecutionSeconds} property default value. */
+	public static final int DEFAULT_MAX_EXECUTION_SECONDS = 10_000;
 
 	private String name;
 	private Set<Long> nodeIds;
 	private Long requestTransformId;
 	private Long responseTransformId;
+	private int maxExecutionSeconds = DEFAULT_MAX_EXECUTION_SECONDS;
 
 	/**
 	 * Constructor.
@@ -94,6 +98,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setNodeIds(nodeIds);
 		entity.setRequestTransformId(requestTransformId);
 		entity.setResponseTransformId(responseTransformId);
+		entity.setMaxExecutionSeconds(maxExecutionSeconds);
 	}
 
 	@Override
@@ -107,6 +112,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 				&& Objects.equals(this.nodeIds, other.nodeIds)
 				&& Objects.equals(this.requestTransformId, other.requestTransformId)
 				&& Objects.equals(this.responseTransformId, other.responseTransformId)
+				&& this.maxExecutionSeconds == other.maxExecutionSeconds
 				;
 		// @formatter:on
 	}
@@ -145,7 +151,9 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 			builder.append(responseTransformId);
 			builder.append(", ");
 		}
-		builder.append("enabled=");
+		builder.append("maxExecutionSeconds=");
+		builder.append(maxExecutionSeconds);
+		builder.append(", enabled=");
 		builder.append(isEnabled());
 		builder.append("}");
 		return builder.toString();
@@ -239,6 +247,25 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 */
 	public void setResponseTransformId(Long transformId) {
 		this.responseTransformId = transformId;
+	}
+
+	/**
+	 * Get the maximum execution seconds.
+	 *
+	 * @return the seconds; defaults to {@link #DEFAULT_MAX_EXECUTION_SECONDS}
+	 */
+	public int getMaxExecutionSeconds() {
+		return maxExecutionSeconds;
+	}
+
+	/**
+	 * Set the maximum execution seconds.
+	 *
+	 * @param maxExecutionSeconds
+	 *        the seconds to set; anything less than 1 will be saved as 1
+	 */
+	public void setMaxExecutionSeconds(int maxExecutionSeconds) {
+		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
 	}
 
 }

@@ -136,6 +136,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("req_xform_id", null)
 			.as("No response transform ID")
 			.containsEntry("res_xform_id", null)
+			.as("Row max execute secs")
+			.containsEntry("max_exec_secs", conf.getMaxExecutionSeconds());
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -189,6 +191,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("req_xform_id", null)
 			.as("No response transform ID")
 			.containsEntry("res_xform_id", null)
+			.as("Row max execute secs")
+			.containsEntry("max_exec_secs", conf.getMaxExecutionSeconds());
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -248,6 +252,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("req_xform_id", conf.getRequestTransformId())
 			.as("Row response transform ID")
 			.containsEntry("res_xform_id", conf.getResponseTransformId())
+			.as("Row max execute secs")
+			.containsEntry("max_exec_secs", conf.getMaxExecutionSeconds());
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -299,6 +305,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("req_xform_id", null)
 			.as("No response transform ID")
 			.containsEntry("res_xform_id", null)
+			.as("Row max execute secs")
+			.containsEntry("max_exec_secs", conf.getMaxExecutionSeconds());
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -352,6 +360,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("req_xform_id", null)
 			.as("No response transform ID")
 			.containsEntry("res_xform_id", null)
+			.as("Row max execute secs")
+			.containsEntry("max_exec_secs", conf.getMaxExecutionSeconds());
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -406,6 +416,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomString());
 		conf.setNodeIds(Collections.singleton(randomLong()));
+		conf.setMaxExecutionSeconds(123);
 
 		UserUuidPK result = dao.save(conf);
 		EndpointConfiguration updated = dao.get(result);
@@ -417,7 +428,7 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 

@@ -36,6 +36,12 @@ public interface CentralInstructionInputUserEvents {
 	/** A user event tag for ININ instruction handling. */
 	String INSTRUCTION_TAG = "instruction";
 
+	/** A user event tag for ININ instruction import. */
+	String INSTRUCTION_IMPORTED_TAG = "imp";
+
+	/** A user event tag for ININ instruction execution. */
+	String INSTRUCTION_EXECUTED_TAG = "exec";
+
 	/** A user event tag for ININ "error" . */
 	String ERROR_TAG = "error";
 
@@ -68,5 +74,10 @@ public interface CentralInstructionInputUserEvents {
 	 * example input parameters to a transformation.
 	 */
 	String PARAMETERS_DATA_KEY = "parameters";
+
+	/**
+	 * User event data key for an instruction ID.
+	 */
+	String INSTRUCTION_DATA_KEY = "instruction";
 
 }

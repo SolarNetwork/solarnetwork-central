@@ -25,7 +25,7 @@ package net.solarnetwork.central.inin.biz;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.util.MimeType;
@@ -61,7 +61,7 @@ public interface InstructionInputEndpointBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	Collection<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
+	List<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
 			InputStream in, Map<String, String> parameters) throws IOException;
 
 	/**
@@ -84,7 +84,7 @@ public interface InstructionInputEndpointBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	void generateResponse(Long userId, UUID endpointId, Collection<NodeInstruction> instructions,
+	void generateResponse(Long userId, UUID endpointId, List<NodeInstruction> instructions,
 			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException;
 
 }

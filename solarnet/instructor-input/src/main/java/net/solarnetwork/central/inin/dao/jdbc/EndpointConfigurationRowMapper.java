@@ -49,6 +49,7 @@ import net.solarnetwork.central.inin.domain.EndpointConfiguration;
  * <li>node_ids (BIGINT[])</li>
  * <li>req_xform_id (BIGINT)</li>
  * <li>res_xform_id (BIGINT)</li>
+ * <li>max_exec_secs (INTEGER)</li>
  * </ol>
  *
  * @author matt
@@ -96,6 +97,7 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 
 		conf.setRequestTransformId(rs.getObject(++p, Long.class));
 		conf.setResponseTransformId(rs.getObject(++p, Long.class));
+		conf.setMaxExecutionSeconds(rs.getInt(++p));
 		return conf;
 	}
 

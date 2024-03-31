@@ -31,6 +31,7 @@ import static org.assertj.core.api.BDDAssertions.and;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,6 +67,7 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransf
 import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTransformConfiguration;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Test cases for the {@link DaoInstructionInputEndpointBiz} class.
@@ -166,11 +168,37 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		given(instructor.queueInstruction(eq(nodeId), same(xformOutput))).willReturn(queuedInstruction);
 
 		// WHEN
+		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
 		Collection<NodeInstruction> result = service.importInstructions(userId, endpoint.getEndpointId(),
-				type, in, null);
+				type, in, params);
 
 		// THEN
 		// @formatter:off
+		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
+		and.then(logEventCaptor.getValue())
+			.as("Event published for instruction input")
+			.satisfies(event -> {
+				Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+				and.then(data)
+					.as("Event data contains endpoint ID")
+					.containsEntry(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId().toString())
+					.as("Event data contains transform ID")
+					.containsEntry(REQ_TRANSFORM_ID_DATA_KEY, transform.getTransformId())
+					.as("Event data contains transform service ID")
+					.containsEntry(REQ_TRANSFORM_SERVICE_ID_DATA_KEY, requestXformServiceId)
+					.as("Event data contains content type")
+					.containsEntry(CONTENT_TYPE_DATA_KEY, type.toString())
+					.containsEntry(PARAMETERS_DATA_KEY, params)
+					;
+
+				String[] tags = event.getTags();
+				and.then(tags)
+					.as("Event tags as expected, for input")
+					.containsExactly(INSTRUCTION_TAG, ININ_TAG, INSTRUCTION_IMPORTED_TAG)
+					;
+			})
+			;
+
 		and.then(result)
 			.as("Single result returned for queued instruction")
 			.hasSize(1)

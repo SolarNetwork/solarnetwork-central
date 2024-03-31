@@ -97,6 +97,23 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 		return new NodeInstructionStatus();
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Instruction{id=");
+		builder.append(getId());
+		builder.append(", nodeId=");
+		builder.append(nodeId);
+		builder.append(", topic=");
+		builder.append(getTopic());
+		builder.append(", state=");
+		builder.append(getState());
+		builder.append(", parameters=");
+		builder.append(getParameters());
+		builder.append("}");
+		return builder.toString();
+	}
+
 	private final class NodeInstructionStatus implements net.solarnetwork.domain.InstructionStatus {
 
 		@Override
@@ -161,7 +178,7 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * 
 	 * @return the node ID
 	 */
-	public Long getNodeId() {
+	public final Long getNodeId() {
 		return nodeId;
 	}
 
@@ -171,7 +188,7 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * @param nodeId
 	 *        the node ID to set
 	 */
-	public void setNodeId(Long nodeId) {
+	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
 	}
 

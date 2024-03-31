@@ -107,6 +107,7 @@ CREATE TABLE solardin.inin_endpoint (
 	node_ids		BIGINT[],
 	req_xform_id	BIGINT,
 	res_xform_id	BIGINT,
+	max_exec_secs	INTEGER NOT NULL,
 	CONSTRAINT inin_endpoint_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT inin_endpoint_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE

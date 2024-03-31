@@ -134,19 +134,41 @@ public class Instruction extends BaseEntity {
 		map.put(key, value);
 	}
 
-	public String getTopic() {
+	/**
+	 * Get the topic.
+	 * 
+	 * @return the topic
+	 */
+	public final String getTopic() {
 		return topic;
 	}
 
-	public void setTopic(String topic) {
+	/**
+	 * Set the topic.
+	 * 
+	 * @param topic
+	 *        the topic to set
+	 */
+	public final void setTopic(String topic) {
 		this.topic = topic;
 	}
 
-	public Instant getInstructionDate() {
+	/**
+	 * Get the instruction date.
+	 * 
+	 * @return the date
+	 */
+	public final Instant getInstructionDate() {
 		return instructionDate;
 	}
 
-	public void setInstructionDate(Instant instructionDate) {
+	/**
+	 * Set the instruction date.
+	 * 
+	 * @param instructionDate
+	 *        the date to set
+	 */
+	public final void setInstructionDate(Instant instructionDate) {
 		this.instructionDate = instructionDate;
 	}
 
@@ -155,7 +177,7 @@ public class Instruction extends BaseEntity {
 	 * 
 	 * @return the status date
 	 */
-	public Instant getStatusDate() {
+	public final Instant getStatusDate() {
 		return statusDate;
 	}
 
@@ -165,23 +187,45 @@ public class Instruction extends BaseEntity {
 	 * @param statusDate
 	 *        the date to set
 	 */
-	public void setStatusDate(Instant statusDate) {
+	public final void setStatusDate(Instant statusDate) {
 		this.statusDate = statusDate;
 	}
 
-	public InstructionState getState() {
+	/**
+	 * Get the state.
+	 * 
+	 * @return the state
+	 */
+	public final InstructionState getState() {
 		return state;
 	}
 
-	public void setState(InstructionState state) {
+	/**
+	 * Set the state.
+	 * 
+	 * @param state
+	 *        the state to set
+	 */
+	public final void setState(InstructionState state) {
 		this.state = state;
 	}
 
-	public List<InstructionParameter> getParameters() {
+	/**
+	 * Get the parameters.
+	 * 
+	 * @return the parameters
+	 */
+	public final List<InstructionParameter> getParameters() {
 		return parameters;
 	}
 
-	public void setParameters(List<InstructionParameter> parameters) {
+	/**
+	 * Set the parameters.
+	 * 
+	 * @param parameters
+	 *        the parameters to set
+	 */
+	public final void setParameters(List<InstructionParameter> parameters) {
 		this.parameters = parameters;
 	}
 
@@ -233,6 +277,11 @@ public class Instruction extends BaseEntity {
 		setParameters(l);
 	}
 
+	/**
+	 * Get the result parameters.
+	 * 
+	 * @return the result parameters
+	 */
 	@JsonIgnore
 	@SuppressWarnings("unchecked")
 	public Map<String, Object> getResultParameters() {
@@ -248,6 +297,12 @@ public class Instruction extends BaseEntity {
 		return map;
 	}
 
+	/**
+	 * Set the result parameters.
+	 * 
+	 * @param resultParameters
+	 *        the parameters to set
+	 */
 	@JsonIgnore
 	public void setResultParameters(Map<String, Object> resultParameters) {
 		this.resultParameters = resultParameters;

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.biz.impl;
 
+import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.biz.UserEventAppenderBiz.addEvent;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
@@ -30,12 +31,21 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -61,6 +71,7 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * DAO implementation of {@link InstructionInputEndpointBiz}.
@@ -70,6 +81,12 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
  */
 public class DaoInstructionInputEndpointBiz
 		implements InstructionInputEndpointBiz, CentralInstructionInputUserEvents {
+
+	/** An instruction result parameter for an error message. */
+	public static final String ERROR_INSTRUCTION_RESULT_PARAM = "error";
+
+	/** The {@code executionResultDelay} property default value. */
+	public static final Duration DEFAULT_EXECUTION_RESULT_DELAY = Duration.ofSeconds(1);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -81,6 +98,7 @@ public class DaoInstructionInputEndpointBiz
 	private final Map<String, RequestTransformService> requestTransformServices;
 	private final Map<String, ResponseTransformService> responseTransformServices;
 	private UserEventAppenderBiz userEventAppenderBiz;
+	private Duration executionResultDelay = DEFAULT_EXECUTION_RESULT_DELAY;
 
 	/**
 	 * Constructor.
@@ -122,9 +140,10 @@ public class DaoInstructionInputEndpointBiz
 						.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
 	}
 
-	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
+	private static LogEventInfo importEvent(String msg, EndpointConfiguration endpoint,
 			RequestTransformConfiguration requestXform, ResponseTransformConfiguration responseXform,
-			MimeType contentType, MimeType outputType, Map<String, String> parameters) {
+			MimeType contentType, MimeType outputType, Map<String, String> parameters,
+			NodeInstruction instruction, String... tags) {
 		var eventData = new LinkedHashMap<>(8);
 		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
 		eventData.put(REQ_TRANSFORM_ID_DATA_KEY, endpoint.getRequestTransformId());
@@ -144,12 +163,22 @@ public class DaoInstructionInputEndpointBiz
 		if ( parameters != null ) {
 			eventData.put(PARAMETERS_DATA_KEY, parameters);
 		}
-		return event(INSTRUCTION_TAGS, msg, getJSONString(eventData, null), ERROR_TAG);
+		if ( instruction != null ) {
+			eventData.put(INSTRUCTION_DATA_KEY, instruction);
+		}
+		return event(INSTRUCTION_TAGS, msg, getJSONString(eventData, null), tags);
+	}
+
+	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
+			RequestTransformConfiguration requestXform, ResponseTransformConfiguration responseXform,
+			MimeType contentType, MimeType outputType, Map<String, String> parameters) {
+		return importEvent(msg, endpoint, requestXform, responseXform, contentType, outputType,
+				parameters, null, ERROR_TAG);
 	}
 
 	@Override
-	public Collection<NodeInstruction> importInstructions(Long userId, UUID endpointId,
-			MimeType contentType, InputStream in, Map<String, String> parameters) throws IOException {
+	public List<NodeInstruction> importInstructions(Long userId, UUID endpointId, MimeType contentType,
+			InputStream in, Map<String, String> parameters) throws IOException {
 		final UserUuidPK endpointPk = new UserUuidPK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(endpointId, "endpointId"));
 		final EndpointConfiguration endpoint = requireNonNullObject(endpointDao.get(endpointPk),
@@ -200,6 +229,7 @@ public class DaoInstructionInputEndpointBiz
 		}
 
 		// verify ownership node is owner of endpoint
+		int instructionCount = 0;
 		for ( NodeInstruction instruction : instructions ) {
 			Long nodeId = requireNonNullArgument(instruction.getNodeId(), "nodeId");
 			SolarNodeOwnership owner = requireNonNullObject(nodeOwnershipDao.ownershipForNodeId(nodeId),
@@ -210,18 +240,26 @@ public class DaoInstructionInputEndpointBiz
 						null, contentType, null, parameters));
 				throw ex;
 			}
+			instructionCount++;
 		}
 
-		var result = new ArrayList<NodeInstruction>(4);
+		var result = new ArrayList<NodeInstruction>(instructionCount);
 		for ( NodeInstruction instruction : instructions ) {
 			var queued = instructor.queueInstruction(instruction.getNodeId(), instruction);
-			result.add(queued);
+			if ( queued != null ) {
+				addEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, xform, null,
+						contentType, null, parameters, instruction, INSTRUCTION_IMPORTED_TAG));
+				result.add(queued);
+			}
 		}
+
+		log.info("Instructions input for user {}, endpoint {}: {}", userId, endpointId, result);
+
 		return result;
 	}
 
 	@Override
-	public void generateResponse(Long userId, UUID endpointId, Collection<NodeInstruction> instructions,
+	public void generateResponse(Long userId, UUID endpointId, List<NodeInstruction> instructions,
 			MimeType outputType, OutputStream out, Map<String, String> parameters) throws IOException {
 		final UserUuidPK endpointPk = new UserUuidPK(requireNonNullArgument(userId, "userId"),
 				requireNonNullArgument(endpointId, "endpointId"));
@@ -246,8 +284,64 @@ public class DaoInstructionInputEndpointBiz
 			throw new IllegalArgumentException(msg);
 		}
 
-		// TODO wait for results
-		//try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+		// wait for results
+		var futures = new ArrayList<Future<NodeInstruction>>(instructions.size());
+		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			long delay = executionResultDelay.toMillis();
+			long expire = System.currentTimeMillis()
+					+ TimeUnit.SECONDS.toMillis(endpoint.getMaxExecutionSeconds());
+			for ( NodeInstruction instruction : instructions ) {
+				futures.add(executor.submit(new Callable<NodeInstruction>() {
+
+					@Override
+					public NodeInstruction call() throws Exception {
+						while ( true ) {
+							try {
+								Thread.sleep(delay);
+							} catch ( InterruptedException e ) {
+								// ignore
+							}
+							var instr = instructor.getInstruction(instruction.getId());
+							if ( instr == null ) {
+								String msg = "Instruction [%d] not found".formatted(instruction.getId());
+								addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
+										null, xform, null, outputType, parameters));
+								throw new IllegalStateException(msg);
+							}
+							if ( instr.getState() == InstructionState.Completed
+									|| instr.getState() == InstructionState.Declined ) {
+								addEvent(userEventAppenderBiz, userId,
+										importEvent(null, endpoint, null, xform, null, outputType,
+												parameters, instr, INSTRUCTION_EXECUTED_TAG));
+								return instr;
+							} else if ( System.currentTimeMillis() > expire ) {
+								// give up
+								String msg = "Timeout waiting for instruction [%d] to complete."
+										.formatted(instruction.getId());
+								addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
+										null, xform, null, outputType, parameters));
+								throw new TimeoutException(msg);
+							}
+							// keep waiting for instruction to complete
+						}
+					}
+				}));
+			}
+		}
+
+		var finalInstructions = new ArrayList<NodeInstruction>(instructions.size());
+		for ( ListIterator<Future<NodeInstruction>> itr = futures.listIterator(); itr.hasNext(); ) {
+			Future<NodeInstruction> f = itr.next();
+			NodeInstruction instr;
+			try {
+				instr = f.get();
+			} catch ( ExecutionException | InterruptedException e ) {
+				Throwable t = e.getCause();
+				instr = instructions.get(itr.previousIndex()).clone();
+				instr.setResultParameters(singletonMap(ERROR_INSTRUCTION_RESULT_PARAM, t.getMessage()));
+			}
+			finalInstructions.add(instr);
+		}
 
 		var params = new HashMap<String, Object>(8);
 		if ( parameters != null ) {
@@ -259,7 +353,7 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
 
 		try {
-			xformService.transformOutput(instructions, outputType, xform, parameters, out);
+			xformService.transformOutput(finalInstructions, outputType, xform, parameters, out);
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
 			addEvent(userEventAppenderBiz, userId,
@@ -283,6 +377,21 @@ public class DaoInstructionInputEndpointBiz
 	 */
 	public void setUserEventAppenderBiz(UserEventAppenderBiz userEventAppenderBiz) {
 		this.userEventAppenderBiz = userEventAppenderBiz;
+	}
+
+	/**
+	 * Set the length of time to delay checking for instruction execution
+	 * results.
+	 *
+	 * @param executionResultDelay
+	 *        the executionDelay to set; defaults to
+	 *        {@link #DEFAULT_EXECUTION_RESULT_DELAY} if {@literal null} or not
+	 *        positive
+	 */
+	public void setExecutionResultDelay(Duration executionResultDelay) {
+		this.executionResultDelay = (executionResultDelay != null && executionResultDelay.isPositive()
+				? executionResultDelay
+				: DEFAULT_EXECUTION_RESULT_DELAY);
 	}
 
 }

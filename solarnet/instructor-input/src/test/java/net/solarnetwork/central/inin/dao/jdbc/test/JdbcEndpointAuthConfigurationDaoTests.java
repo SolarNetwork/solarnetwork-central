@@ -176,7 +176,7 @@ public class JdbcEndpointAuthConfigurationDaoTests extends AbstractJUnit5JdbcDao
 		then(updated).as("Retrieved entity matches updated source")
 			.isEqualTo(conf)
 			.as("Entity saved updated values")
-			.matches(c -> c.isSameAs(updated));
+			.matches(c -> c.isSameAs(conf));
 		// @formatter:on
 	}
 
