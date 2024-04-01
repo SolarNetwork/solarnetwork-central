@@ -653,8 +653,8 @@ function ininManagement() {
 	   Endpoint Transform Preview
 	   ============================ */
 
-	$('#inin-endpoint-req-transform-preview-modal')
-		.on('show.bs.modal', function endpointTransformPreviewModalFormShowSetup() {
+	$('#inin-endpoint-preview-modal')
+		.on('show.bs.modal', function endpointPreviewModalFormShowSetup() {
 			const form = this
 				, modal = $(form)
 				, config = SolarReg.Templates.findContextItem(form);
@@ -662,27 +662,31 @@ function ininManagement() {
 			
 			const previewConfig = Object.assign({}, config);
 			
-			const xform = systems[REQ_TRANSFORM_SYS].configsMap.get(config.transformId);
-			if (xform) {
-				previewConfig.transformDisplay = xform.name;
+			const reqXform = systems[REQ_TRANSFORM_SYS].configsMap.get(config.requestTransformId);
+			if (reqXform) {
+				previewConfig.requestTransformDisplay = reqXform.name;
+			}
+			const resXform = systems[RES_TRANSFORM_SYS].configsMap.get(config.responseTransformId);
+			if (resXform) {
+				previewConfig.responseTransformDisplay = resXform.name;
 			}
 			SolarReg.Templates.setContextItem(modal, previewConfig);
 			SolarReg.Templates.replaceTemplateProperties(modal.find('.endpoint-details-container'), previewConfig);
 			
-			const container = $('#inin-endpoint-req-transform-output-container');
+			const container = $('#inin-endpoint-preview-output-container');
 			container.children().addClass('hidden');
 			container.find('.before').removeClass('hidden');
 		})
-		.on('submit', function endpointTransformPreviewModalFormSubmit(event) {
+		.on('submit', function endpointPreviewModalFormSubmit(event) {
 			event.preventDefault();
 			const form = this
 				, config = SolarReg.Templates.findContextItem(form)
-				, container = $('#inin-endpoint-req-transform-output-container')
+				, container = $('#inin-endpoint-preview-output-container')
 				, submitBtn = container.find('button[type=submit]')
 				, inputData = form.elements.inputData.value
-				, previousInputData = form.elements.previousInputData.value
 				, inputType = form.elements.inputType.value
 				, queryParams = form.elements.queryParams.value
+				, instrResults = form.elements.instructionResults.value
 				, errorContainer = container.find('.error-container')
 				;
 				
@@ -697,10 +701,8 @@ function ininManagement() {
 			if (queryParams) {
 				reqBody.query = queryParams;
 			}
-			if (previousInputData) {
-				reqBody.parameters = {
-					'previous-input': previousInputData
-				};
+			if (instrResults) {
+				reqBody.instructionResults = JSON.parse(instrResults);
 			}
 			
 			$.ajax({
@@ -717,7 +719,7 @@ function ininManagement() {
 				if ( json && json.success === true ) {
 					
 					if (json.data && json.data.message) {
-						errorContainer.text(msg).removeClass('hidden');
+						errorContainer.text(json.data.message).removeClass('hidden');
 					} else if (json.data && Array.isArray(json.data.instructions) && json.data.instructions.length > 0) {
 						// provide empty node for display if none provided, to replace any
 						// previously shown values
@@ -729,9 +731,38 @@ function ininManagement() {
 						// render instructions
 						const instructionContainer = container.find('.instruction-container');
 						SolarReg.Templates.populateTemplateItems(instructionContainer, json.data.instructions, false, function(instruction, el) {
-							// render instruction properties
-							// TODO
+							// render instruction parameters
+							const reqParamContainer = el.find('.req-params');
+							if (instruction.parameters) {
+								const params = {};
+								for (const p of instruction.parameters) {
+									params[p.name] = p.value;
+								}
+								const propItem = {serviceProperties:params};
+								SolarReg.Templates.replaceTemplateProperties(reqParamContainer, propItem);
+								reqParamContainer.removeClass('hidden');
+							} else {
+								reqParamContainer.addClass('hidden');
+							}
+							const resParamContainer = el.find('.res-params');
+							if (instruction.resultParameters) {
+								const params = {};
+								for (const p in instruction.resultParameters) {
+									params[p] = JSON.stringify(instruction.resultParameters[p]);
+								}
+								const propItem = {serviceProperties:params};
+								SolarReg.Templates.replaceTemplateProperties(resParamContainer, propItem);
+								resParamContainer.removeClass('hidden');
+							} else {
+								resParamContainer.addClass('hidden');
+							}
 						});
+						// show response data
+						if (json.data.response) {
+							$('#inin-endpoint-preview-output-response').text(json.data.response).removeClass('hidden');
+						} else {
+							$('#inin-endpoint-preview-output-response').text('').addClass('hidden')
+						}
 					} else {
 						// TODO: i18n
 						let msg = 'No instructions generated.';
@@ -757,11 +788,11 @@ function ininManagement() {
 		})
 		.on('hidden.bs.modal', modalEditFormHiddenCleanup);
 
-	$('#inin-endpoint-req-transform-input-type-shortcuts')
-		.on('change', function endpointTransformPreviewDataTypeShortcutChange(event) {
+	$('#inin-endpoint-preview-input-type-shortcuts')
+		.on('change', function endpointPreviewDataTypeShortcutChange(event) {
 			const shortcutValue = $(event.target).val();
 			if (shortcutValue) {
-				$('#inin-endpoint-req-transform-input-type').val(shortcutValue);
+				$('#inin-endpoint-preview-input-type').val(shortcutValue);
 			}
 		});
 

@@ -8,66 +8,72 @@
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
-<form id="inin-endpoint-transform-preview-modal" class="inin" data-th-classappend="'modal fade'"
-		method="post" tabindex="-1" role="dialog" data-th-action="@{/u/sec/inin/transforms/{transformId}/preview/{endpointId}/params}">
+<form id="inin-endpoint-preview-modal" class="inin" data-th-classappend="'modal fade'"
+		method="post" tabindex="-1" role="dialog" data-th-action="@{/u/sec/inin/endpoints/{endpointId}/preview}">
 	<div class="modal-dialog modal-lg" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" data-th-text="#{inin.endpoint.transform.preview.title}">Endpoint Transform Preview</h4>
+				<h4 class="modal-title" data-th-text="#{inin.endpoint.preview.title}">Endpoint Transform Preview</h4>
 			</div>
 		 	<div class="modal-body endpoint-details-container">
-		 		<p data-th-utext="#{inin.endpoint.transform.preview.intro}">Fill in your test measurement data and click <b>Execute</b> to preview the transform output.</p>
+		 		<p data-th-utext="#{inin.endpoint.preview.intro}">Fill in your test measurement data and click <b>Execute</b> to preview the transform output.</p>
 		 		<div class="row">
-		 			<div class="col-xs-2"><b data-th-text="#{inin.endpoint.name.label}">Endpoint</b></div>
-		 			<div class="col-xs-10" data-tprop="name">My Device XML</div>
+		 			<div class="col-xs-4"><b data-th-text="#{inin.endpoint.name.label}">Endpoint</b></div>
+		 			<div class="col-xs-8" data-tprop="name" data-th-remove="body">My Device XML</div>
 		 		</div>
 		 		<div class="row">
-		 			<div class="col-xs-2"><b data-th-text="#{inin.endpoint.transformId.label}">Transform</b></div>
-		 			<div class="col-xs-10" data-tprop="transformDisplay">Device XML measurement</div>
+		 			<div class="col-xs-4"><b data-th-text="#{inin.endpoint.requestTransformId.label}">Request Transform</b></div>
+		 			<div class="col-xs-8" data-tprop="requestTransformDisplay" data-th-remove="body">Group Capacity req</div>
+		 		</div>
+		 		<div class="row">
+		 			<div class="col-xs-4"><b data-th-text="#{inin.endpoint.responseTransformId.label}">Request Transform</b></div>
+		 			<div class="col-xs-8" data-tprop="responseTransformDisplay" data-th-remove="body">Group Capacity res</div>
 		 		</div>
 		 		<hr>
 		 		<div class="row">
 		 			<div class="col-xs-4 border-rule-right">
 						<div class="form-group">
-							<label for="inin-endpoint-transform-input-data" data-th-text="#{inin.endpoint.transform.preview.inputData.label}">Input data</label>
-							<textarea class="form-control" id="inin-endpoint-transform-input-data" name="inputData" required></textarea>
-							<label for="inin-endpoint-transform-previous-input-data" data-th-text="#{inin.endpoint.transform.preview.previousInputData.label}">Previous input data</label>
-							<textarea class="form-control" id="inin-endpoint-transform-previous-input-data" name="previousInputData"></textarea>
-							<label for="inin-endpoint-transform-query-params" data-th-text="#{inin.endpoint.transform.preview.queryParams.label}">Query parameters</label>
+							<label for="inin-endpoint-preview-input-data" data-th-text="#{inin.endpoint.preview.inputData.label}">Input data</label>
+							<textarea class="form-control" id="inin-endpoint-preview-input-data" name="inputData" required></textarea>
+							<label for="inin-endpoint-transform-query-params" data-th-text="#{inin.endpoint.preview.queryParams.label}">Query parameters</label>
 							<input type="text" class="form-control" id="inin-endpoint-transform-query-params" name="queryParams" maxlength="255">
 						</div>
 						<div class="form-group">
-							<label for="inin-endpoint-transform-input-type">Data type</label>
-							<input type="text" class="form-control" id="inin-endpoint-transform-input-type" name="inputType" required>
-							<select class="form-control" id="inin-endpoint-transform-input-type-shortcuts">
+							<label for="inin-endpoint-preview-input-type" data-th-text="#{inin.endpoint.preview.inputType.label}">Data type</label>
+							<input type="text" class="form-control" id="inin-endpoint-preview-input-type" name="inputType" required>
+							<select class="form-control" id="inin-endpoint-preview-input-type-shortcuts">
 								<option></option>
-								<optgroup label="Data type shortcuts" data-th-label="#{inin.endpoint.transform.preview.type.shortcuts.label}">
-									<option value="application/json" data-th-text="#{inin.endpoint.transform.preview.type.json}">JSON</option>
-									<option value="text/xml" data-th-text="#{inin.endpoint.transform.preview.type.xml}">XML</option>
+								<optgroup label="Data type shortcuts" data-th-label="#{inin.endpoint.preview.type.shortcuts.label}">
+									<option value="application/json" data-th-text="#{inin.endpoint.preview.type.json}">JSON</option>
+									<option value="text/xml" data-th-text="#{inin.endpoint.preview.type.xml}">XML</option>
 								</optgroup>
 							</select>
 						</div>
+						<div class="form-group">
+							<label for="inin-endpoint-preview-instruction-results" data-th-text="#{inin.endpoint.preview.instructionResults.label}">Instruction results</label>
+							<textarea class="form-control" id="inin-endpoint-preview-instruction-results" name="instructionResults"></textarea>
+						</div>
 		 			</div>
-		 			<div class="col-xs-8" id="inin-endpoint-transform-output-container">
-						<p class="hidden" data-th-class="'before'" data-th-text="#{inin.endpoint.transform.preview.output.intro}">The output will appear here.</p>
-						<div class="datum-container" data-th-classappend="'hidden'">
-							<p data-th-text="#{inin.endpoint.transform.preview.output.datum.intro}">The following table shows the successfully generated SolarNetwork datum.</p>
+		 			<div class="col-xs-8" id="inin-endpoint-preview-output-container">
+						<p class="hidden" data-th-class="'before'" data-th-text="#{inin.endpoint.preview.output.intro}">The output will appear here.</p>
+						<div class="instruction-container" data-th-classappend="'hidden'">
+							<p data-th-text="#{inin.endpoint.preview.output.instructions.intro}">The following table shows the successfully generated SolarNetwork instructions.</p>
 							<table class="table">
 								<thead>
 									<tr>
-										<th data-th-text="#{inin.endpoint.transform.preview.output.datum.created.label}">Timestamp</th>
-										<th data-th-text="#{inin.endpoint.transform.preview.output.datum.nodeId.label}">Node</th>
-										<th data-th-text="#{inin.endpoint.transform.preview.output.datum.sourceId.label}">Source</th>
-										<th data-th-text="#{inin.endpoint.transform.preview.output.datum.properties.label}">Properties</th>
+										<th data-th-text="#{inin.endpoint.preview.output.instruction.created.label}">Timestamp</th>
+										<th data-th-text="#{inin.endpoint.preview.output.instruction.nodeId.label}">Node</th>
+										<th data-th-text="#{inin.endpoint.preview.output.instruction.state.label}">Source</th>
+										<th data-th-text="#{inin.endpoint.preview.output.instruction.parameters.label}">Parameters</th>
 									</tr>
 									<tr class="template">
 										<td data-tprop="created"></td>
 										<td data-tprop="nodeId"></td>
-										<td data-tprop="sourceId"></td>
+										<td data-tprop="state"></td>
 										<td class="small">
-											<div class="i-props hidden">
-												<h5 data-th-text="#{inin.endpoint.transform.preview.output.datum.i.header}">Instantaneous</h5>
+											<div class="req-params hidden">
+												<h5 data-th-text="#{inin.endpoint.preview.output.instruction.requestParameters.header}">Request parameters</h5>
 												<dl class="dl-horizontal service-props-container">
 												</dl>
 												<dl class="service-props-template hidden">
@@ -75,31 +81,14 @@
 													<dd class="template" data-tprop="serviceProperties.value"></dd>
 												</dl>
 											</div>
-											<div class="a-props hidden">
-												<h5 data-th-text="#{inin.endpoint.transform.preview.output.datum.a.header}">Accumulating</h5>
+											<div class="res-params hidden">
+												<h5 data-th-text="#{inin.endpoint.preview.output.instruction.responseParameters.header}">Response parameters</h5>
 												<dl class="dl-horizontal service-props-container">
 												</dl>
 												<dl class="service-props-template hidden">
 													<dt class="template" data-tprop="serviceProperties.name"></dt>
 													<dd class="template" data-tprop="serviceProperties.value"></dd>
 												</dl>
-											</div>
-											<div class="s-props hidden">
-												<h5 data-th-text="#{inin.endpoint.transform.preview.output.datum.s.header}">Status</h5>
-												<dl class="dl-horizontal service-props-container">
-												</dl>
-												<dl class="service-props-template hidden">
-													<dt class="template" data-tprop="serviceProperties.name"></dt>
-													<dd class="template" data-tprop="serviceProperties.value"></dd>
-												</dl>
-											</div>
-											<div class="t-props hidden">
-												<h5 data-th-text="#{inin.endpoint.transform.preview.output.datum.t.header}">Tags</h5>
-												<ul class="service-props-container">
-												</ul>
-												<ul class="service-props-template hidden">
-													<li class="template" data-tprop="serviceProperties.value"></li>
-												</ul>
 											</div>
 										</td>
 									</tr>
@@ -109,10 +98,10 @@
 									<tr>
 										<td data-tprop="created">2024-03-01 12:00:00Z</td>
 										<td data-tprop="nodeId">123</td>
-										<td data-tprop="sourceId">meter/1</td>
+										<td data-tprop="state">meter/1</td>
 										<td class="small">
-											<div class="i-props">
-												<h5>Instantaneous</h5>
+											<div class="req-params">
+												<h5>Request parameters</h5>
 												<dl class="dl-horizontal">
 													<dt>watts</dt>
 													<dd>1234</dd>
@@ -120,24 +109,22 @@
 													<dd>271.2</dd>
 												</dl>
 											</div>
-											<div class="a-props">
-												<h5>Accumulating</h5>
+											<div class="res-params">
+												<h5>Response parameters</h5>
 												<dl class="dl-horizontal">
 													<dt>wattHours</dt>
 													<dd>123456</dd>
 												</dl>
-											</div>
-											<div class="t-props">
-												<h5>Tags</h5>
-												<ul class="dl-horizontal">
-													<li>online</li>
-												</ul>
 											</div>
 										</td>
 									</tr>
 								<!--*/-->
 								</tbody>
 							</table>
+						</div>
+						<div class="response-container" data-th-classappend="'hidden'">
+							<p data-th-text="#{inin.endpoint.preview.output.response.intro}">The generated response is:</p>
+							<div id="inin-endpoint-preview-output-response" class="well"></div>
 						</div>
 						<div class="error-container" data-th-classappend="'hidden'"></div>
 		 			</div>
