@@ -630,7 +630,7 @@ function dinManagement() {
 				if ( json && json.success === true ) {
 					
 					if (json.data && json.data.message) {
-						errorContainer.text(msg).removeClass('hidden');
+						errorContainer.text(json.data.message).removeClass('hidden');
 					} else if (json.data && Array.isArray(json.data.datum) && json.data.datum.length > 0) {
 						// provide empty node/source for display if none provided, to replace any
 						// previously shown values
