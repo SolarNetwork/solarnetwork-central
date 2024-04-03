@@ -58,6 +58,7 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import jakarta.servlet.DispatcherType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
@@ -215,7 +216,8 @@ public class WebSecurityConfig {
 					.sessionManagement((sessions) -> sessions.sessionCreationPolicy(IF_REQUIRED))
 
 					.authorizeHttpRequests((matchers) -> {
-						matchers.requestMatchers("/*.do").permitAll()
+						matchers.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
+								.requestMatchers("/*.do").permitAll()
 								.requestMatchers("/register/**").permitAll()
 								.requestMatchers("/u/sec/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 								.requestMatchers("/u/sec/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
@@ -342,7 +344,8 @@ public class WebSecurityConfig {
 							UsernamePasswordAuthenticationFilter.class)
 
 					.authorizeHttpRequests((matchers) -> {
-						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						matchers.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
+								.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 								.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
