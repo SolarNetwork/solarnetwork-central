@@ -23,6 +23,8 @@
 package net.solarnetwork.central.din.app.config;
 
 import static net.solarnetwork.central.din.config.DatumInputTransformServiceConfig.XSLT_TEMPLATES_QUALIFIER;
+import static net.solarnetwork.central.inin.config.InstructionInputTransformServiceConfig.REQ_XSLT_TEMPLATES_QUALIFIER;
+import static net.solarnetwork.central.inin.config.InstructionInputTransformServiceConfig.RES_XSLT_TEMPLATES_QUALIFIER;
 import javax.xml.transform.Templates;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -38,14 +40,14 @@ import net.solarnetwork.central.support.SharedValueCache;
  * Configuration for jobs.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @Profile(SolarDinJobs.JOBS_PROFILE)
 public class JobConfig {
 
 	/**
-	 * A job to prune expired cached XSLT templates.
+	 * A job to prune expired cached datum XSLT templates.
 	 *
 	 * @param cache
 	 *        the cache to clean
@@ -53,9 +55,41 @@ public class JobConfig {
 	 */
 	@ConfigurationProperties(prefix = "app.job.din.xslt-templates-cache-prune")
 	@Bean
-	public ManagedJob xsltTemplatesCacheCleanerJob(
+	public ManagedJob datumXsltTemplatesCacheCleanerJob(
 			@Qualifier(XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
-		return new SharedValueCacheCleaner(cache, "XSLT-Templates", SolarDinJobs.JOBS_GROUP);
+		return new SharedValueCacheCleaner(cache, "Datum-XSLT-Templates", SolarDinJobs.JOBS_GROUP);
+	}
+
+	/**
+	 * A job to prune expired cached instruction request XSLT templates.
+	 *
+	 * @param cache
+	 *        the cache to clean
+	 * @return the job
+	 * @since 1.1
+	 */
+	@ConfigurationProperties(prefix = "app.job.inin.xslt-req-templates-cache-prune")
+	@Bean
+	public ManagedJob instructionRequestXsltTemplatesCacheCleanerJob(
+			@Qualifier(REQ_XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
+		return new SharedValueCacheCleaner(cache, "Instruction-Request-XSLT-Templates",
+				SolarDinJobs.JOBS_GROUP);
+	}
+
+	/**
+	 * A job to prune expired cached instruction response XSLT templates.
+	 *
+	 * @param cache
+	 *        the cache to clean
+	 * @return the job
+	 * @since 1.1
+	 */
+	@ConfigurationProperties(prefix = "app.job.inin.xslt-res-templates-cache-prune")
+	@Bean
+	public ManagedJob instructionResponseXsltTemplatesCacheCleanerJob(
+			@Qualifier(RES_XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> cache) {
+		return new SharedValueCacheCleaner(cache, "Instruction-Response-XSLT-Templates",
+				SolarDinJobs.JOBS_GROUP);
 	}
 
 }
