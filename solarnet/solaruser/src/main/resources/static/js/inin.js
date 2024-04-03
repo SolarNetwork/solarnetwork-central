@@ -426,6 +426,9 @@ function ininManagement() {
 	function createEndpointModel(config) {
 		config.id = config.endpointId;
 		config.systemType = ENDPOINT_SYS;
+		if (Array.isArray(config.nodeIds)) {
+			config.nodeIdsValue = config.nodeIds.join(',');
+		}
 		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 		SolarReg.fill(model, config);
 		model.createdDisplay = moment(config.created).format('D MMM YYYY');

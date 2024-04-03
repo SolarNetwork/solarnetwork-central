@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.inin.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,12 +32,13 @@ import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * DTO for datum input endpoint configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 public class EndpointConfigurationInput
 		extends BaseInstructionInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
@@ -53,6 +55,8 @@ public class EndpointConfigurationInput
 
 	@NotNull
 	private Long responseTransformId;
+
+	private int maxExecutionSeconds = EndpointConfiguration.DEFAULT_MAX_EXECUTION_SECONDS;
 
 	/**
 	 * Constructor.
@@ -75,6 +79,7 @@ public class EndpointConfigurationInput
 		conf.setNodeIds(nodeIds);
 		conf.setRequestTransformId(requestTransformId);
 		conf.setResponseTransformId(responseTransformId);
+		conf.setMaxExecutionSeconds(maxExecutionSeconds);
 	}
 
 	/**
@@ -118,6 +123,40 @@ public class EndpointConfigurationInput
 	}
 
 	/**
+	 * Get the node IDs as a comma-delimited string.
+	 *
+	 * @return the delimited string
+	 */
+	public String getNodeIdsValue() {
+		return StringUtils.commaDelimitedStringFromCollection(nodeIds);
+	}
+
+	/**
+	 * Set the node IDs set as a comma-delimited string.
+	 *
+	 * @param value
+	 *        the comma-delimited string of node IDs to set
+	 */
+	public void setNodeIdsValue(String value) {
+		Set<String> vals = StringUtils.commaDelimitedStringToSet(value);
+		Set<Long> nums = null;
+		if ( vals != null ) {
+			nums = new LinkedHashSet<>(vals.size());
+			for ( String val : vals ) {
+				try {
+					nums.add(Long.valueOf(val));
+				} catch ( IllegalArgumentException e ) {
+					// ignore and continue
+				}
+			}
+			if ( nums.isEmpty() ) {
+				nums = null;
+			}
+		}
+		setNodeIds(nums);
+	}
+
+	/**
 	 * Get the ID of the associated request {@link TransformConfiguration}
 	 * entity.
 	 *
@@ -157,6 +196,25 @@ public class EndpointConfigurationInput
 	 */
 	public void setResponseTransformId(Long responseTransformId) {
 		this.responseTransformId = responseTransformId;
+	}
+
+	/**
+	 * Get the maximum execution seconds.
+	 *
+	 * @return the seconds; defaults to {@link #DEFAULT_MAX_EXECUTION_SECONDS}
+	 */
+	public int getMaxExecutionSeconds() {
+		return maxExecutionSeconds;
+	}
+
+	/**
+	 * Set the maximum execution seconds.
+	 *
+	 * @param maxExecutionSeconds
+	 *        the seconds to set; anything less than 1 will be saved as 1
+	 */
+	public void setMaxExecutionSeconds(int maxExecutionSeconds) {
+		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
 	}
 
 }
