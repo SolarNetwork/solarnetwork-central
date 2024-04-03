@@ -118,7 +118,7 @@ public class InstructionInputController {
 		}
 
 		// use ProvidedOutputStream to delay opening output stream in case of exception
-		ProvidedOutputStream out = new ProvidedOutputStream(() -> {
+		try (ProvidedOutputStream out = new ProvidedOutputStream(() -> {
 			try {
 				response.setContentType(mediaType.toString());
 				OutputStream o = response.getOutputStream();
@@ -129,14 +129,16 @@ public class InstructionInputController {
 			} catch ( IOException e ) {
 				throw new IllegalStateException("IOException generating output", e);
 			}
-		});
+		})) {
 
-		// limit input size
-		input = new MaxUploadSizeInputStream(input, maxInputLength);
-		var instructions = inputBiz.importInstructions(actor.getUserId(), endpointId, mediaType, input,
-				params);
+			// limit input size
+			input = new MaxUploadSizeInputStream(input, maxInputLength);
+			var instructions = inputBiz.importInstructions(actor.getUserId(), endpointId, mediaType,
+					input, params);
 
-		inputBiz.generateResponse(actor.getUserId(), endpointId, instructions, outputType, out, params);
+			inputBiz.generateResponse(actor.getUserId(), endpointId, instructions, outputType, out,
+					params);
+		}
 	}
 
 }
