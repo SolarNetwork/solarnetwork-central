@@ -46,7 +46,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	private static final long serialVersionUID = 4283219512151426023L;
 
 	/** The {@code maxExecutionSeconds} property default value. */
-	public static final int DEFAULT_MAX_EXECUTION_SECONDS = 10_000;
+	public static final int DEFAULT_MAX_EXECUTION_SECONDS = 10;
 
 	private String name;
 	private Set<Long> nodeIds;
