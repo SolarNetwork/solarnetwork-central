@@ -690,6 +690,7 @@ function ininManagement() {
 				, inputType = form.elements.inputType.value
 				, queryParams = form.elements.queryParams.value
 				, instrResults = form.elements.instructionResults.value
+				, respContainer = container.find('.response-container')
 				, errorContainer = container.find('.error-container')
 				;
 				
@@ -762,9 +763,11 @@ function ininManagement() {
 						});
 						// show response data
 						if (json.data.response) {
-							$('#inin-endpoint-preview-output-response').text(json.data.response).removeClass('hidden');
+							$('#inin-endpoint-preview-output-response').text(json.data.response);
+							respContainer.removeClass('hidden');
 						} else {
-							$('#inin-endpoint-preview-output-response').text('').addClass('hidden')
+							$('#inin-endpoint-preview-output-response').text('');
+							respContainer.addClass('hidden');
 						}
 					} else {
 						// TODO: i18n
