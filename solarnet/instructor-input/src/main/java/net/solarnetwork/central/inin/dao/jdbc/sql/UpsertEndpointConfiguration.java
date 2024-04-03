@@ -40,7 +40,7 @@ import net.solarnetwork.central.inin.domain.EndpointConfiguration;
  * Support for INSERT ... ON CONFLICT {@link EndpointConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 public class UpsertEndpointConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -107,7 +107,7 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 		if ( entity.getNodeIds() != null && !entity.getNodeIds().isEmpty() ) {
 			nodeIds = entity.getNodeIds().toArray(Long[]::new);
 		}
-		p = prepareArrayParameter(con, stmt, p, nodeIds);
+		p = prepareArrayParameter(con, stmt, p, nodeIds, true);
 
 		stmt.setObject(++p, entity.getRequestTransformId());
 		stmt.setObject(++p, entity.getResponseTransformId());
