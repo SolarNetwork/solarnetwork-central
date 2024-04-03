@@ -237,7 +237,11 @@ public class DaoInstructionInputEndpointBiz
 			List<NodeInstruction> nodeInstructions = new ArrayList<>(8);
 			for ( NodeInstruction instr : instructions ) {
 				for ( Long nodeId : endpoint.getNodeIds() ) {
-					nodeInstructions.add(instr.copyWithNodeId(nodeId));
+					if ( nodeId.equals(instr.getNodeId()) ) {
+						nodeInstructions.add(instr);
+					} else {
+						nodeInstructions.add(instr.copyWithNodeId(nodeId));
+					}
 				}
 			}
 			instructions = nodeInstructions;
