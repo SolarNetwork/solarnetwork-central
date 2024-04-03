@@ -58,7 +58,7 @@ public class DatumInputCachingDaoConfig implements DatumInputConfiguration {
 	@Qualifier(CACHING)
 	@Bean
 	@Primary
-	public EndpointConfigurationDao cachingEndpointConfigurationDao(EndpointConfigurationDao dao,
+	public EndpointConfigurationDao cachingDatumEndpointConfigurationDao(EndpointConfigurationDao dao,
 			@Qualifier(ENDPOINT_CONF) Cache<UserUuidPK, EndpointConfiguration> cache) {
 		return new CachingEndpointConfigurationDao(dao, cache, executor);
 	}
@@ -71,7 +71,7 @@ public class DatumInputCachingDaoConfig implements DatumInputConfiguration {
 	@Qualifier(CACHING)
 	@Bean
 	@Primary
-	public TransformConfigurationDao cachingTransformConfigurationDao(TransformConfigurationDao dao,
+	public TransformConfigurationDao cachingDatumTransformConfigurationDao(TransformConfigurationDao dao,
 			@Qualifier(TRANSFORM_CONF) Cache<UserLongCompositePK, TransformConfiguration> cache) {
 		return new CachingTransformConfigurationDao(dao, cache, executor);
 	}

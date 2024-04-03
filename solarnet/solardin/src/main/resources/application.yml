@@ -31,16 +31,34 @@ app:
     cache:
       endpoint-conf-cache:
         ttl: 600
-        heap-max-entries: 10000
+        heap-max-entries: 1000
         disk-max-size-mb: 0
       transform-conf-cache:
         ttl: 600
-        heap-max-entries: 10000
+        heap-max-entries: 1000
         disk-max-size-mb: 0
     max-datum-input-length: 8196
     xslt:
       templates-cache:
         ttl: 86400
+  inin:
+    cache:
+      endpoint-conf-cache:
+        ttl: 600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+      req-transform-conf-cache:
+        ttl: 600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+      res-transform-conf-cache:
+        ttl: 600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+    max-input-length: 8196
+    xslt:
+      templates-cache:
+        ttl: 15
   job.din:
     xslt-templates-cache-prune:
       maximum-wait-ms: 240000
@@ -56,7 +74,7 @@ app:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
   security:
-    endpoint-id-url-pattern: "/endpoint/([^/]+)/"
+    endpoint-id-url-pattern: "/endpoint/([^/]+)"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"

@@ -1,5 +1,5 @@
 /* ==================================================================
- * DatumInputTestUtils.java - 19/02/2024 5:12:12 pm
+ * TransformOutput.java - 26/02/2024 8:02:27 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,20 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.din.test;
+package net.solarnetwork.central.user.inin.domain;
+
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
 /**
- * Helpers for datum input testing.
+ * A transform output result DTO.
  *
+ * @param instructions
+ *        the generated instructions
+ * @param response
+ *        the generated response, Base64 encoded if binary
+ * @param transformOutput
+ *        any transform debug output
+ * @param message
+ *        any messages
  * @author matt
  * @version 1.0
  */
-public final class DatumInputTestUtils {
-
-	private DatumInputTestUtils() {
-		// not available
-	}
-
-	// TODO
+public record TransformOutput(Iterable<NodeInstruction> instructions, String response,
+		String transformOutput, String message) {
 
 }

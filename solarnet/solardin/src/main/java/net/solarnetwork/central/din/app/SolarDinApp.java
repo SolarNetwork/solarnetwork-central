@@ -34,6 +34,7 @@ import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
+import net.solarnetwork.central.inin.config.SolarNetInstructionInputConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.user.config.UserDaoConfig;
@@ -48,8 +49,9 @@ import net.solarnetwork.util.ApplicationContextUtils;
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
 		SolarNetDatumConfiguration.class,
-		SolarNetInstructorConfiguration.class,
 		SolarNetDatumInputConfiguration.class,
+		SolarNetInstructorConfiguration.class,
+		SolarNetInstructionInputConfiguration.class,
 		SolarDinApp.class,
 })
 @Import({

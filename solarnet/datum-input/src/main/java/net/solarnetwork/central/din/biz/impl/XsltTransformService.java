@@ -22,14 +22,11 @@
 
 package net.solarnetwork.central.din.biz.impl;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,9 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -52,22 +46,18 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.util.FileCopyUtils;
 import org.springframework.util.MimeType;
-import org.w3c.dom.Document;
-import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.din.biz.TransformService;
+import net.solarnetwork.central.support.BaseXsltService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.SharedValueCache;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
@@ -82,25 +72,9 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements TransformService, EntityResolver {
-
-	/** The setting key for the XSLT stylesheet. */
-	public static final String SETTING_XSLT = "xslt";
-
-	/** The setting key for the XSLT stylesheet cache seconds. */
-	public static final String SETTING_XSLT_CACHE_DURATION = "cache-seconds";
-
-	/** The XSLT input parameter for input JSON. */
-	public static final String XSLT_PARAM_JSON = "input-json";
-
-	private final TransformerFactory transformerFactory;
-	private final DocumentBuilderFactory documentBuilderFactory;
-	private final ObjectMapper objectMapper;
-	private final Duration templatesCacheTtl;
-	private final SharedValueCache<String, Templates, String> templatesCache;
+public class XsltTransformService extends BaseXsltService implements TransformService {
 
 	/**
 	 * Constructor.
@@ -151,14 +125,8 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 	public XsltTransformService(DocumentBuilderFactory documentBuilderFactory,
 			TransformerFactory transformerFactory, ObjectMapper objectMapper, Duration templatesCacheTtl,
 			SharedValueCache<String, Templates, String> templatesCache) {
-		super("net.solarnetwork.central.din.XsltTransformService");
-		this.documentBuilderFactory = requireNonNullArgument(documentBuilderFactory,
-				"documentBuilderFactory");
-		this.transformerFactory = requireNonNullArgument(transformerFactory, "transformerFactory");
-		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
-		this.templatesCacheTtl = templatesCacheTtl != null && templatesCache != null ? templatesCacheTtl
-				: Duration.ZERO;
-		this.templatesCache = templatesCache;
+		super("net.solarnetwork.central.din.XsltTransformService", documentBuilderFactory,
+				transformerFactory, objectMapper, templatesCacheTtl, templatesCache);
 	}
 
 	@Override
@@ -239,94 +207,10 @@ public class XsltTransformService extends BaseSettingsSpecifierLocalizedServiceI
 		}
 	}
 
-	private static final Pattern DOCTYPE_PAT = Pattern.compile("<!DOCTYPE[^>]*>",
-			Pattern.CASE_INSENSITIVE);
-
-	private String inputText(Object input) throws IOException {
-		String result = null;
-		if ( input instanceof InputStream stream ) {
-			result = FileCopyUtils.copyToString(new InputStreamReader(stream, StandardCharsets.UTF_8));
-		} else {
-			result = input.toString();
-		}
-		// remove <!DOCTYPE> declaration
-		return DOCTYPE_PAT.matcher(result).replaceFirst("");
-	}
-
-	private DocumentBuilder documentBuilder() throws ParserConfigurationException {
-		DocumentBuilder db = documentBuilderFactory.newDocumentBuilder();
-		db.setEntityResolver(this);
-		return db;
-	}
-
-	@Override
-	public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-		return null;
-	}
-
 	private Templates templates(String xslt, IdentifiableConfiguration config, Map<String, ?> parameters)
 			throws IOException {
-		final long cacheTtlSeconds = templatesCacheTtlSeconds(config);
-
-		String xsltCacheKey = null;
-		String xsltSharedKey = null;
-		Templates t = null;
-
-		if ( cacheTtlSeconds > 0 ) {
-			if ( parameters != null && parameters.get(PARAM_CONFIGURATION_CACHE_KEY) != null ) {
-				xsltCacheKey = parameters.get(PARAM_CONFIGURATION_CACHE_KEY).toString();
-			} else {
-				xsltCacheKey = DigestUtils.sha256Hex(xslt);
-				xsltSharedKey = xsltCacheKey;
-			}
-			t = templatesCache.get(xsltCacheKey);
-			if ( t != null ) {
-				return t;
-			}
-		}
-
-		Function<String, Templates> provider = (key) -> {
-			try (Reader xsltInput = new StringReader(xslt)) {
-				Document xsltDoc = documentBuilder().parse(new InputSource(xsltInput));
-				return transformerFactory.newTemplates(new DOMSource(xsltDoc));
-			} catch ( SAXException | ParserConfigurationException | IOException e ) {
-				log.debug("Error parsing XSLT source: {}", e.getMessage(), e);
-				throw new IllegalStateException("Error parsing XSLT source.", e);
-			} catch ( TransformerConfigurationException e ) {
-				log.debug("Error creating XSLT source: {}", e.getMessage(), e);
-				throw new IllegalStateException("Error creating XSLT source.", e);
-			}
-		};
-
-		if ( xsltSharedKey == null ) {
-			xsltSharedKey = DigestUtils.sha256Hex(xslt);
-		}
-		try {
-			if ( xsltCacheKey != null ) {
-				t = templatesCache.put(xsltCacheKey, xsltSharedKey, provider, cacheTtlSeconds);
-			} else {
-				t = provider.apply(xsltCacheKey);
-			}
-		} catch ( IllegalStateException e ) {
-			throw new IOException(e.getMessage(), e.getCause());
-		}
-		return t;
-	}
-
-	private long templatesCacheTtlSeconds(IdentifiableConfiguration config) {
-		Map<String, ?> props = (config != null ? config.getServiceProperties() : null);
-		Object val = (props != null ? props.get(SETTING_XSLT_CACHE_DURATION) : null);
-		if ( val != null ) {
-			if ( val instanceof Number n ) {
-				return n.longValue();
-			}
-			try {
-				return Long.parseLong(val.toString());
-			} catch ( NumberFormatException e ) {
-				// ignore
-			}
-		}
-		return templatesCacheTtl.getSeconds();
+		return templates(xslt, config,
+				parameters != null ? parameters.get(PARAM_CONFIGURATION_CACHE_KEY) : null);
 	}
 
 	private List<Datum> parseDatumList(String json) throws IOException {

@@ -62,9 +62,11 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
 
+	@Qualifier(CACHING)
 	@Autowired
 	private TransformConfigurationDao transformDao;
 
+	@Qualifier(CACHING)
 	@Autowired
 	private EndpointConfigurationDao endpointDao;
 

@@ -72,7 +72,7 @@ subprojects {
 		jsonSchemaValidatorVersion = '1.3.2'
 		myBatisStarterVersion = '3.0.3'
 		saxonVersion = '12.4'
-		snCommonVersion = '3.8.1'
+		snCommonVersion = '3.9.0'
 		snCommonMqttVersion = '4.0.1'
 		snCommonMqttNettyVersion = '3.0.1'
 		snCommonOcppVersion = '4.1.0'

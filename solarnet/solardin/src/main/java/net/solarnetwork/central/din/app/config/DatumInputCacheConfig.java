@@ -53,13 +53,13 @@ public class DatumInputCacheConfig implements DatumInputConfiguration {
 	@Bean
 	@Qualifier(ENDPOINT_CONF)
 	@ConfigurationProperties(prefix = "app.din.cache.endpoint-conf-cache")
-	public CacheSettings endpointConfigurationCacheSettings() {
+	public CacheSettings datumEndpointConfigurationCacheSettings() {
 		return new CacheSettings();
 	}
 
 	@Bean
 	@Qualifier(ENDPOINT_CONF)
-	public Cache<UserUuidPK, EndpointConfiguration> endpointConfigurationCache(
+	public Cache<UserUuidPK, EndpointConfiguration> datumEndpointConfigurationCache(
 			@Qualifier(ENDPOINT_CONF) CacheSettings settings) {
 		return settings.createCache(cacheManager, UserUuidPK.class, EndpointConfiguration.class,
 				ENDPOINT_CONF + "-cache");
@@ -68,13 +68,13 @@ public class DatumInputCacheConfig implements DatumInputConfiguration {
 	@Bean
 	@Qualifier(TRANSFORM_CONF)
 	@ConfigurationProperties(prefix = "app.din.cache.transform-conf-cache")
-	public CacheSettings transformConfigurationCacheSettings() {
+	public CacheSettings datumTransformConfigurationCacheSettings() {
 		return new CacheSettings();
 	}
 
 	@Bean
 	@Qualifier(TRANSFORM_CONF)
-	public Cache<UserLongCompositePK, TransformConfiguration> transformConfigurationCache(
+	public Cache<UserLongCompositePK, TransformConfiguration> datumTransformConfigurationCache(
 			@Qualifier(TRANSFORM_CONF) CacheSettings settings) {
 		return settings.createCache(cacheManager, UserLongCompositePK.class,
 				TransformConfiguration.class, TRANSFORM_CONF + "-cache");

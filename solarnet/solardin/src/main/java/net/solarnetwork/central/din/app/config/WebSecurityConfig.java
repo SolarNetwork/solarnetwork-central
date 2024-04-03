@@ -23,6 +23,8 @@
 package net.solarnetwork.central.din.app.config;
 
 import static net.solarnetwork.central.din.app.config.DatumInputConfiguration.CACHING;
+import static net.solarnetwork.central.din.security.SecurityUtils.ROLE_DIN;
+import static net.solarnetwork.central.inin.security.SecurityUtils.ROLE_ININ;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
@@ -52,10 +54,11 @@ import org.springframework.security.web.authentication.Http403ForbiddenEntryPoin
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSource;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationProvider;
+import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
+import net.solarnetwork.central.din.app.security.InstructionEndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.app.security.InstructionEndpointAuthenticationProvider;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
-import net.solarnetwork.central.din.security.SecurityUtils;
 import net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -140,89 +143,13 @@ public class WebSecurityConfig {
 	}
 
 	/**
-	 * API security rules, for stateless REST access.
-	 */
-	@Configuration
-	@Order(1)
-	public static class ApiWebSecurityConfig {
-
-		@Value("${app.security.endpoint-id-url-pattern:}")
-		private String endpointIdUrlPattern;
-
-		@Autowired
-		private PasswordEncoder passwordEncoder;
-
-		@Autowired
-		private JdbcOperations jdbcOperations;
-
-		@Qualifier(CACHING)
-		@Autowired
-		private EndpointConfigurationDao endpointDao;
-
-		@Autowired
-		private AuthenticationEventPublisher authEventPublisher;
-
-		@Bean
-		public EndpointAuthenticationDetailsSource endpointAuthenticationDetailsSource() {
-			Pattern pat = EndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
-			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
-				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
-			}
-			return new EndpointAuthenticationDetailsSource(endpointDao, pat);
-		}
-
-		private AuthenticationManager endpointAuthenticationManager() {
-			JdbcCredentialAuthorizationDao dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
-			var mgr = new ProviderManager(new EndpointAuthenticationProvider(dao, passwordEncoder));
-			mgr.setAuthenticationEventPublisher(authEventPublisher);
-			return mgr;
-		}
-
-		@Order(1)
-		@Bean
-		public SecurityFilterChain filterChainApi(HttpSecurity http) throws Exception {
-			// @formatter:off
-			http
-					// limit this configuration to specific paths
-					.securityMatchers((matchers) -> {
-						matchers.requestMatchers("/api/v1/endpoint/**");
-					})
-
-					// CSRF not needed for stateless calls
-					.csrf((csrf) -> csrf.disable())
-
-					// make sure CORS honored
-					.cors(Customizer.withDefaults())
-
-					// no sessions
-					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
-
-					.httpBasic((basic) -> {
-						basic.realmName("SolarDIN")
-							.authenticationDetailsSource(endpointAuthenticationDetailsSource());
-					})
-
-					.authenticationManager(endpointAuthenticationManager())
-
-					.authorizeHttpRequests((matchers) -> {
-						matchers.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-							.requestMatchers("/**").hasAnyAuthority(SecurityUtils.ROLE_DIN)
-							.anyRequest().denyAll();
-					})
-			;
-			// @formatter:on
-			return http.build();
-		}
-	}
-
-	/**
 	 * Security rules for the management API.
 	 */
 	@Configuration
-	@Order(2)
+	@Order(1)
 	public static class ManagementWebSecurityConfig {
 
-		@Order(2)
+		@Order(1)
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
 			// @formatter:off
@@ -244,6 +171,160 @@ public class WebSecurityConfig {
 					.authorizeHttpRequests((matchers) -> matchers
 							.anyRequest().hasAnyAuthority(OPS_AUTHORITY))
 
+			;
+			// @formatter:on
+			return http.build();
+		}
+	}
+
+	/**
+	 * Datum API security rules, for stateless REST access.
+	 */
+	@Configuration
+	@Order(2)
+	public static class DatumApiWebSecurityConfig {
+
+		@Value("${app.security.endpoint-id-url-pattern:}")
+		private String endpointIdUrlPattern;
+
+		@Autowired
+		private PasswordEncoder passwordEncoder;
+
+		@Autowired
+		private JdbcOperations jdbcOperations;
+
+		@Qualifier(CACHING)
+		@Autowired
+		private EndpointConfigurationDao endpointDao;
+
+		@Autowired
+		private AuthenticationEventPublisher authEventPublisher;
+
+		@Bean
+		public DatumEndpointAuthenticationDetailsSource datumEndpointAuthenticationDetailsSource() {
+			Pattern pat = DatumEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
+			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
+				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
+			}
+			return new DatumEndpointAuthenticationDetailsSource(endpointDao, pat);
+		}
+
+		private AuthenticationManager datumEndpointAuthenticationManager() {
+			var dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
+			var mgr = new ProviderManager(new DatumEndpointAuthenticationProvider(dao, passwordEncoder));
+			mgr.setAuthenticationEventPublisher(authEventPublisher);
+			return mgr;
+		}
+
+		@Order(2)
+		@Bean
+		public SecurityFilterChain datumFilterChainApi(HttpSecurity http) throws Exception {
+			// @formatter:off
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> {
+						matchers.requestMatchers("/api/v1/datum/**");
+					})
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
+
+					.httpBasic((basic) -> {
+						basic.realmName("SolarDIN")
+							.authenticationDetailsSource(datumEndpointAuthenticationDetailsSource());
+					})
+
+					.authenticationManager(datumEndpointAuthenticationManager())
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+							.requestMatchers("/**").hasAnyAuthority(ROLE_DIN)
+							.anyRequest().denyAll()
+					)
+			;
+			// @formatter:on
+			return http.build();
+		}
+	}
+
+	/**
+	 * Instruction API security rules, for stateless REST access.
+	 */
+	@Configuration
+	@Order(3)
+	public static class InstructionApiWebSecurityConfig {
+
+		@Value("${app.security.endpoint-id-url-pattern:}")
+		private String endpointIdUrlPattern;
+
+		@Autowired
+		private PasswordEncoder passwordEncoder;
+
+		@Autowired
+		private JdbcOperations jdbcOperations;
+
+		@Qualifier(CACHING)
+		@Autowired
+		private net.solarnetwork.central.inin.dao.EndpointConfigurationDao endpointDao;
+
+		@Autowired
+		private AuthenticationEventPublisher authEventPublisher;
+
+		@Bean
+		public InstructionEndpointAuthenticationDetailsSource instructionEndpointAuthenticationDetailsSource() {
+			Pattern pat = InstructionEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN;
+			if ( endpointIdUrlPattern != null && !endpointIdUrlPattern.isEmpty() ) {
+				pat = Pattern.compile(endpointIdUrlPattern, Pattern.CASE_INSENSITIVE);
+			}
+			return new InstructionEndpointAuthenticationDetailsSource(endpointDao, pat);
+		}
+
+		private AuthenticationManager instructionEndpointAuthenticationManager() {
+			var dao = new net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao(
+					jdbcOperations);
+			var mgr = new ProviderManager(
+					new InstructionEndpointAuthenticationProvider(dao, passwordEncoder));
+			mgr.setAuthenticationEventPublisher(authEventPublisher);
+			return mgr;
+		}
+
+		@Order(3)
+		@Bean
+		public SecurityFilterChain instructionFilterChainApi(HttpSecurity http) throws Exception {
+			// @formatter:off
+			http
+					// limit this configuration to specific paths
+					.securityMatchers((matchers) -> {
+						matchers.requestMatchers("/api/v1/instr/**");
+					})
+
+					// CSRF not needed for stateless calls
+					.csrf((csrf) -> csrf.disable())
+
+					// make sure CORS honored
+					.cors(Customizer.withDefaults())
+
+					// no sessions
+					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
+
+					.httpBasic((basic) -> {
+						basic.realmName("SolarININ")
+							.authenticationDetailsSource(instructionEndpointAuthenticationDetailsSource());
+					})
+
+					.authenticationManager(instructionEndpointAuthenticationManager())
+
+					.authorizeHttpRequests((matchers) -> matchers
+							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+							.requestMatchers("/**").hasAnyAuthority(ROLE_ININ)
+							.anyRequest().denyAll()
+					)
 			;
 			// @formatter:on
 			return http.build();
