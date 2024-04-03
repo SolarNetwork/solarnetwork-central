@@ -120,6 +120,7 @@ public class InstructionInputController {
 		// use ProvidedOutputStream to delay opening output stream in case of exception
 		ProvidedOutputStream out = new ProvidedOutputStream(() -> {
 			try {
+				response.setContentType(mediaType.toString());
 				OutputStream o = response.getOutputStream();
 				if ( acceptEncoding != null && acceptEncoding.contains("gzip") ) {
 					o = new GZIPOutputStream(o);
