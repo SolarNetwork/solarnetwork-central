@@ -232,6 +232,17 @@ public class DaoInstructionInputEndpointBiz
 			}
 		}
 
+		// apply endpoint node IDs if configured
+		if ( endpoint.getNodeIds() != null && !endpoint.getNodeIds().isEmpty() ) {
+			List<NodeInstruction> nodeInstructions = new ArrayList<>(8);
+			for ( NodeInstruction instr : instructions ) {
+				for ( Long nodeId : endpoint.getNodeIds() ) {
+					nodeInstructions.add(instr.copyWithNodeId(nodeId));
+				}
+			}
+			instructions = nodeInstructions;
+		}
+
 		// verify ownership node is owner of endpoint
 		int instructionCount = 0;
 		for ( NodeInstruction instruction : instructions ) {
