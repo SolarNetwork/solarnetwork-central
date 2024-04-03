@@ -100,7 +100,7 @@ public class InstructionInputController {
 			HttpServletResponse response) throws IOException {
 		final SecurityEndpointCredential actor = SecurityUtils.getCurrentEndpointCredential();
 
-		final MediaType mediaType = MediaType.parseMediaType(contentType);
+		final MediaType inputType = MediaType.parseMediaType(contentType);
 		final MediaType outputType = MediaType.parseMediaType(accept);
 
 		InputStream input = in;
@@ -120,7 +120,7 @@ public class InstructionInputController {
 		// use ProvidedOutputStream to delay opening output stream in case of exception
 		try (ProvidedOutputStream out = new ProvidedOutputStream(() -> {
 			try {
-				response.setContentType(mediaType.toString());
+				response.setContentType(outputType.toString());
 				OutputStream o = response.getOutputStream();
 				if ( acceptEncoding != null && acceptEncoding.contains("gzip") ) {
 					o = new GZIPOutputStream(o);
@@ -133,7 +133,7 @@ public class InstructionInputController {
 
 			// limit input size
 			input = new MaxUploadSizeInputStream(input, maxInputLength);
-			var instructions = inputBiz.importInstructions(actor.getUserId(), endpointId, mediaType,
+			var instructions = inputBiz.importInstructions(actor.getUserId(), endpointId, inputType,
 					input, params);
 
 			inputBiz.generateResponse(actor.getUserId(), endpointId, instructions, outputType, out,
