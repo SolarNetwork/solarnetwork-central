@@ -116,8 +116,8 @@ public class InstructionInputTransformServiceConfig {
 
 	@Bean
 	public XsltResponseTransformService responseXsltTransformService(ObjectMapper objectMapper,
-			@Qualifier(REQ_XSLT_TEMPLATES_QUALIFIER) CacheSettings templatesCacheSettings,
-			@Qualifier(REQ_XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> templatesCache,
+			@Qualifier(RES_XSLT_TEMPLATES_QUALIFIER) CacheSettings templatesCacheSettings,
+			@Qualifier(RES_XSLT_TEMPLATES_QUALIFIER) SharedValueCache<String, Templates, String> templatesCache,
 			@Qualifier(INSTRUCTION_INPUT) URIResolver uriResolver) throws ParserConfigurationException {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newNSInstance();
 
