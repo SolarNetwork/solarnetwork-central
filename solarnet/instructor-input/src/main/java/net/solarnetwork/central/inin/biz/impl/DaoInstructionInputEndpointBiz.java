@@ -88,6 +88,9 @@ public class DaoInstructionInputEndpointBiz
 	/** The {@code executionResultDelay} property default value. */
 	public static final Duration DEFAULT_EXECUTION_RESULT_DELAY = Duration.ofSeconds(1);
 
+	/** The {@code executionResultMaxWait} property default value. */
+	public static final Duration DEFAULT_EXECUTION_RESULT_MAX_WAIT = Duration.ofSeconds(60);
+
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final InstructorBiz instructor;
@@ -99,6 +102,7 @@ public class DaoInstructionInputEndpointBiz
 	private final Map<String, ResponseTransformService> responseTransformServices;
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private Duration executionResultDelay = DEFAULT_EXECUTION_RESULT_DELAY;
+	private Duration executionResultMaxWait = DEFAULT_EXECUTION_RESULT_MAX_WAIT;
 
 	/**
 	 * Constructor.
@@ -288,8 +292,8 @@ public class DaoInstructionInputEndpointBiz
 		var futures = new ArrayList<Future<NodeInstruction>>(instructions.size());
 		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 			long delay = executionResultDelay.toMillis();
-			long expire = System.currentTimeMillis()
-					+ TimeUnit.SECONDS.toMillis(endpoint.getMaxExecutionSeconds());
+			long expire = System.currentTimeMillis() + Math.min(executionResultMaxWait.toMillis(),
+					TimeUnit.SECONDS.toMillis(endpoint.getMaxExecutionSeconds()));
 			for ( NodeInstruction instruction : instructions ) {
 				futures.add(executor.submit(new Callable<NodeInstruction>() {
 
@@ -392,6 +396,16 @@ public class DaoInstructionInputEndpointBiz
 		this.executionResultDelay = (executionResultDelay != null && executionResultDelay.isPositive()
 				? executionResultDelay
 				: DEFAULT_EXECUTION_RESULT_DELAY);
+	}
+
+	/**
+	 * Set the maximum length of time allowed to wait for instruction results.
+	 *
+	 * @param executionResultMaxWait
+	 *        the maximum time to set
+	 */
+	public void setExecutionResultMaxWait(Duration executionResultMaxWait) {
+		this.executionResultMaxWait = executionResultMaxWait;
 	}
 
 }
