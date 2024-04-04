@@ -30,6 +30,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import net.solarnetwork.central.aop.SolarNetCommonAopConfiguration;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
@@ -71,6 +72,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
+		SolarNetCommonAopConfiguration.class,
 		SolarNetDatumAopConfiguration.class,
 		SolarNetDatumConfiguration.class,
 		SolarNetDatumInputConfiguration.class,

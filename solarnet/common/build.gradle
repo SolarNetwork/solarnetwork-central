@@ -78,6 +78,7 @@ dependencies {
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.10.0'
+	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	
 	// OSGi Compatibility
