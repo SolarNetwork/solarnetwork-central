@@ -89,4 +89,10 @@
 		<include refid="fragment-findall-UserMetadataEntity-UserMetadataMatch-where"/>
 	</select>
 	
+	<select id="get-user-metadata-at-path" resultType="string">
+		SELECT jdata #> regexp_split_to_array(ltrim(#{path}, '/'), '/')
+		FROM solaruser.user_meta
+		WHERE user_id = #{userId}
+	</select>
+	
 </mapper>

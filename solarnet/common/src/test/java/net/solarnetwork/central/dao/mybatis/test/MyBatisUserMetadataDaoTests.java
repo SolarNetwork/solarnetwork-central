@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import java.math.BigDecimal;
@@ -36,13 +37,14 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilterMatch;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Test cases for the {@link MyBatisUserMetadataDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -130,6 +132,89 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertEquals(1, (int) results.getReturnedResultCount());
 		UserMetadataFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Match ID", testUserId, match.getId());
+	}
+
+	@Test
+	public void jsonMetadataAtPath_noRow() {
+		// GIVEN
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(testUserId, "/m/foo");
+
+		// THEN
+		then(result).as("No matching row returns null.").isNull();
+	}
+
+	@Test
+	public void jsonMetadataAtPath_noMeta() {
+		// GIVEN
+		UserMetadataEntity meta = getTestInstance();
+		dao.store(meta);
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(testUserId, "/pm/does/not/exist");
+
+		// THEN
+		then(result).as("No matching path returns null.").isNull();
+	}
+
+	@Test
+	public void jsonMetadataAtPath_stringPropertyMatch() {
+		// GIVEN
+		UserMetadataEntity meta = getTestInstance();
+		dao.store(meta);
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(testUserId, "/m/foo");
+
+		// THEN
+		then(result).as("String property returned as JSON string.").isEqualTo("\"bar\"");
+	}
+
+	@Test
+	public void jsonMetadataAtPath_numberPropertyMatch() {
+		// GIVEN
+		UserMetadataEntity meta = getTestInstance();
+		meta.getMeta().putInfoValue("num", 12345);
+		dao.store(meta);
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(testUserId, "/m/num");
+
+		// THEN
+		then(result).as("Number property returned as JSON string.").isEqualTo("12345");
+	}
+
+	@Test
+	public void jsonMetadataAtPath_treeMatch() {
+		// GIVEN
+		UserMetadataEntity meta = getTestInstance();
+		meta.getMeta().putInfoValue("foo", "bim", "bam");
+		meta.getMeta().putInfoValue("foo", "whiz", "pop");
+		dao.store(meta);
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(testUserId, "/pm/foo");
+
+		// THEN
+		Map<String, Object> resultMap = JsonUtils.getStringMap(result);
+		Map<String, ?> expectedMap = meta.getMeta().getPropertyInfo("foo");
+		then(resultMap).as("Tree property returned as JSON object.").isEqualTo(expectedMap);
+	}
+
+	@Test
+	public void jsonMetadataAtPath_arrayMatch() {
+		// GIVEN
+		UserMetadataEntity meta = getTestInstance();
+		meta.getMeta().putInfoValue("foo", "bim", new String[] { "one", "two" });
+		dao.store(meta);
+
+		// WHEN
+		String result = dao.jsonMetadataAtPath(testUserId, "/pm/foo/bim");
+
+		// THEN
+		String[] resultArray = JsonUtils.getObjectFromJSON(result, String[].class);
+		then(resultArray).as("Array property returned as JSON array.").containsExactly("one", "two");
 	}
 
 }

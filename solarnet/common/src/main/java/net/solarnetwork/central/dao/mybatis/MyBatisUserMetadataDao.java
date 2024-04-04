@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.dao.mybatis;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.HashMap;
+import java.util.Map;
 import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
@@ -33,7 +36,7 @@ import net.solarnetwork.central.domain.UserMetadataMatch;
  * MyBatis implementation of {@link UserMetadataDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.8
  */
 public class MyBatisUserMetadataDao extends
@@ -41,10 +44,23 @@ public class MyBatisUserMetadataDao extends
 		implements UserMetadataDao {
 
 	/**
+	 * The query used by {@link #metadataAtPath(Long, String)}.
+	 */
+	public static final String QUERY_FOR_METADATA_PATH = "get-user-metadata-at-path";
+
+	/**
 	 * Default constructor.
 	 */
 	public MyBatisUserMetadataDao() {
 		super(UserMetadataEntity.class, Long.class, UserMetadataMatch.class);
+	}
+
+	@Override
+	public String jsonMetadataAtPath(Long userId, String path) {
+		Map<String, Object> params = new HashMap<String, Object>(1);
+		params.put("userId", requireNonNullArgument(userId, "userId"));
+		params.put("path", requireNonNullArgument(path, "path"));
+		return selectFirst(QUERY_FOR_METADATA_PATH, params);
 	}
 
 }
