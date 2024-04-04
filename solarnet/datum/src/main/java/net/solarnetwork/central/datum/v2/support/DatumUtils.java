@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumUtils.java - 24/11/2020 10:46:42 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -105,9 +105,9 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
 
 /**
  * General datum utility methods.
- * 
+ *
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 2.8
  */
 public final class DatumUtils {
@@ -118,7 +118,7 @@ public final class DatumUtils {
 
 	/**
 	 * Convert a filter to a datum criteria.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter to convert
 	 * @return the criteria, or {@literal null} if {@code filter} is
@@ -130,7 +130,7 @@ public final class DatumUtils {
 
 	/**
 	 * Convert a filter to a datum criteria, with sort and pagination support.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param sortDescriptors
@@ -321,7 +321,7 @@ public final class DatumUtils {
 
 	/**
 	 * Convert a location filter to a location criteria.
-	 * 
+	 *
 	 * @param location
 	 *        the location
 	 * @return the criteria, or {@literal null} if {@code filter} is
@@ -355,7 +355,7 @@ public final class DatumUtils {
 	/**
 	 * Get a copy of a {@link ObjectStreamCriteria} with any date values
 	 * removed.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria
 	 * @return the new criteria
@@ -378,7 +378,7 @@ public final class DatumUtils {
 	/**
 	 * Get a {@link BasicDatumCriteria} instance from a
 	 * {@link ObjectStreamCriteria} instance.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to convert
 	 * @return the basic datum criteria, or {@literal null} if {@code criteria}
@@ -420,7 +420,7 @@ public final class DatumUtils {
 
 	/**
 	 * Convert a "type" property to an {@link Aggregation}.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to extract the type from; if instance of
 	 *        {@link DatumFilter} then the "type" value will be converted to an
@@ -445,7 +445,7 @@ public final class DatumUtils {
 	/**
 	 * Populate the aggregation value of a {@link BasicDatumCriteria} from a
 	 * "type" property value.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to extract the type from
 	 * @param filter
@@ -460,7 +460,7 @@ public final class DatumUtils {
 
 	/**
 	 * Populate a {@link DatumSamples} instance with property values.
-	 * 
+	 *
 	 * @param s
 	 *        the samples instance to populate
 	 * @param propType
@@ -481,7 +481,7 @@ public final class DatumUtils {
 
 	/**
 	 * Populate a {@link DatumSamples} instance with property values.
-	 * 
+	 *
 	 * @param s
 	 *        the samples instance to populate
 	 * @param props
@@ -509,12 +509,12 @@ public final class DatumUtils {
 	/**
 	 * Populate a {@link DatumSamples} instance with instantaneous property
 	 * statistics.
-	 * 
+	 *
 	 * <p>
 	 * This will populate {@code _min} and {@code _max} instantaneous properties
 	 * for all available instantaneous property statistic values.
 	 * </p>
-	 * 
+	 *
 	 * @param s
 	 *        the samples instance to populate
 	 * @param stats
@@ -547,13 +547,13 @@ public final class DatumUtils {
 	/**
 	 * Populate a {@link DatumSamples} instance with accumulating property
 	 * statistics.
-	 * 
+	 *
 	 * <p>
 	 * This will populate {@code _start} and {@code _end} instantaneous
 	 * properties for all available accumulating property statistic values, and
 	 * an accumulating property value for the difference statistic value.
 	 * </p>
-	 * 
+	 *
 	 * @param s
 	 *        the samples instance to populate
 	 * @param stats
@@ -586,7 +586,7 @@ public final class DatumUtils {
 
 	/**
 	 * Create a new {@link ReportingGeneralNodeDatum} out of a {@link Datum}.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to convert
 	 * @param meta
@@ -653,7 +653,7 @@ public final class DatumUtils {
 	/**
 	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of an
 	 * {@link ObjectDatumStreamMetadata}.
-	 * 
+	 *
 	 * @param meta
 	 *        the metadata to convert
 	 * @return the general metadata, or {@literal null} if {@code meta} is
@@ -674,7 +674,7 @@ public final class DatumUtils {
 	/**
 	 * Create a new {@link GeneralNodeDatumAuxiliary} out of a
 	 * {@link DatumAuxiliary}.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to convert
 	 * @param meta
@@ -717,7 +717,7 @@ public final class DatumUtils {
 	/**
 	 * Create a new {@link GeneralNodeDatumAuxiliaryFilterMatch} out of a
 	 * {@link DatumAuxiliary}.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum
 	 * @param meta
@@ -736,7 +736,7 @@ public final class DatumUtils {
 	/**
 	 * Create a new {@link ReportingGeneralLocationDatum} out of a
 	 * {@link Datum}.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to convert
 	 * @param meta
@@ -787,7 +787,7 @@ public final class DatumUtils {
 	/**
 	 * Create a new {@link GeneralLocationDatumMetadataMatch} out of an
 	 * {@link ObjectDatumStreamMetadata}.
-	 * 
+	 *
 	 * @param meta
 	 *        the metadata to convert
 	 * @return the general metadata, or {@literal null} if {@code meta} is
@@ -813,7 +813,7 @@ public final class DatumUtils {
 	/**
 	 * Create a new {@link SolarLocation} out of a
 	 * {@link net.solarnetwork.domain.Location}.
-	 * 
+	 *
 	 * @param l
 	 *        the location to convert
 	 * @return the solar location
@@ -840,7 +840,7 @@ public final class DatumUtils {
 
 	/**
 	 * Truncate a local date based on an {@link Aggregation}.
-	 * 
+	 *
 	 * @param date
 	 *        the date to truncate
 	 * @param agg
@@ -874,7 +874,7 @@ public final class DatumUtils {
 
 	/**
 	 * Generate a virtual stream ID.
-	 * 
+	 *
 	 * @param objectId
 	 *        the object ID
 	 * @param sourceId
@@ -893,11 +893,11 @@ public final class DatumUtils {
 
 	/**
 	 * Generate a v5 UUID.
-	 * 
+	 *
 	 * <p>
 	 * Adapted from https://stackoverflow.com/a/40230410
 	 * </p>
-	 * 
+	 *
 	 * @param namespace
 	 *        a UUID namespace, e.g. {@link #UUID_NAMESPACE_URL}
 	 * @param name
@@ -918,10 +918,10 @@ public final class DatumUtils {
 		md.update(toBytes(namespace));
 		md.update(name);
 		byte[] sha1Bytes = md.digest();
-		sha1Bytes[6] &= 0x0f; /* clear version */
-		sha1Bytes[6] |= 0x50; /* set to version 5 */
-		sha1Bytes[8] &= 0x3f; /* clear variant */
-		sha1Bytes[8] |= 0x80; /* set to IETF variant */
+		sha1Bytes[6] &= (byte) 0x0f; /* clear version */
+		sha1Bytes[6] |= (byte) 0x50; /* set to version 5 */
+		sha1Bytes[8] &= (byte) 0x3f; /* clear variant */
+		sha1Bytes[8] |= (byte) 0x80; /* set to IETF variant */
 		return fromBytes(sha1Bytes);
 	}
 
@@ -952,7 +952,7 @@ public final class DatumUtils {
 	/**
 	 * Convert a {@link DatumRecordCounts} to a legacy
 	 * {@link net.solarnetwork.central.datum.domain.DatumRecordCounts} instance.
-	 * 
+	 *
 	 * @param counts
 	 *        the counts to convert
 	 * @return the legacy instace, or {@literal null} if {@code counts} is
@@ -973,7 +973,7 @@ public final class DatumUtils {
 	/**
 	 * Convert an {@link ObjectDatumKind} to a
 	 * {@link net.solarnetwork.domain.datum.ObjectDatumKind}.
-	 * 
+	 *
 	 * @param kind
 	 *        the kind to convert
 	 * @return the converted instance, or {@literal null} if {@code kind} is
@@ -997,12 +997,12 @@ public final class DatumUtils {
 	/**
 	 * Convert a {@link ObjectDatumStreamMetadata} to a
 	 * {@link BasicObjectDatumStreamMetadata}.
-	 * 
+	 *
 	 * <p>
 	 * <b>Note</b> that the {@link ObjectDatumStreamMetadata#getMetaJson()}
 	 * value is <b>not</b> copied.
 	 * </p>
-	 * 
+	 *
 	 * @param meta
 	 *        the metadata to convert
 	 * @return the converted instance, or {@literal null} if {@code meta} is
@@ -1024,7 +1024,7 @@ public final class DatumUtils {
 	/**
 	 * Convert {@code AuditDatumRollup} filter results to
 	 * {@code AuditDatumRecordCounts} filter results.
-	 * 
+	 *
 	 * @param results
 	 *        the results to conver
 	 * @return the converted results, or {@literal null} if {@code results} is

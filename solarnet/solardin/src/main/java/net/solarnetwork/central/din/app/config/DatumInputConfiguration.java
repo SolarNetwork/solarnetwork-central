@@ -28,16 +28,13 @@ package net.solarnetwork.central.din.app.config;
  * @author matt
  * @version 1.0
  */
-public interface DatumInputConfiguration {
+public interface DatumInputConfiguration extends SolarDinAppConfiguration {
 
 	/** A qualifier for endpoint configuration. */
 	String ENDPOINT_CONF = "endpoint-conf";
 
 	/** A qualifier for transform configuration. */
 	String TRANSFORM_CONF = "transform-conf";
-
-	/** A qualifier for caching support. */
-	String CACHING = "caching";
 
 	/** A qualifier for datum support. */
 	String DATUM = "datum";

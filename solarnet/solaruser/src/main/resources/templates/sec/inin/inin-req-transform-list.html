@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Datum Endpoint Transforms</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<section id="inin-req-transforms" data-th-fragment="content">
+	<h2>
+		<span data-th-text="#{inin.req-transforms.header}">Transforms</span>
+		<button type="button" id="inin-req-transform-add-button" class="btn btn-primary pull-right" data-th-title="#{inin.req-transform.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{inin.req-transforms.intro(0)}">
+		Your Transforms are shown here. Use the + button to add new configurations.
+	</p>
+	<table id="inin-req-transforms-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{inin.req-transform.id.label}">Identifier</th>
+				<th data-th-text="#{inin.req-transform.name.label}">Name</th>
+				<th data-th-text="#{inin.req-transform.serviceIdentifier.label}" colspan="2">Transform Service</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#inin-req-transform-edit-modal"></a></td>
+				<td data-tprop="name"></td>
+				<td data-tprop="type"></td>
+				<td>
+					<dl class="service-props-container">
+					</dl>
+					<dl class="service-props-template hidden">
+						<dt class="template" data-tprop="serviceProperties.name"></dt>
+						<dd class="template" data-tprop="serviceProperties.value"></dd>
+					</dl>
+				</td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</body>
+</html>

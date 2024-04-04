@@ -20,11 +20,11 @@
 		 		<p data-th-utext="#{din.endpoint.transform.preview.intro}">Fill in your test measurement data and click <b>Execute</b> to preview the transform output.</p>
 		 		<div class="row">
 		 			<div class="col-xs-2"><b data-th-text="#{din.endpoint.name.label}">Endpoint</b></div>
-		 			<div class="col-xs-10" data-tprop="name">My Device XML</div>
+		 			<div class="col-xs-10" data-tprop="name" data-th-remove="body">My Device XML</div>
 		 		</div>
 		 		<div class="row">
 		 			<div class="col-xs-2"><b data-th-text="#{din.endpoint.transformId.label}">Transform</b></div>
-		 			<div class="col-xs-10" data-tprop="transformDisplay">Device XML measurement</div>
+		 			<div class="col-xs-10" data-tprop="transformDisplay" data-th-remove="body">Device XML measurement</div>
 		 		</div>
 		 		<hr>
 		 		<div class="row">
@@ -38,7 +38,7 @@
 							<input type="text" class="form-control" id="din-endpoint-transform-query-params" name="queryParams" maxlength="255">
 						</div>
 						<div class="form-group">
-							<label for="din-endpoint-transform-input-type">Data type</label>
+							<label for="din-endpoint-transform-input-type" data-th-text="#{din.endpoint.transform.preview.inputType.label}">Data type</label>
 							<input type="text" class="form-control" id="din-endpoint-transform-input-type" name="inputType" required>
 							<select class="form-control" id="din-endpoint-transform-input-type-shortcuts">
 								<option></option>

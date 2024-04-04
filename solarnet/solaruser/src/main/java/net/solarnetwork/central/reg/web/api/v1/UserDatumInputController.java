@@ -79,7 +79,7 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
 
 /**
- * Web service API for DNP3 management.
+ * Web service API for DIN management.
  *
  * @author matt
  * @version 1.1

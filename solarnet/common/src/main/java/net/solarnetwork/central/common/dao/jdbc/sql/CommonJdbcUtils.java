@@ -89,6 +89,30 @@ public final class CommonJdbcUtils {
 	}
 
 	/**
+	 * Get an array value from a SQL array instance.
+	 * 
+	 * @param <T>
+	 *        the expected array type, e.g. {@code Long[].class}
+	 * @param o
+	 *        the {@link java.sql.Array} instance
+	 * @return the array value, or {@literal null} if {@code o} is
+	 *         {@literal null} or not a {@link java.sql.Array}
+	 * @throws ClassCastException
+	 *         if a casting error occurs
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T arrayValue(Object o) {
+		if ( o instanceof Array a ) {
+			try {
+				return (T) a.getArray();
+			} catch ( SQLException e ) {
+				// ignore
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Get a UUID column value.
 	 * 
 	 * <p>

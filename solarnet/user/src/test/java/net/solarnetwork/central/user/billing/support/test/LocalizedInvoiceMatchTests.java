@@ -80,7 +80,7 @@ public class LocalizedInvoiceMatchTests {
 
 		// when
 		replayAll();
-		LocalizedInvoiceMatch locMatch = new LocalizedInvoiceMatch(match, new Locale("en", "NZ"));
+		LocalizedInvoiceMatch locMatch = new LocalizedInvoiceMatch(match, Locale.of("en", "NZ"));
 
 		// then
 		assertThat("Amount", locMatch.getAmount(), equalTo(TEST_AMOUNT));
@@ -104,7 +104,7 @@ public class LocalizedInvoiceMatchTests {
 
 		// when
 		replayAll();
-		LocalizedInvoiceMatch locMatch = new LocalizedInvoiceMatch(match, new Locale("de", "DE"));
+		LocalizedInvoiceMatch locMatch = new LocalizedInvoiceMatch(match, Locale.of("de", "DE"));
 
 		// then
 		assertThat("Amount", locMatch.getAmount(), equalTo(TEST_AMOUNT));

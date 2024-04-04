@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarDIN'
-version = '1.2.1'
+version = '1.3.0'
 
 base {
 	archivesName = 'solardin'
@@ -27,6 +27,7 @@ dependencies {
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-datum-input')
 	implementation project(':solarnet-instructor')
+	implementation project(':solarnet-instructor-input')
 	implementation project(':solarnet-user')
 
 	// Spring

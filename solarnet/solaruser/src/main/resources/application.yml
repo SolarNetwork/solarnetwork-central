@@ -59,6 +59,11 @@ app:
     ttl: 600
     heap-max-entries: 1000
     disk-max-size-mb: 100
+  inin:
+    max-input-length: 8196
+    xslt:
+      templates-cache:
+        ttl: 15
   location.request:
     alert-mail: "nobody@localhost"
   job:

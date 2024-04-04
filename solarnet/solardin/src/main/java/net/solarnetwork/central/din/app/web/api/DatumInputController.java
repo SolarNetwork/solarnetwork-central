@@ -53,7 +53,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @version 1.2
  */
 @RestController("v1DatumInputController")
-@RequestMapping("/api/v1/endpoint/{endpointId}")
+@RequestMapping("/api/v1/datum/endpoint/{endpointId}")
 public class DatumInputController {
 
 	private final DatumInputEndpointBiz inputBiz;
@@ -91,7 +91,7 @@ public class DatumInputController {
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	@RequestMapping(value = "/datum", method = RequestMethod.POST, consumes = {
+	@RequestMapping(value = "", method = RequestMethod.POST, consumes = {
 			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
 	public Result<Collection<DatumId>> postDatum(@PathVariable("endpointId") UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,

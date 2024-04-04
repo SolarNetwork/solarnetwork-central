@@ -1,5 +1,5 @@
 /* ==================================================================
- * EndpointAuthenticationProvider.java - 23/02/2024 1:30:06 pm
+ * DatumEndpointAuthenticationProvider.java - 23/02/2024 1:30:06 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -28,8 +28,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import net.solarnetwork.central.din.security.CredentialAuthorizationDao;
-import net.solarnetwork.central.din.security.EndpointUserDetails;
+import net.solarnetwork.central.inin.security.CredentialAuthorizationDao;
+import net.solarnetwork.central.inin.security.EndpointUserDetails;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -38,7 +38,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 1.0
  */
-public class EndpointAuthenticationProvider implements AuthenticationProvider {
+public class InstructionEndpointAuthenticationProvider implements AuthenticationProvider {
 
 	private final CredentialAuthorizationDao authDao;
 	private final PasswordEncoder passwordEncoder;
@@ -53,7 +53,7 @@ public class EndpointAuthenticationProvider implements AuthenticationProvider {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public EndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
+	public InstructionEndpointAuthenticationProvider(CredentialAuthorizationDao authDao,
 			PasswordEncoder passwordEncoder) {
 		super();
 		this.authDao = ObjectUtils.requireNonNullArgument(authDao, "authDao");

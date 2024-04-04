@@ -34,12 +34,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetailsSource;
+import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.domain.EndpointConfiguration;
 
 /**
- * Test cases for the {@link EndpointAuthenticationDetailsSource} class.
+ * Test cases for the {@link DatumEndpointAuthenticationDetailsSource} class.
  *
  * @author matt
  * @version 1.0
@@ -50,12 +50,12 @@ public class EndpointAuthenticationDetailsSourceTests {
 	@Mock
 	private EndpointConfigurationDao endpointDao;
 
-	private EndpointAuthenticationDetailsSource service;
+	private DatumEndpointAuthenticationDetailsSource service;
 
 	@BeforeEach
 	public void setup() {
-		service = new EndpointAuthenticationDetailsSource(endpointDao,
-				EndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN);
+		service = new DatumEndpointAuthenticationDetailsSource(endpointDao,
+				DatumEndpointAuthenticationDetailsSource.DEFAULT_ENDPOINT_ID_PATTERN);
 	}
 
 	@Test

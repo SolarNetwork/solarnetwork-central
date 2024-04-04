@@ -38,6 +38,7 @@ import net.solarnetwork.central.datum.export.config.SolarNetDatumExportConfigura
 import net.solarnetwork.central.datum.imp.aop.SolarNetDatumImportAopConfiguration;
 import net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration;
 import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
+import net.solarnetwork.central.inin.config.SolarNetInstructionInputConfiguration;
 import net.solarnetwork.central.instructor.aop.SolarNetInstructorAopConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
@@ -54,6 +55,8 @@ import net.solarnetwork.central.user.expire.aop.SolarNetUserExpireAopConfigurati
 import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
 import net.solarnetwork.central.user.export.aop.SolarNetUserExportAopConfiguration;
 import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
+import net.solarnetwork.central.user.inin.aop.SolarNetUserInstructionInputAopConfiguration;
+import net.solarnetwork.central.user.inin.config.SolarNetUserInstructionInputConfiguration;
 import net.solarnetwork.central.user.ocpp.aop.SolarNetUserOcppAopConfiguration;
 import net.solarnetwork.central.user.ocpp.config.SolarNetUserOcppConfiguration;
 import net.solarnetwork.central.user.oscp.aop.SolarNetUserOscpAopConfiguration;
@@ -74,6 +77,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetDatumExportConfiguration.class,
 		SolarNetDatumImportAopConfiguration.class,
 		SolarNetDatumImportConfiguration.class,
+		SolarNetInstructionInputConfiguration.class,
 		SolarNetInstructorAopConfiguration.class,
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,
@@ -82,6 +86,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetUserDatumInputConfiguration.class,
 		SolarNetUserDnp3AopConfiguration.class,
 		SolarNetUserDnp3Configuration.class,
+		SolarNetUserInstructionInputAopConfiguration.class,
+		SolarNetUserInstructionInputConfiguration.class,
 		SolarNetUserOcppAopConfiguration.class,
 		SolarNetUserOcppConfiguration.class,
 		SolarNetUserOscpAopConfiguration.class,
