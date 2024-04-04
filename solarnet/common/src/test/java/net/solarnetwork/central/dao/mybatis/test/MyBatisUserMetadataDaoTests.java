@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,6 +31,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
@@ -127,11 +129,17 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		criteria.setUserId(testUserId);
 
 		FilterResults<UserMetadataEntity, Long> results = dao.findFiltered(criteria, null, null, null);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, results.getReturnedResultCount());
-		UserMetadataEntity match = results.getResults().iterator().next();
-		assertEquals("Match ID", testUserId, match.getId());
+		// @formatter:off
+		then(results)
+			.as("Non-null results returned")
+			.containsExactly(lastDatum)
+			.asInstanceOf(InstanceOfAssertFactories.type(FilterResults.class))
+			.as("Total results not returned")
+			.returns(null, from(FilterResults::getTotalResults))
+			.as("Returned results same as list size")
+			.returns(1, from(FilterResults::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
