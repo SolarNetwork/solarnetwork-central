@@ -30,6 +30,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserMetadataEntity;
+import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
 import net.solarnetwork.central.inin.domain.TransformConfiguration.RequestTransformConfiguration;
@@ -91,6 +93,22 @@ public class InstructionInputCacheConfig implements InstructionInputConfiguratio
 			@Qualifier(RES_TRANSFORM_CONF) CacheSettings settings) {
 		return settings.createCache(cacheManager, UserLongCompositePK.class,
 				ResponseTransformConfiguration.class, RES_TRANSFORM_CONF + "-cache");
+	}
+
+	@Bean
+	@Qualifier(USER_METADATA)
+	public Cache<Long, UserMetadataEntity> instructionUserMetadataCache(
+			@Qualifier(USER_METADATA) CacheSettings settings) {
+		return settings.createCache(cacheManager, Long.class, UserMetadataEntity.class,
+				USER_METADATA + "-cache");
+	}
+
+	@Bean
+	@Qualifier(USER_METADATA_PATH)
+	public Cache<UserStringCompositePK, String> instructionUserMetadataPathCache(
+			@Qualifier(USER_METADATA_PATH) CacheSettings settings) {
+		return settings.createCache(cacheManager, UserStringCompositePK.class, String.class,
+				USER_METADATA_PATH + "-cache");
 	}
 
 }

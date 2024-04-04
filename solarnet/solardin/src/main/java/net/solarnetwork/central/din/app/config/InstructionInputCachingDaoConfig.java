@@ -29,7 +29,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import net.solarnetwork.central.dao.CachingUserMetadataDao;
+import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserMetadataEntity;
+import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.dao.CachingEndpointConfigurationDao;
 import net.solarnetwork.central.inin.dao.CachingTransformConfigurationDao;
@@ -92,6 +96,20 @@ public class InstructionInputCachingDaoConfig implements InstructionInputConfigu
 			@Qualifier(RES_TRANSFORM_CONF) Cache<UserLongCompositePK, ResponseTransformConfiguration> cache) {
 		return new CachingTransformConfigurationDao<ResponseTransformConfiguration>(dao, cache,
 				executor);
+	}
+
+	/**
+	 * A caching instruction input transform configuration DAO.
+	 *
+	 * @return the DAO
+	 */
+	@Qualifier(CACHING)
+	@Bean
+	@Primary
+	public UserMetadataDao cachingInstructionUserMetadataDao(UserMetadataDao dao,
+			@Qualifier(USER_METADATA) Cache<Long, UserMetadataEntity> entityCache,
+			@Qualifier(USER_METADATA_PATH) Cache<UserStringCompositePK, String> pathCache) {
+		return new CachingUserMetadataDao(dao, entityCache, executor, pathCache);
 	}
 
 }

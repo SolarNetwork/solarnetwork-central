@@ -50,6 +50,7 @@ import net.solarnetwork.central.inin.domain.EndpointConfiguration;
  * <li>req_xform_id (BIGINT)</li>
  * <li>res_xform_id (BIGINT)</li>
  * <li>max_exec_secs (INTEGER)</li>
+ * <li>user_meta_path (TEXT)</li>
  * </ol>
  *
  * @author matt
@@ -98,6 +99,7 @@ public class EndpointConfigurationRowMapper implements RowMapper<EndpointConfigu
 		conf.setRequestTransformId(rs.getObject(++p, Long.class));
 		conf.setResponseTransformId(rs.getObject(++p, Long.class));
 		conf.setMaxExecutionSeconds(rs.getInt(++p));
+		conf.setUserMetadataPath(rs.getString(++p));
 		return conf;
 	}
 

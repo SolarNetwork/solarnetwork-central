@@ -35,15 +35,15 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * Datum input endpoint configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeIds",
-		"requestTransformId", "responseTransformId", "maxExecutionSeconds" })
+		"requestTransformId", "responseTransformId", "maxExecutionSeconds", "userMetadataPath" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements InstructionInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
-	private static final long serialVersionUID = 4283219512151426023L;
+	private static final long serialVersionUID = -7843134190113157004L;
 
 	/** The {@code maxExecutionSeconds} property default value. */
 	public static final int DEFAULT_MAX_EXECUTION_SECONDS = 10;
@@ -53,6 +53,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	private Long requestTransformId;
 	private Long responseTransformId;
 	private int maxExecutionSeconds = DEFAULT_MAX_EXECUTION_SECONDS;
+	private String userMetadataPath;
 
 	/**
 	 * Constructor.
@@ -99,6 +100,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setRequestTransformId(requestTransformId);
 		entity.setResponseTransformId(responseTransformId);
 		entity.setMaxExecutionSeconds(maxExecutionSeconds);
+		entity.setUserMetadataPath(userMetadataPath);
 	}
 
 	@Override
@@ -113,6 +115,7 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 				&& Objects.equals(this.requestTransformId, other.requestTransformId)
 				&& Objects.equals(this.responseTransformId, other.responseTransformId)
 				&& this.maxExecutionSeconds == other.maxExecutionSeconds
+				&& Objects.equals(this.userMetadataPath, other.userMetadataPath)
 				;
 		// @formatter:on
 	}
@@ -153,6 +156,10 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		}
 		builder.append("maxExecutionSeconds=");
 		builder.append(maxExecutionSeconds);
+		if ( userMetadataPath != null ) {
+			builder.append(", userMetadataPath=");
+			builder.append(userMetadataPath);
+		}
 		builder.append(", enabled=");
 		builder.append(isEnabled());
 		builder.append("}");
@@ -266,6 +273,28 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 */
 	public void setMaxExecutionSeconds(int maxExecutionSeconds) {
 		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
+	}
+
+	/**
+	 * Get the user metadata path to provide to the transforms.
+	 *
+	 * @return the userMetadataPath the user metadata path to extract
+	 * @since 1.1
+	 */
+	public String getUserMetadataPath() {
+		return userMetadataPath;
+	}
+
+	/**
+	 * Set the user metadata path to provide to the transforms.
+	 *
+	 * @param userMetadataPath
+	 *        the user metadata path to set
+	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
+	 * @since 1.1
+	 */
+	public void setUserMetadataPath(String userMetadataPath) {
+		this.userMetadataPath = userMetadataPath;
 	}
 
 }

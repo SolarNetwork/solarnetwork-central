@@ -37,6 +37,14 @@ app:
         ttl: 600
         heap-max-entries: 1000
         disk-max-size-mb: 0
+      user-metadata-cache:
+        ttl: 600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+      user-metadata-path-cache:
+        ttl: 600
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
     max-datum-input-length: 8196
     xslt:
       templates-cache:

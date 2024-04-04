@@ -58,7 +58,7 @@
 										<th data-th-text="#{inin.endpoint.requestTransformId.label}">Request Transform</th>
 										<th data-th-text="#{inin.endpoint.responseTransformId.label}">Response Transform</th>
 										<th data-th-text="#{inin.endpoint.nodeIds.label}">Node ID</th>
-										<th data-th-text="#{inin.endpoint.maxExecutionSeconds.label}">Timeout</th>
+										<th data-th-text="#{inin.endpoint.flags.header}">Features</th>
 									</tr>
 								</thead>
 								<tbody class="show-empty">
@@ -79,7 +79,14 @@
 										<td data-tprop="requestTransformDisplay"></td>
 										<td data-tprop="responseTransformDisplay"></td>
 										<td data-tprop="nodeIdsValue"></td>
-										<td data-tprop="maxExecutionSeconds"></td>
+										<td>
+											<dl>
+												<dt data-th-text="#{inin.endpoint.maxExecutionSeconds.label}">Timeout</dt>
+												<dd data-tprop="maxExecutionSeconds"></dd>
+												<dt class="userMetadataPath" data-th-text="#{inin.endpoint.userMetadataPath.label}">User Metadata</dt>
+												<dd class="userMetadataPath" data-tprop="userMetadataPath"></dd>
+											</dl>
+										</td>
 									</tr>
 								</tbody>
 							</table>

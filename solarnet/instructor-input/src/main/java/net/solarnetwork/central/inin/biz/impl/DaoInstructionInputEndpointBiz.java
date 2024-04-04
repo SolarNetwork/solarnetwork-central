@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -98,6 +99,7 @@ public class DaoInstructionInputEndpointBiz
 	private final EndpointConfigurationDao endpointDao;
 	private final TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao;
 	private final TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao;
+	private final UserMetadataDao userMetadataDao;
 	private final Map<String, RequestTransformService> requestTransformServices;
 	private final Map<String, ResponseTransformService> responseTransformServices;
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -117,6 +119,8 @@ public class DaoInstructionInputEndpointBiz
 	 *        the request transform DAO
 	 * @param responseTransformDao
 	 *        the response transform DAO
+	 * @param userMetadataDao
+	 *        the user metadata DAO
 	 * @param requestTransformServices
 	 *        the request transform services
 	 * @param responseTransformServices
@@ -128,6 +132,7 @@ public class DaoInstructionInputEndpointBiz
 			SolarNodeOwnershipDao nodeOwnershipDao, EndpointConfigurationDao endpointDao,
 			TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao,
 			TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao,
+			UserMetadataDao userMetadataDao,
 			Collection<RequestTransformService> requestTransformServices,
 			Collection<ResponseTransformService> responseTransformServices) {
 		super();
@@ -136,6 +141,7 @@ public class DaoInstructionInputEndpointBiz
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");
 		this.requestTransformDao = requireNonNullArgument(requestTransformDao, "requestTransformDao");
 		this.responseTransformDao = requireNonNullArgument(responseTransformDao, "responseTransformDao");
+		this.userMetadataDao = requireNonNullArgument(userMetadataDao, "userMetadataDao");
 		this.requestTransformServices = requireNonNullArgument(requestTransformServices,
 				"requestTransformServices").stream()
 						.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
@@ -215,6 +221,13 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_ENDPOINT_ID, endpointId.toString());
 		params.put(TransformConstants.PARAM_TRANSFORM_ID, endpoint.getRequestTransformId());
 		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+
+		if ( endpoint.getUserMetadataPath() != null && !endpoint.getUserMetadataPath().isBlank() ) {
+			String meta = userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath());
+			if ( meta != null ) {
+				params.put(TransformConstants.PARAM_USER_METADATA_JSON, meta);
+			}
+		}
 
 		Iterable<NodeInstruction> instructions;
 		try {
@@ -370,6 +383,13 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_ENDPOINT_ID, endpointId.toString());
 		params.put(TransformConstants.PARAM_TRANSFORM_ID, endpoint.getResponseTransformId());
 		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+
+		if ( endpoint.getUserMetadataPath() != null && !endpoint.getUserMetadataPath().isBlank() ) {
+			String meta = userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath());
+			if ( meta != null ) {
+				params.put(TransformConstants.PARAM_USER_METADATA_JSON, meta);
+			}
+		}
 
 		try {
 			xformService.transformOutput(finalInstructions, outputType, xform, params, out);

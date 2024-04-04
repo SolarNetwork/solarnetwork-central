@@ -260,6 +260,62 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	}
 
 	@Test
+	public void insert_withUserMetadataPath() {
+		// GIVEN
+		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
+				new Long[] { randomLong() }, null, null);
+		conf.setUserMetadataPath("/pm/foo/bar");
+
+		// WHEN
+		UserUuidPK result = dao.create(userId, conf);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("Primary key")
+			.isNotNull()
+			.as("User ID as provided")
+			.returns(userId, UserUuidPK::getUserId)
+			.as("ID generated")
+			.doesNotReturn(null, UserUuidPK::getUuid)
+			;
+
+		List<Map<String, Object>> data = allEndpointConfigurationData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+			.as("Row user ID")
+			.containsEntry("user_id", userId)
+			.as("Row ID generated")
+			.containsKey("id")
+			.as("Row creation date")
+			.containsEntry("created", Timestamp.from(conf.getCreated()))
+			.as("Row modification date")
+			.containsEntry("modified", Timestamp.from(conf.getModified()))
+			.as("Row enabled")
+			.containsEntry("enabled", conf.isEnabled())
+			.as("Row name")
+			.containsEntry("cname", conf.getName())
+			.as("Row node ID")
+			.hasEntrySatisfying("node_ids", o -> {
+				Long[] ids = CommonJdbcUtils.arrayValue(o);
+				then(ids)
+					.as("Row node_ids")
+					.contains(conf.getNodeIds().toArray(Long[]::new))
+					;
+			})
+			.as("No request transform ID")
+			.containsEntry("req_xform_id", null)
+			.as("No response transform ID")
+			.containsEntry("res_xform_id", null)
+			.as("Row max execute secs")
+			.containsEntry("max_exec_secs", conf.getMaxExecutionSeconds())
+			.as("Row user metadata path")
+			.containsEntry("user_meta_path", conf.getUserMetadataPath())
+			;
+		// @formatter:on
+		last = conf.copyWithId(result);
+	}
+
+	@Test
 	public void save_insert() {
 		// GIVEN
 		EndpointConfiguration conf = newEndpointConfiguration(userId, randomUUID(), randomString(),
@@ -390,6 +446,25 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 	public void get_withTransforms() {
 		// GIVEN
 		insert_withTransforms();
+
+		// WHEN
+		EndpointConfiguration result = dao.get(last.getId());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Retrieved entity matches source")
+			.isEqualTo(last)
+			.as("Entity values retrieved")
+			.matches(c -> c.isSameAs(last))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void get_withUserMetadataPath() {
+		// GIVEN
+		insert_withUserMetadataPath();
 
 		// WHEN
 		EndpointConfiguration result = dao.get(last.getId());

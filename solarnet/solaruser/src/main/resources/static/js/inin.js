@@ -419,6 +419,8 @@ function ininManagement() {
 			
 			// populate inner details
 			SolarReg.Templates.replaceTemplateProperties(el.find('.endpoint-details'), item);
+			
+			el.find('.userMetadataPath').toggleClass('hidden', !item.userMetadataPath);
 		});
 		SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
 	}
@@ -428,6 +430,8 @@ function ininManagement() {
 		config.systemType = ENDPOINT_SYS;
 		if (Array.isArray(config.nodeIds)) {
 			config.nodeIdsValue = config.nodeIds.join(',');
+		} else {
+			config.nodeIdsValue = '';
 		}
 		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 		SolarReg.fill(model, config);

@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.dao.UserMetadataDao;
 import net.solarnetwork.central.inin.biz.RequestTransformService;
 import net.solarnetwork.central.inin.biz.ResponseTransformService;
 import net.solarnetwork.central.inin.biz.impl.DaoInstructionInputEndpointBiz;
@@ -68,6 +69,10 @@ public class InstructionInputServiceConfig implements InstructionInputConfigurat
 	@Autowired
 	private TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao;
 
+	@Qualifier(CACHING)
+	@Autowired
+	private UserMetadataDao userMetadataDao;
+
 	@Autowired
 	private Collection<RequestTransformService> requestTransformServices;
 
@@ -77,7 +82,7 @@ public class InstructionInputServiceConfig implements InstructionInputConfigurat
 	@Bean
 	public DaoInstructionInputEndpointBiz instructionInputEndpointBiz() {
 		var biz = new DaoInstructionInputEndpointBiz(instructor, nodeOwnershipDao, endpointDao,
-				requestTransformDao, responseTransformDao, requestTransformServices,
+				requestTransformDao, responseTransformDao, userMetadataDao, requestTransformServices,
 				responseTransformServices);
 		biz.setUserEventAppenderBiz(userEventAppenderBiz);
 		return biz;
