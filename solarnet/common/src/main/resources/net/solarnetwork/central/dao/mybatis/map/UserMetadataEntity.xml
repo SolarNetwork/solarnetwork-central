@@ -30,8 +30,10 @@
 	</sql>
 	
 	<resultMap id="UserMetadataEntityFullResult" type="net.solarnetwork.central.domain.UserMetadataEntity">
-		<id property="userId" column="node_meta_user_id"/>
-		<id property="created" column="node_meta_created"/>
+		<constructor>
+			<idArg column="node_meta_user_id" javaType="java.lang.Long"/>
+			<arg column="node_meta_created" javaType="java.time.Instant"/>
+		</constructor>
 		<result property="updated" column="node_meta_updated"/>
 		<result property="metaJson" column="node_meta_jdata"/>
 	</resultMap>
@@ -49,9 +51,7 @@
 		FilterableDao support 
 	-->
 
-	<resultMap id="UserMetadataMatchResult" type="net.solarnetwork.central.domain.UserMetadataMatch" extends="net.solarnetwork.central.dao.mybatis.UserMetadataEntity.UserMetadataEntityFullResult"/>
-
-	<sql id="fragment-findall-UserMetadataEntity-UserMetadataMatch-where">
+	<sql id="fragment-findall-UserMetadataEntity-where">
 		<where>
 			<if test="filter.userIds != null and filter.userIds.length > 0">
 				AND umeta.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
@@ -60,19 +60,22 @@
 	</sql>
 
 
-	<select id="findall-UserMetadataEntity-UserMetadataMatch" resultMap="UserMetadataMatchResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+	<select id="findall-UserMetadataEntity-UserMetadataEntity" resultMap="UserMetadataEntityFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		SELECT
 			<include refid="fragment-UserMetadataEntity-full-result"/>
 		FROM
 			solaruser.user_meta umeta
-		<include refid="fragment-findall-UserMetadataEntity-UserMetadataMatch-where"/>
+		<include refid="fragment-findall-UserMetadataEntity-where"/>
 		ORDER BY
 		<choose>
 			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
 				 <foreach collection="SortDescriptors" item="item" separator=",">
-					<if test="item.sortKey == &quot;created&quot;">umeta.created</if>
-					<if test="item.sortKey == &quot;updated&quot;">umeta.updated</if>
-					<if test="item.sortKey == &quot;user&quot;">umeta.user_id</if>
+				 	<choose>
+						<when test="item.sortKey == &quot;created&quot;">umeta.created</when>
+						<when test="item.sortKey == &quot;updated&quot;">umeta.updated</when>
+						<when test="item.sortKey == &quot;user&quot;">umeta.user_id</when>
+						<otherwise>umeta.user_id</otherwise>
+					</choose>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</when>
@@ -82,11 +85,11 @@
 		</choose>
 	</select>
 
-	<select id="findall-UserMetadataEntity-UserMetadataMatch-count" resultType="long">
+	<select id="findall-UserMetadataEntity-UserMetadataEntity-count" resultType="long">
 		SELECT count(umeta.created)
 		FROM
 			solaruser.user_meta umeta
-		<include refid="fragment-findall-UserMetadataEntity-UserMetadataMatch-where"/>
+		<include refid="fragment-findall-UserMetadataEntity-where"/>
 	</select>
 	
 	<select id="get-user-metadata-at-path" resultType="string">

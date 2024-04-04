@@ -24,7 +24,6 @@ package net.solarnetwork.central.dao;
 
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
-import net.solarnetwork.central.domain.UserMetadataFilterMatch;
 
 /**
  * DAO API for {@link UserMetadataEntity}.
@@ -33,8 +32,8 @@ import net.solarnetwork.central.domain.UserMetadataFilterMatch;
  * @version 1.1
  * @since 1.23
  */
-public interface UserMetadataDao extends GenericDao<UserMetadataEntity, Long>,
-		FilterableDao<UserMetadataFilterMatch, Long, UserMetadataFilter> {
+public interface UserMetadataDao extends net.solarnetwork.dao.GenericDao<UserMetadataEntity, Long>,
+		net.solarnetwork.dao.FilterableDao<UserMetadataEntity, Long, UserMetadataFilter> {
 
 	/**
 	 * Extract metadata at a given path as a JSON string.

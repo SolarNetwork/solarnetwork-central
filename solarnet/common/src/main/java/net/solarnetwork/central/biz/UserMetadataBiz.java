@@ -23,9 +23,9 @@
 package net.solarnetwork.central.biz;
 
 import java.util.List;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
-import net.solarnetwork.central.domain.UserMetadataFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -33,7 +33,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * API for manipulating user metadata.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.`
  * @since 1.23
  */
 public interface UserMetadataBiz {
@@ -82,7 +82,7 @@ public interface UserMetadataBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<UserMetadataFilterMatch> findUserMetadata(UserMetadataFilter criteria,
+	FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
 
 }

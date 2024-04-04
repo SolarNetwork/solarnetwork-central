@@ -32,12 +32,11 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.domain.UserMetadataEntity;
-import net.solarnetwork.central.domain.UserMetadataFilterMatch;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
@@ -64,9 +63,11 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	private UserMetadataEntity getTestInstance() {
-		UserMetadataEntity datum = new UserMetadataEntity();
-		datum.setCreated(Instant.now());
-		datum.setUserId(testUserId);
+		return getTestInstance(testUserId);
+	}
+
+	private UserMetadataEntity getTestInstance(Long userId) {
+		UserMetadataEntity datum = new UserMetadataEntity(testUserId, Instant.now());
 
 		GeneralDatumMetadata samples = new GeneralDatumMetadata();
 		datum.setMeta(samples);
@@ -81,7 +82,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	@Test
 	public void storeNew() {
 		UserMetadataEntity datum = getTestInstance();
-		Long id = dao.store(datum);
+		Long id = dao.save(datum);
 		assertNotNull(id);
 		lastDatum = datum;
 	}
@@ -108,7 +109,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		datum.getMeta().getInfo().put("watts", 498475890235787897L);
 		datum.getMeta().getInfo().put("floating",
 				new BigDecimal("293487590845639845728947589237.49087"));
-		dao.store(datum);
+		dao.save(datum);
 
 		UserMetadataEntity entity = dao.get(datum.getId());
 		validate(datum, entity);
@@ -119,18 +120,17 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		storeNew();
 
 		Long userId2 = storeNewUser("bar@example.com");
-		UserMetadataEntity user2Meta = getTestInstance();
-		user2Meta.setUserId(userId2);
-		dao.store(user2Meta);
+		UserMetadataEntity user2Meta = getTestInstance(userId2);
+		dao.save(user2Meta);
 
-		UserFilterCommand criteria = new UserFilterCommand();
+		BasicUserMetadataFilter criteria = new BasicUserMetadataFilter();
 		criteria.setUserId(testUserId);
 
-		FilterResults<UserMetadataFilterMatch> results = dao.findFiltered(criteria, null, null, null);
+		FilterResults<UserMetadataEntity, Long> results = dao.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
-		UserMetadataFilterMatch match = results.getResults().iterator().next();
+		assertEquals(1, results.getReturnedResultCount());
+		UserMetadataEntity match = results.getResults().iterator().next();
 		assertEquals("Match ID", testUserId, match.getId());
 	}
 
@@ -149,7 +149,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void jsonMetadataAtPath_noMeta() {
 		// GIVEN
 		UserMetadataEntity meta = getTestInstance();
-		dao.store(meta);
+		dao.save(meta);
 
 		// WHEN
 		String result = dao.jsonMetadataAtPath(testUserId, "/pm/does/not/exist");
@@ -162,7 +162,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void jsonMetadataAtPath_stringPropertyMatch() {
 		// GIVEN
 		UserMetadataEntity meta = getTestInstance();
-		dao.store(meta);
+		dao.save(meta);
 
 		// WHEN
 		String result = dao.jsonMetadataAtPath(testUserId, "/m/foo");
@@ -176,7 +176,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		UserMetadataEntity meta = getTestInstance();
 		meta.getMeta().putInfoValue("num", 12345);
-		dao.store(meta);
+		dao.save(meta);
 
 		// WHEN
 		String result = dao.jsonMetadataAtPath(testUserId, "/m/num");
@@ -191,7 +191,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		UserMetadataEntity meta = getTestInstance();
 		meta.getMeta().putInfoValue("foo", "bim", "bam");
 		meta.getMeta().putInfoValue("foo", "whiz", "pop");
-		dao.store(meta);
+		dao.save(meta);
 
 		// WHEN
 		String result = dao.jsonMetadataAtPath(testUserId, "/pm/foo");
@@ -207,7 +207,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		// GIVEN
 		UserMetadataEntity meta = getTestInstance();
 		meta.getMeta().putInfoValue("foo", "bim", new String[] { "one", "two" });
-		dao.store(meta);
+		dao.save(meta);
 
 		// WHEN
 		String result = dao.jsonMetadataAtPath(testUserId, "/pm/foo/bim");

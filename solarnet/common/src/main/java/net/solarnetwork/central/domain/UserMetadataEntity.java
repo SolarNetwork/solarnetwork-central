@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.domain;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import net.solarnetwork.central.dao.BaseEntity;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -46,9 +46,24 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  */
 @JsonIgnoreProperties("id")
 @JsonPropertyOrder({ "userId", "created", "updated" })
-public class UserMetadataEntity extends BaseEntity implements UserMetadata, Cloneable, Serializable {
+public class UserMetadataEntity extends net.solarnetwork.dao.BasicEntity<Long>
+		implements UserMetadata, Cloneable, Serializable {
 
-	private static final long serialVersionUID = 3344337449760914930L;
+	private static final long serialVersionUID = 934821285827145848L;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the ID
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserMetadataEntity(Long id, Instant created) {
+		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+	}
 
 	private Instant updated;
 	private GeneralDatumMetadata meta;
@@ -62,16 +77,6 @@ public class UserMetadataEntity extends BaseEntity implements UserMetadata, Clon
 	@Override
 	public Long getUserId() {
 		return getId();
-	}
-
-	/**
-	 * Convenience setter for {@link #setId(Long)}.
-	 * 
-	 * @param userId
-	 *        the user ID to set
-	 */
-	public void setUserId(Long userId) {
-		setId(userId);
 	}
 
 	/**

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.MutableSortDescriptor;
@@ -35,10 +36,10 @@ import net.solarnetwork.domain.SortDescriptor;
  * Filter support for user actions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.23
  */
-public class UserFilterCommand extends FilterSupport implements UserMetadataFilter, UserFilter {
+public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	private static final long serialVersionUID = 915646548230356302L;
 
@@ -47,6 +48,23 @@ public class UserFilterCommand extends FilterSupport implements UserMetadataFilt
 	private Integer max;
 	private String email;
 	private Map<String, Object> internalData;
+
+	/**
+	 * Convert to a {@link UserMetadataFilter}.
+	 * 
+	 * @return the filter
+	 */
+	public UserMetadataFilter toUserMetadataFilter() {
+		BasicUserMetadataFilter f = new BasicUserMetadataFilter();
+		f.setUserIds(getUserIds());
+		f.setTags(getTags());
+		if ( sorts != null ) {
+			f.setSorts(getSortDescriptors());
+		}
+		f.setMax(max);
+		f.setOffset(offset);
+		return f;
+	}
 
 	public List<MutableSortDescriptor> getSorts() {
 		return sorts;

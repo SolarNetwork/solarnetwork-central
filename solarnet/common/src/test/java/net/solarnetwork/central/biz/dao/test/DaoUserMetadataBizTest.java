@@ -26,14 +26,15 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import java.time.Instant;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.biz.dao.DaoUserMetadataBiz;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.UserMetadataDao;
-import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -41,7 +42,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Test cases for the {@link DaoUserMetadataBiz} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserMetadataBizTest {
 
@@ -72,7 +73,7 @@ public class DaoUserMetadataBizTest {
 		Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
-		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
+		EasyMock.expect(userMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
 
 		replayAll();
 		biz.addUserMetadata(TEST_USER_ID, meta);
@@ -94,7 +95,7 @@ public class DaoUserMetadataBizTest {
 		Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
-		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
+		EasyMock.expect(userMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
 
 		replayAll();
 		biz.addUserMetadata(TEST_USER_ID, meta);
@@ -109,7 +110,7 @@ public class DaoUserMetadataBizTest {
 
 	@Test
 	public void findUserMetadata() {
-		UserFilterCommand criteria = new UserFilterCommand();
+		BasicUserMetadataFilter criteria = new BasicUserMetadataFilter();
 		criteria.setUserId(TEST_USER_ID);
 
 		EasyMock.expect(userMetadataDao.findFiltered(criteria, null, null, null)).andReturn(null);
@@ -128,7 +129,7 @@ public class DaoUserMetadataBizTest {
 		final Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
-		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
+		EasyMock.expect(userMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
 
 		GeneralDatumMetadata meta2 = new GeneralDatumMetadata();
 		meta2.putInfoValue("foo", "bam"); // this should replace
@@ -144,7 +145,7 @@ public class DaoUserMetadataBizTest {
 				return metaCap.getValue();
 			}
 		});
-		EasyMock.expect(userMetadataDao.store(EasyMock.capture(meta2Cap))).andReturn(TEST_USER_ID);
+		EasyMock.expect(userMetadataDao.save(EasyMock.capture(meta2Cap))).andReturn(TEST_USER_ID);
 
 		replayAll();
 		biz.addUserMetadata(TEST_USER_ID, meta);
@@ -169,7 +170,7 @@ public class DaoUserMetadataBizTest {
 		final Capture<UserMetadataEntity> metaCap = new Capture<UserMetadataEntity>();
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
-		EasyMock.expect(userMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
+		EasyMock.expect(userMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_USER_ID);
 
 		GeneralDatumMetadata meta2 = new GeneralDatumMetadata();
 		meta2.putInfoValue("foo", "bam"); // this should replace
@@ -187,7 +188,7 @@ public class DaoUserMetadataBizTest {
 				return metaCap.getValue();
 			}
 		});
-		EasyMock.expect(userMetadataDao.store(EasyMock.capture(meta2Cap))).andReturn(TEST_USER_ID);
+		EasyMock.expect(userMetadataDao.save(EasyMock.capture(meta2Cap))).andReturn(TEST_USER_ID);
 
 		replayAll();
 		biz.addUserMetadata(TEST_USER_ID, meta);
@@ -208,9 +209,8 @@ public class DaoUserMetadataBizTest {
 	}
 
 	@Test
-	public void removeNode() {
-		UserMetadataEntity gndm = new UserMetadataEntity();
-		gndm.setUserId(TEST_USER_ID);
+	public void remove() {
+		UserMetadataEntity gndm = new UserMetadataEntity(TEST_USER_ID, Instant.now());
 
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(gndm);
 		userMetadataDao.delete(gndm);
@@ -221,7 +221,7 @@ public class DaoUserMetadataBizTest {
 	}
 
 	@Test
-	public void removeNodeNonExisting() {
+	public void removeNonExisting() {
 		EasyMock.expect(userMetadataDao.get(TEST_USER_ID)).andReturn(null);
 
 		replayAll();

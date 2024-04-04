@@ -24,13 +24,14 @@ package net.solarnetwork.central.dao.mybatis;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.UserMetadataDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
-import net.solarnetwork.central.domain.UserMetadataFilterMatch;
-import net.solarnetwork.central.domain.UserMetadataMatch;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link UserMetadataDao}.
@@ -40,7 +41,7 @@ import net.solarnetwork.central.domain.UserMetadataMatch;
  * @since 1.8
  */
 public class MyBatisUserMetadataDao extends
-		BaseMyBatisFilterableDao<UserMetadataEntity, UserMetadataFilterMatch, UserMetadataFilter, Long>
+		BaseMyBatisFilterableDaoSupport<UserMetadataEntity, Long, UserMetadataEntity, UserMetadataFilter>
 		implements UserMetadataDao {
 
 	/**
@@ -52,7 +53,7 @@ public class MyBatisUserMetadataDao extends
 	 * Default constructor.
 	 */
 	public MyBatisUserMetadataDao() {
-		super(UserMetadataEntity.class, Long.class, UserMetadataMatch.class);
+		super(UserMetadataEntity.class, Long.class, UserMetadataEntity.class);
 	}
 
 	@Override
@@ -61,6 +62,12 @@ public class MyBatisUserMetadataDao extends
 		params.put("userId", requireNonNullArgument(userId, "userId"));
 		params.put("path", requireNonNullArgument(path, "path"));
 		return selectFirst(QUERY_FOR_METADATA_PATH, params);
+	}
+
+	@Override
+	public FilterResults<UserMetadataEntity, Long> findFiltered(UserMetadataFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
+		return doFindFiltered(filter, sorts, offset, max);
 	}
 
 }
