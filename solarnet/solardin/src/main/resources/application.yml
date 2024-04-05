@@ -2,7 +2,16 @@ app:
   meta:
     name: SolarDIN
     key: din
-  cache.persistence.path: "var/cache"
+  cache:
+    persistence.path: "var/cache"
+    user-metadata-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
+    user-metadata-path-cache:
+      ttl: 600
+      heap-max-entries: 1000
+      disk-max-size-mb: 0
   datasource:
     hikari:
       minimumIdle: 1
@@ -34,14 +43,6 @@ app:
         heap-max-entries: 1000
         disk-max-size-mb: 0
       transform-conf-cache:
-        ttl: 600
-        heap-max-entries: 1000
-        disk-max-size-mb: 0
-      user-metadata-cache:
-        ttl: 600
-        heap-max-entries: 1000
-        disk-max-size-mb: 0
-      user-metadata-path-cache:
         ttl: 600
         heap-max-entries: 1000
         disk-max-size-mb: 0

@@ -33,4 +33,10 @@ public interface SolarDinAppConfiguration {
 	/** A qualifier for caching support. */
 	String CACHING = "caching";
 
+	/** A qualifier for user metadata. */
+	String USER_METADATA = "user-metadata";
+
+	/** A qualifier for user metadata path. */
+	String USER_METADATA_PATH = "user-metadata-path";
+
 }
