@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserMetadataFilterMatch.java - 11/11/2016 11:09:40 AM
+ * SolarNetworkXslt.java - 5/04/2024 5:00:24 pm
  * 
- * Copyright 2007-2016 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,15 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.support.xslt;
 
 /**
- * API for a user related search or filter match result.
+ * SolarNetwork XSLT support API.
  * 
  * @author matt
  * @version 1.0
- * @since 1.23
  */
-public interface UserMetadataFilterMatch extends UserMetadata, FilterMatch<Long> {
+public interface SolarNetworkXslt {
+
+	/** The SolarNetwork XSLT namespace URI. */
+	String SN_XSLT_NAMESPACE_URI = "http://solarnetwork.net/xslt";
+
+	/** The default SolarNetwork XSLT namespace prefix. */
+	String SN_XSLT_NAMESPACE_PREFIX = "sn";
 
 }

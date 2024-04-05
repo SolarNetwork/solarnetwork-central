@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserMetadataMatch.java - 11/11/2016 5:40:31 PM
+ * SolarNetCommonAopConfiguration.java - 5/04/2024 10:59:07 am
  * 
- * Copyright 2007-2016 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,20 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.domain;
+package net.solarnetwork.central.aop;
 
 /**
- * A "match" to a {@link UserMetadataEntity}.
- * 
- * Although this class extends {@link UserMetadataEntity} that is merely an
- * implementation detail.
+ * Marker interface for common AOP services.
  * 
  * @author matt
- * @version 2.0
- * @since 1.23
+ * @version 1.0
  */
-public class UserMetadataMatch extends UserMetadataEntity implements UserMetadataFilterMatch {
-
-	private static final long serialVersionUID = -5455447804909429786L;
-
+public interface SolarNetCommonAopConfiguration {
+	// nothing
 }

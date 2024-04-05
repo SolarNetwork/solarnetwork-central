@@ -23,7 +23,6 @@
 				<value>net.solarnetwork.central.domain.SolarLocation</value>
 				<value>net.solarnetwork.central.domain.SolarNode</value>
 				<value>net.solarnetwork.central.domain.UserMetadataEntity</value>
-				<value>net.solarnetwork.central.domain.UserMetadataMatch</value>
 				<value>net.solarnetwork.central.user.domain.User</value>
 				<value>net.solarnetwork.central.user.domain.UserMatch</value>
 				<value>net.solarnetwork.central.user.domain.UserAlert</value>

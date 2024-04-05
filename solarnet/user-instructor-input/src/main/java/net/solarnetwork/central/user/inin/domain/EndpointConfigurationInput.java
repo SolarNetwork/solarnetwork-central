@@ -38,7 +38,7 @@ import net.solarnetwork.util.StringUtils;
  * DTO for datum input endpoint configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EndpointConfigurationInput
 		extends BaseInstructionInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
@@ -57,6 +57,8 @@ public class EndpointConfigurationInput
 	private Long responseTransformId;
 
 	private int maxExecutionSeconds = EndpointConfiguration.DEFAULT_MAX_EXECUTION_SECONDS;
+
+	private String userMetadataPath;
 
 	/**
 	 * Constructor.
@@ -80,6 +82,7 @@ public class EndpointConfigurationInput
 		conf.setRequestTransformId(requestTransformId);
 		conf.setResponseTransformId(responseTransformId);
 		conf.setMaxExecutionSeconds(maxExecutionSeconds);
+		conf.setUserMetadataPath(userMetadataPath);
 	}
 
 	/**
@@ -215,6 +218,28 @@ public class EndpointConfigurationInput
 	 */
 	public void setMaxExecutionSeconds(int maxExecutionSeconds) {
 		this.maxExecutionSeconds = (maxExecutionSeconds > 0 ? maxExecutionSeconds : 1);
+	}
+
+	/**
+	 * Get the user metadata path to provide to the transforms.
+	 *
+	 * @return the userMetadataPath the user metadata path to extract
+	 * @since 1.1
+	 */
+	public String getUserMetadataPath() {
+		return userMetadataPath;
+	}
+
+	/**
+	 * Set the user metadata path to provide to the transforms.
+	 *
+	 * @param userMetadataPath
+	 *        the user metadata path to set
+	 * @see net.solarnetwork.domain.datum.DatumMetadataOperations#metadataAtPath(String)
+	 * @since 1.1
+	 */
+	public void setUserMetadataPath(String userMetadataPath) {
+		this.userMetadataPath = userMetadataPath;
 	}
 
 }

@@ -28,7 +28,7 @@ import org.springframework.util.MimeType;
  * Constants for instruction input.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class TransformConstants {
 
@@ -75,4 +75,10 @@ public final class TransformConstants {
 	/** A parameter key for a preview boolean flag. */
 	public static final String PARAM_PREVIEW = "preview";
 
+	/**
+	 * A parameter key for user metadata JSON.
+	 *
+	 * @since 1.1
+	 */
+	public static final String PARAM_USER_METADATA_JSON = "user-meta";
 }

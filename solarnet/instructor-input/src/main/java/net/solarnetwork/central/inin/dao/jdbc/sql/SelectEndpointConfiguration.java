@@ -87,7 +87,7 @@ public class SelectEndpointConfiguration
 		buf.append("""
 				SELECT ie.user_id, ie.id, ie.created, ie.modified, ie.enabled
 					, ie.cname, ie.node_ids, ie.req_xform_id, ie.res_xform_id
-					, ie.max_exec_secs
+					, ie.max_exec_secs, ie.user_meta_path
 				FROM solardin.inin_endpoint ie
 				""");
 	}

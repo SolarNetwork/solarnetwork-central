@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -33,18 +32,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.biz.UserMetadataBiz;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.domain.UserFilterCommand;
-import net.solarnetwork.central.domain.UserMetadataFilterMatch;
+import net.solarnetwork.central.dao.BasicUserMetadataFilter;
+import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for read-only user metadata access.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1UserMetadataController")
 @RequestMapping({ "/api/v1/pub/users/meta", "/api/v1/sec/users/meta" })
@@ -80,16 +79,16 @@ public class UserMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/{userId}" }, method = RequestMethod.GET)
-	public Response<UserMetadataFilterMatch> getMetadata(
+	public Result<UserMetadataEntity> getMetadata(
 			@PathVariable(name = "userId", required = false) Long userId) {
 		if ( userId == null ) {
 			userId = SecurityUtils.getCurrentActorUserId();
 		}
-		UserFilterCommand criteria = new UserFilterCommand();
+		BasicUserMetadataFilter criteria = new BasicUserMetadataFilter();
 		criteria.setUserId(userId);
-		FilterResults<UserMetadataFilterMatch> results = userMetadataBiz.findUserMetadata(criteria, null,
-				null, null);
-		UserMetadataFilterMatch result = null;
+		FilterResults<UserMetadataEntity, Long> results = userMetadataBiz.findUserMetadata(criteria,
+				null, null, null);
+		UserMetadataEntity result = null;
 		if ( results != null ) {
 			try {
 				result = results.iterator().next();
@@ -97,7 +96,7 @@ public class UserMetadataController {
 				// ignore
 			}
 		}
-		return response(result);
+		return Result.success(result);
 	}
 
 }

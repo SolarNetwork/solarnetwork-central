@@ -28,18 +28,17 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.dao.UserMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.domain.UserMetadataEntity;
 import net.solarnetwork.central.domain.UserMetadataFilter;
-import net.solarnetwork.central.domain.UserMetadataFilterMatch;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * DAO-based implementation of {@link UserMetadataBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserMetadataBiz implements UserMetadataBiz {
 
@@ -64,9 +63,7 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 		UserMetadataEntity um = userMetadataDao.get(userId);
 		GeneralDatumMetadata newMeta = meta;
 		if ( um == null ) {
-			um = new UserMetadataEntity();
-			um.setCreated(Instant.now());
-			um.setId(userId);
+			um = new UserMetadataEntity(userId, Instant.now());
 			newMeta = meta;
 		} else if ( um.getMeta() != null && um.getMeta().equals(meta) == false ) {
 			newMeta = new GeneralDatumMetadata(um.getMeta());
@@ -75,7 +72,7 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 		if ( newMeta != null && newMeta.equals(um.getMeta()) == false ) {
 			// have changes, so persist
 			um.setMeta(newMeta);
-			userMetadataDao.store(um);
+			userMetadataDao.save(um);
 		}
 	}
 
@@ -86,14 +83,12 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 		assert meta != null;
 		UserMetadataEntity um = userMetadataDao.get(userId);
 		if ( um == null ) {
-			um = new UserMetadataEntity();
-			um.setCreated(Instant.now());
-			um.setId(userId);
+			um = new UserMetadataEntity(userId, Instant.now());
 			um.setMeta(meta);
 		} else {
 			um.setMeta(meta);
 		}
-		userMetadataDao.store(um);
+		userMetadataDao.save(um);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -107,7 +102,7 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<UserMetadataFilterMatch> findUserMetadata(UserMetadataFilter criteria,
+	public FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
 		return userMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}

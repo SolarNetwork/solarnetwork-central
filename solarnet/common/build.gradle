@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '2.6.0'
+version = '2.7.0'
 
 base {
 	archivesName = 'solarnet-common'
@@ -78,7 +78,11 @@ dependencies {
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.apache.commons:commons-text:1.10.0'
+	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
+	
+	// Not pushed to extending projects by default
+	compileOnly "net.sf.saxon:Saxon-HE:${saxonVersion}"
 	
 	// OSGi Compatibility
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
@@ -99,6 +103,8 @@ dependencies {
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
     testImplementation 'org.threeten:threeten-extra:1.7.1'
+    testImplementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
+    
 }
 
 jar.manifest {

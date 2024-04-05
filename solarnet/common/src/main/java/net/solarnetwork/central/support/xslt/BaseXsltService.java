@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.support;
+package net.solarnetwork.central.support.xslt;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -47,6 +47,8 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.solarnetwork.central.support.BasicSharedValueCache;
+import net.solarnetwork.central.support.SharedValueCache;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 

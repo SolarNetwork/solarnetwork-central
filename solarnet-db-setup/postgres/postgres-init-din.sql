@@ -229,16 +229,17 @@ CREATE TABLE solardin.inin_res_xform (
 /**
  * Instruction input overall endpoint configuration.
  *
- * @column user_id 		the ID of the account owner
- * @column id 			UUID for the configuration
- * @column created		the creation date
- * @column modified		the modification date
- * @column enabled		a flag to mark the configuration as enabled for use by application or not
- * @column cname		friendly name
- * @column node_ids		the node IDs to use, if the transform does not provide one
- * @column req_xform_id	the inin_req_xform ID to use
- * @column res_xform_id	the inin_res_xform ID to use
- * @column pub_flux		flag to publish to SolarFlux
+ * @column user_id 			the ID of the account owner
+ * @column id 				UUID for the configuration
+ * @column created			the creation date
+ * @column modified			the modification date
+ * @column enabled			a flag to mark the configuration as enabled for use by application or not
+ * @column cname			friendly name
+ * @column node_ids			the node IDs to use, if the transform does not provide one
+ * @column req_xform_id		the inin_req_xform ID to use
+ * @column res_xform_id		the inin_res_xform ID to use
+ * @column max_exec_secs	maximum seconds to wait for results
+ * @column user_meta_path	solaruser.user_meta metadata path
  */
 CREATE TABLE solardin.inin_endpoint (
 	user_id			BIGINT NOT NULL,
@@ -251,6 +252,7 @@ CREATE TABLE solardin.inin_endpoint (
 	req_xform_id	BIGINT,
 	res_xform_id	BIGINT,
 	max_exec_secs	INTEGER NOT NULL,
+	user_meta_path	TEXT,
 	CONSTRAINT inin_endpoint_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT inin_endpoint_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
