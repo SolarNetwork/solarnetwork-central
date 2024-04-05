@@ -42,6 +42,7 @@ import net.solarnetwork.central.inin.biz.impl.XsltResponseTransformService;
 import net.solarnetwork.central.support.BasicSharedValueCache;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.central.support.SharedValueCache;
+import net.solarnetwork.central.support.xslt.RandomUuidFunction;
 
 /**
  * Configuration for transform services.
@@ -104,6 +105,8 @@ public class InstructionInputTransformServiceConfig {
 		TransformerFactoryImpl tf = new net.sf.saxon.TransformerFactoryImpl();
 		tf.setURIResolver(uriResolver);
 
+		tf.getConfiguration().registerExtensionFunction(RandomUuidFunction.INSTANCE);
+
 		var service = new XsltRequestTransformService(dbf, tf, objectMapper,
 				Duration.ofSeconds(templatesCacheSettings.getTtl()), templatesCache);
 
@@ -127,6 +130,8 @@ public class InstructionInputTransformServiceConfig {
 
 		TransformerFactoryImpl tf = new net.sf.saxon.TransformerFactoryImpl();
 		tf.setURIResolver(uriResolver);
+
+		tf.getConfiguration().registerExtensionFunction(RandomUuidFunction.INSTANCE);
 
 		var service = new XsltResponseTransformService(dbf, tf, objectMapper,
 				Duration.ofSeconds(templatesCacheSettings.getTtl()), templatesCache);
