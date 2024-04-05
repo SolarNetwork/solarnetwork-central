@@ -139,10 +139,13 @@
 		<choose>
 			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
 				 <foreach collection="SortDescriptors" item="item" separator=",">
-					<if test="item.sortKey == &quot;created&quot;">u.created</if>
-					<if test="item.sortKey == &quot;email&quot;">u.email</if>
-					<if test="item.sortKey == &quot;name&quot;">u.disp_name</if>
-					<if test="item.sortKey == &quot;user&quot;">u.id</if>
+				 	<choose>
+						<when test="item.sortKey == &quot;created&quot;">u.created</when>
+						<when test="item.sortKey == &quot;email&quot;">u.email</when>
+						<when test="item.sortKey == &quot;name&quot;">u.disp_name</when>
+						<when test="item.sortKey == &quot;user&quot;">u.id</when>
+						<otherwise>u.id</otherwise>
+					</choose>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</when>

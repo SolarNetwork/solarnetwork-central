@@ -100,8 +100,11 @@
 		<choose>
 			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
 				 <foreach collection="SortDescriptors" item="item" separator=",">
-					<if test="item.sortKey == &quot;created&quot;">n.created</if>
-					<if test="item.sortKey == &quot;node&quot;">n.node_id</if>
+				 	<choose>
+						<when test="item.sortKey == &quot;created&quot;">n.created</when>
+						<when test="item.sortKey == &quot;node&quot;">n.node_id</when>
+						<otherwise>n.node_id</otherwise>
+					</choose>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</when>

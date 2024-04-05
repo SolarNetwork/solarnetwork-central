@@ -77,8 +77,11 @@
 			</if>	
 			<if test="SortDescriptors != null">
 				<foreach collection="SortDescriptors" item="item" separator="," close=",">
-					<if test="item.sortKey == &quot;created&quot;">udac.created</if>
-					<if test="item.sortKey == &quot;name&quot;">lower(udac.cname)</if>
+					<choose>
+						<when test="item.sortKey == &quot;created&quot;">udac.created</when>
+						<when test="item.sortKey == &quot;name&quot;">lower(udac.cname)</when>
+						<otherwise>udac.id</otherwise>
+					</choose>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</if>
