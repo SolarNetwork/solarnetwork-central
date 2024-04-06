@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -47,7 +47,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Controller for node metadata actions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.21
  */
 @Controller("v1NodeMetadataController")
@@ -76,15 +76,14 @@ public class NodeMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
-			DatumFilterCommand criteria) {
+	public Response<SolarNodeMetadataFilterMatch> findMetadata(DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return findMetadata(nodeId, criteria);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<SolarNodeMetadataFilterMatch> findMetadata(
 			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
@@ -92,10 +91,14 @@ public class NodeMetadataController {
 		}
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = dataCollectorBiz
-				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
-						criteria.getOffset(), criteria.getMax());
-		return response(results);
+		FilterResults<SolarNodeMetadataFilterMatch> results = dataCollectorBiz
+				.findSolarNodeMetadata(filter, null, null, null);
+		SolarNodeMetadataFilterMatch result = null;
+		for ( SolarNodeMetadataFilterMatch m : results ) {
+			result = m;
+			break;
+		}
+		return response(result);
 	}
 
 	@ResponseBody
