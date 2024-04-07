@@ -15,8 +15,8 @@ outlined below.
 
 To run SolarNet in your own development environment, you'll need the following:
 
- * Java 17, any vendor should work, e.g.
-   [Adoptium](https://adoptium.net/temurin/releases?version=17)
+ * Java 21, any vendor should work, e.g.
+   [Adoptium](https://adoptium.net/temurin/releases?version=21)
  * [Postgres 12](https://www.postgresql.org/download/) (later versions may work)
  * The following standard Postgres contrib extensions: **citext**, **pgcrypto**, and **uuid-ossp**.
    These come with normal Postgres distributions, possibly as part of a separate _contrib_ package.
