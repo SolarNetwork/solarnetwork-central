@@ -4,7 +4,6 @@ This directory contains the SolarNet applications that make up the cloud portion
 
 The main application projects are:
 
- * [SolarDIN](./solardin/)
  * [SolarIn](./solarin/)
  * [SolarJobs](./solarjobs/)
  * [SolarOCPP](./solarocpp/)
@@ -13,6 +12,7 @@ The main application projects are:
 
 Additional application projects are:
 
+ * [SolarDIN](./solardin/)
  * [SolarDNP3](./solardnp3/)
  * [SolarOSCP Flexibility Provider](./oscp-fp/)
  * [SolarOSCP Capacity Provider Simulator](./oscp-sim-cp/)
