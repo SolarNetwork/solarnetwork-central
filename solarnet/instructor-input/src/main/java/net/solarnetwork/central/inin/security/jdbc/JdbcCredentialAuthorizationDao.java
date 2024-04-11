@@ -52,8 +52,8 @@ public class JdbcCredentialAuthorizationDao implements CredentialAuthorizationDa
 	}
 
 	@Override
-	public EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username) {
-		var sql = new SelectAuthenticatedEndpointCredentials(endpointId, username);
+	public EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username, boolean oauth) {
+		var sql = new SelectAuthenticatedEndpointCredentials(endpointId, username, oauth);
 		var results = jdbcOps.query(sql, AuthenticatedEndpointCredentialsRowMapper.INSTANCE);
 		return (!results.isEmpty() ? results.get(0) : null);
 	}

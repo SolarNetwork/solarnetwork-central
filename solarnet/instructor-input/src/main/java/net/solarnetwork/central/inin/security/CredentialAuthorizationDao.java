@@ -28,7 +28,7 @@ import java.util.UUID;
  * API for endpoint credential authorization.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CredentialAuthorizationDao {
 
@@ -39,8 +39,11 @@ public interface CredentialAuthorizationDao {
 	 *        the endpoint ID
 	 * @param username
 	 *        the username
+	 * @param oauth
+	 *        {@literal true} to lookup OAuth credentials, {@literal false} for
+	 *        non-OAuth credentials
 	 * @return the matching credentials
 	 */
-	EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username);
+	EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username, boolean oauth);
 
 }

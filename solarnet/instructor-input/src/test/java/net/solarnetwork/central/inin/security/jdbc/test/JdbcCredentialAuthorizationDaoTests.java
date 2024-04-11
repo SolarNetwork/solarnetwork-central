@@ -83,7 +83,7 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 		// WHEN
 		EndpointUserDetails result = dao.credentialsForEndpoint(endpoint.getEndpointId(),
-				cred.getUsername());
+				cred.getUsername(), false);
 
 		// THEN
 
@@ -96,6 +96,8 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 			.returns(endpoint.getEndpointId(), EndpointUserDetails::getEndpointId)
 			.as("Username provided")
 			.returns(cred.getUsername(), EndpointUserDetails::getUsername)
+			.as("User is not OAuth")
+			.returns(false, EndpointUserDetails::isOauth)
 			.as("User enabled")
 			.returns(true, EndpointUserDetails::isEnabled)
 			;
@@ -119,7 +121,7 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 		// WHEN
 		EndpointUserDetails result = dao.credentialsForEndpoint(endpoint.getEndpointId(),
-				cred.getUsername());
+				cred.getUsername(), false);
 
 		// THEN
 
@@ -132,8 +134,76 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 			.returns(endpoint.getEndpointId(), EndpointUserDetails::getEndpointId)
 			.as("Username provided")
 			.returns(cred.getUsername(), EndpointUserDetails::getUsername)
+			.as("User is not OAuth")
+			.returns(false, EndpointUserDetails::isOauth)
 			.as("User not enabled because credential disabled")
 			.returns(false, EndpointUserDetails::isEnabled)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void notOauth_cred_notFound() {
+		// GIVEN
+		CredentialConfiguration cred = InstructionInputJdbcTestUtils.newCredentialConfiguration(userId,
+				randomString(), randomString());
+		cred.setOauth(false);
+		cred = credentialDao.get(credentialDao.save(cred));
+		EndpointConfiguration endpoint = newEndpointConfiguration(userId, UUID.randomUUID(),
+				randomString(), new Long[] { randomLong() }, null, null);
+		endpoint = endpointDao.get(endpointDao.save(endpoint));
+
+		EndpointAuthConfiguration auth = newEndpointAuthConfiguration(userId, endpoint.getEndpointId(),
+				cred.getCredentialId());
+		auth = endpointAuthDao.get(endpointAuthDao.create(userId, endpoint.getEndpointId(), auth));
+
+		// WHEN
+		EndpointUserDetails result = dao.credentialsForEndpoint(endpoint.getEndpointId(),
+				cred.getUsername(), true);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("User not found")
+			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void oauth_cred_found() {
+		// GIVEN
+		CredentialConfiguration cred = InstructionInputJdbcTestUtils.newCredentialConfiguration(userId,
+				randomString(), randomString());
+		cred.setOauth(true);
+		cred = credentialDao.get(credentialDao.save(cred));
+		EndpointConfiguration endpoint = newEndpointConfiguration(userId, UUID.randomUUID(),
+				randomString(), new Long[] { randomLong() }, null, null);
+		endpoint = endpointDao.get(endpointDao.save(endpoint));
+
+		EndpointAuthConfiguration auth = newEndpointAuthConfiguration(userId, endpoint.getEndpointId(),
+				cred.getCredentialId());
+		auth = endpointAuthDao.get(endpointAuthDao.create(userId, endpoint.getEndpointId(), auth));
+
+		// WHEN
+		EndpointUserDetails result = dao.credentialsForEndpoint(endpoint.getEndpointId(),
+				cred.getUsername(), true);
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("User found")
+			.isNotNull()
+			.as("User ID provided")
+			.returns(userId, EndpointUserDetails::getUserId)
+			.as("Endpoint ID provided")
+			.returns(endpoint.getEndpointId(), EndpointUserDetails::getEndpointId)
+			.as("Username provided")
+			.returns(cred.getUsername(), EndpointUserDetails::getUsername)
+			.as("User is OAuth")
+			.returns(true, EndpointUserDetails::isOauth)
+			.as("User enabled because credential enabled")
+			.returns(true, EndpointUserDetails::isEnabled)
 			;
 		// @formatter:on
 	}
@@ -155,7 +225,7 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 		// WHEN
 		EndpointUserDetails result = dao.credentialsForEndpoint(endpoint.getEndpointId(),
-				cred.getUsername());
+				cred.getUsername(), false);
 
 		// THEN
 
@@ -168,6 +238,8 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 			.returns(endpoint.getEndpointId(), EndpointUserDetails::getEndpointId)
 			.as("Username provided")
 			.returns(cred.getUsername(), EndpointUserDetails::getUsername)
+			.as("User is not OAuth")
+			.returns(false, EndpointUserDetails::isOauth)
 			.as("User not enabled because endpoint disabled")
 			.returns(false, EndpointUserDetails::isEnabled)
 			;
@@ -191,7 +263,7 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 
 		// WHEN
 		EndpointUserDetails result = dao.credentialsForEndpoint(endpoint.getEndpointId(),
-				cred.getUsername());
+				cred.getUsername(), false);
 
 		// THEN
 
@@ -204,6 +276,8 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 			.returns(endpoint.getEndpointId(), EndpointUserDetails::getEndpointId)
 			.as("Username provided")
 			.returns(cred.getUsername(), EndpointUserDetails::getUsername)
+			.as("User is not OAuth")
+			.returns(false, EndpointUserDetails::isOauth)
 			.as("User not enabled because endpoint auth disabled")
 			.returns(false, EndpointUserDetails::isEnabled)
 			;
