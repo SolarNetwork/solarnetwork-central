@@ -58,4 +58,11 @@ public class JdbcCredentialAuthorizationDao implements CredentialAuthorizationDa
 		return (!results.isEmpty() ? results.get(0) : null);
 	}
 
+	@Override
+	public EndpointUserDetails oAuthCredentials(String username) {
+		var sql = new SelectAuthenticatedEndpointCredentials(username);
+		var results = jdbcOps.query(sql, AuthenticatedEndpointCredentialsRowMapper.INSTANCE);
+		return (!results.isEmpty() ? results.get(0) : null);
+	}
+
 }
