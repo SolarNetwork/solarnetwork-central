@@ -30,6 +30,9 @@ CREATE TABLE solardin.inin_credential (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+-- OAuth credentials must be unique by username (issuer URL)
+CREATE UNIQUE INDEX inin_credential_oauth_unq ON solardin.inin_credential (username)
+    WHERE oauth;
 
 /**
  * Account-wide instruction input request transform service configuration.
