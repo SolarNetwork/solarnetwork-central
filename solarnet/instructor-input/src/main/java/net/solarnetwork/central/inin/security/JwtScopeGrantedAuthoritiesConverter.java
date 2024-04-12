@@ -30,12 +30,13 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.StringUtils;
 
 /**
  * Convert JWT scopes to Instruction Input authorities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JwtScopeGrantedAuthoritiesConverter
 		implements Converter<Jwt, Collection<GrantedAuthority>> {
@@ -45,11 +46,11 @@ public class JwtScopeGrantedAuthoritiesConverter
 
 	@Override
 	public Collection<GrantedAuthority> convert(Jwt jwt) {
-		List<String> scopes = jwt.getClaimAsStringList("scope");
-		if ( scopes == null || scopes.isEmpty() ) {
+		String[] scopes = StringUtils.delimitedListToStringArray(jwt.getClaimAsString("scope"), " ");
+		if ( scopes == null || scopes.length < 1 ) {
 			return Collections.emptyList();
 		}
-		List<GrantedAuthority> auths = new ArrayList<>(scopes.size());
+		List<GrantedAuthority> auths = new ArrayList<>(scopes.length);
 		for ( String scope : scopes ) {
 			String auth = switch (scope) {
 				case SCOPE_INSTRUCTION_INPUT -> SecurityUtils.ROLE_ININ;

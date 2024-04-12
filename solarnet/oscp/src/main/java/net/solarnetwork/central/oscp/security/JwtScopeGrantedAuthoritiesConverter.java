@@ -1,21 +1,21 @@
 /* ==================================================================
  * JwtScopeGrantedAuthoritiesConverter.java - 26/08/2022 10:20:43 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,12 +30,13 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.util.StringUtils;
 
 /**
  * Convert JWT scopes to Flexibility Provider authorities.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JwtScopeGrantedAuthoritiesConverter
 		implements Converter<Jwt, Collection<GrantedAuthority>> {
@@ -48,11 +49,11 @@ public class JwtScopeGrantedAuthoritiesConverter
 
 	@Override
 	public Collection<GrantedAuthority> convert(Jwt jwt) {
-		List<String> scopes = jwt.getClaimAsStringList("scope");
-		if ( scopes == null || scopes.isEmpty() ) {
+		String[] scopes = StringUtils.delimitedListToStringArray(jwt.getClaimAsString("scope"), " ");
+		if ( scopes == null || scopes.length < 1 ) {
 			return Collections.emptyList();
 		}
-		List<GrantedAuthority> auths = new ArrayList<>(scopes.size());
+		List<GrantedAuthority> auths = new ArrayList<>(scopes.length);
 		for ( String scope : scopes ) {
 			String auth = switch (scope) {
 				case SCOPE_CAPACITYPROVIDER -> Role.ROLE_CAPACITYPROVIDER.toString();
