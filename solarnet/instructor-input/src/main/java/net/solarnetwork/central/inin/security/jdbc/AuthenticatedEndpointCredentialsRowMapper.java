@@ -48,7 +48,7 @@ import net.solarnetwork.central.inin.security.AuthenticatedEndpointCredentials;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AuthenticatedEndpointCredentialsRowMapper
 		implements RowMapper<AuthenticatedEndpointCredentials> {
@@ -73,8 +73,8 @@ public class AuthenticatedEndpointCredentialsRowMapper
 		boolean enabled = rs.getBoolean(++p);
 		boolean expired = rs.getBoolean(++p);
 		boolean oauth = rs.getBoolean(++p);
-		return new AuthenticatedEndpointCredentials(userId, entityId, username, password, enabled,
-				expired, oauth);
+		return new AuthenticatedEndpointCredentials(userId, entityId, username,
+				password != null ? password : "", enabled, expired, oauth);
 	}
 
 }
