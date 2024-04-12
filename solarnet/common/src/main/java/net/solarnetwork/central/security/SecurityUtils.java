@@ -239,10 +239,12 @@ public class SecurityUtils {
 	 * @since 2.1
 	 */
 	public static SecurityActor getActor(Authentication auth) {
-		if ( auth != null && auth.getPrincipal() instanceof SecurityActor ) {
-			return (SecurityActor) auth.getPrincipal();
-		} else if ( auth != null && auth.getDetails() instanceof SecurityActor ) {
-			return (SecurityActor) auth.getDetails();
+		if ( auth instanceof SecurityActor a ) {
+			return a;
+		} else if ( auth != null && auth.getPrincipal() instanceof SecurityActor a ) {
+			return a;
+		} else if ( auth != null && auth.getDetails() instanceof SecurityActor a ) {
+			return a;
 		}
 		throw new SecurityException("Actor not available");
 	}
@@ -272,15 +274,16 @@ public class SecurityUtils {
 	 * @since 2.1
 	 */
 	public static Long getActorUserId(Authentication auth) throws SecurityException {
-		if ( auth instanceof UserIdRelated u ) {
-			return u.getUserId();
-		} else if ( auth.getDetails() instanceof UserIdRelated u ) {
-			return u.getUserId();
-		}
-		SecurityActor actor = getActor(auth);
 		Long userId = null;
-		if ( actor instanceof UserIdRelated u ) {
+		if ( auth instanceof UserIdRelated u ) {
 			userId = u.getUserId();
+		} else if ( auth.getDetails() instanceof UserIdRelated u ) {
+			userId = u.getUserId();
+		} else {
+			SecurityActor actor = getActor(auth);
+			if ( actor instanceof UserIdRelated u ) {
+				userId = u.getUserId();
+			}
 		}
 		if ( userId != null ) {
 			return userId;
