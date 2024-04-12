@@ -33,8 +33,11 @@ dependencies {
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.security:spring-security-core'
+	implementation 'org.springframework.security:spring-security-oauth2-jose'
+	implementation 'org.springframework.security:spring-security-oauth2-resource-server'
 	
 	// DAO
 	runtimeOnly "org.postgresql:postgresql"

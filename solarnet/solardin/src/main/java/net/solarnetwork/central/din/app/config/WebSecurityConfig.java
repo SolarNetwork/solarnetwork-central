@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.din.app.config;
 
-import static net.solarnetwork.central.din.app.config.DatumInputConfiguration.CACHING;
+import static net.solarnetwork.central.din.app.config.SolarDinAppConfiguration.CACHING;
 import static net.solarnetwork.central.din.security.SecurityUtils.ROLE_DIN;
 import static net.solarnetwork.central.inin.security.SecurityUtils.ROLE_ININ;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
@@ -38,15 +38,12 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.authentication.AuthenticationEventPublisher;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
@@ -59,7 +56,7 @@ import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProv
 import net.solarnetwork.central.din.app.security.InstructionEndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.app.security.InstructionEndpointAuthenticationProvider;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
-import net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao;
+import net.solarnetwork.central.inin.security.CredentialJwtAuthenticationConverter;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
@@ -84,12 +81,6 @@ public class WebSecurityConfig {
 	private boolean authPubSuccess = false;
 
 	@Autowired
-	private DataSource dataSource;
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-
-	@Autowired
 	private HandlerExceptionResolver handlerExceptionResolver;
 
 	@Bean
@@ -100,31 +91,6 @@ public class WebSecurityConfig {
 	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
 		return new Http403ForbiddenEntryPoint();
-	}
-
-	@Bean
-	public UserDetailsService userDetailsService() {
-		JdbcUserDetailsService service = new JdbcUserDetailsService();
-		service.setDataSource(dataSource);
-		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
-		service.setAuthoritiesByUsernameQuery(
-				JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
-		return service;
-	}
-
-	@Bean
-	public AuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService());
-		provider.setPasswordEncoder(passwordEncoder);
-		return provider;
-	}
-
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationEventPublisher authEventPublisher) {
-		var mgr = new ProviderManager(authenticationProvider());
-		mgr.setAuthenticationEventPublisher(authEventPublisher);
-		return mgr;
 	}
 
 	@Bean
@@ -149,6 +115,25 @@ public class WebSecurityConfig {
 	@Order(1)
 	public static class ManagementWebSecurityConfig {
 
+		@Autowired
+		private DataSource dataSource;
+
+		@Autowired
+		private PasswordEncoder passwordEncoder;
+
+		private AuthenticationProvider opsAuthenticationProvider() {
+			JdbcUserDetailsService service = new JdbcUserDetailsService();
+			service.setDataSource(dataSource);
+			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
+			service.setAuthoritiesByUsernameQuery(
+					JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
+
+			DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+			provider.setUserDetailsService(service);
+			provider.setPasswordEncoder(passwordEncoder);
+			return provider;
+		}
+
 		@Order(1)
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
@@ -167,6 +152,8 @@ public class WebSecurityConfig {
 					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
 
 					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
+
+					.authenticationProvider(opsAuthenticationProvider())
 
 					.authorizeHttpRequests((matchers) -> matchers
 							.anyRequest().hasAnyAuthority(OPS_AUTHORITY))
@@ -188,17 +175,14 @@ public class WebSecurityConfig {
 		private String endpointIdUrlPattern;
 
 		@Autowired
-		private PasswordEncoder passwordEncoder;
+		private JdbcOperations jdbcOperations;
 
 		@Autowired
-		private JdbcOperations jdbcOperations;
+		private PasswordEncoder passwordEncoder;
 
 		@Qualifier(CACHING)
 		@Autowired
 		private EndpointConfigurationDao endpointDao;
-
-		@Autowired
-		private AuthenticationEventPublisher authEventPublisher;
 
 		@Bean
 		public DatumEndpointAuthenticationDetailsSource datumEndpointAuthenticationDetailsSource() {
@@ -209,16 +193,17 @@ public class WebSecurityConfig {
 			return new DatumEndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
-		private AuthenticationManager datumEndpointAuthenticationManager() {
-			var dao = new JdbcCredentialAuthorizationDao(jdbcOperations);
-			var mgr = new ProviderManager(new DatumEndpointAuthenticationProvider(dao, passwordEncoder));
-			mgr.setAuthenticationEventPublisher(authEventPublisher);
-			return mgr;
+		@Bean
+		public net.solarnetwork.central.din.security.CredentialAuthorizationDao datumCredentialAuthorizationDao() {
+			return new net.solarnetwork.central.din.security.jdbc.JdbcCredentialAuthorizationDao(
+					jdbcOperations);
 		}
 
 		@Order(2)
 		@Bean
-		public SecurityFilterChain datumFilterChainApi(HttpSecurity http) throws Exception {
+		public SecurityFilterChain datumFilterChainApi(HttpSecurity http,
+				net.solarnetwork.central.din.security.CredentialAuthorizationDao authDao)
+				throws Exception {
 			// @formatter:off
 			http
 					// limit this configuration to specific paths
@@ -235,12 +220,12 @@ public class WebSecurityConfig {
 					// no sessions
 					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
 
+					.authenticationProvider(new DatumEndpointAuthenticationProvider(authDao, passwordEncoder))
+
 					.httpBasic((basic) -> {
 						basic.realmName("SolarDIN")
 							.authenticationDetailsSource(datumEndpointAuthenticationDetailsSource());
 					})
-
-					.authenticationManager(datumEndpointAuthenticationManager())
 
 					.authorizeHttpRequests((matchers) -> matchers
 							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -264,17 +249,14 @@ public class WebSecurityConfig {
 		private String endpointIdUrlPattern;
 
 		@Autowired
-		private PasswordEncoder passwordEncoder;
+		private JdbcOperations jdbcOperations;
 
 		@Autowired
-		private JdbcOperations jdbcOperations;
+		private PasswordEncoder passwordEncoder;
 
 		@Qualifier(CACHING)
 		@Autowired
 		private net.solarnetwork.central.inin.dao.EndpointConfigurationDao endpointDao;
-
-		@Autowired
-		private AuthenticationEventPublisher authEventPublisher;
 
 		@Bean
 		public InstructionEndpointAuthenticationDetailsSource instructionEndpointAuthenticationDetailsSource() {
@@ -285,18 +267,18 @@ public class WebSecurityConfig {
 			return new InstructionEndpointAuthenticationDetailsSource(endpointDao, pat);
 		}
 
-		private AuthenticationManager instructionEndpointAuthenticationManager() {
-			var dao = new net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao(
+		@Bean
+		public net.solarnetwork.central.inin.security.CredentialAuthorizationDao instructionCredentialAuthorizationDao() {
+			return new net.solarnetwork.central.inin.security.jdbc.JdbcCredentialAuthorizationDao(
 					jdbcOperations);
-			var mgr = new ProviderManager(
-					new InstructionEndpointAuthenticationProvider(dao, passwordEncoder));
-			mgr.setAuthenticationEventPublisher(authEventPublisher);
-			return mgr;
 		}
 
 		@Order(3)
 		@Bean
-		public SecurityFilterChain instructionFilterChainApi(HttpSecurity http) throws Exception {
+		public SecurityFilterChain instructionFilterChainApi(HttpSecurity http,
+				AuthenticationEntryPoint unauthorizedEntryPoint,
+				net.solarnetwork.central.inin.security.CredentialAuthorizationDao authDao)
+				throws Exception {
 			// @formatter:off
 			http
 					// limit this configuration to specific paths
@@ -313,18 +295,26 @@ public class WebSecurityConfig {
 					// no sessions
 					.sessionManagement((mgmt) -> mgmt.sessionCreationPolicy(STATELESS))
 
+					.authenticationProvider(new InstructionEndpointAuthenticationProvider(authDao, passwordEncoder))
+
 					.httpBasic((basic) -> {
 						basic.realmName("SolarININ")
 							.authenticationDetailsSource(instructionEndpointAuthenticationDetailsSource());
 					})
 
-					.authenticationManager(instructionEndpointAuthenticationManager())
-
 					.authorizeHttpRequests((matchers) -> matchers
-							.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-							.requestMatchers("/**").hasAnyAuthority(ROLE_ININ)
-							.anyRequest().denyAll()
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers("/**").hasAnyAuthority(ROLE_ININ)
+						.anyRequest().denyAll()
 					)
+
+					.oauth2ResourceServer((oauth) -> oauth
+						.jwt((jwt) -> jwt
+							//.authenticationManager(instructionEndpointAuthenticationManager())
+							.jwtAuthenticationConverter(new CredentialJwtAuthenticationConverter(authDao))
+						)
+						.authenticationEntryPoint(unauthorizedEntryPoint))
+
 			;
 			// @formatter:on
 			return http.build();
