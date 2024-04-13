@@ -12,6 +12,8 @@ The main application projects are:
 
 Additional application projects are:
 
+ * [SolarDIN](./solardin/)
+ * [SolarDNP3](./solardnp3/)
  * [SolarOSCP Flexibility Provider](./oscp-fp/)
  * [SolarOSCP Capacity Provider Simulator](./oscp-sim-cp/)
 

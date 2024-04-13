@@ -1,7 +1,7 @@
 /* ==================================================================
- * JwtScopeGrantedAuthoritiesConverter.java - 26/08/2022 10:20:43 am
+ * JwtScopeGrantedAuthoritiesConverter.java - 12/04/2024 9:52:37 am
  *
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.oscp.security;
+package net.solarnetwork.central.inin.security;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +33,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.StringUtils;
 
 /**
- * Convert JWT scopes to Flexibility Provider authorities.
+ * Convert JWT scopes to Instruction Input authorities.
  *
  * @author matt
  * @version 1.1
@@ -41,11 +41,8 @@ import org.springframework.util.StringUtils;
 public class JwtScopeGrantedAuthoritiesConverter
 		implements Converter<Jwt, Collection<GrantedAuthority>> {
 
-	/** The Capacity Provider scope value. */
-	public static final String SCOPE_CAPACITYPROVIDER = "oscp-fp-cp/cp";
-
-	/** The Capacity Optimizer scope value. */
-	public static final String SCOPE_CAPACITYOPTIMIZER = "oscp-fp-co/co";
+	/** The Instruction Input scope value. */
+	public static final String SCOPE_INSTRUCTION_INPUT = "din/instr";
 
 	@Override
 	public Collection<GrantedAuthority> convert(Jwt jwt) {
@@ -56,8 +53,7 @@ public class JwtScopeGrantedAuthoritiesConverter
 		List<GrantedAuthority> auths = new ArrayList<>(scopes.length);
 		for ( String scope : scopes ) {
 			String auth = switch (scope) {
-				case SCOPE_CAPACITYPROVIDER -> Role.ROLE_CAPACITYPROVIDER.toString();
-				case SCOPE_CAPACITYOPTIMIZER -> Role.ROLE_CAPACITYOPTIMIZER.toString();
+				case SCOPE_INSTRUCTION_INPUT -> SecurityUtils.ROLE_ININ;
 				default -> "SCOPE_%s".formatted(scope);
 			};
 			auths.add(new SimpleGrantedAuthority(auth));

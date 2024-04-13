@@ -23,6 +23,7 @@
 package net.solarnetwork.central.inin.security;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentAuthentication;
+import java.net.URL;
 import org.springframework.security.core.Authentication;
 import net.solarnetwork.central.security.SecurityException;
 import net.solarnetwork.central.security.SecurityUser;
@@ -31,7 +32,7 @@ import net.solarnetwork.central.security.SecurityUser;
  * Security constants for datum input.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SecurityUtils {
 
@@ -64,12 +65,42 @@ public final class SecurityUtils {
 	 */
 	public static SecurityEndpointCredential getEndpointCredential(Authentication auth)
 			throws SecurityException {
-		if ( auth != null && auth.getPrincipal() instanceof SecurityEndpointCredential c ) {
+		if ( auth instanceof SecurityEndpointCredential c ) {
+			return c;
+		} else if ( auth != null && auth.getPrincipal() instanceof SecurityEndpointCredential c ) {
 			return c;
 		} else if ( auth != null && auth.getDetails() instanceof SecurityEndpointCredential c ) {
 			return c;
 		}
 		throw new SecurityException("EndpointCredential not available");
+	}
+
+	/**
+	 * Get a JWT token identifier value.
+	 *
+	 * @param issuer
+	 *        the issuer
+	 * @param principal
+	 *        the principal
+	 * @return the identifier
+	 * @since 1.1
+	 */
+	public static String jwtTokenIdentifier(URL issuer, String principal) {
+		return jwtTokenIdentifier(issuer.toString(), principal);
+	}
+
+	/**
+	 * Get a JWT token identifier value.
+	 *
+	 * @param issuer
+	 *        the issuer
+	 * @param principal
+	 *        the principal
+	 * @return the identifier
+	 * @since 1.1
+	 */
+	public static String jwtTokenIdentifier(String issuer, String principal) {
+		return "%s/%s".formatted(issuer, principal);
 	}
 
 }

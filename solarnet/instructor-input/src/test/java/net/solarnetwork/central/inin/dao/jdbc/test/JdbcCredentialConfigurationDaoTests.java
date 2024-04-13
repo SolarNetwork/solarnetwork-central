@@ -27,6 +27,7 @@ import static net.solarnetwork.central.inin.dao.jdbc.test.InstructionInputJdbcTe
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.jdbc.JdbcCredentialConfigurationDao;
@@ -171,6 +173,58 @@ public class JdbcCredentialConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
+	}
+
+	@Test
+	public void insert_oauth_unique() {
+		// GIVEN
+		CredentialConfiguration conf = newCredentialConfiguration(userId, randomString(),
+				randomString());
+		conf.setOauth(true);
+
+		// another conf using same OAuth username
+		Long userId2 = CommonDbTestUtils.insertUser(jdbcTemplate);
+		CredentialConfiguration conf2 = newCredentialConfiguration(userId2, conf.getUsername(),
+				randomString());
+		conf2.setOauth(true);
+
+		// WHEN
+		dao.create(userId, conf);
+
+		// THEN
+		thenThrownBy(() -> {
+			dao.create(userId2, conf2);
+		}).isInstanceOf(DuplicateKeyException.class);
+	}
+
+	@Test
+	public void insert_notOauth_crossAccount() {
+		// GIVEN
+		CredentialConfiguration conf = newCredentialConfiguration(userId, randomString(),
+				randomString());
+		conf.setOauth(false);
+
+		// another conf using same OAuth username
+		Long userId2 = CommonDbTestUtils.insertUser(jdbcTemplate);
+		CredentialConfiguration conf2 = newCredentialConfiguration(userId2, conf.getUsername(),
+				randomString());
+		conf2.setOauth(false);
+
+		// WHEN
+		UserLongCompositePK result1 = dao.create(userId, conf);
+		UserLongCompositePK result2 = dao.create(userId2, conf2);
+
+		// THEN
+		// @formatter:off
+		then(result1)
+			.as("First configuration created")
+			.isNotNull()
+			;
+		then(result2)
+			.as("Second configuration created")
+			.isNotNull();
+			;
+		// @formatter:on
 	}
 
 	@Test

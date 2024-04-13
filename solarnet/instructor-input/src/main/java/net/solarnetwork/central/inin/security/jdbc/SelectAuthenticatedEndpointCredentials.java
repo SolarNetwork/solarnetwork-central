@@ -36,12 +36,13 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
  * Select {@link CredentialConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectAuthenticatedEndpointCredentials implements PreparedStatementCreator, SqlProvider {
 
 	private final UUID endpointId;
 	private final String username;
+	private final boolean oauth;
 
 	/**
 	 * Constructor.
@@ -50,13 +51,36 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	 *        the endpoint ID
 	 * @param username
 	 *        the username
+	 * @param oauth
+	 *        {@literal true} to lookup OAuth credentials, {@literal false} for
+	 *        non-OAuth credentials
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SelectAuthenticatedEndpointCredentials(UUID endpointId, String username) {
+	public SelectAuthenticatedEndpointCredentials(UUID endpointId, String username, boolean oauth) {
 		super();
 		this.endpointId = requireNonNullArgument(endpointId, "endpointId");
 		this.username = requireNonNullArgument(username, "username");
+		this.oauth = oauth;
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * This constructor assume OAuth style credentials.
+	 * </p>
+	 *
+	 * @param username
+	 *        the username
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public SelectAuthenticatedEndpointCredentials(String username) {
+		super();
+		this.endpointId = null;
+		this.username = requireNonNullArgument(username, "username");
+		this.oauth = true;
 	}
 
 	@Override
@@ -80,8 +104,10 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 				INNER JOIN solardin.inin_endpoint ie ON ie.user_id = ieac.user_id
 					AND ie.id = ieac.endpoint_id
 				INNER JOIN solardin.inin_credential ic ON ic.user_id = ieac.user_id
-				WHERE ieac.endpoint_id = ? AND ic.username = ?
-				""");
+				WHERE ic.username = ? AND ic.oauth = ?""");
+		if ( endpointId != null ) {
+			buf.append(" AND ieac.endpoint_id = ?");
+		}
 		return buf.toString();
 	}
 
@@ -89,8 +115,11 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		stmt.setObject(1, endpointId);
-		stmt.setString(2, username);
+		stmt.setString(1, username);
+		stmt.setBoolean(2, oauth);
+		if ( endpointId != null ) {
+			stmt.setObject(3, endpointId);
+		}
 		return stmt;
 	}
 

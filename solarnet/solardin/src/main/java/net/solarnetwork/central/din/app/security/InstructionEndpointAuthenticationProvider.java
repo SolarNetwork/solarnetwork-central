@@ -72,7 +72,7 @@ public class InstructionEndpointAuthenticationProvider implements Authentication
 				&& authentication.getPrincipal() instanceof String username
 				&& authentication.getCredentials() instanceof String password ) {
 			EndpointUserDetails user = authDao.credentialsForEndpoint(endpointDetails.getEndpointId(),
-					username);
+					username, false);
 			if ( user == null ) {
 				throw new BadCredentialsException("Bad credentials");
 			}

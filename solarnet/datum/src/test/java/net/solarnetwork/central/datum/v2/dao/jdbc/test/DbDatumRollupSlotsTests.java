@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbDatumRollupSlotsTests.java - 10/11/2020 1:19:03 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,8 +27,9 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatu
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertDatumStream;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumAndAuxiliaryResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
-import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.central.test.CommonTestUtils.decimalArrayMatching;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -57,7 +58,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Tests for the database slot rollup stored procedures.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -123,9 +124,9 @@ public class DbDatumRollupSlotsTests extends BaseDatumJdbcTestSupport {
 		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
 		assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
 		assertThat(prefix + " instantaneous", result.getProperties().getInstantaneous(),
-				arrayContaining(expected.getProperties().getInstantaneous()));
+				decimalArrayMatching(expected.getProperties().getInstantaneous()));
 		assertThat(prefix + " accumulating", result.getProperties().getAccumulating(),
-				arrayContaining(expected.getProperties().getAccumulating()));
+				decimalArrayMatching(expected.getProperties().getAccumulating()));
 		assertThat(prefix + " stats instantaneous", result.getStatistics().getInstantaneous(),
 				arrayContaining(expected.getStatistics().getInstantaneous()));
 	}

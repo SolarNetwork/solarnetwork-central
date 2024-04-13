@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.2.3' apply false
+	id 'org.springframework.boot' version '3.2.4' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Instructor Input'
-version = '1.1.0'
+version = '1.2.0'
 
 base {
 	archivesName = 'solarnet-instructor-input'
@@ -33,8 +33,11 @@ dependencies {
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.security:spring-security-core'
+	implementation 'org.springframework.security:spring-security-oauth2-jose'
+	implementation 'org.springframework.security:spring-security-oauth2-resource-server'
 	
 	// DAO
 	runtimeOnly "org.postgresql:postgresql"

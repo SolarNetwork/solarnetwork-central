@@ -15,6 +15,8 @@ This app depends on the following projects:
  * [solarnet-user][solarnet-user]
  * [solarnet-user-billing][solarnet-user-billing]
  * [solarnet-user-datum][solarnet-user-datum]
+ * [solarnet-user-datum-input][solarnet-user-datum-input]
+ * [solarnet-user-instructor-input][solarnet-user-instructor-input]
  * [solarnet-user-ocpp][solarnet-user-ocpp]
  * [solarnet-user-oscp][solarnet-user-oscp]
 
@@ -26,7 +28,9 @@ The following Spring runtime profiles are available:
 |:--------|:------------|
 | `aws-secrets` | Enables AWS Secrets Manager persistence for some credentials, like OAuth for OSCP. |
 | `datum-import-s3-resource-storage` | Store datum import resources in S3. See [S3ResourceStorageConfig][S3ResourceStorageConfig]. |
+| `din` | Datum Input support. See [SolarNetUserDatumInputConfiguration][SolarNetUserDatumInputConfiguration]. |
 | `dogtag` | Node PKI support via Dogtag. See [PkiDogtagConfig][PkiDogtagConfig]. |
+| `inin` | Instruction Input support. See [SolarNetUserInstructionInputConfiguration][SolarNetUserInstructionInputConfiguration]. |
 | `mqtt` | Enables publishing aggregates to SolarFlux. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
 | `node-service-auditor` | Enables auditing node service events like instruction counts. See [InstructorBizConfig][InstructorBizConfig], [JdbcNodeServiceAuditorConfig][JdbcNodeServiceAuditorConfig].|
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
@@ -39,7 +43,7 @@ For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment
 configured as
 
 ```
-SPRING_PROFILES_ACTIVE="production,datum-import-s3-resource-storage,dogtag,mqtt,ocpp-v16,snf-billing,user-event-sqs"
+SPRING_PROFILES_ACTIVE="production,datum-import-s3-resource-storage,din,dogtag,inin,mqtt,ocpp-v16,snf-billing,user-event-sqs"
 ```
 
 # Runtime configuration
@@ -77,6 +81,8 @@ The build produces an executable JAR at `build/libs/solaruser-x.y.z.jar`.
 [solarnet-user]: ../user/
 [solarnet-user-billing]: ../user-billing/
 [solarnet-user-datum]: ../user-datum/
+[solarnet-user-datum-input]: ../user-datum-input/
+[solarnet-user-instructor-input]: ../user-instructor-input/
 [solarnet-user-ocpp]: ../user-ocpp/
 [solarnet-user-oscp]: ../user-oscp/
 [InstructorBizConfig]: ../instructor/src/main/java/net/solarnetwork/central/instructor/config/InstructorBizConfig.java
@@ -87,4 +93,6 @@ The build produces an executable JAR at `build/libs/solaruser-x.y.z.jar`.
 [SolarFluxPublishingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SolarFluxPublishingConfig.java
 [SolarNetOcppConfiguration]: ../ocpp/src/main/java/net/solarnetwork/central/ocpp/config/SolarNetOcppConfiguration.java
 [SolarNetOscpConfiguration]: ../oscp/src/main/java/net/solarnetwork/central/oscp/config/SolarNetOscpConfiguration.java
+[SolarNetUserDatumInputConfiguration]: ../user-datum-input/src/main/java/net/solarnetwork/central/user/din/config/SolarNetUserDatumInputConfiguration.java
+[SolarNetUserInstructionInputConfiguration]: ../user-instructor-input/src/main/java/net/solarnetwork/central/user/inin/config/SolarNetUserInstructionInputConfiguration.java
 [UserEventServiceSqsConfig]: ../user-datum/src/main/java/net/solarnetwork/central/user/event/config/UserEventServiceSqsConfig.java
