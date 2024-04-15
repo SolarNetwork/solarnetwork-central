@@ -22,10 +22,10 @@
 
 package net.solarnetwork.central.query.web.api.test;
 
-import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertLocation;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUser;
 import static net.solarnetwork.central.test.CommonDbTestUtils.insertUserNode;
+import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static net.solarnetwork.util.DateUtils.LOCAL_DATE;
 import static net.solarnetwork.util.DateUtils.LOCAL_TIME;
@@ -52,13 +52,13 @@ import org.springframework.util.MultiValueMap;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumCsvUtils;
 import net.solarnetwork.central.query.SolarQueryApp;
 import net.solarnetwork.central.query.web.api.DatumController;
 import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link DatumController} {@literal /mostRecent} endpoint.
@@ -122,6 +122,7 @@ public class DatumController_MostRecentTests extends AbstractJUnit5CentralTransa
 		MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
 		queryParams.add("nodeId", meta.getObjectId().toString());
 		queryParams.add("sourceId", meta.getSourceId());
+		queryParams.add("startDate", "2001-01-01");
 
 		// WHEN
 		// 2019-08-02 12:10:00+12,1,A,0,23029000
