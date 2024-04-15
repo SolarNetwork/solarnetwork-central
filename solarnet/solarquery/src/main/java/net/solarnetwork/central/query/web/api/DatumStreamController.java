@@ -30,7 +30,10 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
@@ -65,7 +68,7 @@ import net.solarnetwork.io.ProvidedOutputStream;
  * Controller for querying datum stream related data.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Controller("v1DatumStreamController")
 @RequestMapping("/api/v1/sec/datum/stream")
@@ -76,6 +79,7 @@ public class DatumStreamController {
 	private final ObjectMapper cborObjectMapper;
 	private final QueryBiz queryBiz;
 	private SmartValidator filterValidator;
+	private Duration mostRecentStartPeriod = DatumController.DEFAULT_MOST_RECENT_START_PERIOD;
 
 	/**
 	 * Constructor.
@@ -149,6 +153,15 @@ public class DatumStreamController {
 		return processor;
 	}
 
+	private void populateMostRecentImplicitStartDate(final StreamDatumFilterCommand cmd) {
+		if ( mostRecentStartPeriod != null && cmd.isMostRecent() && cmd.getStartDate() == null
+				&& cmd.getLocalStartDate() == null ) {
+			// add implicit start date, to speed up query
+			cmd.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS)
+					.minusSeconds(mostRecentStartPeriod.getSeconds()));
+		}
+	}
+
 	/**
 	 * Query for a listing of datum.
 	 * 
@@ -173,6 +186,7 @@ public class DatumStreamController {
 				throw new ValidationException(validationResult);
 			}
 		}
+		populateMostRecentImplicitStartDate(cmd);
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
 				acceptEncoding, response)) {
@@ -233,7 +247,7 @@ public class DatumStreamController {
 	 * Set the filter validator to use.
 	 * 
 	 * @param filterValidator
-	 *        the valiadtor to set
+	 *        the validator to set
 	 * @throws IllegalArgumentException
 	 *         if {@code validator} does not support the
 	 *         {@link StreamDatumFilter} class
@@ -246,6 +260,29 @@ public class DatumStreamController {
 					"The Validator must support the StreamDatumFilter class.");
 		}
 		this.filterValidator = filterValidator;
+	}
+
+	/**
+	 * Get the length of time to use to determine an implicit start date in most
+	 * recent queries.
+	 * 
+	 * @return the mostRecentStartPeriod the duration
+	 * @since 1.3
+	 */
+	public Duration getMostRecentStartPeriod() {
+		return mostRecentStartPeriod;
+	}
+
+	/**
+	 * Set the length of time to use to determine an implicit start date in most
+	 * recent queries.
+	 * 
+	 * @param mostRecentStartPeriod
+	 *        the period to set
+	 * @since 1.3
+	 */
+	public void setMostRecentStartPeriod(Duration mostRecentStartPeriod) {
+		this.mostRecentStartPeriod = mostRecentStartPeriod;
 	}
 
 }
