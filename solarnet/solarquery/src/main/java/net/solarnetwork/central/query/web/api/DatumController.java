@@ -90,6 +90,15 @@ public class DatumController {
 		this.queryBiz = queryBiz;
 	}
 
+	private void populateMostRecentImplicitStartDate(final DatumFilterCommand cmd) {
+		if ( mostRecentStartPeriod != null && cmd.isMostRecent() && cmd.getStartDate() == null
+				&& cmd.getLocalStartDate() == null ) {
+			// add implicit start date, to speed up query
+			cmd.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS)
+					.minusSeconds(mostRecentStartPeriod.getSeconds()));
+		}
+	}
+
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
 	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd,
@@ -100,12 +109,7 @@ public class DatumController {
 				throw new ValidationException(validationResult);
 			}
 		}
-		if ( mostRecentStartPeriod != null && cmd.getStartDate() == null
-				&& cmd.getLocalStartDate() == null ) {
-			// add implicit start date, to speed up query
-			cmd.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS)
-					.minusSeconds(mostRecentStartPeriod.getSeconds()));
-		}
+		populateMostRecentImplicitStartDate(cmd);
 		int retries = transientExceptionRetryCount;
 		while ( true ) {
 			try {
