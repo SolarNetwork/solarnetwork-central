@@ -106,6 +106,7 @@ app:
       threads: 2
       shutdown-wait-secs: 30
       queue-size: 200
+      queue-refill-threshold: 0.5
       stat-frequency: 200
       datum-cache-removal-alert-threshold: 500
     datum-buffer:

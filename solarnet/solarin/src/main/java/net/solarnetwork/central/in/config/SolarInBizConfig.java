@@ -147,6 +147,7 @@ public class SolarInBizConfig {
 		collector.setConcurrency(settings.getThreads());
 		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());
 		collector.setQueueSize(settings.getQueueSize());
+		collector.setQueueRefillThreshold(settings.getQueueRefillThreshold());
 		collector.setDatumCacheRemovalAlertThreshold(settings.getDatumCacheRemovalAlertThreshold());
 		return collector;
 	}

@@ -87,7 +87,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * </p>
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -106,7 +106,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
 	public static final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
-	private final double QUEUE_REFILL_THRESHOLD = 0.1;
+	/** The {@code queueRefillThreshold} property default value. */
+	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.5;
 
 	private final Cache<Serializable, Serializable> datumCache;
 	private final DatumWriteOnlyDao datumDao;
@@ -122,6 +123,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	private int datumCacheRemovalAlertThreshold;
 
 	private int queueRefillSize;
+	private double queueRefillThreshold = DEFAULT_QUEUE_REFILL_THRESHOLD;
 	private volatile boolean writeEnabled = false;
 	private BlockingQueue<Serializable> queue;
 	private ConcurrentMap<Serializable, Object> scratch; // prevent duplicate processing between threads
@@ -369,11 +371,12 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 						}
 					}
 
-					// try to re-fill queue from cache
+					// try to re-fill queue from cache if queue below queueRefillSize
 					if ( queueLock.tryLock(2, TimeUnit.SECONDS) ) {
 						try {
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
+								log.trace("REFILL: |{}/{}", currSize, queueSize);
 								for ( Entry<Serializable, Serializable> e : datumCache ) {
 									if ( e == null ) {
 										continue;
@@ -519,7 +522,36 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			queueSize = 1;
 		}
 		this.queueSize = queueSize;
-		this.queueRefillSize = Math.max(1, (int) (QUEUE_REFILL_THRESHOLD * queueSize));
+		setupQueueRefillSize(queueSize, queueRefillThreshold);
+	}
+
+	private void setupQueueRefillSize(int queueSize, double queueRefillThreshold) {
+		this.queueRefillSize = Math.max(1, (int) (queueRefillThreshold * queueSize));
+	}
+
+	/**
+	 * Get the percentage full threshold that triggers a "refill" from the
+	 * cache.
+	 *
+	 * @return the threshold; defaults to
+	 *         {@link #DEFAULT_QUEUE_REFILL_THRESHOLD}
+	 * @since 2.4
+	 */
+	public double getQueueRefillThreshold() {
+		return queueRefillThreshold;
+	}
+
+	/**
+	 * Set the percentage full threshold that triggers a "refill" from the
+	 * cache.
+	 *
+	 * @param queueRefillThreshold
+	 *        the threshold to set
+	 * @since 2.4
+	 */
+	public void setQueueRefillThreshold(double queueRefillThreshold) {
+		this.queueRefillThreshold = queueRefillThreshold;
+		setupQueueRefillSize(queueSize, queueRefillThreshold);
 	}
 
 	/**
