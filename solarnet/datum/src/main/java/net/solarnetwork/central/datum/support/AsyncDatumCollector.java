@@ -95,16 +95,16 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		DatumWriteOnlyDao {
 
 	/** The {@code concurrency} property default value. */
-	public final int DEFAULT_CONCURRENCY = 2;
+	public static final int DEFAULT_CONCURRENCY = 2;
 
 	/** The {@code queueSize} property default value. */
-	public final int DEFAULT_QUEUE_SIZE = 200;
+	public static final int DEFAULT_QUEUE_SIZE = 200;
 
 	/** The {@code shtudownWaitSecs} default value. */
-	public final int DEFAULT_SHUTDOWN_WAIT_SECS = 15;
+	public static final int DEFAULT_SHUTDOWN_WAIT_SECS = 30;
 
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
-	public final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
+	public static final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
 	private final double QUEUE_REFILL_THRESHOLD = 0.1;
 
