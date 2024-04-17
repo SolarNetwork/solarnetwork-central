@@ -107,7 +107,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	public static final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
 	/** The {@code queueRefillThreshold} property default value. */
-	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.5;
+	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.1;
 
 	private final Cache<Serializable, Serializable> datumCache;
 	private final DatumWriteOnlyDao datumDao;
@@ -313,6 +313,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				while ( writeEnabled ) {
 					final Serializable key = queue.take();
 					if ( key != null ) {
+						stats.incrementAndGet(BasicCount.WorkQueueRemovals);
 						log.trace("POLL: |{}", key);
 						if ( scratch.putIfAbsent(key, scratchValue) == null ) {
 							try {
@@ -377,6 +378,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
 								log.trace("REFILL: |{}/{}", currSize, queueSize);
+								stats.incrementAndGet(BasicCount.WorkQueueRefills);
 								for ( Entry<Serializable, Serializable> e : datumCache ) {
 									if ( e == null ) {
 										continue;
@@ -384,6 +386,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 									if ( !queue.offer(e.getKey()) ) {
 										break;
 									}
+									stats.incrementAndGet(BasicCount.WorkQueueTopUps);
 								}
 							}
 						} finally {
@@ -392,7 +395,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 					}
 				}
 			} catch ( InterruptedException e ) {
-				// otta here
+				// outta here
 			}
 		}
 	}
@@ -423,7 +426,9 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			}
 			queueLock.lock();
 			try {
-				queue.offer(key);
+				if ( queue.offer(key) ) {
+					stats.incrementAndGet(BasicCount.WorkQueueAdds);
+				}
 			} finally {
 				queueLock.unlock();
 			}
