@@ -28,7 +28,6 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -64,6 +63,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
+import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -186,7 +186,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			serviceDidShutdown();
 		}
 		writeEnabled = true;
-		this.queue = new ArrayBlockingQueue<>(queueSize);
+		this.queue = new LinkedHashSetBlockingQueue<>(queueSize);
 		this.scratch = new ConcurrentHashMap<>(threadCount, 0.9f, threadCount);
 		datumThreads = new DatumWriterThread[threadCount];
 		for ( int i = 0; i < threadCount; i++ ) {
