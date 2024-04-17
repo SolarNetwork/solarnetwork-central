@@ -1,21 +1,21 @@
 /* ==================================================================
  * CollectorStats.java - 11/06/2018 7:43:25 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,9 +28,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Statistics for collector processing.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.1
  */
 public class CollectorStats {
@@ -70,6 +70,12 @@ public class CollectorStats {
 
 		StreamDatumFail(10, "stream datum failed"),
 
+		WorkQueueAdds(11, "work queue adds"),
+
+		WorkQueueRemovals(12, "work queue removals"),
+
+		WorkQueueRefills(13, "work queue refills"),
+
 		;
 
 		private final int index;
@@ -108,7 +114,7 @@ public class CollectorStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param logFrequency
 	 *        a frequency at which to log INFO level statistic messages
 	 */
@@ -118,7 +124,7 @@ public class CollectorStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param countStats
 	 *        the number of statistics to track (on top of the
 	 *        {@link BasicCount}
@@ -129,7 +135,7 @@ public class CollectorStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param logFrequency
 	 *        a frequency at which to log INFO level statistic messages
 	 * @param countStats
@@ -142,7 +148,7 @@ public class CollectorStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param uid
 	 *        the UID
 	 * @param logFrequency
@@ -154,7 +160,7 @@ public class CollectorStats {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param uid
 	 *        the UID
 	 * @param logFrequency
@@ -174,7 +180,7 @@ public class CollectorStats {
 
 	/**
 	 * Set the log frequency.
-	 * 
+	 *
 	 * @param logFrequency
 	 *        the frequency
 	 */
@@ -184,7 +190,7 @@ public class CollectorStats {
 
 	/**
 	 * Get the log frequency.
-	 * 
+	 *
 	 * @return the frequency
 	 */
 	public int getLogFrequency() {
@@ -193,7 +199,7 @@ public class CollectorStats {
 
 	/**
 	 * Set the unique ID.
-	 * 
+	 *
 	 * @param uid
 	 *        the unique ID
 	 */
@@ -211,7 +217,7 @@ public class CollectorStats {
 
 	/**
 	 * Get a current count value.
-	 * 
+	 *
 	 * @param stat
 	 *        the statistic to get the count for
 	 * @return the current count value
@@ -222,7 +228,7 @@ public class CollectorStats {
 
 	/**
 	 * Increment and get the current count value.
-	 * 
+	 *
 	 * @param stat
 	 *        the count to increment and get
 	 * @return the incremented count value

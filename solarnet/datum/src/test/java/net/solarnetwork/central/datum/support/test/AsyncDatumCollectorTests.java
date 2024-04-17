@@ -71,6 +71,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasePK;
+import net.solarnetwork.central.support.ExpandedEventsCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -124,7 +125,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 		factory.setHeapMaxEntries(10);
 		factory.setDiskMaxSizeMB(10);
 		factory.setExpiryPolicy(JCacheFactoryBean.ExpiryPolicy.Eternal);
-		datumCache = factory.getObject();
+		datumCache = new ExpandedEventsCache<>(factory.getObject());
 
 		uncaughtExceptions = new ArrayList<>(2);
 

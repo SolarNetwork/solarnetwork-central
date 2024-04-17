@@ -23,7 +23,10 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.query.config.DatumQueryBizConfig.DATUM_FILTER;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +54,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 3.4
+ * @version 3.5
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
@@ -64,6 +67,9 @@ public class DatumController {
 	/** The {@code transientExceptionRetryDelay} property default value. */
 	public static final long DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY = 2000L;
 
+	/** The {@code mostRecentStartPeriod} property default value. */
+	public static final Duration DEFAULT_MOST_RECENT_START_PERIOD = Duration.ofDays(90);
+
 	private static final Logger log = LoggerFactory.getLogger(DatumController.class);
 
 	private final QueryBiz queryBiz;
@@ -71,6 +77,7 @@ public class DatumController {
 
 	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
+	private Duration mostRecentStartPeriod = DEFAULT_MOST_RECENT_START_PERIOD;
 
 	/**
 	 * Constructor.
@@ -83,6 +90,15 @@ public class DatumController {
 		this.queryBiz = queryBiz;
 	}
 
+	private void populateMostRecentImplicitStartDate(final DatumFilterCommand cmd) {
+		if ( mostRecentStartPeriod != null && cmd.isMostRecent() && cmd.getStartDate() == null
+				&& cmd.getLocalStartDate() == null ) {
+			// add implicit start date, to speed up query
+			cmd.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS)
+					.minusSeconds(mostRecentStartPeriod.getSeconds()));
+		}
+	}
+
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
 	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd,
@@ -93,6 +109,7 @@ public class DatumController {
 				throw new ValidationException(validationResult);
 			}
 		}
+		populateMostRecentImplicitStartDate(cmd);
 		int retries = transientExceptionRetryCount;
 		while ( true ) {
 			try {
@@ -266,6 +283,29 @@ public class DatumController {
 	 */
 	public void setTransientExceptionRetryDelay(long transientExceptionRetryDelay) {
 		this.transientExceptionRetryDelay = transientExceptionRetryDelay;
+	}
+
+	/**
+	 * Get the length of time to use to determine an implicit start date in most
+	 * recent queries.
+	 * 
+	 * @return the mostRecentStartPeriod the duration
+	 * @since 3.5
+	 */
+	public Duration getMostRecentStartPeriod() {
+		return mostRecentStartPeriod;
+	}
+
+	/**
+	 * Set the length of time to use to determine an implicit start date in most
+	 * recent queries.
+	 * 
+	 * @param mostRecentStartPeriod
+	 *        the period to set
+	 * @since 3.5
+	 */
+	public void setMostRecentStartPeriod(Duration mostRecentStartPeriod) {
+		this.mostRecentStartPeriod = mostRecentStartPeriod;
 	}
 
 }

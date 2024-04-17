@@ -28,10 +28,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -64,6 +61,7 @@ import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
+import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -87,7 +85,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * </p>
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -95,18 +93,19 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		DatumWriteOnlyDao {
 
 	/** The {@code concurrency} property default value. */
-	public final int DEFAULT_CONCURRENCY = 2;
+	public static final int DEFAULT_CONCURRENCY = 2;
 
 	/** The {@code queueSize} property default value. */
-	public final int DEFAULT_QUEUE_SIZE = 200;
+	public static final int DEFAULT_QUEUE_SIZE = 200;
 
 	/** The {@code shtudownWaitSecs} default value. */
-	public final int DEFAULT_SHUTDOWN_WAIT_SECS = 15;
+	public static final int DEFAULT_SHUTDOWN_WAIT_SECS = 30;
 
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
-	public final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
+	public static final int DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD = 500;
 
-	private final double QUEUE_REFILL_THRESHOLD = 0.1;
+	/** The {@code queueRefillThreshold} property default value. */
+	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.1;
 
 	private final Cache<Serializable, Serializable> datumCache;
 	private final DatumWriteOnlyDao datumDao;
@@ -122,9 +121,9 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	private int datumCacheRemovalAlertThreshold;
 
 	private int queueRefillSize;
+	private double queueRefillThreshold = DEFAULT_QUEUE_REFILL_THRESHOLD;
 	private volatile boolean writeEnabled = false;
 	private BlockingQueue<Serializable> queue;
-	private ConcurrentMap<Serializable, Object> scratch; // prevent duplicate processing between threads
 	private DatumWriterThread[] datumThreads;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -184,8 +183,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			serviceDidShutdown();
 		}
 		writeEnabled = true;
-		this.queue = new ArrayBlockingQueue<>(queueSize);
-		this.scratch = new ConcurrentHashMap<>(threadCount, 0.9f, threadCount);
+		this.queue = new LinkedHashSetBlockingQueue<>(queueSize);
 		datumThreads = new DatumWriterThread[threadCount];
 		for ( int i = 0; i < threadCount; i++ ) {
 			datumThreads[i] = new DatumWriterThread();
@@ -298,11 +296,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 
 	private final class DatumWriterThread extends Thread {
 
-		private final Object scratchValue;
-
 		private DatumWriterThread() {
 			super(String.format("DatumWriter-" + COUNTER.incrementAndGet()));
-			scratchValue = new Object();
 		}
 
 		@Override
@@ -311,69 +306,64 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				while ( writeEnabled ) {
 					final Serializable key = queue.take();
 					if ( key != null ) {
+						stats.incrementAndGet(BasicCount.WorkQueueRemovals);
 						log.trace("POLL: |{}", key);
-						if ( scratch.putIfAbsent(key, scratchValue) == null ) {
-							try {
-								final Serializable entity = datumCache.get(key);
-								try {
-									if ( entity != null ) {
-										log.trace("STORE: |{}", key);
-										transactionTemplate
-												.execute(new TransactionCallbackWithoutResult() {
+						final Serializable entity = datumCache.getAndRemove(key);
+						try {
+							if ( entity != null ) {
+								log.trace("STORE: |{}", key);
+								transactionTemplate.execute(new TransactionCallbackWithoutResult() {
 
-													@Override
-													protected void doInTransactionWithoutResult(
-															TransactionStatus status) {
-														if ( entity instanceof DatumEntity d ) {
-															datumDao.store(d);
-														} else if ( entity instanceof GeneralObjectDatum<?> d ) {
-															datumDao.persist(d);
-														}
-													}
-												});
-										log.trace("REMOVE: |{}", key);
-										datumCache.remove(key);
-										if ( entity instanceof DatumEntity ) {
-											stats.incrementAndGet(BasicCount.StreamDatumStored);
-										} else if ( entity instanceof GeneralNodeDatum ) {
-											stats.incrementAndGet(BasicCount.DatumStored);
-										} else if ( entity instanceof GeneralLocationDatum ) {
-											stats.incrementAndGet(BasicCount.LocationDatumStored);
+									@Override
+									protected void doInTransactionWithoutResult(
+											TransactionStatus status) {
+										if ( entity instanceof DatumEntity d ) {
+											datumDao.store(d);
+										} else if ( entity instanceof GeneralObjectDatum<?> d ) {
+											datumDao.persist(d);
 										}
-									} else {
-										log.trace("MISS: |{}", key);
 									}
-								} catch ( Throwable t ) {
-									if ( entity instanceof DatumEntity ) {
-										stats.incrementAndGet(BasicCount.StreamDatumFail);
-									} else if ( entity instanceof GeneralNodeDatum ) {
-										stats.incrementAndGet(BasicCount.DatumFail);
-									} else if ( entity instanceof GeneralLocationDatum ) {
-										stats.incrementAndGet(BasicCount.LocationDatumFail);
-									}
-									Throwable root = t;
-									while ( root.getCause() != null ) {
-										root = root.getCause();
-									}
-									log.warn("Error storing datum {}: {}", key, root.toString());
-									UncaughtExceptionHandler exHandler = getUncaughtExceptionHandler();
-									if ( exHandler != null ) {
-										exHandler.uncaughtException(this, t);
-									}
+								});
+								if ( entity instanceof DatumEntity ) {
+									stats.incrementAndGet(BasicCount.StreamDatumStored);
+								} else if ( entity instanceof GeneralNodeDatum ) {
+									stats.incrementAndGet(BasicCount.DatumStored);
+								} else if ( entity instanceof GeneralLocationDatum ) {
+									stats.incrementAndGet(BasicCount.LocationDatumStored);
 								}
-							} finally {
-								scratch.remove(key, scratchValue);
+							} else {
+								log.trace("MISS: |{}", key);
 							}
-						} else {
-							log.trace("SCRATCH: |{}", key);
+						} catch ( Throwable t ) {
+							if ( entity != null ) {
+								datumCache.put(key, entity);
+							}
+							if ( entity instanceof DatumEntity ) {
+								stats.incrementAndGet(BasicCount.StreamDatumFail);
+							} else if ( entity instanceof GeneralNodeDatum ) {
+								stats.incrementAndGet(BasicCount.DatumFail);
+							} else if ( entity instanceof GeneralLocationDatum ) {
+								stats.incrementAndGet(BasicCount.LocationDatumFail);
+							}
+							Throwable root = t;
+							while ( root.getCause() != null ) {
+								root = root.getCause();
+							}
+							log.warn("Error storing datum {}: {}", key, root.toString());
+							UncaughtExceptionHandler exHandler = getUncaughtExceptionHandler();
+							if ( exHandler != null ) {
+								exHandler.uncaughtException(this, t);
+							}
 						}
 					}
 
-					// try to re-fill queue from cache
+					// try to re-fill queue from cache if queue below queueRefillSize
 					if ( queueLock.tryLock(2, TimeUnit.SECONDS) ) {
 						try {
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
+								log.trace("REFILL: |{}/{}", currSize, queueSize);
+								stats.incrementAndGet(BasicCount.WorkQueueRefills);
 								for ( Entry<Serializable, Serializable> e : datumCache ) {
 									if ( e == null ) {
 										continue;
@@ -389,7 +379,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 					}
 				}
 			} catch ( InterruptedException e ) {
-				// otta here
+				// outta here
 			}
 		}
 	}
@@ -420,7 +410,9 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			}
 			queueLock.lock();
 			try {
-				queue.offer(key);
+				if ( queue.offer(key) ) {
+					stats.incrementAndGet(BasicCount.WorkQueueAdds);
+				}
 			} finally {
 				queueLock.unlock();
 			}
@@ -519,7 +511,36 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			queueSize = 1;
 		}
 		this.queueSize = queueSize;
-		this.queueRefillSize = Math.max(1, (int) (QUEUE_REFILL_THRESHOLD * queueSize));
+		setupQueueRefillSize(queueSize, queueRefillThreshold);
+	}
+
+	private void setupQueueRefillSize(int queueSize, double queueRefillThreshold) {
+		this.queueRefillSize = Math.max(1, (int) (queueRefillThreshold * queueSize));
+	}
+
+	/**
+	 * Get the percentage full threshold that triggers a "refill" from the
+	 * cache.
+	 *
+	 * @return the threshold; defaults to
+	 *         {@link #DEFAULT_QUEUE_REFILL_THRESHOLD}
+	 * @since 2.4
+	 */
+	public double getQueueRefillThreshold() {
+		return queueRefillThreshold;
+	}
+
+	/**
+	 * Set the percentage full threshold that triggers a "refill" from the
+	 * cache.
+	 *
+	 * @param queueRefillThreshold
+	 *        the threshold to set
+	 * @since 2.4
+	 */
+	public void setQueueRefillThreshold(double queueRefillThreshold) {
+		this.queueRefillThreshold = queueRefillThreshold;
+		setupQueueRefillSize(queueSize, queueRefillThreshold);
 	}
 
 	/**

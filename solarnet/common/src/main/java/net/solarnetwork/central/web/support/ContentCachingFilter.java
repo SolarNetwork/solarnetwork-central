@@ -39,6 +39,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -46,11 +51,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import net.solarnetwork.central.web.support.ContentCachingService.CompressionType;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.ObjectUtils;
@@ -209,7 +209,7 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 		});
 		if ( lock == null ) {
 			// TODO: handle JSON response explicitly
-			origResponse.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 					"Timeout waiting for cache lock");
 			return;
 		}
@@ -222,13 +222,13 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 		// acquire lock for key
 		try {
 			if ( !lock.tryLock(requestLockTimeout, TimeUnit.MILLISECONDS) ) {
-				origResponse.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 						"Timeout acquiring cache lock");
 				return;
 			}
 		} catch ( InterruptedException e ) {
 			// TODO: handle JSON response explicitly
-			origResponse.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 					"Interrupted acquiring cache lock");
 			return;
 		}
