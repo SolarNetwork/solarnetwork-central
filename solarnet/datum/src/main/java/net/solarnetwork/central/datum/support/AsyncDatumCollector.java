@@ -386,7 +386,6 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 									if ( !queue.offer(e.getKey()) ) {
 										break;
 									}
-									stats.incrementAndGet(BasicCount.WorkQueueTopUps);
 								}
 							}
 						} finally {

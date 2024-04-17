@@ -76,7 +76,7 @@ public class CollectorStats {
 
 		WorkQueueRefills(13, "work queue refills"),
 
-		WorkQueueTopUps(14, "work queue topups"),;
+		;
 
 		private final int index;
 		private final String description;
