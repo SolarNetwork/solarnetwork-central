@@ -272,9 +272,11 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		V old = internalStore.remove(key);
 		if ( old != null ) {
 			size.decrementAndGet();
-			publishRemovedEvent(key, old);
 		} else {
-			old = delegate.getAndRemove(key);
+			old = delegate.getAndRemove(key); // does not generate remove event!
+		}
+		if ( old != null ) {
+			publishRemovedEvent(key, old);
 		}
 		return old;
 	}
