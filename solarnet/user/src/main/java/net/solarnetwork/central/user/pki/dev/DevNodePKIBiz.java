@@ -49,6 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.SecurityUser;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
@@ -222,6 +224,10 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 	@Override
 	public String submitCSR(X509Certificate certificate, PrivateKey privateKey)
 			throws SecurityException {
+		final SecurityUser requestor = SecurityUtils.getCurrentUser(); // mimic Dogtag
+		log.info("Submitting CSR for user {} - {} <{}>", requestor.getUserId(),
+				requestor.getDisplayName(), requestor.getEmail());
+
 		final String csr = certificateService.generatePKCS10CertificateRequestString(certificate,
 				privateKey);
 		final String csrID = DigestUtils.md5Hex(csr);

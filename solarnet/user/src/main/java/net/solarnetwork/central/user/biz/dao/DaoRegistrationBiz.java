@@ -117,7 +117,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -940,9 +940,9 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		UserNodeCertificate cert = null;
 		if ( keystorePassword != null ) {
-			// we must become the User now for CSR to be generated (if we are a node actor)
+			// we must become the User now for CSR to be generated (if we are a node or token actor)
 			try {
-				SecurityUtils.getCurrentActorUserId();
+				SecurityUtils.getCurrentUser();
 			} catch ( SecurityException e ) {
 				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
 			}
