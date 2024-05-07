@@ -2,6 +2,13 @@ $(document).ready(function() {
 	'use strict';
 
 	$('#ocpp-management').first().each(function ocppManagement() {
+		/**
+		 * Resolve the action directly.
+		 */
+		function actionUrlSerializer(action) {
+			return action;
+		}
+		
 		/* ============================
 		   Authorizations
 		   ============================ */
@@ -55,6 +62,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
+				urlSerializer: actionUrlSerializer,
 				errorMessageGenerator: function(_xhr, json, form) {
 					var msg;
 					if ( json ) {
@@ -144,6 +152,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
+				urlSerializer: actionUrlSerializer,
 				errorMessageGenerator: function(_xhr, json, form) {
 					var msg;
 					if ( json ) {
@@ -230,6 +239,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
+				urlSerializer: actionUrlSerializer,
 				errorMessageGenerator: function(_xhr, json, form) {
 					var msg;
 					if ( json ) {
@@ -321,6 +331,8 @@ $(document).ready(function() {
 				}
 
 				return data;
+			}, {
+				urlSerializer: actionUrlSerializer
 			});
 			return false;
 		})
@@ -403,6 +415,11 @@ $(document).ready(function() {
 				config = SolarReg.Templates.findContextItem(modal);
 			if ( !config ) {
 				config = (settingConfigs.length > 0 ? settingConfigs[0] : undefined);
+				if (config) {			
+					// remove fake ID property so don't try to append to URL
+					config = Object.assign({}, config);
+					delete config.id;
+				}
 				SolarReg.Templates.setContextItem(modal, config);
 				modal.attr('action', modal.data('action'));
 			} else {
@@ -437,6 +454,8 @@ $(document).ready(function() {
 				}
 
 				return data;
+			}, {
+				urlSerializer: actionUrlSerializer
 			});
 			return false;
 		})
