@@ -30,7 +30,7 @@ import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
  * Validator for {@link CentralSystemUser} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CentralSystemUserValidator implements Validator {
 
@@ -58,7 +58,7 @@ public class CentralSystemUserValidator implements Validator {
 			errors.rejectValue("username", "ocpp.credentials.error.username.size",
 					new Object[] { USERNAME_MAX_LENGTH }, "The username is too long.");
 		}
-		if ( o.getPassword() == null ) {
+		if ( o.getId() == null && o.getPassword() == null ) {
 			errors.rejectValue("password", "ocpp.credentials.error.password.required",
 					"The password is required.");
 		}
