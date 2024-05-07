@@ -325,6 +325,11 @@ $(document).ready(function() {
 				config = SolarReg.Templates.findContextItem(modal);
 			if ( !config ) {
 				config = (settingConfigs.length > 0 ? settingConfigs[0] : undefined);
+				if (config) {			
+					// remove fake ID property so don't try to append to URL
+					config = Object.assign({}, config);
+					delete config.id;
+				}
 				SolarReg.Templates.setContextItem(modal, config);
 				modal.attr('action', modal.data('action'));
 			} else {
@@ -342,7 +347,7 @@ $(document).ready(function() {
 			if ( form.elements['groupId'] && form.elements['groupId'].value ) {
 				options.urlSerializer = groupSettingsFormUrlSerializer(form.elements['groupId'].value);
 			}
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 				if ( res.groupId === undefined ) {
 					renderSettingConfigs([res], true);
 				} else {
@@ -378,7 +383,7 @@ $(document).ready(function() {
 						delete groupItem.sourceIdTemplate;
 						delete groupItem.publishToSolarIn;
 						delete groupItem.publishToSolarFlux;
-						SolarReg.Templates.populateTemplateItems(systems.cg.container, [groupItem], true, (item, el) => {
+						SolarReg.Templates.populateTemplateItems(systems.cg.container, [groupItem], true, (_item, el) => {
 							let settingsEditContainer = el.find('.settings-container').addClass('hidden').parent();
 							SolarReg.Templates.setContextItem(settingsEditContainer, {id:id,groupId:id});
 						});
@@ -516,7 +521,7 @@ $(document).ready(function() {
 		.on('submit', function handleAssetModalFormSubmit(event) {
 			const config = SolarReg.Templates.findContextItem(this),
 				sys = cgGroupAssets.get(config.capacityGroupId);
-			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(_req, res) {
 				renderCapacityGroupAssets(sys.container, [res], config.capacityGroupId, true);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
@@ -633,7 +638,7 @@ $(document).ready(function() {
 				return;
 			}
 
-			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(_req, res) {
 				res.id = res.configId;
 				res.systemType = config.systemType;
 				renderSystemConfigs([res], config.systemType, true);
@@ -711,7 +716,7 @@ $(document).ready(function() {
 				return;
 			}
 
-			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function onSuccess(_req, res) {
 				res.id = res.configId;
 				res.systemType = config.systemType;
 				renderSystemConfigs([res], config.systemType, true);

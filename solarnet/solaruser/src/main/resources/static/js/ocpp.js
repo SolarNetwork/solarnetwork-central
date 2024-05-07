@@ -38,7 +38,7 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 				populateAuthConfigs([res], true);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
@@ -55,7 +55,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
-				errorMessageGenerator: function(xhr, json, form) {
+				errorMessageGenerator: function(_xhr, json, form) {
 					var msg;
 					if ( json ) {
 						if ( json.code === 'DAO.00101' ) {
@@ -132,7 +132,7 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 				populateChargerConfigs([res], true);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
@@ -144,7 +144,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
-				errorMessageGenerator: function(xhr, json, form) {
+				errorMessageGenerator: function(_xhr, json, form) {
 					var msg;
 					if ( json ) {
 						if ( json.code === 'DAO.00101' ) {
@@ -218,7 +218,7 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 				populateConnectorConfigs([res], true);
 			}, function serializeDataConfigForm(form) {
 				var data = SolarReg.Settings.encodeServiceItemForm(form, true);
@@ -230,7 +230,7 @@ $(document).ready(function() {
 
 				return data;
 			}, {
-				errorMessageGenerator: function(xhr, json, form) {
+				errorMessageGenerator: function(_xhr, json, form) {
 					var msg;
 					if ( json ) {
 						if ( json.code === 'DAO.00105' ) {
@@ -281,7 +281,7 @@ $(document).ready(function() {
 			SolarReg.Settings.handleEditServiceItemAction(event, [], []);
 		});
 
-		$('#ocpp-credential-password-modal').on('hidden.bs.modal', function(event) {
+		$('#ocpp-credential-password-modal').on('hidden.bs.modal', function() {
 			// clear out credentials
 			$(this).find('*[data-tprop]').text('');
 		});
@@ -291,7 +291,7 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 				if ( res.password ) {
 					// server returned a password, so show that to the user once and delete from config
 					const pwModal = $('#ocpp-credential-password-modal');
@@ -415,7 +415,7 @@ $(document).ready(function() {
 		})
 		.on('shown.bs.modal', SolarReg.Settings.focusEditServiceForm)
 		.on('submit', function(event) {
-			SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
+			SolarReg.Settings.handlePostEditServiceForm(event, function(_req, res) {
 				if ( res.chargePointId === undefined ) {
 					populateSettingConfigs([res], true);
 				} else {
@@ -450,7 +450,7 @@ $(document).ready(function() {
 						delete chargerItem.sourceIdTemplate;
 						delete chargerItem.publishToSolarIn;
 						delete chargerItem.publishToSolarFlux;
-						SolarReg.Templates.populateTemplateItems(chargersContainer, [chargerItem], true, (item, el) => {
+						SolarReg.Templates.populateTemplateItems(chargersContainer, [chargerItem], true, (_item, el) => {
 							let settingsEditContainer = el.find('.settings-container').addClass('hidden').parent();
 							SolarReg.Templates.setContextItem(settingsEditContainer, {id:id,chargePointId:id});
 						});
