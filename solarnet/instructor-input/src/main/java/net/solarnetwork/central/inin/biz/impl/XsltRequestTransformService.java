@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.inin.biz.impl;
 
+import static net.solarnetwork.central.inin.biz.TransformConstants.JSON_PLUS_TYPE;
 import static net.solarnetwork.central.inin.biz.TransformConstants.JSON_TYPE;
 import static net.solarnetwork.central.inin.biz.TransformConstants.PARAM_CONFIGURATION_CACHE_KEY;
 import static net.solarnetwork.central.inin.biz.TransformConstants.PARAM_DEBUG_OUTPUT;
+import static net.solarnetwork.central.inin.biz.TransformConstants.XML_PLUS_TYPE;
 import static net.solarnetwork.central.inin.biz.TransformConstants.XML_TYPE;
 import java.io.IOException;
 import java.io.Reader;
@@ -68,7 +70,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * XSLT implementation of {@link RequestTransformService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class XsltRequestTransformService extends BaseXsltService implements RequestTransformService {
 
@@ -138,7 +140,8 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 
 	@Override
 	public boolean supportsInput(Object input, MimeType type) {
-		return input != null && (JSON_TYPE.isCompatibleWith(type) || XML_TYPE.isCompatibleWith(type));
+		return input != null && (JSON_TYPE.isCompatibleWith(type) || XML_TYPE.isCompatibleWith(type)
+				|| JSON_PLUS_TYPE.isCompatibleWith(type) || XML_PLUS_TYPE.isCompatibleWith(type));
 	}
 
 	@Override
@@ -165,7 +168,7 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 
 			// get XML input for XSLT transform
 			Source inputSource = null;
-			if ( JSON_TYPE.isCompatibleWith(type) ) {
+			if ( JSON_TYPE.isCompatibleWith(type) || JSON_PLUS_TYPE.isCompatibleWith(type) ) {
 				// pass JSON as input parameter
 				xform.setParameter(XSLT_PARAM_JSON, inputText);
 				inputSource = new DOMSource();

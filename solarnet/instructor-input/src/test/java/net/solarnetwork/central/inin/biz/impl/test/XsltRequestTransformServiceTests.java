@@ -40,6 +40,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.util.MimeType;
 import net.sf.saxon.TransformerFactoryImpl;
 import net.solarnetwork.central.inin.biz.TransformConstants;
 import net.solarnetwork.central.inin.biz.impl.DataUriResolver;
@@ -80,6 +82,43 @@ public class XsltRequestTransformServiceTests {
 	}
 
 	@Test
+	public void supportsInput_string_json() {
+		then(service.supportsInput("", MediaType.APPLICATION_JSON)).as("JSON string supported").isTrue();
+	}
+
+	@Test
+	public void supportsInput_stream_json() throws IOException {
+		try (var in = new ByteArrayInputStream(new byte[0])) {
+			then(service.supportsInput(in, MediaType.APPLICATION_JSON)).as("JSON stream supported")
+					.isTrue();
+		}
+	}
+
+	@Test
+	public void supportsInput_string_jsonPlus() {
+		then(service.supportsInput("", MediaType.APPLICATION_GRAPHQL_RESPONSE))
+				.as("+JSON string supported").isTrue();
+	}
+
+	@Test
+	public void supportsInput_string_xml() {
+		then(service.supportsInput("", MediaType.TEXT_XML)).as("XML string supported").isTrue();
+	}
+
+	@Test
+	public void supportsInput_stream_xml() throws IOException {
+		try (var in = new ByteArrayInputStream(new byte[0])) {
+			then(service.supportsInput(in, MediaType.TEXT_XML)).as("XML stream supported").isTrue();
+		}
+	}
+
+	@Test
+	public void supportsInput_string_xmlPlus() {
+		then(service.supportsInput("", MediaType.APPLICATION_RSS_XML)).as("+XML string supported")
+				.isTrue();
+	}
+
+	@Test
 	public void xmlObject() throws IOException {
 		// GIVEN
 		final String xmlInput = """
@@ -94,6 +133,44 @@ public class XsltRequestTransformServiceTests {
 		// WHEN
 		Iterable<NodeInstruction> results = service.transformInput(xmlInput, TransformConstants.XML_TYPE,
 				conf, null);
+
+		// THEN
+		// @formatter:off
+		then(results)
+				.as("Single instruction produced")
+				.hasSize(1)
+				.element(0)
+				.as("Node ID not populated")
+				.returns(null, NodeInstruction::getNodeId)
+				.as("Topic populated")
+				.returns("LatestDatum", NodeInstruction::getTopic)
+				.as("Parameters populated")
+				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.as("One parameter populated")
+				.hasSize(1)
+				.as("Source ID parameter generated")
+				.containsEntry("sourceIds", "abc-123")
+				;
+		// @formatter:on
+
+		then(primaryCache).as("Templates not cached").isEmpty();
+	}
+
+	@Test
+	public void xmlPlusObject() throws IOException {
+		// GIVEN
+		final String xmlInput = """
+				<data groupId="abc-123"/>
+				""";
+
+		final String xslt = ClassUtils.getResourceAsString("test-xform-01.xsl", getClass());
+
+		final BasicIdentifiableConfiguration conf = new BasicIdentifiableConfiguration();
+		conf.setServiceProps(singletonMap(XsltRequestTransformService.SETTING_XSLT, xslt));
+
+		// WHEN
+		Iterable<NodeInstruction> results = service.transformInput(xmlInput,
+				MimeType.valueOf("application/foo+xml"), conf, null);
 
 		// THEN
 		// @formatter:off
@@ -448,6 +525,44 @@ public class XsltRequestTransformServiceTests {
 		// WHEN
 		Iterable<NodeInstruction> results = service.transformInput(jsonInput,
 				TransformConstants.JSON_TYPE, conf, null);
+
+		// THEN
+		// @formatter:off
+		then(results)
+				.as("Single instruction produced")
+				.hasSize(1)
+				.element(0)
+				.as("Node ID not populated")
+				.returns(null, NodeInstruction::getNodeId)
+				.as("Topic populated")
+				.returns("LatestDatum", NodeInstruction::getTopic)
+				.as("Parameters populated")
+				.extracting(NodeInstruction::getParams, InstanceOfAssertFactories.map(String.class, String.class))
+				.as("One parameter populated")
+				.hasSize(1)
+				.as("Source ID parameter generated")
+				.containsEntry("sourceIds", "abc-123")
+				;
+		// @formatter:on
+
+		then(primaryCache).as("Templates not cached").isEmpty();
+	}
+
+	@Test
+	public void jsonPlusObject() throws IOException {
+		// GIVEN
+		final String jsonInput = """
+				{"groupId":"abc-123"}
+				""";
+
+		final String xslt = ClassUtils.getResourceAsString("test-xform-03.xsl", getClass());
+
+		final BasicIdentifiableConfiguration conf = new BasicIdentifiableConfiguration();
+		conf.setServiceProps(singletonMap(XsltRequestTransformService.SETTING_XSLT, xslt));
+
+		// WHEN
+		Iterable<NodeInstruction> results = service.transformInput(jsonInput,
+				MimeType.valueOf("application/foo+json"), conf, null);
 
 		// THEN
 		// @formatter:off

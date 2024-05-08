@@ -28,7 +28,7 @@ import org.springframework.util.MimeType;
  * Constants for instruction input.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class TransformConstants {
 
@@ -39,8 +39,22 @@ public final class TransformConstants {
 	/** The JSON MIME type. */
 	public static final MimeType JSON_TYPE = MimeType.valueOf("application/json");
 
+	/**
+	 * The {@literal application/*+json} MIME wildcard type.
+	 *
+	 * @since 1.2
+	 */
+	public static final MimeType JSON_PLUS_TYPE = MimeType.valueOf("application/*+json");
+
 	/** The XML MIME type. */
 	public static final MimeType XML_TYPE = MimeType.valueOf("text/xml");
+
+	/**
+	 * The {@literal application/*+xml} MIME wildcard type.
+	 *
+	 * @since 1.2
+	 */
+	public static final MimeType XML_PLUS_TYPE = MimeType.valueOf("application/*+xml");
 
 	/**
 	 * A parameter key for a transform instance cache key.
