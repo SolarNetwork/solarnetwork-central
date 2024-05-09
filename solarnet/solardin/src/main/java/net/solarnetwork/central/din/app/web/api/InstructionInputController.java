@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -50,7 +51,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Instruction input controller.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1InstructionInputController")
 @RequestMapping("/api/v1/instr/endpoint/{endpointId}")
@@ -85,9 +86,16 @@ public class InstructionInputController {
 	 *        the data content type
 	 * @param encoding
 	 *        the data encoding
+	 * @param req
+	 *        the request
 	 * @param in
 	 *        the data stream
-	 * @return the persisted datum IDs
+	 * @param accept
+	 *        the accept media types
+	 * @param acceptEncoding
+	 *        the accept encoding (gzip supported)
+	 * @param response
+	 *        the response
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
@@ -124,6 +132,7 @@ public class InstructionInputController {
 				OutputStream o = response.getOutputStream();
 				if ( acceptEncoding != null && acceptEncoding.contains("gzip") ) {
 					o = new GZIPOutputStream(o);
+					response.setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
 				}
 				return o;
 			} catch ( IOException e ) {
