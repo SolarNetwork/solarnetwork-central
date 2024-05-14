@@ -64,7 +64,7 @@ import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
  * key/trust store.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SSLContextFactory implements PingTest {
 
@@ -193,7 +193,7 @@ public class SSLContextFactory implements PingTest {
 			return new PingTestResult(false, "No keystore password configured");
 		}
 		final long now = System.currentTimeMillis();
-		final long monthAgo = now - (1000 * 60 * 60 * 24 * trustedCertificateExpireWarningDays);
+		final long warnDaysMills = TimeUnit.DAYS.toMillis(trustedCertificateExpireWarningDays);
 		KeyStore keyStore = loadKeyStore();
 		Enumeration<String> aliases = keyStore.aliases();
 		PingTestResult result = null;
@@ -227,7 +227,7 @@ public class SSLContextFactory implements PingTest {
 											+ " expired on " + x509.getNotAfter() + ".");
 							break;
 						}
-						if ( x509.getNotAfter().getTime() < monthAgo ) {
+						if ( x509.getNotAfter().getTime() - warnDaysMills < now ) {
 							result = new PingTestResult(false,
 									"Certificate " + x509.getSubjectX500Principal().getName()
 											+ " will exipre on " + x509.getNotAfter() + ".");
