@@ -38,7 +38,7 @@ import net.solarnetwork.service.CertificateService;
  * Configuration for Dogtag PKI.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile("dogtag")
 @Configuration
@@ -60,6 +60,7 @@ public class PkiDogtagConfig {
 		private Resource keystoreResource = new ClassPathResource("dogtag-client.jks");
 		private String keystorePassword = "changeit";
 		private String disabledCiphers = DEFAULT_DISABLED_CIPHERS;
+		private int expireWarningDays = 5;
 
 		public String getBaseUrl() {
 			return baseUrl;
@@ -101,6 +102,14 @@ public class PkiDogtagConfig {
 			this.disabledCiphers = disabledCiphers;
 		}
 
+		public int getExpireWarningDays() {
+			return expireWarningDays;
+		}
+
+		public void setExpireWarningDays(int expireWarningDays) {
+			this.expireWarningDays = expireWarningDays;
+		}
+
 	}
 
 	@ConfigurationProperties(prefix = "app.node.pki.dogtag")
@@ -118,6 +127,7 @@ public class PkiDogtagConfig {
 		sslFactory.setKeystorePassword(settings.keystorePassword);
 		sslFactory.setDisabledCipherSuites(
 				StringUtils.commaDelimitedListToStringArray(settings.disabledCiphers));
+		sslFactory.setTrustedCertificateExpireWarningDays(settings.expireWarningDays);
 		return sslFactory;
 	}
 
