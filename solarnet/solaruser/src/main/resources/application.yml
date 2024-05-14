@@ -99,6 +99,7 @@ app:
       profile-id: "SolarNode"
       keystore-resource: "classpath:dogtag-client.jks"
       keystore-password: "changeit"
+      expire-warning-days: 5
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
