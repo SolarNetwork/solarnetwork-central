@@ -125,8 +125,6 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 	public void processActionMessage(ActionMessage<DataTransferRequest> message,
 			ActionMessageResultHandler<DataTransferRequest, DataTransferResponse> resultHandler) {
 		DataTransferRequest req = message.getMessage();
-		log.info("OCPP DataTransfer received from {}; message ID = {}; vendor ID = {}; data = {}",
-				message.getClientId(), req.getMessageId(), req.getVendorId(), req.getData());
 		final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
 		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.getId());
 

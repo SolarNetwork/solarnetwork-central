@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.ocpp.config;
 
+import javax.sql.DataSource;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -36,6 +38,7 @@ import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointSettingsDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.jdbc.JdbcChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.jdbc.JdbcChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralAuthorizationDao;
@@ -60,6 +63,9 @@ public class OcppDaoConfig {
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
+
+	@Autowired
+	private DataSource dataSource;
 
 	@Bean
 	public CentralAuthorizationDao ocppCentralAuthorizationDao() {
@@ -118,6 +124,12 @@ public class OcppDaoConfig {
 	@Bean
 	public ChargePointActionStatusDao ocppChargePointActionStatusDao() {
 		return new JdbcChargePointActionStatusDao(jdbcOperations);
+	}
+
+	@ConfigurationProperties(prefix = "app.ocpp.async-action-status-updater")
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	public AsyncJdbcChargePointActionStatusDao ocppChargePointActionStatusUpdateDao() {
+		return new AsyncJdbcChargePointActionStatusDao(dataSource);
 	}
 
 }

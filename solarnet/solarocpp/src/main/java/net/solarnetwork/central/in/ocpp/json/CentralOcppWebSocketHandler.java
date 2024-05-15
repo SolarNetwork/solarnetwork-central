@@ -48,7 +48,7 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
-import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
@@ -72,7 +72,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.7
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -82,7 +82,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
 	private ChargePointStatusDao chargePointStatusDao;
-	private ChargePointActionStatusDao chargePointActionStatusDao;
+	private ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao;
 	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
@@ -216,7 +216,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			final String cpIdentifier = msg.getMessage().getClientId().getIdentifier();
 			final Action action = msg.getMessage().getAction();
 			final String msgId = msg.getMessage().getMessageId();
-			final ChargePointActionStatusDao statusDao = getChargePointActionStatusDao();
+			final ChargePointActionStatusUpdateDao statusDao = getChargePointActionStatusUpdateDao();
 			if ( statusDao != null ) {
 				ChargePointConnectorKey connectorId = (connectorIdExtractor != null
 						? connectorIdExtractor.apply(msg.getMessage().getMessage())
@@ -584,21 +584,22 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 * Get the charge point action status DAO.
 	 * 
 	 * @return the DAO
-	 * @since 2.3
+	 * @since 2.7
 	 */
-	public ChargePointActionStatusDao getChargePointActionStatusDao() {
-		return chargePointActionStatusDao;
+	public ChargePointActionStatusUpdateDao getChargePointActionStatusUpdateDao() {
+		return chargePointActionStatusUpdateDao;
 	}
 
 	/**
 	 * Set the charge point action status DAO.
 	 * 
-	 * @param chargePointActionStatusDao
+	 * @param chargePointActionStatusUpdateDao
 	 *        the DAO to set
-	 * @since 2.3
+	 * @since 2.7
 	 */
-	public void setChargePointActionStatusDao(ChargePointActionStatusDao chargePointActionStatusDao) {
-		this.chargePointActionStatusDao = chargePointActionStatusDao;
+	public void setChargePointActionStatusUpdateDao(
+			ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao) {
+		this.chargePointActionStatusUpdateDao = chargePointActionStatusUpdateDao;
 	}
 
 	/**

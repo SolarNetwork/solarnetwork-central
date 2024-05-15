@@ -94,7 +94,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </pre>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MeterTransferDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -150,8 +150,6 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 	public void processActionMessage(ActionMessage<DataTransferRequest> message,
 			ActionMessageResultHandler<DataTransferRequest, DataTransferResponse> resultHandler) {
 		DataTransferRequest req = message.getMessage();
-		log.info("OCPP DataTransfer received from {}; message ID = {}; vendor ID = {}; data = {}",
-				message.getClientId(), req.getMessageId(), req.getVendorId(), req.getData());
 		final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
 		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.getId());
 

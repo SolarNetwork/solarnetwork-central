@@ -44,7 +44,7 @@ import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterc
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
-import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v201.service.ConnectorKeyExtractor;
@@ -60,7 +60,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * OCPP v2.0.1 web socket configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 @EnableWebSocket
@@ -95,7 +95,7 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 	private ChargePointStatusDao chargePointStatusDao;
 
 	@Autowired
-	private ChargePointActionStatusDao chargePointActionStatusDao;
+	private ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao;
 
 	@Autowired
 	@Qualifier(OCPP_V201)
@@ -127,7 +127,7 @@ public class OcppV201WebSocketConfig implements WebSocketConfigurer {
 		}
 		handler.setApplicationMetadata(applicationMetadata);
 		handler.setChargePointStatusDao(chargePointStatusDao);
-		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
+		handler.setChargePointActionStatusUpdateDao(chargePointActionStatusUpdateDao);
 		handler.setConnectorIdExtractor(new ConnectorKeyExtractor());
 		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V201_TOPIC);
 		return handler;

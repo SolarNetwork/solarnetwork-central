@@ -21,6 +21,10 @@ app:
     ttl: 60
     heap-max-entries: 10000
     disk-max-size-mb: 100
+  ocpp.async-action-status-updater:
+    connection-recovery-delay: 5000
+    stat-log-update-count: 1000
+    update-delay: 0
   ocpp.v16:
     cs:
       boot-notification:
