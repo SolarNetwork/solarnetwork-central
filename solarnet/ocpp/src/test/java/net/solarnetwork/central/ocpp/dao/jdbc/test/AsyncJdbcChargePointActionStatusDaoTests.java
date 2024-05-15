@@ -122,12 +122,16 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 
 	public static interface TestFunction {
 
-		void apply();
+		void apply() throws Exception;
 	}
 
 	private void test(TestFunction action) {
 		try {
 			action.apply();
+		} catch ( RuntimeException e ) {
+			throw e;
+		} catch ( Exception e ) {
+			throw new RuntimeException(e);
 		} finally {
 			jdbcTemplate.execute("delete from solarev.ocpp_charge_point_action_status");
 			jdbcTemplate.execute("delete from solarev.ocpp_charge_point");
@@ -165,6 +169,7 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		test(() -> {
 			// WHEN
 			dao.updateActionTimestamp(TEST_USER_ID, TEST_CHARGER_IDENT, null, action, messageId, ts);
+			Thread.sleep(200L);
 			dao.shutdownAndWait(Duration.ofSeconds(2));
 
 			// THEN
