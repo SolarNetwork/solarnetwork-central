@@ -69,7 +69,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * </p>
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 
@@ -149,8 +149,6 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 	public void processActionMessage(ActionMessage<DataTransferRequest> message,
 			ActionMessageResultHandler<DataTransferRequest, DataTransferResponse> resultHandler) {
 		DataTransferRequest req = message.getMessage();
-		log.info("OCPP DataTransfer received from {}; message ID = {}; vendor ID = {}; data = {}",
-				message.getClientId(), req.getMessageId(), req.getVendorId(), req.getData());
 		final CentralChargePoint cp = pubSupport.chargePoint(message.getClientId());
 		final ChargePointSettings cps = pubSupport.settingsForChargePoint(cp.getUserId(), cp.getId());
 

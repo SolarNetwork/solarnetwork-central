@@ -58,7 +58,7 @@ import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
-import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusDao;
+import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
@@ -83,7 +83,7 @@ import ocpp.v16.jakarta.cs.StatusNotificationRequest;
  * Test cases for the {@link CentralOcppWebSocketHandler} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @ExtendWith(MockitoExtension.class)
 public class CentralOcppWebSocketHandlerV16Tests {
@@ -104,7 +104,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 	private ChargePointStatusDao chargePointStatusDao;
 
 	@Mock
-	private ChargePointActionStatusDao chargePointActionStatusDao;
+	private ChargePointActionStatusUpdateDao chargePointActionStatusDao;
 
 	@Mock
 	private WebSocketSession session;
@@ -134,7 +134,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		handler.setInstructionDao(nodeInstructionDao);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
 		handler.setChargePointStatusDao(chargePointStatusDao);
-		handler.setChargePointActionStatusDao(chargePointActionStatusDao);
+		handler.setChargePointActionStatusUpdateDao(chargePointActionStatusDao);
 		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		handler.setApplicationMetadata(APP_META);
 		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);

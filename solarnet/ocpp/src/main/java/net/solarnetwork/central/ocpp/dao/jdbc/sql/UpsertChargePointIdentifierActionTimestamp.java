@@ -37,7 +37,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
  * already present.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UpsertChargePointIdentifierActionTimestamp
 		implements PreparedStatementCreator, SqlProvider {
@@ -110,6 +110,15 @@ public class UpsertChargePointIdentifierActionTimestamp
 
 	@Override
 	public String getSql() {
+		return sql();
+	}
+
+	/**
+	 * Get the SQL used by this class.
+	 * 
+	 * @return the SQL
+	 */
+	public static String sql() {
 		return """
 				INSERT INTO solarev.ocpp_charge_point_action_status (user_id, cp_id, evse_id, conn_id, action, msg_id, ts)
 				SELECT cp.user_id, cp.id, ? AS evse_id, ? AS conn_id, ? AS action, ? as msg_id, ? as ts
@@ -125,14 +134,45 @@ public class UpsertChargePointIdentifierActionTimestamp
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement ps = con.prepareStatement(getSql());
-		ps.setInt(1, evseId != null ? evseId.intValue() : 0);
-		ps.setInt(2, connectorId != null ? connectorId.intValue() : 0);
+		prepareStatement(ps, userId, chargePointIdentifier, evseId != null ? evseId.intValue() : 0,
+				connectorId != null ? connectorId.intValue() : 0, action, messageId, date);
+		return ps;
+	}
+
+	/**
+	 * Prepare a statement, assuming SQL as returned by {@link #sql()}.
+	 * 
+	 * 
+	 * 
+	 * @param ps
+	 *        the statement to prepare
+	 * @param userId
+	 *        the user ID
+	 * @param chargePointIdentifier
+	 *        the charge point identifier
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID
+	 * @param action
+	 *        the action
+	 * @param messageId
+	 *        the mssage ID
+	 * @param date
+	 *        the date
+	 * @throws SQLException
+	 *         if any SQL erroor occurs
+	 */
+	public static final void prepareStatement(PreparedStatement ps, long userId,
+			String chargePointIdentifier, int evseId, int connectorId, String action, String messageId,
+			Instant date) throws SQLException {
+		ps.setInt(1, evseId);
+		ps.setInt(2, connectorId);
 		ps.setString(3, action);
 		ps.setString(4, messageId);
 		ps.setTimestamp(5, Timestamp.from(date));
 		ps.setLong(6, userId);
 		ps.setString(7, chargePointIdentifier);
-		return ps;
 	}
 
 }

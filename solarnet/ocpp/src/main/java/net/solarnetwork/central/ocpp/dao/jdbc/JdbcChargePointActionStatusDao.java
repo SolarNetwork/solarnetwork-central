@@ -50,7 +50,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link ChargePointActionStatusDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDao {
 
@@ -69,7 +69,11 @@ public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDa
 		this.jdbcOps = requireNonNullArgument(jdbcOps, "jdbcOps");
 	}
 
-	@Override
+	public void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer connectorId,
+			String action, String messageId, Instant date) {
+		updateActionTimestamp(userId, chargePointIdentifier, 0, connectorId, action, messageId, date);
+	}
+
 	public void updateActionTimestamp(Long userId, String chargePointIdentifier, Integer evseId,
 			Integer connectorId, String action, String messageId, Instant date) {
 		var sql = new UpsertChargePointIdentifierActionTimestamp(userId, chargePointIdentifier, evseId,
