@@ -25,6 +25,7 @@ app:
     connection-recovery-delay: 5000
     stat-log-update-count: 1000
     update-delay: 0
+    buffer-removal-lag-alert-threshold: 1000
   ocpp.v16:
     cs:
       boot-notification:

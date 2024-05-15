@@ -34,15 +34,17 @@ public enum AsyncJdbcChargePointActionStatusCount implements Stat {
 
 	ResultsAdded(0, "results added"),
 
-	WriterThreadsStarted(1, "write threads started"),
+	ResultsRemoved(1, "results removed"),
 
-	WriterThreadsEnded(2, "write threads ended"),
+	WriterThreadsStarted(2, "write threads started"),
 
-	ConnectionsCreated(3, "JDBC connections created"),
+	WriterThreadsEnded(3, "write threads ended"),
 
-	UpdatesExecuted(4, "SQL updates executed"),
+	ConnectionsCreated(4, "JDBC connections created"),
 
-	UpdatesFailed(5, "SQL updates failed"),
+	UpdatesExecuted(5, "SQL updates executed"),
+
+	UpdatesFailed(6, "SQL updates failed"),
 
 	;
 

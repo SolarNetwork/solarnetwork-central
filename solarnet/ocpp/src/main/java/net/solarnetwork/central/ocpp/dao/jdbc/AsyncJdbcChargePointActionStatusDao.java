@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc;
 
+import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -65,15 +66,19 @@ public class AsyncJdbcChargePointActionStatusDao
 	/** The default value for the {@code connecitonRecoveryDelay} property. */
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 5000;
 
+	/** The {@code bufferRemovalLagAlertThreshold} default value. */
+	public static final int DEFAULT_BUFFER_REMOVAL_LAG_ALERT_THRESHOLD = 500;
+
 	private static final Logger log = LoggerFactory.getLogger(AsyncJdbcChargePointActionStatusDao.class);
 
 	private final DataSource dataSource;
 	private final BlockingQueue<ChargePointActionStatusUpdate> statuses;
-	private final StatCounter statCounter;
+	private final StatCounter stats;
 
 	private WriterThread writerThread;
 	private long updateDelay;
 	private long connectionRecoveryDelay;
+	private int bufferRemovalLagAlertThreshold;
 
 	/**
 	 * Constructor.
@@ -114,7 +119,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 *        the JDBC data source to use
 	 * @param statuses
 	 *        the map to use for tracking status updates
-	 * @param statCounter
+	 * @param stats
 	 *        the statistics counter
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
@@ -124,10 +129,11 @@ public class AsyncJdbcChargePointActionStatusDao
 		super();
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
 		this.statuses = requireNonNullArgument(statuses, "statuses");
-		this.statCounter = requireNonNullArgument(statCounter, "statCounter");
+		this.stats = requireNonNullArgument(statCounter, "stats");
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
 		setStatLogUpdateCount(DEFAULT_STAT_LOG_UPDATE_COUNT);
+		setBufferRemovalLagAlertThreshold(DEFAULT_BUFFER_REMOVAL_LAG_ALERT_THRESHOLD);
 	}
 
 	@Override
@@ -147,7 +153,7 @@ public class AsyncJdbcChargePointActionStatusDao
 		ChargePointActionStatusUpdate upd = new ChargePointActionStatusUpdate(userId,
 				chargePointIdentifier, evseId, connectorId, action, messageId, date);
 		if ( statuses.offer(upd) ) {
-			statCounter.incrementAndGet(AsyncJdbcChargePointActionStatusCount.ResultsAdded);
+			stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.ResultsAdded);
 		}
 	}
 
@@ -176,7 +182,7 @@ public class AsyncJdbcChargePointActionStatusDao
 
 		@Override
 		public void run() {
-			statCounter.incrementAndGet(AsyncJdbcChargePointActionStatusCount.WriterThreadsStarted);
+			stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.WriterThreadsStarted);
 			try {
 				while ( keepGoing.get() ) {
 					keepGoingWithConnection.set(true);
@@ -204,7 +210,7 @@ public class AsyncJdbcChargePointActionStatusDao
 					}
 				}
 			} finally {
-				statCounter.incrementAndGet(AsyncJdbcChargePointActionStatusCount.WriterThreadsEnded);
+				stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.WriterThreadsEnded);
 			}
 		}
 
@@ -216,15 +222,15 @@ public class AsyncJdbcChargePointActionStatusDao
 		private Boolean execute() throws SQLException {
 			final DataSource ds = dataSource;
 			try (Connection conn = ds.getConnection()) {
-				statCounter.incrementAndGet(AsyncJdbcChargePointActionStatusCount.ConnectionsCreated);
+				stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = createPreparedStatement(conn);
 				do {
 					try {
+						flushUpdates(stmt);
 						if ( Thread.interrupted() ) {
 							throw new InterruptedException();
 						}
-						flushUpdates(stmt);
 					} catch ( InterruptedException e ) {
 						log.info("Writer thread interrupted: exiting now.");
 						return false;
@@ -236,30 +242,27 @@ public class AsyncJdbcChargePointActionStatusDao
 
 		private void flushUpdates(PreparedStatement stmt) throws SQLException, InterruptedException {
 			while ( keepGoingWithConnection.get() ) {
-				var upd = statuses.poll();
-				if ( upd != null ) {
-					try {
-						UpsertChargePointIdentifierActionTimestamp.prepareStatement(stmt,
-								upd.getUserId(), upd.getChargePointIdentifier(), upd.getEvseId(),
-								upd.getConnectorId(), upd.getAction(), upd.getMessageId(),
-								upd.getDate());
-						stmt.execute();
-						statCounter
-								.incrementAndGet(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
-					} catch ( SQLException e ) {
-						statCounter.incrementAndGet(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-						throw e;
-					} catch ( Exception e ) {
-						statCounter.incrementAndGet(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
-						RuntimeException re;
-						if ( e instanceof RuntimeException ) {
-							re = (RuntimeException) e;
-						} else {
-							re = new RuntimeException(
-									"Exception flushing OCPP charge point action status", e);
-						}
-						throw re;
+				var upd = statuses.take();
+				stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.ResultsRemoved);
+				try {
+					UpsertChargePointIdentifierActionTimestamp.prepareStatement(stmt, upd.getUserId(),
+							upd.getChargePointIdentifier(), upd.getEvseId(), upd.getConnectorId(),
+							upd.getAction(), upd.getMessageId(), upd.getDate());
+					stmt.execute();
+					stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted);
+				} catch ( SQLException e ) {
+					stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
+					throw e;
+				} catch ( Exception e ) {
+					stats.incrementAndGet(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
+					RuntimeException re;
+					if ( e instanceof RuntimeException ) {
+						re = (RuntimeException) e;
+					} else {
+						re = new RuntimeException("Exception flushing OCPP charge point action status",
+								e);
 					}
+					throw re;
 				}
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);
@@ -339,19 +342,29 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	@Override
 	public Result performPingTest() throws Exception {
+		// verify buffer removals does not lag additions
+		final long addCount = stats.get(AsyncJdbcChargePointActionStatusCount.ResultsAdded);
+		final long removeLag = addCount
+				- stats.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved);
 		final WriterThread t = this.writerThread;
-		boolean writerRunning = t != null && t.isAlive();
+		final boolean writerRunning = t != null && t.isAlive();
 		Map<String, Long> statMap = new LinkedHashMap<>(
 				AsyncJdbcChargePointActionStatusCount.values().length);
 		for ( AsyncJdbcChargePointActionStatusCount s : AsyncJdbcChargePointActionStatusCount
 				.values() ) {
-			statMap.put(s.toString(), statCounter.get(s));
+			statMap.put(s.toString(), stats.get(s));
+		}
+		if ( removeLag > bufferRemovalLagAlertThreshold ) {
+			return new PingTestResult(false,
+					format("Buffer removal lag %d > %d", removeLag, bufferRemovalLagAlertThreshold),
+					statMap);
 		}
 		if ( !writerRunning ) {
 			return new PingTestResult(false,
 					(writerThread == null ? "Writer thread missing." : "Writer thread dead."), statMap);
 		}
-		return new PingTestResult(true, "Writer thread alive.", statMap);
+		return new PingTestResult(true, format("Processed %d updates; lag %d.", addCount, removeLag),
+				statMap);
 	}
 
 	/**
@@ -397,7 +410,35 @@ public class AsyncJdbcChargePointActionStatusDao
 	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
 	 */
 	public void setStatLogUpdateCount(int statLogUpdateCount) {
-		statCounter.setLogFrequency(statLogUpdateCount);
+		stats.setLogFrequency(statLogUpdateCount);
 	}
 
+	/**
+	 * Get the datum cache removal alert threshold.
+	 *
+	 * @return the threshold
+	 */
+	public int getBufferRemovalLagAlertThreshold() {
+		return bufferRemovalLagAlertThreshold;
+	}
+
+	/**
+	 * Set the datum cache removal alert threshold.
+	 *
+	 * <p>
+	 * This threshold represents the <i>difference</i> between the
+	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsAdded} and
+	 * {@link AsyncJdbcChargePointActionStatusCount#ResultsRemoved} statistics.
+	 * If the {@code ResultsRemoved} count lags behind {@code ResultsAdded} it
+	 * means updates are not getting persisted fast enough. Passing this
+	 * threshold will trigger a failure {@link PingTest} result in
+	 * {@link #performPingTest()}.
+	 * </p>
+	 *
+	 * @param bufferRemovalLagAlertThreshold
+	 *        the threshold to set
+	 */
+	public void setBufferRemovalLagAlertThreshold(int bufferRemovalLagAlertThreshold) {
+		this.bufferRemovalLagAlertThreshold = bufferRemovalLagAlertThreshold;
+	}
 }

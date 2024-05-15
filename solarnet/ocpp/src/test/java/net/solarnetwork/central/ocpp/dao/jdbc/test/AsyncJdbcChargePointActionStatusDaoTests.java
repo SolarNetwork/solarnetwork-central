@@ -142,6 +142,9 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 		then(queue).as("Queue emptied").isEmpty();
 		then(statCounter).as("ResultsAdded stat tracked")
 				.returns(added, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsAdded))
+				.as("ResultsRemoved stat tracked")
+				.returns(updated + failed,
+						(s) -> s.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved))
 				.as("UpdatesExecuted stat tracked")
 				.returns(updated, (s) -> s.get(AsyncJdbcChargePointActionStatusCount.UpdatesExecuted))
 				.as("UpdatesFailed stat tracked")
