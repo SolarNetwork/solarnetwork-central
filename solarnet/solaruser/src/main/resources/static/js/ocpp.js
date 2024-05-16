@@ -2,6 +2,7 @@ $(document).ready(function() {
 	'use strict';
 
 	$('#ocpp-management').first().each(function ocppManagement() {
+		
 		/**
 		 * Resolve the action directly.
 		 */
@@ -277,8 +278,9 @@ $(document).ready(function() {
 				model.createdDisplay = moment(config.created).format('D MMM YYYY');
 				model.username = config.username;
 	
-				var allowedChargePoints = SolarReg.arrayAsDelimitedString(config.allowedChargePoints);
-				model.allowedChargePoints = allowedChargePoints || '*';
+				model.allowedChargePoints = Array.isArray(config.allowedChargePoints) && config.allowedChargePoints.length > 0
+					? SolarReg.arrayAsDelimitedString(config.allowedChargePoints.sort(SolarReg.naturalSort))
+					: '*';
 	
 				return model;
 			});

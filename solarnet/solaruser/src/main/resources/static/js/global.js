@@ -16,20 +16,37 @@ var SolarReg = {
 	    		+msg +'</div>').insertBefore(el);
 	},
 
-	solarUserURL : function(relativeURL) {
+	solarUserURL: function(relativeURL) {
 		return $('meta[name=solarUserRootURL]').attr('content') + relativeURL;
 	},
 
-	solarUserPublicURL : function(relativeURL) {
+	solarUserPublicURL: function(relativeURL) {
 		return $('meta[name=solarUserRootPublicURL]').attr('content').replace(/\/$/, '') + relativeURL;
 	},
 
-	csrfData : (function() {
+	csrfData: (function() {
 		var csrf = $("meta[name='csrf']").attr("content"),
 			header = $("meta[name='csrf_header']").attr("content");
 		return {token:csrf,headerName:header};
 	}()),
+	
+	/**
+	 * A case-insensitive, numeric-aware natural sort collator.
+	 * 
+	 * @type {Intl.Collator}
+	 */
+	naturalSortCollator: new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'}),
+
 };
+
+/**
+ * Comparison function using "natural sort".
+ *
+ * @param {string} left the element to insert the alert before
+ * @param {string} right an alert class to add
+ * @returns {number} -1, 0, or 1 if `left` is less than, equal to, or greater than `right`
+ */
+SolarReg.naturalSort = SolarReg.naturalSortCollator.compare;
 
 /**
  * Get the CSRF token value or set the token as a request header on an XHR object.
