@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
+import net.solarnetwork.central.common.mixin.config.VirtualThreadTaskConfig;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration;
@@ -53,6 +54,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarOcppApp.class,
 })
 @Import({
+		VirtualThreadTaskConfig.class,
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetCommonSecurityConfiguration.class,

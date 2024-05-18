@@ -1,5 +1,5 @@
 /* ==================================================================
- * TaskConfig.java - 20/10/2021 4:56:03 PM
+ * VirtualThreadTaskConfig.java - 20/10/2021 4:56:03 PM
  * 
  * Copyright 2021 SolarNetwork.net Dev Team
  * 
@@ -20,52 +20,52 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.in.ocpp.config;
+package net.solarnetwork.central.common.mixin.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.task.SimpleAsyncTaskExecutorBuilder;
+import org.springframework.boot.task.SimpleAsyncTaskSchedulerBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 /**
- * Task management configuration.
+ * Task management configuration using virtual threads.
  * 
  * @author matt
  * @version 1.0
  */
 @Configuration
-@EnableScheduling
-public class TaskConfig implements SchedulingConfigurer {
+public class VirtualThreadTaskConfig implements SchedulingConfigurer {
 
 	@Override
 	public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
 		taskRegistrar.setScheduler(taskScheduler());
 	}
 
-	@ConfigurationProperties(prefix = "app.task.scheduler")
-	@Bean(destroyMethod = "shutdown")
+	/**
+	 * General task scheduler.
+	 * 
+	 * @return the scheduler
+	 */
+	@Bean
 	public TaskScheduler taskScheduler() {
-		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-		scheduler.setThreadNamePrefix("SolarNet-Sched-");
-		scheduler.setPoolSize(1);
-		scheduler.setRemoveOnCancelPolicy(true);
-		return scheduler;
+		return new SimpleAsyncTaskSchedulerBuilder().virtualThreads(true)
+				.threadNamePrefix("SolarNet-Sched-").build();
 	}
 
+	/**
+	 * General task executor.
+	 * 
+	 * @return the executor
+	 */
 	@Primary
-	@ConfigurationProperties(prefix = "app.task.executor")
-	@Bean(destroyMethod = "shutdown")
+	@Bean
 	public AsyncTaskExecutor taskExecutor() {
-		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setThreadNamePrefix("SolarNet-");
-		executor.setCorePoolSize(2);
-		return executor;
+		return new SimpleAsyncTaskExecutorBuilder().virtualThreads(true).threadNamePrefix("SolarNet-")
+				.build();
 	}
 }
