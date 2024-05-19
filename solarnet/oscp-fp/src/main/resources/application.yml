@@ -156,9 +156,6 @@ server:
     min-response-size: 2048
   error.whitelabel.enabled: false
   port: 9084
-  tomcat.threads:
-    min-spare: 1
-    max: 5
 
 spring:
   jmx.enabled: false
@@ -171,6 +168,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "http://localhost/idp/path"
+  threads.virtual.enabled: true
 
 ---
 spring:
