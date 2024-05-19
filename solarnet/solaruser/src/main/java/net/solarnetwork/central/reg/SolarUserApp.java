@@ -69,7 +69,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * Main entry point for the SolarUser application.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
