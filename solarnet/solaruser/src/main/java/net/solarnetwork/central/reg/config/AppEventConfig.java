@@ -37,7 +37,7 @@ import net.solarnetwork.event.SimpleAppEventManager;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class AppEventConfig {
 
 	@Autowired
