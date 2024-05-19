@@ -129,13 +129,6 @@ app:
         write-timeout-seconds: -1
     instr-publish:
       publish-qos-level: 1
-  task.executor:
-    thread-name-prefix: "SolarNet-"
-    core-pool-size: 10
-    allow-core-thread-time-out: false
-  task.scheduler:
-    thread-name-prefix: "SolarNet-Sched-"
-    pool-size: 2
   user.events:
     async-appender:
       threads: 1
@@ -197,6 +190,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "http://localhost/idp/path"
+  threads.virtual.enabled: true
 
 ---
 spring:
