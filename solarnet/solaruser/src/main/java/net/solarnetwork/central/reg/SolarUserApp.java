@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.aop.SolarNetCommonAopConfiguration;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
+import net.solarnetwork.central.common.mixin.config.VirtualThreadTaskConfig;
 import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.datum.export.config.SolarNetDatumExportConfiguration;
@@ -103,6 +104,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarUserApp.class,
 })
 @Import({
+		VirtualThreadTaskConfig.class,
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetCommonMailConfiguration.class,
