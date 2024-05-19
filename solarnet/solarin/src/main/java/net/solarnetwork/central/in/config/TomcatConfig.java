@@ -24,6 +24,7 @@ package net.solarnetwork.central.in.config;
 
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.valves.SSLValve;
+import org.apache.tomcat.util.threads.VirtualThreadExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
@@ -35,7 +36,7 @@ import org.springframework.context.annotation.Configuration;
  * Configuration for Tomcat when running dual HTTP/HTTPS.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class TomcatConfig {
@@ -46,6 +47,8 @@ public class TomcatConfig {
 			@Value("${server.http.port}") int httpPort) {
 		Connector connector = new Connector(TomcatServletWebServerFactory.DEFAULT_PROTOCOL);
 		connector.setPort(httpPort);
+		connector.getProtocolHandler().setExecutor(new VirtualThreadExecutor("tomcat-handler-http-"));
+
 		return (tomcat) -> {
 			tomcat.addAdditionalTomcatConnectors(connector);
 			tomcat.addEngineValves(new SSLValve());

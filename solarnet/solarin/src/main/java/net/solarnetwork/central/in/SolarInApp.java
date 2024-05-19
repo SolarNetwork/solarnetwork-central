@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
+import net.solarnetwork.central.common.mixin.config.VirtualThreadTaskConfig;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
@@ -42,7 +43,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * Main entry point for the SolarIn application.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 // @formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
@@ -52,6 +53,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarInApp.class,
 })
 @Import({
+		VirtualThreadTaskConfig.class,
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetCommonSecurityConfiguration.class,
