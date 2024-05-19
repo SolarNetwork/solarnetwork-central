@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.export.config;
 
-import java.util.concurrent.ExecutorService;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.classic.MinimalHttpClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.task.TaskExecutor;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.dest.ftp.FtpDatumExportDestinationService;
@@ -46,7 +46,7 @@ import net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputForma
  * Datum export standard service configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class DatumExportStandardServiceConfig {
@@ -55,7 +55,7 @@ public class DatumExportStandardServiceConfig {
 	private String temporaryDir;
 
 	@Autowired
-	private ExecutorService executorService;
+	private TaskExecutor taskExecutor;
 
 	@Bean
 	public DatumExportOutputFormatService csvDatumExportOutputFormatService() {
@@ -85,7 +85,7 @@ public class DatumExportStandardServiceConfig {
 
 	@Bean
 	public DatumExportDestinationService s3DatumExportDestinationService() {
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(taskExecutor);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(S3DestinationProperties.class.getName());

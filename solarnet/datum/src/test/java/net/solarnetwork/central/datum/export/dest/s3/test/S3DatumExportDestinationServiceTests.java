@@ -42,8 +42,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,6 +51,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.util.FileCopyUtils;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -89,7 +89,7 @@ public class S3DatumExportDestinationServiceTests {
 
 	private static Properties TEST_PROPS;
 
-	private ExecutorService executorService;
+	private TaskExecutor taskExecutor;
 
 	@BeforeAll
 	public static void setupClass() {
@@ -109,13 +109,13 @@ public class S3DatumExportDestinationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		executorService = Executors.newCachedThreadPool();
+		taskExecutor = new SimpleAsyncTaskExecutor();
 	}
 
 	@AfterEach
 	public void teardown() {
-		if ( executorService != null ) {
-			executorService.shutdownNow();
+		if ( taskExecutor != null ) {
+			((SimpleAsyncTaskExecutor) taskExecutor).close();
 		}
 	}
 
@@ -156,7 +156,7 @@ public class S3DatumExportDestinationServiceTests {
 	@Test
 	public void settingSpecifiers() {
 		// given
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(taskExecutor);
 
 		// when
 		List<SettingSpecifier> specs = service.getSettingSpecifiers();
@@ -204,7 +204,7 @@ public class S3DatumExportDestinationServiceTests {
 		AmazonS3 client = getS3Client();
 		cleanS3Folder(client);
 
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(taskExecutor);
 
 		Instant ts = LocalDateTime.of(2018, 4, 11, 11, 50).atZone(ZoneId.of("Pacific/Auckland"))
 				.toInstant();

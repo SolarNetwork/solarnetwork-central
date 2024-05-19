@@ -34,6 +34,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.support.ExecutorServiceAdapter;
 import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
@@ -65,7 +67,7 @@ import software.amazon.awssdk.transfer.s3.progress.TransferProgressSnapshot;
  * AWS S3 implementation of {@link DatumExportDestinationService}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class S3DatumExportDestinationService extends BaseDatumExportDestinationService {
 
@@ -74,14 +76,16 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 	/**
 	 * Constructor.
 	 *
-	 * @param executorService
-	 *        the executor service
+	 * @param taskExecutor
+	 *        the task executor
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public S3DatumExportDestinationService(ExecutorService executorService) {
+	public S3DatumExportDestinationService(TaskExecutor taskExecutor) {
 		super("net.solarnetwork.central.datum.export.dest.s3.S3DatumExportDestinationService");
-		this.executorService = requireNonNullArgument(executorService, "executorService");
+
+		this.executorService = new ExecutorServiceAdapter(
+				requireNonNullArgument(taskExecutor, "taskExecutor"));
 	}
 
 	@Override
