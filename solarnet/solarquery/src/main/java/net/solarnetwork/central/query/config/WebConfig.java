@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -74,7 +75,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -83,6 +84,9 @@ public class WebConfig implements WebMvcConfigurer {
 
 	/** A qualifier for the source ID path matcher. */
 	public static final String SOURCE_ID_PATH_MATCHER = "source-id";
+
+	@Value("${app.query-cache.filter.lock-pool-capacity:128}")
+	private int lockPoolCapacity = 128;
 
 	@Autowired(required = false)
 	@Qualifier(QUERY_CACHE)
@@ -185,11 +189,11 @@ public class WebConfig implements WebMvcConfigurer {
 		converters.add(xml);
 	}
 
-	@Bean(autowireCandidate = false, initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	@Bean(autowireCandidate = false)
 	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
 	@ConfigurationProperties(prefix = "app.query-cache.filter")
 	public ContentCachingFilter contentCachingFilter() {
-		return new ContentCachingFilter(contentCachingService);
+		return new ContentCachingFilter(contentCachingService, lockPoolCapacity);
 	}
 
 	@Bean

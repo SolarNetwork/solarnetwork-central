@@ -24,6 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER;
 import static net.solarnetwork.central.web.support.ContentCachingService.CONTENT_CACHE_HEADER_MISS;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,8 +53,6 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.web.support.ContentCachingService.CompressionType;
-import net.solarnetwork.service.ServiceLifecycleObserver;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Filter for caching HTTP responses, returning cached data when possible.
@@ -63,48 +62,73 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  * 
  * @author matt
- * @version 2.1
+ * @version 3.0
  * @since 1.16
  */
-public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
+public class ContentCachingFilter implements Filter {
 
 	private static final long EPOCH = 1514764800000L; // 1 Jan 2018 GMT
 
 	private final AtomicLong requestCounter = new AtomicLong(System.currentTimeMillis() - EPOCH / 1000);
 
 	private final ContentCachingService contentCachingService;
-	private Set<String> methodsToCache = Collections.singleton("GET");
-	private BlockingQueue<LockAndCount> lockPool;
-	private int lockPoolCapacity = 128;
-	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
+	private final BlockingQueue<LockAndCount> lockPool;
+	private final ConcurrentMap<String, LockAndCount> requestLocks;
 
-	private final ConcurrentMap<String, LockAndCount> requestLocks = new ConcurrentHashMap<>(128);
+	private Set<String> methodsToCache = Collections.singleton("GET");
+	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	private static class LockAndCount implements Lock {
+	/**
+	 * A lock with a corresponding counter.
+	 */
+	public static class LockAndCount implements Lock {
 
 		private final int id;
 		private final AtomicInteger count;
-		private final Lock lock;
+		private final ReentrantLock lock;
 
-		private LockAndCount(int id, Lock lock) {
+		private LockAndCount(int id, ReentrantLock lock) {
 			super();
 			this.id = id;
 			this.lock = lock;
 			count = new AtomicInteger(0);
 		}
 
+		/**
+		 * Get the identifier.
+		 * 
+		 * @return the ID
+		 */
 		public int getId() {
 			return id;
 		}
 
-		public int incrementCount() {
+		/**
+		 * Get the count value.
+		 * 
+		 * @return the count
+		 */
+		public int count() {
+			return count.get();
+		}
+
+		private int incrementCount() {
 			return count.incrementAndGet();
 		}
 
-		public int decrementCount() {
+		private int decrementCount() {
 			return count.decrementAndGet();
+		}
+
+		/**
+		 * Test if the lock is locked (by any thread).
+		 * 
+		 * @return {@literal true} if the lock is locked by any thread
+		 */
+		public boolean isLocked() {
+			return lock.isLocked();
 		}
 
 		@Override
@@ -140,31 +164,58 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 	}
 
 	/**
-	 * Constructor.
+	 * Create a look pool.
 	 * 
-	 * @param contentCachingService
-	 *        the caching service to use
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 * @param lockPoolCapacity
+	 *        the desired capacity of the pool
+	 * @return the pool
 	 */
-	public ContentCachingFilter(ContentCachingService contentCachingService) {
-		super();
-		this.contentCachingService = ObjectUtils.requireNonNullArgument(contentCachingService,
-				"contentCachingService");
-	}
-
-	@Override
-	public void serviceDidStartup() {
+	public static BlockingQueue<LockAndCount> lockPoolWithCapacity(int lockPoolCapacity) {
 		List<LockAndCount> locks = new ArrayList<>(lockPoolCapacity);
 		for ( int i = 0; i < lockPoolCapacity; i++ ) {
 			locks.add(new LockAndCount(i, new ReentrantLock()));
 		}
-		lockPool = new ArrayBlockingQueue<>(lockPoolCapacity, false, locks);
+		return new ArrayBlockingQueue<>(lockPoolCapacity, false, locks);
 	}
 
-	@Override
-	public void serviceDidShutdown() {
-		// nothing
+	/**
+	 * Constructor.
+	 * 
+	 * @param contentCachingService
+	 *        the caching service to use
+	 * @param lockPoolCapacity
+	 *        the lock pool capacity
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public ContentCachingFilter(ContentCachingService contentCachingService, int lockPoolCapacity) {
+		this(contentCachingService, lockPoolWithCapacity(lockPoolCapacity),
+				new ConcurrentHashMap<>(128));
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param contentCachingService
+	 *        the caching service to use
+	 * @param lockPool
+	 *        the request lock pool to use; this must be pre-populated with the
+	 *        desired number of locks to use
+	 * @param requestLocks
+	 *        the request lock map to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null} or the lock pool is empty
+	 */
+	public ContentCachingFilter(ContentCachingService contentCachingService,
+			BlockingQueue<LockAndCount> lockPool, ConcurrentMap<String, LockAndCount> requestLocks) {
+		super();
+		this.contentCachingService = requireNonNullArgument(contentCachingService,
+				"contentCachingService");
+		this.lockPool = requireNonNullArgument(lockPool, "lockPool");
+		this.requestLocks = requireNonNullArgument(requestLocks, "requestLocks");
+		if ( lockPool.isEmpty() ) {
+			throw new IllegalArgumentException("The lock pool must not be empty.");
+		}
 	}
 
 	@Override
@@ -226,12 +277,14 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 			if ( !lock.tryLock(requestLockTimeout, TimeUnit.MILLISECONDS) ) {
 				origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 						"Timeout acquiring cache lock");
+				returnLock(key, lock, requestId, requestUri);
 				return;
 			}
 		} catch ( InterruptedException e ) {
 			// TODO: handle JSON response explicitly
 			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 					"Interrupted acquiring cache lock");
+			returnLock(key, lock, requestId, requestUri);
 			return;
 		}
 
@@ -271,16 +324,23 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 			}
 		} finally {
 			lock.unlock();
-			int count = lock.decrementCount();
-			if ( count < 1 ) {
-				if ( requestLocks.remove(key, lock) ) {
-					log.trace("{} [{}] Removed lock for key {}", requestId, requestUri, key);
-					if ( lockPool.offer(lock) ) {
-						log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri,
-								lock.getId());
-					}
-				}
+			returnLock(key, lock, requestId, requestUri);
+		}
+	}
+
+	private void returnLock(String key, LockAndCount lock, Long requestId, String requestUri) {
+		final int count = lock.decrementCount();
+		if ( count < 1 ) {
+			if ( requestLocks.remove(key, lock) ) {
+				log.trace("{} [{}] Removed lock for key {}", requestId, requestUri, key);
+				returnLockToPool(lock, requestId, requestUri);
 			}
+		}
+	}
+
+	private void returnLockToPool(LockAndCount lock, Long requestId, String requestUri) {
+		if ( lockPool.offer(lock) ) {
+			log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri, lock.getId());
 		}
 	}
 
@@ -306,16 +366,6 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 	 */
 	public void setRequestLockTimeout(long requestLockTimeout) {
 		this.requestLockTimeout = requestLockTimeout;
-	}
-
-	/**
-	 * Set the size of the lock pool, which limits concurrency.
-	 * 
-	 * @param lockPoolCapacity
-	 *        the lock pool capacity; defaults to 128
-	 */
-	public void setLockPoolCapacity(int lockPoolCapacity) {
-		this.lockPoolCapacity = lockPoolCapacity;
 	}
 
 }
