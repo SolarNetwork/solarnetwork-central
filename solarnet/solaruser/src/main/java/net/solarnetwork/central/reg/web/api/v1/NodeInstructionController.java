@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static java.util.Collections.singletonMap;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.jakarta.domain.Response.response;
@@ -31,14 +30,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -73,7 +72,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -86,6 +85,10 @@ public class NodeInstructionController {
 	/** The {@code executionResultMaxWait} property default value. */
 	public static final Duration DEFAULT_EXECUTION_RESULT_MAX_WAIT = Duration.ofSeconds(60);
 
+	private static final Map<String, Object> INSTRUCTION_EXEC_TIMEOUT_MESSAGE = Map
+			.of(InstructionStatus.MESSAGE_RESULT_PARAM, "Timeout waiting for instruction result.");
+
+	private final AsyncTaskExecutor taskExecutor;
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final PropertySerializerRegistrar propertySerializerRegistrar;
@@ -98,6 +101,8 @@ public class NodeInstructionController {
 	/**
 	 * Constructor.
 	 *
+	 * @param taskExecutor
+	 *        the task executor
 	 * @param instructorBiz
 	 *        the instructor service
 	 * @param nodeInstructionDao
@@ -109,10 +114,12 @@ public class NodeInstructionController {
 	 * @param propertySerializerRegistrar
 	 *        the registrar to use (may be {@literal null}
 	 */
-	public NodeInstructionController(InstructorBiz instructorBiz, NodeInstructionDao nodeInstructionDao,
-			ObjectMapper objectMapper, @Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
+	public NodeInstructionController(AsyncTaskExecutor taskExecutor, InstructorBiz instructorBiz,
+			NodeInstructionDao nodeInstructionDao, ObjectMapper objectMapper,
+			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
 		super();
+		this.taskExecutor = requireNonNullArgument(taskExecutor, "taskExecutor");
 		this.instructorBiz = requireNonNullArgument(instructorBiz, "instructorBiz");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
@@ -553,7 +560,8 @@ public class NodeInstructionController {
 		long allowedMaxWait = executionResultMaxWait.toMillis();
 		Long maxWait = (maxWaitMs == null ? allowedMaxWait
 				: Math.max(0, Math.min(allowedMaxWait, maxWaitMs)));
-		var deferred = new DeferredResult<Result<NodeInstruction>>(maxWait, instruction);
+		var deferred = new DeferredResult<Result<NodeInstruction>>(maxWait + 200L, instruction);
+		// use a virtual thread that can deal with long periods of waiting
 		Thread.startVirtualThread(() -> {
 			try {
 				NodeInstruction result = waitForResult(instruction, maxWait);
@@ -582,7 +590,7 @@ public class NodeInstructionController {
 		long allowedMaxWait = executionResultMaxWait.toMillis();
 		long maxWait = (maxWaitMs == null ? allowedMaxWait
 				: Math.max(0, Math.min(allowedMaxWait, maxWaitMs)));
-		var deferred = new DeferredResult<Result<List<NodeInstruction>>>(maxWait, instructions);
+		var deferred = new DeferredResult<Result<List<NodeInstruction>>>(maxWait + 200L, instructions);
 		Thread.startVirtualThread(() -> {
 			try {
 				List<NodeInstruction> result = waitForResults(instructions, maxWait);
@@ -599,53 +607,62 @@ public class NodeInstructionController {
 		if ( instructions == null || instructions.isEmpty() || maxWaitMs < 100 ) {
 			return instructions;
 		}
-		var futures = new ArrayList<Future<NodeInstruction>>(instructions.size());
-		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			long delay = executionResultDelay.toMillis();
-			long expire = System.currentTimeMillis() + maxWaitMs;
-			for ( NodeInstruction instruction : instructions ) {
-				futures.add(executor.submit(new Callable<NodeInstruction>() {
+		final int count = instructions.size();
+		final long delay = executionResultDelay.toMillis();
+		final long backOff = delay / 4;
+		final long expire = System.currentTimeMillis() + maxWaitMs;
+		final ConcurrentMap<Long, NodeInstruction> results = new ConcurrentHashMap<>(
+				instructions.size());
 
-					@Override
-					public NodeInstruction call() throws Exception {
-						while ( true ) {
-							try {
-								Thread.sleep(delay);
-							} catch ( InterruptedException e ) {
-								// ignore
-							}
-							var instr = nodeInstructionDao.get(instruction.getId());
-							if ( instr == null ) {
-								String msg = "Instruction [%d] not found".formatted(instruction.getId());
-								throw new IllegalStateException(msg);
-							}
-							if ( instr.getState() == InstructionState.Completed
-									|| instr.getState() == InstructionState.Declined ) {
-								return instr;
-							} else if ( System.currentTimeMillis() > expire ) {
-								// give up
-								String msg = "Timeout waiting for instruction [%d] to complete."
-										.formatted(instruction.getId());
-								throw new TimeoutException(msg);
-							}
-							// keep waiting for instruction to complete
-						}
-					}
-				}));
+		// block the calling thread, while spawning tasks to check each instruction
+		long currDelay = delay;
+		while ( System.currentTimeMillis() < expire && results.size() < count ) {
+			try {
+				Thread.sleep(currDelay);
+			} catch ( InterruptedException e ) {
+				// ignore
 			}
+			final CountDownLatch latch = new CountDownLatch(instructions.size());
+			for ( NodeInstruction instruction : instructions ) {
+				if ( results.containsKey(instruction.getId()) ) {
+					continue;
+				}
+				taskExecutor.execute(() -> {
+					try {
+						Thread.sleep(delay);
+					} catch ( InterruptedException e ) {
+						// ignore
+					}
+					try {
+						var instr = nodeInstructionDao.get(instruction.getId());
+						if ( instr == null ) {
+							String msg = "Instruction [%d] not found".formatted(instruction.getId());
+							throw new IllegalStateException(msg);
+						} else if ( instr.getState() == InstructionState.Completed
+								|| instr.getState() == InstructionState.Declined ) {
+							results.put(instruction.getId(), instr);
+						}
+					} finally {
+						latch.countDown();
+					}
+				});
+			}
+			try {
+				latch.await(expire - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+			} catch ( InterruptedException e ) {
+				// ignore and continue
+			}
+			currDelay += backOff;
 		}
 
 		var finalInstructions = new ArrayList<NodeInstruction>(instructions.size());
-		for ( ListIterator<Future<NodeInstruction>> itr = futures.listIterator(); itr.hasNext(); ) {
-			Future<NodeInstruction> f = itr.next();
-			NodeInstruction instr;
-			try {
-				instr = f.get();
-			} catch ( ExecutionException | InterruptedException e ) {
-				Throwable t = e.getCause();
-				instr = instructions.get(itr.previousIndex()).clone();
-				instr.setResultParameters(
-						singletonMap(InstructionStatus.MESSAGE_RESULT_PARAM, t.getMessage()));
+		for ( NodeInstruction instr : instructions ) {
+			NodeInstruction updated = results.get(instr.getId());
+			if ( updated != null ) {
+				instr = updated;
+			} else {
+				instr = instr.clone();
+				instr.setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
 			}
 			finalInstructions.add(instr);
 		}
