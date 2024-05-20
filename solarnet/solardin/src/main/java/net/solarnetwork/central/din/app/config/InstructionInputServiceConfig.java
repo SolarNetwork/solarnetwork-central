@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
@@ -43,7 +44,7 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
  * Core instruction service configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class InstructionInputServiceConfig implements InstructionInputConfiguration {
@@ -79,11 +80,14 @@ public class InstructionInputServiceConfig implements InstructionInputConfigurat
 	@Autowired
 	private Collection<ResponseTransformService> responseTransformServices;
 
+	@Autowired
+	private TaskExecutor taskExecutor;
+
 	@Bean
 	public DaoInstructionInputEndpointBiz instructionInputEndpointBiz() {
-		var biz = new DaoInstructionInputEndpointBiz(instructor, nodeOwnershipDao, endpointDao,
-				requestTransformDao, responseTransformDao, userMetadataDao, requestTransformServices,
-				responseTransformServices);
+		var biz = new DaoInstructionInputEndpointBiz(taskExecutor, instructor, nodeOwnershipDao,
+				endpointDao, requestTransformDao, responseTransformDao, userMetadataDao,
+				requestTransformServices, responseTransformServices);
 		biz.setUserEventAppenderBiz(userEventAppenderBiz);
 		return biz;
 	}

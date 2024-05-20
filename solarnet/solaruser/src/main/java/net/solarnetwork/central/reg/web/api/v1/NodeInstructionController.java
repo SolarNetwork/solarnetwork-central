@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -88,7 +88,7 @@ public class NodeInstructionController {
 	private static final Map<String, Object> INSTRUCTION_EXEC_TIMEOUT_MESSAGE = Map
 			.of(InstructionStatus.MESSAGE_RESULT_PARAM, "Timeout waiting for instruction result.");
 
-	private final AsyncTaskExecutor taskExecutor;
+	private final TaskExecutor taskExecutor;
 	private final ObjectMapper objectMapper;
 	private final ObjectMapper cborObjectMapper;
 	private final PropertySerializerRegistrar propertySerializerRegistrar;
@@ -114,7 +114,7 @@ public class NodeInstructionController {
 	 * @param propertySerializerRegistrar
 	 *        the registrar to use (may be {@literal null}
 	 */
-	public NodeInstructionController(AsyncTaskExecutor taskExecutor, InstructorBiz instructorBiz,
+	public NodeInstructionController(TaskExecutor taskExecutor, InstructorBiz instructorBiz,
 			NodeInstructionDao nodeInstructionDao, ObjectMapper objectMapper,
 			@Qualifier(JsonConfig.CBOR_MAPPER) ObjectMapper cborObjectMapper,
 			PropertySerializerRegistrar propertySerializerRegistrar) {
