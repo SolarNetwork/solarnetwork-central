@@ -62,7 +62,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
-import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -72,12 +71,13 @@ import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.PingTest;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link AsyncDatumCollector}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements UncaughtExceptionHandler {
 
@@ -92,7 +92,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 	private CacheManager cacheManager;
 	private NonClosingBufferingDelegatingCache datumCache;
 	private Cache<Serializable, Serializable> delegateDatumCache;
-	private CollectorStats stats;
+	private StatTracker stats;
 
 	private AsyncDatumCollector collector;
 	private List<Throwable> uncaughtExceptions;
@@ -133,7 +133,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		uncaughtExceptions = new ArrayList<>(2);
 		stored = Collections.synchronizedList(new ArrayList<>(1000));
 
-		stats = new CollectorStats("AsyncDatumCollector", 100);
+		stats = new StatTracker("AsyncDatumCollector", "datum.collector", log, 100);
 
 		collector = new AsyncDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
 				stats);
@@ -200,7 +200,8 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 			.returns(watermark, from(NonClosingBufferingDelegatingCache::getInternalSizeWatermark))
 			.as("Lag")
 			.returns(lag, (cache) -> {
-				return (int)(stats.get(CollectorStats.BasicCount.BufferAdds) - stats.get(CollectorStats.BasicCount.BufferRemovals));
+				return (int)(stats.get(AsyncDatumCollector.BasicCount.BufferAdds)
+						- stats.get(AsyncDatumCollector.BasicCount.BufferRemovals));
 			})
 			;
 		// @formatter:on

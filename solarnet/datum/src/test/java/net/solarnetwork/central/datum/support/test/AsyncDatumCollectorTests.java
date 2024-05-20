@@ -66,7 +66,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
-import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -76,12 +75,13 @@ import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.PingTest;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link AsyncDatumCollector}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
@@ -91,7 +91,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 	private PlatformTransactionManager txManager;
 	private CacheManager cacheManager;
 	private Cache<Serializable, Serializable> datumCache;
-	private CollectorStats stats;
+	private StatTracker stats;
 
 	private AsyncDatumCollector collector;
 	private List<Throwable> uncaughtExceptions;
@@ -129,7 +129,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 		uncaughtExceptions = new ArrayList<>(2);
 
-		stats = new CollectorStats("AsyncDatumCollector", 1);
+		stats = new StatTracker("AsyncDatumCollector", "data.collector", log, 1);
 
 		collector = new AsyncDatumCollector(datumCache, datumDao, new TransactionTemplate(txManager),
 				stats);
@@ -371,13 +371,13 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 		log.info("Ping result 1: {}", pingResult1.getProperties());
 		log.info("Ping result 2: {}", pingResult2.getProperties());
 
-		assertThat("Added 50 duplicate datum", stats.get(CollectorStats.BasicCount.BufferAdds),
+		assertThat("Added 50 duplicate datum", stats.get(AsyncDatumCollector.BasicCount.BufferAdds),
 				equalTo(50L));
-		assertThat("Removed 50 duplicate datum", stats.get(CollectorStats.BasicCount.BufferRemovals),
-				equalTo(50L));
-		assertThat("Received at least 1 datum", stats.get(CollectorStats.BasicCount.DatumReceived),
+		assertThat("Removed 50 duplicate datum",
+				stats.get(AsyncDatumCollector.BasicCount.BufferRemovals), equalTo(50L));
+		assertThat("Received at least 1 datum", stats.get(AsyncDatumCollector.BasicCount.DatumReceived),
 				greaterThanOrEqualTo(1L));
-		assertThat("Stored at least 1 datum", stats.get(CollectorStats.BasicCount.DatumStored),
+		assertThat("Stored at least 1 datum", stats.get(AsyncDatumCollector.BasicCount.DatumStored),
 				greaterThanOrEqualTo(1L));
 	}
 
@@ -427,8 +427,9 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 		verify(txStatus);
 
-		assertThat("Added stat", stats.get(CollectorStats.BasicCount.BufferAdds), equalTo(2L));
-		assertThat("Removed stat", stats.get(CollectorStats.BasicCount.BufferRemovals), equalTo(2L));
+		assertThat("Added stat", stats.get(AsyncDatumCollector.BasicCount.BufferAdds), equalTo(2L));
+		assertThat("Removed stat", stats.get(AsyncDatumCollector.BasicCount.BufferRemovals),
+				equalTo(2L));
 	}
 
 	@Test
