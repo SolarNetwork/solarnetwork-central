@@ -57,7 +57,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.web.support.ContentCachingService.CompressionType;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Filter for caching HTTP responses, returning cached data when possible.
@@ -82,7 +82,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	private final ContentCachingService contentCachingService;
 	private final BlockingQueue<LockAndCount> lockPool;
 	private final ConcurrentMap<String, LockAndCount> requestLocks;
-	private final StatCounter stats;
+	private final StatTracker stats;
 	private final int lockPoolCapacity;
 	private final AtomicInteger lockPoolMinize;
 
@@ -94,42 +94,24 @@ public class ContentCachingFilter implements Filter, PingTest {
 	/**
 	 * Statistics for the content caching filter.
 	 */
-	public enum ContentCachingFilterStats implements StatCounter.Stat {
+	public enum ContentCachingFilterStats {
 
 		/** Requests filtered. */
-		RequestsFiltered(0, "requests filtered"),
+		RequestsFiltered,
 
 		/** Lock pool borrows. */
-		LockPoolBorrows(1, "lock pool borrows"),
+		LockPoolBorrows,
 
 		/** Lock pool returns. */
-		LockPoolReturns(2, "lock pool returns"),
+		LockPoolReturns,
 
 		/** Lock pool borrow failures. */
-		LockPoolBorrowFailures(3, "lock pool borrow failures"),
+		LockPoolBorrowFailures,
 
 		/** Request lock failures. */
-		RequestLockFailures(4, "request lock failures"),
+		RequestLockFailures,
 
 		;
-
-		final int index;
-		final String description;
-
-		private ContentCachingFilterStats(int index, String description) {
-			this.index = index;
-			this.description = description;
-		}
-
-		@Override
-		public int getIndex() {
-			return index;
-		}
-
-		@Override
-		public String getDescription() {
-			return description;
-		}
 
 	}
 
@@ -269,9 +251,8 @@ public class ContentCachingFilter implements Filter, PingTest {
 		if ( lockPool.isEmpty() ) {
 			throw new IllegalArgumentException("The lock pool must not be empty.");
 		}
-		this.stats = new StatCounter("ContentCacheFilter",
-				"net.solarnetwork.central.web.ContentCachingFilter", log, DEFAULT_STAT_LOG_ACCESS_COUNT,
-				ContentCachingFilterStats.values());
+		this.stats = new StatTracker("ContentCacheFilter",
+				"net.solarnetwork.central.web.ContentCachingFilter", log, DEFAULT_STAT_LOG_ACCESS_COUNT);
 		this.lockPoolCapacity = lockPool.size();
 		this.lockPoolMinize = new AtomicInteger(lockPoolCapacity);
 	}
@@ -298,7 +279,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 			return;
 		}
 
-		stats.incrementAndGet(ContentCachingFilterStats.RequestsFiltered);
+		stats.increment(ContentCachingFilterStats.RequestsFiltered);
 
 		// get cache key for this request
 		final String key = contentCachingService.keyForRequest(origRequest);
@@ -313,9 +294,9 @@ public class ContentCachingFilter implements Filter, PingTest {
 			try {
 				LockAndCount l = lockPool.poll(requestLockTimeout, TimeUnit.MILLISECONDS);
 				if ( l == null ) {
-					stats.incrementAndGet(ContentCachingFilterStats.LockPoolBorrowFailures);
+					stats.increment(ContentCachingFilterStats.LockPoolBorrowFailures);
 				} else {
-					stats.incrementAndGet(ContentCachingFilterStats.LockPoolBorrows);
+					stats.increment(ContentCachingFilterStats.LockPoolBorrows);
 					int poolSize = lockPool.size();
 					lockPoolMinize.compareAndSet(poolSize + 1, poolSize);
 					if ( log.isTraceEnabled() ) {
@@ -345,7 +326,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 			if ( !lock.tryLock(requestLockTimeout, TimeUnit.MILLISECONDS) ) {
 				origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 						"Timeout acquiring cache lock");
-				stats.incrementAndGet(ContentCachingFilterStats.RequestLockFailures);
+				stats.increment(ContentCachingFilterStats.RequestLockFailures);
 				returnLock(key, lock, requestId, requestUri);
 				return;
 			}
@@ -353,7 +334,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 			// TODO: handle JSON response explicitly
 			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 					"Interrupted acquiring cache lock");
-			stats.incrementAndGet(ContentCachingFilterStats.RequestLockFailures);
+			stats.increment(ContentCachingFilterStats.RequestLockFailures);
 			returnLock(key, lock, requestId, requestUri);
 			return;
 		}
@@ -410,7 +391,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	private void returnLockToPool(LockAndCount lock, Long requestId, String requestUri) {
 		if ( lockPool.offer(lock) ) {
-			stats.incrementAndGet(ContentCachingFilterStats.LockPoolReturns);
+			stats.increment(ContentCachingFilterStats.LockPoolReturns);
 			log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri, lock.getId());
 		}
 	}
@@ -432,10 +413,8 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	@Override
 	public Result performPingTest() throws Exception {
-		Map<String, Number> statMap = new LinkedHashMap<>(ContentCachingFilterStats.values().length);
-		for ( ContentCachingFilterStats s : ContentCachingFilterStats.values() ) {
-			statMap.put(s.toString(), stats.get(s));
-		}
+		Map<String, Number> statMap = new LinkedHashMap<>(ContentCachingFilterStats.values().length + 3);
+		statMap.putAll(stats.allCounts());
 		long activeRequests = requestLocks.values().stream().mapToLong(LockAndCount::count).sum();
 		statMap.put("LockPoolCapacity", lockPoolCapacity);
 		statMap.put("LockPoolWatermark", lockPoolMinize.get());
