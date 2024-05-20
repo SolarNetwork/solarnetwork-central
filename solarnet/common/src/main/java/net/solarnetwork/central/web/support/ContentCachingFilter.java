@@ -201,7 +201,9 @@ public class ContentCachingFilter implements Filter, ServiceLifecycleObserver {
 		final LockAndCount lock = requestLocks.computeIfAbsent(key, k -> {
 			try {
 				LockAndCount l = lockPool.poll(requestLockTimeout, TimeUnit.MILLISECONDS);
-				log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri, l.getId());
+				if ( l != null && log.isTraceEnabled() ) {
+					log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri, l.getId());
+				}
 				return l;
 			} catch ( InterruptedException e ) {
 				return null;
