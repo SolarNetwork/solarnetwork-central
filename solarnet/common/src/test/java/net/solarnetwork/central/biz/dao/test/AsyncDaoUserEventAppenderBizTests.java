@@ -68,7 +68,7 @@ import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
 import net.solarnetwork.domain.Identity;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
 
@@ -86,7 +86,7 @@ public class AsyncDaoUserEventAppenderBizTests {
 	private ExecutorService executor;
 	private UserEventAppenderDao dao;
 	private PriorityBlockingQueue<UserEvent> queue;
-	private StatCounter stats;
+	private StatTracker stats;
 	private AsyncDaoUserEventAppenderBiz biz;
 	private ObjectMapper objectMapper;
 	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
@@ -98,10 +98,9 @@ public class AsyncDaoUserEventAppenderBizTests {
 		executor = Executors.newFixedThreadPool(3);
 		dao = EasyMock.createMock(UserEventAppenderDao.class);
 		queue = new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT);
-		stats = new StatCounter("AsyncDaoUserEventAppender",
+		stats = new StatTracker("AsyncDaoUserEventAppender",
 				"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
-				LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class), 10,
-				UserEventStats.values());
+				LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class), 10);
 		biz = new AsyncDaoUserEventAppenderBiz(executor, dao, queue, stats, uuidGenerator);
 
 		objectMapper = new ObjectMapper();

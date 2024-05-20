@@ -24,7 +24,6 @@ package net.solarnetwork.central.biz.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -43,8 +42,7 @@ import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
-import net.solarnetwork.util.StatCounter;
-import net.solarnetwork.util.StatCounter.Stat;
+import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidGenerator;
 
@@ -52,7 +50,7 @@ import net.solarnetwork.util.UuidGenerator;
  * Asynchronous {@link UserEventAppenderBiz}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class AsyncDaoUserEventAppenderBiz
 		implements UserEventAppenderBiz, PingTest, ServiceLifecycleObserver, Runnable {
@@ -107,38 +105,21 @@ public class AsyncDaoUserEventAppenderBiz
 	/**
 	 * Enumeration of user event statistic count types.
 	 */
-	public static enum UserEventStats implements Stat {
+	public static enum UserEventStats {
 
 		/** The count of user events added. */
-		EventsAdded(0, "events added"),
+		EventsAdded,
 
 		/** The count of user events persisted. */
-		EventsStored(1, "events stored"),
+		EventsStored,
 
 		;
 
-		private final int index;
-		private final String description;
-
-		private UserEventStats(int index, String description) {
-			this.index = index;
-			this.description = description;
-		}
-
-		@Override
-		public int getIndex() {
-			return index;
-		}
-
-		@Override
-		public String getDescription() {
-			return description;
-		}
 	}
 
 	private final ExecutorService executorService;
 	private final UserEventAppenderDao dao;
-	private final StatCounter stats;
+	private final StatTracker stats;
 	private final BlockingQueue<UserEvent> queue;
 	private final UuidGenerator uuidGenerator;
 	private MqttJsonPublisher<UserEvent> solarFluxPublisher;
@@ -154,9 +135,8 @@ public class AsyncDaoUserEventAppenderBiz
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao) {
 		this(executorService, dao, new PriorityBlockingQueue<>(64, EVENT_SORT),
-				new StatCounter("AsyncDaoUserEventAppender",
-						"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz", log, 500,
-						UserEventStats.values()),
+				new StatTracker("AsyncDaoUserEventAppender",
+						"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz", log, 500),
 				TimeBasedV7UuidGenerator.INSTANCE_MICROS);
 	}
 
@@ -177,7 +157,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 *         if any argument is {@literal null}
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao,
-			BlockingQueue<UserEvent> queue, StatCounter stats, UuidGenerator uuidGenerator) {
+			BlockingQueue<UserEvent> queue, StatTracker stats, UuidGenerator uuidGenerator) {
 		super();
 		this.executorService = requireNonNullArgument(executorService, "executorService");
 		this.dao = requireNonNullArgument(dao, "datumDao");
@@ -192,7 +172,7 @@ public class AsyncDaoUserEventAppenderBiz
 		UserEvent event = new UserEvent(userId, uuidGenerator.generate(),
 				requireNonNullArgument(info, "info").getTags(), info.getMessage(), info.getData());
 		queue.offer(event);
-		stats.incrementAndGet(UserEventStats.EventsAdded);
+		stats.increment(UserEventStats.EventsAdded);
 		try {
 			executorService.execute(this);
 		} catch ( RejectedExecutionException e ) {
@@ -209,7 +189,7 @@ public class AsyncDaoUserEventAppenderBiz
 		if ( event != null ) {
 			try {
 				dao.add(event);
-				stats.incrementAndGet(UserEventStats.EventsStored);
+				stats.increment(UserEventStats.EventsStored);
 			} catch ( RuntimeException e ) {
 				log.error("Unable to add event {} to DAO: {}", event, e.getMessage(), e);
 			}
@@ -255,20 +235,18 @@ public class AsyncDaoUserEventAppenderBiz
 	@Override
 	public Result performPingTest() throws Exception {
 		// verify buffer queue not lagging behind additions
-		long addCount = stats.get(UserEventStats.EventsAdded);
-		long removeCount = stats.get(UserEventStats.EventsStored);
-		long lagDiff = addCount - removeCount;
-		Map<String, Number> statMap = new LinkedHashMap<>(UserEventStats.values().length);
-		for ( UserEventStats s : UserEventStats.values() ) {
-			statMap.put(s.toString(), stats.get(s));
-		}
+		final Map<String, Long> allStats = stats.allCounts();
+		final Long addCount = allStats.get(UserEventStats.EventsAdded.name());
+		final Long removeCount = allStats.get(UserEventStats.EventsStored.name());
+		final long lagDiff = (addCount != null ? addCount.longValue() : 0L)
+				- (removeCount != null ? removeCount.longValue() : 0L);
 		if ( lagDiff > queueLagAlertThreshold ) {
 			return new PingTestResult(false,
 					String.format("Queue removal lag %d > %d", lagDiff, queueLagAlertThreshold),
-					statMap);
+					allStats);
 		}
-		return new PingTestResult(true, String.format("Processed %d events; lag %d.", addCount, lagDiff),
-				statMap);
+		return new PingTestResult(true, String.format("Processed %d events; lag %d.",
+				addCount != null ? addCount.longValue() : 0L, lagDiff), allStats);
 	}
 
 	/**
