@@ -28,7 +28,9 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -53,6 +55,9 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.web.support.ContentCachingService.CompressionType;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
+import net.solarnetwork.util.StatCounter;
 
 /**
  * Filter for caching HTTP responses, returning cached data when possible.
@@ -65,7 +70,10 @@ import net.solarnetwork.central.web.support.ContentCachingService.CompressionTyp
  * @version 3.0
  * @since 1.16
  */
-public class ContentCachingFilter implements Filter {
+public class ContentCachingFilter implements Filter, PingTest {
+
+	/** The default value for the {@code statLogAccessCount} property. */
+	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
 
 	private static final long EPOCH = 1514764800000L; // 1 Jan 2018 GMT
 
@@ -74,11 +82,56 @@ public class ContentCachingFilter implements Filter {
 	private final ContentCachingService contentCachingService;
 	private final BlockingQueue<LockAndCount> lockPool;
 	private final ConcurrentMap<String, LockAndCount> requestLocks;
+	private final StatCounter stats;
+	private final int lockPoolCapacity;
+	private final AtomicInteger lockPoolMinize;
 
 	private Set<String> methodsToCache = Collections.singleton("GET");
 	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
+
+	/**
+	 * Statistics for the content caching filter.
+	 */
+	public enum ContentCachingFilterStats implements StatCounter.Stat {
+
+		/** Requests filtered. */
+		RequestsFiltered(0, "requests filtered"),
+
+		/** Lock pool borrows. */
+		LockPoolBorrows(1, "lock pool borrows"),
+
+		/** Lock pool returns. */
+		LockPoolReturns(2, "lock pool returns"),
+
+		/** Lock pool borrow failures. */
+		LockPoolBorrowFailures(3, "lock pool borrow failures"),
+
+		/** Request lock failures. */
+		RequestLockFailures(4, "request lock failures"),
+
+		;
+
+		final int index;
+		final String description;
+
+		private ContentCachingFilterStats(int index, String description) {
+			this.index = index;
+			this.description = description;
+		}
+
+		@Override
+		public int getIndex() {
+			return index;
+		}
+
+		@Override
+		public String getDescription() {
+			return description;
+		}
+
+	}
 
 	/**
 	 * A lock with a corresponding counter.
@@ -216,6 +269,11 @@ public class ContentCachingFilter implements Filter {
 		if ( lockPool.isEmpty() ) {
 			throw new IllegalArgumentException("The lock pool must not be empty.");
 		}
+		this.stats = new StatCounter("ContentCacheFilter",
+				"net.solarnetwork.central.web.ContentCachingFilter", log, DEFAULT_STAT_LOG_ACCESS_COUNT,
+				ContentCachingFilterStats.values());
+		this.lockPoolCapacity = lockPool.size();
+		this.lockPoolMinize = new AtomicInteger(lockPoolCapacity);
 	}
 
 	@Override
@@ -240,6 +298,8 @@ public class ContentCachingFilter implements Filter {
 			return;
 		}
 
+		stats.incrementAndGet(ContentCachingFilterStats.RequestsFiltered);
+
 		// get cache key for this request
 		final String key = contentCachingService.keyForRequest(origRequest);
 		if ( key == null ) {
@@ -252,8 +312,16 @@ public class ContentCachingFilter implements Filter {
 		final LockAndCount lock = requestLocks.computeIfAbsent(key, k -> {
 			try {
 				LockAndCount l = lockPool.poll(requestLockTimeout, TimeUnit.MILLISECONDS);
-				if ( l != null && log.isTraceEnabled() ) {
-					log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri, l.getId());
+				if ( l == null ) {
+					stats.incrementAndGet(ContentCachingFilterStats.LockPoolBorrowFailures);
+				} else {
+					stats.incrementAndGet(ContentCachingFilterStats.LockPoolBorrows);
+					int poolSize = lockPool.size();
+					lockPoolMinize.compareAndSet(poolSize + 1, poolSize);
+					if ( log.isTraceEnabled() ) {
+						log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri,
+								l.getId());
+					}
 				}
 				return l;
 			} catch ( InterruptedException e ) {
@@ -277,6 +345,7 @@ public class ContentCachingFilter implements Filter {
 			if ( !lock.tryLock(requestLockTimeout, TimeUnit.MILLISECONDS) ) {
 				origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 						"Timeout acquiring cache lock");
+				stats.incrementAndGet(ContentCachingFilterStats.RequestLockFailures);
 				returnLock(key, lock, requestId, requestUri);
 				return;
 			}
@@ -284,6 +353,7 @@ public class ContentCachingFilter implements Filter {
 			// TODO: handle JSON response explicitly
 			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 					"Interrupted acquiring cache lock");
+			stats.incrementAndGet(ContentCachingFilterStats.RequestLockFailures);
 			returnLock(key, lock, requestId, requestUri);
 			return;
 		}
@@ -340,8 +410,38 @@ public class ContentCachingFilter implements Filter {
 
 	private void returnLockToPool(LockAndCount lock, Long requestId, String requestUri) {
 		if ( lockPool.offer(lock) ) {
+			stats.incrementAndGet(ContentCachingFilterStats.LockPoolReturns);
 			log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri, lock.getId());
 		}
+	}
+
+	@Override
+	public String getPingTestId() {
+		return "net.solarnetwork.central.web.support.ContentCachingFilter";
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "Content Caching Filter";
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		Map<String, Number> statMap = new LinkedHashMap<>(ContentCachingFilterStats.values().length);
+		for ( ContentCachingFilterStats s : ContentCachingFilterStats.values() ) {
+			statMap.put(s.toString(), stats.get(s));
+		}
+		long activeRequests = requestLocks.values().stream().mapToLong(LockAndCount::count).sum();
+		statMap.put("LockPoolCapacity", lockPoolCapacity);
+		statMap.put("LockPoolWatermark", lockPoolMinize.get());
+		statMap.put("ActiveRequests", activeRequests);
+
+		return new PingTestResult(true, null, statMap);
 	}
 
 	/**
@@ -368,4 +468,21 @@ public class ContentCachingFilter implements Filter {
 		this.requestLockTimeout = requestLockTimeout;
 	}
 
+	/**
+	 * Set the statistic log update count.
+	 * 
+	 * <p>
+	 * Setting this to something greater than {@literal 0} will cause
+	 * {@literal INFO} level statistic log entries to be emitted every
+	 * {@code statLogAccessCount} times a cachable request has been processed.
+	 * </p>
+	 * 
+	 * @param statLogAccessCount
+	 *        the access count the access count; defaults to
+	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}
+	 * @since 3.0
+	 */
+	public void setStatLogAccessCount(int statLogAccessCount) {
+		this.stats.setLogFrequency(statLogAccessCount);
+	}
 }

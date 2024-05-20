@@ -198,6 +198,12 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Bean
 	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
+	public PingTest contentCachingFilterPingTest() {
+		return contentCachingFilter();
+	}
+
+	@Bean
+	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
 	public FilterRegistrationBean<ContentCachingFilter> contentCachingFilterRegistration() {
 		FilterRegistrationBean<ContentCachingFilter> reg = new FilterRegistrationBean<>();
 		reg.setFilter(contentCachingFilter());
