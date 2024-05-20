@@ -30,7 +30,7 @@ import net.solarnetwork.util.StatCounter;
  * Statistics for content cache processing.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.16
  */
 public class ContentCacheStatCounter extends StatCounter {
@@ -54,10 +54,12 @@ public class ContentCacheStatCounter extends StatCounter {
 	 * 
 	 * @param count
 	 *        the count to increment and get
+	 * @param quiet
+	 *        {@code true} to ignore logging
 	 * @return the incremented count value
 	 */
 	public long incrementAndGet(ContentCacheStats count, boolean quiet) {
-		long c = super.incrementAndGet(count, true);
+		long c = super.incrementAndGet(count, quiet);
 		if ( !quiet && log.isInfoEnabled() && ((c % getLogFrequency()) == 0) ) {
 			long hits = 0;
 			long total = 0;
