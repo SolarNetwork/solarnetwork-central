@@ -322,8 +322,9 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			return new PingTestResult(false, String.format("Buffer removal lag %d > %d", lagDiff,
 					datumCacheRemovalAlertThreshold), statMap);
 		}
+		final DatumWriterThread[] workers = this.datumThreads;
 		return new PingTestResult(true, String.format("Processed %d datum using %d workers; lag %d.",
-				addCount, datumThreads.length, lagDiff), statMap);
+				addCount, workers != null ? workers.length : 0, lagDiff), statMap);
 	}
 
 	@Override
