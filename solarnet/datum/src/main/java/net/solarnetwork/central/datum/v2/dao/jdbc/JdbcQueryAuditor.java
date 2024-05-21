@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcAuditor.java - 14/02/2018 10:11:12 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,7 +34,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,34 +52,34 @@ import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * {@link QueryAuditor} implementation that uses JDBC statements to update audit
  * data when datum is queried.
- * 
+ *
  * <p>
  * This class uses a {@link Clock} to determine the "audit date". The default
  * clock uses an hour-based tick settings so that audit counts are grouped into
  * into hour-based time buckets, and thus result in hour-based rows in the
  * database:
  * </p>
- * 
+ *
  * <pre>
  * <code>
  * Clock.tick(Clock.systemUTC(), Duration.ofHours(1))
  * </code>
  * </pre>
- * 
+ *
  * <p>
  * This class opens and maintains a single JDBC {@link Connection} in a
  * dedicated thread. All database updates are buffered in memory and then
  * flushed to the database after the configured {@code flushDelay}. If the
  * connection is lost, a new connection will be created.
  * </p>
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycleObserver {
 
@@ -114,7 +113,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	private final Clock clock;
 	private final DataSource dataSource;
 	private final ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters;
-	private final StatCounter statCounter;
+	private final StatTracker stats;
 
 	private WriterThread writerThread;
 	private long updateDelay;
@@ -124,7 +123,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 */
@@ -134,7 +133,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param nodeSourceCounters
@@ -145,12 +144,12 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	public JdbcQueryAuditor(DataSource dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
 		this(Clock.tick(Clock.systemUTC(), Duration.ofHours(1)), dataSource, nodeSourceCounters,
-				new StatCounter("QueryAuditor", "", log, 1000, JdbcQueryAuditorCount.values()));
+				new StatTracker("QueryAuditor", "", log, 1000));
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param clock
 	 *        the clock to use; use an appropriate tick duration for auditing
 	 *        date derivation
@@ -160,16 +159,16 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 *        the map to use for tracking counts for node datum
 	 * @throws IllegalArgumentException
 	 *         if any parameter is {@literal null}
-	 * @since 2.0
+	 * @since 2.1
 	 */
 	public JdbcQueryAuditor(Clock clock, DataSource dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters,
-			StatCounter statCounter) {
+			StatTracker statCounter) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
 		this.nodeSourceCounters = requireNonNullArgument(nodeSourceCounters, "nodeSourceCounters");
-		this.statCounter = requireNonNullArgument(statCounter, "statCounter");
+		this.stats = requireNonNullArgument(statCounter, "statCounter");
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);
 		setFlushDelay(DEFAULT_FLUSH_DELAY);
 		setUpdateDelay(DEFAULT_UPDATE_DELAY);
@@ -265,11 +264,11 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	private void addNodeSourceCount(GeneralNodeDatumPK key, int count) {
 		nodeSourceCounters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
-		statCounter.incrementAndGet(JdbcQueryAuditorCount.ResultsAdded);
+		stats.increment(JdbcQueryAuditorCount.ResultsAdded);
 	}
 
 	private void flushNodeSourceData(PreparedStatement stmt) throws SQLException, InterruptedException {
-		statCounter.incrementAndGet(JdbcQueryAuditorCount.CountsFlushed);
+		stats.increment(JdbcQueryAuditorCount.CountsFlushed);
 		for ( Iterator<Map.Entry<GeneralNodeDatumPK, AtomicInteger>> itr = nodeSourceCounters.entrySet()
 				.iterator(); itr.hasNext(); ) {
 			Map.Entry<GeneralNodeDatumPK, AtomicInteger> me = itr.next();
@@ -279,7 +278,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 			if ( count < 1 ) {
 				// clean out stale 0 valued counter
 				itr.remove();
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.ZeroCountsCleared);
+				stats.increment(JdbcQueryAuditorCount.ZeroCountsCleared);
 				continue;
 			}
 			try {
@@ -288,19 +287,19 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 				stmt.setTimestamp(3, Timestamp.from(key.getCreated()));
 				stmt.setInt(4, count);
 				stmt.execute();
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.UpdatesExecuted);
+				stats.increment(JdbcQueryAuditorCount.UpdatesExecuted);
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);
 				}
 			} catch ( SQLException | InterruptedException e ) {
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.UpdatesFailed);
+				stats.increment(JdbcQueryAuditorCount.UpdatesFailed);
 				addNodeSourceCount(key, count);
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.ResultsReadded);
+				stats.increment(JdbcQueryAuditorCount.ResultsReadded);
 				throw e;
 			} catch ( Exception e ) {
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.UpdatesFailed);
+				stats.increment(JdbcQueryAuditorCount.UpdatesFailed);
 				addNodeSourceCount(key, count);
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.ResultsReadded);
+				stats.increment(JdbcQueryAuditorCount.ResultsReadded);
 				RuntimeException re;
 				if ( e instanceof RuntimeException ) {
 					re = (RuntimeException) e;
@@ -342,7 +341,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 		@Override
 		public void run() {
-			statCounter.incrementAndGet(JdbcQueryAuditorCount.WriterThreadsStarted);
+			stats.increment(JdbcQueryAuditorCount.WriterThreadsStarted);
 			try {
 				while ( keepGoing.get() ) {
 					keepGoingWithConnection.set(true);
@@ -368,14 +367,14 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 					}
 				}
 			} finally {
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.WriterThreadsEnded);
+				stats.increment(JdbcQueryAuditorCount.WriterThreadsEnded);
 			}
 		}
 
 		private Boolean execute() throws SQLException {
 			final DataSource ds = dataSource;
 			try (Connection conn = ds.getConnection()) {
-				statCounter.incrementAndGet(JdbcQueryAuditorCount.ConnectionsCreated);
+				stats.increment(JdbcQueryAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)
 						? conn.prepareCall(nodeSourceIncrementSql)
@@ -456,10 +455,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	public Result performPingTest() throws Exception {
 		final WriterThread t = this.writerThread;
 		boolean writerRunning = t != null && t.isAlive();
-		Map<String, Long> statMap = new LinkedHashMap<>(JdbcQueryAuditorCount.values().length);
-		for ( JdbcQueryAuditorCount s : JdbcQueryAuditorCount.values() ) {
-			statMap.put(s.toString(), statCounter.get(s));
-		}
+		Map<String, Long> statMap = stats.allCounts();
 		if ( !writerRunning ) {
 			return new PingTestResult(false,
 					(writerThread == null ? "Writer thread missing." : "Writer thread dead."), statMap);
@@ -469,7 +465,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	/**
 	 * Set the delay, in milliseconds, between flushing cached audit data.
-	 * 
+	 *
 	 * @param flushDelay
 	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_FLUSH_DELAY}
@@ -486,7 +482,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	/**
 	 * Set the delay, in milliseconds, to wait after a JDBC connection error
 	 * before trying to recover and connect again.
-	 * 
+	 *
 	 * @param connectionRecoveryDelay
 	 *        the delay, in milliseconds; defaults t[
 	 *        {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
@@ -503,7 +499,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	/**
 	 * Set the delay, in milliseconds, to wait after executing JDBC statements
 	 * within a loop before executing another statement.
-	 * 
+	 *
 	 * @param updateDelay
 	 *        the delay, in milliseconds; defaults t[
 	 *        {@link #DEFAULT_UPDATE_DELAY}
@@ -517,18 +513,18 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	/**
 	 * The JDBC statement to execute for incrementing a count for a single date,
 	 * node, and source.
-	 * 
+	 *
 	 * <p>
 	 * The statement must accept the following parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>long - the node ID</li>
 	 * <li>string - the source ID</li>
 	 * <li>timestamp - the audit date</li>
 	 * <li>integer - the query count</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sql
 	 *        the SQL statement to use; defaults to
 	 *        {@link #DEFAULT_NODE_SOURCE_INCREMENT_SQL}
@@ -546,20 +542,20 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	/**
 	 * Set the statistic log update count.
-	 * 
+	 *
 	 * <p>
 	 * Setting this to something greater than {@literal 0} will cause
 	 * {@literal INFO} level statistic log entries to be emitted every
 	 * {@code statLogUpdateCount} records have been updated in the database.
 	 * </p>
-	 * 
+	 *
 	 * @param statLogUpdateCount
 	 *        the update count; defaults to
 	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
 	 * @since 1.1
 	 */
 	public void setStatLogUpdateCount(int statLogUpdateCount) {
-		statCounter.setLogFrequency(statLogUpdateCount);
+		stats.setLogFrequency(statLogUpdateCount);
 	}
 
 }
