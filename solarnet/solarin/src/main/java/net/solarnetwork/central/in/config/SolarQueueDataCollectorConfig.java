@@ -35,7 +35,7 @@ import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * MQTT instruction publishing configuration.
@@ -56,7 +56,7 @@ public class SolarQueueDataCollectorConfig {
 	@Bean
 	@Qualifier(SOLARQUEUE)
 	@ConfigurationProperties(prefix = "app.solarqueue.data-collector")
-	public MqttDataCollector mqttDataCollector(@Qualifier(SOLARQUEUE) MqttStats mqttStats) {
+	public MqttDataCollector mqttDataCollector(@Qualifier(SOLARQUEUE) StatTracker mqttStats) {
 		ObjectMapper objectMapper = JsonUtils.newDatumObjectMapper(new CBORFactory());
 		MqttDataCollector collector = new MqttDataCollector(objectMapper, dataCollectorBiz,
 				nodeInstructionDao, mqttStats);

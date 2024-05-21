@@ -1,21 +1,21 @@
 /* ==================================================================
  * SolarFluxDatumPublisher.java - 28/02/2020 2:44:10 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,27 +35,26 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.MqttStats;
-import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Publish datum to SolarFlux.
- * 
+ *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
 		implements DatumProcessor {
 
 	/**
 	 * The MQTT topic template for node data publication.
-	 * 
+	 *
 	 * <p>
 	 * Accepts the following parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><b>user ID</b> (long)</li>
 	 * <li><b>node ID</b> (long)</li>
@@ -75,7 +74,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the support DAO
 	 * @param objectMapper
@@ -91,7 +90,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the support DAO
 	 * @param objectMapper
@@ -129,11 +128,11 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 					f.get(timeout, TimeUnit.SECONDS);
 				}
 
-				MqttStat stat = publishStat(aggregation);
+				SolarFluxDatumPublishCountStat stat = publishStat(aggregation);
 				if ( stat != null ) {
-					MqttStats stats = getMqttStats();
+					StatTracker stats = getMqttStats();
 					if ( stats != null ) {
-						stats.incrementAndGet(stat);
+						stats.increment(stat);
 					}
 				}
 			}
@@ -179,7 +178,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 		return aggregation == Aggregation.None ? "Raw" : aggregation.toString();
 	}
 
-	private static MqttStat publishStat(Aggregation aggregation) {
+	private static SolarFluxDatumPublishCountStat publishStat(Aggregation aggregation) {
 		switch (aggregation) {
 			case None:
 				return SolarFluxDatumPublishCountStat.RawDatumPublished;
@@ -219,7 +218,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 
 	/**
 	 * Get the error log limit.
-	 * 
+	 *
 	 * @return the milliseconds to limit error log message to, or 0 for no
 	 *         limit; defaults to {@link #ERROR_LOG_LIMIT_MS_DEFAULT}
 	 */
@@ -229,7 +228,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 
 	/**
 	 * Set the error log limit.
-	 * 
+	 *
 	 * @param errorLogLimitMs
 	 *        the milliseconds to limit error log message to, or 0 for no limit
 	 */

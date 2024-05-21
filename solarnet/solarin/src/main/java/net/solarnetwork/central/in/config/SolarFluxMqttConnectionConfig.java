@@ -23,25 +23,25 @@
 package net.solarnetwork.central.in.config;
 
 import java.util.List;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.datum.flux.SolarFluxDatumPublishCountStat;
 import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 import net.solarnetwork.common.mqtt.MqttConnectionObserver;
-import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.util.StatTracker;
 
 /**
- * SolarFlux configuration.
- * 
+ * SolarIn/MQTT (SolarQuery) configuration.
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("mqtt & !no-solarflux")
 public class SolarFluxMqttConnectionConfig {
 
@@ -53,16 +53,17 @@ public class SolarFluxMqttConnectionConfig {
 
 	@Qualifier(SOLARFLUX)
 	@Bean
-	public MqttStats solarFluxMqttStats() {
-		return new MqttStats("SolarFlux", 500, SolarFluxDatumPublishCountStat.values());
+	public StatTracker solarFluxMqttStats() {
+		return new StatTracker("SolarFlux", null,
+				LoggerFactory.getLogger("net.solarnetwork.central.mqtt.stats.SolarFlux"), 500);
 	}
 
 	@Qualifier(SOLARFLUX)
 	@ConfigurationProperties(prefix = "app.solarflux.connection")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public ObservableMqttConnection solarFluxMqttConnection(
-			@Autowired @Qualifier(SOLARFLUX) List<MqttConnectionObserver> mqttConnectionObservers) {
-		return new ObservableMqttConnection(connectionFactory, solarFluxMqttStats(), "SolarFlux MQTT",
+	public ObservableMqttConnection solarFluxMqttConnection(@Qualifier(SOLARFLUX) StatTracker stats,
+			@Qualifier(SOLARFLUX) List<MqttConnectionObserver> mqttConnectionObservers) {
+		return new ObservableMqttConnection(connectionFactory, stats, "SolarFlux MQTT",
 				mqttConnectionObservers);
 	}
 

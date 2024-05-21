@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpMqttInstructionHandlerTests.java - 9/10/2022 10:02:23 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -71,7 +71,6 @@ import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpRole;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
-import net.solarnetwork.central.oscp.mqtt.OscpMqttCountStat;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructions;
 import net.solarnetwork.central.oscp.util.TaskContext;
@@ -80,15 +79,15 @@ import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.test.CallingThreadExecutorService;
+import net.solarnetwork.util.StatTracker;
 import oscp.v20.GroupCapacityComplianceError;
 
 /**
  * Test cases for the {@link OscpMqttInstructionHandler} class.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, OscpUserEvents {
@@ -140,8 +139,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 	@BeforeEach
 	public void setup() {
 		mapper = JsonUtils.newObjectMapper();
-		handler = new OscpMqttInstructionHandler(
-				new MqttStats("SolarOSCP-MQTT", 1, OscpMqttCountStat.values()),
+		handler = new OscpMqttInstructionHandler(new StatTracker("SolarOSCP-MQTT", null, log, 1),
 				new CallingThreadExecutorService(), mapper, nodeInstructionDao, capacityGroupDao,
 				capacityOptimizerDao, capacityProviderDao, client);
 		handler.setUserEventAppenderBiz(userEventAppenderBiz);
@@ -149,7 +147,7 @@ public class OscpMqttInstructionHandlerTests implements OscpMqttInstructions, Os
 
 	@Test
 	public void subscribeWhenConnectionEstablished() {
-		// GIVEN		
+		// GIVEN
 		given(conn.subscribe(MQTT_TOPIC_V20, MqttQos.AtLeastOnce, handler))
 				.willReturn(completedFuture(null));
 

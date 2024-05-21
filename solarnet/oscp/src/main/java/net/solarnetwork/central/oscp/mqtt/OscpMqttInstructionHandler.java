@@ -1,21 +1,21 @@
 /* ==================================================================
  * MqttInstructionHandler.java - 6/10/2022 4:35:04 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -74,20 +74,20 @@ import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.util.StatTracker;
 import oscp.v20.AdjustGroupCapacityForecast;
 
 /**
  * MQTT subscriber for OSCP v2.0 instructions.
- * 
+ *
  * <p>
  * This connection observer will subscribe to a MQTT topic for OSCP 2.0
  * instructions and forward the OSCP message to the associated Capacity Provider
  * and then update the instruction status with the result.
  * </p>
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		implements MqttMessageHandler, OscpUserEvents, OscpMqttInstructions {
@@ -107,7 +107,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param stats
 	 *        the stats to use
 	 * @param taskExecutor
@@ -127,8 +127,9 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OscpMqttInstructionHandler(MqttStats stats, Executor taskExecutor, ObjectMapper objectMapper,
-			NodeInstructionDao nodeInstructionDao, CapacityGroupConfigurationDao capacityGroupDao,
+	public OscpMqttInstructionHandler(StatTracker stats, Executor taskExecutor,
+			ObjectMapper objectMapper, NodeInstructionDao nodeInstructionDao,
+			CapacityGroupConfigurationDao capacityGroupDao,
 			CapacityOptimizerConfigurationDao capacityOptimizerDao,
 			CapacityProviderConfigurationDao capacityProviderDao, ExternalSystemClient client) {
 		super();
@@ -318,18 +319,18 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 	}
 
 	private void incrementInstructionReceivedStat(String action) {
-		getMqttStats().incrementAndGet(OscpMqttCountStat.InstructionsReceived);
+		getMqttStats().increment(OscpMqttCountStat.InstructionsReceived);
 		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionReceivedStat(action);
 		if ( actionStat != null ) {
-			getMqttStats().incrementAndGet(actionStat);
+			getMqttStats().increment(actionStat);
 		}
 	}
 
 	private void incrementInstructionErrorStat(String action) {
-		getMqttStats().incrementAndGet(OscpMqttCountStat.InstructionErrors);
+		getMqttStats().increment(OscpMqttCountStat.InstructionErrors);
 		OscpMqttCountStat actionStat = OscpMqttCountStat.instructionErrorStat(action);
 		if ( actionStat != null ) {
-			getMqttStats().incrementAndGet(actionStat);
+			getMqttStats().increment(actionStat);
 		}
 	}
 
@@ -399,7 +400,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	/**
 	 * Get the MQTT topic to subscribe to.
-	 * 
+	 *
 	 * @return the topic
 	 */
 	public String getMqttTopic() {
@@ -408,7 +409,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	/**
 	 * Set the MQTT topic to publish to.
-	 * 
+	 *
 	 * @param mqttTopic
 	 *        the topic; if {@literal null} or blank then
 	 *        {@link #MQTT_TOPIC_V20} will be set instead
@@ -419,7 +420,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	/**
 	 * Get the user event appender service.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public UserEventAppenderBiz getUserEventAppenderBiz() {
@@ -428,7 +429,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 
 	/**
 	 * Set the user event appender service.
-	 * 
+	 *
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */

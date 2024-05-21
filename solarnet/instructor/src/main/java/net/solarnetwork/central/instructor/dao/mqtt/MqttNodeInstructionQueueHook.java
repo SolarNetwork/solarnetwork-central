@@ -38,8 +38,8 @@ import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.BaseMqttConnectionObserver;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * MQTT implementation of {@link NodeInstructionQueueHook}.
@@ -51,7 +51,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 2.0
  */
 public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook {
@@ -86,7 +86,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 	 *         if any argument is {@literal null}
 	 */
 	public MqttNodeInstructionQueueHook(ObjectMapper objectMapper, Executor executor,
-			NodeInstructionDao nodeInstructionDao, MqttStats mqttStats) {
+			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.executor = requireNonNullArgument(executor, "executor");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
@@ -144,7 +144,7 @@ public class MqttNodeInstructionQueueHook extends BaseMqttConnectionObserver
 					Future<?> f = conn
 							.publish(new BasicMqttMessage(topic, false, getPublishQos(), payload));
 					f.get(getPublishTimeoutSeconds(), TimeUnit.SECONDS);
-					getMqttStats().incrementAndGet(NodeInstructionQueueHookStat.InstructionsPublished);
+					getMqttStats().increment(NodeInstructionQueueHookStat.InstructionsPublished);
 				} else {
 					throw new RuntimeException("MQTT connection not available");
 				}

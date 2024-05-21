@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpV20MqttConfig.java - 7/10/2022 2:59:40 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.fp.config;
 import static net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration.OSCP_V20;
 import static net.solarnetwork.central.oscp.fp.config.JsonConfig.CBOR_MAPPER;
 import static net.solarnetwork.central.oscp.fp.config.SolarQueueMqttConnectionConfig.SOLARQUEUE;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -40,15 +41,14 @@ import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityOptimizerConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityProviderConfigurationDao;
 import net.solarnetwork.central.oscp.http.ExternalSystemClient;
-import net.solarnetwork.central.oscp.mqtt.OscpMqttCountStat;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionHandler;
-import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Configuration for OSCP instruction handling.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(OscpV20MqttConfig.MQTT_OSCP_V20)
 @Configuration(proxyBeanMethods = false)
@@ -84,26 +84,27 @@ public class OscpV20MqttConfig {
 
 	/**
 	 * The MQTT statistics to use.
-	 * 
+	 *
 	 * @return
 	 */
 	@Qualifier(OSCP_V20)
 	@Bean
-	public MqttStats oscpMqttStats() {
-		return new MqttStats("SolarOSCP-MQTT", 200, OscpMqttCountStat.values());
+	public StatTracker oscpMqttStats() {
+		return new StatTracker("SolarOSCP-MQTT", null,
+				LoggerFactory.getLogger("net.solarnetwork.central.mqtt.stats.OscpInstructions"), 200);
 	}
 
 	/**
 	 * A node instruction queue hook to process OSCP instructions (from a
 	 * Capacity Optimizer) and forward them to a Capacity Provider
-	 * 
+	 *
 	 * @return the hook
 	 */
 	@ConfigurationProperties(prefix = "app.oscp.v20.mqtt.instr-handler")
 	@Qualifier(SOLARQUEUE)
 	@Bean
 	public OscpMqttInstructionHandler oscpMqttInstructionHandler_v20(
-			@Qualifier(OSCP_V20) MqttStats mqttStats) {
+			@Qualifier(OSCP_V20) StatTracker mqttStats) {
 		OscpMqttInstructionHandler handler = new OscpMqttInstructionHandler(mqttStats, taskExecutor,
 				objectMapper, nodeInstructionDao, capacityGroupDao, capacityOptimizerDao,
 				capacityProviderDao, client);

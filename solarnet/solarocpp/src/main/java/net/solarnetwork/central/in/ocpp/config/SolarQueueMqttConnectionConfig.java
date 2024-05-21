@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.ocpp.config;
 
 import java.util.List;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -32,36 +33,51 @@ import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.support.ObservableMqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 import net.solarnetwork.common.mqtt.MqttConnectionObserver;
-import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.util.StatTracker;
 
 /**
- * SolarQueue configuration.
- * 
+ * SolarQueue MQTT configuration.
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
 public class SolarQueueMqttConnectionConfig {
 
-	/** Qualifier for SolqrQueue. */
+	/** Qualifier for SolarQueue MQTT. */
 	public static final String SOLARQUEUE = "solarqueue";
 
 	@Autowired
 	private MqttConnectionFactory connectionFactory;
 
+	/**
+	 * Statistics for SolarQueue processing.
+	 *
+	 * @return the statistics
+	 */
 	@Qualifier(SOLARQUEUE)
 	@Bean
-	public MqttStats solarQueueMqttStats() {
-		return new MqttStats("SolarQueue", 500);
+	public StatTracker solarQueueMqttStats() {
+		return new StatTracker("SolarQueue", null,
+				LoggerFactory.getLogger("net.solarnetwork.central.mqtt.stats.SolarQueue"), 500);
 	}
 
+	/**
+	 * MQTT connection to SolarQueue.
+	 *
+	 * @param stats
+	 *        the statistics to use
+	 * @param mqttConnectionObservers
+	 *        the connection observers
+	 * @return the connection
+	 */
 	@Qualifier(SOLARQUEUE)
 	@ConfigurationProperties(prefix = "app.solarqueue.connection")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public ObservableMqttConnection solarQueueMqttConnection(
+	public ObservableMqttConnection solarQueueMqttConnection(@Qualifier(SOLARQUEUE) StatTracker stats,
 			@Autowired @Qualifier(SOLARQUEUE) List<MqttConnectionObserver> mqttConnectionObservers) {
-		return new ObservableMqttConnection(connectionFactory, solarQueueMqttStats(), "SolarQueue MQTT",
+		return new ObservableMqttConnection(connectionFactory, stats, "SolarQueue MQTT",
 				mqttConnectionObservers);
 	}
 
