@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAccumulator;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -84,7 +85,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	private final ConcurrentMap<String, LockAndCount> requestLocks;
 	private final StatTracker stats;
 	private final int lockPoolCapacity;
-	private final AtomicInteger lockPoolMinize;
+	private final LongAccumulator lockPoolMinize;
 
 	private Set<String> methodsToCache = Collections.singleton("GET");
 	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
@@ -254,7 +255,8 @@ public class ContentCachingFilter implements Filter, PingTest {
 		this.stats = new StatTracker("ContentCacheFilter",
 				"net.solarnetwork.central.web.ContentCachingFilter", log, DEFAULT_STAT_LOG_ACCESS_COUNT);
 		this.lockPoolCapacity = lockPool.size();
-		this.lockPoolMinize = new AtomicInteger(lockPoolCapacity);
+		this.lockPoolMinize = new LongAccumulator(Math::min, Long.MAX_VALUE);
+		this.lockPoolMinize.accumulate(this.lockPoolCapacity);
 	}
 
 	@Override
@@ -297,8 +299,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 					stats.increment(ContentCachingFilterStats.LockPoolBorrowFailures);
 				} else {
 					stats.increment(ContentCachingFilterStats.LockPoolBorrows);
-					int poolSize = lockPool.size();
-					lockPoolMinize.compareAndSet(poolSize + 1, poolSize);
+					lockPoolMinize.accumulate(lockPool.size());
 					if ( log.isTraceEnabled() ) {
 						log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri,
 								l.getId());
@@ -417,6 +418,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		statMap.putAll(stats.allCounts());
 		long activeRequests = requestLocks.values().stream().mapToLong(LockAndCount::count).sum();
 		statMap.put("LockPoolCapacity", lockPoolCapacity);
+		statMap.put("LockPoolAvailable", lockPool.size());
 		statMap.put("LockPoolWatermark", lockPoolMinize.get());
 		statMap.put("ActiveRequests", activeRequests);
 
