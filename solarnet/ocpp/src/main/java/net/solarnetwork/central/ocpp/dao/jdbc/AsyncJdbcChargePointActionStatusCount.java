@@ -22,48 +22,35 @@
 
 package net.solarnetwork.central.ocpp.dao.jdbc;
 
-import net.solarnetwork.util.StatCounter.Stat;
-
 /**
  * Statistics for asynchronous JDBC charge point action status processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public enum AsyncJdbcChargePointActionStatusCount implements Stat {
+public enum AsyncJdbcChargePointActionStatusCount {
 
-	ResultsAdded(0, "results added"),
+	/** Results added. */
+	ResultsAdded,
 
-	ResultsRemoved(1, "results removed"),
+	/** Results removed. */
+	ResultsRemoved,
 
-	WriterThreadsStarted(2, "write threads started"),
+	/** Writer threads started. */
+	WriterThreadsStarted,
 
-	WriterThreadsEnded(3, "write threads ended"),
+	/** Writer threads ended. */
+	WriterThreadsEnded,
 
-	ConnectionsCreated(4, "JDBC connections created"),
+	/** JDBC connections created. */
+	ConnectionsCreated,
 
-	UpdatesExecuted(5, "SQL updates executed"),
+	/** SQL updates executed. */
+	UpdatesExecuted,
 
-	UpdatesFailed(6, "SQL updates failed"),
+	/** SQL updates failed. */
+	UpdatesFailed,
 
 	;
-
-	private final int index;
-	private final String description;
-
-	private AsyncJdbcChargePointActionStatusCount(int index, String description) {
-		this.index = index;
-		this.description = description;
-	}
-
-	@Override
-	public int getIndex() {
-		return index;
-	}
-
-	@Override
-	public String getDescription() {
-		return description;
-	}
 
 }

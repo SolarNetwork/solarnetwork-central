@@ -55,7 +55,7 @@ import net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusCo
 import net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusDao;
 import net.solarnetwork.central.ocpp.dao.jdbc.ChargePointActionStatusUpdate;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link AsyncJdbcChargePointActionStatusDao} class.
@@ -74,13 +74,12 @@ public class AsyncJdbcChargePointActionStatusDaoTests extends AbstractJUnit5Jdbc
 
 	private BlockingQueue<ChargePointActionStatusUpdate> queue;
 	private AsyncJdbcChargePointActionStatusDao dao;
-	private StatCounter statCounter;
+	private StatTracker statCounter;
 
 	@BeforeEach
 	public void setup() {
 		queue = new LinkedBlockingQueue<>();
-		statCounter = new StatCounter("TestChargePointActionStatusUpdater", "", log, 1,
-				AsyncJdbcChargePointActionStatusCount.values());
+		statCounter = new StatTracker("TestChargePointActionStatusUpdater", "", log, 1);
 		dao = new AsyncJdbcChargePointActionStatusDao(dataSource, queue, statCounter);
 
 		setupTestUser(TEST_USER_ID);
