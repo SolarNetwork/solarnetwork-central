@@ -22,50 +22,30 @@
 
 package net.solarnetwork.central.web.support;
 
-import net.solarnetwork.util.StatCounter;
-
 /**
  * Content cache statistics.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.2
  */
-public enum ContentCacheStats implements StatCounter.Stat {
+public enum ContentCacheStats {
 
 	/** Cache hit. */
-	Hit(0, "cache hits"),
+	Hit,
 
 	/** Cache miss. */
-	Miss(1, "cache misses"),
+	Miss,
 
 	/** Count of items added to cache. */
-	Stored(2, "cache puts"),
+	Stored,
 
 	/** Number of entries in the cache. */
-	EntryCount(3, "number of entries"),
+	EntryCount,
 
 	/** Total bytes size of all entries in the cache. */
-	ByteSize(4, "byte size of entries"),
+	ByteSize,
 
 	;
-
-	final int index;
-	final String description;
-
-	private ContentCacheStats(int index, String description) {
-		this.index = index;
-		this.description = description;
-	}
-
-	@Override
-	public int getIndex() {
-		return index;
-	}
-
-	@Override
-	public String getDescription() {
-		return description;
-	}
 
 }
