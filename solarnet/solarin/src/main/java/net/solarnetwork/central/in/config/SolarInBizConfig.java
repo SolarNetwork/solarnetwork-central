@@ -25,6 +25,7 @@ package net.solarnetwork.central.in.config;
 import java.io.Serializable;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -42,7 +43,6 @@ import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
-import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.support.DatumCacheSettings;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
@@ -51,12 +51,13 @@ import net.solarnetwork.central.in.biz.NetworkIdentityBiz;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.in.biz.dao.SimpleNetworkIdentityBiz;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Business service configuration for the SolarIn application.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration
 public class SolarInBizConfig {
@@ -141,7 +142,9 @@ public class SolarInBizConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public AsyncDatumCollector asyncDaoDatumCollector() {
 		AsyncDatumCollectorSettings settings = asyncDatumCollectorSettings();
-		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.getStatFrequency());
+		StatTracker stats = new StatTracker("AsyncDaoDatum",
+				"net.solarnetwork.central.datum.support.AsyncDatumCollector",
+				LoggerFactory.getLogger(AsyncDatumCollector.class), settings.getStatFrequency());
 		AsyncDatumCollector collector = new AsyncDatumCollector(bufferingDatumCache(), datumDao,
 				transactionTemplate(), stats);
 		collector.setConcurrency(settings.getThreads());

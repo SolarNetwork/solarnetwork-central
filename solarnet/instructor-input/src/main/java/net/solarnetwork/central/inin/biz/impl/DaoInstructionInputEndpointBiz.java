@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.inin.biz.impl;
 
-import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.biz.UserEventAppenderBiz.addEvent;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
@@ -37,19 +36,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
@@ -72,13 +69,14 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * DAO implementation of {@link InstructionInputEndpointBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoInstructionInputEndpointBiz
 		implements InstructionInputEndpointBiz, CentralInstructionInputUserEvents {
@@ -92,8 +90,12 @@ public class DaoInstructionInputEndpointBiz
 	/** The {@code executionResultMaxWait} property default value. */
 	public static final Duration DEFAULT_EXECUTION_RESULT_MAX_WAIT = Duration.ofSeconds(60);
 
+	private static final Map<String, Object> INSTRUCTION_EXEC_TIMEOUT_MESSAGE = Map
+			.of(InstructionStatus.MESSAGE_RESULT_PARAM, "Timeout waiting for instruction result.");
+
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
+	private final TaskExecutor taskExecutor;
 	private final InstructorBiz instructor;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final EndpointConfigurationDao endpointDao;
@@ -109,6 +111,8 @@ public class DaoInstructionInputEndpointBiz
 	/**
 	 * Constructor.
 	 *
+	 * @param taskExecutor
+	 *        the task executor to use
 	 * @param instructor
 	 *        the instruction service
 	 * @param nodeOwnershipDao
@@ -128,7 +132,7 @@ public class DaoInstructionInputEndpointBiz
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoInstructionInputEndpointBiz(InstructorBiz instructor,
+	public DaoInstructionInputEndpointBiz(TaskExecutor taskExecutor, InstructorBiz instructor,
 			SolarNodeOwnershipDao nodeOwnershipDao, EndpointConfigurationDao endpointDao,
 			TransformConfigurationDao<RequestTransformConfiguration> requestTransformDao,
 			TransformConfigurationDao<ResponseTransformConfiguration> responseTransformDao,
@@ -136,6 +140,7 @@ public class DaoInstructionInputEndpointBiz
 			Collection<RequestTransformService> requestTransformServices,
 			Collection<ResponseTransformService> responseTransformServices) {
 		super();
+		this.taskExecutor = requireNonNullArgument(taskExecutor, "taskExecutor");
 		this.instructor = requireNonNullArgument(instructor, "instructor");
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.endpointDao = requireNonNullArgument(endpointDao, "endpointDao");
@@ -317,60 +322,71 @@ public class DaoInstructionInputEndpointBiz
 		}
 
 		// wait for results
-		var futures = new ArrayList<Future<NodeInstruction>>(instructions.size());
-		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			long delay = executionResultDelay.toMillis();
-			long expire = System.currentTimeMillis() + Math.min(executionResultMaxWait.toMillis(),
-					TimeUnit.SECONDS.toMillis(endpoint.getMaxExecutionSeconds()));
-			for ( NodeInstruction instruction : instructions ) {
-				futures.add(executor.submit(new Callable<NodeInstruction>() {
+		final int count = instructions.size();
+		final long delay = executionResultDelay.toMillis();
+		final long backOff = delay / 4;
+		final long expire = System.currentTimeMillis() + Math.min(executionResultMaxWait.toMillis(),
+				TimeUnit.SECONDS.toMillis(endpoint.getMaxExecutionSeconds()));
+		final ConcurrentMap<Long, NodeInstruction> results = new ConcurrentHashMap<>(
+				instructions.size());
 
-					@Override
-					public NodeInstruction call() throws Exception {
-						while ( true ) {
-							try {
-								Thread.sleep(delay);
-							} catch ( InterruptedException e ) {
-								// ignore
-							}
-							var instr = instructor.getInstruction(instruction.getId());
-							if ( instr == null ) {
-								String msg = "Instruction [%d] not found".formatted(instruction.getId());
-								addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
-										null, xform, null, outputType, parameters));
-								throw new IllegalStateException(msg);
-							}
-							if ( instr.getState() == InstructionState.Completed
-									|| instr.getState() == InstructionState.Declined ) {
-								addEvent(userEventAppenderBiz, userId,
-										importEvent(null, endpoint, null, xform, null, outputType,
-												parameters, instr, INSTRUCTION_EXECUTED_TAG));
-								return instr;
-							} else if ( System.currentTimeMillis() > expire ) {
-								// give up
-								String msg = "Timeout waiting for instruction [%d] to complete."
-										.formatted(instruction.getId());
-								addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
-										null, xform, null, outputType, parameters));
-								throw new TimeoutException(msg);
-							}
-							// keep waiting for instruction to complete
-						}
-					}
-				}));
+		long currDelay = delay;
+		while ( System.currentTimeMillis() < expire && results.size() < count ) {
+			try {
+				Thread.sleep(currDelay);
+			} catch ( InterruptedException e ) {
+				// ignore
 			}
+			final CountDownLatch latch = new CountDownLatch(instructions.size());
+			for ( NodeInstruction instruction : instructions ) {
+				if ( results.containsKey(instruction.getId()) ) {
+					continue;
+				}
+				taskExecutor.execute(() -> {
+					try {
+						Thread.sleep(delay);
+					} catch ( InterruptedException e ) {
+						// ignore
+					}
+					try {
+						var instr = instructor.getInstruction(instruction.getId());
+						if ( instr == null ) {
+							String msg = "Instruction [%d] not found".formatted(instruction.getId());
+							addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, null,
+									xform, null, outputType, parameters));
+							throw new IllegalStateException(msg);
+						} else if ( instr.getState() == InstructionState.Completed
+								|| instr.getState() == InstructionState.Declined ) {
+							addEvent(userEventAppenderBiz, userId,
+									importEvent(null, endpoint, null, xform, null, outputType,
+											parameters, instr, INSTRUCTION_EXECUTED_TAG));
+							results.put(instruction.getId(), instr);
+						}
+					} finally {
+						latch.countDown();
+					}
+				});
+			}
+			try {
+				latch.await(expire - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+			} catch ( InterruptedException e ) {
+				// ignore and continue
+			}
+			currDelay += backOff;
 		}
 
 		var finalInstructions = new ArrayList<NodeInstruction>(instructions.size());
-		for ( ListIterator<Future<NodeInstruction>> itr = futures.listIterator(); itr.hasNext(); ) {
-			Future<NodeInstruction> f = itr.next();
-			NodeInstruction instr;
-			try {
-				instr = f.get();
-			} catch ( ExecutionException | InterruptedException e ) {
-				Throwable t = e.getCause();
-				instr = instructions.get(itr.previousIndex()).clone();
-				instr.setResultParameters(singletonMap(ERROR_INSTRUCTION_RESULT_PARAM, t.getMessage()));
+		for ( NodeInstruction instr : instructions ) {
+			NodeInstruction updated = results.get(instr.getId());
+			if ( updated != null ) {
+				instr = updated;
+			} else {
+				instr = instr.clone();
+				instr.setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
+				String msg = "Timeout waiting for instruction [%d] to complete."
+						.formatted(instr.getId());
+				addEvent(userEventAppenderBiz, userId,
+						importErrorEvent(msg, endpoint, null, xform, null, outputType, parameters));
 			}
 			finalInstructions.add(instr);
 		}

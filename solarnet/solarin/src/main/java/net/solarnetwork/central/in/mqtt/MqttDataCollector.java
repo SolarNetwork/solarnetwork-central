@@ -50,7 +50,6 @@ import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessageHandler;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
@@ -59,12 +58,13 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 2.4
+ * @version 3.0
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
@@ -129,7 +129,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	 *         if any argument is {@literal null}
 	 */
 	public MqttDataCollector(ObjectMapper objectMapper, DataCollectorBiz dataCollectorBiz,
-			NodeInstructionDao nodeInstructionDao, MqttStats mqttStats) {
+			NodeInstructionDao nodeInstructionDao, StatTracker mqttStats) {
 		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		this.dataCollectorBiz = requireNonNullArgument(dataCollectorBiz, "dataCollectorBiz");
 		this.nodeInstructionDao = requireNonNullArgument(nodeInstructionDao, "nodeInstructionDao");
@@ -224,7 +224,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	}
 
 	private void handleInstructionStatus(final Long nodeId, final JsonNode node) {
-		getMqttStats().incrementAndGet(SolarInCountStat.InstructionStatusReceived);
+		getMqttStats().increment(SolarInCountStat.InstructionStatusReceived);
 		String instructionId = getStringFieldValue(node, "instructionId", null);
 		String instructionState = getStringFieldValue(node, "state", null);
 		if ( instructionState == null ) {
@@ -250,7 +250,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 		try {
 			StreamDatum d = objectMapper.treeToValue(node, StreamDatum.class);
 			dataCollectorBiz.postStreamDatum(singleton(d));
-			getMqttStats().incrementAndGet(SolarInCountStat.StreamDatumReceived);
+			getMqttStats().increment(SolarInCountStat.StreamDatumReceived);
 		} catch ( IOException e ) {
 			log.debug("Unable to parse StreamDatum: {}", e.getMessage());
 		}
@@ -301,7 +301,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 					dataCollectorBiz.postGeneralNodeDatum(singleton((GeneralNodeDatum) ld));
 				}
 			}
-			getMqttStats().incrementAndGet(d.getKind() == ObjectDatumKind.Location
+			getMqttStats().increment(d.getKind() == ObjectDatumKind.Location
 					? checkVersion ? SolarInCountStat.LocationDatumReceived
 							: SolarInCountStat.LegacyLocationDatumReceived
 					: checkVersion ? SolarInCountStat.NodeDatumReceived

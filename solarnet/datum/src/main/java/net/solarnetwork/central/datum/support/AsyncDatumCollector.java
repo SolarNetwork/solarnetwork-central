@@ -55,7 +55,6 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
-import net.solarnetwork.central.datum.support.CollectorStats.BasicCount;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
@@ -65,6 +64,7 @@ import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Data collector that processes datum and location datum asynchronously.
@@ -85,7 +85,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * </p>
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -107,10 +107,59 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	/** The {@code queueRefillThreshold} property default value. */
 	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.1;
 
+	/** Basic counted fields. */
+	public enum BasicCount {
+
+		/** Buffer additions. */
+		BufferAdds,
+
+		/** Buffer removals. */
+		BufferRemovals,
+
+		/** Daum received. */
+		DatumReceived,
+
+		/** Datum persisted. */
+		DatumStored,
+
+		/** Datum persistence failures. */
+		DatumFail,
+
+		/** Location datum received. */
+		LocationDatumReceived,
+
+		/** Location datum persisted. */
+		LocationDatumStored,
+
+		/** Location datum persistence failures. */
+		LocationDatumFail,
+
+		/** Stream datum received. */
+		StreamDatumReceived,
+
+		/** Stream datum persisted. */
+		StreamDatumStored,
+
+		/** Stream datum persistence failures. */
+		StreamDatumFail,
+
+		/** Work queue additions. */
+		WorkQueueAdds,
+
+		/** Work queue removals. */
+		WorkQueueRemovals,
+
+		/** Work queue refills. */
+		WorkQueueRefills,
+
+		;
+
+	}
+
 	private final Cache<Serializable, Serializable> datumCache;
 	private final DatumWriteOnlyDao datumDao;
 	private final TransactionTemplate transactionTemplate;
-	private final CollectorStats stats;
+	private final StatTracker stats;
 	private final CacheEntryListenerConfiguration<Serializable, Serializable> listenerConfiguration;
 	private final ReentrantLock queueLock = new ReentrantLock();
 
@@ -126,7 +175,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	private BlockingQueue<Serializable> queue;
 	private DatumWriterThread[] datumThreads;
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
+	private static final Logger log = LoggerFactory.getLogger(AsyncDatumCollector.class);
 
 	/**
 	 * Constructor.
@@ -140,7 +189,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 */
 	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
 			TransactionTemplate transactionTemplate) {
-		this(datumCache, datumDao, transactionTemplate, new CollectorStats("AsyncDaoDatum", 200));
+		this(datumCache, datumDao, transactionTemplate, new StatTracker("AsyncDaoDatum",
+				"net.solarnetwork.central.datum.support.AsyncDatumCollector", log, 200));
 	}
 
 	/**
@@ -158,7 +208,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 *         if any argument is {@literal null}
 	 */
 	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
-			TransactionTemplate transactionTemplate, CollectorStats stats) {
+			TransactionTemplate transactionTemplate, StatTracker stats) {
 		super();
 		this.datumCache = requireNonNullArgument(datumCache, "datumCache");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
@@ -272,8 +322,9 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			return new PingTestResult(false, String.format("Buffer removal lag %d > %d", lagDiff,
 					datumCacheRemovalAlertThreshold), statMap);
 		}
-		return new PingTestResult(true, String.format("Processed %d datum; lag %d.", addCount, lagDiff),
-				statMap);
+		final DatumWriterThread[] workers = this.datumThreads;
+		return new PingTestResult(true, String.format("Processed %d datum using %d workers; lag %d.",
+				addCount, workers != null ? workers.length : 0, lagDiff), statMap);
 	}
 
 	@Override
@@ -306,7 +357,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				while ( writeEnabled ) {
 					final Serializable key = queue.take();
 					if ( key != null ) {
-						stats.incrementAndGet(BasicCount.WorkQueueRemovals);
+						stats.increment(BasicCount.WorkQueueRemovals);
 						log.trace("POLL: |{}", key);
 						final Serializable entity = datumCache.getAndRemove(key);
 						try {
@@ -325,11 +376,11 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 									}
 								});
 								if ( entity instanceof DatumEntity ) {
-									stats.incrementAndGet(BasicCount.StreamDatumStored);
+									stats.increment(BasicCount.StreamDatumStored);
 								} else if ( entity instanceof GeneralNodeDatum ) {
-									stats.incrementAndGet(BasicCount.DatumStored);
+									stats.increment(BasicCount.DatumStored);
 								} else if ( entity instanceof GeneralLocationDatum ) {
-									stats.incrementAndGet(BasicCount.LocationDatumStored);
+									stats.increment(BasicCount.LocationDatumStored);
 								}
 							} else {
 								log.trace("MISS: |{}", key);
@@ -339,11 +390,11 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 								datumCache.put(key, entity);
 							}
 							if ( entity instanceof DatumEntity ) {
-								stats.incrementAndGet(BasicCount.StreamDatumFail);
+								stats.increment(BasicCount.StreamDatumFail);
 							} else if ( entity instanceof GeneralNodeDatum ) {
-								stats.incrementAndGet(BasicCount.DatumFail);
+								stats.increment(BasicCount.DatumFail);
 							} else if ( entity instanceof GeneralLocationDatum ) {
-								stats.incrementAndGet(BasicCount.LocationDatumFail);
+								stats.increment(BasicCount.LocationDatumFail);
 							}
 							Throwable root = t;
 							while ( root.getCause() != null ) {
@@ -363,7 +414,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
 								log.trace("REFILL: |{}/{}", currSize, queueSize);
-								stats.incrementAndGet(BasicCount.WorkQueueRefills);
+								stats.increment(BasicCount.WorkQueueRefills);
 								for ( Entry<Serializable, Serializable> e : datumCache ) {
 									if ( e == null ) {
 										continue;
@@ -400,18 +451,18 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_CRE: |{}", key);
-			stats.incrementAndGet(BasicCount.BufferAdds);
+			stats.increment(BasicCount.BufferAdds);
 			if ( key instanceof DatumPK ) {
-				stats.incrementAndGet(BasicCount.StreamDatumReceived);
+				stats.increment(BasicCount.StreamDatumReceived);
 			} else if ( key instanceof GeneralNodeDatumPK ) {
-				stats.incrementAndGet(BasicCount.DatumReceived);
+				stats.increment(BasicCount.DatumReceived);
 			} else {
-				stats.incrementAndGet(BasicCount.LocationDatumReceived);
+				stats.increment(BasicCount.LocationDatumReceived);
 			}
 			queueLock.lock();
 			try {
 				if ( queue.offer(key) ) {
-					stats.incrementAndGet(BasicCount.WorkQueueAdds);
+					stats.increment(BasicCount.WorkQueueAdds);
 				}
 			} finally {
 				queueLock.unlock();
@@ -426,8 +477,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_UPT: |{}", key);
-			stats.incrementAndGet(BasicCount.BufferRemovals);
-			stats.incrementAndGet(BasicCount.BufferAdds);
+			stats.increment(BasicCount.BufferRemovals);
+			stats.increment(BasicCount.BufferAdds);
 		}
 	}
 
@@ -438,12 +489,14 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_REM: |{}", key);
-			long c = stats.incrementAndGet(BasicCount.BufferRemovals);
-			if ( log.isTraceEnabled()
-					&& (stats.getLogFrequency() > 0 && ((c % stats.getLogFrequency()) == 0)) ) {
-				Set<Serializable> allKeys = StreamSupport.stream(datumCache.spliterator(), false)
-						.filter(e -> e != null).map(e -> e.getKey()).collect(Collectors.toSet());
-				log.trace("Datum cache keys: {}", allKeys);
+			stats.increment(BasicCount.BufferRemovals);
+			if ( log.isTraceEnabled() ) {
+				long c = stats.get(BasicCount.BufferRemovals);
+				if ( stats.getLogFrequency() > 0 && ((c % stats.getLogFrequency()) == 0) ) {
+					Set<Serializable> allKeys = StreamSupport.stream(datumCache.spliterator(), false)
+							.filter(e -> e != null).map(e -> e.getKey()).collect(Collectors.toSet());
+					log.trace("Datum cache keys: {}", allKeys);
+				}
 			}
 		}
 	}

@@ -22,45 +22,40 @@
 
 package net.solarnetwork.central.in.mqtt;
 
-import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
-
 /**
  * SolarIn MQTT statistic types.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.1
  */
-public enum SolarInCountStat implements MqttStat {
+public enum SolarInCountStat {
 
-	NodeDatumReceived(0, "node datum received"),
+	NodeDatumReceived("node datum received"),
 
-	LocationDatumReceived(1, "location datum received"),
+	LocationDatumReceived("location datum received"),
 
-	InstructionStatusReceived(2, "instruction status received"),
+	InstructionStatusReceived("instruction status received"),
 
-	LegacyNodeDatumReceived(3, "Legacy node datum received"),
+	LegacyNodeDatumReceived("Legacy node datum received"),
 
-	LegacyLocationDatumReceived(4, "Legacy location datum received"),
+	LegacyLocationDatumReceived("Legacy location datum received"),
 
-	StreamDatumReceived(5, "stream datum received"),
+	StreamDatumReceived("stream datum received"),
 
 	;
 
-	private final int index;
 	private final String description;
 
-	private SolarInCountStat(int index, String description) {
-		this.index = index;
+	private SolarInCountStat(String description) {
 		this.description = description;
 	}
 
-	@Override
-	public int getIndex() {
-		return index;
-	}
-
-	@Override
+	/**
+	 * Get the description.
+	 * 
+	 * @return the description
+	 */
 	public String getDescription() {
 		return description;
 	}

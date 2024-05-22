@@ -39,14 +39,13 @@ import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.LoggingUserEventAppenderBiz;
 import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz;
-import net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz.UserEventStats;
 import net.solarnetwork.central.common.config.AsyncUserEventAppenderSettings;
 import net.solarnetwork.central.common.dao.UserEventAppenderDao;
 import net.solarnetwork.central.common.dao.jdbc.JdbcUserEventDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 import net.solarnetwork.util.UuidGenerator;
 
 /**
@@ -59,7 +58,7 @@ import net.solarnetwork.util.UuidGenerator;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
@@ -103,10 +102,10 @@ public class UserEventConfig {
 			executor.allowCoreThreadTimeOut(true);
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,
 					new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT),
-					new StatCounter("AsyncDaoUserEventAppender",
+					new StatTracker("AsyncDaoUserEventAppender",
 							"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
 							LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class),
-							settings.getStatFrequency(), UserEventStats.values()),
+							settings.getStatFrequency()),
 					uuidGenerator);
 			biz.setQueueLagAlertThreshold(settings.getQueueLagAlertThreshold());
 			biz.setSolarFluxPublisher(userEventSolarFluxPublisher);

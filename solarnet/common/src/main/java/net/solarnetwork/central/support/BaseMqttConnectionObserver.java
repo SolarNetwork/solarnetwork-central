@@ -29,15 +29,15 @@ import org.slf4j.LoggerFactory;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionObserver;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.service.support.BasicIdentifiable;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Base implementation of {@link MqttConnectionObserver} to help with connection
  * observer-based MQTT services.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 		implements MqttConnectionObserver {
@@ -68,7 +68,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	private int publishTimeoutSeconds = DEFAULT_PUBLISH_TIMEOUT_SECONDS;
 	private int subscribeTimeoutSeconds = DEFAULT_SUBSCRIBE_TIMEOUT_SECONDS;
 	private int transientErrorTries = DEFAULT_TRANSIENT_ERROR_TRIES;
-	private MqttStats mqttStats;
+	private StatTracker mqttStats;
 
 	/**
 	 * Callback when the MQTT connection has been established.
@@ -165,7 +165,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * 
 	 * @return the statistics tracker
 	 */
-	public MqttStats getMqttStats() {
+	public StatTracker getMqttStats() {
 		return mqttStats;
 	}
 
@@ -175,7 +175,7 @@ public abstract class BaseMqttConnectionObserver extends BasicIdentifiable
 	 * @param mqttStats
 	 *        the statistics tracker to set
 	 */
-	public void setMqttStats(MqttStats mqttStats) {
+	public void setMqttStats(StatTracker mqttStats) {
 		this.mqttStats = mqttStats;
 	}
 

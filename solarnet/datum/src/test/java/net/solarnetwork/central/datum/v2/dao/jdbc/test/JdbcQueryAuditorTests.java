@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcQueryAuditorTests.java - 15/02/2018 9:28:21 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -51,15 +51,14 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
-import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditorCount;
 import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link JdbcQueryAuditor} class.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JdbcQueryAuditorTests {
 
@@ -87,7 +86,7 @@ public class JdbcQueryAuditorTests {
 		jdbcStatement = EasyMock.createMock(CallableStatement.class);
 		datumCountMap = new ConcurrentHashMap<>(8);
 		auditor = new JdbcQueryAuditor(testClock, dataSource, datumCountMap,
-				new StatCounter("QueryAuditor", "", log, 20, JdbcQueryAuditorCount.values()));
+				new StatTracker("QueryAuditor", "", log, 20));
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);

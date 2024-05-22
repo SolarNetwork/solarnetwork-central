@@ -46,15 +46,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
-import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditorCount;
 import net.solarnetwork.domain.datum.DatumId;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link JdbcNodeServiceAuditor} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcNodeServiceAuditorTests {
 
@@ -82,8 +81,8 @@ public class JdbcNodeServiceAuditorTests {
 		jdbcConnection = EasyMock.createMock(Connection.class);
 		jdbcStatement = EasyMock.createMock(CallableStatement.class);
 		datumCountMap = new ConcurrentHashMap<>(8);
-		auditor = new JdbcNodeServiceAuditor(dataSource, datumCountMap, testClock, new StatCounter(
-				"NodeServiceAuditor", "", log, 20, JdbcNodeServiceAuditorCount.values()));
+		auditor = new JdbcNodeServiceAuditor(dataSource, datumCountMap, testClock,
+				new StatTracker("NodeServiceAuditor", "", log, 20));
 		auditor.setFlushDelay(FLUSH_DELAY);
 		auditor.setUpdateDelay(UPDATE_DELAY);
 		auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);

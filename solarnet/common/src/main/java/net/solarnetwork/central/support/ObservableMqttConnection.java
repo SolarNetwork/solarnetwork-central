@@ -30,14 +30,14 @@ import net.solarnetwork.common.mqtt.BaseMqttConnectionService;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttConnectionFactory;
 import net.solarnetwork.common.mqtt.MqttConnectionObserver;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Basic MQTT connection service with a configurable list of observers.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class ObservableMqttConnection extends BaseMqttConnectionService
 		implements ServiceLifecycleObserver, MqttConnectionObserver {
@@ -63,7 +63,7 @@ public class ObservableMqttConnection extends BaseMqttConnectionService
 	 * @param connectionObservers
 	 *        the connection observers
 	 */
-	public ObservableMqttConnection(MqttConnectionFactory connectionFactory, MqttStats mqttStats,
+	public ObservableMqttConnection(MqttConnectionFactory connectionFactory, StatTracker mqttStats,
 			String name, List<MqttConnectionObserver> connectionObservers) {
 		super(connectionFactory, mqttStats);
 		this.name = requireNonNullArgument(name, "name");

@@ -51,16 +51,15 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
-import net.solarnetwork.central.in.mqtt.SolarInCountStat;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.StreamDatum;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for ingesting StreamDatum CBOR.
@@ -91,7 +90,7 @@ public class MqttDataCollectorTests_StreamDatum {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.initialize();
 
-		MqttStats mqttStats = new MqttStats(1, SolarInCountStat.values());
+		StatTracker mqttStats = new StatTracker("Test", null, LoggerFactory.getLogger(getClass()), 1);
 
 		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
 	}

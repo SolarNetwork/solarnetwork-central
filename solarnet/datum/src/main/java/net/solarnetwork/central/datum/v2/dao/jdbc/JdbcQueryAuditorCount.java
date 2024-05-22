@@ -1,74 +1,63 @@
 /* ==================================================================
  * JdbcQueryAuditorCount.java - 11/06/2018 7:43:25 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao.jdbc;
 
-import net.solarnetwork.util.StatCounter.Stat;
-
 /**
  * Statistics for JDBC query audit processing.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.0
  */
-public enum JdbcQueryAuditorCount implements Stat {
+public enum JdbcQueryAuditorCount {
 
-	ResultsAdded(0, "results added"),
+	/** Results added. */
+	ResultsAdded,
 
-	WriterThreadsStarted(1, "write threads started"),
+	/** Write threads started. */
+	WriterThreadsStarted,
 
-	WriterThreadsEnded(2, "write threads ended"),
+	/** Write threads ended. */
+	WriterThreadsEnded,
 
-	ConnectionsCreated(3, "JDBC connections created"),
+	/** JDBC connections created. */
+	ConnectionsCreated,
 
-	CountsFlushed(4, "flushed counts to DB"),
+	/** Flushed counts to DB. */
+	CountsFlushed,
 
-	ZeroCountsCleared(5, "zero-valued counts cleared"),
+	/** Zero-valued counts cleared. */
+	ZeroCountsCleared,
 
-	UpdatesExecuted(6, "SQL updates executed"),
+	/** SQL updates executed. */
+	UpdatesExecuted,
 
-	UpdatesFailed(7, "SQL updates failed"),
+	/** SQL updates failed. */
+	UpdatesFailed,
 
-	ResultsReadded(8, "results re-added (from errors)"),
+	/** Results re-added (from errors). */
+	ResultsReadded,
 
 	;
-
-	private final int index;
-	private final String description;
-
-	private JdbcQueryAuditorCount(int index, String description) {
-		this.index = index;
-		this.description = description;
-	}
-
-	@Override
-	public int getIndex() {
-		return index;
-	}
-
-	@Override
-	public String getDescription() {
-		return description;
-	}
 
 }

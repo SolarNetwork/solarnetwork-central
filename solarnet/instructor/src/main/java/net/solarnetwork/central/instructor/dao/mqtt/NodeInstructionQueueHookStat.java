@@ -22,34 +22,29 @@
 
 package net.solarnetwork.central.instructor.dao.mqtt;
 
-import net.solarnetwork.common.mqtt.MqttStats.MqttStat;
-
 /**
  * NodeInstructionQueueHook MQTT statistic types.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public enum NodeInstructionQueueHookStat implements MqttStat {
+public enum NodeInstructionQueueHookStat {
 
-	InstructionsPublished(0, "instructions published"),
+	InstructionsPublished("instructions published"),
 
 	;
 
-	private final int index;
 	private final String description;
 
-	private NodeInstructionQueueHookStat(int index, String description) {
-		this.index = index;
+	private NodeInstructionQueueHookStat(String description) {
 		this.description = description;
 	}
 
-	@Override
-	public int getIndex() {
-		return index;
-	}
-
-	@Override
+	/**
+	 * Get the description.
+	 * 
+	 * @return the description
+	 */
 	public String getDescription() {
 		return description;
 	}

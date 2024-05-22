@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpMqttInstructionQueueHookTests.java - 8/10/2022 5:53:23 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -71,7 +71,6 @@ import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
 import net.solarnetwork.central.oscp.domain.OscpUserEvents;
-import net.solarnetwork.central.oscp.mqtt.OscpMqttCountStat;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructionQueueHook;
 import net.solarnetwork.central.oscp.mqtt.OscpMqttInstructions;
 import net.solarnetwork.central.oscp.util.OscpUtils;
@@ -81,15 +80,15 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttMessage;
-import net.solarnetwork.common.mqtt.MqttStats;
+import net.solarnetwork.util.StatTracker;
 import oscp.v20.AdjustGroupCapacityForecast;
 import oscp.v20.GroupCapacityComplianceError;
 
 /**
  * Test cases for the {@link OscpMqttInstructionQueueHook} class.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, OscpUserEvents {
@@ -133,9 +132,8 @@ public class OscpMqttInstructionQueueHookTests implements OscpMqttInstructions, 
 	@BeforeEach
 	public void setup() {
 		mapper = JsonUtils.newObjectMapper();
-		hook = new OscpMqttInstructionQueueHook(
-				new MqttStats("SolarOSCP-MQTT", 1, OscpMqttCountStat.values()), mapper, userNodeDao,
-				capacityGroupDao, capacityOptimizerDao, capacityProviderDao);
+		hook = new OscpMqttInstructionQueueHook(new StatTracker("SolarOSCP-MQTT", null, log, 1), mapper,
+				userNodeDao, capacityGroupDao, capacityOptimizerDao, capacityProviderDao);
 		hook.setUserEventAppenderBiz(userEventAppenderBiz);
 		hook.setJsonSchemaFactory(OscpUtils.oscpSchemaFactory_v20());
 	}

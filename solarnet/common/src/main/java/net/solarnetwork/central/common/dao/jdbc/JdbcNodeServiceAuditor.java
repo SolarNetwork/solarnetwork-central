@@ -31,7 +31,6 @@ import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -47,7 +46,7 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
-import net.solarnetwork.util.StatCounter;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * JDBC based implementation of {@link NodeServiceAuditor}.
@@ -60,7 +59,7 @@ import net.solarnetwork.util.StatCounter;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, ServiceLifecycleObserver {
 
@@ -96,7 +95,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	private final DataSource dataSource;
 	private final ConcurrentMap<DatumId, AtomicInteger> nodeServiceCounters; // DatumId used with sourceId for service
 	private final Clock clock;
-	private final StatCounter statCounter;
+	private final StatTracker statCounter;
 
 	private String nodeServiceIncrementSql;
 
@@ -115,8 +114,8 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 */
 	public JdbcNodeServiceAuditor(DataSource dataSource) {
 		this(dataSource, new ConcurrentHashMap<>(1000, 0.8f, 4),
-				Clock.tick(Clock.systemUTC(), Duration.ofHours(1)), new StatCounter("NodeServiceAuditor",
-						"", log, 1000, JdbcNodeServiceAuditorCount.values()));
+				Clock.tick(Clock.systemUTC(), Duration.ofHours(1)),
+				new StatTracker("NodeServiceAuditor", "", log, 1000));
 	}
 
 	/**
@@ -133,7 +132,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 */
 	public JdbcNodeServiceAuditor(DataSource dataSource,
 			ConcurrentMap<DatumId, AtomicInteger> nodeSourceCounters, Clock clock,
-			StatCounter statCounter) {
+			StatTracker statCounter) {
 		super();
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
 		this.nodeServiceCounters = requireNonNullArgument(nodeSourceCounters, "nodeSourceCounters");
@@ -172,7 +171,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 
 	private void addNodeServiceCount(DatumId key, int count) {
 		nodeServiceCounters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
-		statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.ResultsAdded);
+		statCounter.increment(JdbcNodeServiceAuditorCount.ResultsAdded);
 	}
 
 	private class WriterThread extends Thread {
@@ -201,7 +200,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 		@Override
 		public void run() {
 			log.info("Started JDBC audit writer thread {}", this);
-			statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.WriterThreadsStarted);
+			statCounter.increment(JdbcNodeServiceAuditorCount.WriterThreadsStarted);
 			try {
 				while ( keepGoing.get() ) {
 					keepGoingWithConnection.set(true);
@@ -223,13 +222,13 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 					}
 				}
 			} finally {
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.WriterThreadsEnded);
+				statCounter.increment(JdbcNodeServiceAuditorCount.WriterThreadsEnded);
 			}
 		}
 
 		private Boolean execute() throws SQLException {
 			try (Connection conn = dataSource.getConnection()) {
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.ConnectionsCreated);
+				statCounter.increment(JdbcNodeServiceAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = isCallableStatement(nodeServiceIncrementSql)
 						? conn.prepareCall(nodeServiceIncrementSql)
@@ -253,7 +252,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	}
 
 	private void flushNodeServiceData(PreparedStatement stmt) throws SQLException, InterruptedException {
-		statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.CountsFlushed);
+		statCounter.increment(JdbcNodeServiceAuditorCount.CountsFlushed);
 		for ( Iterator<Map.Entry<DatumId, AtomicInteger>> itr = nodeServiceCounters.entrySet()
 				.iterator(); itr.hasNext(); ) {
 			Map.Entry<DatumId, AtomicInteger> me = itr.next();
@@ -263,7 +262,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 			if ( count < 1 ) {
 				// clean out stale 0 valued counter
 				itr.remove();
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.ZeroCountsCleared);
+				statCounter.increment(JdbcNodeServiceAuditorCount.ZeroCountsCleared);
 				continue;
 			}
 			try {
@@ -276,19 +275,19 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 				stmt.setTimestamp(3, Timestamp.from(key.getTimestamp()));
 				stmt.setInt(4, count);
 				stmt.execute();
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.UpdatesExecuted);
+				statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesExecuted);
 				if ( updateDelay > 0 ) {
 					Thread.sleep(updateDelay);
 				}
 			} catch ( SQLException | InterruptedException e ) {
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.UpdatesFailed);
+				statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesFailed);
 				addNodeServiceCount(key, count);
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.ResultsReadded);
+				statCounter.increment(JdbcNodeServiceAuditorCount.ResultsReadded);
 				throw e;
 			} catch ( Exception e ) {
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.UpdatesFailed);
+				statCounter.increment(JdbcNodeServiceAuditorCount.UpdatesFailed);
 				addNodeServiceCount(key, count);
-				statCounter.incrementAndGet(JdbcNodeServiceAuditorCount.ResultsReadded);
+				statCounter.increment(JdbcNodeServiceAuditorCount.ResultsReadded);
 				RuntimeException re;
 				if ( e instanceof RuntimeException ) {
 					re = (RuntimeException) e;
@@ -363,10 +362,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	public Result performPingTest() throws Exception {
 		final WriterThread t = this.writerThread;
 		boolean writerRunning = t != null && t.isAlive();
-		Map<String, Long> statMap = new LinkedHashMap<>(JdbcNodeServiceAuditorCount.values().length);
-		for ( JdbcNodeServiceAuditorCount s : JdbcNodeServiceAuditorCount.values() ) {
-			statMap.put(s.toString(), statCounter.get(s));
-		}
+		Map<String, Long> statMap = statCounter.allCounts();
 		if ( !writerRunning ) {
 			return new PingTestResult(false,
 					(writerThread == null ? "Writer thread missing." : "Writer thread dead."), statMap);

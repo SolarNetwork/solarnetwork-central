@@ -26,6 +26,7 @@ import static net.solarnetwork.central.din.app.config.SolarFluxMqttConnectionCon
 import java.io.Serializable;
 import java.util.Collection;
 import javax.cache.Cache;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -38,7 +39,6 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.support.AsyncDatumCollectorSettings;
-import net.solarnetwork.central.datum.support.CollectorStats;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.din.biz.TransformService;
@@ -46,12 +46,13 @@ import net.solarnetwork.central.din.biz.impl.DaoDatumInputEndpointBiz;
 import net.solarnetwork.central.din.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.din.dao.InputDataEntityDao;
 import net.solarnetwork.central.din.dao.TransformConfigurationDao;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Core service configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class DatumInputServiceConfig implements DatumInputConfiguration {
@@ -97,7 +98,9 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	public AsyncDatumCollector asyncDaoDatumCollector(AsyncDatumCollectorSettings settings,
 			@Qualifier(DATUM_BUFFER) Cache<Serializable, Serializable> buffer) {
 		TransactionTemplate tt = new TransactionTemplate(txManager);
-		CollectorStats stats = new CollectorStats("AsyncDaoDatum", settings.getStatFrequency());
+		StatTracker stats = new StatTracker("AsyncDaoDatum",
+				"net.solarnetwork.central.datum.support.AsyncDatumCollector",
+				LoggerFactory.getLogger(AsyncDatumCollector.class), settings.getStatFrequency());
 		AsyncDatumCollector collector = new AsyncDatumCollector(buffer, datumDao, tt, stats);
 		collector.setConcurrency(settings.getThreads());
 		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());

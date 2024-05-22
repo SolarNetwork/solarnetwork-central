@@ -55,6 +55,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -83,7 +84,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link DaoInstructionInputEndpointBiz} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -141,9 +142,9 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 		given(requestXformService.getId()).willReturn(requestXformServiceId);
 		responseXformServiceId = randomString();
 		given(responseXformService.getId()).willReturn(responseXformServiceId);
-		service = new DaoInstructionInputEndpointBiz(instructor, nodeOwnershipDao, endpointDao,
-				requestTransformDao, responseTransformDao, userMetadataDao,
-				singleton(requestXformService), singleton(responseXformService));
+		service = new DaoInstructionInputEndpointBiz(new SimpleAsyncTaskExecutor(), instructor,
+				nodeOwnershipDao, endpointDao, requestTransformDao, responseTransformDao,
+				userMetadataDao, singleton(requestXformService), singleton(responseXformService));
 		service.setUserEventAppenderBiz(userEventAppender);
 	}
 

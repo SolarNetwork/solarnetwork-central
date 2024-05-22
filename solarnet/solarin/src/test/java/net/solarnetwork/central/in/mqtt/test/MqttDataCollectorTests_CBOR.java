@@ -41,6 +41,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,21 +50,20 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.in.mqtt.MqttDataCollector;
-import net.solarnetwork.central.in.mqtt.SolarInCountStat;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttMessage;
 import net.solarnetwork.common.mqtt.MqttQos;
-import net.solarnetwork.common.mqtt.MqttStats;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link MqttDataCollector} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MqttDataCollectorTests_CBOR {
 
@@ -86,7 +86,7 @@ public class MqttDataCollectorTests_CBOR {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.initialize();
 
-		MqttStats mqttStats = new MqttStats(1, SolarInCountStat.values());
+		StatTracker mqttStats = new StatTracker("Test", null, LoggerFactory.getLogger(getClass()), 1);
 
 		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
 	}

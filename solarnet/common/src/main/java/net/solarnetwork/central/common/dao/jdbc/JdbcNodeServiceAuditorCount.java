@@ -22,52 +22,41 @@
 
 package net.solarnetwork.central.common.dao.jdbc;
 
-import net.solarnetwork.util.StatCounter.Stat;
-
 /**
  * Statistics for JDBC node service audit processing.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public enum JdbcNodeServiceAuditorCount implements Stat {
+public enum JdbcNodeServiceAuditorCount {
 
-	ResultsAdded(0, "results added"),
+	/** Results added. */
+	ResultsAdded,
 
-	WriterThreadsStarted(1, "write threads started"),
+	/** Write threads started. */
+	WriterThreadsStarted,
 
-	WriterThreadsEnded(2, "write threads ended"),
+	/** Write threads ended. */
+	WriterThreadsEnded,
 
-	ConnectionsCreated(3, "JDBC connections created"),
+	/** JDBC connections created. */
+	ConnectionsCreated,
 
-	CountsFlushed(4, "flushed counts to DB"),
+	/** Flushed counts to DB. */
+	CountsFlushed,
 
-	ZeroCountsCleared(5, "zero-valued counts cleared"),
+	/** Zero-valued counts cleared. */
+	ZeroCountsCleared,
 
-	UpdatesExecuted(6, "SQL updates executed"),
+	/** SQL updates executed. */
+	UpdatesExecuted,
 
-	UpdatesFailed(7, "SQL updates failed"),
+	/** SQL updates failed. */
+	UpdatesFailed,
 
-	ResultsReadded(8, "results re-added (from errors)"),
+	/** Results re-added (from errors). */
+	ResultsReadded,
 
 	;
-
-	private final int index;
-	private final String description;
-
-	private JdbcNodeServiceAuditorCount(int index, String description) {
-		this.index = index;
-		this.description = description;
-	}
-
-	@Override
-	public int getIndex() {
-		return index;
-	}
-
-	@Override
-	public String getDescription() {
-		return description;
-	}
 
 }
