@@ -40,6 +40,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.util.zip.ZipException;
 import javax.cache.Cache;
 import javax.cache.configuration.FactoryBuilder.SingletonFactory;
 import javax.cache.configuration.MutableCacheEntryListenerConfiguration;
@@ -49,6 +50,7 @@ import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
 import org.apache.commons.codec.binary.Hex;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -67,7 +69,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -79,6 +81,8 @@ public class JCacheContentCachingService
 	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern
 			.compile("^" + AuthenticationScheme.V1.getSchemeName() + "\\s+([^:]+):");
 	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern.compile("Credential=([^,]+)(?:,|$)");
+
+	private static final Logger log = LoggerFactory.getLogger(JCacheContentCachingService.class);
 
 	private final Cache<String, CachedContent> cache;
 	private final StatTracker stats;
@@ -348,7 +352,20 @@ public class JCacheContentCachingService
 				FileCopyUtils.copy(in, response.getOutputStream());
 			} else if ( CompressionType.GZIP.getContentEncoding().equals(contentEncoding) ) {
 				// send decompressed content
-				FileCopyUtils.copy(new GZIPInputStream(in), response.getOutputStream());
+				try {
+					FileCopyUtils.copy(new GZIPInputStream(in), response.getOutputStream());
+				} catch ( ZipException e ) {
+					// should not be here! log some info to help troubleshoot
+					log.error("""
+							Cached content {} for [{}] marked as gzip but not valid ({}). \
+							Content size: {}; headers: {}; metadata: {}
+							""", key, request.getRequestURI(), e.getMessage(),
+							content.getContentLength(), content.getHeaders(), content.getMetadata());
+
+					// then fall back to raw response
+					response.setContentLength(content.getContentLength());
+					FileCopyUtils.copy(in, response.getOutputStream());
+				}
 			} else {
 				// send raw content
 				response.setContentLength(content.getContentLength());
