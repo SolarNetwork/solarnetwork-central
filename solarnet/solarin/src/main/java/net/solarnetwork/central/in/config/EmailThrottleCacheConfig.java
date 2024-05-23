@@ -36,15 +36,16 @@ import net.solarnetwork.central.support.CacheSettings;
  * Email throttle cache configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class EmailThrottleCacheConfig {
 
 	@Autowired
 	private CacheManager cacheManager;
 
 	@Bean
+	@Qualifier(EMAIL_THROTTLE)
 	@ConfigurationProperties(prefix = "app.email-throttle-cache")
 	public CacheSettings emailThrottleCacheSettings() {
 		return new CacheSettings();
@@ -52,8 +53,7 @@ public class EmailThrottleCacheConfig {
 
 	@Bean
 	@Qualifier(EMAIL_THROTTLE)
-	public Cache<String, Boolean> emailThrottleCache() {
-		CacheSettings settings = emailThrottleCacheSettings();
+	public Cache<String, Boolean> emailThrottleCache(@Qualifier(EMAIL_THROTTLE) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, Boolean.class, EMAIL_THROTTLE);
 	}
 

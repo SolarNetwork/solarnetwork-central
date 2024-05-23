@@ -35,7 +35,7 @@ import net.solarnetwork.central.user.biz.dao.UserValidator;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class RegistrationConfig {
 
 	@Bean
