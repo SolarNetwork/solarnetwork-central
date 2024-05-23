@@ -37,7 +37,7 @@ import net.solarnetwork.central.dao.mybatis.support.MyBatisExceptionTranslator;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class MyBatisDaoConfig {
 
 	@Autowired
