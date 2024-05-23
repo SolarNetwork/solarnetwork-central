@@ -185,9 +185,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		} else {
 			latch = null;
 		}
-		//new Thread(() -> {
 		super.disconnectClients();
-		//}, "OCPP Shutdown").start();
 		if ( latch != null ) {
 			try {
 				if ( shutdownTaskMaxWait.isPositive() ) {
