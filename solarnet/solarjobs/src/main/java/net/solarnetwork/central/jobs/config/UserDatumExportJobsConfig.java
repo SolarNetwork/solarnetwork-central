@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserDatumExportJobsConfig.java - 11/11/2021 8:32:05 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,11 +39,11 @@ import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
 
 /**
  * User datum export jobs configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserDatumExportJobsConfig {
 
 	@Autowired
@@ -65,9 +65,9 @@ public class UserDatumExportJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.user-datum-export.hourly")
 	@Bean
-	public ManagedJob hourlyTaskPopulatorJob() {
+	public ManagedJob hourlyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Hourly,
-				userExportJobsService());
+				exportJobsService);
 		job.setId("UserExportTaskPopulatorHourly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
@@ -75,9 +75,9 @@ public class UserDatumExportJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.user-datum-export.daily")
 	@Bean
-	public ManagedJob dailyTaskPopulatorJob() {
+	public ManagedJob dailyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Daily,
-				userExportJobsService());
+				exportJobsService);
 		job.setId("UserExportTaskPopulatorDaily");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
@@ -85,9 +85,9 @@ public class UserDatumExportJobsConfig {
 
 	@ConfigurationProperties(prefix = "app.job.user-datum-export.weekly")
 	@Bean
-	public ManagedJob weeklyTaskPopulatorJob() {
+	public ManagedJob weeklyTaskPopulatorJob(UserExportJobsService exportJobsService) {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Weekly,
-				userExportJobsService());
+				exportJobsService);
 		job.setId("UserExportTaskPopulatorWeekly");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
