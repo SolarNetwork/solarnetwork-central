@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -391,11 +392,20 @@ public class JCacheContentCachingService
 					FileCopyUtils.copy(new GZIPInputStream(in), response.getOutputStream());
 				} catch ( ZipException e ) {
 					// should not be here! log some info to help troubleshoot
+					String base64Content = "";
+					try {
+						var byos = new ByteArrayOutputStream(content.getContentLength());
+						FileCopyUtils.copy(content.getContent(), byos);
+						base64Content = Base64.getEncoder().encodeToString(byos.toByteArray());
+					} catch ( Exception e2 ) {
+						// ignore exception and continue
+					}
 					log.error("""
 							Cached content {} for [{}] marked as gzip but not valid ({}). \
-							Content size: {}; headers: {}; metadata: {}
+							Content size: {}; headers: {}; metadata: {}; content Base64: {}
 							""", key, request.getRequestURI(), e.getMessage(),
-							content.getContentLength(), content.getHeaders(), content.getMetadata());
+							content.getContentLength(), content.getHeaders(), content.getMetadata(),
+							base64Content);
 
 					// then fall back to raw response
 					response.setContentLength(content.getContentLength());
