@@ -33,7 +33,7 @@ import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class WebSecurityTokenConfig {
 
 	@ConfigurationProperties(prefix = "app.web.security.token")

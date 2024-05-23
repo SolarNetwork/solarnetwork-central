@@ -47,9 +47,9 @@ import net.solarnetwork.central.query.support.StreamDatumFilterValidator;
  * Configuration for Datum Query business configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class DatumQueryBizConfig {
 
 	/** A qualifier used for datum criteria components. */
@@ -148,8 +148,8 @@ public class DatumQueryBizConfig {
 	}
 
 	@Bean
-	public QueryBiz queryBiz() {
-		DatumQuerySettings settings = datumQuerySettings();
+	public QueryBiz queryBiz(DatumQuerySettings settings,
+			@Qualifier(DATUM_CRITERIA) Validator datumCriteriaValidator) {
 		DaoQueryBiz biz = new DaoQueryBiz(datumDao, streamMetadataDao, readingDatumDao,
 				nodeOwnershipDao);
 		biz.setFilteredResultsLimit(settings.filteredResultsLimit);
@@ -159,15 +159,15 @@ public class DatumQueryBizConfig {
 		biz.setMaxDaysForDayOfWeekAggregation(settings.maxDaysForDayOfWeekAggregation);
 		biz.setMaxDaysForHourOfDayAggregation(settings.maxDaysForHourOfDayAggregation);
 		biz.setMaxDaysForWeekOfYearAggregation(settings.maxDaysForWeekOfYearAggregation);
-		biz.setCriteriaValidator(datumCriteriaValidator());
+		biz.setCriteriaValidator(datumCriteriaValidator);
 		return biz;
 	}
 
 	@Bean
 	@Profile("query-auditor")
 	@Primary
-	public AuditingQueryBiz auditingQueryBiz(@Autowired QueryAuditor queryAuditor) {
-		return new AuditingQueryBiz(queryBiz(), queryAuditor);
+	public AuditingQueryBiz auditingQueryBiz(QueryBiz queryBiz, QueryAuditor queryAuditor) {
+		return new AuditingQueryBiz(queryBiz, queryAuditor);
 	}
 
 	@Bean

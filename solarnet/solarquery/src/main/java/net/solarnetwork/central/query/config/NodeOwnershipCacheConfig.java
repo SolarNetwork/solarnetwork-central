@@ -39,12 +39,18 @@ import net.solarnetwork.central.support.CacheSettings;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class NodeOwnershipCacheConfig {
 
 	@Autowired
 	private CacheManager cacheManager;
 
+	/**
+	 * The node ownership cache settings.
+	 *
+	 * @return the settings
+	 */
+	@Qualifier(NODE_OWNERSHIP_CACHE)
 	@Bean
 	@ConfigurationProperties(prefix = "app.node-ownership-cache")
 	public CacheSettings nodeOwnershipCacheSettings() {
@@ -52,21 +58,16 @@ public class NodeOwnershipCacheConfig {
 	}
 
 	/**
-	 * Get the datum cache.
-	 * 
-	 * @return the actor cache
+	 * Get the node ownership cache.
+	 *
+	 * @return the node ownership cache
 	 */
 	@Bean
 	@Qualifier(NODE_OWNERSHIP_CACHE)
-	public Cache<Long, SolarNodeOwnership> nodeOwnershipCache() {
-		Cache<Long, SolarNodeOwnership> cache = cacheManager.getCache(NODE_OWNERSHIP_CACHE, Long.class,
-				SolarNodeOwnership.class);
-		if ( cache == null ) {
-			CacheSettings settings = nodeOwnershipCacheSettings();
-			cache = settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
-					NODE_OWNERSHIP_CACHE);
-		}
-		return cache;
+	public Cache<Long, SolarNodeOwnership> nodeOwnershipCache(
+			@Qualifier(NODE_OWNERSHIP_CACHE) CacheSettings settings) {
+		return settings.createCache(cacheManager, Long.class, SolarNodeOwnership.class,
+				NODE_OWNERSHIP_CACHE);
 	}
 
 }
