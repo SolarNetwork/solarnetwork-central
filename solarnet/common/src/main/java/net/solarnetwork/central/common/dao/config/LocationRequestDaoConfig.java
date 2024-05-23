@@ -36,7 +36,7 @@ import net.solarnetwork.central.common.dao.jdbc.JdbcLocationRequestDao;
  * @version 1.0
  * @since 1.3
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class LocationRequestDaoConfig {
 
 	@Autowired

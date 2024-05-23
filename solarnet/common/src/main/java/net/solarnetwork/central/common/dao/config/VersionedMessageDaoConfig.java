@@ -36,7 +36,7 @@ import net.solarnetwork.central.dao.mybatis.MyBatisVersionedMessageDao;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class VersionedMessageDaoConfig {
 
 	/**

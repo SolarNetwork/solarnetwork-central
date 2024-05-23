@@ -36,7 +36,7 @@ import net.solarnetwork.service.PingTest;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class MainDataSourceConfig {
 
 	@Value("${app.datasource.ping-query:SELECT CURRENT_TIMESTAMP}")
