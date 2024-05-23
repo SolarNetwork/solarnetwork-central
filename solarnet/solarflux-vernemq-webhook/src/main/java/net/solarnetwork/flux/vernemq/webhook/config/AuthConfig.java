@@ -31,7 +31,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.impl.SimpleAuthorizationEva
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class AuthConfig {
 
   @Value("${auth.userTopicPrefixEnabled:true}")
