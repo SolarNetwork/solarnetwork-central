@@ -63,7 +63,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * OCPP v1.6 web socket configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSocket
@@ -156,11 +156,9 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16u/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
-				ocppSystemUserDao, passwordEncoder);
+				ocppSystemUserDao, passwordEncoder, Pattern.compile("/ocpp/j/v16u/(.*)/(.*)/.*"));
 		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16u/.*/.*/(.*)"));
 		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
-		pathAuthInterceptor.setClientCredentialsExtractor(CentralOcppWebSocketHandshakeInterceptor
-				.pathCredentialsExtractor("/ocpp/j/v16u/(.*)/(.*)/.*"));
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
 
 	}

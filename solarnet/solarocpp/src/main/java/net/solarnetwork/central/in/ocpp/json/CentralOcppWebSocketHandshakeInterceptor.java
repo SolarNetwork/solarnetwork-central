@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.in.ocpp.json;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -36,6 +36,7 @@ import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.ocpp.domain.ChargePointAuthorizationDetails;
 import net.solarnetwork.ocpp.domain.SystemUser;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.service.PasswordEncoder;
@@ -44,7 +45,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
@@ -57,6 +58,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 			"forbidden" };
 
 	private UserEventAppenderBiz userEventAppenderBiz;
+	private final Pattern pathCredentialsRegex;
 
 	/**
 	 * Constructor.
@@ -68,35 +70,49 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	 */
 	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
 			PasswordEncoder passwordEncoder) {
-		super(systemUserDao, passwordEncoder);
+		this(systemUserDao, passwordEncoder, null);
 	}
 
 	/**
-	 * Get a credentials extractor function that extracts from the request path.
+	 * Constructor.
 	 * 
-	 * @param regex
-	 *        the path regular expression: it must provide 2 groups, for the
-	 *        username and password
-	 * @return the function
+	 * @param systemUserDao
+	 *        the system user DAO
+	 * @param passwordEncoder
+	 *        the password encoder
+	 * @param pathCredentialsRegex
+	 *        an optional regular expression to extract path credentials from;
+	 *        the expression must return two groups: the username and the
+	 *        password
+	 * @since 1.3
 	 */
-	public static BiFunction<ServerHttpRequest, String, String[]> pathCredentialsExtractor(
-			String regex) {
-		Pattern p = Pattern.compile(regex);
-		return (request, identifier) -> {
-			String path = request.getURI().getPath();
-			Matcher m = p.matcher(path);
-			if ( m.matches() ) {
-				return new String[] { m.group(1), m.group(2) };
-			}
-			log.warn("OCPP handshake request rejected for {}, path-based credentials not provided.",
-					identifier);
-			return null;
-		};
+	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
+			PasswordEncoder passwordEncoder, Pattern pathCredentialsRegex) {
+		super(systemUserDao, passwordEncoder);
+		this.pathCredentialsRegex = pathCredentialsRegex;
+		if ( pathCredentialsRegex != null ) {
+			setClientCredentialsExtractor(this::extractPathCredentials);
+		}
+	}
+
+	private ChargePointAuthorizationDetails extractPathCredentials(final ServerHttpRequest request,
+			final String identifier) {
+		String path = request.getURI().getPath();
+		Matcher m = pathCredentialsRegex.matcher(path);
+		if ( m.matches() ) {
+			return new SystemUser(Instant.now(), m.group(1), m.group(2));
+		}
+		log.warn("OCPP handshake request rejected for {}, path-based credentials not provided.",
+				identifier);
+		didForbidChargerConnection(request, identifier, null,
+				String.format("Path-based credentials not provided in URL [%s]", path));
+		return null;
 	}
 
 	@Override
-	protected void didForbidChargerConnection(SystemUser user, String reason) {
-		super.didForbidChargerConnection(user, reason);
+	protected void didForbidChargerConnection(ServerHttpRequest request, String identifier,
+			ChargePointAuthorizationDetails user, String reason) {
+		super.didForbidChargerConnection(request, identifier, user, reason);
 		if ( user instanceof CentralSystemUser ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
 			data.put("username", user.getUsername());
