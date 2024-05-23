@@ -65,7 +65,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)
 public class UserOcppBizConfig {
 
@@ -134,18 +134,22 @@ public class UserOcppBizConfig {
 	/**
 	 * The {@link UserOcppBiz} implementation.
 	 * 
+	 * @param userOcppValidator
+	 *        the user validator to use
 	 * @param chargePointStatusFilterValidator
 	 *        the charge point status filter validator to use
+	 * @param chargePointActionStatusFilterValidator
+	 *        the charge point action status filter to use
 	 * @return the service
 	 */
 	@Bean
-	public DaoUserOcppBiz userOcppBiz(
+	public DaoUserOcppBiz userOcppBiz(@Qualifier(OCPP_V16) Validator userOcppValidator,
 			@Qualifier(CHARGE_POINT_STATUS_FILTER) Validator chargePointStatusFilterValidator,
 			@Qualifier(CHARGE_POINT_ACTION_STATUS_FILTER) Validator chargePointActionStatusFilterValidator) {
 		DaoUserOcppBiz biz = new DaoUserOcppBiz(systemUserDao, chargePointDao, connectorDao,
 				authorizationDao, chargeSessionDao, userSettingsDao, chargePointSettingsDao,
 				chargePointStatusDao, chargePointActionStatusDao, passwordEncoder);
-		biz.setValidator(userOcppValidator());
+		biz.setValidator(userOcppValidator);
 		biz.setChargePointStatusFilterValidator(chargePointStatusFilterValidator);
 		biz.setChargePointActionStatusFilterValidator(chargePointActionStatusFilterValidator);
 		return biz;
