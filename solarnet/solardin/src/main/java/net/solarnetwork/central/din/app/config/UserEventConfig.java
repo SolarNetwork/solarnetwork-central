@@ -102,8 +102,7 @@ public class UserEventConfig {
 			executor.allowCoreThreadTimeOut(true);
 			AsyncDaoUserEventAppenderBiz biz = new AsyncDaoUserEventAppenderBiz(executor, dao,
 					new PriorityBlockingQueue<>(64, AsyncDaoUserEventAppenderBiz.EVENT_SORT),
-					new StatTracker("AsyncDaoUserEventAppender",
-							"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz",
+					new StatTracker("AsyncDaoUserEventAppender", null,
 							LoggerFactory.getLogger(AsyncDaoUserEventAppenderBiz.class),
 							settings.getStatFrequency()),
 					uuidGenerator);

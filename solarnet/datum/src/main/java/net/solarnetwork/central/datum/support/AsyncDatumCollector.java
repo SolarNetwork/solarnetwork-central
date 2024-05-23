@@ -189,8 +189,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 */
 	public AsyncDatumCollector(Cache<Serializable, Serializable> datumCache, DatumWriteOnlyDao datumDao,
 			TransactionTemplate transactionTemplate) {
-		this(datumCache, datumDao, transactionTemplate, new StatTracker("AsyncDaoDatum",
-				"net.solarnetwork.central.datum.support.AsyncDatumCollector", log, 200));
+		this(datumCache, datumDao, transactionTemplate,
+				new StatTracker("AsyncDaoDatum", null, log, 200));
 	}
 
 	/**

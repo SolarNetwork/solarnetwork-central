@@ -115,7 +115,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	public JdbcNodeServiceAuditor(DataSource dataSource) {
 		this(dataSource, new ConcurrentHashMap<>(1000, 0.8f, 4),
 				Clock.tick(Clock.systemUTC(), Duration.ofHours(1)),
-				new StatTracker("NodeServiceAuditor", "", log, 1000));
+				new StatTracker("NodeServiceAuditor", null, log, 1000));
 	}
 
 	/**

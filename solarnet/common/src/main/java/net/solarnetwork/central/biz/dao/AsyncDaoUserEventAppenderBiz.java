@@ -135,8 +135,7 @@ public class AsyncDaoUserEventAppenderBiz
 	 */
 	public AsyncDaoUserEventAppenderBiz(ExecutorService executorService, UserEventAppenderDao dao) {
 		this(executorService, dao, new PriorityBlockingQueue<>(64, EVENT_SORT),
-				new StatTracker("AsyncDaoUserEventAppender",
-						"net.solarnetwork.central.biz.dao.AsyncDaoUserEventAppenderBiz", log, 500),
+				new StatTracker("AsyncDaoUserEventAppender", null, log, 500),
 				TimeBasedV7UuidGenerator.INSTANCE_MICROS);
 	}
 
