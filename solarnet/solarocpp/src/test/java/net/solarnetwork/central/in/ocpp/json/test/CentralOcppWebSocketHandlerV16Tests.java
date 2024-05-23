@@ -153,6 +153,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		given(session.getAttributes()).willReturn(sessionAttributes);
 
 		// WHEN
+		handler.startup(false);
 		handler.afterConnectionEstablished(session);
 
 		// THEN
@@ -188,6 +189,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		given(session.getAttributes()).willReturn(sessionAttributes);
 
 		// WHEN
+		handler.startup(false);
 		handler.afterConnectionClosed(session, CloseStatus.NORMAL);
 
 		// THEN
@@ -224,6 +226,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		given(session.getAttributes()).willReturn(sessionAttributes);
 
 		// WHEN
+		handler.startup(false);
 		handler.afterConnectionEstablished(session);
 
 		var req = new StatusNotificationRequest();

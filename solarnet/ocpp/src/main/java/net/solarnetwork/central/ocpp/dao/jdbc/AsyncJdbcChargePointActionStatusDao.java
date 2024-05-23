@@ -107,7 +107,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	 */
 	public AsyncJdbcChargePointActionStatusDao(DataSource dataSource,
 			BlockingQueue<ChargePointActionStatusUpdate> statuses) {
-		this(dataSource, statuses, new StatTracker("ChargePointActionStatusUpdater", "", log,
+		this(dataSource, statuses, new StatTracker("ChargePointActionStatusUpdater", null, log,
 				DEFAULT_STAT_LOG_UPDATE_COUNT));
 	}
 

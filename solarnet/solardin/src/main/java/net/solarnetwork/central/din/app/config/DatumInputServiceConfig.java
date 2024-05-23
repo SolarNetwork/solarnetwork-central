@@ -98,8 +98,7 @@ public class DatumInputServiceConfig implements DatumInputConfiguration {
 	public AsyncDatumCollector asyncDaoDatumCollector(AsyncDatumCollectorSettings settings,
 			@Qualifier(DATUM_BUFFER) Cache<Serializable, Serializable> buffer) {
 		TransactionTemplate tt = new TransactionTemplate(txManager);
-		StatTracker stats = new StatTracker("AsyncDaoDatum",
-				"net.solarnetwork.central.datum.support.AsyncDatumCollector",
+		StatTracker stats = new StatTracker("AsyncDaoDatum", null,
 				LoggerFactory.getLogger(AsyncDatumCollector.class), settings.getStatFrequency());
 		AsyncDatumCollector collector = new AsyncDatumCollector(buffer, datumDao, tt, stats);
 		collector.setConcurrency(settings.getThreads());

@@ -144,7 +144,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	public JdbcQueryAuditor(DataSource dataSource,
 			ConcurrentMap<GeneralNodeDatumPK, AtomicInteger> nodeSourceCounters) {
 		this(Clock.tick(Clock.systemUTC(), Duration.ofHours(1)), dataSource, nodeSourceCounters,
-				new StatTracker("QueryAuditor", "", log, 1000));
+				new StatTracker("QueryAuditor", null, log, 1000));
 	}
 
 	/**

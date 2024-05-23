@@ -27,12 +27,16 @@ import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
 import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.CloseStatus;
@@ -78,6 +82,12 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
 		extends OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver, CentralOcppUserEvents {
 
+	/** The {@code shutdownTaskMaxWait} property default value (1 minute). */
+	public static final Duration DEFAULT_SHUTDOWN_TASK_MAX_WAIT = Duration.ofMinutes(1);
+
+	/** The {@code shutdownTaskPostDelay} property default value (5 seconds). */
+	public static final Duration DEFAULT_SHUTDOWN_TASK_POST_DELAY = Duration.ofSeconds(5);
+
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -86,6 +96,10 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private Function<Object, ChargePointConnectorKey> connectorIdExtractor;
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
+
+	private CountDownLatch shutdownTaskLatch;
+	private Duration shutdownTaskMaxWait = DEFAULT_SHUTDOWN_TASK_MAX_WAIT;
+	private Duration shutdownTaskPostDelay = DEFAULT_SHUTDOWN_TASK_POST_DELAY;
 
 	/**
 	 * Constructor.
@@ -149,12 +163,45 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 	@Override
 	public void serviceDidStartup() {
+		shutdownTaskLatch = null;
 		super.startup();
 	}
 
 	@Override
 	public void serviceDidShutdown() {
 		super.shutdown();
+	}
+
+	@Override
+	protected void disconnectClients() {
+		final int connectedChargerCount = availableChargePointsIds().size();
+		final CountDownLatch latch;
+		if ( connectedChargerCount > 0 ) {
+			latch = (shutdownTaskLatch != null ? shutdownTaskLatch
+					: new CountDownLatch(connectedChargerCount));
+			if ( shutdownTaskLatch == null ) {
+				shutdownTaskLatch = latch;
+			}
+		} else {
+			latch = null;
+		}
+		super.disconnectClients();
+		if ( latch != null ) {
+			try {
+				if ( shutdownTaskMaxWait.isPositive() ) {
+					log.info("Waiting at most {}s for charger disonnections to complete.",
+							shutdownTaskMaxWait.toSeconds());
+					latch.await(shutdownTaskMaxWait.toMillis(), TimeUnit.MILLISECONDS);
+				}
+				if ( shutdownTaskPostDelay.isPositive() ) {
+					log.info("Waiting for {}s for asynchronous shutdown tasks to complete.",
+							shutdownTaskPostDelay.toSeconds());
+					Thread.sleep(shutdownTaskPostDelay);
+				}
+			} catch ( InterruptedException e ) {
+				// ignore
+			}
+		}
 	}
 
 	@Override
@@ -207,6 +254,10 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			}
 		}
 		super.afterConnectionClosed(session, status);
+		final CountDownLatch latch = this.shutdownTaskLatch;
+		if ( latch != null ) {
+			latch.countDown();
+		}
 	}
 
 	@Override
@@ -646,6 +697,58 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	 */
 	public void setInstructionTopic(String instructionTopic) {
 		this.instructionTopic = instructionTopic;
+	}
+
+	/**
+	 * Get the maximum amount of time to wait for shutdown tasks to complete.
+	 * 
+	 * @return the maximum wait time; defaults to
+	 *         {@link #DEFAULT_SHUTDOWN_TASK_MAX_WAIT}
+	 * @since 2.7
+	 */
+	public Duration getShutdownTaskMaxWait() {
+		return shutdownTaskMaxWait;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for shutdown tasks to complete.
+	 * 
+	 * @param shutdownTaskMaxWait
+	 *        the maximum wait time to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 2.7
+	 */
+	public void setShutdownTaskMaxWait(Duration shutdownTaskMaxWait) {
+		this.shutdownTaskMaxWait = requireNonNullArgument(shutdownTaskMaxWait, "shutdownTaskMaxWait");
+	}
+
+	/**
+	 * Get the delay to wait for when {@link #serviceDidShutdown()} is invoked,
+	 * after all clients have disconnected, to give time for any asynchronous
+	 * event processing to complete.
+	 * 
+	 * @return the delay; defaults to {@link #DEFAULT_SHUTDOWN_TASK_POST_DELAY}
+	 * @since 2.7
+	 */
+	public Duration getShutdownTaskPostDelay() {
+		return shutdownTaskPostDelay;
+	}
+
+	/**
+	 * Set the delay to wait for when {@link #serviceDidShutdown()} is invoked,
+	 * after all clients have disconnected, to give time for any asynchronous
+	 * event processing to complete.
+	 * 
+	 * @param shutdownTaskPostDelay
+	 *        the delay to set
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 2.7
+	 */
+	public void setShutdownTaskPostDelay(Duration shutdownTaskPostDelay) {
+		this.shutdownTaskPostDelay = requireNonNullArgument(shutdownTaskPostDelay,
+				"shutdownTaskPostDelay");
 	}
 
 }

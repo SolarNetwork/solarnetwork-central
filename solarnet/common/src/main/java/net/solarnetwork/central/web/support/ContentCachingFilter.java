@@ -68,7 +68,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, PingTest {
@@ -252,8 +252,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		if ( lockPool.isEmpty() ) {
 			throw new IllegalArgumentException("The lock pool must not be empty.");
 		}
-		this.stats = new StatTracker("ContentCacheFilter",
-				"net.solarnetwork.central.web.ContentCachingFilter", log, DEFAULT_STAT_LOG_ACCESS_COUNT);
+		this.stats = new StatTracker("ContentCacheFilter", null, log, DEFAULT_STAT_LOG_ACCESS_COUNT);
 		this.lockPoolCapacity = lockPool.size();
 		this.lockPoolMinize = new LongAccumulator(Math::min, Long.MAX_VALUE);
 		this.lockPoolMinize.accumulate(this.lockPoolCapacity);
@@ -298,7 +297,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 				if ( l == null ) {
 					stats.increment(ContentCachingFilterStats.LockPoolBorrowFailures);
 				} else {
-					stats.increment(ContentCachingFilterStats.LockPoolBorrows);
+					stats.increment(ContentCachingFilterStats.LockPoolBorrows, true);
 					lockPoolMinize.accumulate(lockPool.size());
 					if ( log.isTraceEnabled() ) {
 						log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri,
@@ -392,7 +391,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	private void returnLockToPool(LockAndCount lock, Long requestId, String requestUri) {
 		if ( lockPool.offer(lock) ) {
-			stats.increment(ContentCachingFilterStats.LockPoolReturns);
+			stats.increment(ContentCachingFilterStats.LockPoolReturns, true);
 			log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri, lock.getId());
 		}
 	}
