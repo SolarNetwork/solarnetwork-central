@@ -116,6 +116,9 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 		if ( user instanceof CentralSystemUser ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
 			data.put("username", user.getUsername());
+			if ( identifier != null ) {
+				data.put(CHARGE_POINT_DATA_KEY, identifier);
+			}
 			data.put(ERROR_DATA_KEY, reason);
 			generateUserEvent(((CentralSystemUser) user).getUserId(),
 					CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, null, data);
