@@ -62,7 +62,7 @@ import net.solarnetwork.util.UuidGenerator;
  * @author matt
  * @version 1.2
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserEventConfig {
 
 	@Autowired
@@ -82,7 +82,7 @@ public class UserEventConfig {
 	/**
 	 * Configuration for publishing user events to SolarFlux.
 	 */
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@Profile("mqtt")
 	public static class UserEventSolarFluxConfig {
 
@@ -104,7 +104,7 @@ public class UserEventConfig {
 	 * Configuration for persisting user events.
 	 */
 	@Profile("!logging-user-event-appender")
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	public static class AsyncUserEventAppenderConfig {
 
 		@Bean
@@ -135,7 +135,7 @@ public class UserEventConfig {
 	}
 
 	@Profile("logging-user-event-appender")
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	public static class LoggingUserEventAppenderConfig {
 
 		@Bean
