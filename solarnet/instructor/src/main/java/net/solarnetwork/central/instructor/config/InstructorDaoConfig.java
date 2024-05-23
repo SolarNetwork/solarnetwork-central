@@ -35,7 +35,7 @@ import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class InstructorDaoConfig {
 
 	@Autowired
