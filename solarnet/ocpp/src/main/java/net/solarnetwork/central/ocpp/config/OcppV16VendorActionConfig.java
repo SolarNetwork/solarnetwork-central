@@ -48,7 +48,7 @@ import ocpp.v16.jakarta.cs.DataTransferResponse;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)
 public class OcppV16VendorActionConfig {
 
