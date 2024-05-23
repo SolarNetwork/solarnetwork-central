@@ -42,7 +42,7 @@ import net.solarnetwork.central.scheduler.SimpleSchedulerManager;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(SolarDinJobs.JOBS_PROFILE)
 public class JobSchedulerConfig {
 

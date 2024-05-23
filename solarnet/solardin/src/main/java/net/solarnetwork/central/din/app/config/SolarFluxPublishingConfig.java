@@ -45,7 +45,7 @@ import net.solarnetwork.codec.JsonUtils;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
 public class SolarFluxPublishingConfig {
 
@@ -76,9 +76,8 @@ public class SolarFluxPublishingConfig {
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
 	@Qualifier(SOLARFLUX)
-	public SolarFluxDatumPublisher solarFluxDatumPublisher() {
-		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
-				solarFluxObjectMapper());
+	public SolarFluxDatumPublisher solarFluxDatumPublisher(@Qualifier(SOLARFLUX) ObjectMapper mapper) {
+		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao, mapper);
 		return processor;
 	}
 
