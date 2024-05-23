@@ -58,7 +58,7 @@ import net.solarnetwork.support.PrefixedMessageSource;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserExportBizConfig {
 
 	@Autowired
@@ -107,9 +107,9 @@ public class UserExportBizConfig {
 	}
 
 	@Bean
-	public UserExportBiz userExportBiz() {
+	public UserExportBiz userExportBiz(UserExportTaskBiz userExportTaskBiz) {
 		DaoUserExportBiz biz = new DaoUserExportBiz(datumExportConfigDao, dataConfigDao,
-				destinationConfigDao, outputConfigDao, taskDao, adhocTaskDao, userExportTaskBiz());
+				destinationConfigDao, outputConfigDao, taskDao, adhocTaskDao, userExportTaskBiz);
 
 		biz.setOutputFormatServices(datumExportOutputFormatServices);
 		biz.setDestinationServices(datumExportDestinationServices);

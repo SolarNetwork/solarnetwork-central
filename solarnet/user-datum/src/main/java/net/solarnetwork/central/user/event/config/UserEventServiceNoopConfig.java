@@ -35,7 +35,7 @@ import net.solarnetwork.central.user.event.noop.NoopUserNodeEventHookService;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("development")
 public class UserEventServiceNoopConfig {
 
