@@ -83,7 +83,7 @@ public class UserEventConfig {
 	}
 
 	@Profile("!logging-user-event-appender")
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	public static class AsyncUserEventAppenderConfig {
 
 		@Bean
@@ -114,7 +114,7 @@ public class UserEventConfig {
 	}
 
 	@Profile("logging-user-event-appender")
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	public static class LoggingUserEventAppenderConfig {
 
 		@Bean
