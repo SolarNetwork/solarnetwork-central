@@ -48,7 +48,7 @@ import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OcppV16MqttConfig.MQTT_OCPP_V16)
 public class OcppV16MqttConfig {
 
@@ -78,8 +78,9 @@ public class OcppV16MqttConfig {
 
 	@Bean
 	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V16)
-	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v16() {
-		return instructionHandler_v16();
+	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v16(
+			@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V16) MqttInstructionHandler<ChargePointAction> instructionHandler) {
+		return instructionHandler;
 	}
 
 }
