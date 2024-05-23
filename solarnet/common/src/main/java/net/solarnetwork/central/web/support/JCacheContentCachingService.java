@@ -49,6 +49,8 @@ import javax.cache.event.CacheEntryEvent;
 import javax.cache.event.CacheEntryExpiredListener;
 import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
+import javax.cache.event.CacheEntryRemovedListener;
+import javax.cache.event.CacheEntryUpdatedListener;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +61,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.solarnetwork.central.support.CacheUtils;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.util.ObjectUtils;
@@ -69,11 +72,14 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
-		CacheEntryExpiredListener<String, CachedContent> {
+		CacheEntryExpiredListener<String, CachedContent>,
+		CacheEntryUpdatedListener<String, CachedContent>,
+		CacheEntryRemovedListener<String, CachedContent>,
+		CacheUtils.CacheEvictionListener<String, CachedContent> {
 
 	/** The default value for the {@code statLogAccessCount} property. */
 	public static final int DEFAULT_STAT_LOG_ACCESS_COUNT = 500;
@@ -109,9 +115,10 @@ public class JCacheContentCachingService
 		this.pingTestId = String.format("%s-%s", JCacheContentCachingService.class.getName(),
 				cache.getName());
 		MutableCacheEntryListenerConfiguration<String, CachedContent> listenerConfiguration = new MutableCacheEntryListenerConfiguration<>(
-				new SingletonFactory<CacheEntryListener<String, CachedContent>>(this), null, false,
+				new SingletonFactory<CacheEntryListener<String, CachedContent>>(this), null, true,
 				false);
 		cache.registerCacheEntryListener(listenerConfiguration);
+		CacheUtils.registerCacheEvictionListener(cache, this);
 	}
 
 	@Override
@@ -140,23 +147,51 @@ public class JCacheContentCachingService
 		return new PingTestResult(true, "Cache active.", statMap);
 	}
 
+	private void handleCacheEntryEvent(
+			Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events) {
+		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
+			CachedContent old = event.getOldValue();
+			if ( old != null ) {
+				stats.add(ContentCacheStats.EntryCount, -1L);
+				stats.add(ContentCacheStats.ByteSize, -old.getContentLength(), true);
+			}
+			CachedContent curr = event.getValue();
+			if ( curr != null && curr != old ) {
+				stats.increment(ContentCacheStats.EntryCount);
+				stats.add(ContentCacheStats.ByteSize, curr.getContentLength(), true);
+			}
+		}
+	}
+
 	@Override
 	public void onExpired(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
 			throws CacheEntryListenerException {
-		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
-			long size = event.getValue().getContentLength();
-			stats.add(ContentCacheStats.EntryCount, -1L);
-			stats.add(ContentCacheStats.ByteSize, -size);
-		}
+		handleCacheEntryEvent(events);
 	}
 
 	@Override
 	public void onCreated(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
 			throws CacheEntryListenerException {
-		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
-			long size = event.getValue().getContentLength();
-			stats.increment(ContentCacheStats.EntryCount);
-			stats.add(ContentCacheStats.ByteSize, size);
+		handleCacheEntryEvent(events);
+	}
+
+	@Override
+	public void onUpdated(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
+			throws CacheEntryListenerException {
+		handleCacheEntryEvent(events);
+	}
+
+	@Override
+	public void onRemoved(Iterable<CacheEntryEvent<? extends String, ? extends CachedContent>> events)
+			throws CacheEntryListenerException {
+		handleCacheEntryEvent(events);
+	}
+
+	@Override
+	public void onCacheEviction(String key, CachedContent value) {
+		stats.add(ContentCacheStats.EntryCount, -1L);
+		if ( value != null ) {
+			stats.add(ContentCacheStats.ByteSize, -value.getContentLength(), true);
 		}
 	}
 
