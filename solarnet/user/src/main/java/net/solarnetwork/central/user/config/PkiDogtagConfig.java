@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,9 +41,12 @@ import net.solarnetwork.service.CertificateService;
  * @author matt
  * @version 1.1
  */
-@Profile("dogtag")
-@Configuration
+@Profile(PkiDogtagConfig.DOGTAG)
+@Configuration(proxyBeanMethods = false)
 public class PkiDogtagConfig {
+
+	/** A qualifier for Dogtag. */
+	public static final String DOGTAG = "dogtag";
 
 	@Autowired
 	public CertificateService certificateService;
@@ -118,10 +122,9 @@ public class PkiDogtagConfig {
 		return new DogtagSettings();
 	}
 
+	@Qualifier(DOGTAG)
 	@Bean
-	public SSLContextFactory sslContextFactory() {
-		DogtagSettings settings = dogtagSettings();
-
+	public SSLContextFactory sslContextFactory(DogtagSettings settings) {
 		SSLContextFactory sslFactory = new SSLContextFactory();
 		sslFactory.setKeystoreResource(settings.keystoreResource);
 		sslFactory.setKeystorePassword(settings.keystorePassword);
@@ -132,11 +135,8 @@ public class PkiDogtagConfig {
 	}
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public DogtagPKIBiz pkiBiz() {
-		DogtagSettings settings = dogtagSettings();
-
-		SSLContextFactory sslFactory = sslContextFactory();
-
+	public DogtagPKIBiz pkiBiz(DogtagSettings settings,
+			@Qualifier(DOGTAG) SSLContextFactory sslFactory) {
 		DogtagPKIBiz biz = new DogtagPKIBiz();
 		biz.setBaseUrl(settings.baseUrl);
 		biz.setDogtagProfileId(settings.profileId);

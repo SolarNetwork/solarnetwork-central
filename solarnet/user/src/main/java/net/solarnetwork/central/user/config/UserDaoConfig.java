@@ -48,7 +48,7 @@ import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserDaoConfig {
 
 	@Autowired

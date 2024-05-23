@@ -55,7 +55,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class RegistrationBizConfig {
 
 	/** The qualifier for the user registration related services. */
