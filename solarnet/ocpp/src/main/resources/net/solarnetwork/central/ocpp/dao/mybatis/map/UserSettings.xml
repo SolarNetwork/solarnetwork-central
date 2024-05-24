@@ -26,6 +26,7 @@
 	<sql id="fragment-UserSettings-full-result">
 		us.user_id AS ocpp_user_settings_cp_id
 		, us.created AS ocpp_user_settings_created
+		, us.hid AS ocpp_user_settings_hid
 		, us.pub_in AS ocpp_user_settings_pub_in
 		, us.pub_flux AS ocpp_user_settings_pub_flux
 		, us.source_id_tmpl AS ocpp_user_settings_source_id_tmpl
@@ -35,6 +36,7 @@
 		<constructor>
 			<idArg  column="ocpp_user_settings_cp_id" javaType="Long"/>
 			<arg column="ocpp_user_settings_created" javaType="java.time.Instant"/>
+			<arg column="ocpp_user_settings_hid" javaType="String"/>
 		</constructor>
 		<result property="publishToSolarIn" column="ocpp_user_settings_pub_in"/>
 		<result property="publishToSolarFlux" column="ocpp_user_settings_pub_flux"/>
@@ -48,6 +50,15 @@
 			solarev.ocpp_user_settings us
 		WHERE
 			us.user_id = #{id}
+	</select>
+	
+	<select id="get-UserSettings-for-hid" parameterType="String" resultMap="UserSettings-FullResult">
+		SELECT
+			<include refid="fragment-UserSettings-full-result"/>
+		FROM
+			solarev.ocpp_user_settings us
+		WHERE
+			us.hid = #{id}
 	</select>
 	
 	<select id="findall-UserSettings" resultMap="UserSettings-FullResult"  fetchSize="100" resultSetType="FORWARD_ONLY">

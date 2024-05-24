@@ -42,14 +42,15 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "created", "publishToSolarIn", "publishToSolarFlux", "sourceIdTemplate" })
+@JsonPropertyOrder({ "userId", "created", "hid", "publishToSolarIn", "publishToSolarFlux",
+		"sourceIdTemplate" })
 public class UserSettings extends BasicLongEntity
 		implements Differentiable<UserSettings>, UserRelatedEntity<Long> {
 
-	private static final long serialVersionUID = 5060316663324383986L;
+	private static final long serialVersionUID = -8366279907077166152L;
 
 	/** The default {@code sourceIdTemplate} value. */
 	public static final String DEFAULT_SOURCE_ID_TEMPLATE = "/ocpp/cp/{chargerIdentifier}/{connectorId}/{location}";
@@ -82,6 +83,7 @@ public class UserSettings extends BasicLongEntity
 		return SOURCE_ID_EMPTY_SEGMENT_PAT.matcher(sourceId).replaceAll("");
 	}
 
+	private final String hid;
 	private boolean publishToSolarIn = true;
 	private boolean publishToSolarFlux = true;
 	private String sourceIdTemplate;
@@ -90,7 +92,7 @@ public class UserSettings extends BasicLongEntity
 	 * Default constructor.
 	 */
 	public UserSettings() {
-		super();
+		this(null, null, null);
 	}
 
 	/**
@@ -100,7 +102,7 @@ public class UserSettings extends BasicLongEntity
 	 *        the user ID
 	 */
 	public UserSettings(Long userId) {
-		super(userId, null);
+		this(userId, null, null);
 	}
 
 	/**
@@ -114,7 +116,23 @@ public class UserSettings extends BasicLongEntity
 	@JsonCreator
 	public UserSettings(@JsonProperty(value = "userId", required = true) Long userId,
 			@JsonProperty("created") Instant created) {
+		this(userId, created, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param created
+	 *        the creation date
+	 * @param hid
+	 *        the human ID
+	 * @since 1.2
+	 */
+	public UserSettings(Long userId, Instant created, String hid) {
 		super(userId, created);
+		this.hid = hid;
 	}
 
 	/**
@@ -219,6 +237,16 @@ public class UserSettings extends BasicLongEntity
 	 */
 	public void setSourceIdTemplate(String sourceIdTemplate) {
 		this.sourceIdTemplate = requireNonNullArgument(sourceIdTemplate, "sourceIdTemplate");
+	}
+
+	/**
+	 * Get the human ID.
+	 * 
+	 * @return the human ID
+	 * @since 1.2
+	 */
+	public String getHid() {
+		return hid;
 	}
 
 }

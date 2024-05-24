@@ -25,6 +25,8 @@ package net.solarnetwork.central.ocpp.dao.mybatis.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.util.Arrays;
@@ -42,7 +44,7 @@ import net.solarnetwork.central.ocpp.domain.UserSettings;
  * Test cases for the {@link MyBatisUserSettingsDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -94,8 +96,35 @@ public class MyBatisUserSettingsDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("HID generated", entity.getHid(), is(notNullValue()));
 		assertThat("Source ID template", entity.getSourceIdTemplate(),
 				equalTo(last.getSourceIdTemplate()));
+	}
+
+	@Test
+	public void getByHid() {
+		// GIVEN
+		insert();
+		UserSettings entity = dao.get(last.getId());
+
+		// WHEN
+		UserSettings result = dao.getForHid(entity.getHid());
+
+		// THEN
+		assertThat("Result found", result, is(notNullValue()));
+		assertThat("Expected result", result, is(equalTo(entity)));
+	}
+
+	@Test
+	public void getByHid_notFound() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		UserSettings result = dao.getForHid("nope");
+
+		// THEN
+		assertThat("Result not found", result, is(nullValue()));
 	}
 
 	@Test

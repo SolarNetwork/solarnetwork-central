@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserSettingsDao.java - 27/02/2020 4:11:21 pm
+ * HumanIdDao.java - 25/05/2024 8:46:50 am
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,23 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.dao;
-
-import net.solarnetwork.central.dao.HumanIdDao;
-import net.solarnetwork.central.ocpp.domain.UserSettings;
-import net.solarnetwork.dao.GenericDao;
+package net.solarnetwork.central.dao;
 
 /**
- * DAO API for {@link UserSettings} entities.
+ * DAO with "human ID" support.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface UserSettingsDao extends GenericDao<UserSettings, Long>, HumanIdDao<UserSettings> {
+public interface HumanIdDao<T> {
 
 	/**
-	 * Delete a settings by its unique ID.
+	 * Get a persisted domain object by its human ID.
 	 * 
-	 * @param userId
-	 *        the owner ID
-	 * @throws RuntimeException
-	 *         if the entity cannot be found
+	 * @param id
+	 *        the human ID of the object to retrieve
+	 * @return the domain object, or {@literal null} if not found
 	 */
-	void delete(Long userId);
+	T getForHid(String hid);
 
 }
