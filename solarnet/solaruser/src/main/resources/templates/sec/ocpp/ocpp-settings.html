@@ -23,11 +23,13 @@
 	<table id="ocpp-settings-container" class="table configs" data-th-classappend="'hidden'">
 		<thead>
 			<tr>
+				<th data-th-text="#{ocpp.settings.hid.label}">HID</th>
 				<th data-th-text="#{ocpp.settings.sourceIdTemplate.label}">Source ID template</th>
 				<th data-th-text="#{ocpp.settings.publishToSolarIn.label}">SolarIn</th>
 				<th data-th-text="#{ocpp.settings.publishToSolarFlux.label}">SolarFlux</th>
 			</tr>
 			<tr data-th-classappend="'template'">
+				<td data-tprop="hid"></td>
 				<td data-tprop="sourceIdTemplate"></td>
 				<td><span class="label" data-tprop="publishToSolarIn"
 						data-th-data-true-text="#{settings.enabled.label}"
