@@ -25,15 +25,13 @@ package net.solarnetwork.central.query.biz.dao.test;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.Before;
 import org.mybatis.spring.SqlSessionTemplate;
-import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -42,7 +40,7 @@ import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.JsonUtils;
 
@@ -52,11 +50,9 @@ import net.solarnetwork.codec.JsonUtils;
  * @author matt
  * @version 2.0
  */
-@ContextConfiguration
-@MybatisTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(net.solarnetwork.central.query.config.DataSourceConfig.class)
-public abstract class AbstractQueryBizDaoTestSupport extends AbstractCentralTransactionalTest {
+@SpringBootTest
+@AutoConfigureMockMvc
+public abstract class AbstractQueryBizDaoTestSupport extends AbstractJUnit5CentralTransactionalTest {
 
 	public static final Long TEST_USER_ID = -2L;
 	public static final String TEST_USER_EMAIL = "test@localhost";

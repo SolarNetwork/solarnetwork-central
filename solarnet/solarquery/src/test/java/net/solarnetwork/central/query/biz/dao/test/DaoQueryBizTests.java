@@ -28,8 +28,8 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
-import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -43,6 +43,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Period;
@@ -55,11 +56,9 @@ import java.util.Set;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -84,16 +83,16 @@ import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
@@ -103,9 +102,6 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * @author matt
  * @version 4.0
  */
-@Import({ net.solarnetwork.central.common.config.NetworkIdentityConfig.class,
-		net.solarnetwork.central.query.config.CacheConfig.class,
-		net.solarnetwork.central.query.config.NodeOwnershipCacheConfig.class })
 public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
 	private final String TEST_SOURCE_ID = "test.source";
@@ -117,7 +113,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
 	private DaoQueryBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
@@ -131,7 +127,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		EasyMock.replay(datumDao, metaDao, readingDao, nodeOwnershipDao);
 	}
 
-	@After
+	@AfterEach
 	public void tearndown() {
 		EasyMock.verify(datumDao, metaDao, readingDao, nodeOwnershipDao);
 	}
@@ -653,13 +649,10 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		replayAll();
 		// only the Difference type is supported
 		for ( DatumReadingType type : EnumSet.complementOf(EnumSet.of(DatumReadingType.Difference)) ) {
-			try {
+			assertThrows(IllegalArgumentException.class, () -> {
 				biz.findFilteredAggregateReading(new DatumFilterCommand(),
 						DatumReadingType.DifferenceWithin, null, null, null, null);
-				Assert.fail("Should have thrown IllegalArgumentException for DatumReadingType " + type);
-			} catch ( IllegalArgumentException e ) {
-				// expected
-			}
+			}, "Should have thrown IllegalArgumentException for DatumReadingType " + type);
 		}
 	}
 
