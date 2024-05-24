@@ -115,14 +115,20 @@ CREATE INDEX ocpp_charge_sess_reading_sess_id_idx ON solarev.ocpp_charge_sess_re
 CREATE TABLE solarev.ocpp_user_settings (
 	user_id				BIGINT NOT NULL,
 	created				TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	hid					TEXT NOT NULL,
 	pub_in				BOOLEAN NOT NULL DEFAULT TRUE,
 	pub_flux			BOOLEAN NOT NULL DEFAULT TRUE,
 	source_id_tmpl		VARCHAR(255),
 	CONSTRAINT ocpp_user_settings_pk PRIMARY KEY (user_id),
+	CONSTRAINT ocpp_user_settings_hid_unq UNIQUE (hid),
 	CONSTRAINT ocpp_user_settings_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+-- auto-assign hid column with short unique random string value
+CREATE TRIGGER ocpp_user_settings_genhid BEFORE INSERT ON solarev.ocpp_user_settings
+FOR EACH ROW EXECUTE PROCEDURE solarcommon.assign_human_id();
 
 CREATE TABLE solarev.ocpp_charge_point_settings (
 	cp_id				BIGINT NOT NULL,
