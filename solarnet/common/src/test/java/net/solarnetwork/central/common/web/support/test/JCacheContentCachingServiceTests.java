@@ -70,6 +70,8 @@ public class JCacheContentCachingServiceTests {
 		cache = EasyMock.createMock(Cache.class);
 
 		expect(cache.getName()).andReturn("Test Cache").anyTimes();
+		expect(cache.getConfiguration(anyObject()))
+				.andThrow(new IllegalArgumentException("Configuration not supported.")).anyTimes();
 	}
 
 	private void replayAll() {
