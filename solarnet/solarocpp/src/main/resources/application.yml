@@ -76,7 +76,7 @@ app:
         write-timeout-seconds: -1
   task.executor:
     thread-name-prefix: "SolarNet-"
-    core-pool-size: 5
+    core-pool-size: 10
     allow-core-thread-time-out: false
   task.scheduler:
     thread-name-prefix: "SolarNet-Sched-"
@@ -129,7 +129,7 @@ server:
   port: 9085
   tomcat.threads:
     min-spare: 10
-    max: 20
+    max: 50
 
 spring:
   jmx.enabled: false
