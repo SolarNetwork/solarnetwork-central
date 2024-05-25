@@ -71,7 +71,7 @@ import ocpp.v16.jakarta.cs.StatusNotificationResponse;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OCPP_V16)
 public class OcppV16ServiceConfig {
 
@@ -168,14 +168,16 @@ public class OcppV16ServiceConfig {
 	@ConfigurationProperties(prefix = "app.ocpp.v16.cs.boot-notification")
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<BootNotificationRequest, BootNotificationResponse> ocppBootNotificationProcessor_v16() {
-		return new BootNotificationProcessor(ocppController_v16());
+	public ActionMessageProcessor<BootNotificationRequest, BootNotificationResponse> ocppBootNotificationProcessor_v16(
+			@Qualifier(OCPP_V16) OcppController ocppController) {
+		return new BootNotificationProcessor(ocppController);
 	}
 
 	@Bean
 	@OcppCentralServiceQualifier(OCPP_V16)
-	public ActionMessageProcessor<StatusNotificationRequest, StatusNotificationResponse> ocppStatusNotification_v16() {
-		return new StatusNotificationProcessor(ocppController_v16());
+	public ActionMessageProcessor<StatusNotificationRequest, StatusNotificationResponse> ocppStatusNotification_v16(
+			@Qualifier(OCPP_V16) OcppController ocppController) {
+		return new StatusNotificationProcessor(ocppController);
 	}
 
 }

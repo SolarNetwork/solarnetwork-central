@@ -39,7 +39,7 @@ import net.solarnetwork.service.PingTest;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty("app.datasource-read-write.url")
 public class AuditDataSourceConfig {
 

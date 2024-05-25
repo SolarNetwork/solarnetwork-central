@@ -40,7 +40,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableCaching
 public class CacheConfig {
 

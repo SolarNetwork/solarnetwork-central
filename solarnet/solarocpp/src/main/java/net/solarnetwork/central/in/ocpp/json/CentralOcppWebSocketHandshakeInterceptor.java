@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.in.ocpp.json;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -33,18 +33,22 @@ import org.springframework.http.server.ServerHttpRequest;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
-import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.ocpp.domain.ChargePointAuthorizationDetails;
 import net.solarnetwork.ocpp.domain.SystemUser;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.service.PasswordEncoder;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.4
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
@@ -56,6 +60,9 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 			CentralOcppWebSocketHandler.OCPP_EVENT_TAG, CentralOcppWebSocketHandler.CHARGER_EVENT_TAG,
 			"forbidden" };
 
+	private final UserSettingsDao userSettingsDao;
+	private final Pattern pathCredentialsRegex;
+	private final Pattern pathHidRegex;
 	private UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
@@ -65,44 +72,112 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	 *        the system user DAO
 	 * @param passwordEncoder
 	 *        the password encoder
+	 * @param userSettingsDao
+	 *        the user settings DAO
 	 */
 	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
-			PasswordEncoder passwordEncoder) {
-		super(systemUserDao, passwordEncoder);
+			PasswordEncoder passwordEncoder, UserSettingsDao userSettingsDao) {
+		this(systemUserDao, passwordEncoder, userSettingsDao, null);
 	}
 
 	/**
-	 * Get a credentials extractor function that extracts from the request path.
+	 * Constructor.
 	 * 
-	 * @param regex
-	 *        the path regular expression: it must provide 2 groups, for the
-	 *        username and password
-	 * @return the function
+	 * @param systemUserDao
+	 *        the system user DAO
+	 * @param passwordEncoder
+	 *        the password encoder
+	 * @param userSettingsDao
+	 *        the user settings DAO
+	 * @param pathCredentialsRegex
+	 *        an optional regular expression to extract path credentials from
+	 *        request URLs; the expression must return two groups: the username
+	 *        and the password
+	 * @since 1.3
 	 */
-	public static BiFunction<ServerHttpRequest, String, String[]> pathCredentialsExtractor(
-			String regex) {
-		Pattern p = Pattern.compile(regex);
-		return (request, identifier) -> {
-			String path = request.getURI().getPath();
-			Matcher m = p.matcher(path);
-			if ( m.matches() ) {
-				return new String[] { m.group(1), m.group(2) };
-			}
-			log.warn("OCPP handshake request rejected for {}, path-based credentials not provided.",
-					identifier);
-			return null;
-		};
+	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
+			PasswordEncoder passwordEncoder, UserSettingsDao userSettingsDao,
+			Pattern pathCredentialsRegex) {
+		this(systemUserDao, passwordEncoder, userSettingsDao, pathCredentialsRegex, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param systemUserDao
+	 *        the system user DAO
+	 * @param passwordEncoder
+	 *        the password encoder
+	 * @param userSettingsDao
+	 *        the user settings DAO
+	 * @param pathCredentialsRegex
+	 *        an optional regular expression to extract path credentials from
+	 *        request URLs; the expression must return two groups: the username
+	 *        and the password
+	 * @param pathHidRegex
+	 *        an optional regular expression to extract an OCPP user settings
+	 *        {@code hid} value from request URLs; the epxression must return
+	 *        one group: the hid value
+	 * @since 1.4
+	 */
+	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
+			PasswordEncoder passwordEncoder, UserSettingsDao userSettingsDao,
+			Pattern pathCredentialsRegex, Pattern pathHidRegex) {
+		super(systemUserDao, passwordEncoder);
+		this.userSettingsDao = ObjectUtils.requireNonNullArgument(userSettingsDao, "userSettingsDao");
+		this.pathCredentialsRegex = pathCredentialsRegex;
+		if ( pathCredentialsRegex != null ) {
+			setClientCredentialsExtractor(this::extractPathCredentials);
+		}
+		this.pathHidRegex = pathHidRegex;
+	}
+
+	private ChargePointAuthorizationDetails extractPathCredentials(final ServerHttpRequest request,
+			final String identifier) {
+		String path = request.getURI().getPath();
+		Matcher m = pathCredentialsRegex.matcher(path);
+		if ( m.matches() ) {
+			return new SystemUser(Instant.now(), m.group(1), m.group(2));
+		}
+		log.warn("OCPP handshake request rejected for {}, path-based credentials not provided.",
+				identifier);
+		didForbidChargerConnection(request, identifier, null,
+				String.format("Path-based credentials not provided in URL [%s]", path));
+		return null;
 	}
 
 	@Override
-	protected void didForbidChargerConnection(SystemUser user, String reason) {
-		super.didForbidChargerConnection(user, reason);
-		if ( user instanceof CentralSystemUser ) {
+	protected void didForbidChargerConnection(ServerHttpRequest request, String identifier,
+			ChargePointAuthorizationDetails user, String reason) {
+		super.didForbidChargerConnection(request, identifier, user, reason);
+
+		Long userId = null;
+
+		if ( user instanceof UserRelatedEntity<?> u ) {
+			userId = u.getUserId();
+		} else if ( pathHidRegex != null ) {
+			Matcher m = pathHidRegex.matcher(request.getURI().getPath());
+			if ( m.matches() ) {
+				String hid = m.group(1);
+				if ( !hid.isEmpty() ) {
+					UserSettings settings = userSettingsDao.getForHid(hid);
+					if ( settings != null ) {
+						userId = settings.getUserId();
+					}
+				}
+			}
+		}
+
+		if ( userId != null ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put("username", user.getUsername());
+			if ( user != null && user.getUsername() != null ) {
+				data.put("username", user.getUsername());
+			}
+			if ( identifier != null ) {
+				data.put(CHARGE_POINT_DATA_KEY, identifier);
+			}
 			data.put(ERROR_DATA_KEY, reason);
-			generateUserEvent(((CentralSystemUser) user).getUserId(),
-					CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, null, data);
+			generateUserEvent(userId, CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, null, data);
 		}
 	}
 

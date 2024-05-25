@@ -39,7 +39,7 @@ import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class MyBatisSolarNodeDaoConfig {
 
 	@Autowired

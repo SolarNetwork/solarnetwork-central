@@ -39,9 +39,9 @@ import net.solarnetwork.central.support.SimpleAppConfiguration;
  * Network identity configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class NetworkIdentityConfig {
 
 	/** Settings for the NetworkIdentityBiz. */
@@ -120,14 +120,12 @@ public class NetworkIdentityConfig {
 	}
 
 	@Bean
-	public AppConfigurationBiz appConfigurationBiz() {
-		NetworkIdentitySettings settings = networkIdentitySettings();
+	public AppConfigurationBiz appConfigurationBiz(NetworkIdentitySettings settings) {
 		return new BasicAppConfigurationBiz(new SimpleAppConfiguration(settings.serviceUrls));
 	}
 
 	@Bean
-	public NetworkIdentificationBiz networkIdentificationBiz() {
-		NetworkIdentitySettings settings = networkIdentitySettings();
+	public NetworkIdentificationBiz networkIdentificationBiz(NetworkIdentitySettings settings) {
 		return new BasicNetworkIdentificationBiz(settings.networkIdentityKey, settings.termsOfService,
 				settings.host, settings.port, settings.forceTls, settings.serviceUrls);
 	}

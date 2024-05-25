@@ -1,7 +1,7 @@
 /* ==================================================================
- * WebSecurityTokenConfig.java - 18/03/2022 4:24:03 PM
+ * HumanIdDao.java - 25/05/2024 8:46:50 am
  * 
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,26 +20,23 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.query.config;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
+package net.solarnetwork.central.dao;
 
 /**
- * Web security token configuration.
+ * DAO with "human ID" support.
  * 
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class WebSecurityTokenConfig {
+public interface HumanIdDao<T> {
 
-	@ConfigurationProperties(prefix = "app.web.security.token")
-	@Bean
-	public SecurityTokenFilterSettings tokenAuthenticationFilterSettings() {
-		return new SecurityTokenFilterSettings();
-	}
+	/**
+	 * Get a persisted domain object by its human ID.
+	 * 
+	 * @param id
+	 *        the human ID of the object to retrieve
+	 * @return the domain object, or {@literal null} if not found
+	 */
+	T getForHid(String hid);
 
 }

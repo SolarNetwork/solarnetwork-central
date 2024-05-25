@@ -49,7 +49,7 @@ import net.solarnetwork.ocpp.v201.domain.Action;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OcppV201MqttConfig.MQTT_OCPP_V201)
 public class OcppV201MqttConfig {
 
@@ -87,8 +87,9 @@ public class OcppV201MqttConfig {
 
 	@Bean
 	@VersionedQualifier(value = OCPP_INSTRUCTION, version = OCPP_V201)
-	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v201() {
-		return instructionHandler_v201();
+	public ActionMessageProcessor<JsonNode, Void> instructionHandlerMessageProcessor_v201(
+			@VersionedQualifier(value = SOLARQUEUE, version = OCPP_V201) MqttInstructionHandler<Action> instructionHandler) {
+		return instructionHandler;
 	}
 
 }

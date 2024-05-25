@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import net.solarnetwork.central.dao.HumanIdDao;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.dao.GenericDao;
 
@@ -29,9 +30,9 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link UserSettings} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface UserSettingsDao extends GenericDao<UserSettings, Long> {
+public interface UserSettingsDao extends GenericDao<UserSettings, Long>, HumanIdDao<UserSettings> {
 
 	/**
 	 * Delete a settings by its unique ID.

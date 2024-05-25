@@ -41,9 +41,9 @@ import net.solarnetwork.central.web.support.JCacheContentCachingService;
  * Content caching service configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty("app.query-cache.enabled")
 public class ContentCachingServiceConfig {
 
@@ -80,6 +80,7 @@ public class ContentCachingServiceConfig {
 	}
 
 	@Bean
+	@Qualifier(QUERY_CACHE)
 	@ConfigurationProperties(prefix = "app.query-cache.cache")
 	public QueryCacheSettings queryCacheSettings() {
 		return new QueryCacheSettings();
@@ -92,17 +93,17 @@ public class ContentCachingServiceConfig {
 	 */
 	@Bean
 	@Qualifier(QUERY_CACHE)
-	public Cache<String, CachedContent> queryCache() {
-		QueryCacheSettings settings = queryCacheSettings();
+	public Cache<String, CachedContent> queryCache(@Qualifier(QUERY_CACHE) QueryCacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, CachedContent.class, QUERY_CACHE);
 	}
 
 	@Profile("!query-auditor")
 	@Bean(QUERY_CACHING_SERVICE)
 	@Qualifier(QUERY_CACHE)
-	public JCacheContentCachingService queryCachingService() {
-		QueryCacheSettings settings = queryCacheSettings();
-		JCacheContentCachingService service = new JCacheContentCachingService(queryCache());
+	public JCacheContentCachingService queryCachingService(
+			@Qualifier(QUERY_CACHE) QueryCacheSettings settings,
+			@Qualifier(QUERY_CACHE) Cache<String, CachedContent> queryCache) {
+		JCacheContentCachingService service = new JCacheContentCachingService(queryCache);
 		service.setCompressMinimumLength(settings.compressMinimumLength);
 		service.setStatLogAccessCount(settings.statLogAccessCount);
 		return service;
@@ -111,10 +112,11 @@ public class ContentCachingServiceConfig {
 	@Profile("query-auditor")
 	@Bean(QUERY_CACHING_SERVICE)
 	@Qualifier(QUERY_CACHE)
-	public AuditingJCacheContentCachingService auditingQueryCachingService(QueryAuditor queryAuditor) {
-		QueryCacheSettings settings = queryCacheSettings();
-		AuditingJCacheContentCachingService service = new AuditingJCacheContentCachingService(
-				queryCache(), queryAuditor);
+	public AuditingJCacheContentCachingService auditingQueryCachingService(
+			@Qualifier(QUERY_CACHE) QueryCacheSettings settings,
+			@Qualifier(QUERY_CACHE) Cache<String, CachedContent> queryCache, QueryAuditor queryAuditor) {
+		AuditingJCacheContentCachingService service = new AuditingJCacheContentCachingService(queryCache,
+				queryAuditor);
 		service.setCompressMinimumLength(settings.compressMinimumLength);
 		service.setStatLogAccessCount(settings.statLogAccessCount);
 		return service;

@@ -33,7 +33,7 @@ import net.solarnetwork.pki.bc.BCCertificateService;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class CertificationAuthorityConfig {
 
 	@ConfigurationProperties(prefix = "app.node.pki.cs")

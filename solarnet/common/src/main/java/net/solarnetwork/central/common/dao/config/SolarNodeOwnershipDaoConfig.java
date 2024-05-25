@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class SolarNodeOwnershipDaoConfig {
 
 	/**

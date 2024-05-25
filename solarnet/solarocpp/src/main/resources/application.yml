@@ -14,13 +14,22 @@ app:
     username: "solartest"
     password: "solartest"
     initialize: false
+  datum:
+    stream-metadata-cache:
+      ttl: 300
+      heap-max-entries: 10000
+      disk-max-size-mb: 5
+    stream-metadata-id-cache:
+      ttl: 900
+      heap-max-entries: 10000
+      disk-max-size-mb: 5
   mqtt.client:
     io-thread-count: 2
     wire-logging-enabled: false
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
-    disk-max-size-mb: 100
+    disk-max-size-mb: 5
   ocpp.async-action-status-updater:
     connection-recovery-delay: 5000
     stat-log-update-count: 1000
@@ -37,7 +46,7 @@ app:
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
-      mqtt-stats.log-frequency: 200
+      mqtt-stats.log-frequency: 1000
       mqtt-config:
         server-uri: "mqtt://solarflux.solarnetwork:1883"
         client-id: "solarocpp-${app.meta.instance-id}"
@@ -75,8 +84,8 @@ app:
   user.events:
     async-appender:
       threads: 1
-      stat-frequency: 500
-      queue-lag-alert-threshold: 500
+      stat-frequency: 1000
+      queue-lag-alert-threshold: 1000
 
 logging:
   level:

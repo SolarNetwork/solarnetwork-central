@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Configuration;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableCaching
 public class CacheConfig {
 

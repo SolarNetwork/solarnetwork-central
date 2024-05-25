@@ -45,7 +45,7 @@ import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserOutputConfigu
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserExportDaoConfig {
 
 	@Autowired

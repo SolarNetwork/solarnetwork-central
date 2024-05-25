@@ -38,7 +38,7 @@ import net.solarnetwork.service.StaticOptionalServiceCollection;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class ChargePointRouterConfig {
 
 	@Autowired

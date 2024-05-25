@@ -45,7 +45,7 @@ import net.solarnetwork.ocpp.service.cs.ChargeSessionManager;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(OCPP_CHARGE_SESSION)
 public class OcppChargeSessionManagerConfig {
 

@@ -39,7 +39,7 @@ import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventTaskD
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserEventDaoConfig {
 
 	@Autowired

@@ -35,7 +35,7 @@ import net.solarnetwork.central.ApplicationMetadata;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class ApplicationMetadataConfig {
 
 	private final Logger log = LoggerFactory.getLogger(ApplicationMetadataConfig.class);

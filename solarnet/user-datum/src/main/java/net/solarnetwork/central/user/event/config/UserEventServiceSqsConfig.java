@@ -43,9 +43,9 @@ import net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService;
  * SQS user node event hook configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("user-event-sqs")
 public class UserEventServiceSqsConfig {
 
@@ -59,6 +59,7 @@ public class UserEventServiceSqsConfig {
 	private CacheManager cacheManager;
 
 	@Bean
+	@Qualifier(SQS_DESTINATION_CACHE)
 	@ConfigurationProperties(prefix = "app.user-event.sqs.destination-cache")
 	public CacheSettings sqsDestinationCacheSettings() {
 		return new CacheSettings();
@@ -71,17 +72,18 @@ public class UserEventServiceSqsConfig {
 	 */
 	@Qualifier(SQS_DESTINATION_CACHE)
 	@Bean
-	public Cache<String, SqsDestination> sqsDestinationCache() {
-		CacheSettings settings = sqsDestinationCacheSettings();
+	public Cache<String, SqsDestination> sqsDestinationCache(
+			@Qualifier(SQS_DESTINATION_CACHE) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, SqsDestination.class,
 				SQS_DESTINATION_CACHE);
 	}
 
 	@Bean
-	public UserNodeEventHookService sqsUserNodeEventHookService() {
+	public UserNodeEventHookService sqsUserNodeEventHookService(
+			@Qualifier(SQS_DESTINATION_CACHE) Cache<String, SqsDestination> sqsDestinationCache) {
 		SqsStats stats = new SqsStats("SqsNodeEventHook", statFrequency);
 		SqsUserNodeEventHookService service = new SqsUserNodeEventHookService(stats);
-		service.setDestinationCache(sqsDestinationCache());
+		service.setDestinationCache(sqsDestinationCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SqsDestinationProperties.class.getName());

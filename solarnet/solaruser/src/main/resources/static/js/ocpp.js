@@ -369,6 +369,7 @@ $(document).ready(function() {
 				model.chargePointId = config.chargePointId;
 			}
 			model.id = config.id;
+			model.hid = config.hid || '-';
 			model.publishToSolarIn = config.publishToSolarIn;
 			model.publishToSolarFlux = config.publishToSolarFlux;
 			model.sourceIdTemplate = config.sourceIdTemplate;

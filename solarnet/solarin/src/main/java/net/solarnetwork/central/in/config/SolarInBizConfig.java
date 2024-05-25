@@ -59,13 +59,18 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class SolarInBizConfig {
 
 	/**
 	 * A cache name to use for datum objects.
 	 */
 	public static final String DATUM_CACHE_NAME = "datum-buffer";
+
+	/**
+	 * A buffering cache name to use for datum objects.
+	 */
+	public static final String BUFFERING_DATUM_CACHE_NAME = "buffering-datum-cache";
 
 	@Autowired
 	private CacheManager cacheManager;
@@ -109,6 +114,7 @@ public class SolarInBizConfig {
 	}
 
 	@Bean
+	@Qualifier(DATUM_CACHE_NAME)
 	@ConfigurationProperties(prefix = "app.solarin.datum-buffer")
 	public DatumCacheSettings datumCacheSettings() {
 		return new DatumCacheSettings();
@@ -121,16 +127,18 @@ public class SolarInBizConfig {
 	 */
 	@Bean
 	@Qualifier(DATUM_CACHE_NAME)
-	public Cache<Serializable, Serializable> datumCache() {
-		DatumCacheSettings settings = datumCacheSettings();
+	public Cache<Serializable, Serializable> datumCache(
+			@Qualifier(DATUM_CACHE_NAME) DatumCacheSettings settings) {
 		return settings.createCache(cacheManager, Serializable.class, Serializable.class,
 				DATUM_CACHE_NAME);
 	}
 
+	@Qualifier(BUFFERING_DATUM_CACHE_NAME)
 	@Bean
-	public Cache<Serializable, Serializable> bufferingDatumCache() {
-		DatumCacheSettings settings = datumCacheSettings();
-		return new BufferingDelegatingCache<>(datumCache(), settings.getTempMaxEntries());
+	public Cache<Serializable, Serializable> bufferingDatumCache(
+			@Qualifier(DATUM_CACHE_NAME) Cache<Serializable, Serializable> datumCache,
+			@Qualifier(DATUM_CACHE_NAME) DatumCacheSettings settings) {
+		return new BufferingDelegatingCache<>(datumCache, settings.getTempMaxEntries());
 	}
 
 	@Bean
@@ -140,12 +148,13 @@ public class SolarInBizConfig {
 	}
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public AsyncDatumCollector asyncDaoDatumCollector() {
+	public AsyncDatumCollector asyncDaoDatumCollector(
+			@Qualifier(BUFFERING_DATUM_CACHE_NAME) Cache<Serializable, Serializable> bufferingDatumCache) {
 		AsyncDatumCollectorSettings settings = asyncDatumCollectorSettings();
 		StatTracker stats = new StatTracker("AsyncDaoDatum",
 				"net.solarnetwork.central.datum.support.AsyncDatumCollector",
 				LoggerFactory.getLogger(AsyncDatumCollector.class), settings.getStatFrequency());
-		AsyncDatumCollector collector = new AsyncDatumCollector(bufferingDatumCache(), datumDao,
+		AsyncDatumCollector collector = new AsyncDatumCollector(bufferingDatumCache, datumDao,
 				transactionTemplate(), stats);
 		collector.setConcurrency(settings.getThreads());
 		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());
@@ -156,7 +165,8 @@ public class SolarInBizConfig {
 	}
 
 	@Bean
-	public DataCollectorBiz dataCollectorBiz() {
+	public DataCollectorBiz dataCollectorBiz(
+			@Qualifier(BUFFERING_DATUM_CACHE_NAME) Cache<Serializable, Serializable> bufferingDatumCache) {
 		DaoDataCollectorBiz biz = new DaoDataCollectorBiz();
 		biz.setDatumDao(datumDao);
 		biz.setMetaDao(metaDao);
@@ -165,7 +175,7 @@ public class SolarInBizConfig {
 		biz.setDatumMetadataBiz(datumMetadataBiz);
 		biz.setSolarNodeMetadataBiz(solarNodeMetadataBiz());
 		biz.setTransactionTemplate(transactionTemplate());
-		biz.setDatumCache(bufferingDatumCache());
+		biz.setDatumCache(bufferingDatumCache);
 		return biz;
 	}
 

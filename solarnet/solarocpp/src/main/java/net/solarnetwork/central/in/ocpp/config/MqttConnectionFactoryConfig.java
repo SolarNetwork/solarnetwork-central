@@ -37,7 +37,7 @@ import net.solarnetwork.common.mqtt.netty.NettyMqttConnectionFactory;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
 public class MqttConnectionFactoryConfig {
 

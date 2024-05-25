@@ -36,7 +36,7 @@ import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class JsonConfig {
 
 	/** The {@link ObjectMapper} for CBOR handling. */

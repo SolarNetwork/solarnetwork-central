@@ -1,21 +1,21 @@
 /* ==================================================================
  * SnfInvoiceRendererResolverConfig.java - 3/11/2021 9:40:16 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -41,12 +41,15 @@ import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 
 /**
  * Configuration for SNF invoice renderer resolvers.
- * 
+ *
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class SnfInvoiceRendererResolverConfig {
+
+	/** A StringTemplates 4 qualifier. */
+	public static final String ST4 = "st4";
 
 	@Autowired
 	@Qualifier(VERSIONED_MESSAGES_CACHE)
@@ -59,6 +62,7 @@ public class SnfInvoiceRendererResolverConfig {
 	private CacheManager cacheManager;
 
 	@Bean
+	@Qualifier(ST4)
 	@ConfigurationProperties(prefix = "app.billing.invoice.html-template-cache")
 	public CacheSettings snfInvoiceHtmlTemplateCacheSettings() {
 		CacheSettings settings = new CacheSettings();
@@ -68,8 +72,9 @@ public class SnfInvoiceRendererResolverConfig {
 	}
 
 	@Bean
-	public Cache<String, ST4TemplateRenderer> snfInvoiceHtmlTemplateCache() {
-		CacheSettings settings = snfInvoiceHtmlTemplateCacheSettings();
+	@Qualifier(ST4)
+	public Cache<String, ST4TemplateRenderer> snfInvoiceHtmlTemplateCache(
+			@Qualifier(ST4) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, ST4TemplateRenderer.class,
 				"st4-template-renderers");
 	}
@@ -77,16 +82,18 @@ public class SnfInvoiceRendererResolverConfig {
 	@Qualifier("html")
 	@Primary
 	@Bean
-	public SnfInvoiceRendererResolver htmlSnfInvoiceRendererResolver() {
+	public SnfInvoiceRendererResolver htmlSnfInvoiceRendererResolver(
+			@Qualifier(ST4) Cache<String, ST4TemplateRenderer> snfInvoiceHtmlTemplateCache) {
 		return new VersionedMessageSourceSnfInvoiceRendererResolver("/snf/text/html/invoice", "invoice",
 				MimeTypeUtils.TEXT_HTML, messageDao, versionedMessagesCache,
-				snfInvoiceHtmlTemplateCache());
+				snfInvoiceHtmlTemplateCache);
 	}
 
 	@Qualifier("pdf")
 	@Bean
-	public SnfInvoiceRendererResolver pdfSnfInvoiceRendererResolver() {
-		return new HtmlToPdfSnfInvoiceRendererResolver(htmlSnfInvoiceRendererResolver());
+	public SnfInvoiceRendererResolver pdfSnfInvoiceRendererResolver(
+			@Qualifier("html") SnfInvoiceRendererResolver htmlSnfInvoiceRendererResolver) {
+		return new HtmlToPdfSnfInvoiceRendererResolver(htmlSnfInvoiceRendererResolver);
 	}
 
 }

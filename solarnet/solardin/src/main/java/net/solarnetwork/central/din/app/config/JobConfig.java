@@ -42,7 +42,7 @@ import net.solarnetwork.central.support.SharedValueCache;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile(SolarDinJobs.JOBS_PROFILE)
 public class JobConfig {
 

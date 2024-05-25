@@ -57,7 +57,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
 		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
@@ -103,19 +103,19 @@ public class WebConfig implements WebMvcConfigurer {
 	}
 
 	@Bean
-	public SimpleXmlView xml() {
+	public SimpleXmlView xml(PropertySerializerRegistrar registrar) {
 		SimpleXmlView view = new SimpleXmlView();
 		view.setContentType("text/xml;charset=UTF-8");
-		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
+		view.setPropertySerializerRegistrar(registrar);
 		view.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
 		return view;
 	}
 
 	@Bean
-	public JSONView json() {
+	public JSONView json(PropertySerializerRegistrar registrar) {
 		JSONView view = new JSONView();
 		view.setContentType("application/json;charset=UTF-8");
-		view.setPropertySerializerRegistrar(propertySerializerRegistrar());
+		view.setPropertySerializerRegistrar(registrar);
 		view.setIncludeParentheses(false);
 		return view;
 	}

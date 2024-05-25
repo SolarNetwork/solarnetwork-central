@@ -36,6 +36,30 @@ import net.solarnetwork.central.ocpp.domain.UserSettings;
 public class MyBatisUserSettingsDao extends BaseMyBatisGenericDaoSupport<UserSettings, Long>
 		implements UserSettingsDao {
 
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		/** Delete a settings for a given user ID and ID. */
+		GetForHid("get-UserSettings-for-hid"),
+
+		;
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 */
@@ -54,6 +78,11 @@ public class MyBatisUserSettingsDao extends BaseMyBatisGenericDaoSupport<UserSet
 		if ( count < 1 ) {
 			throw new DataRetrievalFailureException("Entity not found.");
 		}
+	}
+
+	@Override
+	public UserSettings getForHid(String hid) {
+		return selectFirst(QueryName.GetForHid.getQueryName(), hid);
 	}
 
 }

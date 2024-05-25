@@ -1,21 +1,21 @@
 /* ==================================================================
  * SolarFluxPublishingConfig.java - 10/11/2021 9:22:14 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -41,11 +41,11 @@ import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Configuration for SolarFlux publishing.
- * 
+ *
  * @author matt
  * @version 1.1
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
 public class SolarFluxPublishingConfig {
 
@@ -54,7 +54,7 @@ public class SolarFluxPublishingConfig {
 
 	/**
 	 * A module for handling SolarFlux objects.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	public static final com.fasterxml.jackson.databind.Module SOLARFLUX_MODULE;
@@ -78,9 +78,8 @@ public class SolarFluxPublishingConfig {
 	@Bean
 	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
 	@Qualifier(SOLARFLUX)
-	public SolarFluxDatumPublisher solarFluxDatumPublisher() {
-		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
-				solarFluxObjectMapper());
+	public SolarFluxDatumPublisher solarFluxDatumPublisher(@Qualifier(SOLARFLUX) ObjectMapper mapper) {
+		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao, mapper);
 		return processor;
 	}
 

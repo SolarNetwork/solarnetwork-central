@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisUserDatumDeleteJo
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class UserExpireDaoConfig {
 
 	@Autowired

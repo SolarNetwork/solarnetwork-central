@@ -40,7 +40,7 @@ import net.solarnetwork.service.CertificationAuthorityService;
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Profile("!dogtag")
 public class PkiDevConfig {
 

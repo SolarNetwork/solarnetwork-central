@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecretsConfig.java - 27/08/2022 3:39:29 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,17 +42,18 @@ import net.solarnetwork.central.support.CacheSettings;
 
 /**
  * Secret management configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class SecretsConfig {
 
 	@Autowired
 	private CacheManager cacheManager;
 
 	@Bean
+	@Qualifier(SECRETS)
 	@ConfigurationProperties(prefix = "app.secrets.cache")
 	public CacheSettings secretsCacheSettings() {
 		return new CacheSettings();
@@ -60,12 +61,11 @@ public class SecretsConfig {
 
 	@Bean
 	@Qualifier(SECRETS)
-	public Cache<String, String> secretsCache() {
-		CacheSettings settings = secretsCacheSettings();
+	public Cache<String, String> secretsCache(@Qualifier(SECRETS) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, String.class, SECRETS);
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@Profile("aws-secrets")
 	public static class AwsSecretsConfig {
 
@@ -76,8 +76,8 @@ public class SecretsConfig {
 		}
 
 		@Bean
-		public SecretsBiz awsSecretsBiz(@Qualifier(SECRETS) Cache<String, String> cache) {
-			CloudAccessSettings settings = awsSecretsSettings();
+		public SecretsBiz awsSecretsBiz(@Qualifier(SECRETS) Cache<String, String> cache,
+				CloudAccessSettings settings) {
 			AwsSecretsBiz biz = new AwsSecretsBiz(settings.getRegion(), settings.getAccessToken(),
 					settings.getAccessSecret());
 			biz.setSecretCache(cache);
@@ -86,7 +86,7 @@ public class SecretsConfig {
 
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@Profile("!aws-secrets")
 	public static class SimpleSecretsConfig {
 
