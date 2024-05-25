@@ -33,19 +33,22 @@ import org.springframework.http.server.ServerHttpRequest;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
+import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
-import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
+import net.solarnetwork.central.ocpp.domain.UserSettings;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.ocpp.domain.ChargePointAuthorizationDetails;
 import net.solarnetwork.ocpp.domain.SystemUser;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.service.PasswordEncoder;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
@@ -57,8 +60,10 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 			CentralOcppWebSocketHandler.OCPP_EVENT_TAG, CentralOcppWebSocketHandler.CHARGER_EVENT_TAG,
 			"forbidden" };
 
-	private UserEventAppenderBiz userEventAppenderBiz;
+	private final UserSettingsDao userSettingsDao;
 	private final Pattern pathCredentialsRegex;
+	private final Pattern pathHidRegex;
+	private UserEventAppenderBiz userEventAppenderBiz;
 
 	/**
 	 * Constructor.
@@ -67,10 +72,12 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	 *        the system user DAO
 	 * @param passwordEncoder
 	 *        the password encoder
+	 * @param userSettingsDao
+	 *        the user settings DAO
 	 */
 	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
-			PasswordEncoder passwordEncoder) {
-		this(systemUserDao, passwordEncoder, null);
+			PasswordEncoder passwordEncoder, UserSettingsDao userSettingsDao) {
+		this(systemUserDao, passwordEncoder, userSettingsDao, null);
 	}
 
 	/**
@@ -80,19 +87,49 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	 *        the system user DAO
 	 * @param passwordEncoder
 	 *        the password encoder
+	 * @param userSettingsDao
+	 *        the user settings DAO
 	 * @param pathCredentialsRegex
-	 *        an optional regular expression to extract path credentials from;
-	 *        the expression must return two groups: the username and the
-	 *        password
+	 *        an optional regular expression to extract path credentials from
+	 *        request URLs; the expression must return two groups: the username
+	 *        and the password
 	 * @since 1.3
 	 */
 	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
-			PasswordEncoder passwordEncoder, Pattern pathCredentialsRegex) {
+			PasswordEncoder passwordEncoder, UserSettingsDao userSettingsDao,
+			Pattern pathCredentialsRegex) {
+		this(systemUserDao, passwordEncoder, userSettingsDao, pathCredentialsRegex, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param systemUserDao
+	 *        the system user DAO
+	 * @param passwordEncoder
+	 *        the password encoder
+	 * @param userSettingsDao
+	 *        the user settings DAO
+	 * @param pathCredentialsRegex
+	 *        an optional regular expression to extract path credentials from
+	 *        request URLs; the expression must return two groups: the username
+	 *        and the password
+	 * @param pathHidRegex
+	 *        an optional regular expression to extract an OCPP user settings
+	 *        {@code hid} value from request URLs; the epxression must return
+	 *        one group: the hid value
+	 * @since 1.4
+	 */
+	public CentralOcppWebSocketHandshakeInterceptor(CentralSystemUserDao systemUserDao,
+			PasswordEncoder passwordEncoder, UserSettingsDao userSettingsDao,
+			Pattern pathCredentialsRegex, Pattern pathHidRegex) {
 		super(systemUserDao, passwordEncoder);
+		this.userSettingsDao = ObjectUtils.requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.pathCredentialsRegex = pathCredentialsRegex;
 		if ( pathCredentialsRegex != null ) {
 			setClientCredentialsExtractor(this::extractPathCredentials);
 		}
+		this.pathHidRegex = pathHidRegex;
 	}
 
 	private ChargePointAuthorizationDetails extractPathCredentials(final ServerHttpRequest request,
@@ -113,15 +150,34 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 	protected void didForbidChargerConnection(ServerHttpRequest request, String identifier,
 			ChargePointAuthorizationDetails user, String reason) {
 		super.didForbidChargerConnection(request, identifier, user, reason);
-		if ( user instanceof CentralSystemUser ) {
+
+		Long userId = null;
+
+		if ( user instanceof UserRelatedEntity<?> u ) {
+			userId = u.getUserId();
+		} else if ( pathHidRegex != null ) {
+			Matcher m = pathHidRegex.matcher(request.getURI().getPath());
+			if ( m.matches() ) {
+				String hid = m.group(1);
+				if ( !hid.isEmpty() ) {
+					UserSettings settings = userSettingsDao.getForHid(hid);
+					if ( settings != null ) {
+						userId = settings.getUserId();
+					}
+				}
+			}
+		}
+
+		if ( userId != null ) {
 			Map<String, Object> data = new LinkedHashMap<>(4);
-			data.put("username", user.getUsername());
+			if ( user != null && user.getUsername() != null ) {
+				data.put("username", user.getUsername());
+			}
 			if ( identifier != null ) {
 				data.put(CHARGE_POINT_DATA_KEY, identifier);
 			}
 			data.put(ERROR_DATA_KEY, reason);
-			generateUserEvent(((CentralSystemUser) user).getUserId(),
-					CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, null, data);
+			generateUserEvent(userId, CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS, null, data);
 		}
 	}
 

@@ -48,6 +48,7 @@ import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
@@ -63,7 +64,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * OCPP v1.6 web socket configuration.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration
 @EnableWebSocket
@@ -99,6 +100,9 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 
 	@Autowired
 	private ChargePointActionStatusUpdateDao chargePointActionStatusUpdateDao;
+
+	@Autowired
+	private UserSettingsDao userSettingsDao;
 
 	@Autowired
 	@Qualifier(OCPP_V16)
@@ -141,26 +145,73 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		return handler;
 	}
 
+	/** Client ID pattern when Basic authentication used. */
+	public static final Pattern BASIC_CLIENT_ID_REGEX = Pattern.compile("/ocpp/j/v16/(.*)");
+
+	/** Client ID pattern when path authentication used. */
+	public static final Pattern PATH_CLIENT_ID_REGEX = Pattern.compile("/ocpp/j/v16u/.*/.*/(.*)");
+
+	/** Credentials pattern when path authentication used. */
+	public static final Pattern PATH_CREDS_REGEX = Pattern.compile("/ocpp/j/v16u/(.*)/(.*)/.*");
+
+	/** Client ID pattern when Basic authentication used with HID. */
+	public static final Pattern HID_BASIC_CLIENT_ID_REGEX = Pattern.compile("/ocpp/j/v16h/.*/(.*)");
+
+	/** HID pattern when Basic authentication used. */
+	public static final Pattern HID_BASIC_HID_REGEX = Pattern.compile("/ocpp/j/v16h/(.*)/.*");
+
+	/** Client ID pattern when path authentication used with HID. */
+	public static final Pattern HID_PATH_CLIENT_ID_REGEX = Pattern
+			.compile("/ocpp/j/v16hu/.*/.*/.*/(.*)");
+
+	/** Credentials pattern when path authentication used with HID. */
+	public static final Pattern HID_PATH_CREDS_REGEX = Pattern.compile("/ocpp/j/v16hu/.*/(.*)/(.*)/.*");
+
+	/** HID pattern when path authentication used. */
+	public static final Pattern HID_PATH_HID_REGEX = Pattern.compile("/ocpp/j/v16hu/(.*)/.*/.*/.*");
+
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+		// normal path /v16/identifier
 		WebSocketHandlerRegistration basicAuthReg = registry
 				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor basicAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
-				ocppSystemUserDao, passwordEncoder);
-		basicAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16/(.*)"));
+				ocppSystemUserDao, passwordEncoder, userSettingsDao);
+		basicAuthInterceptor.setClientIdUriPattern(BASIC_CLIENT_ID_REGEX);
 		basicAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		basicAuthReg.addInterceptors(basicAuthInterceptor);
 
+		// support path credentials /v16u/username/password/identifier
 		WebSocketHandlerRegistration pathAuthReg = registry
 				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16u/**").setAllowedOrigins("*");
 
 		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptor = new CentralOcppWebSocketHandshakeInterceptor(
-				ocppSystemUserDao, passwordEncoder, Pattern.compile("/ocpp/j/v16u/(.*)/(.*)/.*"));
-		pathAuthInterceptor.setClientIdUriPattern(Pattern.compile("/ocpp/j/v16u/.*/.*/(.*)"));
+				ocppSystemUserDao, passwordEncoder, userSettingsDao, PATH_CREDS_REGEX);
+		pathAuthInterceptor.setClientIdUriPattern(PATH_CLIENT_ID_REGEX);
 		pathAuthInterceptor.setUserEventAppenderBiz(userEventAppenderBiz);
 		pathAuthReg.addInterceptors(pathAuthInterceptor);
 
+		// support HID /v16h/hid/identifier
+		WebSocketHandlerRegistration basicAuthRegHid = registry
+				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16h/**").setAllowedOrigins("*");
+
+		CentralOcppWebSocketHandshakeInterceptor basicAuthInterceptorHid = new CentralOcppWebSocketHandshakeInterceptor(
+				ocppSystemUserDao, passwordEncoder, userSettingsDao, null, HID_BASIC_HID_REGEX);
+		basicAuthInterceptorHid.setClientIdUriPattern(HID_BASIC_CLIENT_ID_REGEX);
+		basicAuthInterceptorHid.setUserEventAppenderBiz(userEventAppenderBiz);
+		basicAuthRegHid.addInterceptors(basicAuthInterceptorHid);
+
+		// support HID + path credentials /v16hu/hid/username/password/identifier
+		WebSocketHandlerRegistration pathAuthRegHid = registry
+				.addHandler(ocppWebSocketHandler_v16(), "/ocpp/j/v16hu/**").setAllowedOrigins("*");
+
+		CentralOcppWebSocketHandshakeInterceptor pathAuthInterceptorHid = new CentralOcppWebSocketHandshakeInterceptor(
+				ocppSystemUserDao, passwordEncoder, userSettingsDao, HID_PATH_CREDS_REGEX,
+				HID_PATH_HID_REGEX);
+		pathAuthInterceptorHid.setClientIdUriPattern(HID_PATH_CLIENT_ID_REGEX);
+		pathAuthInterceptorHid.setUserEventAppenderBiz(userEventAppenderBiz);
+		pathAuthRegHid.addInterceptors(pathAuthInterceptorHid);
 	}
 
 }
