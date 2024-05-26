@@ -148,14 +148,14 @@ public class SolarInBizConfig {
 	}
 
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public AsyncDatumCollector asyncDaoDatumCollector(
+	public AsyncDatumCollector asyncDaoDatumCollector(AsyncDatumCollectorSettings settings,
+			TransactionTemplate transactionTemplate,
 			@Qualifier(BUFFERING_DATUM_CACHE_NAME) Cache<Serializable, Serializable> bufferingDatumCache) {
-		AsyncDatumCollectorSettings settings = asyncDatumCollectorSettings();
 		StatTracker stats = new StatTracker("AsyncDaoDatum",
 				"net.solarnetwork.central.datum.support.AsyncDatumCollector",
 				LoggerFactory.getLogger(AsyncDatumCollector.class), settings.getStatFrequency());
 		AsyncDatumCollector collector = new AsyncDatumCollector(bufferingDatumCache, datumDao,
-				transactionTemplate(), stats);
+				transactionTemplate, stats);
 		collector.setConcurrency(settings.getThreads());
 		collector.setShutdownWaitSecs(settings.getShutdownWaitSecs());
 		collector.setQueueSize(settings.getQueueSize());
@@ -165,7 +165,8 @@ public class SolarInBizConfig {
 	}
 
 	@Bean
-	public DataCollectorBiz dataCollectorBiz(
+	public DataCollectorBiz dataCollectorBiz(SolarNodeMetadataBiz solarNodeMetadataBiz,
+			TransactionTemplate transactionTemplate,
 			@Qualifier(BUFFERING_DATUM_CACHE_NAME) Cache<Serializable, Serializable> bufferingDatumCache) {
 		DaoDataCollectorBiz biz = new DaoDataCollectorBiz();
 		biz.setDatumDao(datumDao);
@@ -173,8 +174,8 @@ public class SolarInBizConfig {
 		biz.setSolarLocationDao(solarLocationDao);
 		biz.setSolarNodeDao(solarNodeDao);
 		biz.setDatumMetadataBiz(datumMetadataBiz);
-		biz.setSolarNodeMetadataBiz(solarNodeMetadataBiz());
-		biz.setTransactionTemplate(transactionTemplate());
+		biz.setSolarNodeMetadataBiz(solarNodeMetadataBiz);
+		biz.setTransactionTemplate(transactionTemplate);
 		biz.setDatumCache(bufferingDatumCache);
 		return biz;
 	}
