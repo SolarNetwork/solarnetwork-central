@@ -85,7 +85,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -357,7 +357,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				while ( writeEnabled ) {
 					final Serializable key = queue.take();
 					if ( key != null ) {
-						stats.increment(BasicCount.WorkQueueRemovals);
+						stats.increment(BasicCount.WorkQueueRemovals, true);
 						log.trace("POLL: |{}", key);
 						final Serializable entity = datumCache.getAndRemove(key);
 						try {
@@ -414,7 +414,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
 								log.trace("REFILL: |{}/{}", currSize, queueSize);
-								stats.increment(BasicCount.WorkQueueRefills);
+								stats.increment(BasicCount.WorkQueueRefills, true);
 								for ( Entry<Serializable, Serializable> e : datumCache ) {
 									if ( e == null ) {
 										continue;
@@ -451,7 +451,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_CRE: |{}", key);
-			stats.increment(BasicCount.BufferAdds);
+			stats.increment(BasicCount.BufferAdds, true);
 			if ( key instanceof DatumPK ) {
 				stats.increment(BasicCount.StreamDatumReceived);
 			} else if ( key instanceof GeneralNodeDatumPK ) {
@@ -462,7 +462,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			queueLock.lock();
 			try {
 				if ( queue.offer(key) ) {
-					stats.increment(BasicCount.WorkQueueAdds);
+					stats.increment(BasicCount.WorkQueueAdds, true);
 				}
 			} finally {
 				queueLock.unlock();
@@ -477,8 +477,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_UPT: |{}", key);
-			stats.increment(BasicCount.BufferRemovals);
-			stats.increment(BasicCount.BufferAdds);
+			stats.increment(BasicCount.BufferRemovals, true);
+			stats.increment(BasicCount.BufferAdds, true);
 		}
 	}
 
@@ -489,7 +489,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( CacheEntryEvent<? extends Serializable, ? extends Serializable> event : events ) {
 			Serializable key = event.getKey();
 			log.trace("CACHE_REM: |{}", key);
-			stats.increment(BasicCount.BufferRemovals);
+			stats.increment(BasicCount.BufferRemovals, true);
 			if ( log.isTraceEnabled() ) {
 				long c = stats.get(BasicCount.BufferRemovals);
 				if ( stats.getLogFrequency() > 0 && ((c % stats.getLogFrequency()) == 0) ) {
