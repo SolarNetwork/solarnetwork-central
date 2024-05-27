@@ -26,7 +26,7 @@ package net.solarnetwork.central.datum.support;
  * Settings for the AsyncDatumCollector.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AsyncDatumCollectorSettings {
 
@@ -35,6 +35,7 @@ public class AsyncDatumCollectorSettings {
 	private int queueSize = AsyncDatumCollector.DEFAULT_QUEUE_SIZE;
 	private int datumCacheRemovalAlertThreshold = AsyncDatumCollector.DEFAULT_DATUM_CACHE_REMOVAL_ALERT_THRESHOLD;
 	private double queueRefillThreshold = AsyncDatumCollector.DEFAULT_QUEUE_REFILL_THRESHOLD;
+	private long queueRefillWaitMs = AsyncDatumCollector.DEFAULT_QUEUE_REFILL_WAIT_MS;
 	private int statFrequency = 200;
 
 	/**
@@ -153,6 +154,29 @@ public class AsyncDatumCollectorSettings {
 	 */
 	public void setQueueRefillThreshold(double queueRefillThreshold) {
 		this.queueRefillThreshold = queueRefillThreshold;
+	}
+
+	/**
+	 * Get the amount of time to wait to refill the queue after processing each
+	 * datum.
+	 *
+	 * @return the wait time, in milliseconds
+	 * @since 1.2
+	 */
+	public long getQueueRefillWaitMs() {
+		return queueRefillWaitMs;
+	}
+
+	/**
+	 * Set the amount of time to wait to refill the queue after processing each
+	 * datum.
+	 *
+	 * @param queueRefillWaitMs
+	 *        the wait time, in milliseconds
+	 * @since 1.2
+	 */
+	public void setQueueRefillWaitMs(long queueRefillWaitMs) {
+		this.queueRefillWaitMs = queueRefillWaitMs;
 	}
 
 }

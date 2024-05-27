@@ -50,6 +50,27 @@ public class LinkedHashSetBlockingQueueTests {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Test
+	public void offerDuplicate() {
+		// GIVEN
+		var queue = new LinkedHashSetBlockingQueue<String>(10);
+
+		// WHEN
+		then(queue.offer("123")).as("First offer returns true").isTrue();
+		then(queue.offer("123")).as("Offer duplicate returns true").isTrue();
+	}
+
+	@Test
+	public void offerFull() {
+		// GIVEN
+		var queue = new LinkedHashSetBlockingQueue<String>(2);
+
+		// WHEN
+		then(queue.offer("123")).as("First offer returns true").isTrue();
+		then(queue.offer("234")).as("Second offer returns true").isTrue();
+		then(queue.offer("345")).as("Thrid offer fails (at capacity)").isFalse();
+	}
+
+	@Test
 	public void clear() throws Exception {
 		// GIVEN
 		var queue = new LinkedHashSetBlockingQueue<String>(10);
