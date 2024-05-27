@@ -85,7 +85,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -106,6 +106,9 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 
 	/** The {@code queueRefillThreshold} property default value. */
 	public static final double DEFAULT_QUEUE_REFILL_THRESHOLD = 0.1;
+
+	/** The {@code queueRefillWaitMs} property default value. */
+	public static final long DEFAULT_QUEUE_REFILL_WAIT_MS = 20L;
 
 	/** Basic counted fields. */
 	public enum BasicCount {
@@ -171,6 +174,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 
 	private int queueRefillSize;
 	private double queueRefillThreshold = DEFAULT_QUEUE_REFILL_THRESHOLD;
+	private long queueRefillWaitMs = DEFAULT_QUEUE_REFILL_WAIT_MS;
 	private volatile boolean writeEnabled = false;
 	private BlockingQueue<Serializable> queue;
 	private DatumWriterThread[] datumThreads;
@@ -409,7 +413,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 					}
 
 					// try to re-fill queue from cache if queue below queueRefillSize
-					if ( queueLock.tryLock(50, TimeUnit.MILLISECONDS) ) {
+					if ( queueRefillWaitMs > 0
+							&& queueLock.tryLock(queueRefillWaitMs, TimeUnit.MILLISECONDS) ) {
 						try {
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
@@ -642,6 +647,35 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	 */
 	public void setDatumCacheRemovalAlertThreshold(int datumCacheRemovalAlertThreshold) {
 		this.datumCacheRemovalAlertThreshold = datumCacheRemovalAlertThreshold;
+	}
+
+	/**
+	 * Get the amount of time to wait to refill the queue after processing each
+	 * datum.
+	 *
+	 * @return the wait time, in milliseconds; defaults to
+	 *         {@link #DEFAULT_QUEUE_REFILL_WAIT_MS}
+	 * @since 2.7
+	 */
+	public long getQueueRefillWaitMs() {
+		return queueRefillWaitMs;
+	}
+
+	/**
+	 * Set the amount of time to wait to refill the queue after processing each
+	 * datum.
+	 *
+	 * @param queueRefillWaitMs
+	 *        the wait time, in milliseconds
+	 * @throws IllegalArgumentException
+	 *         if {@code queueRefillWaitMs} is less than 0
+	 * @since 2.7
+	 */
+	public void setQueueRefillWaitMs(long queueRefillWaitMs) {
+		if ( queueRefillWaitMs < 0 ) {
+			throw new IllegalArgumentException("The queueRefillWaitMs value must be 0 or more.");
+		}
+		this.queueRefillWaitMs = queueRefillWaitMs;
 	}
 
 }

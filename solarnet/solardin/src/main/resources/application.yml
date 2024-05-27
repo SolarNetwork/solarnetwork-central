@@ -107,6 +107,7 @@ app:
       shutdown-wait-secs: 30
       queue-size: 200
       queue-refill-threshold: 0.1
+      queue-refill-wait-ms: 20
       stat-frequency: 200
       datum-cache-removal-alert-threshold: 500
     datum-buffer:
