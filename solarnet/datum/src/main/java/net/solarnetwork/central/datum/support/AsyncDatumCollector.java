@@ -409,7 +409,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 					}
 
 					// try to re-fill queue from cache if queue below queueRefillSize
-					if ( queueLock.tryLock(2, TimeUnit.SECONDS) ) {
+					if ( queueLock.tryLock(50, TimeUnit.MILLISECONDS) ) {
 						try {
 							int currSize = queue.size();
 							if ( currSize < queueRefillSize ) {
@@ -459,13 +459,8 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 			} else {
 				stats.increment(BasicCount.LocationDatumReceived);
 			}
-			queueLock.lock();
-			try {
-				if ( queue.offer(key) ) {
-					stats.increment(BasicCount.WorkQueueAdds, true);
-				}
-			} finally {
-				queueLock.unlock();
+			if ( queue.offer(key) ) {
+				stats.increment(BasicCount.WorkQueueAdds, true);
 			}
 		}
 	}
