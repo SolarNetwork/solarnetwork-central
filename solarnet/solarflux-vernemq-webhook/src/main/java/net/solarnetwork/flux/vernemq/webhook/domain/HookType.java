@@ -31,7 +31,11 @@ public enum HookType implements HookNames {
 
   AuthorizeOnPublish(AUTH_ON_PUBLISH),
 
-  AuthorizeOnSubscribe(AUTH_ON_SUBSCRIBE);
+  AuthorizeOnSubscribe(AUTH_ON_SUBSCRIBE),
+
+  OnDeliver(ON_DELIVER),
+
+  ;
 
   /** The name of the HTTP header that is used to transmit the hook type. */
   public static final String HOOK_HEADER = "vernemq-hook";

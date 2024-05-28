@@ -53,7 +53,7 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcAuditService implements AuditService {
 
@@ -168,6 +168,14 @@ public class JdbcAuditService implements AuditService {
       addNodeSourceCount(
           DatumId.nodeId(nodeId, sourceId, clock.instant().truncatedTo(ChronoUnit.HOURS)),
           byteCount);
+    }
+  }
+
+  @Override
+  public void auditDeliverMessage(Message message) {
+    final int byteCount = (message.getPayload() != null ? message.getPayload().length : 0);
+    if (byteCount > 0) {
+      // TODO
     }
   }
 

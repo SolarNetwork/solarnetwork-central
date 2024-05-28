@@ -1,0 +1,7 @@
+{
+    "username": "username",
+    "client_id": "clientid",
+    "mountpoint": "",
+    "topic": "a/b",
+    "payload": "aGVsbG8="
+}

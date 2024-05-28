@@ -28,9 +28,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * A webhook response object.
  * 
  * @author matt
+ * @version 1.1
  */
 @JsonPropertyOrder(value = { "result", "modifiers" })
 public class Response {
+
+  /**
+   * A standard OK response.
+   * 
+   * @since 1.1
+   */
+  public static final Response OK = new Response(ResponseStatus.OK);
+
+  /**
+   * A standard NEXT response.
+   * 
+   * @since 1.1
+   */
+  public static final Response NEXT = new Response(ResponseStatus.NEXT);
 
   private final ResponseStatus status;
 
