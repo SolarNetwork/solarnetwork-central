@@ -28,6 +28,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -105,7 +106,8 @@ public class JdbcCredentialConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 			;
 
 		List<Map<String, Object>> data = allCredentialConfigurationData(jdbcTemplate);
-		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+		then(data).as("Table has 1 row").hasSize(1).asInstanceOf(list(Map.class))
+			.element(0, map(String.class, Object.class))
 			.as("Row user ID")
 			.containsEntry("user_id", userId)
 			.as("Row ID generated")
@@ -151,7 +153,8 @@ public class JdbcCredentialConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 			;
 
 		List<Map<String, Object>> data = allCredentialConfigurationData(jdbcTemplate);
-		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+		then(data).as("Table has 1 row").hasSize(1).asInstanceOf(list(Map.class))
+			.element(0, map(String.class, Object.class))
 			.as("Row user ID")
 			.containsEntry("user_id", userId)
 			.as("Row ID generated")

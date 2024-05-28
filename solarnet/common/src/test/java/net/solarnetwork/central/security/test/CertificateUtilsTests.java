@@ -26,10 +26,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.BDDAssertions.as;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import javax.security.auth.x500.X500Principal;
 import org.junit.jupiter.api.Test;
@@ -94,7 +96,7 @@ public class CertificateUtilsTests {
 		then(result).as("Key store created").isNotNull();
 		// @formatter:off
 		then(asList(result.getCertificateChain("server")))
-			.as("Server chain is available").asList()
+			.as("Server chain is available").asInstanceOf(list(Certificate.class))
 			.element(0).as("First certificate is server")
 			.extracting(cert -> {
 				return ((X509Certificate) cert).getSubjectX500Principal();
