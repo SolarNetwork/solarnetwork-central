@@ -30,11 +30,17 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.support.CsvFilteredResultsProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.central.support.ObjectMapperFilteredResultsProcessor;
@@ -44,7 +50,7 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
  * Helper utilities for web APIs.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class WebUtils {
 
@@ -197,6 +203,93 @@ public final class WebUtils {
 		}
 		response.setContentType(processor.getMimeType().toString());
 		return processor;
+	}
+
+	/**
+	 * Get the request URI including query parameters as a string.
+	 * 
+	 * @param request
+	 *        the servlet request
+	 * @return the request URI with query parameters included
+	 * @since 1.3
+	 */
+	public static String requestUriWithQueryParameters(final HttpServletRequest request) {
+		String url = request.getRequestURI();
+		String q = request.getQueryString();
+		if ( q != null ) {
+			return url + "?" + q;
+		}
+		return url;
+	}
+
+	/**
+	 * Handle a {@link DataAccessException} by either logging a WARN log message
+	 * if {@code retries} is greater than 0, or re-throwing the exception
+	 * otherwise.
+	 * 
+	 * @param req
+	 *        the HTTP request
+	 * @param e
+	 *        the exception
+	 * @param retries
+	 *        the number of retry attempts remaining
+	 * @param retryDelay
+	 *        a delay in milliseconds to sleep for, if {@code retries} is
+	 *        greater than 0
+	 * @param log
+	 *        the logger to log a WARN message to
+	 * @since 1.3
+	 */
+	public static void handleTransientDataAccessExceptionRetry(final HttpServletRequest req,
+			final DataAccessException e, final int retries, final long retryDelay, final Logger log) {
+		if ( retries > 0 ) {
+			log.warn(
+					"Transient {} exception in request {}, will retry up to {} more times after a delay of {}ms: {}",
+					e.getClass().getSimpleName(), requestUriWithQueryParameters(req), retries,
+					retryDelay, e.toString());
+			if ( retryDelay > 0 ) {
+				try {
+					Thread.sleep(retryDelay);
+				} catch ( InterruptedException e2 ) {
+					// ignore
+				}
+			}
+		} else {
+			throw e;
+		}
+	}
+
+	/**
+	 * Perform an action with {@link DataAccessException} retry.
+	 * 
+	 * @param <T>
+	 *        the action argument type
+	 * @param <R>
+	 *        the action return type
+	 * @param action
+	 *        the action to perform
+	 * @param arg
+	 *        the argument to pass to the action
+	 * @param req
+	 *        the HTTP request
+	 * @param tries
+	 *        the number of attempts to try
+	 * @param retryDelay
+	 *        a delay in milliseconds to sleep for, if {@code retries} is
+	 *        greater than 0
+	 * @param log
+	 *        the logger to log a WARN message to
+	 * @return
+	 */
+	public static <T> T doWithTransientDataAccessExceptionRetry(final Supplier<T> action,
+			final HttpServletRequest req, int tries, final long retryDelay, final Logger log) {
+		while ( true ) {
+			try {
+				return action.get();
+			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
+				handleTransientDataAccessExceptionRetry(req, e, --tries, retryDelay, log);
+			}
+		}
 	}
 
 }

@@ -27,12 +27,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.SmartValidator;
@@ -40,13 +36,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.web.jakarta.domain.Response;
 
@@ -54,29 +53,19 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Controller for querying datum related data.
  * 
  * @author matt
- * @version 3.5
+ * @version 3.6
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
 @GlobalExceptionRestController
-public class DatumController {
-
-	/** The {@code transientExceptionRetryCount} property default value. */
-	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
-
-	/** The {@code transientExceptionRetryDelay} property default value. */
-	public static final long DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY = 2000L;
+public class DatumController extends BaseTransientDataAccessRetryController {
 
 	/** The {@code mostRecentStartPeriod} property default value. */
 	public static final Duration DEFAULT_MOST_RECENT_START_PERIOD = Duration.ofDays(90);
 
-	private static final Logger log = LoggerFactory.getLogger(DatumController.class);
-
 	private final QueryBiz queryBiz;
 	private SmartValidator filterValidator;
 
-	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
-	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
 	private Duration mostRecentStartPeriod = DEFAULT_MOST_RECENT_START_PERIOD;
 
 	/**
@@ -101,8 +90,8 @@ public class DatumController {
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd,
-			BindingResult validationResult) {
+	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
+			final DatumFilterCommand cmd, BindingResult validationResult) {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
 			if ( validationResult.hasErrors() ) {
@@ -110,45 +99,25 @@ public class DatumController {
 			}
 		}
 		populateMostRecentImplicitStartDate(cmd);
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				FilterResults<?> results;
-				if ( cmd.getAggregation() != null ) {
-					results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd,
-							cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-				} else {
-					results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
-							cmd.getOffset(), cmd.getMax());
-				}
-				return new Response<FilterResults<?>>(results);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /list request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			FilterResults<?> results;
+			if ( cmd.getAggregation() != null ) {
+				results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
+			} else {
+				results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
 			}
-			retries--;
-		}
+			return new Response<FilterResults<?>>(results);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd,
-			BindingResult validationResult) {
+	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final HttpServletRequest req,
+			final DatumFilterCommand cmd, BindingResult validationResult) {
 		cmd.setMostRecent(true);
-		return filterGeneralDatumData(cmd, validationResult);
+		return filterGeneralDatumData(req, cmd, validationResult);
 	}
 
 	/**
@@ -167,8 +136,8 @@ public class DatumController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
-	public Response<FilterResults<?>> datumReading(final DatumFilterCommand cmd,
-			@RequestParam("readingType") DatumReadingType readingType,
+	public Response<FilterResults<?>> datumReading(final HttpServletRequest req,
+			final DatumFilterCommand cmd, @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
 			BindingResult validationResult) {
 		if ( filterValidator != null ) {
@@ -177,58 +146,16 @@ public class DatumController {
 				throw new ValidationException(validationResult);
 			}
 		}
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				FilterResults<?> results;
-				if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
-					results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
-							cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-				} else {
-					results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
-				}
-				return new Response<FilterResults<?>>(results);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /reading request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			FilterResults<?> results;
+			if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
+				results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
+						cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+			} else {
+				results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
 			}
-			retries--;
-		}
-	}
-
-	/**
-	 * Get the number of retry attempts for transient DAO exceptions.
-	 * 
-	 * @return the retry count; defaults to
-	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT}.
-	 * @since 2.6
-	 */
-	public int getTransientExceptionRetryCount() {
-		return transientExceptionRetryCount;
-	}
-
-	/**
-	 * Set the number of retry attempts for transient DAO exceptions.
-	 * 
-	 * @param transientExceptionRetryCount
-	 *        the retry count, or {@literal 0} for no retries
-	 * @since 2.6
-	 */
-	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
-		this.transientExceptionRetryCount = transientExceptionRetryCount;
+			return new Response<FilterResults<?>>(results);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	/**
@@ -259,30 +186,6 @@ public class DatumController {
 					"The Validator must support the GeneralNodeDatumFilter class.");
 		}
 		this.filterValidator = filterValidator;
-	}
-
-	/**
-	 * Get the length of time, in milliseconds, to sleep before retrying a
-	 * request after a transient exception.
-	 * 
-	 * @return the delay, in milliseconds; defaults to
-	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY}
-	 * @since 3.1
-	 */
-	public long getTransientExceptionRetryDelay() {
-		return transientExceptionRetryDelay;
-	}
-
-	/**
-	 * Set the length of time, in milliseconds, to sleep before retrying a
-	 * request after a transient exception.
-	 * 
-	 * @param transientExceptionRetryDelay
-	 *        the delay to set
-	 * @since 3.1
-	 */
-	public void setTransientExceptionRetryDelay(long transientExceptionRetryDelay) {
-		this.transientExceptionRetryDelay = transientExceptionRetryDelay;
 	}
 
 	/**

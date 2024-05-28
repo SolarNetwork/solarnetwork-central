@@ -28,13 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -43,6 +42,7 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
@@ -54,7 +54,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * </p>
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
@@ -137,38 +137,20 @@ public class ReportableIntervalController {
 	 * }
 	 * </pre>
 	 * 
+	 * @param req
+	 *        the HTTP request
 	 * @param cmd
 	 *        the input command
 	 * @return the {@link ReportableInterval}
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = "!types")
-	public Response<ReportableInterval> getReportableInterval(GeneralReportableIntervalCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(),
-						cmd.getSourceId());
-				return new Response<ReportableInterval>(data);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /interval request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
-			}
-			retries--;
-		}
+	public Response<ReportableInterval> getReportableInterval(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), cmd.getSourceId());
+			return new Response<ReportableInterval>(data);
+		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
 	/**
@@ -197,6 +179,8 @@ public class ReportableIntervalController {
 	 * }
 	 * </pre>
 	 * 
+	 * @param req
+	 *        the HTTP request
 	 * @param cmd
 	 *        the input command
 	 * @return the available sources
@@ -204,39 +188,20 @@ public class ReportableIntervalController {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"!metadataFilter", "!withNodeIds" })
-	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				DatumFilterCommand f = new DatumFilterCommand();
-				f.setNodeIds(cmd.getNodeIds());
-				f.setStartDate(cmd.getStartDate());
-				f.setEndDate(cmd.getEndDate());
-				Set<String> data = queryBiz.getAvailableSources(f);
+	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			DatumFilterCommand f = new DatumFilterCommand();
+			f.setNodeIds(cmd.getNodeIds());
+			f.setStartDate(cmd.getStartDate());
+			f.setEndDate(cmd.getEndDate());
+			Set<String> data = queryBiz.getAvailableSources(f);
 
-				// support filtering based on sourceId path pattern
-				data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
+			// support filtering based on sourceId path pattern
+			data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
 
-				return new Response<Set<String>>(data);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /sources request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
-			}
-			retries--;
-		}
+			return new Response<Set<String>>(data);
+		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
 	/**
@@ -279,47 +244,28 @@ public class ReportableIntervalController {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"!metadataFilter", "withNodeIds" })
-	public Response<Set<?>> findAvailableSources(GeneralReportableIntervalCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				DatumFilterCommand f = new DatumFilterCommand();
-				f.setNodeIds(cmd.getNodeIds());
-				f.setStartDate(cmd.getStartDate());
-				f.setEndDate(cmd.getEndDate());
-				Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
+	public Response<Set<?>> findAvailableSources(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			DatumFilterCommand f = new DatumFilterCommand();
+			f.setNodeIds(cmd.getNodeIds());
+			f.setStartDate(cmd.getStartDate());
+			f.setEndDate(cmd.getEndDate());
+			Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
 
-				// support filtering based on sourceId path pattern
-				data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+			// support filtering based on sourceId path pattern
+			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
-				if ( !cmd.isWithNodeIds() ) {
-					Set<String> sourceIds = new LinkedHashSet<String>(data.size());
-					for ( NodeSourcePK pk : data ) {
-						sourceIds.add(pk.getSourceId());
-					}
-					return new Response<Set<?>>(sourceIds);
+			if ( !cmd.isWithNodeIds() ) {
+				Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+				for ( NodeSourcePK pk : data ) {
+					sourceIds.add(pk.getSourceId());
 				}
-
-				return new Response<Set<?>>(data);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /sources request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
+				return new Response<Set<?>>(sourceIds);
 			}
-			retries--;
-		}
+
+			return new Response<Set<?>>(data);
+		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
 	/**
@@ -356,6 +302,8 @@ public class ReportableIntervalController {
 	 * node ID which is redundant.
 	 * </p>
 	 * 
+	 * @param req
+	 *        the HTTP request
 	 * @param cmd
 	 *        the criteria
 	 * @return the sources
@@ -363,35 +311,25 @@ public class ReportableIntervalController {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
 			"metadataFilter" })
-	public Response<Set<?>> getMetadataFilteredAvailableSources(GeneralReportableIntervalCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				Set<NodeSourcePK> data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(
-						cmd.getNodeIds(), cmd.getMetadataFilter());
+	public Response<Set<?>> getMetadataFilteredAvailableSources(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			Set<NodeSourcePK> data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(
+					cmd.getNodeIds(), cmd.getMetadataFilter());
 
-				// support filtering based on sourceId path pattern
-				data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+			// support filtering based on sourceId path pattern
+			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
-				if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
-					// at most 1 node ID, so simplify results to just source ID values
-					Set<String> sourceIds = new LinkedHashSet<String>(data.size());
-					for ( NodeSourcePK pk : data ) {
-						sourceIds.add(pk.getSourceId());
-					}
-					return new Response<Set<?>>(sourceIds);
+			if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
+				// at most 1 node ID, so simplify results to just source ID values
+				Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+				for ( NodeSourcePK pk : data ) {
+					sourceIds.add(pk.getSourceId());
 				}
-				return new Response<Set<?>>(data);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
-				} else {
-					throw e;
-				}
+				return new Response<Set<?>>(sourceIds);
 			}
-			retries--;
-		}
+			return new Response<Set<?>>(data);
+		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
 	/**

@@ -26,11 +26,7 @@ import static net.solarnetwork.central.security.SecurityUtils.authorizedNodeIdsF
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.util.NoSuchElementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -38,33 +34,30 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for read-only node metadata access.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1NodeMetadataController")
 @RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })
 @GlobalExceptionRestController
-public class NodeMetadataController {
-
-	/** The {@code transientExceptionRetryCount} property default value. */
-	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
-
-	private static final Logger log = LoggerFactory.getLogger(NodeMetadataController.class);
+public class NodeMetadataController extends BaseTransientDataAccessRetryController {
 
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final SolarNodeMetadataBiz solarNodeMetadataBiz;
-	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
 
 	/**
 	 * Constructor.
@@ -97,28 +90,17 @@ public class NodeMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	public Response<FilterResults<SolarNodeMetadataFilterMatch>> findMetadata(
-			DatumFilterCommand criteria) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				if ( criteria.getNodeId() == null ) {
-					// default to all nodes for actor
-					criteria.setNodeIds(authorizedNodeIdsForCurrentActor(nodeOwnershipDao));
-				}
-				FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
-						.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(),
-								criteria.getOffset(), criteria.getMax());
-				return response(results);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
-				} else {
-					throw e;
-				}
+			final HttpServletRequest req, final DatumFilterCommand criteria) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			if ( criteria.getNodeId() == null ) {
+				// default to all nodes for actor
+				criteria.setNodeIds(authorizedNodeIdsForCurrentActor(nodeOwnershipDao));
 			}
-			retries--;
-		}
+			FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
+					.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
+							criteria.getMax());
+			return response(results);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	/**
@@ -130,54 +112,23 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Response<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable("nodeId") Long nodeId) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				DatumFilterCommand criteria = new DatumFilterCommand();
-				criteria.setNodeId(nodeId);
-				FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
-						.findSolarNodeMetadata(criteria, null, null, null);
-				SolarNodeMetadataFilterMatch result = null;
-				if ( results != null ) {
-					try {
-						result = results.iterator().next();
-					} catch ( NoSuchElementException e ) {
-						// ignore
-					}
-				}
-				return response(result);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn("Transient {} exception, will retry up to {} more times.",
-							e.getClass().getSimpleName(), retries, e);
-				} else {
-					throw e;
+	public Response<SolarNodeMetadataFilterMatch> getMetadata(final HttpServletRequest req,
+			@PathVariable("nodeId") final Long nodeId) {
+		DatumFilterCommand criteria = new DatumFilterCommand();
+		criteria.setNodeId(nodeId);
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
+					.findSolarNodeMetadata(criteria, null, null, null);
+			SolarNodeMetadataFilterMatch result = null;
+			if ( results != null ) {
+				try {
+					result = results.iterator().next();
+				} catch ( NoSuchElementException e ) {
+					// ignore
 				}
 			}
-			retries--;
-		}
+			return response(result);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
-	/**
-	 * Get the number of retry attempts for transient DAO exceptions.
-	 * 
-	 * @return the retry count; defaults to
-	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT}.
-	 * @since 1.1
-	 */
-	public int getTransientExceptionRetryCount() {
-		return transientExceptionRetryCount;
-	}
-
-	/**
-	 * Set the number of retry attempts for transient DAO exceptions.
-	 * 
-	 * @param transientExceptionRetryCount
-	 *        the retry count, or {@literal 0} for no retries
-	 * @since 1.1
-	 */
-	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
-		this.transientExceptionRetryCount = transientExceptionRetryCount;
-	}
 }
