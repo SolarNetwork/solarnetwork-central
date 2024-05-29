@@ -17,6 +17,7 @@
 
 package net.solarnetwork.flux.vernemq.webhook.service.impl;
 
+import static java.lang.System.currentTimeMillis;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 
 import java.sql.CallableStatement;
@@ -25,11 +26,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Iterator;
-import java.util.Map;
+import java.time.Instant;
+import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -41,7 +44,7 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.central.support.DelayQueueSet;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
@@ -115,9 +118,18 @@ public class JdbcAuditService implements AuditService {
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   private final DataSource dataSource;
-  private final ConcurrentMap<DatumId, AtomicInteger> nodeSourceCounters;
   private final Clock clock;
   private final AtomicLong updateCount;
+
+  /**
+   * A mapping of keys to count objects.
+   */
+  private final ConcurrentMap<DelayedKey, AtomicInteger> counters;
+
+  /**
+   * A delay queue of keys whose counts have been updated and need to be persisted.
+   */
+  private final BlockingQueue<DelayedKey> counterQueue;
 
   private String mqttServiceName;
   private String nodeSourceIncrementSql;
@@ -149,7 +161,7 @@ public class JdbcAuditService implements AuditService {
    * 
    * @param dataSource
    *        the JDBC DataSource
-   * @param nodeSourceCounters
+   * @param counters
    *        the node source counters map
    * @param clock
    *        the clock to use; the clock should tick only at the rate that counts should be
@@ -157,11 +169,12 @@ public class JdbcAuditService implements AuditService {
    * @throws IllegalArgumentException
    *         if any argument is {@literal null}
    */
-  public JdbcAuditService(DataSource dataSource,
-      ConcurrentMap<DatumId, AtomicInteger> nodeSourceCounters, Clock clock) {
+  public JdbcAuditService(DataSource dataSource, ConcurrentMap<DelayedKey, AtomicInteger> counters,
+      Clock clock) {
     super();
     this.dataSource = requireNonNullArgument(dataSource, "dataSource");
-    this.nodeSourceCounters = requireNonNullArgument(nodeSourceCounters, "nodeSourceCounters");
+    this.counters = requireNonNullArgument(counters, "counters");
+    this.counterQueue = new DelayQueueSet<>();
     this.clock = requireNonNullArgument(clock, "clock");
     this.updateCount = new AtomicLong();
     setMqttServiceName(DEFAULT_AUDIT_MQTT_SERVICE_NAME);
@@ -177,9 +190,8 @@ public class JdbcAuditService implements AuditService {
   public void auditPublishMessage(Actor actor, Long nodeId, String sourceId, Message message) {
     final int byteCount = (message.getPayload() != null ? message.getPayload().length : 0);
     if (byteCount > 0) {
-      addNodeSourceCount(
-          DatumId.nodeId(nodeId, sourceId, clock.instant().truncatedTo(ChronoUnit.HOURS)),
-          byteCount);
+      final DelayedKey key = key(nodeId, sourceId);
+      addCount(key, byteCount);
     }
   }
 
@@ -192,17 +204,111 @@ public class JdbcAuditService implements AuditService {
         final String userId = m.group(1);
         ;
         if (userId != null && !userId.isBlank()) {
-          final DatumId key = DatumId.nodeId(Long.valueOf(userId), null, clock.instant());
+          final DelayedKey key = key(Long.valueOf(userId), null);
           log.trace("Message on topic [{}] delivers {} bytes to user {} @ {}", message.getTopic(),
-              byteCount, userId, key.getTimestamp());
-          addNodeSourceCount(key, byteCount);
+              byteCount, userId, key.timestamp);
+          addCount(key, byteCount);
         }
       }
     }
   }
 
-  private void addNodeSourceCount(DatumId key, int count) {
-    nodeSourceCounters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+  private DelayedKey key(Long objectId, String sourceId) {
+    return new DelayedKey(objectId, sourceId, clock.instant(), currentTimeMillis() + flushDelay);
+  }
+
+  private void addCount(DelayedKey key, int count) {
+    counters.computeIfAbsent(key, k -> new AtomicInteger(0)).addAndGet(count);
+    counterQueue.add(key);
+  }
+
+  /**
+   * A delayed key.
+   * 
+   * This class is public to support testing, and is otherwise meant to be internal to this class.
+   */
+  public static final class DelayedKey implements Delayed {
+
+    /** The object ID (user ID or node ID). */
+    private final Long objectId;
+
+    /** The source ID, or {@literal null}. */
+    private final String sourceId;
+
+    /** The count timestamp (e.g. an hour-truncated date). */
+    private final Instant timestamp;
+
+    /** The expiration date, in epoch milliseconds. */
+    private final long expires;
+
+    /**
+     * Constructor.
+     * 
+     * @param objectId
+     *        the object ID
+     * @param sourceId
+     *        the source ID
+     * @param timestamp
+     *        the timestamp
+     * @param expires
+     *        the expiration
+     */
+    public DelayedKey(Long objectId, String sourceId, Instant timestamp, long expires) {
+      super();
+      assert objectId != null : "objectId must not be null";
+      assert timestamp != null : "timestamp must not be null";
+      this.objectId = objectId;
+      this.sourceId = sourceId;
+      this.timestamp = timestamp;
+      this.expires = expires;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(objectId, sourceId, timestamp);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      // not bothering to check instanceof for performance
+      DelayedKey other = (DelayedKey) obj;
+      return Objects.equals(objectId, other.objectId) && Objects.equals(sourceId, other.sourceId)
+          && Objects.equals(timestamp, other.timestamp);
+    }
+
+    @Override
+    public int compareTo(Delayed o) {
+      // not bothering to check instanceof for performance
+      DelayedKey other = (DelayedKey) o;
+      int result = Long.compare(expires, other.expires);
+      if (result == 0) {
+        // fall back to sort by object ID when expires are equal
+        result = objectId.compareTo(other.objectId);
+        if (result == 0) {
+          // fall back to source ID when expires and object ID are equal
+          if (sourceId != other.sourceId) {
+            if (sourceId == null) {
+              result = -1;
+            } else if (other.sourceId == null) {
+              result = 1;
+            } else {
+              result = sourceId.compareTo(other.sourceId);
+            }
+          }
+        }
+      }
+      return result;
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+      long ms = expires - System.currentTimeMillis();
+      return unit.convert(ms, TimeUnit.MILLISECONDS);
+    }
+
   }
 
   private class WriterThread extends Thread {
@@ -250,9 +356,10 @@ public class JdbcAuditService implements AuditService {
           }
         }
       }
+      log.info("Finished JDBC audit writer thread {}", this);
     }
 
-    private Boolean execute() throws SQLException {
+    private boolean execute() throws SQLException {
       try (Connection conn = dataSource.getConnection()) {
         conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
         PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)
@@ -263,8 +370,8 @@ public class JdbcAuditService implements AuditService {
             if (Thread.interrupted()) {
               throw new InterruptedException();
             }
-            flushNodeSourceData(stmt);
-            Thread.sleep(flushDelay);
+            DelayedKey key = counterQueue.take();
+            flushCount(key, stmt);
           } catch (InterruptedException e) {
             log.info("Writer thread interrupted: exiting now.");
             return false;
@@ -276,55 +383,53 @@ public class JdbcAuditService implements AuditService {
 
   }
 
-  private void flushNodeSourceData(PreparedStatement stmt)
+  private void flushCount(DelayedKey key, PreparedStatement stmt)
       throws SQLException, InterruptedException {
-    for (Iterator<Map.Entry<DatumId, AtomicInteger>> itr = nodeSourceCounters.entrySet()
-        .iterator(); itr.hasNext();) {
-      Map.Entry<DatumId, AtomicInteger> me = itr.next();
-      DatumId key = me.getKey();
-      AtomicInteger counter = me.getValue();
-      final int count = counter.getAndSet(0);
-      if (count < 1) {
-        // clean out stale 0 valued counter
-        itr.remove();
-        continue;
-      }
-      try {
-        if (log.isTraceEnabled()) {
-          if (key.getSourceId() != null) {
-            log.trace("Incrementing node {} source {} @ {} {} byte count by {}", key.getObjectId(),
-                key.getSourceId(), key.getTimestamp(), mqttServiceName, count);
-          } else {
-            log.trace("Incrementing user {} @ {} {} byte count by {}", key.getObjectId(),
-                key.getTimestamp(), deliverMqttServiceName, count);
-          }
-        }
-        stmt.setString(1, key.getSourceId() != null ? mqttServiceName : deliverMqttServiceName);
-        stmt.setObject(2, key.getObjectId());
-        stmt.setString(3, key.getSourceId());
-        stmt.setTimestamp(4, java.sql.Timestamp.from(key.getTimestamp()));
-        stmt.setInt(5, count);
-        stmt.execute();
-        long currUpdateCount = updateCount.incrementAndGet();
-        if (statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0) {
-          log.info("Updated {} node source byte count records", currUpdateCount);
-        }
-        if (updateDelay > 0) {
-          Thread.sleep(updateDelay);
-        }
-      } catch (SQLException | InterruptedException e) {
-        addNodeSourceCount(key, count);
-        throw e;
-      } catch (Exception e) {
-        addNodeSourceCount(key, count);
-        RuntimeException re;
-        if (e instanceof RuntimeException) {
-          re = (RuntimeException) e;
+    AtomicInteger counter = counters.get(key);
+    if (counter == null) {
+      return;
+    }
+    final int count = counter.getAndSet(0);
+    if (count < 1) {
+      // clean out stale 0 valued counter
+      counters.remove(key, counter);
+      return;
+    }
+    try {
+      if (log.isTraceEnabled()) {
+        if (key.sourceId != null) {
+          log.trace("Incrementing node {} source {} @ {} {} byte count by {}", key.objectId,
+              key.sourceId, key.timestamp, mqttServiceName, count);
         } else {
-          re = new RuntimeException("Exception flushing node source audit data", e);
+          log.trace("Incrementing user {} @ {} {} byte count by {}", key.objectId, key.timestamp,
+              deliverMqttServiceName, count);
         }
-        throw re;
       }
+      stmt.setString(1, key.sourceId != null ? mqttServiceName : deliverMqttServiceName);
+      stmt.setObject(2, key.objectId);
+      stmt.setString(3, key.sourceId);
+      stmt.setTimestamp(4, java.sql.Timestamp.from(key.timestamp));
+      stmt.setInt(5, count);
+      stmt.execute();
+      long currUpdateCount = updateCount.incrementAndGet();
+      if (statLogUpdateCount > 0 && currUpdateCount % statLogUpdateCount == 0) {
+        log.info("Updated {} node source byte count records", currUpdateCount);
+      }
+      if (updateDelay > 0) {
+        Thread.sleep(updateDelay);
+      }
+    } catch (SQLException | InterruptedException e) {
+      addCount(key, count);
+      throw e;
+    } catch (Exception e) {
+      addCount(key, count);
+      RuntimeException re;
+      if (e instanceof RuntimeException) {
+        re = (RuntimeException) e;
+      } else {
+        re = new RuntimeException("Exception flushing node source audit data", e);
+      }
+      throw re;
     }
   }
 
@@ -368,6 +473,25 @@ public class JdbcAuditService implements AuditService {
   public synchronized void disableWriting() {
     if (writerThread != null) {
       writerThread.exit();
+    }
+  }
+
+  /**
+   * Disable writing and wait for data to be flushed.
+   */
+  public synchronized void disableWriting(Duration maxWait) {
+    disableWriting();
+    if (writerThread != null && writerThread.isAlive()) {
+      try {
+        log.info("Waiting at most {}ms for writer thread to exit...", maxWait.toMillis());
+        writerThread.join(maxWait);
+      } catch (InterruptedException e) {
+        // ignore and continue
+      } finally {
+        if (writerThread.isAlive()) {
+          writerThread.interrupt();
+        }
+      }
     }
   }
 

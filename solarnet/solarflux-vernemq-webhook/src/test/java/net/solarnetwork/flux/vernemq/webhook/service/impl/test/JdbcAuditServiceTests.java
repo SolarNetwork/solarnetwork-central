@@ -46,7 +46,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.DeliverRequest;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
 import net.solarnetwork.flux.vernemq.webhook.service.impl.JdbcAuditService;
@@ -69,7 +68,7 @@ public class JdbcAuditServiceTests extends TestSupport {
   private static final String TEST_SOURCE_1 = "test.source.1";
   private static final Long TEST_USER_ID = 2L;
 
-  private ConcurrentMap<DatumId, AtomicInteger> datumCountMap;
+  private ConcurrentMap<JdbcAuditService.DelayedKey, AtomicInteger> datumCountMap;
 
   @Mock
   private DataSource dataSource;
@@ -94,21 +93,12 @@ public class JdbcAuditServiceTests extends TestSupport {
     auditor.setConnectionRecoveryDelay(RECONNECT_DELAY);
   }
 
-  private void sleep(long ms) {
-    try {
-      Thread.sleep(ms);
-    } catch (InterruptedException e) {
-      // ignore
-    }
-  }
-
   private void stopAuditingAndWaitForFlush() {
-    auditor.disableWriting();
-    sleep(Math.round(FLUSH_DELAY * 2));
+    auditor.disableWriting(Duration.ofSeconds(5));
   }
 
-  private static DatumId nodeDatumKey(Instant date, Long nodeId, String sourceId) {
-    return DatumId.nodeId(nodeId, sourceId, date);
+  private static JdbcAuditService.DelayedKey auditKey(Instant date, Long nodeId, String sourceId) {
+    return new JdbcAuditService.DelayedKey(nodeId, sourceId, date, 0);
   }
 
   private static String topicForNodeSource(Long nodeId, String sourceId) {
@@ -164,7 +154,7 @@ public class JdbcAuditServiceTests extends TestSupport {
     // THEN
     verify(jdbcConnection, atLeastOnce()).setAutoCommit(true);
     verifyStatement(TEST_NODE_1, TEST_SOURCE_1, topOfHour.toEpochMilli(), msg.getPayload().length);
-    assertMapValueZeroOrMissing(datumCountMap, nodeDatumKey(topOfHour, TEST_NODE_1, TEST_SOURCE_1));
+    assertMapValueZeroOrMissing(datumCountMap, auditKey(topOfHour, TEST_NODE_1, TEST_SOURCE_1));
   }
 
   @Test
@@ -190,7 +180,7 @@ public class JdbcAuditServiceTests extends TestSupport {
     then(jdbcConnection).should(atLeastOnce()).setAutoCommit(true);
     then(jdbcConnection).should().close();
     verifyStatement(TEST_USER_ID, null, topOfHour.toEpochMilli(), msg.getPayload().length);
-    assertMapValueZeroOrMissing(datumCountMap, nodeDatumKey(topOfHour, TEST_USER_ID, null));
+    assertMapValueZeroOrMissing(datumCountMap, auditKey(topOfHour, TEST_USER_ID, null));
   }
 
 }
