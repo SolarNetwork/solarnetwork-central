@@ -1,21 +1,21 @@
 /* ==================================================================
  * AbstractJunit5CentralTransactionalTest.java - 6/10/2021 4:57:00 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,14 +36,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Base test for Spring-managed transactional tests in JUnit 5.
- * 
+ *
  * <p>
  * This is a transitional class to help migrate JUnit 4 tests to JUnit 5 with
  * minimal changes.
  * <p>
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SpringJUnitConfig
 @Transactional
@@ -72,7 +72,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 
 	/**
 	 * Insert a test node into the sn_node table.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID to assign to the node
 	 */
@@ -82,7 +82,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 
 	/**
 	 * Insert a test node into the sn_node table.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID to assign to the node
 	 * @param locationId
@@ -94,7 +94,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 
 	/**
 	 * Set the currently authenticated user.
-	 * 
+	 *
 	 * @param auth
 	 *        the user to set
 	 * @since 1.2
@@ -112,7 +112,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 
 	/**
 	 * Insert a test location into the sn_loc table.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID
 	 */
@@ -123,7 +123,7 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	/**
 	 * Insert a test location into the sn_loc table and weather location in the
 	 * sn_weather_loc table.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID to use
 	 * @param timeZoneId
@@ -136,11 +136,11 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 
 	/**
 	 * Insert a test user into the {@literal solaruser.sn_user} table.
-	 * 
+	 *
 	 * <p>
 	 * The username will be {@literal test[userId]@localhost}.
 	 * </p>
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to create
 	 */
@@ -150,7 +150,24 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 
 	/**
 	 * Insert a test user into the {@literal solaruser.sn_user} table.
-	 * 
+	 *
+	 * <p>
+	 * The username will be {@literal test[userId]@localhost}.
+	 * </p>
+	 *
+	 * @param userId
+	 *        the ID of the user to create
+	 * @param locationId
+	 *        the location ID
+	 * @since 1.2
+	 */
+	protected void setupTestUser(Long userId, Long locationId) {
+		setupTestUser(userId, "test" + userId + "@localhost", locationId);
+	}
+
+	/**
+	 * Insert a test user into the {@literal solaruser.sn_user} table.
+	 *
 	 * @param userId
 	 *        the ID of the user to create
 	 * @param username
@@ -158,15 +175,30 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 * @since 1.1
 	 */
 	protected void setupTestUser(Long userId, String username) {
+		setupTestUser(userId, username, null);
+	}
+
+	/**
+	 * Insert a test user into the {@literal solaruser.sn_user} table.
+	 *
+	 * @param userId
+	 *        the ID of the user to create
+	 * @param username
+	 *        the username to use
+	 * @param locationId
+	 *        the location ID to use
+	 * @since 1.2
+	 */
+	protected void setupTestUser(Long userId, String username, Long locationId) {
 		jdbcTemplate.update(
-				"insert into solaruser.user_user (id, disp_name, email, password) values (?,?,?,?)",
-				userId, "Test User " + userId, username, "password-" + userId);
+				"insert into solaruser.user_user (id, disp_name, email, password, loc_id) values (?,?,?,?,?)",
+				userId, "Test User " + userId, username, "password-" + userId, locationId);
 	}
 
 	/**
 	 * Insert a user-node association into the {@literal solaruser.sn_user_node}
 	 * table.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param nodeId
