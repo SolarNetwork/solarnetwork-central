@@ -108,7 +108,7 @@ public class JdbcAuditService implements AuditService {
   /**
    * The default value for the {@code deliverTopicRegex} property.
    */
-  public static final String DEFAULT_DELIVER_TOPIC_REGEX = "(?:user/(\\d+))?(?:/node/(\\d+)/datum/[^/]+)?(/.+)";
+  public static final String DEFAULT_DELIVER_TOPIC_REGEX = "user/(\\d+)/.*";
 
   // CHECKSTYLE ON: LineLength
 
@@ -190,20 +190,13 @@ public class JdbcAuditService implements AuditService {
       Matcher m = deliverTopicRegex.matcher(message.getTopic());
       if (m.matches()) {
         final String userId = m.group(1);
-        final String nodeId = m.group(2);
-        final String sourceId = m.group(3);
-        final DatumId key;
-        if (nodeId != null && !nodeId.isEmpty() && sourceId != null && !sourceId.isEmpty()) {
-          key = DatumId.nodeId(Long.valueOf(nodeId), sourceId, clock.instant());
-        } else if (userId != null && !userId.isBlank()) {
-          key = DatumId.nodeId(Long.valueOf(userId), null, clock.instant());
-        } else {
-          // unknown topic format, ignore
-          return;
+        ;
+        if (userId != null && !userId.isBlank()) {
+          final DatumId key = DatumId.nodeId(Long.valueOf(userId), null, clock.instant());
+          log.trace("Message on topic [{}] delivers {} bytes to user {} @ {}", message.getTopic(),
+              byteCount, userId, key.getTimestamp());
+          addNodeSourceCount(key, byteCount);
         }
-        log.trace("Message on topic [{}] delivers {} bytes to key {}", message.getTopic(),
-            byteCount, key);
-        addNodeSourceCount(key, byteCount);
       }
     }
   }
@@ -510,8 +503,6 @@ public class JdbcAuditService implements AuditService {
    * 
    * <ol>
    * <li>user ID</li>
-   * <li>node ID</li>
-   * <li>source ID</li>
    * </ol>
    * 
    * @param deliverTopicRegex
