@@ -85,19 +85,19 @@ public class JdbcAuditService implements AuditService {
   /**
    * The default value for the {@code nodeSourceIncrementSql} property.
    */
-  public static final String DEFAULT_NODE_SOURCE_INCREMENT_SQL = "{call solardatm.audit_increment_mqtt_publish_byte_count(?,?,?,?,?)}";
+  public static final String DEFAULT_NODE_SOURCE_INCREMENT_SQL = "{call solardatm.audit_increment_mqtt_byte_count(?,?,?,?,?)}";
 
   /**
    * The default value for the {@link mqttServiceName} property.
    */
-  public static final String DEFAULT_AUDIT_MQTT_SERVICE_NAME = "solarflux-in";
+  public static final String DEFAULT_AUDIT_MQTT_SERVICE_NAME = "flxi";
 
   /**
    * The default value for the {@link mqttServiceName} property.
    * 
    * @since 1.2
    */
-  public static final String DEFAULT_AUDIT_DELIVER_MQTT_SERVICE_NAME = "solarflux-out";
+  public static final String DEFAULT_AUDIT_DELIVER_MQTT_SERVICE_NAME = "flxo";
 
   /**
    * A regular expression that matches if a JDBC statement is a {@link CallableStatement}.
@@ -108,7 +108,7 @@ public class JdbcAuditService implements AuditService {
   /**
    * The default value for the {@code deliverTopicRegex} property.
    */
-  public static final String DEFAULT_DELIVER_TOPIC_REGEX = "(?:user/(\\d+)/)?(?:node/(\\d+)/datum/[^/]+(/.+))?";
+  public static final String DEFAULT_DELIVER_TOPIC_REGEX = "(?:user/(\\d+))?(?:/node/(\\d+)/datum/[^/]+)?(/.+)";
 
   // CHECKSTYLE ON: LineLength
 
@@ -203,7 +203,7 @@ public class JdbcAuditService implements AuditService {
         }
         log.debug("Message on topic [{}] delivers {} bytes to key {}", message.getTopic(),
             byteCount, key);
-        // TODO: addNodeSourceCount(key, byteCount);
+        addNodeSourceCount(key, byteCount);
       }
     }
   }
