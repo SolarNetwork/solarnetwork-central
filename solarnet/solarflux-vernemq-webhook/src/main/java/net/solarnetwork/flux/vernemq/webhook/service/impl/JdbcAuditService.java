@@ -201,7 +201,7 @@ public class JdbcAuditService implements AuditService {
           // unknown topic format, ignore
           return;
         }
-        log.debug("Message on topic [{}] delivers {} bytes to key {}", message.getTopic(),
+        log.trace("Message on topic [{}] delivers {} bytes to key {}", message.getTopic(),
             byteCount, key);
         addNodeSourceCount(key, byteCount);
       }
@@ -303,7 +303,7 @@ public class JdbcAuditService implements AuditService {
                 key.getSourceId(), key.getTimestamp(), mqttServiceName, count);
           } else {
             log.trace("Incrementing user {} @ {} {} byte count by {}", key.getObjectId(),
-                key.getSourceId(), key.getTimestamp(), deliverMqttServiceName, count);
+                key.getTimestamp(), deliverMqttServiceName, count);
           }
         }
         stmt.setString(1, key.getSourceId() != null ? mqttServiceName : deliverMqttServiceName);
