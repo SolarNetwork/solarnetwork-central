@@ -98,7 +98,7 @@ DECLARE
 	tz				TEXT;
 BEGIN
 	-- get user time zone
-	SELECT COALESCE(solarnet.get_user_timezone(usr), 'UTC') INTO tz;
+	SELECT COALESCE(solaruser.get_user_timezone(usr), 'UTC') INTO tz;
 
 	INSERT INTO solardatm.aud_user_io (user_id, service, ts_start, cnt)
 	VALUES (usr, srvc, date_trunc('hour', ts_recv), icount)
@@ -158,7 +158,7 @@ CREATE OR REPLACE FUNCTION solardatm.calc_audit_user_monthly(
 		start_ts 	TIMESTAMP WITH TIME ZONE,
 		end_ts 		TIMESTAMP WITH TIME ZONE
 	) RETURNS TABLE (
-		node_id		BIGINT,
+		user_id		BIGINT,
 		service		CHARACTER(4),
 		ts_start 	TIMESTAMP WITH TIME ZONE,
 		cnt			BIGINT
