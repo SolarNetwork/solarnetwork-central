@@ -26,11 +26,6 @@ import static net.solarnetwork.central.security.SecurityPolicy.INVERTED_PATH_MAT
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Set;
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -52,6 +47,11 @@ import org.springframework.util.PathMatcher;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
@@ -75,7 +75,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -310,6 +310,16 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		SecurityContextHolder.getContext().setAuthentication(null);
 		request.deleteCachedContent();
 		authenticationEntryPoint.handleTransientResourceException(request, response, failed);
+	}
+
+	/**
+	 * Get the user details service.
+	 * 
+	 * @return the service
+	 * @since 1.9
+	 */
+	public UserDetailsService getUserDetailsService() {
+		return userDetailsService;
 	}
 
 	/**
