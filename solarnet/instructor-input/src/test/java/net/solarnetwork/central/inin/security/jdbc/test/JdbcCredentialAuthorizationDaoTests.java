@@ -286,6 +286,59 @@ public class JdbcCredentialAuthorizationDaoTests extends AbstractJUnit5JdbcDaoTe
 	}
 
 	@Test
+	public void oAuthCredentials_found_otherCredsAvailable() {
+		// GIVEN
+		// save non-oauth cred
+		CredentialConfiguration cred1 = InstructionInputJdbcTestUtils.newCredentialConfiguration(userId,
+				randomString(), randomString());
+		cred1.setOauth(false);
+		cred1 = credentialDao.get(credentialDao.save(cred1));
+
+		EndpointConfiguration endpoint1 = newEndpointConfiguration(userId, UUID.randomUUID(),
+				randomString(), new Long[] { randomLong() }, null, null);
+		endpoint1 = endpointDao.get(endpointDao.save(endpoint1));
+
+		EndpointAuthConfiguration auth1 = newEndpointAuthConfiguration(userId, endpoint1.getEndpointId(),
+				cred1.getCredentialId());
+		auth1 = endpointAuthDao.get(endpointAuthDao.create(userId, endpoint1.getEndpointId(), auth1));
+
+		// save oauth cred
+		CredentialConfiguration cred2 = InstructionInputJdbcTestUtils.newCredentialConfiguration(userId,
+				randomString(), randomString());
+		cred2.setOauth(true);
+		cred2 = credentialDao.get(credentialDao.save(cred2));
+
+		EndpointConfiguration endpoint2 = newEndpointConfiguration(userId, UUID.randomUUID(),
+				randomString(), new Long[] { randomLong() }, null, null);
+		endpoint2 = endpointDao.get(endpointDao.save(endpoint2));
+
+		EndpointAuthConfiguration auth2 = newEndpointAuthConfiguration(userId, endpoint2.getEndpointId(),
+				cred2.getCredentialId());
+		auth2 = endpointAuthDao.get(endpointAuthDao.create(userId, endpoint2.getEndpointId(), auth2));
+
+		// WHEN
+		EndpointUserDetails result = dao.oAuthCredentials(cred2.getUsername());
+
+		// THEN
+
+		// @formatter:off
+		then(result).as("User found")
+			.isNotNull()
+			.as("User ID provided")
+			.returns(userId, EndpointUserDetails::getUserId)
+			.as("Endpoint ID provided")
+			.returns(endpoint2.getEndpointId(), EndpointUserDetails::getEndpointId)
+			.as("Username provided")
+			.returns(cred2.getUsername(), EndpointUserDetails::getUsername)
+			.as("User is OAuth")
+			.returns(true, EndpointUserDetails::isOauth)
+			.as("User enabled because credential enabled")
+			.returns(true, EndpointUserDetails::isEnabled)
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void oAuthCredentials_notFound() {
 		// GIVEN
 		CredentialConfiguration cred = InstructionInputJdbcTestUtils.newCredentialConfiguration(userId,

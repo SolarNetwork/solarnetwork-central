@@ -36,7 +36,7 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
  * Select {@link CredentialConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectAuthenticatedEndpointCredentials implements PreparedStatementCreator, SqlProvider {
 
@@ -100,10 +100,11 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 						ELSE FALSE
 						END AS expired
 					, ic.oauth
-				FROM solardin.inin_endpoint_auth_cred ieac
+				FROM solardin.inin_credential ic
+				INNER JOIN solardin.inin_endpoint_auth_cred ieac ON ieac.user_id = ic.user_id
+					AND ieac.cred_id = ic.id
 				INNER JOIN solardin.inin_endpoint ie ON ie.user_id = ieac.user_id
 					AND ie.id = ieac.endpoint_id
-				INNER JOIN solardin.inin_credential ic ON ic.user_id = ieac.user_id
 				WHERE ic.username = ? AND ic.oauth = ?""");
 		if ( endpointId != null ) {
 			buf.append(" AND ieac.endpoint_id = ?");
