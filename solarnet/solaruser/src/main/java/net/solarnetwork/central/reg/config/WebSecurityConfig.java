@@ -74,7 +74,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 @Configuration
 @EnableWebSecurity
@@ -145,8 +145,7 @@ public class WebSecurityConfig {
 		return service;
 	}
 
-	@Bean
-	public AuthenticationProvider authenticationProvider() {
+	private AuthenticationProvider authenticationProvider() {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 		provider.setUserDetailsService(userDetailsService());
 		provider.setPasswordEncoder(passwordEncoder);
@@ -268,7 +267,7 @@ public class WebSecurityConfig {
 		@Autowired
 		private SecurityTokenFilterSettings securityTokenFilterSettings;
 
-		public UserDetailsService tokenUserDetailsService() {
+		private UserDetailsService tokenUserDetailsService() {
 			JdbcUserDetailsService service = new JdbcUserDetailsService();
 			service.setDataSource(dataSource);
 			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
@@ -309,8 +308,9 @@ public class WebSecurityConfig {
 		}
 
 		@Bean
-		public AuthenticationTokenService authenticationTokenService() {
-			return new UserDetailsAuthenticationTokenService(tokenUserDetailsService());
+		public AuthenticationTokenService authenticationTokenService(
+				SecurityTokenAuthenticationFilter filter) {
+			return new UserDetailsAuthenticationTokenService(filter.getUserDetailsService());
 		}
 
 		@Order(2)
