@@ -95,8 +95,7 @@ public class WebSecurityConfig {
 		return service;
 	}
 
-	@Bean
-	public AuthenticationProvider authenticationProvider() {
+	private AuthenticationProvider authenticationProvider() {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 		provider.setUserDetailsService(userDetailsService());
 		provider.setPasswordEncoder(passwordEncoder);
@@ -167,7 +166,7 @@ public class WebSecurityConfig {
 		@Autowired
 		private SecurityTokenFilterSettings securityTokenFilterSettings;
 
-		public UserDetailsService tokenUserDetailsService() {
+		private UserDetailsService tokenUserDetailsService() {
 			JdbcUserDetailsService service = new JdbcUserDetailsService();
 			service.setDataSource(dataSource);
 			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
@@ -197,8 +196,9 @@ public class WebSecurityConfig {
 		}
 
 		@Bean
-		public AuthenticationTokenService authenticationTokenService() {
-			return new UserDetailsAuthenticationTokenService(tokenUserDetailsService());
+		public AuthenticationTokenService authenticationTokenService(
+				SecurityTokenAuthenticationFilter filter) {
+			return new UserDetailsAuthenticationTokenService(filter.getUserDetailsService());
 		}
 
 		@Bean
