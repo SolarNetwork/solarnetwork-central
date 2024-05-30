@@ -501,7 +501,7 @@ BEGIN
 END;$BODY$
   LANGUAGE plpgsql VOLATILE;
 
-/**
+/******************************************************************************
  * TRIGGER function that automatically transfers rows related to a user_node to
  * the new owner when the user_id value is changed. Expected record is solaruser.uesr_node.
  */
@@ -523,3 +523,20 @@ CREATE TRIGGER node_ownership_transfer
   FOR EACH ROW
   WHEN (OLD.user_id IS DISTINCT FROM NEW.user_id)
   EXECUTE PROCEDURE solaruser.node_ownership_transfer();
+
+/******************************************************************************
+ * FUNCTION solaruser.get_user_timezone(bigint)
+ *
+ * Return a user's time zone, or NULL if not set.
+ *
+ * @param bigint the user ID
+ * @return time zone name, e.g. 'Pacific/Auckland'
+ */
+CREATE OR REPLACE FUNCTION solaruser.get_user_timezone(bigint)
+  RETURNS text LANGUAGE 'sql' STABLE AS
+$$
+	SELECT l.time_zone
+	FROM solaruser.user_user u
+	INNER JOIN solarnet.sn_loc l ON l.id = u.loc_id
+	WHERE u.id = $1
+$$;
