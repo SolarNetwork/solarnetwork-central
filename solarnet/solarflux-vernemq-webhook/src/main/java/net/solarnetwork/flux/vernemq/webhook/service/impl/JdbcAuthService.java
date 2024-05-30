@@ -45,7 +45,6 @@ import com.github.veqryn.net.Cidr4;
 import net.solarnetwork.flux.vernemq.webhook.domain.Actor;
 import net.solarnetwork.flux.vernemq.webhook.domain.Message;
 import net.solarnetwork.flux.vernemq.webhook.domain.Response;
-import net.solarnetwork.flux.vernemq.webhook.domain.ResponseStatus;
 import net.solarnetwork.flux.vernemq.webhook.domain.TopicSettings;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishModifiers;
 import net.solarnetwork.flux.vernemq.webhook.domain.v311.PublishRequest;
@@ -246,20 +245,20 @@ public class JdbcAuthService implements AuthService {
     if (!isPeerAddressValid(request)) {
       AUDIT_LOG.info("Access denied to node: peer address {} not allowed",
           request.getPeerAddress());
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     Long nodeId;
     try {
       nodeId = Long.valueOf(request.getClientId());
     } catch (NumberFormatException e) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     Actor actor = actorForNodeId(nodeId);
     if (actor == null) {
       AUDIT_LOG.info("Access denied to node [{}]: not found", nodeId);
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     AUDIT_LOG.info("Authorized node [{}]", nodeId);
@@ -267,14 +266,14 @@ public class JdbcAuthService implements AuthService {
         && (request.getCleanSession() == null || !request.getCleanSession().booleanValue())) {
       return new Response(RegisterModifiers.builder().withCleanSession(true).build());
     }
-    return new Response();
+    return Response.OK;
   }
 
   @Override
   public Response authenticateRequest(RegisterRequest request) {
     final String username = request.getUsername();
     if (username == null || username.isEmpty()) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     if (publishUsername.equalsIgnoreCase(username)) {
@@ -288,7 +287,7 @@ public class JdbcAuthService implements AuthService {
     if (!isClientIdValidForTokenAuthentication(request)) {
       AUDIT_LOG.info("Access denied to [{}]: invlalid client ID [{}]", tokenId,
           request.getClientId());
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     final Map<String, String> pwTokens;
@@ -300,7 +299,7 @@ public class JdbcAuthService implements AuthService {
     }
     if (pwTokens == null || !(pwTokens.containsKey(DATE_PASSWORD_TOKEN)
         && pwTokens.containsKey(SIGNATURE_PASSWORD_TOKEN))) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     final long reqDate;
@@ -315,12 +314,12 @@ public class JdbcAuthService implements AuthService {
     if (maxDateSkew >= 0 && reqDateSkew > maxDateSkew) {
       AUDIT_LOG.info("Access denied to [{}]: date {} skew {} > {} maximum", tokenId, reqDate,
           reqDateSkew, maxDateSkew);
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     final String sig = pwTokens.get(SIGNATURE_PASSWORD_TOKEN);
     if (sig.isEmpty()) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     log.debug("Authenticating [{}] @ {}{} with [{}]", tokenId, snHost, snPath,
@@ -341,13 +340,13 @@ public class JdbcAuthService implements AuthService {
     }, new SnTokenDetailsRowMapper(tokenId));
 
     if (results == null || results.isEmpty()) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     // verify not expired
     SnTokenDetails details = results.get(0);
     if (details.getPolicy() != null && !details.getPolicy().isValidAt(now())) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     // request is authenticated
@@ -357,7 +356,7 @@ public class JdbcAuthService implements AuthService {
         && (request.getCleanSession() == null || !request.getCleanSession().booleanValue())) {
       return new Response(RegisterModifiers.builder().withCleanSession(true).build());
     }
-    return new Response();
+    return Response.OK;
   }
 
   private Map<String, String> signTokenCredentials(final String tokenId, final String tokenSecret) {
@@ -456,37 +455,37 @@ public class JdbcAuthService implements AuthService {
   public Response authorizeRequest(PublishRequest request) {
     final String username = request.getUsername();
     if (!publishUsername.equalsIgnoreCase(username)) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
     final String clientId = request.getClientId();
     final Long nodeId;
     try {
       nodeId = Long.valueOf(clientId);
     } catch (NumberFormatException e) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     log.debug("Authorizing publish request for node {}", request);
     Actor actor = actorForNodeId(nodeId);
     if (actor == null) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     // verify not expired
     if (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now())) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     Message result = authEvaluator.evaluatePublish(actor, request);
     if (result == null) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     auditService.auditPublishMessage(actor, nodeId, authEvaluator.sourceIdForPublish(actor, result),
         result);
 
     if (result == request) {
-      return new Response();
+      return Response.OK;
     }
 
     // @formatter:off
@@ -512,25 +511,25 @@ public class JdbcAuthService implements AuthService {
   public Response authorizeRequest(SubscribeRequest request) {
     final String tokenId = request.getUsername();
     if (tokenId == null || tokenId.isEmpty()) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     log.debug("Authorizing subscribe request {}", request);
     Actor actor = actorForTokenId(tokenId);
     if (actor == null) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     // verify not expired
     if (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now())) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     }
 
     TopicSettings result = authEvaluator.evaluateSubscribe(actor, request.getTopics());
     if (result == null) {
-      return new Response(ResponseStatus.NEXT);
+      return Response.NEXT;
     } else if (result == request.getTopics()) {
-      return new Response();
+      return Response.OK;
     }
 
     return new Response(result);

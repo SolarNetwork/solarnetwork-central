@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcServerAuthConfigurationDaoTests.java - 7/08/2023 6:56:43 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,6 +24,7 @@ package net.solarnetwork.central.dnp3.dao.jdbc.test;
 
 import static net.solarnetwork.central.dnp3.dao.jdbc.test.Dnp3JdbcTestUtils.allServerAuthConfigurationData;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
@@ -48,7 +49,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 
 /**
  * Test cases for the {@link JdbcServerAuthConfigurationDao} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -95,7 +96,8 @@ public class JdbcServerAuthConfigurationDaoTests extends AbstractJUnit5JdbcDaoTe
 			;
 
 		List<Map<String, Object>> data = allServerAuthConfigurationData(jdbcTemplate);
-		then(data).as("Table has 1 row").hasSize(1).asList().element(0, map(String.class, Object.class))
+		then(data).as("Table has 1 row").hasSize(1).asInstanceOf(list(Map.class))
+			.element(0, map(String.class, Object.class))
 			.as("Row user ID")
 			.containsEntry("user_id", conf.getUserId())
 			.as("Row server ID")

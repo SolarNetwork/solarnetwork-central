@@ -25,48 +25,37 @@ package net.solarnetwork.central.query.web.api;
 import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
+import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for location-based data.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
 @GlobalExceptionRestController
-public class LocationDatumController {
-
-	/** The {@code transientExceptionRetryCount} property default value. */
-	public static final int DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT = 1;
-
-	/** The {@code transientExceptionRetryDelay} property default value. */
-	public static final long DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY = 2000L;
-
-	private static final Logger log = LoggerFactory.getLogger(LocationDatumController.class);
+public class LocationDatumController extends BaseTransientDataAccessRetryController {
 
 	private final QueryBiz queryBiz;
 	private final PathMatcher pathMatcher;
-	private int transientExceptionRetryCount = DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT;
-	private long transientExceptionRetryDelay = DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY;
 
 	/**
 	 * Constructor.
@@ -128,36 +117,17 @@ public class LocationDatumController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
-	public Response<Set<String>> getAvailableSources(GeneralReportableIntervalCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(),
-						cmd.getStartDate(), cmd.getEndDate());
+	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(),
+					cmd.getStartDate(), cmd.getEndDate());
 
-				// support filtering based on sourceId path pattern
-				data = filterSources(data, this.pathMatcher, cmd.getSourceId());
+			// support filtering based on sourceId path pattern
+			data = filterSources(data, this.pathMatcher, cmd.getSourceId());
 
-				return new Response<Set<String>>(data);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /sources request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
-			}
-			retries--;
-		}
+			return new Response<Set<String>>(data);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	/**
@@ -197,32 +167,13 @@ public class LocationDatumController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET)
-	public Response<ReportableInterval> getReportableInterval(GeneralReportableIntervalCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				ReportableInterval data = queryBiz.getLocationReportableInterval(cmd.getLocationId(),
-						cmd.getSourceId());
-				return new Response<ReportableInterval>(data);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /interval request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
-			}
-			retries--;
-		}
+	public Response<ReportableInterval> getReportableInterval(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			ReportableInterval data = queryBiz.getLocationReportableInterval(cmd.getLocationId(),
+					cmd.getSourceId());
+			return new Response<ReportableInterval>(data);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	private void resolveSourceIdPattern(DatumFilterCommand cmd) {
@@ -248,94 +199,30 @@ public class LocationDatumController {
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public Response<FilterResults<?>> filterGeneralDatumData(final DatumFilterCommand cmd) {
-		int retries = transientExceptionRetryCount;
-		while ( true ) {
-			try {
-				// support filtering based on sourceId path pattern, by simply finding the sources that match first
-				resolveSourceIdPattern(cmd);
+	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
+			final DatumFilterCommand cmd) {
+		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
+			// support filtering based on sourceId path pattern, by simply finding the sources that match first
+			resolveSourceIdPattern(cmd);
 
-				FilterResults<?> results;
-				if ( cmd.getAggregation() != null ) {
-					results = queryBiz.findAggregateGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
-							cmd.getOffset(), cmd.getMax());
-				} else {
-					results = queryBiz.findGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
-							cmd.getOffset(), cmd.getMax());
-				}
-				return new Response<FilterResults<?>>(results);
-			} catch ( TransientDataAccessException | DataAccessResourceFailureException e ) {
-				if ( retries > 0 ) {
-					log.warn(
-							"Transient {} exception in /list request {}, will retry up to {} more times after a delay of {}ms: {}",
-							e.getClass().getSimpleName(), cmd, retries, transientExceptionRetryDelay,
-							e.toString());
-					if ( transientExceptionRetryDelay > 0 ) {
-						try {
-							Thread.sleep(transientExceptionRetryDelay);
-						} catch ( InterruptedException e2 ) {
-							// ignore
-						}
-					}
-				} else {
-					throw e;
-				}
+			FilterResults<?> results;
+			if ( cmd.getAggregation() != null ) {
+				results = queryBiz.findAggregateGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
+			} else {
+				results = queryBiz.findGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
+						cmd.getOffset(), cmd.getMax());
 			}
-			retries--;
-		}
+			return new Response<FilterResults<?>>(results);
+		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final DatumFilterCommand cmd) {
+	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final HttpServletRequest req,
+			final DatumFilterCommand cmd) {
 		cmd.setMostRecent(true);
-		return filterGeneralDatumData(cmd);
-	}
-
-	/**
-	 * Get the number of retry attempts for transient DAO exceptions.
-	 * 
-	 * @return the retry count; defaults to
-	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT}.
-	 * @since 1.3
-	 */
-	public int getTransientExceptionRetryCount() {
-		return transientExceptionRetryCount;
-	}
-
-	/**
-	 * Set the number of retry attempts for transient DAO exceptions.
-	 * 
-	 * @param transientExceptionRetryCount
-	 *        the retry count, or {@literal 0} for no retries
-	 * @since 1.3
-	 */
-	public void setTransientExceptionRetryCount(int transientExceptionRetryCount) {
-		this.transientExceptionRetryCount = transientExceptionRetryCount;
-	}
-
-	/**
-	 * Get the length of time, in milliseconds, to sleep before retrying a
-	 * request after a transient exception.
-	 * 
-	 * @return the delay, in milliseconds; defaults to
-	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY}
-	 * @since 2.1
-	 */
-	public long getTransientExceptionRetryDelay() {
-		return transientExceptionRetryDelay;
-	}
-
-	/**
-	 * Set the length of time, in milliseconds, to sleep before retrying a
-	 * request after a transient exception.
-	 * 
-	 * @param transientExceptionRetryDelay
-	 *        the delay to set
-	 * @since 2.1
-	 */
-	public void setTransientExceptionRetryDelay(long transientExceptionRetryDelay) {
-		this.transientExceptionRetryDelay = transientExceptionRetryDelay;
+		return filterGeneralDatumData(req, cmd);
 	}
 
 }

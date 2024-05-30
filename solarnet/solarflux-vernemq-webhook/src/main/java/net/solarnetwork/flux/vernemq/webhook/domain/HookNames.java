@@ -26,13 +26,24 @@ package net.solarnetwork.flux.vernemq.webhook.domain;
  * </p>
  * 
  * @author matt
+ * @version 1.1
  */
 public interface HookNames {
 
+  /** Hook name for authorization on register. */
   String AUTH_ON_REGISTER = "auth_on_register";
 
+  /** Hook name for authorization on publish. */
   String AUTH_ON_PUBLISH = "auth_on_publish";
 
+  /** Hook name for authorization on subscribe. */
   String AUTH_ON_SUBSCRIBE = "auth_on_subscribe";
+
+  /**
+   * Hook name for on deliver.
+   * 
+   * @since 1.1
+   */
+  String ON_DELIVER = "on_deliver";
 
 }

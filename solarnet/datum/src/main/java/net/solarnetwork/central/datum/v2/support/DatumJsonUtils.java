@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumUtils.java - 23/10/2020 1:51:36 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,7 +57,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 
 /**
  * Utilities for Datum JSON processing.
- * 
+ *
  * @author matt
  * @version 2.3
  * @since 2.8
@@ -70,12 +70,12 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write the contents of a JSON array of {@link BigDecimal}.
-	 * 
+	 *
 	 * <p>
 	 * This writes <b>just</b> the array contents, without the start/end JSON
 	 * array literals.
 	 * </p>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator
 	 * @param array
@@ -95,13 +95,13 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write the contents of a two dimensional JSON array of {@link BigDecimal}.
-	 * 
+	 *
 	 * <p>
 	 * This writes <b>just</b> the array contents, without the start/end JSON
 	 * array literals of the outer array. The inner arrays do have their
 	 * start/end JSON array literals included.
 	 * </p>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator
 	 * @param arrayOfArrays
@@ -127,12 +127,12 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write the contents of a JSON array of strings.
-	 * 
+	 *
 	 * <p>
 	 * This writes <b>just</b> the array contents, without the start/end JSON
 	 * array literals.
 	 * </p>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator
 	 * @param array
@@ -151,7 +151,7 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write datum stream metadata as a JSON object.
-	 * 
+	 *
 	 * <p>
 	 * A datum stream metadata object consists of a properties name array and a
 	 * classification object with {@code i}, {@code a}, and {@code s} properties
@@ -159,7 +159,7 @@ public final class DatumJsonUtils {
 	 * provides a time zone ID. For example here is the JSON for a stream of 4
 	 * properties:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "tz"   : "UTC",
@@ -171,7 +171,7 @@ public final class DatumJsonUtils {
 	 *     }
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator to write to
 	 * @param metadata
@@ -245,11 +245,11 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write datum property values as a two dimensional JSON array.
-	 * 
+	 *
 	 * <p>
 	 * The output array will contain the following elements:
 	 * </p>
-	 * 
+	 *
 	 * <ul>
 	 * <li>The datum timestamp, as a millisecond epoch number value, or a
 	 * literal {@literal null}.</li>
@@ -258,18 +258,18 @@ public final class DatumJsonUtils {
 	 * <li>All status property values, as strings.</li>
 	 * <li>All tag values, as strings.</li>
 	 * </ul>
-	 * 
+	 *
 	 * <p>
 	 * If any property array is {@literal null} or empty, no elements will be
 	 * contributed to the output JSON array. Any {@literal null} values
 	 * <i>within</i> a property array will contribute {@literal null} literals
 	 * to the output JSON array.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON properties value array looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>[
 	 *     [1325376000000, 3, 23445, 123, null],
@@ -277,7 +277,7 @@ public final class DatumJsonUtils {
 	 *     [1325376002000, 4, 33452, 291, null]
 	 * ]</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator to write to
 	 * @param datum
@@ -327,13 +327,13 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write a collection of datum as a JSON datum stream.
-	 * 
+	 *
 	 * <p>
 	 * A datum stream consists of a string identifier, metadata object, and
 	 * array of property value arrays. For example here is the JSON for a stream
 	 * of 4 properties:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "streamId": "5970bf45-a1c9-4862-8bb8-1d687b370a55",
@@ -352,7 +352,7 @@ public final class DatumJsonUtils {
 	 *     ]
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator to write to
 	 * @param streamId
@@ -403,11 +403,11 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write aggregate datum statistic values as a JSON array.
-	 * 
+	 *
 	 * <p>
 	 * The output array will contain the following elements:
 	 * </p>
-	 * 
+	 *
 	 * <ul>
 	 * <li>The datum timestamp, as a millisecond epoch number value, or a
 	 * literal {@literal null}.</li>
@@ -416,23 +416,23 @@ public final class DatumJsonUtils {
 	 * <li>All accumulating property values, as arrays of {@code [start, end]}
 	 * numbers.</li>
 	 * </ul>
-	 * 
+	 *
 	 * <p>
 	 * If any property array is {@literal null} or empty, no elements will be
 	 * contributed to the output JSON array. Any {@literal null} values
 	 * <i>within</i> a property array will contribute {@literal null} literals
 	 * to the output JSON array.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * For example here is the JSON for a stream with one instantaneous and two
 	 * accumulating:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>[1325376000000, [0,10,60], [0,23445], [0,123]]</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param generator
 	 *        the generator to write to
 	 * @param datum
@@ -476,13 +476,13 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Write a collection of aggregate datum as a JSON datum stream.
-	 * 
+	 *
 	 * <p>
 	 * An aggregate datum stream consists of a string identifier, metadata
 	 * object, and array of property value and statistic array pairs. For
 	 * example here is the JSON for a stream of 4 properties:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "streamId": "5970bf45-a1c9-4862-8bb8-1d687b370a55",
@@ -504,7 +504,7 @@ public final class DatumJsonUtils {
 	 *     ]
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * <p>
 	 * The {@code values} array will thus contain {@code 2 × count(datum)}
 	 * elements: one array from
@@ -513,8 +513,8 @@ public final class DatumJsonUtils {
 	 * {@link #writeStatisticValuesArray(JsonGenerator, AggregateDatum)} for
 	 * each datum. The timestamp value will be identical for each pair.
 	 * </p>
-	 * 
-	 * 
+	 *
+	 *
 	 * @param generator
 	 *        the generator to write to
 	 * @param streamId
@@ -568,18 +568,18 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a datum JSON object.
-	 * 
+	 *
 	 * <p>
 	 * The {@code meta} argument will be used to encode the property names into
 	 * the two dimensional arrays used in the returned properties instance. It
 	 * will also be used to translate node/location/source ID values into stream
 	 * ID values. The datum can either provide
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "nodeId"   : 1,
@@ -596,7 +596,7 @@ public final class DatumJsonUtils {
 	 *     }
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @param metadataProvider
@@ -625,7 +625,7 @@ public final class DatumJsonUtils {
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
 				parser.nextToken();
-				switch (parser.getCurrentName()) {
+				switch (parser.currentName()) {
 					case "locationId":
 					case "nodeId":
 						objectId = parser.getLongValue();
@@ -670,18 +670,18 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse an aggregate datum JSON object.
-	 * 
+	 *
 	 * <p>
 	 * The {@code meta} argument will be used to encode the property names into
 	 * the two dimensional arrays used in the returned properties instance. It
 	 * will also be used to translate node/location/source ID values into stream
 	 * ID values. The datum can either provide
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "nodeId"   : 1,
@@ -708,7 +708,7 @@ public final class DatumJsonUtils {
 	 *     }
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @param metadataProvider
@@ -738,7 +738,7 @@ public final class DatumJsonUtils {
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
 				parser.nextToken();
-				switch (parser.getCurrentName()) {
+				switch (parser.currentName()) {
 					case "kind":
 						kind = Aggregation.forKey(parser.getText());
 						break;
@@ -789,16 +789,16 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a datum samples JSON object.
-	 * 
+	 *
 	 * <p>
 	 * The {@code meta} argument will be used to encode the property names into
 	 * the two dimensional arrays used in the returned properties instance.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "i" : {
@@ -814,7 +814,7 @@ public final class DatumJsonUtils {
 	 *     "t" : ["A", "Ok"]
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @param meta
@@ -836,7 +836,7 @@ public final class DatumJsonUtils {
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
 				parser.nextToken();
-				switch (parser.getCurrentName()) {
+				switch (parser.currentName()) {
 					case "i":
 						instantaneous = parseDecimalArrayForSamplesType(parser, meta,
 								DatumSamplesType.Instantaneous);
@@ -862,16 +862,16 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a datum samples statistics JSON object.
-	 * 
+	 *
 	 * <p>
 	 * The {@code meta} argument will be used to encode the property names into
 	 * the two dimensional arrays used in the returned statistics instance.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "i" : {
@@ -883,7 +883,7 @@ public final class DatumJsonUtils {
 	 *     }
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @param meta
@@ -903,7 +903,7 @@ public final class DatumJsonUtils {
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
 				parser.nextToken();
-				switch (parser.getCurrentName()) {
+				switch (parser.currentName()) {
 					case "i":
 						instantaneous = parseDecimalArrayOfArraysForSamplesType(parser, meta,
 								DatumSamplesType.Instantaneous);
@@ -987,18 +987,18 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a JSON object with decimal property values.
-	 * 
+	 *
 	 * <p>
 	 * This will parse the contents of a JSON object until a JSON end object
 	 * literal. The fields of the object are assumed to have decimal values
 	 * (string values are supported as well). The returned map contains the
 	 * field names with their associated decimal values.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "x" : 1.1,
@@ -1006,7 +1006,7 @@ public final class DatumJsonUtils {
 	 *     "z" : "19.95"
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed JSON object
@@ -1033,7 +1033,7 @@ public final class DatumJsonUtils {
 					}
 				}
 				if ( d != null ) {
-					map.put(parser.getCurrentName(), d);
+					map.put(parser.currentName(), d);
 				}
 			}
 		}
@@ -1042,25 +1042,25 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a JSON object with string property values.
-	 * 
+	 *
 	 * <p>
 	 * This will parse the contents of a JSON object until a JSON end object
 	 * literal. The fields of the object are assumed to have string values. The
 	 * returned map contains the field names with their associated string
 	 * values.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "alert" : "A",
 	 *     "state" : "On"
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed JSON object
@@ -1078,7 +1078,7 @@ public final class DatumJsonUtils {
 				t = parser.nextToken();
 				String v = parser.getText();
 				if ( v != null ) {
-					map.put(parser.getCurrentName(), v);
+					map.put(parser.currentName(), v);
 				}
 			}
 		}
@@ -1087,25 +1087,25 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a JSON object with decimal array property values.
-	 * 
+	 *
 	 * <p>
 	 * This will parse the contents of a JSON object until a JSON end object
 	 * literal. The fields of the object are assumed to have arrays of decimal
 	 * values. The returned map contains the field names with their associated
 	 * array values.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{
 	 *     "x" : [60, 1.1, 9.8],
 	 *     "y" : [60, -2.2, 5.5]
 	 * }</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed JSON object
@@ -1121,7 +1121,7 @@ public final class DatumJsonUtils {
 				return null;
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
-				String name = parser.getCurrentName();
+				String name = parser.currentName();
 				t = parser.nextToken();
 				if ( t == JsonToken.START_ARRAY ) {
 					BigDecimal[] d = parseDecimalArray(parser);
@@ -1136,12 +1136,12 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a JSON array of decimal values.
-	 * 
+	 *
 	 * <p>
 	 * This will parse the contents of a JSON array until a JSON end array
 	 * literal.
 	 * </p>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed array
@@ -1167,18 +1167,18 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Parse a JSON string timestamp.
-	 * 
+	 *
 	 * <p>
 	 * An example JSON object supported by this method looks like these:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>
 	 * "2020-06-01T00:00:00Z"
 	 * "2020-06-01 00:00:00Z"
 	 * </code>
 	 * </pre>
-	 * 
+	 *
 	 * @param parser
 	 *        the parser to read from
 	 * @return the parsed instant
@@ -1208,7 +1208,7 @@ public final class DatumJsonUtils {
 
 	/**
 	 * A module for handling datum objects.
-	 * 
+	 *
 	 * @since 2.1
 	 */
 	public static final com.fasterxml.jackson.databind.Module DATUM_MODULE;
@@ -1223,7 +1223,7 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Create a new {@link ObjectMapper} with datum support.
-	 * 
+	 *
 	 * @return a new {@link ObjectMapper}
 	 * @since 2.1
 	 */
@@ -1235,7 +1235,7 @@ public final class DatumJsonUtils {
 
 	/**
 	 * Create a new {@link ObjectMapper} with datum support.
-	 * 
+	 *
 	 * @param jsonFactory
 	 *        the JSON factory to use
 	 * @return a new {@link ObjectMapper}

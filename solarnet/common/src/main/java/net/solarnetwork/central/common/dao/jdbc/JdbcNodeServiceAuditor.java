@@ -90,7 +90,8 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*\\}",
 			Pattern.CASE_INSENSITIVE);
 
-	private static final Logger log = LoggerFactory.getLogger(JdbcNodeServiceAuditor.class);
+	/** A class-level logger. */
+	protected final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final DataSource dataSource;
 	private final ConcurrentMap<DatumId, AtomicInteger> nodeServiceCounters; // DatumId used with sourceId for service
@@ -114,8 +115,8 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 */
 	public JdbcNodeServiceAuditor(DataSource dataSource) {
 		this(dataSource, new ConcurrentHashMap<>(1000, 0.8f, 4),
-				Clock.tick(Clock.systemUTC(), Duration.ofHours(1)),
-				new StatTracker("NodeServiceAuditor", null, log, 1000));
+				Clock.tick(Clock.systemUTC(), Duration.ofHours(1)), new StatTracker("NodeServiceAuditor",
+						null, LoggerFactory.getLogger(JdbcNodeServiceAuditor.class), 1000));
 	}
 
 	/**
@@ -123,7 +124,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 * 
 	 * @param dataSource
 	 *        the JDBC DataSource
-	 * @param nodeSourceCounters
+	 * @param nodeServiceCounters
 	 *        the node source counters map
 	 * @param clock
 	 *        the clock to use
@@ -131,11 +132,11 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 *         if any argument is {@literal null}
 	 */
 	public JdbcNodeServiceAuditor(DataSource dataSource,
-			ConcurrentMap<DatumId, AtomicInteger> nodeSourceCounters, Clock clock,
+			ConcurrentMap<DatumId, AtomicInteger> nodeServiceCounters, Clock clock,
 			StatTracker statCounter) {
 		super();
 		this.dataSource = requireNonNullArgument(dataSource, "dataSource");
-		this.nodeServiceCounters = requireNonNullArgument(nodeSourceCounters, "nodeSourceCounters");
+		this.nodeServiceCounters = requireNonNullArgument(nodeServiceCounters, "nodeServiceCounters");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.statCounter = requireNonNullArgument(statCounter, "statCounter");
 		setConnectionRecoveryDelay(DEFAULT_CONNECTION_RECOVERY_DELAY);

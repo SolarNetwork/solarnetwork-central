@@ -24,7 +24,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.Message;
  * API for a service that can audit specific events.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface AuditService {
 
@@ -39,5 +39,15 @@ public interface AuditService {
    *        the message that is to be published
    */
   void auditPublishMessage(Actor actor, Long nodeId, String sourceId, Message message);
+
+  /**
+   * Audit the deliver of a message.
+   * 
+   * @param actor
+   *        the actor
+   * @param message
+   *        the message being delivered
+   */
+  void auditDeliverMessage(Message message);
 
 }
