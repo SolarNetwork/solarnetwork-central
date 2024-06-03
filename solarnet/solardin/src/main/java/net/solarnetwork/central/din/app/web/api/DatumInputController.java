@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,7 +51,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Datum input controller.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @RestController("v1DatumInputController")
 @RequestMapping("/api/v1/datum/endpoint/{endpointId}")
@@ -93,7 +94,8 @@ public class DatumInputController {
 	 */
 	@RequestMapping(value = "", method = RequestMethod.POST, consumes = {
 			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
-	public Result<Collection<DatumId>> postDatum(@PathVariable("endpointId") UUID endpointId,
+	public ResponseEntity<Result<Collection<DatumId>>> postDatum(
+			@PathVariable("endpointId") UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, WebRequest req,
 			InputStream in) throws IOException {
@@ -119,7 +121,7 @@ public class DatumInputController {
 		input = new MaxUploadSizeInputStream(input, maxDatumInputLength);
 		var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
 
-		return success(result);
+		return ResponseEntity.ok(result != null ? success(result) : null);
 	}
 
 }
