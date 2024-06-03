@@ -106,6 +106,8 @@ CREATE TABLE solardin.din_endpoint (
 	xform_id		BIGINT,
 	pub_flux		BOOLEAN NOT NULL DEFAULT TRUE,
 	track_prev 		BOOLEAN NOT NULL DEFAULT FALSE,
+	incl_res_body	BOOLEAN NOT NULL DEFAULT FALSE,
+	req_type		CHARACTER VARYING(96),
 	CONSTRAINT din_endpoint_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT din_endpoint_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
@@ -256,6 +258,8 @@ CREATE TABLE solardin.inin_endpoint (
 	res_xform_id	BIGINT,
 	max_exec_secs	INTEGER NOT NULL,
 	user_meta_path	TEXT,
+	req_type		CHARACTER VARYING(96),
+	res_type		CHARACTER VARYING(96),
 	CONSTRAINT inin_endpoint_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT inin_endpoint_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
