@@ -34,22 +34,25 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * Datum input endpoint configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeId",
-		"sourceId", "transformId", "publishToSolarFlux", "previousInputTracking" })
+		"sourceId", "transformId", "publishToSolarFlux", "previousInputTracking", "includeResponseBody",
+		"requestContentType" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements DatumInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
-	private static final long serialVersionUID = -6465528397271907221L;
+	private static final long serialVersionUID = -3845517573525287732L;
 
 	private String name;
 	private Long nodeId;
 	private String sourceId;
 	private Long transformId;
 	private boolean publishToSolarFlux = true;
-	private boolean previousInputTracking = false;
+	private boolean previousInputTracking;
+	private boolean includeResponseBody;
+	private String requestContentType;
 
 	/**
 	 * Constructor.
@@ -97,6 +100,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setTransformId(transformId);
 		entity.setPublishToSolarFlux(publishToSolarFlux);
 		entity.setPreviousInputTracking(previousInputTracking);
+		entity.setIncludeResponseBody(includeResponseBody);
+		entity.setRequestContentType(requestContentType);
 	}
 
 	@Override
@@ -112,6 +117,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 				&& Objects.equals(this.transformId, other.transformId)
 				&& publishToSolarFlux == other.publishToSolarFlux
 				&& previousInputTracking == other.previousInputTracking
+				&& includeResponseBody == other.includeResponseBody
+				&& Objects.equals(requestContentType, other.requestContentType)
 				;
 		// @formatter:on
 	}
@@ -221,7 +228,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 * provide one.
 	 *
 	 * @param sourceId
-	 *        the source ID to set
+	 *        the source ID to set; a blank value will be normalized to
+	 *        {@literal null}
 	 */
 	public void setSourceId(String sourceId) {
 		if ( sourceId != null && sourceId.isBlank() ) {
@@ -290,6 +298,52 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 */
 	public void setPreviousInputTracking(boolean previousInputTracking) {
 		this.previousInputTracking = previousInputTracking;
+	}
+
+	/**
+	 * Get the "include response body" flag.
+	 *
+	 * @return {@literal true} to include the response content
+	 * @since 1.2
+	 */
+	public boolean isIncludeResponseBody() {
+		return includeResponseBody;
+	}
+
+	/**
+	 * Set the "include response body" flag.
+	 *
+	 * @param includeResponseBody
+	 *        {@literal true} to include the response content
+	 * @since 1.2
+	 */
+	public void setIncludeResponseBody(boolean includeResponseBody) {
+		this.includeResponseBody = includeResponseBody;
+	}
+
+	/**
+	 * Get an implicit request content type.
+	 *
+	 * @return the request content type to assume
+	 * @since 1.2
+	 */
+	public String getRequestContentType() {
+		return requestContentType;
+	}
+
+	/**
+	 * Set an implicit request content type.
+	 *
+	 * @param requestContentType
+	 *        the request content to assume, or {@literal null} to; a blank
+	 *        value will be normalized to {@literal null}
+	 * @since 1.2
+	 */
+	public void setRequestContentType(String requestContentType) {
+		if ( requestContentType != null && requestContentType.isBlank() ) {
+			requestContentType = null;
+		}
+		this.requestContentType = requestContentType;
 	}
 
 }

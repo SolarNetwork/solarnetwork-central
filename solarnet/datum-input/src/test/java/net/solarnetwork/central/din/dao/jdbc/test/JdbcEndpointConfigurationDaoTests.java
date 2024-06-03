@@ -53,7 +53,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link JdbcEndpointConfigurationDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -92,6 +92,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 				randomLong(), randomString(), null);
 		conf.setPublishToSolarFlux(false);
 		conf.setPreviousInputTracking(true);
+		conf.setIncludeResponseBody(true);
+		conf.setRequestContentType("foo/bar");
 
 		// WHEN
 		UserUuidPK result = dao.create(userId, conf);
@@ -132,6 +134,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("pub_flux", false)
 			.as("Track previous flag")
 			.containsEntry("track_prev", true)
+			.as("Include response body")
+			.containsEntry("incl_res_body", true)
+			.as("Request content type")
+			.containsEntry("req_type", conf.getRequestContentType())
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -184,6 +190,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("pub_flux", true)
 			.as("Track previous flag")
 			.containsEntry("track_prev", false)
+			.as("Include response body")
+			.containsEntry("incl_res_body", false)
+			.as("No request content type")
+			.containsEntry("req_type", null)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -238,6 +248,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("pub_flux", true)
 			.as("Track previous flag")
 			.containsEntry("track_prev", false)
+			.as("Include response body")
+			.containsEntry("incl_res_body", false)
+			.as("No request content type")
+			.containsEntry("req_type", null)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -288,6 +302,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("pub_flux", true)
 			.as("Track previous flag")
 			.containsEntry("track_prev", false)
+			.as("Include response body")
+			.containsEntry("incl_res_body", false)
+			.as("No request content type")
+			.containsEntry("req_type", null)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -340,6 +358,10 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 			.containsEntry("pub_flux", true)
 			.as("Track previous flag")
 			.containsEntry("track_prev", false)
+			.as("Include response body")
+			.containsEntry("incl_res_body", false)
+			.as("No request content type")
+			.containsEntry("req_type", null)
 			;
 		// @formatter:on
 		last = conf.copyWithId(result);
@@ -395,6 +417,8 @@ public class JdbcEndpointConfigurationDaoTests extends AbstractJUnit5JdbcDaoTest
 		conf.setName(randomString());
 		conf.setNodeId(randomLong());
 		conf.setSourceId(randomString());
+		conf.setIncludeResponseBody(false);
+		conf.setRequestContentType(null);
 
 		UserUuidPK result = dao.save(conf);
 		EndpointConfiguration updated = dao.get(result);

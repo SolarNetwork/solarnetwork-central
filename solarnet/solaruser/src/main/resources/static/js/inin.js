@@ -137,8 +137,6 @@ function ininManagement() {
 				sys.configsMap.delete(id);
 			}
 			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), false);
-			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), true);
-			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=previousInputTracking]'), false);
 		});
 	}
 
@@ -421,6 +419,8 @@ function ininManagement() {
 			SolarReg.Templates.replaceTemplateProperties(el.find('.endpoint-details'), item);
 			
 			el.find('.userMetadataPath').toggleClass('hidden', !item.userMetadataPath);
+			el.find('.requestContentType').toggleClass('hidden', !item.requestContentType);
+			el.find('.responseContentType').toggleClass('hidden', !item.responseContentType);
 		});
 		SolarReg.saveServiceConfigurations(configs, preserve, sys.configs, sys.container);
 	}
