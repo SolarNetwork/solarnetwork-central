@@ -39,7 +39,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * Support for INSERT ... ON CONFLICT {@link EndpointConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UpsertEndpointConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -47,10 +47,12 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 			INSERT INTO solardin.din_endpoint (
 				  created,modified,user_id,id
 				, enabled,cname,node_id,source_id,xform_id,pub_flux,track_prev
+				, incl_res_body,req_type
 			)
 			VALUES (
 				  ?,?,?,?
-				, ?,?,?,?,?,?,?)
+				, ?,?,?,?,?,?,?
+				, ?,?)
 			ON CONFLICT (user_id, id) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
@@ -60,6 +62,8 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 					, xform_id = EXCLUDED.xform_id
 					, pub_flux = EXCLUDED.pub_flux
 					, track_prev = EXCLUDED.track_prev
+					, incl_res_body = EXCLUDED.incl_res_body
+					, req_type = EXCLUDED.req_type
 			""";
 
 	private final Long userId;
@@ -107,6 +111,8 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 		stmt.setObject(++p, entity.getTransformId());
 		stmt.setBoolean(++p, entity.isPublishToSolarFlux());
 		stmt.setBoolean(++p, entity.isPreviousInputTracking());
+		stmt.setBoolean(++p, entity.isIncludeResponseBody());
+		stmt.setString(++p, entity.getRequestContentType());
 		return stmt;
 	}
 
