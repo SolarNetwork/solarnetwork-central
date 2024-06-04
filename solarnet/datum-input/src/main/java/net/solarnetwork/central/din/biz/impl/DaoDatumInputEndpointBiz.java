@@ -72,7 +72,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -172,7 +172,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		params.put(TransformService.PARAM_USER_ID, userId);
 		params.put(TransformService.PARAM_ENDPOINT_ID, endpointId.toString());
 		params.put(TransformService.PARAM_TRANSFORM_ID, endpoint.getTransformId());
-		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
 		Iterable<Datum> datum;
 		try {

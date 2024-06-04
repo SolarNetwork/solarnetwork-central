@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.time.Instant;
+import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.CopyingIdentity;
@@ -35,7 +36,7 @@ import net.solarnetwork.domain.Differentiable;
  * its primary key is a Long user ID.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
 		extends BasicEntity<K> implements UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>,
@@ -98,6 +99,29 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	public Long getUserId() {
 		K pk = getId();
 		return (pk != null ? (Long) pk.keyComponent(0) : null);
+	}
+
+	/**
+	 * Get a short identifier string.
+	 *
+	 * @return the identifier, which includes the {@code modified} epoch
+	 *         seconds, if available
+	 * @since 1.1
+	 */
+	public String ident() {
+		K id = getId();
+		StringBuilder buf = new StringBuilder(64);
+		if ( id instanceof BasePK pk ) {
+			buf.append(pk.getId());
+		} else if ( id != null ) {
+			buf.append(id.toString());
+		}
+		Instant mod = getModified();
+		if ( mod != null ) {
+			buf.append('.');
+			buf.append(mod.getEpochSecond());
+		}
+		return buf.toString();
 	}
 
 	/**
