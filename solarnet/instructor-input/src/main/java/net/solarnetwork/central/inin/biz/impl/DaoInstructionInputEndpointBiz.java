@@ -76,7 +76,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO implementation of {@link InstructionInputEndpointBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoInstructionInputEndpointBiz
 		implements InstructionInputEndpointBiz, CentralInstructionInputUserEvents {
@@ -230,7 +230,7 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_USER_ID, userId);
 		params.put(TransformConstants.PARAM_ENDPOINT_ID, endpointId.toString());
 		params.put(TransformConstants.PARAM_TRANSFORM_ID, endpoint.getRequestTransformId());
-		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
 		if ( endpoint.getUserMetadataPath() != null && !endpoint.getUserMetadataPath().isBlank() ) {
 			String meta = userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath());
@@ -406,7 +406,7 @@ public class DaoInstructionInputEndpointBiz
 		params.put(TransformConstants.PARAM_USER_ID, userId);
 		params.put(TransformConstants.PARAM_ENDPOINT_ID, endpointId.toString());
 		params.put(TransformConstants.PARAM_TRANSFORM_ID, endpoint.getResponseTransformId());
-		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+		params.put(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
 		if ( endpoint.getUserMetadataPath() != null && !endpoint.getUserMetadataPath().isBlank() ) {
 			String meta = userMetadataDao.jsonMetadataAtPath(userId, endpoint.getUserMetadataPath());

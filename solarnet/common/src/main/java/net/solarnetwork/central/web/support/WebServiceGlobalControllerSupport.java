@@ -25,6 +25,7 @@ package net.solarnetwork.central.web.support;
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.requestDescription;
 import static net.solarnetwork.central.web.support.WebServiceControllerSupport.userPrincipalName;
 import static net.solarnetwork.domain.Result.error;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ import net.solarnetwork.util.NumberUtils;
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.6
  */
 @RestControllerAdvice
 @Order(1000)
@@ -477,6 +478,25 @@ public class WebServiceGlobalControllerSupport {
 		log.error("HttpMessageConversionException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.00200", e.getMessage());
+	}
+
+	/**
+	 * Handle a {@link HttpMessageConversionException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.6
+	 */
+	@ExceptionHandler(IOException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleIOException(IOException e, WebRequest request) {
+		log.warn("IOException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
+		return error("WEB.09000", e.getMessage());
 	}
 
 }

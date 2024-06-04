@@ -202,7 +202,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 			.as("Transform ID transform parameter provided")
 			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
 			.as("Transform cache key provided")
-			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
 			.as("Service parameters passed as transform parameters")
 			.containsAllEntriesOf(params)
 			;
@@ -310,7 +310,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 			.as("Transform ID transform parameter provided")
 			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
 			.as("Transform cache key provided")
-			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
 			.as("User metadata provided")
 			.containsEntry(TransformConstants.PARAM_USER_METADATA_JSON, userMetaJson)
 			.as("Service parameters passed as transform parameters")
@@ -429,7 +429,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 			.as("Transform ID transform parameter provided")
 			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
 			.as("Transform cache key provided")
-			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
 			.as("Service parameters passed as transform parameters")
 			.containsAllEntriesOf(params)
 			;
@@ -554,7 +554,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 			.as("Transform ID transform parameter provided")
 			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
 			.as("Transform cache key provided")
-			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
 			.as("User metadata provided")
 			.containsEntry(TransformConstants.PARAM_USER_METADATA_JSON, userMetaJson)
 			.as("Service parameters passed as transform parameters")
@@ -658,7 +658,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 			.as("Transform ID transform parameter provided")
 			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
 			.as("Transform cache key provided")
-			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
 			.as("Service parameters passed as transform parameters")
 			.containsAllEntriesOf(params)
 			;
@@ -778,7 +778,7 @@ public class DaoInstructionInputEndpointBizTests implements CentralInstructionIn
 			.as("Transform ID transform parameter provided")
 			.containsEntry(TransformConstants.PARAM_TRANSFORM_ID, transform.getTransformId())
 			.as("Transform cache key provided")
-			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.getId().ident())
+			.containsEntry(TransformConstants.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
 			.as("Service parameters passed as transform parameters")
 			.containsAllEntriesOf(params)
 			;

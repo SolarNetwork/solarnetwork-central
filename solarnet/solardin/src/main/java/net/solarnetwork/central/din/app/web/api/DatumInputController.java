@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -119,9 +120,13 @@ public class DatumInputController {
 
 		// limit input size
 		input = new MaxUploadSizeInputStream(input, maxDatumInputLength);
-		var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
-
-		return ResponseEntity.ok(result != null ? success(result) : null);
+		try {
+			var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
+			return ResponseEntity.ok(result != null ? success(result) : null);
+		} catch ( IOException e ) {
+			return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+					.body(Result.error("DIN.0100", e.getMessage()));
+		}
 	}
 
 }
