@@ -49,11 +49,13 @@ function dinManagement() {
 			, enabled = (config && config.enabled === true ? true : false)
 			, pubSolarFlux = (!config || config.publishToSolarFlux === true ? true : false)
 			, prevTrack = (config && config.previousInputTracking === true ? true : false)
+			, inclResBody = (config && config.includeResponseBody === true ? true : false)
 			, type = (this.dataset ? this.dataset.systemType : undefined);
 		
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), enabled);
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), pubSolarFlux);		
 		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=previousInputTracking]'), prevTrack);
+		SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=includeResponseBody]'), inclResBody);
 		
 		SolarReg.Settings.prepareEditServiceForm(modal
 			, type == TRANSFORM_SYS ? transformServices : []
@@ -123,6 +125,7 @@ function dinManagement() {
 			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=enabled]'), false);
 			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=publishToSolarFlux]'), true);
 			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=previousInputTracking]'), false);
+			SolarReg.Settings.handleSettingToggleButtonChange(modal.find('button[name=includeResponseBody]'), false);
 		});
 	}
 
@@ -348,6 +351,9 @@ function dinManagement() {
 		var model = SolarReg.Settings.serviceConfigurationItem(config, []);
 		SolarReg.fill(model, config);
 		model.createdDisplay = moment(config.created).format('D MMM YYYY');
+		model.nodeIdDisplay = (config.nodeId || '-');
+		model.sourceIdDisplay = (config.sourceId || '-');
+		model.requestContentTypeDisplay = (config.requestContentType || '-');
 		
 		if (config.transformId) {
 			let xform = systems[TRANSFORM_SYS].configsMap.get(config.transformId);

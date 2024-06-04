@@ -72,7 +72,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -150,6 +150,11 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		final DatumProcessor fluxPublisher = (endpoint.isPublishToSolarFlux() ? getFluxPublisher()
 				: null);
 
+		if ( endpoint.getRequestContentType() != null ) {
+			// force content type to endpoint configuration
+			contentType = MimeType.valueOf(endpoint.getRequestContentType());
+		}
+
 		if ( !xformService.supportsInput(requireNonNullArgument(in, "in"),
 				requireNonNullArgument(contentType, "contentType")) ) {
 			String msg = "Transform service %s does not support input type %s with %s."
@@ -167,7 +172,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		params.put(TransformService.PARAM_USER_ID, userId);
 		params.put(TransformService.PARAM_ENDPOINT_ID, endpointId.toString());
 		params.put(TransformService.PARAM_TRANSFORM_ID, endpoint.getTransformId());
-		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xformPk.ident());
+		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
 		Iterable<Datum> datum;
 		try {
@@ -215,7 +220,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			}
 		}
 
-		var result = new ArrayList<DatumId>(8);
+		var result = (endpoint.isIncludeResponseBody() ? new ArrayList<DatumId>(8) : null);
 		for ( Datum d : datum ) {
 			Object gd = DatumUtils.convertGeneralDatum(d);
 			if ( gd instanceof GeneralNodeDatum gnd ) {
@@ -248,7 +253,9 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				}
 
 				DatumPK pk = datumDao.persist(gnd);
-				result.add(DatumId.nodeId(nodeId, sourceId, pk.getTimestamp()));
+				if ( result != null ) {
+					result.add(DatumId.nodeId(nodeId, sourceId, pk.getTimestamp()));
+				}
 
 				try {
 					if ( fluxPublisher != null && fluxPublisher.isConfigured() ) {

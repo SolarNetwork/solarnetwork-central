@@ -49,8 +49,8 @@
 				   </div>
 
 				   <div class="row section endpoint-details show-empty">
-						<label class="col-sm-3 talign" data-th-text="#{din.endpoint.details.header}">Details</label>
-						<div class="col-sm-9">
+						<label class="col-sm-2 talign" data-th-text="#{din.endpoint.details.header}">Details</label>
+						<div class="col-sm-10">
 							<table class="table">
 								<thead>
 									<tr>
@@ -58,6 +58,7 @@
 										<th data-th-text="#{din.endpoint.transformId.label}">Transform</th>
 										<th data-th-text="#{din.endpoint.nodeId.label}">Node ID</th>
 										<th data-th-text="#{din.endpoint.sourceId.label}">Source ID</th>
+										<th data-th-text="#{din.endpoint.requestContentType.label}">Request Type</th>
 										<th data-th-text="#{din.endpoint.flags.header}">Flags</th>
 									</tr>
 								</thead>
@@ -77,8 +78,9 @@
 							 			</div>
 										</td>
 										<td data-tprop="transformDisplay"></td>
-										<td data-tprop="nodeId"></td>
-										<td data-tprop="sourceId"></td>
+										<td data-tprop="nodeIdDisplay"></td>
+										<td data-tprop="sourceIdDisplay"></td>
+										<td data-tprop="requestContentTypeDisplay"></td>
 										<td>
 											<span class="label label-default" data-tprop="publishToSolarFlux"
 												data-th-data-true-text="#{din.endpoint.publishToSolarFlux.label}"
@@ -87,6 +89,10 @@
 											<span class="label label-default" data-tprop="previousInputTracking"
 												data-th-data-true-text="#{din.endpoint.previousInputTracking.label}"
 												data-th-data-false-text="#{din.endpoint.previousInputTracking.label}"></span>
+											<br>
+											<span class="label label-default" data-tprop="includeResponseBody"
+												data-th-data-true-text="#{din.endpoint.includeResponseBody.label}"
+												data-th-data-false-text="#{din.endpoint.includeResponseBody.label}"></span>
 										</td>
 									</tr>
 								</tbody>
@@ -95,8 +101,8 @@
 					</div>
 
 				   <div class="row section endpoint-auths show-empty">
-						<label class="col-sm-3 talign" data-th-text="#{din.auths.header}">Authorized Credentials</label>
-						<div class="col-sm-9">
+						<label class="col-sm-2 talign" data-th-text="#{din.auths.header}">Authorized Credentials</label>
+						<div class="col-sm-10">
 							<table class="table">
 								<thead data-th-classappend="hidden">
 									<tr>

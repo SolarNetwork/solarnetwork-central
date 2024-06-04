@@ -38,7 +38,7 @@ import net.solarnetwork.util.StringUtils;
  * DTO for datum input endpoint configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class EndpointConfigurationInput
 		extends BaseInstructionInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
@@ -59,6 +59,12 @@ public class EndpointConfigurationInput
 	private int maxExecutionSeconds = EndpointConfiguration.DEFAULT_MAX_EXECUTION_SECONDS;
 
 	private String userMetadataPath;
+
+	@Size(max = 96)
+	private String requestContentType;
+
+	@Size(max = 96)
+	private String responseContentType;
 
 	/**
 	 * Constructor.
@@ -83,6 +89,8 @@ public class EndpointConfigurationInput
 		conf.setResponseTransformId(responseTransformId);
 		conf.setMaxExecutionSeconds(maxExecutionSeconds);
 		conf.setUserMetadataPath(userMetadataPath);
+		conf.setRequestContentType(requestContentType);
+		conf.setResponseContentType(responseContentType);
 	}
 
 	/**
@@ -240,6 +248,53 @@ public class EndpointConfigurationInput
 	 */
 	public void setUserMetadataPath(String userMetadataPath) {
 		this.userMetadataPath = userMetadataPath;
+	}
+
+	/**
+	 * Get an implicit request content type.
+	 *
+	 * @return the request content type to assume
+	 * @since 1.2
+	 */
+	public String getRequestContentType() {
+		return requestContentType;
+	}
+
+	/**
+	 * Set an implicit request content type.
+	 *
+	 * @param requestContentType
+	 *        the request content to assume, or {@literal null} to; a blank
+	 *        value will be normalized to {@literal null}
+	 * @since 1.2
+	 */
+	public void setRequestContentType(String requestContentType) {
+		if ( requestContentType != null && requestContentType.isBlank() ) {
+			requestContentType = null;
+		}
+		this.requestContentType = requestContentType;
+	}
+
+	/**
+	 * Get an implicit response content type.
+	 *
+	 * @return the response content type to assume
+	 * @since 1.2
+	 */
+	public String getResponseContentType() {
+		return responseContentType;
+	}
+
+	/**
+	 * Set an implicit response content type.
+	 *
+	 * @param responseContentType
+	 *        the response content to assume, or {@literal null} to; a blank
+	 *        value will be normalized to {@literal null}
+	 * @since 1.2
+	 */
+	public void setResponseContentType(String responseContentType) {
+		this.responseContentType = responseContentType;
 	}
 
 }

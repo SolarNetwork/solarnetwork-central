@@ -58,7 +58,9 @@ public interface DatumInputEndpointBiz {
 	 * @param parameters
 	 *        optional parameters, such as {@link #PARAM_NODE_ID} or
 	 *        {@link #PARAM_SOURCE_ID}
-	 * @return the collection of datum IDs successfully imported
+	 * @return the collection of datum IDs successfully imported; will be
+	 *         {@literal null} if the endpoint is configured not to include a
+	 *         response body
 	 * @throws IOException
 	 *         if any IO error occurs
 	 * @throws IllegalArgumentException

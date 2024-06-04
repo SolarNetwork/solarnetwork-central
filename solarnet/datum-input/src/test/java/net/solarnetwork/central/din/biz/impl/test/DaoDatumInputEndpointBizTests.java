@@ -32,6 +32,7 @@ import static net.solarnetwork.domain.datum.GeneralDatum.nodeDatum;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -39,6 +40,7 @@ import static org.mockito.BDDMockito.then;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Map;
@@ -86,7 +88,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link DaoDatumInputEndpointBiz} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -156,11 +158,13 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		final var transform = new TransformConfiguration(userId, randomLong(), now());
 		transform.setServiceIdentifier(xformServiceId);
+		transform.setModified(Instant.now());
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
 
 		// load transform configuration
@@ -174,7 +178,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(xformService.supportsInput(in, type)).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), paramsCaptor.capture()))
+		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -187,11 +191,27 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
 
 		// WHEN
+		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
 		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
-				null);
+				params);
 
 		// THEN
 		// @formatter:off
+		then(xformService).should().transform(eq(in),  eq(type), eq(transform), paramsCaptor.capture());
+		and.then(paramsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("User ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_USER_ID, userId)
+			.as("Endpoint ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_ENDPOINT_ID, endpoint.getEndpointId().toString())
+			.as("Transform ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_TRANSFORM_ID, transform.getTransformId())
+			.as("Transform cache key provided")
+			.containsEntry(TransformService.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
+			.as("Service parameters passed as transform parameters")
+			.containsAllEntriesOf(params)
+			;
+
 		then(datumDao).should().persist(datumCaptor.capture());
 		and.then(datumCaptor.getValue())
 			.as("Persisted datum")
@@ -229,6 +249,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		endpoint.setNodeId(nodeId);
 		endpoint.setSourceId(sourceId);
 		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(true);
 
 		// load transform configuration
@@ -242,7 +263,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(xformService.supportsInput(in, type)).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), paramsCaptor.capture()))
+		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -304,6 +325,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
 		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
 
 		// load transform configuration
@@ -317,7 +339,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(xformService.supportsInput(in, type)).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), paramsCaptor.capture()))
+		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -372,6 +394,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
 		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
 
 		// load transform configuration
@@ -385,7 +408,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		given(xformService.supportsInput(in, type)).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), paramsCaptor.capture()))
+		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -457,6 +480,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
 		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
 		endpoint.setPreviousInputTracking(true);
 
@@ -511,6 +535,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
 		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
 		endpoint.setPublishToSolarFlux(false);
 		endpoint.setPreviousInputTracking(true);
 
@@ -558,7 +583,8 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			.containsExactly(1, 2, 3)
 			;
 
-		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform), paramsCaptor.capture());
+		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform),
+				paramsCaptor.capture());
 		and.then(inputCaptor.getValue())
 			.as("Current input supplied as ByteArrayInputStream")
 			.satisfies(curr -> {
@@ -605,4 +631,143 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// @formatter:on
 	}
 
+	@Test
+	public void noResponse() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final var transform = new TransformConfiguration(userId, randomLong(), now());
+		transform.setServiceIdentifier(xformServiceId);
+
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		endpoint.setNodeId(nodeId);
+		endpoint.setSourceId(sourceId);
+		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(false);
+		endpoint.setPublishToSolarFlux(false);
+
+		// load transform configuration
+		given(endpointDao.get(new UserUuidPK(userId, endpoint.getEndpointId()))).willReturn(endpoint);
+		given(transformDao.get(new UserLongCompositePK(userId, transform.getTransformId())))
+				.willReturn(transform);
+
+		// transform input
+		final var in = new ByteArrayInputStream(new byte[0]);
+		final MimeType type = MediaType.APPLICATION_JSON;
+		given(xformService.supportsInput(in, type)).willReturn(true);
+		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
+		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
+		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+				.willReturn(asList(xformOutput));
+
+		// verify datum ownership
+		final var owner = new BasicSolarNodeOwnership(nodeId, userId, "NZ", ZoneOffset.UTC, false,
+				false);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner);
+
+		// persist datum
+		final DatumPK datumPk = new DatumPK(UUID.randomUUID(), now().plusSeconds(100));
+		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
+
+		// WHEN
+		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(), type, in,
+				null);
+
+		// THEN
+		// @formatter:off
+		then(datumDao).should().persist(datumCaptor.capture());
+		and.then(datumCaptor.getValue())
+			.as("Persisted datum")
+			.isNotNull()
+			.as("Persisted node ID")
+			.returns(nodeId, GeneralNodeDatum::getNodeId)
+			.as("Persisted source ID")
+			.returns(sourceId, GeneralNodeDatum::getSourceId)
+			.as("Timestamp not provided to DAO")
+			.returns(null, GeneralNodeDatum::getCreated)
+			.as("Persisted samples")
+			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			;
+
+		then(fluxProcessor).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("No result returned for persisted datum when includeResponseBody is false")
+			.isNull();
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void explicitRequestContentType() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final var transform = new TransformConfiguration(userId, randomLong(), now());
+		transform.setServiceIdentifier(xformServiceId);
+
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		endpoint.setNodeId(nodeId);
+		endpoint.setSourceId(sourceId);
+		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
+		endpoint.setPublishToSolarFlux(false);
+		endpoint.setRequestContentType("foo/bar");
+
+		// load transform configuration
+		given(endpointDao.get(new UserUuidPK(userId, endpoint.getEndpointId()))).willReturn(endpoint);
+		given(transformDao.get(new UserLongCompositePK(userId, transform.getTransformId())))
+				.willReturn(transform);
+
+		// transform input
+		final var in = new ByteArrayInputStream(new byte[0]);
+		final MimeType type = MimeType.valueOf(endpoint.getRequestContentType());
+		given(xformService.supportsInput(in, type)).willReturn(true);
+		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
+		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
+		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+				.willReturn(asList(xformOutput));
+
+		// verify datum ownership
+		final var owner = new BasicSolarNodeOwnership(nodeId, userId, "NZ", ZoneOffset.UTC, false,
+				false);
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(owner);
+
+		// persist datum
+		final DatumPK datumPk = new DatumPK(UUID.randomUUID(), now().plusSeconds(100));
+		given(datumDao.persist(any(GeneralNodeDatum.class))).willReturn(datumPk);
+
+		// WHEN
+		// posting application/json content type, overridden by foo/bar on endpoint
+		Collection<DatumId> result = service.importDatum(userId, endpoint.getEndpointId(),
+				MediaType.APPLICATION_JSON, in, null);
+
+		// THEN
+		// @formatter:off
+		then(datumDao).should().persist(datumCaptor.capture());
+		and.then(datumCaptor.getValue())
+			.as("Persisted datum")
+			.isNotNull()
+			.as("Persisted node ID")
+			.returns(nodeId, GeneralNodeDatum::getNodeId)
+			.as("Persisted source ID")
+			.returns(sourceId, GeneralNodeDatum::getSourceId)
+			.as("Timestamp not provided to DAO")
+			.returns(null, GeneralNodeDatum::getCreated)
+			.as("Persisted samples")
+			.returns(xformOutput.getSamples(), GeneralNodeDatum::getSamples)
+			;
+
+		then(fluxProcessor).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("Single result returned for persisted datum")
+			.contains(nodeId(nodeId, sourceId, datumPk.getTimestamp()))
+			;
+		// @formatter:on
+	}
 }

@@ -40,7 +40,7 @@ import net.solarnetwork.central.inin.domain.EndpointConfiguration;
  * Support for INSERT ... ON CONFLICT {@link EndpointConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class UpsertEndpointConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -48,12 +48,13 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 			INSERT INTO solardin.inin_endpoint (
 				  created,modified,user_id,id
 				, enabled,cname,node_ids,req_xform_id,res_xform_id
-				, max_exec_secs,user_meta_path
+				, max_exec_secs,user_meta_path,req_type,res_type
+
 			)
 			VALUES (
 				  ?,?,?,?
 				, ?,?,?,?,?
-				, ?,?)
+				, ?,?,?,?)
 			ON CONFLICT (user_id, id) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
@@ -63,6 +64,8 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 					, res_xform_id = EXCLUDED.res_xform_id
 					, max_exec_secs = EXCLUDED.max_exec_secs
 					, user_meta_path = EXCLUDED.user_meta_path
+					, req_type = EXCLUDED.req_type
+					, res_type = EXCLUDED.res_type
 			""";
 
 	private final Long userId;
@@ -116,6 +119,8 @@ public class UpsertEndpointConfiguration implements PreparedStatementCreator, Sq
 		stmt.setObject(++p, entity.getResponseTransformId());
 		stmt.setInt(++p, entity.getMaxExecutionSeconds());
 		stmt.setString(++p, entity.getUserMetadataPath());
+		stmt.setString(++p, entity.getRequestContentType());
+		stmt.setString(++p, entity.getResponseContentType());
 		return stmt;
 	}
 

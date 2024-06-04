@@ -35,15 +35,16 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * Datum input endpoint configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "endpointId", "created", "modified", "enabled", "name", "nodeIds",
-		"requestTransformId", "responseTransformId", "maxExecutionSeconds", "userMetadataPath" })
+		"requestTransformId", "responseTransformId", "maxExecutionSeconds", "userMetadataPath",
+		"requestContentType", "responseContentType" })
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements InstructionInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
-	private static final long serialVersionUID = -7843134190113157004L;
+	private static final long serialVersionUID = 2868500125327336304L;
 
 	/** The {@code maxExecutionSeconds} property default value. */
 	public static final int DEFAULT_MAX_EXECUTION_SECONDS = 10;
@@ -54,6 +55,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	private Long responseTransformId;
 	private int maxExecutionSeconds = DEFAULT_MAX_EXECUTION_SECONDS;
 	private String userMetadataPath;
+	private String requestContentType;
+	private String responseContentType;
 
 	/**
 	 * Constructor.
@@ -101,6 +104,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 		entity.setResponseTransformId(responseTransformId);
 		entity.setMaxExecutionSeconds(maxExecutionSeconds);
 		entity.setUserMetadataPath(userMetadataPath);
+		entity.setRequestContentType(requestContentType);
+		entity.setResponseContentType(responseContentType);
 	}
 
 	@Override
@@ -116,6 +121,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 				&& Objects.equals(this.responseTransformId, other.responseTransformId)
 				&& this.maxExecutionSeconds == other.maxExecutionSeconds
 				&& Objects.equals(this.userMetadataPath, other.userMetadataPath)
+				&& Objects.equals(requestContentType, other.requestContentType)
+				&& Objects.equals(responseContentType, other.responseContentType)
 				;
 		// @formatter:on
 	}
@@ -295,6 +302,53 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	 */
 	public void setUserMetadataPath(String userMetadataPath) {
 		this.userMetadataPath = userMetadataPath;
+	}
+
+	/**
+	 * Get an implicit request content type.
+	 *
+	 * @return the request content type to assume
+	 * @since 1.2
+	 */
+	public String getRequestContentType() {
+		return requestContentType;
+	}
+
+	/**
+	 * Set an implicit request content type.
+	 *
+	 * @param requestContentType
+	 *        the request content to assume, or {@literal null} to; a blank
+	 *        value will be normalized to {@literal null}
+	 * @since 1.2
+	 */
+	public void setRequestContentType(String requestContentType) {
+		if ( requestContentType != null && requestContentType.isBlank() ) {
+			requestContentType = null;
+		}
+		this.requestContentType = requestContentType;
+	}
+
+	/**
+	 * Get an implicit response content type.
+	 *
+	 * @return the response content type to assume
+	 * @since 1.2
+	 */
+	public String getResponseContentType() {
+		return responseContentType;
+	}
+
+	/**
+	 * Set an implicit response content type.
+	 *
+	 * @param responseContentType
+	 *        the response content to assume, or {@literal null} to; a blank
+	 *        value will be normalized to {@literal null}
+	 * @since 1.2
+	 */
+	public void setResponseContentType(String responseContentType) {
+		this.responseContentType = responseContentType;
 	}
 
 }

@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
  * DTO for datum input endpoint configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class EndpointConfigurationInput
 		extends BaseDatumInputConfigurationInput<EndpointConfiguration, UserUuidPK> {
@@ -53,6 +53,11 @@ public class EndpointConfigurationInput
 
 	private boolean publishToSolarFlux = true;
 	private boolean previousInputTracking = false;
+
+	private boolean includeResponseBody = false;
+
+	@Size(max = 96)
+	private String requestContentType;
 
 	/**
 	 * Constructor.
@@ -77,6 +82,8 @@ public class EndpointConfigurationInput
 		conf.setTransformId(transformId);
 		conf.setPublishToSolarFlux(publishToSolarFlux);
 		conf.setPreviousInputTracking(previousInputTracking);
+		conf.setIncludeResponseBody(includeResponseBody);
+		conf.setRequestContentType(requestContentType);
 	}
 
 	/**
@@ -200,6 +207,52 @@ public class EndpointConfigurationInput
 	 */
 	public void setPreviousInputTracking(boolean previousInputTracking) {
 		this.previousInputTracking = previousInputTracking;
+	}
+
+	/**
+	 * Get the "omit response body" flag.
+	 *
+	 * @return {@literal true} to not include any response content
+	 * @since 1.2
+	 */
+	public boolean isIncludeResponseBody() {
+		return includeResponseBody;
+	}
+
+	/**
+	 * Set the "omit response body" flag.
+	 *
+	 * @param includeResponseBody
+	 *        {@literal true} to not include any response content
+	 * @since 1.2
+	 */
+	public void setIncludeResponseBody(boolean includeResponseBody) {
+		this.includeResponseBody = includeResponseBody;
+	}
+
+	/**
+	 * Get an implicit request content type.
+	 *
+	 * @return the request content type to assume
+	 * @since 1.2
+	 */
+	public String getRequestContentType() {
+		return requestContentType;
+	}
+
+	/**
+	 * Set an implicit request content type.
+	 *
+	 * @param requestContentType
+	 *        the request content to assume, or {@literal null} to; a blank
+	 *        value will be normalized to {@literal null}
+	 * @since 1.2
+	 */
+	public void setRequestContentType(String requestContentType) {
+		if ( requestContentType != null && requestContentType.isBlank() ) {
+			requestContentType = null;
+		}
+		this.requestContentType = requestContentType;
 	}
 
 }

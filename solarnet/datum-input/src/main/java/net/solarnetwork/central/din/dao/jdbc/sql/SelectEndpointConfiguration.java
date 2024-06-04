@@ -40,7 +40,7 @@ import net.solarnetwork.central.din.domain.EndpointConfiguration;
  * Select {@link EndpointConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectEndpointConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -87,6 +87,7 @@ public class SelectEndpointConfiguration
 		buf.append("""
 				SELECT de.user_id, de.id, de.created, de.modified, de.enabled
 					, de.cname, de.node_id, de.source_id, de.xform_id, de.pub_flux, de.track_prev
+					, de.incl_res_body, de.req_type
 				FROM solardin.din_endpoint de
 				""");
 	}
