@@ -92,10 +92,12 @@ app:
   task.executor:
     thread-name-prefix: "SolarNet-"
     core-pool-size: 10
+    max-pool-size: 10
     allow-core-thread-time-out: false
   task.scheduler:
     thread-name-prefix: "SolarNet-Sched-"
     pool-size: 2
+    remove-on-cancel-policy: true
   user.events:
     async-appender:
       threads: 1
