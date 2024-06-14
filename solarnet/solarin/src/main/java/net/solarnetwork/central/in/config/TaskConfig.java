@@ -27,22 +27,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
+import net.solarnetwork.central.scheduler.ThreadPoolTaskSchedulerPingTest;
+import net.solarnetwork.service.PingTest;
 
 /**
  * Task management configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class TaskConfig {
 
 	@ConfigurationProperties(prefix = "app.task.scheduler")
 	@Bean(destroyMethod = "shutdown")
-	public TaskScheduler taskScheduler() {
+	public ThreadPoolTaskScheduler taskScheduler() {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.setThreadNamePrefix("SolarNet-Sched-");
 		scheduler.setPoolSize(1);
@@ -59,4 +61,31 @@ public class TaskConfig {
 		executor.setCorePoolSize(2);
 		return executor;
 	}
+
+	/**
+	 * Expose a ping test for the task scheduler.
+	 *
+	 * @param scheduler
+	 *        the scheduler
+	 * @return the ping test
+	 * @since 1.2
+	 */
+	@Bean
+	public PingTest taskSchedulerPingTest(ThreadPoolTaskScheduler taskScheduler) {
+		return new ThreadPoolTaskSchedulerPingTest(taskScheduler);
+	}
+
+	/**
+	 * Expose a ping test for the task executor.
+	 *
+	 * @param taskExecutor
+	 *        the executor
+	 * @return the ping test
+	 * @since 1.2
+	 */
+	@Bean
+	public PingTest taskExecutorPingTest(ThreadPoolTaskExecutor taskExecutor) {
+		return new ThreadPoolTaskExecutorPingTest(taskExecutor);
+	}
+
 }

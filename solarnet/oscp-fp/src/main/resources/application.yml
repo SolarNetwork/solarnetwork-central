@@ -116,10 +116,12 @@ app:
   task.executor:
     thread-name-prefix: "SolarOSCP-FP-"
     core-pool-size: 10
-    allow-core-thread-time-out: false
+    max-pool-size: 10
+    allow-core-thread-time-out: true
   task.scheduler:
     thread-name-prefix: "SolarOSCP-FP-Sched-"
-    pool-size: 5  
+    pool-size: 5
+    remove-on-cancel-policy: true
 
 debug: false
 
