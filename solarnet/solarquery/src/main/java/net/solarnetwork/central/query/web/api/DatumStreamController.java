@@ -68,10 +68,10 @@ import net.solarnetwork.io.ProvidedOutputStream;
  * Controller for querying datum stream related data.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Controller("v1DatumStreamController")
-@RequestMapping("/api/v1/sec/datum/stream")
+@RequestMapping({ "/api/v1/pub/datum/stream", "/api/v1/sec/datum/stream" })
 @GlobalExceptionRestController
 public class DatumStreamController {
 
