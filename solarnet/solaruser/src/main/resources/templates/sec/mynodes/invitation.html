@@ -16,7 +16,22 @@
 		<button type="button" class="close" data-dismiss="alert" data-th-aria-label="#{close.label}"><span aria-hidden="true">&times;</span></button>
 		<span data-th-utext="#{my-nodes.solarnode.link.help}">Your SolarNode setup screen is available at whatever your node's DNS name or IP address is.</span>
 	</div>
-	<pre class="well" data-th-text="${details.confirmationKey}"></pre>
+	<div class="row copyable-container">
+		<div class="col-sm-11">
+			<textarea class="well form-control copyable" rows="5" data-th-text="${details.confirmationKey}" readonly>
+				abc123
+				def456
+			</textarea>
+		</div>
+		<div class="col-sm-1">
+			<button type="button" class="btn btn-default copy"
+				data-toggle="tooltip" data-placement="top"
+				title="Copy to Clipboard"
+				data-th-title="#{copy.tooltip}">
+				<span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
+			</button>
+		</div>
+	</div>
 	<h3></h3>
 	<p class="alert alert-info">
 		<strong data-th-text="#{my-nodes.invitation.securityPhrase.label} + ':'">Phrase:</strong>

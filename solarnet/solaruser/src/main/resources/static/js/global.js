@@ -387,7 +387,7 @@ $(document).ready(function() {
 	   ================== */
 	$('button.copy').on('click', function copyFieldValue() {
 		var btn = $(this),
-			copyable = btn.closest('.input-group').find('input.copyable');
+			copyable = btn.closest('.copyable-container').find('.copyable');
 		if ( copyable.length ) {
 			copyable[0].select();
 			try {
