@@ -40,8 +40,10 @@ import static org.mockito.BDDMockito.then;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +57,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -88,7 +92,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link DaoDatumInputEndpointBiz} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -173,12 +177,12 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 				.willReturn(transform);
 
 		// transform input
-		final var in = new ByteArrayInputStream(new byte[0]);
+		final var in = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -197,7 +201,17 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		// THEN
 		// @formatter:off
-		then(xformService).should().transform(eq(in),  eq(type), eq(transform), paramsCaptor.capture());
+		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform), paramsCaptor.capture());
+		and.then(inputCaptor.getValue())
+			.as("Current input supplied as ByteArrayInputStream")
+			.satisfies(curr -> {
+				byte[] currData = ((ByteArrayInputStream)curr).readAllBytes();
+				and.then(currData)
+					.as("Current input data provided")
+					.containsExactly(1, 2, 3)
+					;
+			})
+			;
 		and.then(paramsCaptor.getValue())
 			.asInstanceOf(map(String.class, Object.class))
 			.as("User ID transform parameter provided")
@@ -260,10 +274,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// transform input
 		final var in = new ByteArrayInputStream(new byte[0]);
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -334,12 +348,12 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 				.willReturn(transform);
 
 		// transform input
-		final var in = new ByteArrayInputStream(new byte[0]);
+		final var in = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+		given(xformService.transform(inputCaptor.capture(), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -359,6 +373,17 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		// THEN
 		// @formatter:off
+		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform), paramsCaptor.capture());
+		and.then(inputCaptor.getValue())
+			.as("Current input supplied as ByteArrayInputStream")
+			.satisfies(curr -> {
+				byte[] currData = ((ByteArrayInputStream)curr).readAllBytes();
+				and.then(currData)
+					.as("Current input data provided")
+					.containsExactly(1, 2, 3)
+					;
+			})
+			;
 		then(datumDao).should().persist(datumCaptor.capture());
 		and.then(datumCaptor.getValue())
 			.as("Persisted datum")
@@ -403,12 +428,12 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 				.willReturn(transform);
 
 		// transform input
-		final var in = new ByteArrayInputStream(new byte[0]);
+		final var in = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -425,6 +450,19 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 
 		// THEN
 		// @formatter:off
+		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform),
+				paramsCaptor.capture());
+		and.then(inputCaptor.getValue())
+			.as("Current input supplied as ByteArrayInputStream")
+			.satisfies(curr -> {
+				byte[] currData = ((ByteArrayInputStream)curr).readAllBytes();
+				and.then(currData)
+					.as("Current input data provided")
+					.containsExactly(1, 2, 3)
+					;
+			})
+			;
+
 		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
 		and.then(logEventCaptor.getValue())
 			.satisfies(event -> {
@@ -492,7 +530,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// transform input
 		final var in = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 
 		// track previous data in cache (not found)
 		final UserLongStringCompositePK inputCacheKey = new UserLongStringCompositePK(userId, nodeId,
@@ -547,7 +585,7 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// transform input
 		final var in = new ByteArrayInputStream(new byte[] { 1, 2, 3 });
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 
 		// track previous data in cache (found)
 		final UserLongStringCompositePK inputCacheKey = new UserLongStringCompositePK(userId, nodeId,
@@ -656,10 +694,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// transform input
 		final var in = new ByteArrayInputStream(new byte[0]);
 		final MimeType type = MediaType.APPLICATION_JSON;
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -726,10 +764,10 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// transform input
 		final var in = new ByteArrayInputStream(new byte[0]);
 		final MimeType type = MimeType.valueOf(endpoint.getRequestContentType());
-		given(xformService.supportsInput(in, type)).willReturn(true);
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
 		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
 		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
-		given(xformService.transform(eq(in), eq(type), eq(transform), any()))
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
 				.willReturn(asList(xformOutput));
 
 		// verify datum ownership
@@ -770,4 +808,213 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 			;
 		// @formatter:on
 	}
+
+	@Test
+	public void transformException() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final var transform = new TransformConfiguration(userId, randomLong(), now());
+		transform.setServiceIdentifier(xformServiceId);
+		transform.setModified(Instant.now());
+
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		endpoint.setNodeId(nodeId);
+		endpoint.setSourceId(sourceId);
+		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
+		endpoint.setPublishToSolarFlux(false);
+
+		// load transform configuration
+		given(endpointDao.get(new UserUuidPK(userId, endpoint.getEndpointId()))).willReturn(endpoint);
+		given(transformDao.get(new UserLongCompositePK(userId, transform.getTransformId())))
+				.willReturn(transform);
+
+		// transform input
+		final String inputValue = "Hello, world.";
+		final var in = new ByteArrayInputStream(inputValue.getBytes(StandardCharsets.UTF_8));
+		final MimeType type = MediaType.APPLICATION_JSON;
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
+		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
+		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
+				.willThrow(new JsonParseException("Oops."));
+
+		// WHEN
+		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
+		and.thenThrownBy(() -> {
+			service.importDatum(userId, endpoint.getEndpointId(), type, in, params);
+		}).isInstanceOf(JsonProcessingException.class);
+
+		// THEN
+		// @formatter:off
+		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform), paramsCaptor.capture());
+		and.then(inputCaptor.getValue())
+			.as("Current input supplied as ByteArrayInputStream")
+			.satisfies(curr -> {
+				byte[] currData = ((ByteArrayInputStream)curr).readAllBytes();
+				and.then(currData)
+					.as("Current input data provided")
+					.containsExactly(inputValue.getBytes(StandardCharsets.UTF_8))
+					;
+			})
+			;
+		and.then(paramsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("User ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_USER_ID, userId)
+			.as("Endpoint ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_ENDPOINT_ID, endpoint.getEndpointId().toString())
+			.as("Transform ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_TRANSFORM_ID, transform.getTransformId())
+			.as("Transform cache key provided")
+			.containsEntry(TransformService.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
+			.as("Service parameters passed as transform parameters")
+			.containsAllEntriesOf(params)
+			;
+
+		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
+		and.then(logEventCaptor.getValue())
+			.satisfies(event -> {
+				Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+				and.then(data)
+					.as("Event data contains endpoint ID")
+					.containsEntry(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId().toString())
+					.as("Event data contains transform ID")
+					.containsEntry(TRANSFORM_ID_DATA_KEY, transform.getTransformId())
+					.as("Event data contains transform service ID")
+					.containsEntry(TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId)
+					.as("Event data contains content type")
+					.containsEntry(CONTENT_TYPE_DATA_KEY, type.toString())
+					.as("Event data contains text content as string")
+					.containsEntry(CONTENT_DATA_KEY, inputValue)
+					.hasEntrySatisfying(PARAMETERS_DATA_KEY, (p) -> {
+						and.then(p)
+							.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+							.as("Extra parameters has foo")
+							.containsEntry("foo", "bar")
+							.as("Extra parameters has bim")
+							.containsEntry("bim", "bam")
+							;
+					})
+					;
+
+				String[] tags = event.getTags();
+				and.then(tags)
+					.as("Event tags as expected, with error")
+					.contains(DIN_TAG, DATUM_TAG, ERROR_TAG)
+					;
+			})
+			;
+
+		then(fluxProcessor).shouldHaveNoInteractions();
+		// @formatter:on
+	}
+
+	@Test
+	public void transformException_binaryContent() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final var transform = new TransformConfiguration(userId, randomLong(), now());
+		transform.setServiceIdentifier(xformServiceId);
+		transform.setModified(Instant.now());
+
+		final var endpoint = new EndpointConfiguration(userId, UUID.randomUUID(), now());
+		endpoint.setNodeId(nodeId);
+		endpoint.setSourceId(sourceId);
+		endpoint.setTransformId(transform.getTransformId());
+		endpoint.setIncludeResponseBody(true);
+		endpoint.setPublishToSolarFlux(false);
+
+		// load transform configuration
+		given(endpointDao.get(new UserUuidPK(userId, endpoint.getEndpointId()))).willReturn(endpoint);
+		given(transformDao.get(new UserLongCompositePK(userId, transform.getTransformId())))
+				.willReturn(transform);
+
+		// transform input
+		final String inputValue = "Hello, world.";
+		final var in = new ByteArrayInputStream(inputValue.getBytes(StandardCharsets.UTF_8));
+		final MimeType type = MediaType.APPLICATION_CBOR;
+		given(xformService.supportsInput(any(ByteArrayInputStream.class), eq(type))).willReturn(true);
+		final GeneralDatum xformOutput = nodeDatum(nodeId, sourceId, null, new DatumSamples());
+		xformOutput.putSampleValue(DatumSamplesType.Instantaneous, "foo", randomLong());
+		given(xformService.transform(any(ByteArrayInputStream.class), eq(type), eq(transform), any()))
+				.willThrow(new JsonParseException("Oops."));
+
+		// WHEN
+		Map<String, String> params = Map.of("foo", "bar", "bim", "bam");
+		and.thenThrownBy(() -> {
+			service.importDatum(userId, endpoint.getEndpointId(), type, in, params);
+		}).isInstanceOf(JsonProcessingException.class);
+
+		// THEN
+		// @formatter:off
+		then(xformService).should().transform(inputCaptor.capture(),  eq(type), eq(transform), paramsCaptor.capture());
+		and.then(inputCaptor.getValue())
+			.as("Current input supplied as ByteArrayInputStream")
+			.satisfies(curr -> {
+				byte[] currData = ((ByteArrayInputStream)curr).readAllBytes();
+				and.then(currData)
+					.as("Current input data provided")
+					.containsExactly(inputValue.getBytes(StandardCharsets.UTF_8))
+					;
+			})
+			;
+		and.then(paramsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("User ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_USER_ID, userId)
+			.as("Endpoint ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_ENDPOINT_ID, endpoint.getEndpointId().toString())
+			.as("Transform ID transform parameter provided")
+			.containsEntry(TransformService.PARAM_TRANSFORM_ID, transform.getTransformId())
+			.as("Transform cache key provided")
+			.containsEntry(TransformService.PARAM_CONFIGURATION_CACHE_KEY, transform.ident())
+			.as("Service parameters passed as transform parameters")
+			.containsAllEntriesOf(params)
+			;
+
+		then(userEventAppender).should().addEvent(eq(userId), logEventCaptor.capture());
+		and.then(logEventCaptor.getValue())
+			.satisfies(event -> {
+				Map<String, Object> data = JsonUtils.getStringMap(event.getData());
+				and.then(data)
+					.as("Event data contains endpoint ID")
+					.containsEntry(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId().toString())
+					.as("Event data contains transform ID")
+					.containsEntry(TRANSFORM_ID_DATA_KEY, transform.getTransformId())
+					.as("Event data contains transform service ID")
+					.containsEntry(TRANSFORM_SERVICE_ID_DATA_KEY, xformServiceId)
+					.as("Event data contains content type")
+					.containsEntry(CONTENT_TYPE_DATA_KEY, type.toString())
+					.as("Event data contains binary content as Base64 encoded string")
+					.containsEntry(CONTENT_DATA_KEY, Base64.getEncoder().encodeToString(inputValue.getBytes(StandardCharsets.UTF_8)))
+					.hasEntrySatisfying(PARAMETERS_DATA_KEY, (p) -> {
+						and.then(p)
+							.asInstanceOf(InstanceOfAssertFactories.map(String.class, String.class))
+							.as("Extra parameters has foo")
+							.containsEntry("foo", "bar")
+							.as("Extra parameters has bim")
+							.containsEntry("bim", "bam")
+							;
+					})
+					;
+
+				String[] tags = event.getTags();
+				and.then(tags)
+					.as("Event tags as expected, with error")
+					.contains(DIN_TAG, DATUM_TAG, ERROR_TAG)
+					;
+			})
+			;
+
+		then(fluxProcessor).shouldHaveNoInteractions();
+		// @formatter:on
+	}
+
 }

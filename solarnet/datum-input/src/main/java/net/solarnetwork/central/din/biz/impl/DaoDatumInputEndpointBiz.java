@@ -30,7 +30,9 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -117,13 +119,28 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
 	}
 
+	private static final MimeType JSON_TYPE = MimeType.valueOf("application/json");
+	private static final MimeType TEXT_TYPE = MimeType.valueOf("text/*");
+
 	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
-			TransformConfiguration xform, MimeType contentType, Map<String, String> parameters) {
+			TransformConfiguration xform, MimeType contentType, byte[] content,
+			Map<String, String> parameters) {
 		var eventData = new LinkedHashMap<>(8);
 		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
 		eventData.put(TRANSFORM_ID_DATA_KEY, endpoint.getTransformId());
 		eventData.put(TRANSFORM_SERVICE_ID_DATA_KEY, xform.getServiceIdentifier());
 		eventData.put(CONTENT_TYPE_DATA_KEY, contentType.toString());
+
+		if ( content != null && content.length > 0 ) {
+			String value = null;
+			if ( JSON_TYPE.isCompatibleWith(contentType) || TEXT_TYPE.isCompatibleWith(contentType) ) {
+				value = new String(content, contentType.getCharset() != null ? contentType.getCharset()
+						: StandardCharsets.UTF_8);
+			} else {
+				value = Base64.getEncoder().encodeToString(content);
+			}
+			eventData.put(CONTENT_DATA_KEY, value);
+		}
 
 		if ( parameters != null ) {
 			eventData.put(PARAMETERS_DATA_KEY, parameters);
@@ -155,12 +172,16 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			contentType = MimeType.valueOf(endpoint.getRequestContentType());
 		}
 
+		// load data, so can include in error event if needed
+		final byte[] inputData = FileCopyUtils.copyToByteArray(in);
+		in = new ByteArrayInputStream(inputData);
+
 		if ( !xformService.supportsInput(requireNonNullArgument(in, "in"),
 				requireNonNullArgument(contentType, "contentType")) ) {
 			String msg = "Transform service %s does not support input type %s with %s."
 					.formatted(xformServiceId, contentType, in.getClass().getSimpleName());
 			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, parameters));
+			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, inputData,parameters));
 			// @formatter:on
 			throw new IllegalArgumentException(msg);
 		}
@@ -191,12 +212,10 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 					if ( nodeId != null && sourceId != null ) {
 						UserLongStringCompositePK key = new UserLongStringCompositePK(userId, nodeId,
 								sourceId);
-						byte[] inputData = FileCopyUtils.copyToByteArray(in);
 						byte[] previousInput = previousInputDao.getAndPut(key, inputData);
 						if ( previousInput == null ) {
 							return Collections.emptyList();
 						}
-						in = new ByteArrayInputStream(inputData);
 						params.put(TransformService.PARAM_PREVIOUS_INPUT,
 								new ByteArrayInputStream(previousInput));
 					}
@@ -209,7 +228,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
 			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, parameters));
+			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, inputData,parameters));
 			// @formatter:on
 			if ( e instanceof IOException ioe ) {
 				throw ioe;
@@ -247,8 +266,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 						nodeOwnershipDao.ownershipForNodeId(nodeId), nodeId);
 				if ( !userId.equals(owner.getUserId()) ) {
 					var ex = new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
-					addEvent(userEventAppenderBiz, userId,
-							importErrorEvent(ex.getMessage(), endpoint, xform, contentType, parameters));
+					addEvent(userEventAppenderBiz, userId, importErrorEvent(ex.getMessage(), endpoint,
+							xform, contentType, inputData, parameters));
 					throw ex;
 				}
 
