@@ -1,21 +1,21 @@
 /* ==================================================================
  * ObjectMapperStreamDatumFilteredResultsProcessor.java - 1/05/2022 5:32:46 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -53,16 +53,15 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 import net.solarnetwork.domain.datum.StreamDatum;
-import net.solarnetwork.util.ArrayUtils;
 
 /**
  * {@link FilteredResultsProcessor} for encoding overall results into datum
  * stream form.
- * 
+ *
  * <p>
  * The overall structure has the metadata followed by the data:
  * </p>
- * 
+ *
  * <pre>
  * <code>{
  *   "returnedResultCount" : &lt;count&gt;,
@@ -80,12 +79,12 @@ import net.solarnetwork.util.ArrayUtils;
  *   ]
  * }</code>
  * </pre>
- * 
+ *
  * <p>
  * For {@link Datum} results, each {@code data} element is an array with the
  * following:
  * </p>
- * 
+ *
  * <ol>
  * <li>0-based index of the associated stream metadata object in the
  * {@literal meta} array</li>
@@ -98,11 +97,11 @@ import net.solarnetwork.util.ArrayUtils;
  * array)</li>
  * <li>tags (one element per tag)</li>
  * </ol>
- * 
+ *
  * <p>
  * The {@link Datum} structure resembles this:
  * </p>
- * 
+ *
  * <pre>
  * <code>[
  *   &lt;meta index&gt;,
@@ -117,12 +116,12 @@ import net.solarnetwork.util.ArrayUtils;
  *   ...,
  * ]</code>
  * </pre>
- * 
+ *
  * <p>
  * For {@link AggregateDatum} results, each {@code data} element is an array
  * with the following:
  * </p>
- * 
+ *
  * <ol>
  * <li>0-based index of the associated stream metadata object in the
  * {@literal meta} array</li>
@@ -136,11 +135,11 @@ import net.solarnetwork.util.ArrayUtils;
  * ending value, for each accumulating property value (elements in order of the
  * {@code meta.a} array)</li>
  * </ol>
- * 
+ *
  * <p>
  * The {@link AggregateDatum} structure resembles this:
  * </p>
- * 
+ *
  * <pre>
  * <code>[
  *   &lt;meta index&gt;,
@@ -151,9 +150,9 @@ import net.solarnetwork.util.ArrayUtils;
  *   ...,
  * ]</code>
  * </pre>
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.3
  */
 public final class ObjectMapperStreamDatumFilteredResultsProcessor
@@ -173,7 +172,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param generator
 	 *        the generator to use
 	 * @param provider
@@ -283,13 +282,8 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 						p.getInstantaneous(), stats.getInstantaneous());
 				writeAggregateProperty(generator, DatumSamplesType.Accumulating, aLen,
 						p.getAccumulating(), stats.getAccumulating());
-				if ( sLen > 0 || tLen > 0 ) {
-					// if status or tags provided try to optimize them away if
-					if ( !ArrayUtils.isOnlyNull(p.getStatus()) || tLen > 0 ) {
-						writeStringArrayValues(generator, p.getStatus(), sLen);
-					}
-					writeStringArrayValues(generator, p.getTags(), tLen);
-				}
+				writeStringArrayValues(generator, p.getStatus(), sLen);
+				writeStringArrayValues(generator, p.getTags(), tLen);
 			} else {
 				generator.writeNull();
 			}

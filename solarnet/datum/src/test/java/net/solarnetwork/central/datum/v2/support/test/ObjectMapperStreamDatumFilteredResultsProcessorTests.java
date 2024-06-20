@@ -1,21 +1,21 @@
 /* ==================================================================
  * ObjectMapperStreamDatumFilteredResultsProcessorTests.java - 1/05/2022 6:02:55 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,10 +25,10 @@ package net.solarnetwork.central.datum.v2.support.test;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
 import static net.solarnetwork.domain.datum.BasicObjectDatumStreamDataSet.dataSet;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -63,9 +63,9 @@ import net.solarnetwork.util.ByteUtils;
 /**
  * Test cases for the {@link ObjectMapperStreamDatumFilteredResultsProcessor}
  * class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 
@@ -148,7 +148,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 				statisticsOf(new BigDecimal[][] {
 						decimalArray("10", "1.0", "2.0"),
 						decimalArray("10", "2.0", "3.0")
-					}, new BigDecimal[][] { 
+					}, new BigDecimal[][] {
 						decimalArray("30", "100", "130")
 					}
 				)
@@ -192,7 +192,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 				statisticsOf(new BigDecimal[][] {
 					decimalArray("10", "1.0", "2.0"),
 					decimalArray("10", "2.0", "3.0")
-				}, new BigDecimal[][] { 
+				}, new BigDecimal[][] {
 					decimalArray("30", "100", "130")
 				}));
 		// @formatter:on
@@ -213,7 +213,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		assertThat("Reading JSON", json, is(format("{\"success\":true,\"meta\":[{\"streamId\":\"%s\",",
 				meta.getStreamId()) + "\"zone\":\"Pacific/Auckland\",\"kind\":\"n\",\"objectId\":123,"
 				+ "\"sourceId\":\"test/source\",\"i\":[\"a\",\"b\"],\"a\":[\"c\"],\"s\":[\"d\"]}],"
-				+ "\"data\":[[0,[1651197060000,1651200660000],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130]]]}"));
+				+ "\"data\":[[0,[1651197060000,1651200660000],[1.23,10,1.0,2.0],[2.34,10,2.0,3.0],[30,100,130],null]]}"));
 	}
 
 }
