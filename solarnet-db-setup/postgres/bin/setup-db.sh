@@ -27,11 +27,45 @@ CREATE_USER=""
 DRY_RUN=""
 VERBOSE=""
 
-while getopts ":c:d:D:mrtT:u:U:v" opt; do
+do_help () {
+	cat 1>&2 <<EOF
+Usage: $0 <arguments>
+
+ -c <args>        - extra arguments to pass to psql
+ -d <db name>     - the database name; defaults to 'solarnetwork_unittest'
+ -D <admin db>    - the Postgres admin database name; defaults to 'postgres'
+ -m               - create the Postgres database user
+ -r               - recreate the database (drop and create again)
+ -t               - dry run
+ -T <db name>     - the Postgres template database name to use; defaults to
+                    'template0'
+ -u <db user>     - the Postgres database user to use; defaults to 'solartest'
+ -U <admin user>  - the Postgres admin user to use; defaults to 'postgres'
+ -v               - increase verbosity
+
+Example that creates the test database and user for the first time:
+
+  ./bin/setup-db.sh -m
+
+To connect to a different Postgres port:
+
+  ./bin/setup-db.sh -c '-p 5412'
+
+To recreate the database (drop and create):
+
+  ./bin/setup-db.sh -r
+
+EOF
+}
+
+while getopts ":c:d:D:hmrtT:u:U:v" opt; do
 	case $opt in
 		c) PSQL_CONN_ARGS="${OPTARG}";;
 		d) PG_DB="${OPTARG}";;
 		D) PG_ADMIN_DB="${OPTARG}";;
+		h) do_help
+			exit 0
+			;;
 		m) CREATE_USER='TRUE';;
 		r) RECREATE_DB='TRUE';;
 		t) DRY_RUN='TRUE';;
@@ -39,8 +73,8 @@ while getopts ":c:d:D:mrtT:u:U:v" opt; do
 		u) PG_USER="${OPTARG}";;
 		U) PG_ADMIN_USER="${OPTARG}";;
 		v) VERBOSE='TRUE';;
-		?)
-			echo "Unknown argument ${OPTARG}"
+		*) echo "Unknown argument ${OPTARG}"
+			do_help
 			exit 1
 	esac
 done
