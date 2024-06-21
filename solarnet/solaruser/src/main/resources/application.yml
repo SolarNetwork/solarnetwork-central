@@ -260,6 +260,9 @@ spring:
     max-request-size: "256MB"
     location: ""
     file-size-threshold: "1MB"
+  session.jdbc:
+    initialize-schema: "never"
+    table-name: "solaruser.http_session"
 
 ---
 spring:
