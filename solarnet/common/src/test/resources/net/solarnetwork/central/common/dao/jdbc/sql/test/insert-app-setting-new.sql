@@ -1,2 +1,2 @@
-INSERT INTO solarcommon.app_setting (modified, skey, stype, svalue)
-VALUES (?,?,?,?)
+INSERT INTO solarcommon.app_setting (created, modified, skey, stype, svalue)
+VALUES (?,?,?,?,?)

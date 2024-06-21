@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.AppSetting;
@@ -35,7 +36,7 @@ import net.solarnetwork.central.domain.AppSetting;
  * Insert an {@link AppSetting} instance.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.0
  */
 public class InsertAppSetting implements PreparedStatementCreator, SqlProvider {
@@ -62,22 +63,8 @@ public class InsertAppSetting implements PreparedStatementCreator, SqlProvider {
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		buf.append("INSERT INTO solarcommon.app_setting (");
-		if ( setting.getCreated() != null ) {
-			buf.append("created, ");
-		}
-		if ( setting.getModified() != null ) {
-			buf.append("modified, ");
-		}
-		buf.append("skey, stype, svalue)\n");
-		buf.append("VALUES (");
-		if ( setting.getCreated() != null ) {
-			buf.append("?,");
-		}
-		if ( setting.getModified() != null ) {
-			buf.append("?,");
-		}
-		buf.append("?,?,?)\n");
+		buf.append("INSERT INTO solarcommon.app_setting (created, modified, skey, stype, svalue)\n");
+		buf.append("VALUES (?,?,?,?,?)\n");
 		if ( upsert ) {
 			buf.append("ON CONFLICT (skey, stype) DO UPDATE\nSET ");
 			if ( setting.getModified() != null ) {
@@ -90,14 +77,15 @@ public class InsertAppSetting implements PreparedStatementCreator, SqlProvider {
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql());
+		final PreparedStatement stmt = con.prepareStatement(getSql());
+		final Instant now = (setting.getCreated() == null || setting.getModified() == null
+				? Instant.now()
+				: null);
 		int p = 0;
-		if ( setting.getCreated() != null ) {
-			stmt.setTimestamp(++p, Timestamp.from(setting.getCreated()));
-		}
-		if ( setting.getModified() != null ) {
-			stmt.setTimestamp(++p, Timestamp.from(setting.getModified()));
-		}
+		stmt.setTimestamp(++p,
+				Timestamp.from(setting.getCreated() != null ? setting.getCreated() : now));
+		stmt.setTimestamp(++p,
+				Timestamp.from(setting.getModified() != null ? setting.getModified() : now));
 		stmt.setString(++p, setting.getKey());
 		stmt.setString(++p, setting.getType());
 		stmt.setString(++p, setting.getValue());
