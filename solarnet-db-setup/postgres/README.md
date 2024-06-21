@@ -37,7 +37,7 @@ git clone https://github.com/timescale/timescaledb.git
 
 # checkout version tag
 cd timescaledb
-git checkout 2.5.1   # or some other release
+git checkout 2.11.2   # or some other release
 ```
 
 Then, build and install according to the TimescaleDB documentation. On macOS, for example:
