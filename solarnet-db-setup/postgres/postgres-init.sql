@@ -40,3 +40,9 @@
 \i postgres-init-oscp.sql
 \i postgres-init-dnp3-schema.sql
 \i postgres-init-dnp3.sql
+\i postgres-init-din-schema.sql
+\i postgres-init-din.sql
+
+\i postgres-init-billing-schema.sql
+\i postgres-init-billing.sql
+
