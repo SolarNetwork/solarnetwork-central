@@ -3,7 +3,7 @@
 # Script for creating or re-creating the SolarNetwork database in its default form.
 # The resulting database is suitable for development and unit testing.
 #
-# To create a database 'solarnet_unittest' and database user 'solarnet_test' for testing:
+# To create a database 'solarnetwork_unittest' and database user 'solartest' for testing:
 #
 #     ./bin/setup-db.sh -mrv
 #
@@ -17,8 +17,8 @@
 #     ./bin/setup-db.sh -mrv -c '-p 5496 -h postgres96.example.com'
 
 PSQL_CONN_ARGS=""
-PG_USER="solarnet_test"
-PG_DB="solarnet_unittest"
+PG_USER="solartest"
+PG_DB="solarnetwork_unittest"
 PG_ADMIN_USER="postgres"
 PG_ADMIN_DB="postgres"
 PG_TEMPLATE_DB="template0"
