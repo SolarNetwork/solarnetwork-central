@@ -65,7 +65,7 @@ app:
       uid: "SolarOCPP-${app.meta.instance-id}"
       mqtt-stats.log-frequency: 200
       mqtt-config:
-        server-uri: "mqtt://queue.solarnetwork:1883"
+        server-uri: "mqtt://localhost:1883"
         client-id: "solarocpp-${app.meta.instance-id}"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"
