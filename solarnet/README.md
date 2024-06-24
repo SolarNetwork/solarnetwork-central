@@ -32,3 +32,13 @@ To build all applications:
 # Windows
 ./gradlew.bat build
 ```
+
+# Testing
+
+You can run all subproject unit/integration tests and produce a single HTML report at
+`./build/reports/all-tests/index.html` like this:
+
+```sh
+# Run all project tests, combine into build/reports/all-tests/index.html
+./gradlew testReport
+```
