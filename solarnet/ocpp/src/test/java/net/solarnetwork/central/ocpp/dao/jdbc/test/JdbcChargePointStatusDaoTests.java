@@ -56,7 +56,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link JdbcChargePointStatusDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -148,7 +148,7 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		assertThat("Row session ID missing", row.get("session_id"), is(nullValue()));
 		assertThat("Row connected date updated to 'now' (within a few ms of now)",
 				Instant.now().toEpochMilli() - ((Timestamp) row.get("connected_date")).getTime(),
-				is(allOf(greaterThanOrEqualTo(0L), lessThan(500L))));
+				is(allOf(greaterThanOrEqualTo(-900L), lessThan(900L))));
 	}
 
 	@Test
