@@ -169,3 +169,9 @@ subprojects {
 	}
 	
 }
+
+task testReport(type: TestReport) {
+	destinationDir = file("$buildDir/reports/all-tests")
+	// Combine all 'test' task results into a single HTML report
+	reportOn subprojects.collect { it.tasks.withType(Test) }
+}
