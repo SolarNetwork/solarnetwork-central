@@ -35,6 +35,7 @@ DECLARE
 	num_rows				BIGINT;
 
 	result_row				solardatm.obj_datm_id;
+	flux_pub 				solardatm.flux_pub_settings;
 BEGIN
 	CASE kind
 		WHEN 'd' THEN
@@ -160,9 +161,12 @@ BEGIN
 		IF meta.kind = 'n' AND local_ts_start = date_trunc(
 							CASE kind WHEN 'h' THEN 'hour' WHEN 'd' THEN 'day' ELSE 'month' END
 							, CURRENT_TIMESTAMP AT TIME ZONE tz) THEN
-			INSERT INTO solardatm.agg_stale_flux (stream_id, agg_kind)
-			VALUES (stale.stream_id, kind)
-			ON CONFLICT (stream_id, agg_kind) DO NOTHING;
+			SELECT * FROM solardatm.flux_agg_pub_settings(result_row.obj_id, result_row.source_id) INTO flux_pub;
+			IF FOUND AND flux_pub.publish THEN
+				INSERT INTO solardatm.agg_stale_flux (stream_id, agg_kind)
+				VALUES (stale.stream_id, kind)
+				ON CONFLICT (stream_id, agg_kind) DO NOTHING;
+			END IF;
 		END IF;
 
 		DELETE FROM solardatm.agg_stale_datm WHERE CURRENT OF curs;

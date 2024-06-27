@@ -43,10 +43,12 @@
 				<li data-th-classappend="${navloc == 'auth-tokens'}?active" sec:authorize="hasRole('ROLE_USER')">
 					<a data-th-href="@{/u/sec/auth-tokens}" data-th-text="#{link.auth-tokens}">Security Tokens</a>
 				</li>
-				<li class="dropdown" data-th-classappend="${navloc == 'data'
+				<li class="dropdown" data-th-classappend="${
+						   navloc == 'data'
 						|| navloc == 'data-insight'
 						|| navloc == 'expire'
 						|| navloc == 'export'
+						|| navloc == 'flux'
 						|| navloc == 'node-event'
 						}?active" sec:authorize="hasRole('ROLE_USER')">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
@@ -67,6 +69,9 @@
 						</li>
 						<li data-th-classappend="${navloc == 'node-event'}?active" sec:authorize="hasRole('ROLE_EVENT')" data-th-if="eventHookBiz">
 							<a data-th-href="@{/u/sec/event/node}" data-th-text="#{link.node-event}">Node Event Hooks</a>
+						</li>
+						<li data-th-classappend="${navloc == 'flux'}?active" data-th-if="eventHookBiz">
+							<a data-th-href="@{/u/sec/flux}" data-th-text="#{link.flux}">SolarFlux Settings</a>
 						</li>
 					</ul>
 				</li>

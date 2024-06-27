@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SolarFlux Aggregate Datum Publish Default Settings</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<section id="flux-agg-pub-default-settings" data-th-fragment="content">
+	<h2>
+		<span data-th-text="#{flux-agg-pub.default-settings.header}">Aggregate Datum Publish Default Settings</span>
+		<button type="button" id="flux-agg-pub-default-settings-edit-button" class="btn btn-primary pull-right"
+			data-target="#flux-agg-pub-settings-edit-modal" data-toggle="modal"
+			data-th-title="#{flux-agg-pub.default-settings.edit}"
+			data-th-text="#{flux-agg-pub.default-settings.edit}">
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{flux-agg-pub.default-settings.intro}">
+		Your Aggregate Datum Publish Default Settings are shown here. Use the edit button to update the settings.
+	</p>
+	<table id="flux-agg-pub-default-settings-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{flux-agg-pub.settings.publish.label}">Publish</th>
+				<th data-th-text="#{flux-agg-pub.settings.retain.label}">Retain</th>
+			</tr>
+			<tr data-th-classappend="'template'">
+				<td><span class="label" data-tprop="publish"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+				<td><span class="label" data-tprop="retain"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</body>
+</html>

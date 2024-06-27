@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
+import net.solarnetwork.central.datum.flux.dao.FluxPublishSettingsDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.support.UserEventSerializer;
 import net.solarnetwork.codec.JsonUtils;
@@ -43,7 +44,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Configuration for SolarFlux publishing.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("mqtt")
@@ -51,6 +52,9 @@ public class SolarFluxPublishingConfig {
 
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
+
+	@Autowired
+	private FluxPublishSettingsDao fluxPublishSettingsDao;
 
 	/**
 	 * A module for handling SolarFlux objects.
@@ -79,7 +83,8 @@ public class SolarFluxPublishingConfig {
 	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
 	@Qualifier(SOLARFLUX)
 	public SolarFluxDatumPublisher solarFluxDatumPublisher(@Qualifier(SOLARFLUX) ObjectMapper mapper) {
-		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao, mapper);
+		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
+				fluxPublishSettingsDao, mapper);
 		return processor;
 	}
 

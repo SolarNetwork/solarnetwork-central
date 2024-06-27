@@ -43,7 +43,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 public final class CommonSqlUtils {
 
@@ -737,6 +737,29 @@ public final class CommonSqlUtils {
 					ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		}
 		return stmt;
+	}
+
+	/**
+	 * Generate SQL {@literal WHERE} criteria for an array column containment
+	 * clause.
+	 * 
+	 * @param array
+	 *        the array value to match
+	 * @param colName
+	 *        the array SQL column name
+	 * @param buf
+	 *        the buffer to append the SQL to
+	 * @return the number of JDBC query parameters generated
+	 * @since 2.7
+	 * @see #prepareArrayParameter(Connection, PreparedStatement, int, String,
+	 *      Object[])
+	 */
+	public static int whereArrayColContains(Object[] array, String colName, StringBuilder buf) {
+		if ( array != null && array.length > 0 ) {
+			buf.append("\tAND ").append(colName).append(" @> ?\n");
+			return 1;
+		}
+		return 0;
 	}
 
 	/**

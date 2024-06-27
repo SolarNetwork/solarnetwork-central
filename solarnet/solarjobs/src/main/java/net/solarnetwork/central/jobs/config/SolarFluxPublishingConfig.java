@@ -38,6 +38,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.agg.StaleSolarFluxProcessor;
 import net.solarnetwork.central.datum.flux.SolarFluxDatumPublisher;
+import net.solarnetwork.central.datum.flux.dao.FluxPublishSettingsDao;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.UserEvent;
 import net.solarnetwork.central.scheduler.ManagedJob;
@@ -66,6 +67,9 @@ public class SolarFluxPublishingConfig {
 	@Autowired
 	private SolarNodeOwnershipDao nodeOwnershipDao;
 
+	@Autowired
+	private FluxPublishSettingsDao fluxPublishSettingsDao;
+
 	/**
 	 * A module for handling SolarFlux objects.
 	 *
@@ -93,7 +97,8 @@ public class SolarFluxPublishingConfig {
 	@ConfigurationProperties(prefix = "app.solarflux.datum-publish")
 	@Qualifier(SOLARFLUX)
 	public SolarFluxDatumPublisher solarFluxDatumPublisher(@Qualifier(SOLARFLUX) ObjectMapper mapper) {
-		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao, mapper);
+		SolarFluxDatumPublisher processor = new SolarFluxDatumPublisher(nodeOwnershipDao,
+				fluxPublishSettingsDao, mapper);
 		return processor;
 	}
 

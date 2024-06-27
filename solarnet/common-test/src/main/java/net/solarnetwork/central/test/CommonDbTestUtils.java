@@ -1,48 +1,52 @@
 /* ==================================================================
  * CommonDbTestUtils.java - 7/10/2021 7:05:54 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.test;
 
+import static java.util.stream.Collectors.joining;
 import java.security.SecureRandom;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcOperations;
 
 /**
  * Common DB test utilities.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new user with a randomly assigned user ID and username.
-	 * 
+	 *
 	 * <p>
 	 * The username will be in the form {@literal testX@localhost} where
 	 * {@literal X} is the assigned ID. The password will be
 	 * {@literal password}.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @return the assigned user ID
@@ -56,11 +60,11 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new user with a randomly assigned user ID.
-	 * 
+	 *
 	 * <p>
 	 * The password will be {@literal password}.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @return the assigned user ID
@@ -73,7 +77,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new user.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param id
@@ -94,14 +98,14 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new user-node mapping.
-	 * 
+	 *
 	 * <p>
 	 * The display name will be in the form {@literal User X node Y} where
 	 * {@literal X} is the user ID and {@literal Y} the node ID. The
 	 * {@code requiresAuth} flag will be set to {@literal false}. The
 	 * {@code archived} flag will be set to {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param userId
@@ -115,13 +119,13 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new user-node mapping.
-	 * 
+	 *
 	 * <p>
 	 * The display name will be in the form {@literal User X node Y} where
 	 * {@literal X} is the user ID and {@literal Y} the node ID. The
 	 * {@code archived} flag will be set to {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param userId
@@ -139,7 +143,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new user-node mapping.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param userId
@@ -162,7 +166,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a security token.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param tokenId
@@ -190,7 +194,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new location with a randomly assigned ID.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param country
@@ -207,7 +211,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a location into the {@code sn_loc} table.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID to use
 	 * @param country
@@ -222,7 +226,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a location into the {@code sn_loc} table.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID to use
 	 * @param country
@@ -243,7 +247,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a new node with a randomly assigned ID.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param locationId
@@ -258,7 +262,7 @@ public final class CommonDbTestUtils {
 
 	/**
 	 * Insert a test node into the sn_node table.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID to assign to the node
 	 * @param locationId
@@ -267,6 +271,29 @@ public final class CommonDbTestUtils {
 	public static void insertNode(JdbcOperations jdbcTemplate, Long nodeId, Long locationId) {
 		jdbcTemplate.update("insert into solarnet.sn_node (node_id, loc_id) values (?,?)", nodeId,
 				locationId);
+	}
+
+	/**
+	 * Get the raw content of a table.
+	 *
+	 * @param log
+	 *        the logger to log to
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @param table
+	 *        the name of the table
+	 * @param order
+	 *        the order column expression
+	 * @return the rows
+	 * @since 1.1
+	 */
+	public static List<Map<String, Object>> allTableData(Logger log, JdbcOperations jdbcOps,
+			String table, String order) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("SELECT * FROM %s ORDER BY %s".formatted(table, order));
+		log.debug("%s table has {} items: [{}]".formatted(table), data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
 	}
 
 }

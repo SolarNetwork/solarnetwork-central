@@ -141,22 +141,25 @@ SolarReg.splitAsNumberArray = function splitAsNumberArray(string, delimiter) {
  };
 
 /**
-  * Split a string into an array of numbers.
-  *
-  * This method will filter out any values that are not numbers.
-  *
-  * @param {array} array the array to join into a string
-  * @param {string} [delimiter] the string to join elements with; defaults to comma and space
-  * @returns {string}
-  */
-SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimiter) {
+ * Split a string into an array of numbers.
+ *
+ * This method will filter out any values that are not numbers.
+ *
+ * @param {array} array the array to join into a string
+ * @param {string} [delimiter] the string to join elements with; defaults to comma and space
+ * @param {string} [emptyValue] the value to display if the array is empty or undefined;
+ *                              defaults to an empty string
+ * @returns {string}
+ */
+SolarReg.arrayAsDelimitedString = function arrayAsDelimitedString(array, delimiter, emptyValue) {
 	// allow the empty string delimiter
 	delimiter = (delimiter !== undefined ? delimiter : ', ');
 	if ( !(Array.isArray(array) && array.length > 0) ) {
-		return '';
+		return emptyValue !== undefined ? emptyValue : '';
 	}
 	return array.join(delimiter);
 };
+
 
 /**
  * Replace template variables on a string with corresponding values from a parameter object.
