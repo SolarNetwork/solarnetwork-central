@@ -135,6 +135,10 @@ app:
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "40 18/20 * * * *"
+    ocpp:
+      charge-session-cleaner:
+        schedule: "40 30 5 * * *"
+        expirePeriod: "P1Y"
     user:
       audit:
         daily:
@@ -147,10 +151,6 @@ app:
           maximum-wait-ms: 299000
           parallelism: 2
           schedule: "40 19/20 * * * *"
-    ocpp:
-      charge-session-cleaner:
-        schedule: "40 30 5 * * *"
-        expirePeriod: "P1Y"
     user-alert:
       stale-data:
         cleaner:
@@ -242,6 +242,10 @@ app:
         write-timeout-seconds: -1
     datum-publish:
       publish-qos-level: 0
+      user-settings-cache:
+        ttl: 900
+        heap-max-entries: 100000
+        disk-max-size-mb: 10
     user-events:
       publish-qos-level: 0
   task.executor:

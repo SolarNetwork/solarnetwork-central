@@ -32,6 +32,8 @@ import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.flux.dao.FluxPublishSettingsDao;
+import net.solarnetwork.central.datum.flux.domain.FluxPublishSettings;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.support.MqttJsonPublisher;
 import net.solarnetwork.common.mqtt.MqttQos;
@@ -43,7 +45,7 @@ import net.solarnetwork.util.StatTracker;
  * Publish datum to SolarFlux.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralNodeDatumPK>>
 		implements DatumProcessor {
@@ -68,6 +70,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	public static final long ERROR_LOG_LIMIT_MS_DEFAULT = 60_000L;
 
 	private final SolarNodeOwnershipDao supportDao;
+	private final FluxPublishSettingsDao fluxPublishSettingsDao;
 	private long errorLogLimitMs = ERROR_LOG_LIMIT_MS_DEFAULT;
 
 	private long lastErrorTime = 0; // ignoring thread safety for performance
@@ -77,6 +80,8 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 *
 	 * @param nodeOwnershipDao
 	 *        the support DAO
+	 * @param fluxPublishSettingsDao
+	 *        the SolarFlux publish settings DAO
 	 * @param objectMapper
 	 *        the mapper for JSON
 	 * @param retained
@@ -84,8 +89,9 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 * @param publishQos
 	 *        the publish QoS
 	 */
-	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper) {
-		this(nodeOwnershipDao, objectMapper, false, MqttQos.AtMostOnce);
+	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao,
+			FluxPublishSettingsDao fluxPublishSettingsDao, ObjectMapper objectMapper) {
+		this(nodeOwnershipDao, fluxPublishSettingsDao, objectMapper, false, MqttQos.AtMostOnce);
 	}
 
 	/**
@@ -93,6 +99,8 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 *
 	 * @param nodeOwnershipDao
 	 *        the support DAO
+	 * @param fluxPublishSettingsDao
+	 *        the SolarFlux publish settings DAO
 	 * @param objectMapper
 	 *        the mapper for JSON
 	 * @param retained
@@ -100,12 +108,15 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 * @param publishQos
 	 *        the publish QoS
 	 */
-	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao, ObjectMapper objectMapper,
-			boolean retained, MqttQos publishQos) {
+	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao,
+			FluxPublishSettingsDao fluxPublishSettingsDao, ObjectMapper objectMapper, boolean retained,
+			MqttQos publishQos) {
 		super("SolarFlux Datum Publisher", objectMapper, (item) -> {
 			throw new UnsupportedOperationException();
 		}, retained, publishQos);
 		this.supportDao = requireNonNullArgument(nodeOwnershipDao, "supportDao");
+		this.fluxPublishSettingsDao = requireNonNullArgument(fluxPublishSettingsDao,
+				"fluxPublishSettingsDao");
 	}
 
 	@Override
@@ -122,8 +133,32 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 		try {
 			final int timeout = getPublishTimeoutSeconds();
 			for ( Identity<GeneralNodeDatumPK> d : datum ) {
-				String topic = topicForDatum(aggregation, d);
-				Future<?> f = publish(d, topic);
+				final SolarNodeOwnership ownership = supportDao
+						.ownershipForNodeId(d.getId().getNodeId());
+				if ( ownership == null ) {
+					log.info("Not publishing datum {} to SolarFlux because user ID not available.", d);
+					continue;
+				}
+
+				Long nodeId = d.getId().getNodeId();
+				String sourceId = d.getId().getSourceId();
+				if ( ownership.getUserId() == null || nodeId == null || sourceId == null
+						|| sourceId.isEmpty() ) {
+					continue;
+				}
+
+				final FluxPublishSettings pubSettings = fluxPublishSettingsDao
+						.nodeSourcePublishConfiguration(ownership.getUserId(), nodeId, sourceId);
+				if ( pubSettings == null || !pubSettings.isPublish() ) {
+					continue;
+				}
+				if ( sourceId.startsWith("/") ) {
+					sourceId = sourceId.substring(1);
+				}
+				final String topic = String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE,
+						ownership.getUserId(), nodeId, aggregation.getKey(), sourceId);
+
+				Future<?> f = publish(d, topic, pubSettings.isRetain(), getPublishQos());
 				if ( timeout > 0 ) {
 					f.get(timeout, TimeUnit.SECONDS);
 				}
@@ -195,25 +230,6 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 			default:
 				return null;
 		}
-	}
-
-	private String topicForDatum(Aggregation aggregation, Identity<GeneralNodeDatumPK> datum) {
-		final SolarNodeOwnership ownership = supportDao.ownershipForNodeId(datum.getId().getNodeId());
-		if ( ownership == null ) {
-			log.info("Not publishing datum {} to SolarFlux because user ID not available.", datum);
-			return null;
-		}
-		Long nodeId = datum.getId().getNodeId();
-		String sourceId = datum.getId().getSourceId();
-		if ( ownership.getUserId() == null || nodeId == null || sourceId == null
-				|| sourceId.isEmpty() ) {
-			return null;
-		}
-		if ( sourceId.startsWith("/") ) {
-			sourceId = sourceId.substring(1);
-		}
-		return String.format(NODE_AGGREGATE_DATUM_TOPIC_TEMPLATE, ownership.getUserId(), nodeId,
-				aggregation.getKey(), sourceId);
 	}
 
 	/**

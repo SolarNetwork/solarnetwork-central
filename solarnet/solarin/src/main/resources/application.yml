@@ -40,7 +40,7 @@ app:
       node-dashboard: "http://localhost/node-dashboard"
       node-dataview: "http://localhost/node-dataview?nodeId={nodeId}"
       solardin: "http://localhost:9087"
-      solarin-mqtt: "mqtts://localhost:8883"
+      solarin-mqtt: "mqtt://localhost:1883"
       solarquery: "http://localhost:9082/solarquery"
       solaruser: "http://localhost:9081/solaruser"
   node.pki.cs:
@@ -85,7 +85,7 @@ app:
       uid: "SolarIn-@@SOLAR_IN_ID@@"
       mqtt-stats.log-frequency: 200
       mqtt-config:
-        server-uri: "mqtt://queue.solarnetwork:1883"
+        server-uri: "mqtt://localhost:1883"
         client-id: "solarin-@@SOLAR_IN_ID@@"
         username: "USERNAME_HERE"
         password: "PASSWORD_HERE"

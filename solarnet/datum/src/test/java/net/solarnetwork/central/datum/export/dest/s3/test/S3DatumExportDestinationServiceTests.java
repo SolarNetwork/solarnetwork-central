@@ -49,6 +49,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -80,9 +81,23 @@ import net.solarnetwork.settings.SettingSpecifier;
 /**
  * Test cases for the {@link S3DatumExportDestinationService} class.
  *
+ * <p>
+ * Note this test requires a {@code s3} system property be defined with some
+ * value, and a {@code s3-export-dest.properties} classpath resource be created
+ * with properties that define the S3 connection details to use:
+ * </p>
+ *
+ * <pre>{@code
+ * path = https://s3.us-west-2.amazonaws.com/solarnetwork-dev-testing/data-exports/unittest
+ * accessKey = AWS_ACCESS_TOKEN_HERE
+ * secretKey = AWS_TOKEN_SECRET_HERE
+ * storageClass = REDUCED_REDUNDANCY
+ * }</pre>
+ *
  * @author matt
  * @version 2.0
  */
+@EnabledIfSystemProperty(named = "s3", matches = ".*")
 public class S3DatumExportDestinationServiceTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());

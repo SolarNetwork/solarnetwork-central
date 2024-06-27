@@ -40,6 +40,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import net.solarnetwork.central.user.event.dest.sqs.SqsDestinationProperties;
 import net.solarnetwork.central.user.event.dest.sqs.SqsStats;
 import net.solarnetwork.central.user.event.dest.sqs.SqsUserNodeEventHookService;
@@ -64,9 +65,24 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
 /**
  * Test cases for the {@link SqsUserNodeEventHookService} class.
  * 
+ * <p>
+ * Note this test requires a {@code sqs} system property be defined with some
+ * value, and a {@code sqs-dest.properties} classpath resource be created with
+ * properties that define the SQS connection details to use:
+ * </p>
+ *
+ * <pre>{@code
+ * region = us-west-2
+ * queueName = node-event-dest-test
+ * accessKey = AWS_ACCESS_TOKEN_HERE
+ * secretKey = AWS_TOKEN_SECRET_HERE
+ * url = https://sqs.us-west-2.amazonaws.com/467156503442/node-event-dest-test
+ * }</pre>
+ * 
  * @author matt
  * @version 1.0
  */
+@EnabledIfSystemProperty(named = "sqs", matches = ".*")
 public class SqsUserNodeEventHookServiceTests {
 
 	private static Map<String, Object> TEST_PROPS;

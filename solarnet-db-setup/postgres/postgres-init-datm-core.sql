@@ -700,3 +700,14 @@ CREATE OR REPLACE FUNCTION solardatm.virutal_stream_id(obj_id BIGINT, source_id 
 $$
 	SELECT uuid_generate_v5(uuid_ns_url(), 'objid://obj/' || obj_id || '/' || TRIM(LEADING '/' FROM source_id))
 $$;
+
+
+/**
+ * Type to represent the SolarFlux publish settings for a datum stream.
+ */
+CREATE TYPE solardatm.flux_pub_settings AS (
+	node_id 	BIGINT,
+	source_id 	CHARACTER VARYING(64),
+	publish 	BOOLEAN,
+	retain 		BOOLEAN
+);

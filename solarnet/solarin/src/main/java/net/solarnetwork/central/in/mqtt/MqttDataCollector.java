@@ -64,7 +64,7 @@ import net.solarnetwork.util.StatTracker;
  * MQTT implementation of upload service.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class MqttDataCollector extends BaseMqttConnectionObserver implements MqttMessageHandler {
 
@@ -177,6 +177,8 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 			}
 			throw new RepeatableTaskException("Communication error handling message on MQTT topic "
 					+ topic + ": " + e.getMessage(), e);
+		} catch ( net.solarnetwork.central.security.AuthorizationException e ) {
+			log.warn("Authorization exception on MQTT topic [{}]: {}", topic, e.getMessage());
 		} catch ( RuntimeException e ) {
 			log.error("Error handling MQTT message on topic {}", topic, e);
 			throw new RepeatableTaskException(

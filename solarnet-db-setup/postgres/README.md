@@ -11,7 +11,7 @@ only version 12 has been extensively tested, but newer versions may work fine.
  * **uuid-ossp** extension (from contrib)
  * [timescaledb](https://docs.timescale.com/) extension
  * [aggs_for_vecs](https://github.com/pjungwir/aggs_for_vecs) extension
- 
+
 # macOS setup
 
 On macOS, Postgres can be easily installed via the [Postgres.app](https://postgresapp.com/) or
@@ -37,7 +37,7 @@ git clone https://github.com/timescale/timescaledb.git
 
 # checkout version tag
 cd timescaledb
-git checkout 2.5.1   # or some other release
+git checkout 2.11.2   # or some other release
 ```
 
 Then, build and install according to the TimescaleDB documentation. On macOS, for example:
@@ -72,7 +72,7 @@ make && sudo make install
 make PG_CONFIG=/Applications/Postgres.app/Contents/Versions/12/bin/pg_config
 make install PG_CONFIG=/Applications/Postgres.app/Contents/Versions/12/bin/pg_config
 ```
- 
+
 
 # Create database
 
@@ -83,7 +83,7 @@ To create a database **solarnetwork** and database user **solarnet** for develop
 ./bin/setup-db.sh -mrv -u solarnet -d solarnetwork
 ```
 
-To create a database **solarnet_unittest** and database user **solarnet_test** for testing,
+To create a database **solarnetwork_test** and database user **solartest** for testing,
 the defaults can be used:
 
 ```sh
@@ -103,7 +103,7 @@ The `postgres-create.sql` script can be used to
 
  1. Create a **solarnet** database user.
  2. Create a **solarnetwork** database, owned by the **solarnet** user.
- 3. Install the **citext**, **pgcrypto**, **uuid-ossp**, **[timescaledb][timescaledb]**, and 
+ 3. Install the **citext**, **pgcrypto**, **uuid-ossp**, **[timescaledb][timescaledb]**, and
     **[aggs_for_vecs][aggs_for_vecs]** extensions.
 
 This script should be run as a database superuser, for example **postgres**.

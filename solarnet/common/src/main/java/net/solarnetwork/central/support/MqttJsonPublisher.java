@@ -39,7 +39,7 @@ import net.solarnetwork.common.mqtt.MqttQos;
  * Basic service to publish objects to SolarFlux.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements Function<T, Future<?>> {
 
@@ -85,6 +85,25 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 	 * @return the publish future
 	 */
 	protected Future<?> publish(T item, String topic) {
+		return publish(item, topic, isRetained(), getPublishQos());
+	}
+
+	/**
+	 * Publish an item to a given topic.
+	 * 
+	 * @param item
+	 *        the item
+	 * @param topic
+	 *        the topic
+	 * @param retained
+	 *        {@literal true} if the message should have the {@code retained}
+	 *        flag set
+	 * @param qos
+	 *        the publish QoS to use
+	 * @return the publish future
+	 * @since 1.1
+	 */
+	protected Future<?> publish(T item, String topic, boolean retained, MqttQos qos) {
 		if ( item == null || topic == null ) {
 			return CompletableFuture.completedFuture(null);
 		}
@@ -106,7 +125,7 @@ public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements 
 				log.trace("Publishing to MQTT topic {}\n{}", topic,
 						Base64.getEncoder().encodeToString(payload));
 			}
-			return conn.publish(new BasicMqttMessage(topic, isRetained(), getPublishQos(), payload));
+			return conn.publish(new BasicMqttMessage(topic, retained, qos, payload));
 		} catch ( IOException e ) {
 			Throwable root = e;
 			while ( root.getCause() != null ) {

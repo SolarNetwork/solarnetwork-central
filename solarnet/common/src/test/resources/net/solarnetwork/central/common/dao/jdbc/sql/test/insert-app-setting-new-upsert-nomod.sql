@@ -1,4 +1,4 @@
-INSERT INTO solarcommon.app_setting (skey, stype, svalue)
-VALUES (?,?,?)
+INSERT INTO solarcommon.app_setting (created, modified, skey, stype, svalue)
+VALUES (?,?,?,?,?)
 ON CONFLICT (skey, stype) DO UPDATE
 SET svalue = EXCLUDED.svalue

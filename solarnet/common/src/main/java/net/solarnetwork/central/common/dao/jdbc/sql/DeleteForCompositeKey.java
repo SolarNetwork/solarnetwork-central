@@ -32,7 +32,7 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.domain.CompositeKey;
 
 /**
- * Delete based on a filter.
+ * Delete based on a composite primary key.
  * 
  * @author matt
  * @version 1.0

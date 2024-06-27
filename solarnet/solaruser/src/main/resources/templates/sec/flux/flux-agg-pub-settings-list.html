@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Datum Endpoint Credentials</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="../../../static/css/bootstrap.css">
+	<link rel="stylesheet" href="../../../static/css/bootstrap-theme.css">
+	<link rel="stylesheet" href="../../../static/css/global.css">
+</head>
+<body>
+<section id="flux-agg-pub-settings" data-th-fragment="content">
+	<h2>
+		<span data-th-text="#{flux-agg-pub.settings.header}">Aggregate Publish Settings</span>
+		<button type="button" id="flux-agg-pub-settings-add-button" class="btn btn-primary pull-right" 
+				data-th-title="#{flux-agg-pub.settings.add}">
+			<i class="glyphicon glyphicon-plus"></i>
+		</button>
+	</h2>
+	<p class="intro" data-th-utext="#{flux-agg-pub.settings.intro(0)}">
+		Your publish settings are shown here. Use the + button to add new configurations.
+	</p>
+	<table id="flux-agg-pub-settings-container" class="table configs" data-th-classappend="'hidden'">
+		<thead>
+			<tr>
+				<th data-th-text="#{flux-agg-pub.settings.id.label}">ID</th>
+				<th data-th-text="#{flux-agg-pub.settings.nodeIds.label}">Node IDs</th>
+				<th data-th-text="#{flux-agg-pub.settings.sourceIds.label}">Source IDs</th>
+				<th data-th-text="#{flux-agg-pub.settings.publish.label}">Publish</th>
+				<th data-th-text="#{flux-agg-pub.settings.retain.label}">Retain</th>
+			</tr>
+			<tr class="template">
+				<td><a href="#" class="edit-link" data-tprop="id" data-edit-modal="#flux-agg-pub-settings-edit-modal"></a></td>
+				<td data-tprop="nodeIdsDisplay"></td>
+				<td data-tprop="sourceIdsDisplay"></td>
+				<td><span class="label" data-tprop="publish"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+				<td><span class="label" data-tprop="retain"
+						data-th-data-true-text="#{settings.enabled.label}"
+						data-th-data-false-text="#{settings.disabled.label}"></span></td>
+			</tr>
+		</thead>
+		<tbody class="list-container">
+		</tbody>
+	</table>
+</section>
+</body>
+</html>

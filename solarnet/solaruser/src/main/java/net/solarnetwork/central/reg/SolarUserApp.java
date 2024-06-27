@@ -56,6 +56,8 @@ import net.solarnetwork.central.user.expire.aop.SolarNetUserExpireAopConfigurati
 import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
 import net.solarnetwork.central.user.export.aop.SolarNetUserExportAopConfiguration;
 import net.solarnetwork.central.user.export.config.SolarNetUserExportConfiguration;
+import net.solarnetwork.central.user.flux.aop.SolarNetUserFluxAopConfiguration;
+import net.solarnetwork.central.user.flux.config.SolarNetUserFluxConfiguration;
 import net.solarnetwork.central.user.inin.aop.SolarNetUserInstructionInputAopConfiguration;
 import net.solarnetwork.central.user.inin.config.SolarNetUserInstructionInputConfiguration;
 import net.solarnetwork.central.user.ocpp.aop.SolarNetUserOcppAopConfiguration;
@@ -68,7 +70,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * Main entry point for the SolarUser application.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
@@ -100,6 +102,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetUserExpireConfiguration.class,
 		SolarNetUserExportAopConfiguration.class,
 		SolarNetUserExportConfiguration.class,
+		SolarNetUserFluxAopConfiguration.class,
+		SolarNetUserFluxConfiguration.class,
 		SolarUserApp.class,
 })
 @Import({

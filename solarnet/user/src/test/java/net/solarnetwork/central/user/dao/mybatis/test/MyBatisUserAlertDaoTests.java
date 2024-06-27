@@ -50,7 +50,7 @@ import net.solarnetwork.central.user.domain.UserAlertType;
  * Test cases for the {@link MyBatisUserAlertDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -88,6 +88,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		alert.setNodeId(TEST_NODE_ID);
 		alert.setType(UserAlertType.NodeStaleData);
 		alert.setStatus(UserAlertStatus.Active);
+		alert.setValidTo(alert.getCreated());
 
 		Map<String, Object> options = new HashMap<String, Object>(4);
 		options.put("string", "foo");

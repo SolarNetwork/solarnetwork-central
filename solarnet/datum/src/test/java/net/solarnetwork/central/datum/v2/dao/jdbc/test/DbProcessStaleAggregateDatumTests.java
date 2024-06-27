@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbProcessStaleAggregateDatumTests.java - 7/11/2020 7:00:42 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,9 +36,10 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.listStaleF
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.processStaleAggregateDatum;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
-import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -79,18 +80,18 @@ import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for DB stored procedures that process stale aggregate datum.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -165,6 +166,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleHour() throws IOException {
 		// GIVEN
+		setupUserFluxDefaultAggPubSettings(TEST_USER_ID, "UTC", 1L);
+
 		List<GeneralNodeDatum> datums = loadJson("test-datum-01.txt", 0, 6);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = ingestDatumStream(log, jdbcTemplate, datums,
 				"UTC");
@@ -311,9 +314,23 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		assertThat("No stale flux record created for time in past", staleFluxRows, hasSize(0));
 	}
 
+	private void setupUserFluxDefaultAggPubSettings(Long userId, String tz, Long nodeId) {
+		setupTestUser(userId);
+		Long locId = randomLong();
+		setupTestLocation(locId, "UTC");
+		setupTestNode(nodeId, locId);
+		setupTestUserNode(userId, nodeId);
+		jdbcTemplate.update("""
+				INSERT INTO solaruser.user_flux_default_agg_pub_settings (user_id, publish, retain)
+				VALUES (?, ?, ?)
+				""", userId, true, true);
+	}
+
 	@Test
 	public void processStaleHour_currDayToFlux() throws IOException {
 		// GIVEN
+		setupUserFluxDefaultAggPubSettings(TEST_USER_ID, "UTC", 1L);
+
 		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 		ZonedDateTime hour = now.truncatedTo(ChronoUnit.HOURS);
 		DatumEntity d = new DatumEntity(UUID.randomUUID(), now.toInstant(), Instant.now(),
@@ -341,6 +358,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleDay() throws IOException {
 		// GIVEN
+		setupUserFluxDefaultAggPubSettings(TEST_USER_ID, "UTC", 1L);
+
 		ObjectDatumStreamMetadata meta = loadStream("test-agg-hour-datum-01.txt", Aggregation.Hour);
 		ZonedDateTime day = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		insertStaleAggregateDatum(log, jdbcTemplate,
@@ -387,6 +406,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleDay_currDayToFlux() throws IOException {
 		// GIVEN
+		setupUserFluxDefaultAggPubSettings(TEST_USER_ID, "UTC", 1L);
+
 		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 		ZonedDateTime day = now.truncatedTo(ChronoUnit.DAYS);
 		AggregateDatumEntity agg = new AggregateDatumEntity(UUID.randomUUID(), day.toInstant(),
@@ -417,6 +438,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleMonth() throws IOException {
 		// GIVEN
+		setupUserFluxDefaultAggPubSettings(TEST_USER_ID, "UTC", 1L);
+
 		ObjectDatumStreamMetadata meta = loadStream("test-agg-day-datum-01.txt", Aggregation.Day);
 		ZonedDateTime month = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
 		insertStaleAggregateDatum(log, jdbcTemplate,
@@ -459,6 +482,8 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 	@Test
 	public void processStaleMonth_currDayToFlux() throws IOException {
 		// GIVEN
+		setupUserFluxDefaultAggPubSettings(TEST_USER_ID, "UTC", 1L);
+
 		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 		ZonedDateTime month = now.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
 		AggregateDatumEntity agg = new AggregateDatumEntity(UUID.randomUUID(), month.toInstant(),
@@ -491,9 +516,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		// GIVEN
 		ZoneId zone = ZoneId.of("America/New_York");
 		setupTestLocation(1L, zone.getId());
-		setupTestNode(1L, 1L);
+		setupTestNode(2L, 1L);
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
-				zone.getId(), ObjectDatumKind.Node, 1L, "a", null, new String[] { "wh" }, null, null);
+				zone.getId(), ObjectDatumKind.Node, 2L, "a", null, new String[] { "wh" }, null, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta));
 
 		// populate 100Wh hourly data from D-1 to D+1, where D is a DST boundary day
@@ -550,9 +575,9 @@ public class DbProcessStaleAggregateDatumTests extends BaseDatumJdbcTestSupport 
 		// GIVEN
 		ZoneId zone = ZoneId.of("America/New_York");
 		setupTestLocation(1L, zone.getId());
-		setupTestNode(1L, 1L);
+		setupTestNode(2L, 1L);
 		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(),
-				zone.getId(), ObjectDatumKind.Node, 1L, "a", null, new String[] { "wh" }, null, null);
+				zone.getId(), ObjectDatumKind.Node, 2L, "a", null, new String[] { "wh" }, null, null);
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, asList(meta));
 
 		// populate 100Wh hourly data from D-1 to D+1, where D is a DST boundary day
