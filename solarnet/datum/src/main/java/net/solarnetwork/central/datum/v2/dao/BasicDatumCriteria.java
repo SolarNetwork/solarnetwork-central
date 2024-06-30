@@ -1,27 +1,28 @@
 /* ==================================================================
  * BasicDatumCriteria.java - 27/10/2020 7:42:38 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -44,9 +45,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Basic implementation of {@link DatumCriteria}.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 2.8
  */
 public class BasicDatumCriteria extends BasicCoreCriteria
@@ -72,6 +73,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	private CombiningType combiningType;
 	private Map<Long, Set<Long>> objectIdMappings;
 	private Map<String, Set<String>> sourceIdMappings;
+	private Map<String, BigDecimal> sourceIdScaleFactorMappings;
 
 	private String[] propertyNames;
 	private String[] instantaneousPropertyNames;
@@ -136,12 +138,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Copy the properties of another criteria into this instance.
-	 * 
+	 *
 	 * <p>
 	 * This method will test for conformance to all the various criteria
 	 * interfaces implemented by this class, and copy those properties as well.
 	 * </p>
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 */
@@ -185,7 +187,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Create a copy of a criteria.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 * @return the copy
@@ -299,7 +301,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the start date.
-	 * 
+	 *
 	 * @param startDate
 	 *        the date to set
 	 */
@@ -314,7 +316,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the end date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the date to set
 	 */
@@ -329,7 +331,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the local start date.
-	 * 
+	 *
 	 * @param localStartDate
 	 *        the date to set
 	 */
@@ -344,7 +346,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the local end date.
-	 * 
+	 *
 	 * @param localEndDate
 	 *        the date to set
 	 */
@@ -360,12 +362,12 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single stream ID.
-	 * 
+	 *
 	 * <p>
 	 * This will completely replace any existing {@code streamIds} value with a
 	 * new array with a single value.
 	 * </p>
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID to set
 	 */
@@ -381,7 +383,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the stream IDs.
-	 * 
+	 *
 	 * @param streamIds
 	 *        the location IDs to set
 	 */
@@ -396,7 +398,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the "most recent" flag.
-	 * 
+	 *
 	 * @param mostRecent
 	 *        the "most recent" flag to set
 	 */
@@ -406,7 +408,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Toggle the "without total results" mode.
-	 * 
+	 *
 	 * @param mode
 	 *        the mode to set
 	 */
@@ -426,7 +428,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the aggregation level to use.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation to set
 	 */
@@ -441,7 +443,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the partial aggregation to include.
-	 * 
+	 *
 	 * @param partialAggregation
 	 *        the partialAggregation to set
 	 */
@@ -462,7 +464,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the datum rollup types.
-	 * 
+	 *
 	 * @param datumRollupTypes
 	 *        the types to set
 	 */
@@ -477,7 +479,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the reading type.
-	 * 
+	 *
 	 * @param readingType
 	 *        the type to set
 	 */
@@ -492,7 +494,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the time tolerance.
-	 * 
+	 *
 	 * @param timeTolerance
 	 *        the period to set
 	 */
@@ -507,7 +509,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the object kind.
-	 * 
+	 *
 	 * @param objectKind
 	 *        the object kind to set
 	 */
@@ -522,7 +524,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the datum auxiliary type.
-	 * 
+	 *
 	 * @param datumAuxiliaryType
 	 *        the type to set
 	 */
@@ -537,7 +539,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the combining type.
-	 * 
+	 *
 	 * @param combiningType
 	 *        the type to set
 	 */
@@ -552,7 +554,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the object ID mappings.
-	 * 
+	 *
 	 * @param objectIdMappings
 	 *        the objectIdMappings to set
 	 */
@@ -562,7 +564,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the object ID mappings as an encoded string array.
-	 * 
+	 *
 	 * @param mappings
 	 *        the mapping values
 	 * @see ObjectMappingCriteria#mappingsFrom(String[])
@@ -578,7 +580,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the source ID mappings.
-	 * 
+	 *
 	 * @param sourceIdMappings
 	 *        the sourceIdMappings to set
 	 */
@@ -588,7 +590,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the source ID mappings as an encoded string array.
-	 * 
+	 *
 	 * @param mappings
 	 *        the mapping values
 	 * @see SourceMappingCriteria#mappingsFrom(String[])
@@ -605,7 +607,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the {@code propertyNames} array,
@@ -613,7 +615,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * {@code propertyNames} value with a new array containing just the name
 	 * passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 1.2
@@ -630,7 +632,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the property names.
-	 * 
+	 *
 	 * @param propertyNames
 	 *        the names to set
 	 * @since 1.2
@@ -647,7 +649,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single instantaneous property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the
@@ -655,7 +657,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * this method replaces any existing {@code instantaneousPropertyNames}
 	 * value with a new array containing just the name passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 1.2
@@ -672,7 +674,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the instantaneous property names.
-	 * 
+	 *
 	 * @param propertyNames
 	 *        the names to set
 	 * @since 1.2
@@ -689,7 +691,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single accumulating property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the
@@ -697,7 +699,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * method replaces any existing {@code accumulatingPropertyNames} value with
 	 * a new array containing just the name passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 1.2
@@ -714,7 +716,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the accumulating property names.
-	 * 
+	 *
 	 * @param propertyNames
 	 *        the names to set
 	 * @since 1.2
@@ -731,7 +733,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single status property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the {@code statusPropertyNames}
@@ -739,7 +741,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * {@code statusPropertyNames} value with a new array containing just the
 	 * name passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 1.2
@@ -756,13 +758,35 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the status property names.
-	 * 
+	 *
 	 * @param propertyNames
 	 *        the names to set
 	 * @since 1.2
 	 */
 	public void setStatusPropertyNames(String[] statusPropertyNames) {
 		this.statusPropertyNames = statusPropertyNames;
+	}
+
+	/**
+	 * Get a mapping of source IDs to associated scale factors to apply.
+	 *
+	 * @return the source ID scale factor mappings
+	 * @since 1.3
+	 */
+	@Override
+	public Map<String, BigDecimal> getSourceIdScaleFactorMappings() {
+		return sourceIdScaleFactorMappings;
+	}
+
+	/**
+	 * Set a mapping of source IDs to associated scale factors to apply.
+	 *
+	 * @param sourceIdScaleFactorMappings
+	 *        the source ID scale factor mappings
+	 * @since 1.3
+	 */
+	public void setSourceIdScaleFactorMappings(Map<String, BigDecimal> sourceIdScaleFactorMappings) {
+		this.sourceIdScaleFactorMappings = sourceIdScaleFactorMappings;
 	}
 
 }
