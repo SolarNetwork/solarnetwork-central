@@ -65,6 +65,8 @@ import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ChargePointBroker;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
 
@@ -75,8 +77,8 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 1.0
  */
-public class CentralOcppNodeInstructionManager
-		implements AsyncProcessor<ChargePointIdentity>, ServiceLifecycleObserver, CentralOcppUserEvents {
+public class CentralOcppNodeInstructionManager implements AsyncProcessor<ChargePointIdentity>,
+		ServiceLifecycleObserver, CentralOcppUserEvents, PingTest {
 
 	/**
 	 * A delayed charge point identifier.
@@ -122,7 +124,7 @@ public class CentralOcppNodeInstructionManager
 
 		@Override
 		public long getDelay(TimeUnit unit) {
-			return ready.until(clock.instant(), unit.toChronoUnit());
+			return clock.instant().until(ready, unit.toChronoUnit());
 		}
 
 	}
@@ -214,12 +216,17 @@ public class CentralOcppNodeInstructionManager
 
 	@Override
 	public void asyncProcessItem(ChargePointIdentity item) {
+		stats.increment(CentralOcppNodeInstructionStatusCount.ItemsAdded);
 		queue.offer(new DelayedChargePointIdentifier(item));
 	}
 
 	@Override
 	public boolean cancelAsyncProcessItem(ChargePointIdentity item) {
-		return queue.remove(new DelayedChargePointIdentifier(item));
+		boolean result = queue.remove(new DelayedChargePointIdentifier(item));
+		if ( result ) {
+			stats.increment(CentralOcppNodeInstructionStatusCount.ItemsRemoved);
+		}
+		return result;
 	}
 
 	private class ProcessorThread extends Thread {
@@ -375,6 +382,7 @@ public class CentralOcppNodeInstructionManager
 			}
 
 			// this instruction is for this charge point... send it now
+			stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsProcessed);
 			OcppInstructionUtils.decodeJsonOcppInstructionMessage(objectMapper, action, params,
 					actionPayloadDecoder, (e, jsonPayload, payload) -> {
 						if ( e != null ) {
@@ -403,6 +411,8 @@ public class CentralOcppNodeInstructionManager
 								UUID.randomUUID().toString(), action, payload);
 						chargePointBroker.sendMessageToChargePoint(message, (msg, res, err) -> {
 							if ( err != null ) {
+								stats.increment(
+										CentralOcppNodeInstructionStatusCount.InstructionsFailed);
 								Throwable root = err;
 								while ( root.getCause() != null ) {
 									root = root.getCause();
@@ -422,6 +432,7 @@ public class CentralOcppNodeInstructionManager
 									resultParameters = JsonUtils
 											.getStringMapFromTree(objectMapper.valueToTree(res));
 								}
+								stats.increment(CentralOcppNodeInstructionStatusCount.InstructionsSent);
 								if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(),
 										cp.getNodeId(), InstructionState.Executing,
 										InstructionState.Completed, resultParameters) ) {
@@ -499,6 +510,56 @@ public class CentralOcppNodeInstructionManager
 				// ignore and continue
 			}
 		}
+	}
+
+	@Override
+	public String getPingTestId() {
+		return getClass().getName();
+	}
+
+	@Override
+	public String getPingTestName() {
+		return stats.getDisplayName();
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		final Map<String, Long> statMap = stats.allCounts();
+		// verify buffer removals does not lag additions
+		final long addCount = statMap
+				.containsKey(CentralOcppNodeInstructionStatusCount.ItemsAdded.name())
+						? statMap.get(CentralOcppNodeInstructionStatusCount.ItemsAdded.name())
+						: 0L;
+		final long removeLag = addCount
+				- (statMap.containsKey(CentralOcppNodeInstructionStatusCount.ItemsRemoved.name())
+						? statMap.get(CentralOcppNodeInstructionStatusCount.ItemsRemoved.name())
+						: 0L);
+		final ProcessorThread t = this.thread;
+		final boolean writerRunning = t != null && t.isAlive();
+		if ( removeLag > removalLagAlertThreshold ) {
+			return new PingTestResult(false,
+					format("Removal lag %d > %d", removeLag, removalLagAlertThreshold), statMap);
+		}
+		if ( !writerRunning ) {
+			return new PingTestResult(false,
+					(t == null ? "Writer thread missing." : "Writer thread dead."), statMap);
+		}
+		return new PingTestResult(true, format("Processed %d updates; lag %d.", addCount, removeLag),
+				statMap);
+	}
+
+	/**
+	 * Get the stats.
+	 * 
+	 * @return the stats
+	 */
+	public StatTracker getStats() {
+		return stats;
 	}
 
 	/**

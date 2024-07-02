@@ -56,6 +56,8 @@ import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
 import net.solarnetwork.ocpp.service.ErrorCodeResolver;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
 
@@ -66,8 +68,8 @@ import net.solarnetwork.util.StatTracker;
  * @version 2.8
  * @since 1.1
  */
-public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
-		extends OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver, CentralOcppUserEvents {
+public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action> extends
+		OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver, CentralOcppUserEvents, PingTest {
 
 	/** The {@code shutdownTaskMaxWait} property default value (1 minute). */
 	public static final Duration DEFAULT_SHUTDOWN_TASK_MAX_WAIT = Duration.ofMinutes(1);
@@ -77,6 +79,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 	private final Clock clock;
 	private final StatTracker instructionStats;
+	private final String pingTestId;
+	private final String pingTestName;
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -175,7 +179,9 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 				subProtocols);
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.instructionStats = requireNonNullArgument(instructionStats, "instructionStats");
-
+		this.pingTestId = CentralOcppWebSocketHandler.class.getName() + "-"
+				+ arrayToCommaDelimitedString(subProtocols);
+		this.pingTestName = "OCPP WebSocket Handler " + arrayToCommaDelimitedString(subProtocols);
 	}
 
 	@Override
@@ -185,6 +191,8 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		instructionManager = new CentralOcppNodeInstructionManager(clock, instructionStats,
 				new DelayQueueSet<>(64), this::chargePointAction, getObjectMapper(),
 				getCentralServiceActionPayloadDecoder(), this, chargePointDao, instructionDao);
+		instructionManager.setInstructionTopic(instructionTopic);
+		instructionManager.setUserEventAppenderBiz(userEventAppenderBiz);
 		instructionManager.serviceDidStartup();
 	}
 
@@ -407,6 +415,30 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			LogEventInfo event = new LogEventInfo(tags, message, dataStr);
 			biz.addEvent(userId, event);
 		});
+	}
+
+	@Override
+	public String getPingTestId() {
+		return pingTestId;
+	}
+
+	@Override
+	public String getPingTestName() {
+		return pingTestName;
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		final var manager = this.instructionManager;
+		if ( manager == null ) {
+			return new PingTestResult(true, null);
+		}
+		return manager.performPingTest();
 	}
 
 	/**

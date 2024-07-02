@@ -48,6 +48,12 @@ public enum CentralOcppNodeInstructionStatusCount {
 	/** Node instructions processed. */
 	InstructionsProcessed,
 
+	/** Node instructions sent to chargers. */
+	InstructionsSent,
+
+	/** Node instructions failed to send to chargers. */
+	InstructionsFailed,
+
 	;
 
 }
