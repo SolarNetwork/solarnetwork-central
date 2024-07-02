@@ -53,7 +53,7 @@ import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
  * class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class UpsertChargePointIdentifierConnectionStatusTests {
@@ -74,16 +74,16 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 	}
 
 	private void thenPrepStatement(PreparedStatement result, Long userId, String chargePointIdentifier,
-			ChargePointStatus status) throws SQLException {
+			ChargePointStatus status, boolean connected) throws SQLException {
 		int p = 0;
-		if ( status.getConnectedDate() != null ) {
+		if ( connected ) {
 			then(result).should().setString(++p, status.getConnectedTo());
 			then(result).should().setString(++p, status.getSessionId());
-			then(result).should().setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		}
+		then(result).should().setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		then(result).should().setObject(++p, userId);
 		then(result).should().setString(++p, chargePointIdentifier);
-		if ( status.getConnectedDate() == null ) {
+		if ( !connected ) {
 			then(result).should().setString(++p, status.getConnectedTo());
 			then(result).should().setString(++p, status.getSessionId());
 		}
@@ -101,7 +101,8 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 				Instant.now(), instanceId, sessionId, connDate);
 
 		// WHEN
-		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent, status).getSql();
+		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent, status, true)
+				.getSql();
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sql);
@@ -124,7 +125,7 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 
 		// WHEN
 		PreparedStatement result = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent,
-				status).createPreparedStatement(con);
+				status, true).createPreparedStatement(con);
 
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
@@ -132,7 +133,7 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		assertThat("Generated SQL", sqlCaptor.getValue(), equalToTextResource(
 				"upsert-cpstatus-ident-date.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		thenPrepStatement(result, userId, cpIdent, status);
+		thenPrepStatement(result, userId, cpIdent, status, true);
 	}
 
 	@Test
@@ -142,10 +143,11 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		final String cpIdent = UUID.randomUUID().toString();
 		final String sessionId = UUID.randomUUID().toString();
 		final ChargePointStatus status = new ChargePointStatus(unassignedEntityIdKey(userId),
-				Instant.now(), null, sessionId, null);
+				Instant.now(), null, sessionId, Instant.now());
 
 		// WHEN
-		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent, status).getSql();
+		String sql = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent, status, false)
+				.getSql();
 
 		// THEN
 		log.debug("Generated SQL:\n{}", sql);
@@ -160,13 +162,13 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		final String cpIdent = UUID.randomUUID().toString();
 		final String sessionId = UUID.randomUUID().toString();
 		final ChargePointStatus status = new ChargePointStatus(unassignedEntityIdKey(userId),
-				Instant.now(), null, sessionId, null);
+				Instant.now(), null, sessionId, Instant.now());
 
 		givenPrepStatement();
 
 		// WHEN
 		PreparedStatement result = new UpsertChargePointIdentifierConnectionStatus(userId, cpIdent,
-				status).createPreparedStatement(con);
+				status, false).createPreparedStatement(con);
 
 		// THEN
 		then(con).should().prepareStatement(sqlCaptor.capture());
@@ -174,7 +176,7 @@ public class UpsertChargePointIdentifierConnectionStatusTests {
 		assertThat("Generated SQL", sqlCaptor.getValue(),
 				equalToTextResource("upsert-cpstatus-ident.sql", TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
-		thenPrepStatement(result, userId, cpIdent, status);
+		thenPrepStatement(result, userId, cpIdent, status, false);
 	}
 
 }

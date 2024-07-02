@@ -23,13 +23,10 @@
 package net.solarnetwork.central.ocpp.dao.jdbc.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import java.sql.Timestamp;
@@ -56,7 +53,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link JdbcChargePointStatusDao} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -112,7 +109,8 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		final Instant connDate = Instant.now().truncatedTo(ChronoUnit.HOURS);
 
 		// WHEN
-		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId, connDate);
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId, connDate,
+				true);
 
 		// THEN
 		List<Map<String, Object>> data = allChargePointStatusData();
@@ -136,7 +134,9 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		insertChargerStatus(TEST_USER_ID, TEST_CHARGER_ID, instanceId, sessionId, connDate);
 
 		// WHEN
-		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId, null);
+		final Instant disconnDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId, disconnDate,
+				false);
 
 		// THEN
 		List<Map<String, Object>> data = allChargePointStatusData();
@@ -146,9 +146,9 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		assertThat("Row charger ID matches", row, hasEntry("cp_id", TEST_CHARGER_ID));
 		assertThat("Row connected to missing", row.get("connected_to"), is(nullValue()));
 		assertThat("Row session ID missing", row.get("session_id"), is(nullValue()));
-		assertThat("Row connected date updated to 'now' (within a few ms of now)",
-				Instant.now().toEpochMilli() - ((Timestamp) row.get("connected_date")).getTime(),
-				is(allOf(greaterThanOrEqualTo(-900L), lessThan(900L))));
+		assertThat("Row connected date updated to disconnDate",
+				((Timestamp) row.get("connected_date")).getTime(),
+				is(equalTo(disconnDate.toEpochMilli())));
 	}
 
 	@Test
@@ -160,8 +160,10 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 		insertChargerStatus(TEST_USER_ID, TEST_CHARGER_ID, instanceId, sessionId, connDate);
 
 		// WHEN
+		final Instant disconnDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		final String sessionId2 = UUID.randomUUID().toString();
-		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId2, null);
+		dao.updateConnectionStatus(TEST_USER_ID, TEST_CHARGER_IDENT, instanceId, sessionId2, disconnDate,
+				false);
 
 		// THEN
 		List<Map<String, Object>> data = allChargePointStatusData();
@@ -192,7 +194,7 @@ public class JdbcChargePointStatusDaoTests extends AbstractJUnit5JdbcDaoTestSupp
 			String sessionId = UUID.randomUUID().toString();
 			sessionIds.add(sessionId);
 			dao.updateConnectionStatus(TEST_USER_ID, chargerIdent, instanceId, sessionId,
-					clock.instant());
+					clock.instant(), true);
 			clock.add(1, ChronoUnit.SECONDS);
 		}
 

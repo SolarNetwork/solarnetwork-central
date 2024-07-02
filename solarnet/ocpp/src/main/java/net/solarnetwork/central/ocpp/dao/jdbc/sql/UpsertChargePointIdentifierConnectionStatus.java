@@ -55,17 +55,20 @@ public class UpsertChargePointIdentifierConnectionStatus
 	 *        the charge point identifier
 	 * @param status
 	 *        the status data
+	 * @param connected
+	 *        {@literal true} if connected, {@literal false} if disconnected
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public UpsertChargePointIdentifierConnectionStatus(Long userId, String chargePointIdentifier,
-			ChargePointStatus status) {
+			ChargePointStatus status, boolean connected) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.chargePointIdentifier = requireNonNullArgument(chargePointIdentifier,
 				"chargePointIdentifier");
 		this.status = requireNonNullArgument(status, "status");
-		this.connected = (status.getConnectedTo() != null && status.getConnectedDate() != null);
+		requireNonNullArgument(status.getConnectedDate(), "status.connectedDate");
+		this.connected = connected;
 	}
 
 	@Override
@@ -87,7 +90,7 @@ public class UpsertChargePointIdentifierConnectionStatus
 		} else {
 			buf.append("""
 					SELECT cp.user_id, cp.id, NULL::TEXT AS connected_to, NULL::TEXT AS session_id
-						, CURRENT_TIMESTAMP AS connected_date
+						, ? AS connected_date
 					FROM solarev.ocpp_charge_point cp
 					INNER JOIN solarev.ocpp_charge_point_status cps
 						ON cps.user_id = cp.user_id AND cps.cp_id = cp.id
@@ -111,8 +114,8 @@ public class UpsertChargePointIdentifierConnectionStatus
 		if ( connected ) {
 			ps.setString(++p, status.getConnectedTo());
 			ps.setString(++p, status.getSessionId());
-			ps.setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		}
+		ps.setTimestamp(++p, Timestamp.from(status.getConnectedDate()));
 		ps.setObject(++p, userId);
 		ps.setString(++p, chargePointIdentifier);
 		if ( !connected ) {

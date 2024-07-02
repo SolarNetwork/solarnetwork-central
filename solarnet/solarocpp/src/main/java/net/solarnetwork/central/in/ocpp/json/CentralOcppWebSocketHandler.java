@@ -76,7 +76,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
@@ -216,7 +216,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					if ( statusDao != null ) {
 						try {
 							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-									appMeta.getInstanceId(), session.getId(), Instant.now());
+									appMeta.getInstanceId(), session.getId(), Instant.now(), true);
 						} catch ( RuntimeException e ) {
 							log.error("Error updating charger {} connection status", clientId, e);
 						}
@@ -242,7 +242,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					if ( statusDao != null ) {
 						try {
 							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-									appMeta.getInstanceId(), session.getId(), null);
+									appMeta.getInstanceId(), session.getId(), Instant.now(), false);
 						} catch ( RuntimeException e ) {
 							log.error("Error updating charger {} disconnection status", clientId, e);
 						}
@@ -517,19 +517,22 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	}
 
 	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
-		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
-		if ( biz == null ) {
-			return;
-		}
-		String dataStr;
-		try {
-			dataStr = (data instanceof String ? (String) data
-					: getObjectMapper().writeValueAsString(data));
-		} catch ( JsonProcessingException e ) {
-			dataStr = null;
-		}
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
-		biz.addEvent(userId, event);
+		// bump to executor to not block processor thread
+		executor.execute(() -> {
+			final UserEventAppenderBiz biz = getUserEventAppenderBiz();
+			if ( biz == null ) {
+				return;
+			}
+			String dataStr;
+			try {
+				dataStr = (data instanceof String ? (String) data
+						: getObjectMapper().writeValueAsString(data));
+			} catch ( JsonProcessingException e ) {
+				dataStr = null;
+			}
+			LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+			biz.addEvent(userId, event);
+		});
 	}
 
 	/**

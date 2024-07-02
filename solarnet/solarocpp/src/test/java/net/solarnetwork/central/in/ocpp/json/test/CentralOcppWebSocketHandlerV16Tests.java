@@ -30,7 +30,6 @@ import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
@@ -83,7 +82,7 @@ import ocpp.v16.jakarta.cs.StatusNotificationRequest;
  * Test cases for the {@link CentralOcppWebSocketHandler} class.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @ExtendWith(MockitoExtension.class)
 public class CentralOcppWebSocketHandlerV16Tests {
@@ -159,7 +158,7 @@ public class CentralOcppWebSocketHandlerV16Tests {
 		// THEN
 		then(chargePointStatusDao).should().updateConnectionStatus(eq(userId),
 				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), eq(sessionId),
-				dateCaptor.capture());
+				dateCaptor.capture(), eq(true));
 		assertThat("Status data is close to now",
 				System.currentTimeMillis() - dateCaptor.getValue().toEpochMilli(),
 				is(lessThanOrEqualTo(SECONDS.toMillis(2))));
@@ -194,7 +193,11 @@ public class CentralOcppWebSocketHandlerV16Tests {
 
 		// THEN
 		then(chargePointStatusDao).should().updateConnectionStatus(eq(userId),
-				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), eq(sessionId), isNull());
+				eq(cpIdentity.getIdentifier()), eq(APP_META.getInstanceId()), eq(sessionId),
+				dateCaptor.capture(), eq(false));
+		assertThat("Status data is close to now",
+				System.currentTimeMillis() - dateCaptor.getValue().toEpochMilli(),
+				is(lessThanOrEqualTo(SECONDS.toMillis(2))));
 
 		then(userEventAppenderBiz).should().addEvent(eq(userId), logEventCaptor.capture());
 		LogEventInfo event = logEventCaptor.getValue();

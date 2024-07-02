@@ -35,6 +35,8 @@ app:
     stat-log-update-count: 1000
     update-delay: 0
     buffer-removal-lag-alert-threshold: 1000
+  ocpp.async-status-updater:
+    flush-delay: "3s"
   ocpp.v16:
     cs:
       boot-notification:
