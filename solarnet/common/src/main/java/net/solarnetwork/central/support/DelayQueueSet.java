@@ -38,7 +38,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * FIXME
+ * A combination of {@link BlockingQueue} and {@link Set}.
  * 
  * <p>
  * Adapted from {@linkjava.util.concurrent.DelayQueue}
