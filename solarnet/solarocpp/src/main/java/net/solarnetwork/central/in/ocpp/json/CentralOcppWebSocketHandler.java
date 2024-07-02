@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.ocpp.json;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -125,8 +126,9 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			ActionPayloadDecoder centralServiceActionPayloadDecoder,
 			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
 		this(Clock.systemUTC(),
-				new StatTracker("ChargePointActionStatusUpdater", null,
-						LoggerFactory.getLogger(CentralOcppWebSocketHandler.class),
+				new StatTracker(
+						"ChargePointInstructionProcessor-" + arrayToCommaDelimitedString(subProtocols),
+						null, LoggerFactory.getLogger(CentralOcppWebSocketHandler.class),
 						CentralOcppNodeInstructionManager.DEFAULT_STAT_LOG_UPDATE_COUNT),
 				chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
 				pendingMessageQueue, centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,

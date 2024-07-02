@@ -463,7 +463,7 @@ public class CentralOcppNodeInstructionManager
 	public synchronized void enableProcessor() {
 		if ( thread == null || !thread.isGoing() ) {
 			thread = new ProcessorThread();
-			thread.setName("OcppNodeInstructionManager");
+			thread.setName(stats.getDisplayName());
 			synchronized ( thread ) {
 				thread.start();
 				while ( !thread.hasStarted() ) {
