@@ -58,8 +58,6 @@ import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
 import net.solarnetwork.ocpp.service.ErrorCodeResolver;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
-import net.solarnetwork.service.PingTest;
-import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
 
@@ -72,7 +70,7 @@ import net.solarnetwork.util.StatTracker;
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
 		extends OcppWebSocketHandler<C, S>
-		implements ServiceLifecycleObserver, CentralOcppUserEvents, PingTest, SmartLifecycle {
+		implements ServiceLifecycleObserver, CentralOcppUserEvents, SmartLifecycle {
 
 	/** The {@code shutdownTaskMaxWait} property default value (1 minute). */
 	public static final Duration DEFAULT_SHUTDOWN_TASK_MAX_WAIT = Duration.ofMinutes(1);
@@ -84,9 +82,6 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
 
 	private final Clock clock;
-	private final StatTracker stats;
-	private final String pingTestId;
-	private final String pingTestName;
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -136,8 +131,9 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			ActionPayloadDecoder centralServiceActionPayloadDecoder,
 			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
 		this(Clock.systemUTC(),
-				new StatTracker(
-						"CentralOcppWebSocketHandler-" + arrayToCommaDelimitedString(subProtocols), null,
+				new StatTracker("OCPP WebSocket Handler " + arrayToCommaDelimitedString(subProtocols),
+						CentralOcppWebSocketHandler.class.getName() + "-"
+								+ arrayToCommaDelimitedString(subProtocols),
 						LoggerFactory.getLogger(CentralOcppWebSocketHandler.class),
 						DEFAULT_STAT_LOG_UPDATE_COUNT),
 				chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
@@ -179,14 +175,10 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			AsyncTaskExecutor executor, ObjectMapper mapper, ActionMessageQueue pendingMessageQueue,
 			ActionPayloadDecoder centralServiceActionPayloadDecoder,
 			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
-		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
-				pendingMessageQueue, centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
-				subProtocols);
+		super(stats, chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor,
+				mapper, pendingMessageQueue, centralServiceActionPayloadDecoder,
+				chargePointActionPayloadDecoder, subProtocols);
 		this.clock = requireNonNullArgument(clock, "clock");
-		this.stats = requireNonNullArgument(stats, "stats");
-		this.pingTestId = CentralOcppWebSocketHandler.class.getName() + "-"
-				+ arrayToCommaDelimitedString(subProtocols);
-		this.pingTestName = "OCPP WebSocket Handler " + arrayToCommaDelimitedString(subProtocols);
 	}
 
 	@Override
@@ -256,7 +248,6 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 		super.afterConnectionEstablished(session);
-		stats.increment(CentralOcppStatusCount.ChargePointsConnected);
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
 			if ( clientId.getUserIdentifier() instanceof Long userId ) {
@@ -285,7 +276,6 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-		stats.increment(CentralOcppStatusCount.ChargePointsDisconnected);
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
 			final var eventPublisher = getEventPublisher();
@@ -432,30 +422,6 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			LogEventInfo event = new LogEventInfo(tags, message, dataStr);
 			biz.addEvent(userId, event);
 		});
-	}
-
-	@Override
-	public String getPingTestId() {
-		return pingTestId;
-	}
-
-	@Override
-	public String getPingTestName() {
-		return pingTestName;
-	}
-
-	@Override
-	public long getPingTestMaximumExecutionMilliseconds() {
-		return 1000;
-	}
-
-	@Override
-	public Result performPingTest() throws Exception {
-		Map<String, Long> statMap = stats.allCounts();
-		statMap.put(CentralOcppStatusCount.ChargePointActiveConnections.name(),
-				(long) availableChargePointsIds().size());
-		return new PingTestResult(true, "WebSocket processor " + (isStarted() ? "started" : "stopped."),
-				statMap);
 	}
 
 	/**
