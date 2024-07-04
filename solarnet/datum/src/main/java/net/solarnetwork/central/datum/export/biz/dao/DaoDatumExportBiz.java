@@ -354,54 +354,56 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 								.toInstant());
 			}
 
-			try (DatumExportOutputFormatService.ExportContext exportContext = outputService
-					.createExportContext(config.getOutputConfiguration())) {
+			return doWithinOptionalTransaction(() -> {
+				try (DatumExportOutputFormatService.ExportContext exportContext = outputService
+						.createExportContext(config.getOutputConfiguration())) {
 
-				BasicBulkExportOptions options = new BasicBulkExportOptions(DATUM_EXPORT_NAME,
-						singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
+					BasicBulkExportOptions options = new BasicBulkExportOptions(DATUM_EXPORT_NAME,
+							singletonMap(DatumEntityDao.EXPORT_PARAMETER_DATUM_CRITERIA, filter));
 
-				final QueryAuditor auditor = queryAuditor;
-				if ( auditor != null ) {
-					auditor.resetCurrentAuditResults();
+					final QueryAuditor auditor = queryAuditor;
+					if ( auditor != null ) {
+						auditor.resetCurrentAuditResults();
+					}
+
+					// all exported data will be audited on the hour we start the export at
+					GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
+					auditDatumKey.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
+
+					datumDao.bulkExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+
+						@Override
+						public void didBegin(Long totalResultCountEstimate) {
+							try {
+								exportContext.start(
+										totalResultCountEstimate != null ? totalResultCountEstimate
+												: COUNT_UNKNOWN);
+							} catch ( IOException e ) {
+								throw new DatumExportException(info.getId(), e.getMessage(), e);
+							}
+						}
+
+						@Override
+						public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
+							if ( d != null && d.getId() != null && auditor != null ) {
+								auditDatumKey.setNodeId(d.getId().getNodeId());
+								auditDatumKey.setSourceId(d.getId().getSourceId());
+								auditor.addNodeDatumAuditResults(singletonMap(auditDatumKey, 1));
+							}
+							try {
+								exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
+							} catch ( IOException e ) {
+								throw new DatumExportException(info.getId(), e.getMessage(), e);
+							}
+							return ExportCallbackAction.CONTINUE;
+						}
+					}, options);
+
+					return exportContext.finish();
+				} catch ( IOException e ) {
+					throw new DatumExportException(info.getId(), e.getMessage(), e);
 				}
-
-				// all exported data will be audited on the hour we start the export at
-				GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
-				auditDatumKey.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-
-				datumDao.bulkExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
-
-					@Override
-					public void didBegin(Long totalResultCountEstimate) {
-						try {
-							exportContext
-									.start(totalResultCountEstimate != null ? totalResultCountEstimate
-											: COUNT_UNKNOWN);
-						} catch ( IOException e ) {
-							throw new DatumExportException(info.getId(), e.getMessage(), e);
-						}
-					}
-
-					@Override
-					public ExportCallbackAction handle(GeneralNodeDatumFilterMatch d) {
-						if ( d != null && d.getId() != null && auditor != null ) {
-							auditDatumKey.setNodeId(d.getId().getNodeId());
-							auditDatumKey.setSourceId(d.getId().getSourceId());
-							auditor.addNodeDatumAuditResults(singletonMap(auditDatumKey, 1));
-						}
-						try {
-							exportContext.appendDatumMatch(singleton(d), DatumExportTask.this);
-						} catch ( IOException e ) {
-							throw new DatumExportException(info.getId(), e.getMessage(), e);
-						}
-						return ExportCallbackAction.CONTINUE;
-					}
-				}, options);
-
-				return exportContext.finish();
-			} catch ( IOException e ) {
-				throw new DatumExportException(info.getId(), e.getMessage(), e);
-			}
+			});
 		}
 
 		private AggregateGeneralNodeDatumFilter policyEnforcer(

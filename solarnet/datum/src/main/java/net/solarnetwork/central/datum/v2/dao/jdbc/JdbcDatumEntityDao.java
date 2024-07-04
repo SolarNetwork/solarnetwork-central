@@ -69,8 +69,6 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -146,7 +144,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -684,7 +682,6 @@ public class JdbcDatumEntityDao
 		}
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public ObjectDatumStreamFilterResults<ReadingDatum, DatumPK> findDatumReadingFiltered(
 			DatumCriteria filter) {
@@ -730,7 +727,6 @@ public class JdbcDatumEntityDao
 
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
 	public ExportResult bulkExport(ExportCallback<GeneralNodeDatumFilterMatch> callback,
 			ExportOptions options) {
@@ -766,7 +762,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/
