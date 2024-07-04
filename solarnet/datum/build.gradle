@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.10.0'
+version = '2.10.1'
 
 base {
 	archivesName = 'solarnet-datum'

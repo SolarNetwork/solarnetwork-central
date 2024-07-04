@@ -178,7 +178,7 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 						}
 					}
 					return null;
-				}, objectMapper, centralServiceActionPayloadDecoder, broker, ocppCentralChargePointDao,
+				}, objectMapper, chargePointActionPayloadDecoder, broker, ocppCentralChargePointDao,
 				nodeInstructionDao);
 		provider.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
 
