@@ -22,22 +22,19 @@
 
 package net.solarnetwork.central.in.ocpp.json;
 
-import static java.lang.String.format;
-import static java.util.Collections.singletonMap;
-import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_ACTION_PARAM;
-import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGER_IDENTIFIER_PARAM;
-import static net.solarnetwork.central.ocpp.util.OcppInstructionUtils.OCPP_CHARGE_POINT_ID_PARAM;
+import static net.solarnetwork.central.ocpp.domain.OcppAppEvents.connectionEvent;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
@@ -45,23 +42,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
-import net.solarnetwork.central.instructor.domain.Instruction;
-import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
-import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
-import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
-import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.ocpp.domain.Action;
-import net.solarnetwork.ocpp.domain.ActionMessage;
-import net.solarnetwork.ocpp.domain.BasicActionMessage;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.ErrorCode;
@@ -70,17 +58,21 @@ import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.service.ActionMessageQueue;
 import net.solarnetwork.ocpp.service.ErrorCodeResolver;
 import net.solarnetwork.ocpp.web.jakarta.json.OcppWebSocketHandler;
+import net.solarnetwork.service.PingTest;
+import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Extension of {@link OcppWebSocketHandler} to support queued instructions.
  * 
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 1.1
  */
 public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends Enum<S> & Action>
-		extends OcppWebSocketHandler<C, S> implements ServiceLifecycleObserver, CentralOcppUserEvents {
+		extends OcppWebSocketHandler<C, S>
+		implements ServiceLifecycleObserver, CentralOcppUserEvents, PingTest, SmartLifecycle {
 
 	/** The {@code shutdownTaskMaxWait} property default value (1 minute). */
 	public static final Duration DEFAULT_SHUTDOWN_TASK_MAX_WAIT = Duration.ofMinutes(1);
@@ -88,6 +80,13 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	/** The {@code shutdownTaskPostDelay} property default value (5 seconds). */
 	public static final Duration DEFAULT_SHUTDOWN_TASK_POST_DELAY = Duration.ofSeconds(5);
 
+	/** The default value for the statistic logging. */
+	public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
+
+	private final Clock clock;
+	private final StatTracker stats;
+	private final String pingTestId;
+	private final String pingTestName;
 	private CentralChargePointDao chargePointDao;
 	private NodeInstructionDao instructionDao;
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -97,6 +96,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	private ApplicationMetadata applicationMetadata;
 	private String instructionTopic;
 
+	private AppEventPublisher eventPublisher;
 	private CountDownLatch shutdownTaskLatch;
 	private Duration shutdownTaskMaxWait = DEFAULT_SHUTDOWN_TASK_MAX_WAIT;
 	private Duration shutdownTaskPostDelay = DEFAULT_SHUTDOWN_TASK_POST_DELAY;
@@ -104,31 +104,10 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	/**
 	 * Constructor.
 	 * 
-	 * @param chargePointActionClass
-	 *        the charge point action class
-	 * @param centralSystemActionClass
-	 *        the central system action class
-	 * @param errorCodeResolver
-	 *        the error code resolver
-	 * @param executor
-	 *        an executor for tasks
-	 * @param mapper
-	 *        the mapper
-	 * @param subProtocols
-	 *        the WebSocket sub-protocols
-	 * @param mapper
-	 *        the object mapper to use
-	 */
-	public CentralOcppWebSocketHandler(Class<C> chargePointActionClass,
-			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
-			AsyncTaskExecutor executor, ObjectMapper mapper, String... subProtocols) {
-		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
-				subProtocols);
-	}
-
-	/**
-	 * Constructor.
-	 * 
+	 * @param clock
+	 *        the clock to use
+	 * @param instructionStats
+	 *        the stats to use
 	 * @param chargePointActionClass
 	 *        the charge point action class
 	 * @param centralSystemActionClass
@@ -156,20 +135,90 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			AsyncTaskExecutor executor, ObjectMapper mapper, ActionMessageQueue pendingMessageQueue,
 			ActionPayloadDecoder centralServiceActionPayloadDecoder,
 			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
-		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
+		this(Clock.systemUTC(),
+				new StatTracker(
+						"CentralOcppWebSocketHandler-" + arrayToCommaDelimitedString(subProtocols), null,
+						LoggerFactory.getLogger(CentralOcppWebSocketHandler.class),
+						DEFAULT_STAT_LOG_UPDATE_COUNT),
+				chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
 				pendingMessageQueue, centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
 				subProtocols);
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param clock
+	 *        the clock to use
+	 * @param stats
+	 *        the stats to use
+	 * @param chargePointActionClass
+	 *        the charge point action class
+	 * @param centralSystemActionClass
+	 *        the central system action class
+	 * @param errorCodeResolver
+	 *        the error code resolver
+	 * @param executor
+	 *        an executor for tasks
+	 * @param mapper
+	 *        the mapper
+	 * @param pendingMessageQueue
+	 *        a queue to hold pending messages, for individual client IDs
+	 * @param centralServiceActionPayloadDecoder
+	 *        the action payload decoder to use
+	 * @param chargePointActionPayloadDecoder
+	 *        for Central Service message the action payload decoder to use for
+	 *        Charge Point messages
+	 * @param subProtocols
+	 *        the WebSocket sub-protocols
+	 * @throws IllegalArgumentException
+	 *         if any parameter is {@literal null}
+	 */
+	public CentralOcppWebSocketHandler(Clock clock, StatTracker stats, Class<C> chargePointActionClass,
+			Class<S> centralSystemActionClass, ErrorCodeResolver errorCodeResolver,
+			AsyncTaskExecutor executor, ObjectMapper mapper, ActionMessageQueue pendingMessageQueue,
+			ActionPayloadDecoder centralServiceActionPayloadDecoder,
+			ActionPayloadDecoder chargePointActionPayloadDecoder, String... subProtocols) {
+		super(chargePointActionClass, centralSystemActionClass, errorCodeResolver, executor, mapper,
+				pendingMessageQueue, centralServiceActionPayloadDecoder, chargePointActionPayloadDecoder,
+				subProtocols);
+		this.clock = requireNonNullArgument(clock, "clock");
+		this.stats = requireNonNullArgument(stats, "stats");
+		this.pingTestId = CentralOcppWebSocketHandler.class.getName() + "-"
+				+ arrayToCommaDelimitedString(subProtocols);
+		this.pingTestName = "OCPP WebSocket Handler " + arrayToCommaDelimitedString(subProtocols);
+	}
+
 	@Override
 	public void serviceDidStartup() {
+		if ( isStarted() ) {
+			return;
+		}
 		shutdownTaskLatch = null;
 		super.startup();
 	}
 
 	@Override
 	public void serviceDidShutdown() {
+		if ( !isStarted() ) {
+			return;
+		}
 		super.shutdown();
+	}
+
+	@Override
+	public void start() {
+		// unused
+	}
+
+	@Override
+	public void stop() {
+		serviceDidShutdown();
+	}
+
+	@Override
+	public boolean isRunning() {
+		return isStarted();
 	}
 
 	@Override
@@ -207,6 +256,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 		super.afterConnectionEstablished(session);
+		stats.increment(CentralOcppStatusCount.ChargePointsConnected);
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
 			if ( clientId.getUserIdentifier() instanceof Long userId ) {
@@ -216,7 +266,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					if ( statusDao != null ) {
 						try {
 							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-									appMeta.getInstanceId(), session.getId(), Instant.now());
+									appMeta.getInstanceId(), session.getId(), Instant.now(), true);
 						} catch ( RuntimeException e ) {
 							log.error("Error updating charger {} connection status", clientId, e);
 						}
@@ -226,15 +276,22 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 						SESSION_ID_DATA_KEY, session.getId());
 				generateUserEvent(userId, CHARGE_POINT_CONNECTED_TAGS, null, data);
 			}
-			// look for instructions
-			executor.execute(new ProcessQueuedInstructionsTask(clientId));
+			final var eventPublisher = getEventPublisher();
+			if ( eventPublisher != null ) {
+				eventPublisher.postEvent(connectionEvent(clock.instant(), clientId, true));
+			}
 		}
 	}
 
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+		stats.increment(CentralOcppStatusCount.ChargePointsDisconnected);
 		ChargePointIdentity clientId = clientId(session);
 		if ( clientId != null ) {
+			final var eventPublisher = getEventPublisher();
+			if ( eventPublisher != null ) {
+				eventPublisher.postEvent(connectionEvent(clock.instant(), clientId, false));
+			}
 			if ( clientId.getUserIdentifier() instanceof Long userId ) {
 				final ApplicationMetadata appMeta = getApplicationMetadata();
 				if ( appMeta != null && appMeta.getInstanceId() != null ) {
@@ -242,7 +299,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 					if ( statusDao != null ) {
 						try {
 							statusDao.updateConnectionStatus(userId, clientId.getIdentifier(),
-									appMeta.getInstanceId(), session.getId(), null);
+									appMeta.getInstanceId(), session.getId(), Instant.now(), false);
 						} catch ( RuntimeException e ) {
 							log.error("Error updating charger {} disconnection status", clientId, e);
 						}
@@ -358,178 +415,47 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 		}
 	}
 
-	private class ProcessQueuedInstructionsTask implements Runnable {
-
-		private final ChargePointIdentity identity;
-
-		private ProcessQueuedInstructionsTask(ChargePointIdentity identity) {
-			super();
-			this.identity = identity;
-		}
-
-		@Override
-		public void run() {
-			final String topic = getInstructionTopic();
-			if ( chargePointDao == null || instructionDao == null || topic == null ) {
+	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+		// bump to executor to not block processor thread
+		executor.execute(() -> {
+			final UserEventAppenderBiz biz = getUserEventAppenderBiz();
+			if ( biz == null ) {
 				return;
 			}
+			String dataStr;
 			try {
-				CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identity);
-				if ( cp == null ) {
-					return;
-				}
-				SimpleInstructionFilter filter = new SimpleInstructionFilter();
-				filter.setNodeId(cp.getNodeId());
-				filter.setStateSet(EnumSet.of(InstructionState.Received));
-				FilterResults<EntityMatch> matches = instructionDao.findFiltered(filter, null, null,
-						null);
-				for ( EntityMatch match : matches ) {
-					Instruction instruction;
-					if ( match instanceof Instruction ) {
-						instruction = (Instruction) match;
-					} else {
-						instruction = instructionDao.get(match.getId());
-					}
-					if ( instruction != null && topic.equals(instruction.getTopic()) ) {
-						processInstruction(instruction, cp);
-					}
-				}
-			} catch ( Exception e ) {
-				Throwable root = e;
-				while ( root.getCause() != null ) {
-					root = root.getCause();
-				}
-				log.error("{} error processing queued instructions for charger {}: {}",
-						root.getClass().getSimpleName(), identity, root.getMessage(), e);
+				dataStr = (data instanceof String ? (String) data
+						: getObjectMapper().writeValueAsString(data));
+			} catch ( JsonProcessingException e ) {
+				dataStr = null;
 			}
-		}
-
-		private Map<String, String> instructionParameterMap(Instruction instruction) {
-			Map<String, String> params = instruction.getParams();
-			return (params != null ? params : new HashMap<>(0));
-		}
-
-		private void processInstruction(Instruction instruction, CentralChargePoint cp) {
-			Map<String, String> params = instructionParameterMap(instruction);
-			Action action = chargePointAction(params.remove(OCPP_ACTION_PARAM));
-			if ( action == null ) {
-				Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
-						"OCPP action parameter missing or not supported.");
-				if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
-						InstructionState.Received, InstructionState.Declined, data) ) {
-					generateUserEvent(cp.getUserId(), CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
-							"Unsupported action", data);
-				}
-				return;
-			}
-
-			// verify the instruction is for this charge point, first via ID
-			try {
-				String instructionChargePointId = params.remove(OCPP_CHARGE_POINT_ID_PARAM);
-				if ( instructionChargePointId != null
-						&& !cp.getId().equals(Long.valueOf(instructionChargePointId)) ) {
-					// not for this charge point
-					return;
-				}
-			} catch ( NumberFormatException e ) {
-				Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
-						"OCPP " + OCPP_CHARGE_POINT_ID_PARAM + " parameter invalid syntax.");
-				if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(), cp.getNodeId(),
-						InstructionState.Received, InstructionState.Declined, data) ) {
-					generateUserEvent(cp.getUserId(), CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
-							"Invalid charge point ID syntax", data);
-				}
-				return;
-			}
-
-			// next via identifier
-			String instructionIdentifier = params.remove(OCPP_CHARGER_IDENTIFIER_PARAM);
-			if ( instructionIdentifier != null && !instructionIdentifier.equals(cp.getInfo().getId()) ) {
-				// not for this charge point
-				return;
-			}
-
-			// this instruction is for this charge point... send it now
-			OcppInstructionUtils.decodeJsonOcppInstructionMessage(getObjectMapper(), action, params,
-					getChargePointActionPayloadDecoder(), (e, jsonPayload, payload) -> {
-						if ( e != null ) {
-							Throwable root = e;
-							while ( root.getCause() != null ) {
-								root = root.getCause();
-							}
-							Map<String, Object> data = singletonMap(ERROR_DATA_KEY,
-									"Error decoding OCPP action message: " + root.getMessage());
-							if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(),
-									cp.getNodeId(), InstructionState.Received, InstructionState.Declined,
-									data) ) {
-								generateUserEvent(cp.getUserId(), CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
-										"Invalid OCPP message syntax", data);
-							}
-							return null;
-						}
-
-						if ( !instructionDao.compareAndUpdateInstructionState(instruction.getId(),
-								cp.getNodeId(), InstructionState.Received, InstructionState.Executing,
-								null) ) {
-							return null;
-						}
-
-						ActionMessage<Object> message = new BasicActionMessage<Object>(identity,
-								UUID.randomUUID().toString(), action, payload);
-						sendMessageToChargePoint(message, (msg, res, err) -> {
-							if ( err != null ) {
-								Throwable root = err;
-								while ( root.getCause() != null ) {
-									root = root.getCause();
-								}
-								Map<String, Object> data = singletonMap(ERROR_DATA_KEY, format(
-										"Error handling OCPP action %s: %s", action, root.getMessage()));
-								if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(),
-										cp.getNodeId(), InstructionState.Executing,
-										InstructionState.Declined, data) ) {
-									generateUserEvent(cp.getUserId(),
-											CHARGE_POINT_INSTRUCTION_ERROR_TAGS,
-											"Error handling OCPP action", data);
-								}
-							} else {
-								Map<String, Object> resultParameters = null;
-								if ( res != null ) {
-									resultParameters = JsonUtils
-											.getStringMapFromTree(getObjectMapper().valueToTree(res));
-								}
-								if ( instructionDao.compareAndUpdateInstructionState(instruction.getId(),
-										cp.getNodeId(), InstructionState.Executing,
-										InstructionState.Completed, resultParameters) ) {
-									Map<String, Object> data = new HashMap<>(4);
-									data.put(ACTION_DATA_KEY, action);
-									data.put(CHARGE_POINT_DATA_KEY, identity.getIdentifier());
-									data.put(MESSAGE_DATA_KEY, resultParameters);
-									generateUserEvent(cp.getUserId(),
-											CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS, null, data);
-								}
-							}
-							return true;
-						});
-
-						return null;
-					});
-		}
+			LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+			biz.addEvent(userId, event);
+		});
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
-		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
-		if ( biz == null ) {
-			return;
-		}
-		String dataStr;
-		try {
-			dataStr = (data instanceof String ? (String) data
-					: getObjectMapper().writeValueAsString(data));
-		} catch ( JsonProcessingException e ) {
-			dataStr = null;
-		}
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
-		biz.addEvent(userId, event);
+	@Override
+	public String getPingTestId() {
+		return pingTestId;
+	}
+
+	@Override
+	public String getPingTestName() {
+		return pingTestName;
+	}
+
+	@Override
+	public long getPingTestMaximumExecutionMilliseconds() {
+		return 1000;
+	}
+
+	@Override
+	public Result performPingTest() throws Exception {
+		Map<String, Long> statMap = stats.allCounts();
+		statMap.put(CentralOcppStatusCount.ChargePointActiveConnections.name(),
+				(long) availableChargePointsIds().size());
+		return new PingTestResult(true, "WebSocket processor " + (isStarted() ? "started" : "stopped."),
+				statMap);
 	}
 
 	/**
@@ -749,6 +675,27 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	public void setShutdownTaskPostDelay(Duration shutdownTaskPostDelay) {
 		this.shutdownTaskPostDelay = requireNonNullArgument(shutdownTaskPostDelay,
 				"shutdownTaskPostDelay");
+	}
+
+	/**
+	 * Get the event publisher service.
+	 * 
+	 * @return the service
+	 * @since 2.8
+	 */
+	public AppEventPublisher getEventPublisher() {
+		return eventPublisher;
+	}
+
+	/**
+	 * Configure an event publisher for posting events.
+	 * 
+	 * @param eventPublisher
+	 *        the optional event publisher
+	 * @since 2.8
+	 */
+	public void setEventPublisher(AppEventPublisher eventPublisher) {
+		this.eventPublisher = eventPublisher;
 	}
 
 }
