@@ -2,6 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
 
+	<cache flushInterval="${ocpp-auth-cache-flush}" readOnly="true"/>
+
 	<insert id="insert-CentralAuthorization" parameterType="net.solarnetwork.central.ocpp.domain.CentralAuthorization">
 		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
               SELECT nextval('solarev.ocpp_authorization_seq') AS id 

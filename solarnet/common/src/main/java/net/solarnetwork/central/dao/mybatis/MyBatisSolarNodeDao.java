@@ -26,8 +26,6 @@ import static java.util.stream.Collectors.toList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.FilterResults;
@@ -35,9 +33,9 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMatch;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.MapPathMatcher;
 import net.solarnetwork.util.SearchFilter;
 
@@ -45,7 +43,7 @@ import net.solarnetwork.util.SearchFilter;
  * MyBatis implementation of {@link SolarNodeDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisSolarNodeDao
 		extends BaseMyBatisFilterableDao<SolarNode, SolarNodeFilterMatch, SolarNodeFilter, Long>
@@ -62,13 +60,11 @@ public class MyBatisSolarNodeDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	public Long getUnusedNodeId() {
 		return getSqlSession().selectOne(QUERY_FOR_NEXT_NODE_ID);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Long store(SolarNode datum) {
 		// because we allow the node ID to be pre-assigned (i.e. from a
 		// previous call to getUnusedNodeId() we have to test if the node

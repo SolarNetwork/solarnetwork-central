@@ -25,8 +25,6 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
@@ -53,7 +51,7 @@ import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
  * </ol>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.11
  */
 public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
@@ -86,7 +84,6 @@ public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEnti
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void delete(T domainObject) {
 		if ( domainObject.getId() == null || domainObject.getUserId() == null ) {
 			return;

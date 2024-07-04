@@ -35,6 +35,8 @@ app:
     stat-log-update-count: 1000
     update-delay: 0
     buffer-removal-lag-alert-threshold: 1000
+  ocpp.async-status-updater:
+    flush-delay: "3s"
   ocpp.v16:
     cs:
       boot-notification:
@@ -79,10 +81,12 @@ app:
     core-pool-size: 10
     max-pool-size: 10
     allow-core-thread-time-out: false
+    accept-tasks-after-context-close: true
   task.scheduler:
     thread-name-prefix: "SolarNet-Sched-"
     pool-size: 2
     remove-on-cancel-policy: true
+    accept-tasks-after-context-close: true
   user.events:
     async-appender:
       threads: 1
@@ -112,6 +116,9 @@ mybatis:
     default-statement-timeout: 30
   configuration-properties:
     node-cache-flush: 900000
+    ocpp-auth-cache-flush: 900000
+    ocpp-charge-point-cache-flush: 900000
+    ocpp-system-user-cache-flush: 900000
     user-cache-flush: 900000
     user-auth-token-cache-flush: 900000
     user-node-cache-flush: 900000

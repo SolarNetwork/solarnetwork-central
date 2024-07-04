@@ -218,6 +218,9 @@ mybatis:
     default-statement-timeout: 30
   configuration-properties:
     node-cache-flush: 900000
+    ocpp-auth-cache-flush: 900000
+    ocpp-charge-point-cache-flush: 900000
+    ocpp-system-user-cache-flush: 900000
     user-cache-flush: 900000
     user-auth-token-cache-flush: 900000
     user-node-cache-flush: 900000

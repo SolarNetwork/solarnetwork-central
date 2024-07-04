@@ -24,8 +24,6 @@ package net.solarnetwork.central.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.Location;
@@ -36,7 +34,7 @@ import net.solarnetwork.central.domain.SolarLocation;
  * MyBatis implementation of {@link SolarLocationDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisSolarLocationDao
 		extends BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long>
@@ -81,7 +79,6 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
 		Map<String, String> params = new HashMap<String, String>(2);
 		params.put("country", country);
@@ -90,7 +87,6 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SolarLocation getSolarLocationForLocation(Location criteria) {
 		return selectFirst(QUERY_FOR_EXACT_LOCATION, criteria);
 	}
@@ -110,7 +106,6 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SolarLocation getSolarLocationForNode(Long nodeId) {
 		return selectFirst(QUERY_FOR_NODE, nodeId);
 	}

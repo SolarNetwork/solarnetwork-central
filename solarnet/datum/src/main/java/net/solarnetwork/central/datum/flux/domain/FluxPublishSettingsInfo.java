@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.flux.domain;
 
+import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -30,7 +31,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author matt
  * @version 1.0
  */
-public record FluxPublishSettingsInfo(boolean publish, boolean retain) implements FluxPublishSettings {
+public record FluxPublishSettingsInfo(boolean publish, boolean retain)
+		implements FluxPublishSettings, Serializable {
 
 	/** A common "publish retained" setting instance. */
 	public static final FluxPublishSettings PUBLISH_RETAINED = new FluxPublishSettingsInfo(true, true);

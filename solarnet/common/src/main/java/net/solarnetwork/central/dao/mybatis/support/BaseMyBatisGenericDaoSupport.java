@@ -31,8 +31,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SortDescriptor;
@@ -42,7 +40,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 2.1
  */
 public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> extends BaseMyBatisDao
@@ -130,14 +128,11 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 		return keyType;
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public T get(K id) {
 		return getSqlSession().selectOne(this.queryForId, id);
 	}
 
-	// Propagation.REQUIRED for server-side cursors
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	@Override
 	public Collection<T> getAll(List<SortDescriptor> sorts) {
 		List<T> results;
@@ -150,7 +145,6 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 		return results;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public K save(T entity) {
 		if ( isAssignedPrimaryKeys() ) {
@@ -206,7 +200,6 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 		return count;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public void delete(T entity) {
 		handleDelete(entity.getId());

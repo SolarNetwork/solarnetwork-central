@@ -26,21 +26,19 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Base MyBatis {@link FilterableDao} implementation.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
 		extends BaseMyBatisGenericDao<T, PK> implements FilterableDao<M, PK, F> {
@@ -92,7 +90,6 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 		// nothing here, extending classes can implement
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {

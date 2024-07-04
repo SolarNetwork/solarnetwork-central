@@ -23,8 +23,10 @@
 package net.solarnetwork.central.in.ocpp.config;
 
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
+import java.time.Clock;
 import java.util.List;
 import java.util.regex.Pattern;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +41,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.ApplicationMetadata;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.in.ocpp.json.CentralOcppNodeInstructionProvider;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandler;
 import net.solarnetwork.central.in.ocpp.json.CentralOcppWebSocketHandshakeInterceptor;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -49,16 +52,22 @@ import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusUpdateDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
+import net.solarnetwork.central.ocpp.domain.OcppAppEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
 import net.solarnetwork.central.ocpp.v16.util.ConnectorIdExtractor;
+import net.solarnetwork.central.support.DelayQueueSet;
+import net.solarnetwork.event.AppEventHandlerRegistrar;
+import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.ocpp.json.ActionPayloadDecoder;
 import net.solarnetwork.ocpp.json.WebSocketSubProtocol;
 import net.solarnetwork.ocpp.service.ActionMessageProcessor;
+import net.solarnetwork.ocpp.service.ChargePointBroker;
 import net.solarnetwork.ocpp.service.SimpleActionMessageQueue;
 import net.solarnetwork.ocpp.v16.jakarta.CentralSystemAction;
 import net.solarnetwork.ocpp.v16.jakarta.ChargePointAction;
 import net.solarnetwork.ocpp.v16.jakarta.ErrorCodeResolver;
 import net.solarnetwork.service.PasswordEncoder;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * OCPP v1.6 web socket configuration.
@@ -105,6 +114,12 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 	private UserSettingsDao userSettingsDao;
 
 	@Autowired
+	private AppEventHandlerRegistrar eventHandlerRegistrar;
+
+	@Autowired
+	private AppEventPublisher eventPublisher;
+
+	@Autowired
 	@Qualifier(OCPP_V16)
 	private ObjectMapper objectMapper;
 
@@ -142,7 +157,36 @@ public class OcppV16WebSocketConfig implements WebSocketConfigurer {
 		handler.setChargePointActionStatusUpdateDao(chargePointActionStatusUpdateDao);
 		handler.setConnectorIdExtractor(new ConnectorIdExtractor());
 		handler.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
+		handler.setEventPublisher(eventPublisher);
 		return handler;
+	}
+
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	@Qualifier(OCPP_V16)
+	public CentralOcppNodeInstructionProvider ocppNodeInstructionProvider_v16(
+			@Qualifier(OCPP_V16) ChargePointBroker broker) {
+		final var stats = new StatTracker("OCPP Instruction Provider v16",
+				"net.solarnetwork.central.ocpp.stats.OcppInstructionProvider_v16", LoggerFactory
+						.getLogger("net.solarnetwork.central.ocpp.stats.OcppInstructionProvider_v16"),
+				500);
+
+		CentralOcppNodeInstructionProvider provider = new CentralOcppNodeInstructionProvider(
+				Clock.systemUTC(), stats, taskScheduler, new DelayQueueSet<>(), (name) -> {
+					for ( ChargePointAction action : ChargePointAction.values() ) {
+						if ( name.equals(action.getName()) ) {
+							return action;
+						}
+					}
+					return null;
+				}, objectMapper, chargePointActionPayloadDecoder, broker, ocppCentralChargePointDao,
+				nodeInstructionDao);
+		provider.setInstructionTopic(OcppInstructionUtils.OCPP_V16_TOPIC);
+
+		eventHandlerRegistrar.registerEventHandler(provider,
+				OcppAppEvents.EVENT_TOPIC_CHARGE_POINT_CONNECTED,
+				OcppAppEvents.EVENT_TOPIC_CHARGE_POINT_DISCONNECTED);
+
+		return provider;
 	}
 
 	/** Client ID pattern when Basic authentication used. */

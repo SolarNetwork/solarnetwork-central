@@ -23,8 +23,6 @@
 package net.solarnetwork.central.user.export.dao.mybatis;
 
 import java.util.List;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
@@ -33,7 +31,7 @@ import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
  * MyBatis implementation of {@link UserDestinationConfigurationDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserDestinationConfigurationDao
 		extends BaseMyBatisUserRelatedGenericDao<UserDestinationConfiguration, Long>
@@ -50,7 +48,6 @@ public class MyBatisUserDestinationConfigurationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserDestinationConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
 	}

@@ -25,8 +25,6 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
@@ -35,7 +33,7 @@ import net.solarnetwork.central.user.domain.UserAlertSituation;
  * MyBatis implementation of {@link UserAlertSituationDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserAlertSituationDao extends BaseMyBatisGenericDao<UserAlertSituation, Long>
 		implements UserAlertSituationDao {
@@ -59,13 +57,11 @@ public class MyBatisUserAlertSituationDao extends BaseMyBatisGenericDao<UserAler
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserAlertSituation getActiveAlertSituationForAlert(Long alertId) {
 		return selectFirst(QUERY_ACTIVE_FOR_ALERT, alertId);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeResolvedSituations(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("date", olderThanDate);
