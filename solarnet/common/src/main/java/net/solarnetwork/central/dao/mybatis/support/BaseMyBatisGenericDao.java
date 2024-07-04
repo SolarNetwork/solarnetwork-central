@@ -33,14 +33,12 @@ import org.mybatis.spring.support.SqlSessionDaoSupport;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.dao.Entity;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Base implementation of {@link GenericDao} using MyBatis via
@@ -136,7 +134,7 @@ import net.solarnetwork.domain.Identity;
  * @param <PK>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, PK> {
@@ -249,14 +247,11 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public T get(PK id) {
 		return getSqlSession().selectOne(this.queryForId, id);
 	}
 
 	@Override
-	// Propagation.REQUIRED for server-side cursors
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<T> getAll(List<SortDescriptor> sortDescriptors) {
 		List<T> results;
 		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
@@ -270,7 +265,6 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public PK store(T datum) {
 		if ( datum.getId() != null ) {
 			return handleUpdate(datum);
@@ -294,7 +288,6 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 *        the datum to store
 	 * @return the primary key
 	 */
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	protected PK handleAssignedPrimaryKeyStore(T datum) {
 		// try update, then insert if that fails
 		if ( getSqlSession().update(getUpdate(), datum) == 0 ) {
@@ -361,7 +354,6 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void delete(T domainObject) {
 		if ( domainObject.getId() == null ) {
 			return;

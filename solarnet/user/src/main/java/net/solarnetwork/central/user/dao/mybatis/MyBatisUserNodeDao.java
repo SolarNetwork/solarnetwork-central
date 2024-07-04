@@ -28,8 +28,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -41,7 +39,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * MyBatis implementation of {@link UserNodeDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> implements UserNodeDao {
 
@@ -119,7 +117,6 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> findUserNodesForUser(User user) {
 		List<UserNode> results = getSqlSession().selectList(QUERY_FOR_USER, user.getId());
 		for ( UserNode userNode : results ) {
@@ -129,32 +126,27 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> findUserNodesAndCertificatesForUser(Long userId) {
 		return getSqlSession().selectList(QUERY_FOR_USER_WITH_CERT, userId);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	public void storeUserNodeTransfer(UserNodeTransfer transfer) {
 		getSqlSession().update(CALL_STORE_USER_NODE_TRANSFER, transfer);
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserNodeTransfer getUserNodeTransfer(UserNodePK pk) {
 		return getSqlSession().selectOne(QUERY_USER_NODE_TRANSFERS_FOR_ID, pk);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
 	public void deleteUserNodeTrasnfer(UserNodeTransfer transfer) {
 		int count = getSqlSession().delete(DELETE_USER_NODE_TRANSFER, transfer.getId());
 		log.debug("Deleted {} UserNodeTransfer entities for ID {}", count, transfer.getId());
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeTransfer> findUserNodeTransferRequestsForEmail(String email) {
 		return getSqlSession().selectList(QUERY_USER_NODE_TRANSFERS_FOR_EMAIL, email);
 	}
@@ -165,7 +157,6 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * @since 1.1
 	 */
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNode> findArchivedUserNodesForUser(Long userId) {
 		return getSqlSession().selectList(QUERY_FOR_USER_ARCHIVED, userId);
 	}
@@ -176,7 +167,6 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * @since 1.1
 	 */
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived) {
 		Map<String, Object> sqlProperties = new HashMap<String, Object>(3);
 		sqlProperties.put("userId", userId);
@@ -191,7 +181,6 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * @since 1.2
 	 */
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findNodeIdsForUser(Long userId) {
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_USER, userId, null, null);
 		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
@@ -204,7 +193,6 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 * @since 1.3
 	 */
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findNodeIdsForToken(String tokenId) {
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_TOKEN, tokenId, null, null);
 		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()

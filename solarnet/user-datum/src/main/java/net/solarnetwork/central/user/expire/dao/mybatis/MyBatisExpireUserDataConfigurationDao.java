@@ -23,8 +23,6 @@
 package net.solarnetwork.central.user.expire.dao.mybatis;
 
 import java.util.List;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
@@ -34,7 +32,7 @@ import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
  * MyBatis implementation of {@link ExpireUserDataConfigurationDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisExpireUserDataConfigurationDao
 		extends BaseMyBatisUserRelatedGenericDao<ExpireUserDataConfiguration, Long>
@@ -63,19 +61,16 @@ public class MyBatisExpireUserDataConfigurationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<ExpireUserDataConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public DatumRecordCounts countExpiredDataForConfiguration(ExpireUserDataConfiguration config) {
 		return selectFirst(QUERY_COUNTS_FOR_CONFIG, config);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long deleteExpiredDataForConfiguration(ExpireUserDataConfiguration config) {
 		return selectLong(QUERY_DELETE_FOR_CONFIG, config);
 	}

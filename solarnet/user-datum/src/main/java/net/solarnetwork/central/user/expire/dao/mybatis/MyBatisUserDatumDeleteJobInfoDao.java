@@ -22,19 +22,18 @@
 
 package net.solarnetwork.central.user.expire.dao.mybatis;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.time.Instant;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
@@ -43,7 +42,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
  * MyBatis implementation of {@link UserDatumDeleteJobInfoDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserDatumDeleteJobInfoDao extends
 		BaseMyBatisGenericDao<DatumDeleteJobInfo, UserUuidPK> implements UserDatumDeleteJobInfoDao {
@@ -107,13 +106,11 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public DatumDeleteJobInfo claimQueuedJob() {
 		return selectFirst(queryForClaimQueuedJob, null);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeOldJobs(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
@@ -123,7 +120,6 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobState(UserUuidPK id, DatumDeleteJobState desiredState,
 			Set<DatumDeleteJobState> expectedStates) {
 		Map<String, Object> params = new HashMap<>(3);
@@ -139,7 +135,6 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobConfiguration(UserUuidPK id, GeneralNodeDatumFilter configuration) {
 		DatumDeleteJobInfo info = new DatumDeleteJobInfo();
 		info.setConfiguration(new DatumFilterCommand(configuration));
@@ -154,7 +149,6 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobProgress(UserUuidPK id, double percentComplete, Long loadedCount) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
@@ -164,7 +158,6 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 		return (count > 0);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public List<DatumDeleteJobInfo> findForUser(Long userId, Set<DatumDeleteJobState> states) {
 		Map<String, Object> params = new HashMap<>(2);
@@ -177,7 +170,6 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 		return selectList(queryForUser, params, null, null);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumDeleteJobState> states) {
 		Map<String, Object> params = new HashMap<>(2);

@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.dao.UserDao;
@@ -41,7 +39,7 @@ import net.solarnetwork.codec.JsonUtils;
  * MyBatis implementation of {@link UserDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMatch, UserFilter, Long>
 		implements UserDao {
@@ -91,20 +89,17 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public User getUserByEmail(String email) {
 		return selectFirst(QUERY_FOR_EMAIL, email == null ? null : email.trim());
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<String> getUserRoles(User user) {
 		final List<String> results = getSqlSession().selectList(QUERY_FOR_ROLES, user);
 		return new TreeSet<String>(results);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void storeUserRoles(final User user, final Set<String> roles) {
 		getSqlSession().delete(DELETE_ROLES, user);
 		if ( roles != null ) {
@@ -134,7 +129,6 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	 * @since 1.2
 	 */
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void storeInternalData(Long userId, Map<String, Object> data) {
 		Map<String, Object> sqlParams = new HashMap<String, Object>(3);
 		sqlParams.put("userId", userId);
