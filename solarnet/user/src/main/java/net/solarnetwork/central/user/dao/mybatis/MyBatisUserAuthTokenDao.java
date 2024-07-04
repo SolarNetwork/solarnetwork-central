@@ -28,8 +28,6 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.security.SecurityToken;
@@ -41,7 +39,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * MyBatis implementation of {@link UserAuthTokenDao}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken, String>
 		implements UserAuthTokenDao, SecurityTokenDao {
@@ -63,20 +61,17 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserAuthToken> findUserAuthTokensForUser(Long userId) {
 		return getSqlSession().selectList(QUERY_FOR_USER_ID, userId);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public String store(final UserAuthToken datum) {
 		final String pk = handleAssignedPrimaryKeyStore(datum);
 		return pk;
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(String tokenId,
 			Instant signingDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
@@ -99,7 +94,6 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public SecurityToken securityTokenForId(String tokenId) {
 		return selectFirst(getQueryForId(), tokenId);
 	}

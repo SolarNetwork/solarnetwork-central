@@ -26,17 +26,15 @@ import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodePK;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * MyBatis implementation of {@link UserNodeCertificateDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class MyBatisUserNodeCertificateDao extends
-		BaseMyBatisGenericDao<UserNodeCertificate, UserNodePK> implements UserNodeCertificateDao {
+public class MyBatisUserNodeCertificateDao extends BaseMyBatisGenericDao<UserNodeCertificate, UserNodePK>
+		implements UserNodeCertificateDao {
 
 	/** The query name used for {@link #getActiveCertificateForNode(Long)}. */
 	public static final String QUERY_ACTIVE_FOR_NODE = "get-UserNodeCertificate-for-active-node";
@@ -49,7 +47,6 @@ public class MyBatisUserNodeCertificateDao extends
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserNodeCertificate getActiveCertificateForNode(Long nodeId) {
 		return selectFirst(QUERY_ACTIVE_FOR_NODE, nodeId);
 	}

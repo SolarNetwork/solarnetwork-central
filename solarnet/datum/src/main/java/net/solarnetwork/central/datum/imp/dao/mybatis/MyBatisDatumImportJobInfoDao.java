@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -43,7 +41,7 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportState;
  * MyBatis implementation of {@link DatumImportJobInfoDao}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImportJobInfo, UserUuidPK>
 		implements DatumImportJobInfoDao {
@@ -107,13 +105,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public DatumImportJobInfo claimQueuedJob() {
 		return selectFirst(queryForClaimQueuedJob, null);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeOldJobs(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
@@ -123,7 +119,6 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobState(UserUuidPK id, DatumImportState desiredState,
 			Set<DatumImportState> expectedStates) {
 		Map<String, Object> params = new HashMap<>(3);
@@ -139,7 +134,6 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobConfiguration(UserUuidPK id, Configuration configuration) {
 		DatumImportJobInfo info = new DatumImportJobInfo();
 		info.setConfig(new BasicConfiguration(configuration));
@@ -153,7 +147,6 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateJobProgress(UserUuidPK id, double percentComplete, Long loadedCount) {
 		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", id);
@@ -163,7 +156,6 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		return (count > 0);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public List<DatumImportJobInfo> findForUser(Long userId, Set<DatumImportState> states) {
 		Map<String, Object> params = new HashMap<>(2);
@@ -176,7 +168,6 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		return selectList(queryForUser, params, null, null);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public int deleteForUser(Long userId, Set<UUID> jobIds, Set<DatumImportState> states) {
 		Map<String, Object> params = new HashMap<>(2);

@@ -26,8 +26,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.domain.UserAlert;
@@ -37,7 +35,7 @@ import net.solarnetwork.central.user.domain.UserAlertType;
  * MyBatis implementation of {@link UserAlertDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> implements UserAlertDao {
 
@@ -80,8 +78,6 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
-	// Propagation.REQUIRED for server-side cursors
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<UserAlert> findAlertsToProcess(UserAlertType type, Long startingId, Instant validDate,
 			Integer max) {
 		Map<String, Object> params = new HashMap<String, Object>(3);
@@ -94,14 +90,11 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
-	// Propagation.REQUIRED for server-side cursors
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
 	public List<UserAlert> findAlertsForUser(Long userId) {
 		return selectList(QUERY_FOR_USER_WITH_SITUATION, userId, null, null);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public int deleteAllAlertsForNode(Long userId, Long nodeId) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("user", userId);
@@ -110,13 +103,11 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserAlert getAlertSituation(Long alertId) {
 		return selectFirst(QUERY_FOR_SITUATION, alertId);
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public void updateValidTo(Long alertId, Instant validTo) {
 		Map<String, Object> params = new HashMap<String, Object>(3);
 		params.put("id", alertId);
@@ -125,19 +116,16 @@ public class MyBatisUserAlertDao extends BaseMyBatisGenericDao<UserAlert, Long> 
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserAlert> findActiveAlertSituationsForUser(Long userId) {
 		return selectList(QUERY_ACTIVE_SITUATIONS_FOR_USER, userId, null, null);
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserAlert> findActiveAlertSituationsForNode(Long nodeId) {
 		return selectList(QUERY_ACTIVE_SITUATIONS_FOR_NODE, nodeId, null, null);
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public int alertSituationCountForUser(Long userId) {
 		Number n = getSqlSession().selectOne(QUERY_ACTIVE_SITUATIONS_FOR_USER_COUNT, userId);
 		if ( n != null ) {

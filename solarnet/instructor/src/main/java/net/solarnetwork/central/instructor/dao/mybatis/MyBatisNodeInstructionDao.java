@@ -32,8 +32,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
@@ -48,7 +46,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * MyBatis implementation of {@link NodeInstructionDao}.
  * 
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -103,7 +101,6 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeCompletedInstructions(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("date", olderThanDate);
@@ -113,7 +110,6 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long purgeIncompleteInstructions(Instant olderThanDate) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("date", olderThanDate);
@@ -123,7 +119,6 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
 			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters) {
 		Map<String, Object> params = new HashMap<String, Object>(3);
@@ -139,7 +134,6 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
 			Map<String, ?> resultParameters) {
 		Map<String, Object> params = new HashMap<String, Object>(3);
@@ -154,7 +148,6 @@ public class MyBatisNodeInstructionDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public long updateStaleInstructionsState(InstructionState currentState, Instant olderThanDate,
 			InstructionState desiredState) {
 		Map<String, Object> params = new HashMap<String, Object>(2);

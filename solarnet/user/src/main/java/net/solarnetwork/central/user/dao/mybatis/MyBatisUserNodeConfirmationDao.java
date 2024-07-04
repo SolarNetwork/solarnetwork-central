@@ -25,8 +25,6 @@ package net.solarnetwork.central.user.dao.mybatis;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.domain.User;
@@ -36,7 +34,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * MyBatis implementation of {@link UserNodeConfirmationDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisUserNodeConfirmationDao extends BaseMyBatisGenericDao<UserNodeConfirmation, Long>
 		implements UserNodeConfirmationDao {
@@ -59,7 +57,6 @@ public class MyBatisUserNodeConfirmationDao extends BaseMyBatisGenericDao<UserNo
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public UserNodeConfirmation getConfirmationForKey(Long userId, String key) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("userId", userId);
@@ -68,7 +65,6 @@ public class MyBatisUserNodeConfirmationDao extends BaseMyBatisGenericDao<UserNo
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserNodeConfirmation> findPendingConfirmationsForUser(User user) {
 		Map<String, Object> params = new HashMap<String, Object>(2);
 		params.put("user", user);

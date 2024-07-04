@@ -24,8 +24,6 @@ package net.solarnetwork.central.dao.mybatis;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.NetworkAssociationDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisDao;
 import net.solarnetwork.domain.NetworkAssociation;
@@ -34,7 +32,7 @@ import net.solarnetwork.domain.NetworkAssociation;
  * MyBatis implementation of {@link NetworkAssociationDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisNetworkAssociationDao extends BaseMyBatisDao implements NetworkAssociationDao {
 
@@ -45,7 +43,6 @@ public class MyBatisNetworkAssociationDao extends BaseMyBatisDao implements Netw
 	public static final String QUERY_FOR_CONFIRMATION_CODE = "get-NetworkAssociation-for-code";
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public NetworkAssociation getNetworkAssociationForConfirmationKey(String username,
 			String confirmationCode) {
 		Map<String, Object> params = new HashMap<String, Object>(1);

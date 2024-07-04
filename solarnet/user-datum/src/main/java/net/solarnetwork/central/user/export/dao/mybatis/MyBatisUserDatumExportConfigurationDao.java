@@ -27,8 +27,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
@@ -38,7 +36,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * MyBatis implementation of {@link UserDatumExportConfigurationDao}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserDatumExportConfigurationDao
 		extends BaseMyBatisUserRelatedGenericDao<UserDatumExportConfiguration, Long>
@@ -66,13 +64,11 @@ public class MyBatisUserDatumExportConfigurationDao
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserDatumExportConfiguration> findConfigurationsForUser(Long userId) {
 		return selectList(QUERY_CONFIGURATIONS_FOR_USER, userId, null, null);
 	}
 
 	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<UserDatumExportConfiguration> findForExecution(Instant exportDate,
 			ScheduleType scheduleType) {
 		if ( scheduleType == null ) {
@@ -86,7 +82,6 @@ public class MyBatisUserDatumExportConfigurationDao
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public int updateMinimumExportDate(Long id, Long userId, Instant minimumDate) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("id", id);
