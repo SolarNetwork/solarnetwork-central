@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.in.ocpp.config;
 
+import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,15 +31,19 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.ocpp.dao.AsyncChargePointStatusDao;
 import net.solarnetwork.central.ocpp.dao.ChargePointStatusDao;
+import net.solarnetwork.central.ocpp.dao.jdbc.AsyncJdbcChargePointActionStatusDao;
 
 /**
  * OCPP DAO configuration.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class OcppInDaoConfig {
+
+	@Autowired
+	private DataSource dataSource;
 
 	@ConfigurationProperties(prefix = "app.ocpp.async-status-updater")
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
@@ -45,6 +51,12 @@ public class OcppInDaoConfig {
 	public ChargePointStatusDao ocppAsyncChargePointStatusDao(TaskScheduler taskScheduler,
 			ChargePointStatusDao delegate) {
 		return new AsyncChargePointStatusDao(taskScheduler, delegate);
+	}
+
+	@ConfigurationProperties(prefix = "app.ocpp.async-action-status-updater")
+	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
+	public AsyncJdbcChargePointActionStatusDao ocppChargePointActionStatusUpdateDao() {
+		return new AsyncJdbcChargePointActionStatusDao(dataSource);
 	}
 
 }
