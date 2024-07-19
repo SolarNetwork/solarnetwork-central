@@ -26,7 +26,7 @@ package net.solarnetwork.central.din.domain;
  * Constants for central datum input (DIN) user events.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CentralDinUserEvents {
 
@@ -73,5 +73,17 @@ public interface CentralDinUserEvents {
 	 * @since 1.2
 	 */
 	String CONTENT_DATA_KEY = "content";
+
+	/**
+	 * User event data key for the tracked previous request content value.
+	 *
+	 * <p>
+	 * If the content is textual, the content will be included as-is. Otherwise
+	 * it will be Base64 encoded.
+	 * </p>
+	 *
+	 * @since 1.3
+	 */
+	String PREVIOUS_CONTENT_DATA_KEY = "previousContent";
 
 }

@@ -74,7 +74,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -123,7 +123,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	private static final MimeType TEXT_TYPE = MimeType.valueOf("text/*");
 
 	private static LogEventInfo importErrorEvent(String msg, EndpointConfiguration endpoint,
-			TransformConfiguration xform, MimeType contentType, byte[] content,
+			TransformConfiguration xform, MimeType contentType, byte[] content, byte[] previousContent,
 			Map<String, String> parameters) {
 		var eventData = new LinkedHashMap<>(8);
 		eventData.put(ENDPOINT_ID_DATA_KEY, endpoint.getEndpointId());
@@ -132,20 +132,30 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		eventData.put(CONTENT_TYPE_DATA_KEY, contentType.toString());
 
 		if ( content != null && content.length > 0 ) {
-			String value = null;
-			if ( JSON_TYPE.isCompatibleWith(contentType) || TEXT_TYPE.isCompatibleWith(contentType) ) {
-				value = new String(content, contentType.getCharset() != null ? contentType.getCharset()
-						: StandardCharsets.UTF_8);
-			} else {
-				value = Base64.getEncoder().encodeToString(content);
-			}
+			String value = eventContentValue(contentType, content);
 			eventData.put(CONTENT_DATA_KEY, value);
+		}
+
+		if ( previousContent != null && previousContent.length > 0 ) {
+			String value = eventContentValue(contentType, previousContent);
+			eventData.put(PREVIOUS_CONTENT_DATA_KEY, value);
 		}
 
 		if ( parameters != null ) {
 			eventData.put(PARAMETERS_DATA_KEY, parameters);
 		}
 		return event(DATUM_TAGS, msg, getJSONString(eventData, null), ERROR_TAG);
+	}
+
+	private static String eventContentValue(MimeType contentType, byte[] content) {
+		String value = null;
+		if ( JSON_TYPE.isCompatibleWith(contentType) || TEXT_TYPE.isCompatibleWith(contentType) ) {
+			value = new String(content, contentType.getCharset() != null ? contentType.getCharset()
+					: StandardCharsets.UTF_8);
+		} else {
+			value = Base64.getEncoder().encodeToString(content);
+		}
+		return value;
 	}
 
 	@Override
@@ -181,7 +191,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			String msg = "Transform service %s does not support input type %s with %s."
 					.formatted(xformServiceId, contentType, in.getClass().getSimpleName());
 			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, inputData,parameters));
+			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, inputData,null,parameters));
 			// @formatter:on
 			throw new IllegalArgumentException(msg);
 		}
@@ -195,6 +205,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		params.put(TransformService.PARAM_TRANSFORM_ID, endpoint.getTransformId());
 		params.put(TransformService.PARAM_CONFIGURATION_CACHE_KEY, xform.ident());
 
+		byte[] prevInputData = null;
 		Iterable<Datum> datum;
 		try {
 			// check for previous input support
@@ -212,12 +223,12 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 					if ( nodeId != null && sourceId != null ) {
 						UserLongStringCompositePK key = new UserLongStringCompositePK(userId, nodeId,
 								sourceId);
-						byte[] previousInput = previousInputDao.getAndPut(key, inputData);
-						if ( previousInput == null ) {
+						prevInputData = previousInputDao.getAndPut(key, inputData);
+						if ( prevInputData == null ) {
 							return Collections.emptyList();
 						}
 						params.put(TransformService.PARAM_PREVIOUS_INPUT,
-								new ByteArrayInputStream(previousInput));
+								new ByteArrayInputStream(prevInputData));
 					}
 				} catch ( IllegalArgumentException e ) {
 					// ignore and continue
@@ -225,11 +236,31 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			}
 
 			datum = xformService.transform(in, contentType, xform, params);
+
+			if ( log.isTraceEnabled() ) {
+				log.trace(
+						"Transformed user {} endpoint {} to datum with service {}; parameters {}; previous content [{}]; content [{}]; datum: {}",
+						userId, endpointId, xformServiceId, params,
+						eventContentValue(contentType, prevInputData),
+						eventContentValue(contentType, inputData), datum);
+			}
 		} catch ( Exception e ) {
-			String msg = "Error executing transform: " + e.getMessage();
-			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, inputData,parameters));
-			// @formatter:on
+			Throwable root = e;
+			while ( root.getCause() != null ) {
+				root = root.getCause();
+			}
+			String msg = "Error executing transform: " + root.getMessage();
+
+			if ( log.isWarnEnabled() ) {
+				log.warn(
+						"Error transforming user {} endpoint {} to datum with service {}; parameters {}; previous content [{}]; content: [{}]",
+						userId, endpointId, xformServiceId, params,
+						eventContentValue(contentType, prevInputData),
+						eventContentValue(contentType, inputData), e);
+			}
+
+			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType,
+					inputData, prevInputData, parameters));
 			if ( e instanceof IOException ioe ) {
 				throw ioe;
 			} else if ( e instanceof RuntimeException re ) {
@@ -267,7 +298,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				if ( !userId.equals(owner.getUserId()) ) {
 					var ex = new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 					addEvent(userEventAppenderBiz, userId, importErrorEvent(ex.getMessage(), endpoint,
-							xform, contentType, inputData, parameters));
+							xform, contentType, inputData, prevInputData, parameters));
 					throw ex;
 				}
 
