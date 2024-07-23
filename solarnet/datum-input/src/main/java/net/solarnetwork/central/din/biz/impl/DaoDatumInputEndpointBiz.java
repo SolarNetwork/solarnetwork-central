@@ -74,7 +74,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * DAO implementation of {@link DatumInputEndpointBiz}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralDinUserEvents {
 
@@ -148,6 +148,9 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 	}
 
 	private static String eventContentValue(MimeType contentType, byte[] content) {
+		if ( content == null ) {
+			return null;
+		}
 		String value = null;
 		if ( JSON_TYPE.isCompatibleWith(contentType) || TEXT_TYPE.isCompatibleWith(contentType) ) {
 			value = new String(content, contentType.getCharset() != null ? contentType.getCharset()
