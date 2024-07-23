@@ -22,14 +22,15 @@
 
 package net.solarnetwork.central.datum.export.config;
 
-import java.util.concurrent.ExecutorService;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.classic.MinimalHttpClient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.dest.ftp.FtpDatumExportDestinationService;
@@ -46,16 +47,13 @@ import net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputForma
  * Datum export standard service configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class DatumExportStandardServiceConfig {
 
 	@Value("${app.datum.export.temporary-dir}")
 	private String temporaryDir;
-
-	@Autowired
-	private ExecutorService executorService;
 
 	@Bean
 	public DatumExportOutputFormatService csvDatumExportOutputFormatService() {
@@ -83,9 +81,28 @@ public class DatumExportStandardServiceConfig {
 		return service;
 	}
 
+	/**
+	 * A task executor specific for use with the S3 Transfer manager.
+	 *
+	 * @return the task executor
+	 */
 	@Bean
-	public DatumExportDestinationService s3DatumExportDestinationService() {
-		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
+	@Qualifier("s3-datum-export")
+	@ConfigurationProperties(prefix = "app.datum.export.s3.executor")
+	public ThreadPoolTaskExecutor s3DatumExportTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setThreadNamePrefix("S3-Export-");
+		executor.setCorePoolSize(10);
+		executor.setMaxPoolSize(10);
+		executor.setAllowCoreThreadTimeOut(true);
+		return executor;
+	}
+
+	@Bean
+	public DatumExportDestinationService s3DatumExportDestinationService(
+			@Qualifier("s3-datum-export") ThreadPoolTaskExecutor taskExecutor) {
+		S3DatumExportDestinationService service = new S3DatumExportDestinationService(
+				taskExecutor.getThreadPoolExecutor());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(S3DestinationProperties.class.getName());

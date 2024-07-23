@@ -24,6 +24,11 @@ app:
     export:
       completed-task-minimum-cache-time: 14400000
       temporary-dir: "${java.io.tmpdir}"
+      s3.executor:
+        thread-name-prefix: "SolarNet-S3-Export-"
+        core-pool-size: 10
+        max-pool-size: 10
+        allow-core-thread-time-out: true
     import:
       concurrent-tasks: 2
       concurrent-preview-tasks: 4
