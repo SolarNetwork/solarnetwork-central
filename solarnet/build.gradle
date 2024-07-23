@@ -65,7 +65,7 @@ subprojects {
 	}
 
 	ext {
-		awsSdk2Version = '2.21+'
+		awsSdk2Version = '2.26+'
 		batikVersion = '1.16'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.15.1'
