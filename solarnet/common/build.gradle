@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.3.1' apply false
+	id 'org.springframework.boot' version '3.3.2' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '2.14.0'
+version = '2.15.0'
 
 base {
 	archivesName = 'solarnet-common'
@@ -80,6 +80,9 @@ dependencies {
 	implementation 'org.apache.commons:commons-text:1.10.0'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
+	
+	// Explicit Multipart support using Tomcat's implementation
+	implementation 'org.apache.tomcat.embed:tomcat-embed-core'
 	
 	// Not pushed to extending projects by default
 	compileOnly "net.sf.saxon:Saxon-HE:${saxonVersion}"
