@@ -81,6 +81,9 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	
+	// Explicit Multipart support using Tomcat's implementation
+	implementation 'org.apache.tomcat.embed:tomcat-embed-core'
+	
 	// Not pushed to extending projects by default
 	compileOnly "net.sf.saxon:Saxon-HE:${saxonVersion}"
 	

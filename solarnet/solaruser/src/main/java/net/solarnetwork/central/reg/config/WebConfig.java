@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -44,8 +45,10 @@ import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.session.jdbc.PostgreSqlJdbcIndexedSessionRepositoryCustomizer;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -179,6 +182,18 @@ public class WebConfig implements WebMvcConfigurer {
 			.allowedHeaders("Authorization", "Content-MD5", "Content-Type", "Digest", "X-SN-Date")
 			;
 		// @formatter:on
+	}
+
+	@Bean
+	public CommonsMultipartResolver multipartResolver(
+			@Value("${spring.servlet.multipart.max-file-size:10MB}") DataSize maxFileSize,
+			@Value("${spring.servlet.multipart.max-request-size:10MB}") DataSize maxRequestSize,
+			@Value("${spring.servlet.multipart.file-size-threshold:1MB}") DataSize fileSizeThreshold) {
+		CommonsMultipartResolver multipartResolver = new CommonsMultipartResolver();
+		multipartResolver.setMaxUploadSize(maxRequestSize.toBytes());
+		multipartResolver.setMaxUploadSizePerFile(maxFileSize.toBytes());
+		multipartResolver.setMaxInMemorySize((int) fileSizeThreshold.toBytes());
+		return multipartResolver;
 	}
 
 }

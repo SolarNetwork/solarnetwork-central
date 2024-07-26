@@ -29,6 +29,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -43,6 +44,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.transaction.TransactionException;
 import org.springframework.util.Assert;
+import org.springframework.util.MimeType;
 import org.springframework.util.PathMatcher;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -75,7 +77,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * </p>
  * 
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter implements Filter {
 
@@ -158,6 +160,13 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 				settings.getCompressibleContentTypePattern(),
 				(int) settings.getMinimumSpoolLength().toBytes(), settings.getSpoolDirectory());
 		HttpServletResponse response = res;
+
+		// for multipart requests, force the InputStream to be resolved now so the parameters
+		// are not parsed by the servlet container
+		if ( req.getContentType() != null && MediaType.MULTIPART_FORM_DATA
+				.isCompatibleWith(MimeType.valueOf(req.getContentType())) ) {
+			request.getContentSHA256();
+		}
 
 		AuthenticationData data;
 		try {
