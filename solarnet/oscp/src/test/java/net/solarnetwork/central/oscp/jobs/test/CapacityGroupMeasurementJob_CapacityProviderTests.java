@@ -1,21 +1,21 @@
 /* ==================================================================
  * CapacityGroupMeasurementJobTests.java - 7/09/2022 12:52:38 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -88,7 +88,7 @@ import oscp.v20.UpdateAssetMeasurement;
 
 /**
  * Test cases for the {@link CapacityGroupMeasurementJob} class.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -218,6 +218,93 @@ public class CapacityGroupMeasurementJob_CapacityProviderTests {
 				hasSize(1));
 		AssetMeasurement m = post.getMeasurements().get(0);
 		assertAssetMeasurement("1", systemConf, group, cpAsset, m, im, em, start, end);
+	}
+
+	@Test
+	public void runJob_provider_asset_energyMeasurementsCombined() {
+		// GIVEN
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant end = start.plus(10, ChronoUnit.MINUTES);
+		final CapacityProviderConfiguration systemConf = systemConf();
+		final CapacityGroupConfiguration group = OscpJdbcTestUtils
+				.newCapacityGroupConfiguration(systemConf.getUserId(), systemConf.getEntityId(), null,
+						start)
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+
+		final var results = new ArrayList<Instant>();
+
+		// iterate over expired configurations
+		final var ctx = new CapacityGroupSystemTaskContext<CapacityProviderConfiguration>(
+				"Measurement Test", OscpRole.CapacityProvider, systemConf, group, start, null, null,
+				capacityProviderDao, Collections.emptyMap());
+		will((Answer<Void>) invocation -> {
+			Function<CapacityGroupSystemTaskContext<CapacityProviderConfiguration>, Instant> handler = invocation
+					.getArgument(0);
+			if ( !results.isEmpty() ) {
+				return null;
+			}
+			Instant result = handler.apply(ctx);
+			results.add(result);
+
+			return null;
+		}).given(capacityProviderDao).processExternalSystemWithExpiredMeasurement(any());
+
+		// get group configuration for expired system configuration
+		given(capacityGroupDao.findForCapacityProvider(systemConf.getUserId(), systemConf.getEntityId(),
+				group.getIdentifier())).willReturn(group);
+
+		AssetConfiguration cpAsset = OscpJdbcTestUtils
+				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+		AssetConfiguration coAsset = OscpJdbcTestUtils
+				.newAssetConfiguration(systemConf.getUserId(), group.getEntityId(), Instant.now())
+				.copyWithId(new UserLongCompositePK(systemConf.getUserId(),
+						randomUUID().getMostSignificantBits()));
+		coAsset.setAudience(OscpRole.CapacityOptimizer);
+
+		// get all assets for group
+		given(assetDao.findAllForCapacityGroup(systemConf.getUserId(), group.getEntityId(), null))
+				.willReturn(asList(cpAsset, coAsset));
+
+		// get measurements for system assets
+		Measurement em1 = Measurement.energyMeasurement(new BigDecimal("123"), Phase.All,
+				MeasurementUnit.kWh, end, EnergyType.Total, EnergyDirection.Import, start);
+		Measurement em2 = Measurement.energyMeasurement(new BigDecimal("234"), Phase.All,
+				MeasurementUnit.kWh, end, EnergyType.Total, EnergyDirection.Import, start);
+		Measurement im = Measurement.instantaneousMeasurement(new BigDecimal("345"), Phase.All,
+				MeasurementUnit.kW, end);
+		given(measurementDao.getMeasurements(same(cpAsset), any())).willReturn(asList(im, em1, em2));
+
+		// WHEN
+		job.run();
+
+		// THEN
+		assertThat("Result processed", results, hasSize(1));
+
+		then(measurementDao).should().getMeasurements(same(cpAsset), criteriaCaptor.capture());
+		assertThat("Measurement criteria start date from task date",
+				criteriaCaptor.getValue().getStartDate(), is(equalTo(start)));
+		assertThat("Measurement criteria end date from task date + measurement period",
+				criteriaCaptor.getValue().getEndDate(), is(equalTo(end)));
+
+		then(client).should().systemExchange(same(ctx), eq(HttpMethod.POST),
+				pathSupplierCaptor.capture(), postBodyCaptor.capture());
+		assertThat("POST path is for asset measurements", pathSupplierCaptor.getValue().get(),
+				is(equalTo(UrlPaths_20.UPDATE_ASSET_MEASUREMENTS_URL_PATH)));
+		assertThat("POST body is OSCP 2 Update Asset Measurements", postBodyCaptor.getValue(),
+				is(instanceOf(UpdateAssetMeasurement.class)));
+		UpdateAssetMeasurement post = (UpdateAssetMeasurement) postBodyCaptor.getValue();
+		assertThat("POST group_id from group identifier", post.getGroupId(),
+				is(equalTo(group.getIdentifier())));
+		assertThat("Include one AssetMeasurement per AssetConfiguration", post.getMeasurements(),
+				hasSize(1));
+		AssetMeasurement m = post.getMeasurements().get(0);
+
+		Measurement emCombined = Measurement.energyMeasurement(em1.value().add(em2.value()), Phase.All,
+				MeasurementUnit.kWh, end, EnergyType.Total, EnergyDirection.Import, start);
+		assertAssetMeasurement("1", systemConf, group, cpAsset, m, im, emCombined, start, end);
 	}
 
 	private void assertAssetMeasurement(String prefix, ExternalSystemConfiguration sys,
