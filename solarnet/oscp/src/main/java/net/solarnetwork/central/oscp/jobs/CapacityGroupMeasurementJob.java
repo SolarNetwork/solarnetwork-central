@@ -1,21 +1,21 @@
 /* ==================================================================
  * CapacityGroupMeasurementJob.java - 1/09/2022 3:07:48 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,7 +57,7 @@ import oscp.v20.UpdateGroupMeasurements;
 
 /**
  * Job to post OSCP measurement messages to external systems.
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -73,7 +73,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 
 	/**
 	 * Construct with properties.
-	 * 
+	 *
 	 * @param role
 	 *        the role
 	 * @param dao
@@ -106,7 +106,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 
 	/**
 	 * Configure a transaction template.
-	 * 
+	 *
 	 * @param txTemplate
 	 *        the template
 	 * @return this instance for method chaining
@@ -310,14 +310,24 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 		List<AssetMeasurement> result = new ArrayList<>(assets.size());
 		for ( AssetConfiguration asset : assets ) {
 			Collection<Measurement> measurements = measurementDao.getMeasurements(asset, criteria);
-			AssetMeasurement measurement = new AssetMeasurement(asset.getIdentifier(),
-					asset.getCategory().toOscp20Value());
+			// in case there are multiple measurements of a given type, we need to combine them
+			// into a single value, so create lists of each type first
+			List<EnergyMeasurement> energyList = new ArrayList<>(2);
+			List<InstantaneousMeasurement> instList = new ArrayList<>(2);
 			for ( Measurement meas : measurements ) {
 				if ( meas.isEnergyMeasurement() ) {
-					measurement.setEnergyMeasurement(meas.toOscp20EnergyValue());
+					energyList.add(meas.toOscp20EnergyValue());
 				} else {
-					measurement.setInstantaneousMeasurement(meas.toOscp20InstantaneousValue());
+					instList.add(meas.toOscp20InstantaneousValue());
 				}
+			}
+			AssetMeasurement measurement = new AssetMeasurement(asset.getIdentifier(),
+					asset.getCategory().toOscp20Value());
+			if ( !energyList.isEmpty() ) {
+				measurement.setEnergyMeasurement(combineEnergyMeasurements(energyList));
+			}
+			if ( !instList.isEmpty() ) {
+				measurement.setInstantaneousMeasurement(combineInstantaneousMeasurements(instList));
 			}
 			result.add(measurement);
 		}
