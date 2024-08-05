@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectDatum.java - 19/11/2020 8:23:34 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -44,9 +44,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter.
- * 
+ *
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 3.8
  */
 public class SelectDatum
@@ -54,7 +54,7 @@ public class SelectDatum
 
 	/**
 	 * The {@code fetchSize} property default value.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
@@ -66,7 +66,7 @@ public class SelectDatum
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
@@ -78,7 +78,7 @@ public class SelectDatum
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param fetchSize
@@ -228,8 +228,10 @@ public class SelectDatum
 			case ThirtyMinute:
 			case DayOfWeek:
 			case SeasonalDayOfWeek:
+			case DayOfYear:
 			case HourOfDay:
 			case SeasonalHourOfDay:
+			case HourOfYear:
 			case WeekOfYear:
 				return true;
 
@@ -241,8 +243,10 @@ public class SelectDatum
 	private boolean isDefaultLocalDateRange() {
 		return !filter.hasDateOrLocalDateRange() && (filter.getAggregation() == Aggregation.DayOfWeek
 				|| filter.getAggregation() == Aggregation.SeasonalDayOfWeek
+				|| filter.getAggregation() == Aggregation.DayOfYear
 				|| filter.getAggregation() == Aggregation.HourOfDay
 				|| filter.getAggregation() == Aggregation.SeasonalHourOfDay
+				|| filter.getAggregation() == Aggregation.HourOfYear
 				|| filter.getAggregation() == Aggregation.WeekOfYear);
 	}
 
@@ -276,6 +280,11 @@ public class SelectDatum
 						? "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ?, ?)";
 
+			case DayOfYear:
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
+						? "solardatm.find_agg_datm_doy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_doy(s.stream_id, ?, ?)";
+
 			case HourOfDay:
 				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_hod(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
@@ -285,6 +294,11 @@ public class SelectDatum
 				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
 						? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
 						: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
+
+			case HourOfYear:
+				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
+						? "solardatm.find_agg_datm_hoy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+						: "solardatm.find_agg_datm_hoy(s.stream_id, ?, ?)";
 
 			case WeekOfYear:
 				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
@@ -445,8 +459,8 @@ public class SelectDatum
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
 			if ( isMinuteAggregation() ) {
-				// We use a specialized count query here because the actual query does a lot 
-				// of computation to produce minute-level aggregation. The 
+				// We use a specialized count query here because the actual query does a lot
+				// of computation to produce minute-level aggregation. The
 				// solardatm.count_datm_time_span_slots() function is designed to run faster.
 				sqlCte(buf, false);
 				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
