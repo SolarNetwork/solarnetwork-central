@@ -1,7 +1,7 @@
 /* ==================================================================
- * DbFindAggHodTests.java - 10/12/2020 9:12:05 pm
+ * DbFindAggDoyTests.java - 5/08/2024 6:19:37 am
  *
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -61,15 +61,19 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
- * Test cases for the {@literal solardatm.find_agg_dow} database stored
+ * Test cases for the {@literal solardatm.find_agg_hoy} database stored
  * procedure.
  *
  * @author matt
  * @version 1.0
  */
-public class DbFindAggHodTests extends BaseDatumJdbcTestSupport {
+public class DbFindAggHoyTests extends BaseDatumJdbcTestSupport {
 
-	private List<AggregateDatum> findAggHod(UUID streamId, Instant start, Instant end) {
+	private static final int HOURS_PER_NON_LEAP_YEAR = 8760;
+	private static final ZonedDateTime FEB_29 = ZonedDateTime.of(1996, 2, 29, 0, 0, 0, 0,
+			ZoneOffset.UTC);
+
+	private List<AggregateDatum> findAggHoy(UUID streamId, Instant start, Instant end) {
 		List<Map<String, Object>> meta = jdbcTemplate.queryForList(
 				"SELECT * FROM solardatm.find_metadata_for_stream(?::uuid)", streamId.toString());
 		log.debug("Metadata for stream:\n{}",
@@ -80,12 +84,12 @@ public class DbFindAggHodTests extends BaseDatumJdbcTestSupport {
 			@Override
 			public List<AggregateDatum> doInConnection(Connection con)
 					throws SQLException, DataAccessException {
-				log.debug("Finding agg DOW for stream {} from {} - {}", streamId, start, end);
+				log.debug("Finding agg DOY for stream {} from {} - {}", streamId, start, end);
 				List<AggregateDatum> result = new ArrayList<>();
 				RowMapper<AggregateDatum> mapper = new AggregateDatumEntityRowMapper(
-						Aggregation.DayOfWeek);
+						Aggregation.HourOfYear);
 				try (CallableStatement stmt = con
-						.prepareCall("{call solardatm.find_agg_datm_hod(?,?,?)}")) {
+						.prepareCall("{call solardatm.find_agg_datm_hoy(?,?,?)}")) {
 					stmt.setObject(1, streamId, Types.OTHER);
 					stmt.setTimestamp(2, Timestamp.from(start));
 					stmt.setTimestamp(3, Timestamp.from(end));
@@ -99,7 +103,7 @@ public class DbFindAggHodTests extends BaseDatumJdbcTestSupport {
 						}
 					}
 				}
-				log.debug("Found agg HOD for stream:\n{}",
+				log.debug("Found agg HOY for stream:\n{}",
 						result.stream().map(Object::toString).collect(joining("\n")));
 				return result;
 			}
@@ -117,51 +121,60 @@ public class DbFindAggHodTests extends BaseDatumJdbcTestSupport {
 	}
 
 	@Test
-	public void find_hod_typical() {
+	public void find_hoy_utc() {
 		// GIVEN
 		ObjectDatumStreamMetadata meta = testStreamMetadata();
 
-		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		List<AggregateDatum> datums = new ArrayList<>(3 * 24);
-		for ( int day = 0; day < 3; day++ ) {
-			for ( int hour = 0; hour < 24; hour++ ) {
-				Instant ts = start.plusDays(day).plusHours(hour).toInstant();
-				DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(day + hour) },
-						new BigDecimal[] { new BigDecimal((day + 1) * (hour + 1)) }, null, null);
-				DatumPropertiesStatistics stats = statisticsOf(
-						new BigDecimal[][] { new BigDecimal[] { new BigDecimal(6),
-								new BigDecimal(day + hour - 1), new BigDecimal(day + hour + 1) } },
-						new BigDecimal[][] { new BigDecimal[] { new BigDecimal(0), new BigDecimal(0),
-								new BigDecimal(0) } });
+		final ZonedDateTime start = ZonedDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final ZonedDateTime end = ZonedDateTime.of(2023, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		final List<AggregateDatum> datums = new ArrayList<>(730);
 
-				datums.add(new AggregateDatumEntity(meta.getStreamId(), ts, Aggregation.Hour, props,
-						stats));
-			}
+		ZonedDateTime ts = start;
+		for ( int hour = 0; ts.isBefore(end); hour++, ts = ts.plusHours(1) ) {
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(hour) },
+					new BigDecimal[] { new BigDecimal((hour + 1)) }, null, null);
+			DatumPropertiesStatistics stats = statisticsOf(
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(6), new BigDecimal(hour - 1),
+							new BigDecimal(hour + 1) } },
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(0), new BigDecimal(0),
+							new BigDecimal(0) } });
+
+			datums.add(new AggregateDatumEntity(meta.getStreamId(), ts.toInstant(), Aggregation.Hour,
+					props, stats));
 		}
 		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
 
 		// WHEN
-		List<AggregateDatum> results = findAggHod(meta.getStreamId(), Instant.EPOCH, Instant.now());
+		List<AggregateDatum> results = findAggHoy(meta.getStreamId(), Instant.EPOCH, Instant.now());
 
 		// THEN
-		assertThat("24 hour results for one stream", results, hasSize(24));
-		ZonedDateTime date = ZonedDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		for ( int i = 0; i < 24; i++ ) {
+		assertThat("365 * 24 hour results for each hour of year", results,
+				hasSize(HOURS_PER_NON_LEAP_YEAR));
+		ZonedDateTime date = ZonedDateTime.of(1996, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < HOURS_PER_NON_LEAP_YEAR; i++ ) {
 			AggregateDatum d = results.get(i);
-			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(i + 1) },
-					new BigDecimal[] { new BigDecimal((i + 1) * 2) }, null, null);
+			double pi = i + HOURS_PER_NON_LEAP_YEAR / 2.0;
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(pi) },
+					new BigDecimal[] { new BigDecimal(pi + 1) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
-					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(18), new BigDecimal(i - 1),
-							new BigDecimal(i + 3) } },
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(12), new BigDecimal(i - 1),
+							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } },
 					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
-							new BigDecimal(3 * (i + 1)) } });
+							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } });
+
+			// skip 29 Feb as data not over leap year
+			ZonedDateTime expectedDate = date.plusHours(i);
+			if ( expectedDate.compareTo(FEB_29) >= 0 ) {
+				expectedDate = expectedDate.plusDays(1);
+			}
+
 			assertAggregateDatum("Hour " + i, d, new AggregateDatumEntity(meta.getStreamId(),
-					date.plusHours(i).toInstant(), Aggregation.HourOfDay, props, stats));
+					expectedDate.toInstant(), Aggregation.HourOfYear, props, stats));
 		}
 	}
 
 	@Test
-	public void find_hod_tz() {
+	public void find_hoy_tz() {
 		// GIVEN
 		// a node in Pacific/Honolulu time zone
 		final ZoneId zone = ZoneId.of("Pacific/Honolulu");
@@ -169,45 +182,54 @@ public class DbFindAggHodTests extends BaseDatumJdbcTestSupport {
 		setupTestNode(1L, 1L);
 
 		// datum stream metadata for node
-		ObjectDatumStreamMetadata meta = testStreamMetadata(1L, "a", zone.getId());
+		final ObjectDatumStreamMetadata meta = testStreamMetadata(1L, "a", zone.getId());
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 
-		ZonedDateTime start = ZonedDateTime.of(2020, 6, 1, 0, 0, 0, 0, zone);
-		List<AggregateDatum> datums = new ArrayList<>(3 * 24);
-		for ( int day = 0; day < 3; day++ ) {
-			for ( int hour = 0; hour < 24; hour++ ) {
-				Instant ts = start.plusDays(day).plusHours(hour).toInstant();
-				DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(day + hour) },
-						new BigDecimal[] { new BigDecimal((day + 1) * (hour + 1)) }, null, null);
-				DatumPropertiesStatistics stats = statisticsOf(
-						new BigDecimal[][] { new BigDecimal[] { new BigDecimal(6),
-								new BigDecimal(day + hour - 1), new BigDecimal(day + hour + 1) } },
-						new BigDecimal[][] { new BigDecimal[] { new BigDecimal(0), new BigDecimal(0),
-								new BigDecimal(0) } });
+		final ZonedDateTime start = ZonedDateTime.of(2021, 1, 1, 0, 0, 0, 0, zone);
+		final ZonedDateTime end = ZonedDateTime.of(2023, 1, 1, 0, 0, 0, 0, zone);
+		final List<AggregateDatum> datums = new ArrayList<>(730);
 
-				datums.add(new AggregateDatumEntity(meta.getStreamId(), ts, Aggregation.Hour, props,
-						stats));
-			}
+		ZonedDateTime ts = start;
+		for ( int hour = 0; ts.isBefore(end); hour++, ts = ts.plusHours(1) ) {
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(hour) },
+					new BigDecimal[] { new BigDecimal((hour + 1)) }, null, null);
+			DatumPropertiesStatistics stats = statisticsOf(
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(6), new BigDecimal(hour - 1),
+							new BigDecimal(hour + 1) } },
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(0), new BigDecimal(0),
+							new BigDecimal(0) } });
+
+			datums.add(new AggregateDatumEntity(meta.getStreamId(), ts.toInstant(), Aggregation.Hour,
+					props, stats));
 		}
 		DatumDbUtils.insertAggregateDatum(log, jdbcTemplate, datums);
 
 		// WHEN
-		List<AggregateDatum> results = findAggHod(meta.getStreamId(), Instant.EPOCH, Instant.now());
+		List<AggregateDatum> results = findAggHoy(meta.getStreamId(), Instant.EPOCH, Instant.now());
 
 		// THEN
-		assertThat("24 hour results for one stream", results, hasSize(24));
-		ZonedDateTime date = ZonedDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-		for ( int i = 0; i < 24; i++ ) {
+		assertThat("365 * 24 hour results for each hour of year", results,
+				hasSize(HOURS_PER_NON_LEAP_YEAR));
+		ZonedDateTime date = ZonedDateTime.of(1996, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+		for ( int i = 0; i < HOURS_PER_NON_LEAP_YEAR; i++ ) {
 			AggregateDatum d = results.get(i);
-			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(i + 1) },
-					new BigDecimal[] { new BigDecimal((i + 1) * 2) }, null, null);
+			double pi = i + HOURS_PER_NON_LEAP_YEAR / 2.0;
+			DatumProperties props = propertiesOf(new BigDecimal[] { new BigDecimal(pi) },
+					new BigDecimal[] { new BigDecimal(pi + 1) }, null, null);
 			DatumPropertiesStatistics stats = statisticsOf(
-					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(18), new BigDecimal(i - 1),
-							new BigDecimal(i + 3) } },
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(12), new BigDecimal(i - 1),
+							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } },
 					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
-							new BigDecimal(3 * (i + 1)) } });
+							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } });
+
+			// skip 29 Feb as data not over leap year
+			ZonedDateTime expectedDate = date.plusHours(i);
+			if ( expectedDate.compareTo(FEB_29) >= 0 ) {
+				expectedDate = expectedDate.plusDays(1);
+			}
+
 			assertAggregateDatum("Hour " + i, d, new AggregateDatumEntity(meta.getStreamId(),
-					date.plusHours(i).toInstant(), Aggregation.HourOfDay, props, stats));
+					expectedDate.toInstant(), Aggregation.HourOfYear, props, stats));
 		}
 	}
 

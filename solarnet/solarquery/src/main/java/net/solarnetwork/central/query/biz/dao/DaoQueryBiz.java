@@ -99,7 +99,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 4.3
+ * @version 4.4
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -115,7 +115,9 @@ public class DaoQueryBiz implements QueryBiz {
 	private long maxDaysForHourAggregation = 31;
 	private long maxDaysForDayAggregation = 730;
 	private long maxDaysForDayOfWeekAggregation = 3650;
+	private long maxDaysForDayOfYearAggregation = 3650;
 	private long maxDaysForHourOfDayAggregation = 3650;
+	private long maxDaysForHourOfYearAggregation = 3650;
 	private long maxDaysForWeekOfYearAggregation = 3650;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -291,7 +293,8 @@ public class DaoQueryBiz implements QueryBiz {
 		}
 		if ( startDate == null && endDate == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
 				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek ) {
+				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
+				&& agg != Aggregation.HourOfYear && agg != Aggregation.DayOfYear ) {
 			log.info("Restricting aggregate to Day for filter with missing start or end date: {}",
 					filter);
 			forced = Aggregation.Day;
@@ -302,11 +305,25 @@ public class DaoQueryBiz implements QueryBiz {
 						diffDays, maxDaysForHourOfDayAggregation, filter);
 				forced = Aggregation.Month;
 			}
+		} else if ( agg == Aggregation.HourOfYear ) {
+			if ( diffDays > maxDaysForHourOfYearAggregation ) {
+				log.info(
+						"Restricting aggregate to Month for HourOfYear filter duration {} days (> {}): {}",
+						diffDays, maxDaysForHourOfYearAggregation, filter);
+				forced = Aggregation.Month;
+			}
 		} else if ( agg == Aggregation.DayOfWeek || agg == Aggregation.SeasonalDayOfWeek ) {
 			if ( diffDays > maxDaysForDayOfWeekAggregation ) {
 				log.info(
 						"Restricting aggregate to Month for DayOfWeek filter duration {} days (> {}): {}",
 						diffDays, maxDaysForDayOfWeekAggregation, filter);
+				forced = Aggregation.Month;
+			}
+		} else if ( agg == Aggregation.DayOfYear ) {
+			if ( diffDays > maxDaysForDayOfYearAggregation ) {
+				log.info(
+						"Restricting aggregate to Month for DayOfYear filter duration {} days (> {}): {}",
+						diffDays, maxDaysForDayOfYearAggregation, filter);
 				forced = Aggregation.Month;
 			}
 		} else if ( agg == Aggregation.WeekOfYear ) {
@@ -642,6 +659,30 @@ public class DaoQueryBiz implements QueryBiz {
 	 */
 	public void setCriteriaValidator(Validator criteriaValidator) {
 		this.criteriaValidator = criteriaValidator;
+	}
+
+	/**
+	 * Set the maximum day time range allowed for day-of-year aggregate queries
+	 * before a higher aggregation level (e.g. month) is enforced.
+	 * 
+	 * @param maxDaysForDayOfYearAggregation
+	 *        the maximum day range to set
+	 * @since 4.4
+	 */
+	public final void setMaxDaysForDayOfYearAggregation(long maxDaysForDayOfYearAggregation) {
+		this.maxDaysForDayOfYearAggregation = maxDaysForDayOfYearAggregation;
+	}
+
+	/**
+	 * Set the maximum day time range allowed for hour-of-year aggregate queries
+	 * before a higher aggregation level (e.g. month) is enforced.
+	 * 
+	 * @param maxDaysForHourOfYearAggregation
+	 *        the maximum day range to set
+	 * @since 4.4
+	 */
+	public final void setMaxDaysForHourOfYearAggregation(long maxDaysForHourOfYearAggregation) {
+		this.maxDaysForHourOfYearAggregation = maxDaysForHourOfYearAggregation;
 	}
 
 }

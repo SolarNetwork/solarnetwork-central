@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectDatumTests.java - 22/11/2020 8:12:12 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -62,9 +62,9 @@ import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link SelectDatum} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectDatumTests {
 
@@ -978,6 +978,44 @@ public class SelectDatumTests {
 						TestSqlResources.class, SQL_COMMENT));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, nodeIdsArray, sourceIdsArray);
+	}
+
+	@Test
+	public void sql_find_doy_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.DayOfYear);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-datum-doy-nodesAndSources-dates.sql",
+				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_hoy_nodesAndSources_absoluteDates() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setAggregation(Aggregation.HourOfYear);
+		filter.setNodeId(1L);
+		filter.setSourceId("a");
+		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource("select-datum-hoy-nodesAndSources-dates.sql",
+				TestSqlResources.class, SQL_COMMENT));
 	}
 
 }
