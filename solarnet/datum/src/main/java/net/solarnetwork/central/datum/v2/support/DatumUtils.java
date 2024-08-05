@@ -107,7 +107,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
  * @since 2.8
  */
 public final class DatumUtils {
@@ -606,26 +606,48 @@ public final class DatumUtils {
 		ReportingGeneralNodeDatum gnd = new ReportingGeneralNodeDatum();
 
 		gnd.setCreated(datum.getTimestamp());
-		gnd.setLocalDateTime(datum.getTimestamp().atZone(zone).toLocalDateTime());
 		gnd.setNodeId(meta.getObjectId());
 		gnd.setSourceId(meta.getSourceId());
 
 		DatumSamples s = new DatumSamples();
+
 		// populate instantaneous statistics data if available
-		if ( datum instanceof AggregateDatum ) {
-			DatumPropertiesStatistics stats = ((AggregateDatum) datum).getStatistics();
+		if ( datum instanceof AggregateDatum agg ) {
+			DatumPropertiesStatistics stats = agg.getStatistics();
 			if ( stats != null ) {
 				populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
 			}
+
+			if ( agg.getAggregation() != null ) {
+				switch (agg.getAggregation()) {
+					case DayOfWeek:
+					case DayOfYear:
+					case HourOfDay:
+					case HourOfYear:
+					case SeasonalDayOfWeek:
+					case SeasonalHourOfDay:
+					case WeekOfYear:
+						// the local time for the XoY aggregates is UTC
+						gnd.setLocalDateTime(
+								datum.getTimestamp().atOffset(ZoneOffset.UTC).toLocalDateTime());
+						break;
+
+					default:
+						// nothing
+				}
+			}
 		}
+
+		if ( gnd.getLocalDateTime() == null ) {
+			gnd.setLocalDateTime(datum.getTimestamp().atZone(zone).toLocalDateTime());
+		}
+
 		// populate normal data
 		DatumProperties props = datum.getProperties();
 		if ( props != null ) {
 			populateGeneralDatumSamples(s, props, meta);
 		}
-		if ( datum instanceof ReadingDatum ) {
-			ReadingDatum read = (ReadingDatum) datum;
-
+		if ( datum instanceof ReadingDatum read ) {
 			// populate reading (accumulating) data from stats when available
 			DatumPropertiesStatistics stats = read.getStatistics();
 			if ( stats != null ) {
