@@ -194,7 +194,9 @@ CREATE AGGREGATE solardatm.rollup_agg_data(solardatm.agg_data) (
  * Aggregate datum rollup state transition function, to average aggregate datum into a higher-level
  * aggregate datum.
  *
- * Note that the `data_s` and `read_a` columns are not supported.
+ * Note that the `data_s` column are not supported. The `data_r` column is handled differently
+ * in that each 3-element sub-array contains the average, min, and max accumulated value (instead
+ * of the difference, start, and end accumulated value).
  *
  * @see solardatm.avg_agg_data_ffunc()
  */
@@ -348,7 +350,7 @@ BEGIN
 		SELECT
 			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_a
 			, array_agg(
-				ARRAY[NULL, val_min, val_max] ORDER BY idx
+				ARRAY[val, val_min, val_max] ORDER BY idx
 			) AS read_a
 		FROM da
 	)
