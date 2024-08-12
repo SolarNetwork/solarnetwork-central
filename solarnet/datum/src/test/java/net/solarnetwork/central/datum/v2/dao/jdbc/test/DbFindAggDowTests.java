@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbFindAggDowTests.java - 10/12/2020 9:12:05 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,8 +31,8 @@ import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
@@ -56,14 +56,14 @@ import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@literal solardatm.find_agg_dow} database stored
  * procedure.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -130,8 +130,8 @@ public class DbFindAggDowTests extends BaseDatumJdbcTestSupport {
 						propertiesOf(decimalArray("1.6", "6.1"), decimalArray("500"), null, null),
 						statisticsOf(
 								new BigDecimal[][] { decimalArray("18", "1.1", "3.1"),
-										decimalArray("18", "2.0", "7.1") },
-								new BigDecimal[][] { decimalArray(null, "100", "800") })));
+										decimalArray("18", "2", "7.1") },
+								new BigDecimal[][] { decimalArray("500", "100", "800") })));
 		assertAggregateDatum("Tuesday result", results.get(1),
 				new AggregateDatumEntity(streamId, date.plusDays(1).toInstant(), Aggregation.DayOfWeek,
 						propertiesOf(decimalArray("1.4", "4.1"), decimalArray("600"), null, null),

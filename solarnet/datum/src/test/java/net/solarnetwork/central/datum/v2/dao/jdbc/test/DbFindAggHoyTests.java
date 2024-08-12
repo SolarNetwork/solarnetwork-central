@@ -159,8 +159,8 @@ public class DbFindAggHoyTests extends BaseDatumJdbcTestSupport {
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(12), new BigDecimal(i - 1),
 							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } },
-					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
-							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } });
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(pi + 1),
+							new BigDecimal(i + 1), new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } });
 
 			// skip 29 Feb as data not over leap year
 			ZonedDateTime expectedDate = date.plusHours(i);
@@ -219,8 +219,8 @@ public class DbFindAggHoyTests extends BaseDatumJdbcTestSupport {
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(12), new BigDecimal(i - 1),
 							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } },
-					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
-							new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } });
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(pi + 1),
+							new BigDecimal(i + 1), new BigDecimal(i + HOURS_PER_NON_LEAP_YEAR + 1) } });
 
 			// skip 29 Feb as data not over leap year
 			ZonedDateTime expectedDate = date.plusHours(i);

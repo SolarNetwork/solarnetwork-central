@@ -158,8 +158,8 @@ public class DbFindAggDoyTests extends BaseDatumJdbcTestSupport {
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(12), new BigDecimal(i - 1),
 							new BigDecimal(i + 365 + 1) } },
-					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
-							new BigDecimal(i + 365 + 1) } });
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(pi + 1),
+							new BigDecimal(i + 1), new BigDecimal(i + 365 + 1) } });
 
 			// skip 29 Feb as data not over leap year
 			ZonedDateTime expectedDate = date.plusDays(i);
@@ -218,8 +218,8 @@ public class DbFindAggDoyTests extends BaseDatumJdbcTestSupport {
 			DatumPropertiesStatistics stats = statisticsOf(
 					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(12), new BigDecimal(i - 1),
 							new BigDecimal(i + 365 + 1) } },
-					new BigDecimal[][] { new BigDecimal[] { null, new BigDecimal(i + 1),
-							new BigDecimal(i + 365 + 1) } });
+					new BigDecimal[][] { new BigDecimal[] { new BigDecimal(pi + 1),
+							new BigDecimal(i + 1), new BigDecimal(i + 365 + 1) } });
 
 			// skip 29 Feb as data not over leap year
 			ZonedDateTime expectedDate = date.plusDays(i);
