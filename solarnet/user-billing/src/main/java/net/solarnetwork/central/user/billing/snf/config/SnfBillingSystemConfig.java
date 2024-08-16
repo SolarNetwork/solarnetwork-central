@@ -49,7 +49,7 @@ import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
  * SNF BillingSystem configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class SnfBillingSystemConfig {
@@ -91,7 +91,8 @@ public class SnfBillingSystemConfig {
 
 	@Bean
 	public BillingSystem snfBillingSystem(SnfInvoicingSystem snfInvoicingSystem) {
-		SnfBillingSystem system = new SnfBillingSystem(snfInvoicingSystem, accountDao, invoiceDao);
+		SnfBillingSystem system = new SnfBillingSystem(snfInvoicingSystem, accountDao, invoiceDao,
+				usageDao);
 		return system;
 	}
 

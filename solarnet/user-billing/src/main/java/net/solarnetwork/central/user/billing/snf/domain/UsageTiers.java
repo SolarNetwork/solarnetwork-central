@@ -1,21 +1,21 @@
 /* ==================================================================
  * UsageTiers.java - 27/05/2021 12:24:45 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,26 +31,27 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
 
 /**
  * A collection of ordered {@link UsageTier} objects.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
-public class UsageTiers {
+public class UsageTiers implements NamedCostTiers {
 
 	private final List<UsageTier> tiers;
 	private final LocalDate date;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The tiers will be sorted by {@code quantity}.
 	 * </p>
-	 * 
+	 *
 	 * @param tiers
 	 *        the tiers; the list will be copied
 	 * @throws IllegalArgumentException
@@ -62,11 +63,11 @@ public class UsageTiers {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The tiers will be sorted by {@code quantity}.
 	 * </p>
-	 * 
+	 *
 	 * @param tiers
 	 *        the tiers; the list will be copied
 	 * @param date
@@ -80,7 +81,7 @@ public class UsageTiers {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tiers
 	 *        the tiers; the list will be copied
 	 * @param date
@@ -107,7 +108,7 @@ public class UsageTiers {
 
 	/**
 	 * Get all tiers of a given type.
-	 * 
+	 *
 	 * @param key
 	 *        the key of the tiers to get
 	 * @return the matching tiers, never {@literal null}
@@ -118,7 +119,7 @@ public class UsageTiers {
 
 	/**
 	 * Get a mapping of all tier types to associated tiers.
-	 * 
+	 *
 	 * @return the tier map
 	 */
 	public Map<String, List<UsageTier>> tierMap() {
@@ -134,23 +135,25 @@ public class UsageTiers {
 
 	/**
 	 * Get the tiers.
-	 * 
+	 *
 	 * @return the tiers (unmodifiable)
 	 */
+	@Override
 	public List<UsageTier> getTiers() {
 		return tiers;
 	}
 
 	/**
 	 * Get the tiers date.
-	 * 
+	 *
 	 * <p>
 	 * The {@code date} might be interpreted as an effective date for this
 	 * collection of tiers.
 	 * </p>
-	 * 
+	 *
 	 * @return the date, or {@literal null}
 	 */
+	@Override
 	public LocalDate getDate() {
 		return date;
 	}

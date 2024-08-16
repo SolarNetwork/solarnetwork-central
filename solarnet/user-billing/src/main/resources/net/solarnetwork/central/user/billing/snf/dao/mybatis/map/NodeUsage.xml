@@ -22,6 +22,16 @@
 		FROM solarbill.billing_usage_tiers(#{date,jdbcType=DATE}) tier
 	</select>
 
+	<select id="find-EffectiveUsageTier-all" resultMap="EffectiveUsageTier-FullResult">
+		SELECT 
+			  tier.meter_key 			AS usage_tier_meter_key
+			, tier.min 					AS usage_tier_min
+			, tier.cost 				AS usage_tier_cost
+			, tier.effective_date 		AS usage_tier_effective_date
+		FROM solarbill.billing_usage_tier_effective_dates() d
+			, solarbill.billing_usage_tiers(d.effective_date) tier
+	</select>
+
 	<!-- 
 		Account-level usage (with costs)
 	 -->

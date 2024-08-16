@@ -1,21 +1,21 @@
 /* ==================================================================
  * BillingController.java - 25/08/2017 7:32:16 AM
- * 
+ *
  * Copyright 2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,7 +25,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.YEAR;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.YearMonth;
 import java.time.chrono.IsoChronology;
@@ -64,7 +63,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for billing management.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -77,13 +76,13 @@ public class BillingController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param billingBiz
 	 *        the billing biz to use
 	 */
 	public BillingController(@Autowired(required = false) BillingBiz billingBiz) {
 		super();
-		this.billingBiz = requireNonNullArgument(billingBiz, "billingBiz");
+		this.billingBiz = billingBiz;
 	}
 
 	private BillingBiz billingBiz() {
@@ -95,7 +94,7 @@ public class BillingController {
 
 	/**
 	 * Get billing system info for the current user.
-	 * 
+	 *
 	 * @param locale
 	 *        the Locale of the request
 	 * @return the billing system info
@@ -111,7 +110,7 @@ public class BillingController {
 
 	/**
 	 * Get a single invoice with full details.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the ID of the invoice to get
 	 * @param userId
@@ -144,7 +143,7 @@ public class BillingController {
 
 	/**
 	 * Render an invoice.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID to render
 	 * @param accept
@@ -184,7 +183,7 @@ public class BillingController {
 
 	/**
 	 * Render an invoice as PDF.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID to render
 	 * @param userId
@@ -204,7 +203,7 @@ public class BillingController {
 
 	/**
 	 * Find matching invoices.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param locale
@@ -249,7 +248,7 @@ public class BillingController {
 
 	/**
 	 * Preview the current billing cycle's invoice.
-	 * 
+	 *
 	 * @param userId
 	 *        the optional user ID to get the invoice for; if not provided the
 	 *        current actor's ID is used
@@ -294,7 +293,7 @@ public class BillingController {
 
 	/**
 	 * Render a preview of the current billing cycle's invoice.
-	 * 
+	 *
 	 * @param accept
 	 *        an optional output type, defaults to {@literal text/html}
 	 * @param userId
@@ -345,7 +344,7 @@ public class BillingController {
 
 	/**
 	 * Render a preview of the current billing cycle's invoice as a PDF.
-	 * 
+	 *
 	 * @param userId
 	 *        the optional user ID to get the invoice for; if not provided the
 	 *        current actor's ID is used

@@ -27,17 +27,17 @@ import java.util.Locale;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface BillingBiz {
 
@@ -50,6 +50,17 @@ public interface BillingBiz {
 	 *         or available
 	 */
 	BillingSystem billingSystemForUser(Long userId);
+
+	/**
+	 * Get the billing system associated with a given accounting system key.
+	 * 
+	 * @param key
+	 *        the key of the system to get
+	 * @return the system, or {@literal null} if no system available for the
+	 *         given {@code key}
+	 * @since 1.2
+	 */
+	BillingSystem billingSystemForKey(String key);
 
 	/**
 	 * Get an invoice by ID.

@@ -1,27 +1,28 @@
 /* ==================================================================
  * SnfInvoicingSystem.java - 20/07/2020 9:26:30 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Locale;
 import org.springframework.context.MessageSource;
@@ -33,9 +34,9 @@ import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * API for generating invoices for the {@link SnfBillingSystem}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SnfInvoicingSystem {
 
@@ -46,7 +47,7 @@ public interface SnfInvoicingSystem {
 
 		/**
 		 * Get the "dry run" flag.
-		 * 
+		 *
 		 * @return {@literal true} if an invoice should be generated but not
 		 *         persisted nor delivered to the account holder
 		 */
@@ -54,7 +55,7 @@ public interface SnfInvoicingSystem {
 
 		/**
 		 * Get the "use account credit" flag.
-		 * 
+		 *
 		 * @return {@literal true} to use available account credit by adding a
 		 *         credit item to the generated invoice
 		 */
@@ -64,7 +65,7 @@ public interface SnfInvoicingSystem {
 
 	/**
 	 * Get the billing account for a given user.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the account for
 	 * @return the account, or {@literal null} if not available
@@ -73,7 +74,7 @@ public interface SnfInvoicingSystem {
 
 	/**
 	 * Get the latest invoice for a given account.
-	 * 
+	 *
 	 * @param accountId
 	 *        the ID of the account to get the latest invoice for
 	 * @return the latest available invoice, or {@literal null} if none
@@ -83,7 +84,7 @@ public interface SnfInvoicingSystem {
 
 	/**
 	 * Generate a new invoice.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to generate an invoice for
 	 * @param startDate
@@ -103,7 +104,7 @@ public interface SnfInvoicingSystem {
 	/**
 	 * Deliver an invoice via an account-specific delivery mechanism (such as
 	 * email).
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the ID of the invoice to deliver
 	 * @return {@literal true} if the invoice was delivered successfully
@@ -112,7 +113,7 @@ public interface SnfInvoicingSystem {
 
 	/**
 	 * Get a {@link MessageSource} appropriate for a given invoice.
-	 * 
+	 *
 	 * @param invoice
 	 *        the invoice to get the message source for
 	 * @return the message source, never {@literal null}
@@ -120,15 +121,25 @@ public interface SnfInvoicingSystem {
 	MessageSource messageSourceForInvoice(SnfInvoice invoice);
 
 	/**
+	 * Get a {@link MessageSource} appropriate for a given date.
+	 *
+	 * @param date
+	 *        the date to get the message source for
+	 * @return the message source, never {@literal null}
+	 * @since 1.1
+	 */
+	MessageSource messageSourceForDate(Instant date);
+
+	/**
 	 * Render an invoice entity.
-	 * 
+	 *
 	 * <p>
 	 * This is similar to
 	 * {@link net.solarnetwork.central.user.billing.biz.BillingSystem#renderInvoice(Long, String, MimeType, Locale)}
 	 * except it is meant to be used internally, when an invoice entity instance
 	 * already exists.
 	 * </p>
-	 * 
+	 *
 	 * @param invoice
 	 *        the invoice to render
 	 * @param outputType

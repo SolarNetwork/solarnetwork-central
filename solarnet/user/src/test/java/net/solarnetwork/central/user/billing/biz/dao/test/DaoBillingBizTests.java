@@ -22,7 +22,19 @@
 
 package net.solarnetwork.central.user.billing.biz.dao.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import net.solarnetwork.central.test.CommonTestUtils;
+import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
+import net.solarnetwork.central.user.dao.UserDao;
 
 /**
  * Test cases for the {@link DaoBillingBiz} class.
@@ -30,6 +42,49 @@ import net.solarnetwork.central.user.billing.biz.dao.DaoBillingBiz;
  * @author matt
  * @version 1.0
  */
+@ExtendWith(MockitoExtension.class)
 public class DaoBillingBizTests {
+
+	@Mock
+	private UserDao userDao;
+
+	@Mock
+	private BillingSystem system1;
+
+	private DaoBillingBiz service;
+
+	@BeforeEach
+	public void setup() {
+		List<BillingSystem> systems = new ArrayList<>(1);
+		systems.add(system1);
+
+		service = new DaoBillingBiz(userDao, systems);
+	}
+
+	@Test
+	public void systemForKey_found() {
+		// GIVEN
+		final String key = CommonTestUtils.randomString();
+		given(system1.supportsAccountingSystemKey(key)).willReturn(true);
+
+		// WHEN
+		BillingSystem result = service.billingSystemForKey(key);
+
+		// THEN
+		then(result).as("Accounting system for matching key returned").isSameAs(system1);
+	}
+
+	@Test
+	public void systemForKey_notFound() {
+		// GIVEN
+		final String key = CommonTestUtils.randomString();
+		given(system1.supportsAccountingSystemKey(key)).willReturn(false);
+
+		// WHEN
+		BillingSystem result = service.billingSystemForKey(key);
+
+		// THEN
+		then(result).as("Null returned when no matching key found").isNull();
+	}
 
 }
