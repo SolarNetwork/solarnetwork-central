@@ -36,13 +36,13 @@ import static org.hamcrest.Matchers.nullValue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +50,14 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.dao.AuditNodeServiceEntity;
+import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTier;
 import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
+import net.solarnetwork.central.user.billing.snf.test.OcppTestUtils;
 import net.solarnetwork.central.user.billing.snf.test.OscpTestUtils;
 
 /**
@@ -503,10 +506,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	protected void addOcppCharger(Long userId, Long nodeId, String ident, String vendor, String model) {
-		jdbcTemplate.update("""
-				INSERT INTO solarev.ocpp_charge_point (user_id,node_id,ident,vendor,model)
-				VALUES (?,?,?,?,?)
-				""", userId, nodeId, ident, vendor, model);
+		OcppTestUtils.saveOcppCharger(jdbcTemplate, userId, nodeId, ident, vendor, model, true);
 	}
 
 	protected void addDnp3Server(Long userId, Long serverId) {
@@ -533,11 +533,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	protected void addAuditInstructionsIssuedDaily(Long nodeId, Instant ts, Long count) {
-		jdbcTemplate.update("""
-				INSERT INTO solardatm.aud_node_daily
-					(node_id, service, ts_start, cnt)
-				VALUES (?, 'inst', ?, ?)
-				""", nodeId, Timestamp.from(ts), count);
+		DatumDbUtils.insertAuditNodeServiceValueDaily(log, jdbcTemplate, Collections
+				.singleton(AuditNodeServiceEntity.dailyAuditNodeService(nodeId, "inst", ts, count)));
 	}
 
 	@Test
@@ -569,7 +566,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				""".formatted(userId));
 
 		final Long fpId = OscpTestUtils.saveFlexibilityProviderAuthId(jdbcTemplate, userId,
-				randomUUID().toString());
+				randomUUID().toString(), false);
 		final Long cpId = OscpTestUtils.saveCapacityProvider(jdbcTemplate, userId, fpId, "CP");
 		final Long coId = OscpTestUtils.saveCapacityOptimizer(jdbcTemplate, userId, fpId, "CO");
 		final int numOscpCapacityGroups = 200;
@@ -729,7 +726,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				""".formatted(userId));
 
 		final Long fpId = OscpTestUtils.saveFlexibilityProviderAuthId(jdbcTemplate, userId,
-				randomUUID().toString());
+				randomUUID().toString(), false);
 		final Long cpId = OscpTestUtils.saveCapacityProvider(jdbcTemplate, userId, fpId, "CP");
 		final Long coId = OscpTestUtils.saveCapacityOptimizer(jdbcTemplate, userId, fpId, "CO");
 		final int numOscpCapacityGroups = 200;
@@ -1072,7 +1069,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		}
 
 		final Long fpId = OscpTestUtils.saveFlexibilityProviderAuthId(jdbcTemplate, userId,
-				randomUUID().toString());
+				randomUUID().toString(), false);
 		final Long cpId = OscpTestUtils.saveCapacityProvider(jdbcTemplate, userId, fpId, "CP");
 		final Long coId = OscpTestUtils.saveCapacityOptimizer(jdbcTemplate, userId, fpId, "CO");
 		final int numOscpCapacityGroups = 150;

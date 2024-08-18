@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpTestUtils.java - 17/08/2022 3:37:12 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,9 +32,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 
 /**
  * Testing utilities for Flexibility Provider.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class OscpTestUtils {
 
@@ -44,23 +44,27 @@ public final class OscpTestUtils {
 
 	/**
 	 * Save a new Flexibility Provider authorization ID.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @param userId
 	 *        the user ID
 	 * @param token
 	 *        the token
+	 * @param oauth
+	 *        the OAuth flag
 	 * @return the new ID
 	 */
-	public static Long saveFlexibilityProviderAuthId(JdbcOperations jdbcOps, Long userId, String token) {
+	public static Long saveFlexibilityProviderAuthId(JdbcOperations jdbcOps, Long userId, String token,
+			boolean oauth) {
 		GeneratedKeyHolder holder = new GeneratedKeyHolder();
 		jdbcOps.update((con) -> {
 			PreparedStatement stmt = con.prepareStatement(
-					"INSERT INTO solaroscp.oscp_fp_token (user_id, token) VALUES (?, ?) RETURNING id",
+					"INSERT INTO solaroscp.oscp_fp_token (user_id, token, oauth) VALUES (?, ?, ?) RETURNING id",
 					Statement.RETURN_GENERATED_KEYS);
 			stmt.setObject(1, userId, Types.BIGINT);
 			stmt.setString(2, token);
+			stmt.setBoolean(3, oauth);
 			return stmt;
 		}, holder);
 		return holder.getKeyAs(Long.class);
@@ -68,7 +72,7 @@ public final class OscpTestUtils {
 
 	/**
 	 * Save a new Capacity Provider.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @param userId
@@ -98,7 +102,7 @@ public final class OscpTestUtils {
 
 	/**
 	 * Save a new Capacity Optimizer.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @param userId
@@ -128,7 +132,7 @@ public final class OscpTestUtils {
 
 	/**
 	 * Save a new Capacity Optimizer.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @param userId
@@ -168,7 +172,7 @@ public final class OscpTestUtils {
 
 	/**
 	 * Save a new Capacity Optimizer.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC template to use
 	 * @param userId

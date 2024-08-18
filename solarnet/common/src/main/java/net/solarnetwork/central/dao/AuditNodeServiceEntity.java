@@ -43,7 +43,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * Audit node service entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "ts", "nodeId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
@@ -141,6 +141,23 @@ public class AuditNodeServiceEntity extends BasicIdentity<DatumId> implements Au
 		super(id);
 		this.aggregation = (aggregation == null ? Aggregation.None : aggregation);
 		this.count = count;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("AuditNodeServiceEntity{aggregation=");
+		builder.append(aggregation);
+		builder.append(", nodeId=");
+		builder.append(getNodeId());
+		builder.append(", service=");
+		builder.append(getService());
+		builder.append(", timestamp=");
+		builder.append(getTimestamp());
+		builder.append(", count=");
+		builder.append(count);
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

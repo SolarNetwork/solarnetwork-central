@@ -83,6 +83,8 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.central.domain.AuditNodeServiceValue;
+import net.solarnetwork.central.domain.AuditUserServiceValue;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -101,7 +103,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * </p>
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -1104,6 +1106,84 @@ public final class DatumDbUtils {
 						}
 
 						datumStmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Insert a set of daily {@link AuditNodeServiceValue} entities in the
+	 * database.
+	 *
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param data
+	 *        the data to insert
+	 * @since 2.5
+	 */
+	public static void insertAuditNodeServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<AuditNodeServiceValue> data) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement stmt = con.prepareStatement("""
+						INSERT INTO solardatm.aud_node_daily
+							(node_id, service, ts_start, cnt)
+						VALUES (?, ?, ?, ?)
+						""")) {
+					for ( AuditNodeServiceValue v : data ) {
+						if ( log != null ) {
+							log.debug("Inserting AuditNodeServiceValue: {}", v);
+						}
+						stmt.setObject(1, v.getNodeId());
+						stmt.setObject(2, v.getService());
+						stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
+						stmt.setObject(4, v.getCount());
+						stmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Insert a set of daily {@link AuditNodeServiceValue} entities in the
+	 * database.
+	 *
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param data
+	 *        the data to insert
+	 * @since 2.5
+	 */
+	public static void insertAuditUserServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<AuditUserServiceValue> data) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement stmt = con.prepareStatement("""
+						INSERT INTO solardatm.aud_user_daily
+							(user_id, service, ts_start, cnt)
+						VALUES (?, ?, ?, ?)
+						""")) {
+					for ( AuditUserServiceValue v : data ) {
+						if ( log != null ) {
+							log.debug("Inserting AuditNodeServiceValue: {}", v);
+						}
+						stmt.setObject(1, v.getUserId());
+						stmt.setObject(2, v.getService());
+						stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
+						stmt.setObject(4, v.getCount());
+						stmt.execute();
 					}
 				}
 				return null;
