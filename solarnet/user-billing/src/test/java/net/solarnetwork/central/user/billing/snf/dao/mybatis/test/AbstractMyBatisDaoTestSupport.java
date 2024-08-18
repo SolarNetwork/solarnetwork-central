@@ -225,22 +225,15 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		return streamId;
 	}
 
-	protected UUID addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
-			long datumQueryCount, int datumCount, short datumHourlyCount, short datumDailyCount,
-			boolean monthPresent) {
-		return addAuditDatumMonthly(nodeId, sourceId, date, propCount, datumQueryCount, 0L, datumCount,
-				datumHourlyCount, datumDailyCount, monthPresent);
-	}
-
-	protected UUID addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
+	protected UUID addAuditDatumDaily(Long nodeId, String sourceId, Instant date, long propCount,
 			long datumQueryCount, long fluxByteCount, int datumCount, short datumHourlyCount,
-			short datumDailyCount, boolean monthPresent) {
+			boolean datumDailyPresent) {
 		UUID streamId = setupDatumStream(nodeId, sourceId);
-		jdbcTemplate.update("insert into solardatm.aud_datm_monthly "
-				+ "(ts_start,stream_id,prop_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
-				+ "VALUES (?,?::uuid,?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()),
+		jdbcTemplate.update("insert into solardatm.aud_datm_daily "
+				+ "(ts_start,stream_id,prop_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres)"
+				+ "VALUES (?,?::uuid,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()),
 				streamId.toString(), propCount, datumQueryCount, fluxByteCount, datumCount,
-				datumHourlyCount, datumDailyCount, monthPresent);
+				datumHourlyCount, datumDailyPresent);
 		return streamId;
 	}
 

@@ -254,7 +254,7 @@ $$
 			, SUM(a.flux_byte_count)::bigint AS flux_byte_count
 		FROM nodes nodes
 		INNER JOIN solardatm.da_datm_meta meta ON meta.node_id = ANY(nodes.nodes)
-		INNER JOIN solardatm.aud_datm_monthly a ON a.stream_id = meta.stream_id
+		INNER JOIN solardatm.aud_datm_daily a ON a.stream_id = meta.stream_id
 			AND a.ts_start >= nodes.sdate AND a.ts_start < nodes.edate
 		GROUP BY meta.node_id
 	)
@@ -459,7 +459,7 @@ $$
 		)
 		SELECT
 			(SUM(a.cnt) FILTER (WHERE a.service = 'flxo'))::BIGINT AS flux_data_out
-		FROM solardatm.aud_user_monthly a, tz
+		FROM solardatm.aud_user_daily a, tz
 		WHERE a.user_id = userid
 			AND a.ts_start >= ts_min AT TIME ZONE tz.time_zone
 			AND a.ts_start < ts_max AT TIME ZONE tz.time_zone

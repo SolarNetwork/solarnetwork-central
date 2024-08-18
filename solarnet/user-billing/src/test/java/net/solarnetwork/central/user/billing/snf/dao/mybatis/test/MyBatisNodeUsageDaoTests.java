@@ -253,7 +253,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000, 2000, 3000, 4000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100, 200, 300, (short) 400, (short) 500, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100, 200, 2_500L, 300, (short) 400, true);
 		}
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
@@ -300,8 +300,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000000, 2000000, 3000000, 4000000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100000, 200000, 300000, (short) 400000,
-					(short) 500000, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100000, 200000, 250_000L, 300000, (short) 400000,
+					true);
 		}
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
@@ -413,10 +413,10 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 			addAuditAccumulatingDatumDaily(nodeId2, sourceId, day, 500_000, 1_500_000, 2_500_000,
 					3_500_000);
 
-			addAuditDatumMonthly(nodeId, sourceId, day, 100_000, 200_000, 300_000, (short) 400_000,
-					(short) 500_000, true);
-			addAuditDatumMonthly(nodeId2, sourceId, day, 50_000, 150_000, 250_000, (short) 350_000,
-					(short) 450_000, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100_000, 200_000, 2_500_000L, 300_000,
+					(short) 400_000, true);
+			addAuditDatumDaily(nodeId2, sourceId, day, 50_000, 150_000, 1_500_000L, 250_000,
+					(short) 350_000, true);
 		}
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
@@ -551,8 +551,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000000, 2000000, 3000000, 4000000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100000, 200000, 300000, (short) 400000,
-					(short) 500000, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100000, 200000, 2_500_000L, 300000, (short) 400000,
+					true);
 		}
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
@@ -711,8 +711,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000000, 2000000, 3000000, 4000000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100000, 200000, 300000, (short) 400000,
-					(short) 500000, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100000, 200000, 2_500_000L, 300000, (short) 400000,
+					true);
 		}
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
@@ -926,8 +926,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1_000_000, 2_000_000, 3_000_000,
 					4_000_000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100_000, 200_000, 300_000, (short) 400_000,
-					(short) 500_000, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100_000, 200_000, 2_500_000L, 300_000,
+					(short) 400_000, true);
 			addAuditInstructionsIssuedDaily(nodeId, day, 100_000L);
 		}
 
@@ -1067,8 +1067,8 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000000, 2000000, 3000000, 4000000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100000, 200000, 300000, (short) 400000,
-					(short) 500000, true);
+			addAuditDatumDaily(nodeId, sourceId, day, 100000, 200000, 2_500_000L, 300000, (short) 400000,
+					true);
 		}
 
 		final Long fpId = OscpTestUtils.saveFlexibilityProviderAuthId(jdbcTemplate, userId,
@@ -1271,9 +1271,9 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1_000_000, 2_000_000, 3_000_000,
 					4_000_000);
+			addAuditDatumDaily(nodeId, sourceId, day, 100_000L, 200_000L, 250_000_000L, 300_000,
+					(short) 400_000, true);
 		}
-		addAuditDatumMonthly(nodeId, sourceId, month.atStartOfDay(TEST_ZONE).toInstant(), 1_000_000L,
-				2_000_000L, 2_500_000_000L, 3_000_000, (short) 4_000_000, (short) 5_000_000, true);
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
 		debugRows("solardatm.aud_datm_monthly", "ts_start");
