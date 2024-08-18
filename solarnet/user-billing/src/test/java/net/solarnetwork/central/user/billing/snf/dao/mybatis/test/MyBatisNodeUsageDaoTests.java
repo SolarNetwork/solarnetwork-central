@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisNodeUsageDaoTests.java - 22/07/2020 10:40:26 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -59,7 +59,7 @@ import net.solarnetwork.central.user.billing.snf.test.OscpTestUtils;
 
 /**
  * Test cases for the {@link MyBatisNodeUsageDao}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -364,7 +364,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						NamedCost.forTier(1, "50000", 	new BigDecimal("50000") .multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "350000", 	new BigDecimal("350000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString()),
 						NamedCost.forTier(3, "600000", 	new BigDecimal("600000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(2).getCost()).toString())));
-				
+
 				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 								new BigDecimal("50000")  .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
 						.add(	new BigDecimal("350000") .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(1).getCost()))
@@ -377,7 +377,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 						NamedCost.forTier(2, "350000", 	new BigDecimal("350000") .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(1).getCost()).toString()),
 						NamedCost.forTier(3, "600000", 	new BigDecimal("600000") .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(2).getCost()).toString()),
 						NamedCost.forTier(4, "1000000", new BigDecimal("1000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(3).getCost()).toString())));
-				
+
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("50000")   .multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
 						.add(	new BigDecimal("350000")  .multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
@@ -471,7 +471,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				NamedCost.forTier(3, "600000", 	new BigDecimal("600000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(2).getCost()).toString()),
 				NamedCost.forTier(4, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(3).getCost()).toString())
 				));
-		
+
 		assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 						new BigDecimal("50000")  .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
 				.add(	new BigDecimal("350000") .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(1).getCost()))
@@ -485,7 +485,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				NamedCost.forTier(3, "600000", 	new BigDecimal("600000") .multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(2).getCost()).toString()),
 				NamedCost.forTier(4, "2500000", new BigDecimal("2500000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(3).getCost()).toString())
 				));
-		
+
 		assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 						new BigDecimal("50000")    .multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
 				.add(	new BigDecimal("350000")   .multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
@@ -656,14 +656,14 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				assertThat("Properties in cost tiers", propsInTiersCost, contains(
 						NamedCost.forTier(1, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString())));
-				
+
 				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 								new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
 						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
-				
+
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
 						.add(	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
@@ -856,14 +856,14 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				assertThat("Properties in cost tiers", propsInTiersCost, contains(
 						NamedCost.forTier(1, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString())));
-				
+
 				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 								new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
 						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
-				
+
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
 						.add(	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
@@ -1021,14 +1021,14 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				assertThat("Properties in cost tiers", propsInTiersCost, contains(
 						NamedCost.forTier(1, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString())));
-				
+
 				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 								new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
 						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
-				
+
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
 						.add(	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
@@ -1210,14 +1210,14 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				assertThat("Properties in cost tiers", propsInTiersCost, contains(
 						NamedCost.forTier(1, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
 						NamedCost.forTier(2, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString())));
-				
+
 				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 								new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
 						.setScale(3)
 						));
 				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
 						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
-				
+
 				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
 						.add(	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
@@ -1258,4 +1258,133 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	}
 
+	@Test
+	public void usageForUser_oneNodeOneSource_withFluxDataIn() {
+		// GIVEN
+		final LocalDate month = LocalDate.of(2024, 11, 1);
+		final String sourceId = "S1";
+		setupDatumStream(nodeId, sourceId);
+
+		// add 10 days worth of audit data
+		final int numDays = 10;
+		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
+			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
+			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1_000_000, 2_000_000, 3_000_000,
+					4_000_000);
+		}
+		addAuditDatumMonthly(nodeId, sourceId, month.atStartOfDay(TEST_ZONE).toInstant(), 1_000_000L,
+				2_000_000L, 2_500_000_000L, 3_000_000, (short) 4_000_000, (short) 5_000_000, true);
+
+		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
+		debugRows("solardatm.aud_datm_monthly", "ts_start");
+		debugQuery(format(
+				"select * from solarbill.billing_usage_tier_details(%d, '%s'::timestamp, '%s'::timestamp, '%s'::date)",
+				userId, month.toString(), month.plusMonths(1).toString(), month.toString()));
+
+		// WHEN
+		UsageTiers tiers = dao.effectiveUsageTiers(month);
+		Map<String, List<UsageTier>> tierMap = tiers.tierMap();
+
+		List<NodeUsage> r1 = dao.findNodeUsageForAccount(userId, month, month.plusMonths(1));
+		List<NodeUsage> r2 = dao.findUsageForAccount(userId, month, month.plusMonths(1));
+
+		// THEN
+		int i = 0;
+		for ( List<NodeUsage> results : Arrays.asList(r1, r2) ) {
+			assertThat("Results non-null with single result", results, hasSize(1));
+			NodeUsage usage = results.get(0);
+			if ( i == 0 ) {
+				assertThat("Node ID present for node-level usage", usage.getId(), equalTo(nodeId));
+				assertThat("Node usage description is node name", usage.getDescription(),
+						equalTo(format("Test Node %d", nodeId)));
+			} else {
+				assertThat("No node ID for account-level usage", usage.getId(), nullValue());
+			}
+			assertThat("Properties in count aggregated", usage.getDatumPropertiesIn(),
+					equalTo(BigInteger.valueOf(100_000L * numDays)));
+			assertThat("Datum out count aggregated", usage.getDatumOut(),
+					equalTo(BigInteger.valueOf(200_000L * numDays)));
+			assertThat("Datum stored count aggregated", usage.getDatumDaysStored(), equalTo(
+					BigInteger.valueOf((1_000_000L + 2_000_000L + 3_000_000L + 4_000_000L) * numDays)));
+			assertThat("Flux in count aggregated", usage.getFluxDataIn(),
+					equalTo(BigInteger.valueOf(2_500_000_000L)));
+
+			// see tiersForDate_202411
+			Map<String, List<NamedCost>> tiersBreakdown = usage.getTiersCostBreakdown();
+			List<NamedCost> propsInTiersCost = tiersBreakdown.get(NodeUsage.DATUM_PROPS_IN_KEY);
+			assertThat("Properties in cost tier count", propsInTiersCost, hasSize(2));
+			List<NamedCost> datumOutTiersCost = tiersBreakdown.get(NodeUsage.DATUM_OUT_KEY);
+			assertThat("Datum out cost tier count", datumOutTiersCost, hasSize(1));
+			List<NamedCost> datumStoredTiersCost = tiersBreakdown.get(NodeUsage.DATUM_DAYS_STORED_KEY);
+			assertThat("Datum stored cost tier count", datumStoredTiersCost, hasSize(2));
+			List<NamedCost> fluxDataInTiersCost = tiersBreakdown.get(NodeUsage.FLUX_DATA_IN_KEY);
+			assertThat("Flux data in cost tier count", fluxDataInTiersCost, hasSize(2));
+
+			if ( i == 0 ) {
+				List<NamedCost> ocppChargersTiersCost = tiersBreakdown.get(NodeUsage.OCPP_CHARGERS_KEY);
+				assertThat("No node-level OCPP charger costs", ocppChargersTiersCost, hasSize(0));
+				List<NamedCost> oscpCapacityGroupsTiersCost = tiersBreakdown
+						.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY);
+				assertThat("No node-level OSCP capacity group costs", oscpCapacityGroupsTiersCost,
+						hasSize(0));
+			} else {
+				List<NamedCost> ocppChargersTiersCost = tiersBreakdown.get(NodeUsage.OCPP_CHARGERS_KEY);
+				assertThat("Account-level OCPP charger costs", ocppChargersTiersCost, hasSize(0));
+				List<NamedCost> oscpCapacityGroupsTiersCost = tiersBreakdown
+						.get(NodeUsage.OSCP_CAPACITY_GROUPS_KEY);
+				assertThat("Account-level OSCP capacity group costs", oscpCapacityGroupsTiersCost,
+						hasSize(0));
+				/*-
+				datum-props-in=[
+					NamedCost{name=Tier 1, quantity=500000, cost=2.500000},
+					NamedCost{name=Tier 2, quantity=500000, cost=1.500000}],
+				datum-out=[
+					NamedCost{name=Tier 1, quantity=2000000, cost=0.2000000}],
+				datum-days-stored=[
+					NamedCost{name=Tier 1, quantity=10000000, cost=0.50000000},
+					NamedCost{name=Tier 2, quantity=90000000, cost=0.90000000}],
+				flux-data-in=[
+					NamedCost{name=Tier 1, quantity=1000000000, cost=10.00000000},
+					NamedCost{name=Tier 2, quantity=1500000000, cost=9.000000000}]
+				*/
+				// @formatter:off
+				assertThat("Properties in cost", usage.getDatumPropertiesInCost().setScale(3), equalTo(
+								new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost())
+						.add(	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()))
+						.setScale(3)
+						));
+				assertThat("Properties in cost tiers", propsInTiersCost, contains(
+						NamedCost.forTier(1, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "500000", 	new BigDecimal("500000").multiply(tierMap.get(NodeUsage.DATUM_PROPS_IN_KEY).get(1).getCost()).toString())));
+
+				assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
+								new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost())
+						.setScale(3)
+						));
+				assertThat("Datum out cost tiers", datumOutTiersCost, contains(
+						NamedCost.forTier(4, "2000000", new BigDecimal("2000000").multiply(tierMap.get(NodeUsage.DATUM_OUT_KEY).get(0).getCost()).toString())));
+
+				assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
+								new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost())
+						.add(	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()))
+						.setScale(3)
+						));
+				assertThat("Datum stored cost tiers", datumStoredTiersCost, contains(
+						NamedCost.forTier(1, "10000000", 	new BigDecimal("10000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "90000000", 	new BigDecimal("90000000").multiply(tierMap.get(NodeUsage.DATUM_DAYS_STORED_KEY).get(1).getCost()).toString())));
+
+				assertThat("Flux data in cost", usage.getFluxDataInCost().setScale(3), equalTo(
+								        new BigDecimal("1000000000").multiply(tierMap.get(NodeUsage.FLUX_DATA_IN_KEY).get(0).getCost())
+								.add(	new BigDecimal("1500000000").multiply(tierMap.get(NodeUsage.FLUX_DATA_IN_KEY).get(1).getCost()))
+						.setScale(3)
+						));
+				assertThat("Flux data in cost tiers", fluxDataInTiersCost, contains(
+						NamedCost.forTier(1, "1000000000", 	new BigDecimal("1000000000").multiply(tierMap.get(NodeUsage.FLUX_DATA_IN_KEY).get(0).getCost()).toString()),
+						NamedCost.forTier(2, "1500000000", 	new BigDecimal("1500000000").multiply(tierMap.get(NodeUsage.FLUX_DATA_IN_KEY).get(1).getCost()).toString())));
+				// @formatter:on
+			}
+			i++;
+		}
+
+	}
 }

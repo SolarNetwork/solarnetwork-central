@@ -1,21 +1,21 @@
 /* ==================================================================
  * AbstractMyBatisDaoTestSupport.java - 25/02/2020 7:50:22 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,7 +49,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
 
 /**
  * Base class for MyBatis DAO tests.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -87,12 +87,12 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 
 	/**
 	 * Get the last update statement's update count result.
-	 * 
+	 *
 	 * <p>
 	 * This method can be used to automatically flush the MyBatis batch
 	 * statements and return the last statement's update count.
 	 * </p>
-	 * 
+	 *
 	 * @param result
 	 *        the result as returned by a {@code getSqlSession().update()} style
 	 *        statement
@@ -111,7 +111,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 
 	/**
 	 * Create a test address instance.
-	 * 
+	 *
 	 * @return the address
 	 */
 	protected Address createTestAddress() {
@@ -120,7 +120,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 
 	/**
 	 * Create a test address instance.
-	 * 
+	 *
 	 * @param created
 	 *        the creation date
 	 * @return the address
@@ -143,7 +143,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 
 	/**
 	 * Create a test account for a given address.
-	 * 
+	 *
 	 * @param address
 	 *        the address
 	 * @return the account
@@ -228,12 +228,19 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	protected UUID addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
 			long datumQueryCount, int datumCount, short datumHourlyCount, short datumDailyCount,
 			boolean monthPresent) {
+		return addAuditDatumMonthly(nodeId, sourceId, date, propCount, datumQueryCount, 0L, datumCount,
+				datumHourlyCount, datumDailyCount, monthPresent);
+	}
+
+	protected UUID addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
+			long datumQueryCount, long fluxByteCount, int datumCount, short datumHourlyCount,
+			short datumDailyCount, boolean monthPresent) {
 		UUID streamId = setupDatumStream(nodeId, sourceId);
 		jdbcTemplate.update("insert into solardatm.aud_datm_monthly "
-				+ "(ts_start,stream_id,prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
-				+ "VALUES (?,?::uuid,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()),
-				streamId.toString(), propCount, datumQueryCount, datumCount, datumHourlyCount,
-				datumDailyCount, monthPresent);
+				+ "(ts_start,stream_id,prop_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
+				+ "VALUES (?,?::uuid,?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()),
+				streamId.toString(), propCount, datumQueryCount, fluxByteCount, datumCount,
+				datumHourlyCount, datumDailyCount, monthPresent);
 		return streamId;
 	}
 
@@ -244,6 +251,13 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 				+ "(ts_start,stream_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
 				+ "VALUES (?,?::uuid,?,?,?,?)", new Timestamp(date.toEpochMilli()), streamId.toString(),
 				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
+	}
+
+	protected void addAuditUserMonthly(Long userId, Instant date, String service, long count) {
+		jdbcTemplate.update(
+				"insert into solardatm.aud_user_monthly " + "(ts_start,user_id,service,cnt)"
+						+ "VALUES (?,?,?,?)",
+				new Timestamp(date.toEpochMilli()), userId, service, count);
 	}
 
 	protected void addAggregateDatumDaily(UUID streamId, Instant date, BigDecimal[] iData,

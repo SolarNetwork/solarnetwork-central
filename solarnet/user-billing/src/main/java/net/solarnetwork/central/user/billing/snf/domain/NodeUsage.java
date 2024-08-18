@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodeUsage.java - 22/07/2020 10:05:31 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -43,25 +43,25 @@ import net.solarnetwork.util.ArrayUtils;
 
 /**
  * Usage details for a single node.
- * 
+ *
  * <p>
  * The {@link #getId()} represents the node ID this usage relates to.
  * </p>
- * 
+ *
  * <p>
  * The usage date range is defined in whatever associated entity refers to this
  * usage. For example for an {@link SnfInvoice} the date range would be that of
  * the invoice. The costs are shown in the system's <i>normalized</i> currency,
  * and must be translated into real currencies elsewhere.
  * </p>
- * 
+ *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
-	private static final long serialVersionUID = 7976017078304093207L;
+	private static final long serialVersionUID = 5913729606960898478L;
 
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
@@ -74,10 +74,13 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger datumOut;
 	private BigInteger datumDaysStored;
 	private BigInteger instructionsIssued;
+	private BigInteger fluxDataIn;
+	private BigInteger fluxDataOut;
 	private BigInteger ocppChargers;
 	private BigInteger oscpCapacityGroups;
 	private BigInteger oscpCapacity;
 	private BigInteger dnp3DataPoints;
+	private BigInteger oauthClientCredentials;
 	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
 
@@ -85,10 +88,13 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] datumOutTiers;
 	private BigInteger[] datumDaysStoredTiers;
 	private BigInteger[] instructionsIssuedTiers;
+	private BigInteger[] fluxDataInTiers;
+	private BigInteger[] fluxDataOutTiers;
 	private BigInteger[] ocppChargersTiers;
 	private BigInteger[] oscpCapacityGroupsTiers;
 	private BigInteger[] oscpCapacityTiers;
 	private BigInteger[] dnp3DataPointsTiers;
+	private BigInteger[] oauthClientCredentialsTiers;
 	private NodeUsageCost[] costsTiers;
 
 	/**
@@ -105,7 +111,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * This creates a {@literal null} node ID, for usage not associated with a
 	 * specific node.
@@ -117,7 +123,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 */
@@ -127,7 +133,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param created
@@ -139,10 +145,13 @@ public class NodeUsage extends BasicLongEntity
 		setDatumOut(BigInteger.ZERO);
 		setDatumDaysStored(BigInteger.ZERO);
 		setInstructionsIssued(BigInteger.ZERO);
+		setFluxDataIn(BigInteger.ZERO);
+		setFluxDataOut(BigInteger.ZERO);
 		setOcppChargers(BigInteger.ZERO);
 		setOscpCapacityGroups(BigInteger.ZERO);
 		setOscpCapacity(BigInteger.ZERO);
 		setDnp3DataPoints(BigInteger.ZERO);
+		setOauthClientCredentials(BigInteger.ZERO);
 		setTotalCost(BigDecimal.ZERO);
 		this.costs = new NodeUsageCost();
 	}
@@ -164,6 +173,10 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(datumDaysStored);
 		builder.append(", instructionsIssued=");
 		builder.append(instructionsIssued);
+		builder.append(", fluxDataIn=");
+		builder.append(fluxDataIn);
+		builder.append(", fluxDataOut=");
+		builder.append(fluxDataOut);
 		builder.append(", oscpCapacityGroups=");
 		builder.append(oscpCapacityGroups);
 		builder.append(", oscpCapacity=");
@@ -184,6 +197,8 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(costs.getOscpCapacityCost());
 		builder.append(", dnp3DataPointsCost=");
 		builder.append(costs.getDnp3DataPointsCost());
+		builder.append(", oauthClientCredentials=");
+		builder.append(oauthClientCredentials);
 		builder.append(", totalCost=");
 		builder.append(totalCost);
 		builder.append("}");
@@ -193,12 +208,12 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code nodeId} and all {@code cost} properties are not compared by
 	 * this method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -213,10 +228,14 @@ public class NodeUsage extends BasicLongEntity
 				&& Objects.equals(datumOut, other.datumOut)
 				&& Objects.equals(datumDaysStored, other.datumDaysStored)
 				&& Objects.equals(instructionsIssued, other.instructionsIssued)
+				&& Objects.equals(fluxDataIn, other.fluxDataIn)
+				&& Objects.equals(fluxDataOut, other.fluxDataOut)
 				&& Objects.equals(ocppChargers, other.ocppChargers)
 				&& Objects.equals(oscpCapacityGroups, other.oscpCapacityGroups)
 				&& Objects.equals(oscpCapacity, other.oscpCapacity)
-				&& Objects.equals(dnp3DataPoints, other.dnp3DataPoints);
+				&& Objects.equals(dnp3DataPoints, other.dnp3DataPoints)
+				&& Objects.equals(oauthClientCredentials, other.oauthClientCredentials)
+				;
 		// @formatter:on
 	}
 
@@ -237,7 +256,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set an optional description, such as a node name.
-	 * 
+	 *
 	 * @param description
 	 *        the description to set
 	 * @since 2.1
@@ -256,12 +275,13 @@ public class NodeUsage extends BasicLongEntity
 				costs.getDatumDaysStoredCost()));
 		recs.add(new UsageInfo(INSTRUCTIONS_ISSUED_KEY, new BigDecimal(instructionsIssued),
 				costs.getInstructionsIssuedCost()));
+		recs.add(new UsageInfo(FLUX_DATA_IN_KEY, new BigDecimal(fluxDataIn), costs.getFluxDataInCost()));
 		return recs;
 	}
 
 	/**
 	 * Get the node ID.
-	 * 
+	 *
 	 * @return the node ID
 	 */
 	public Long getNodeId() {
@@ -270,7 +290,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the node usage costs.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 */
 	@JsonIgnore
@@ -280,7 +300,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of datum properties added.
-	 * 
+	 *
 	 * @return the count, never {@literal null}
 	 */
 	public BigInteger getDatumPropertiesIn() {
@@ -289,7 +309,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum properties added.
-	 * 
+	 *
 	 * @param datumPropertiesIn
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -303,7 +323,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of datum properties added.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal getDatumPropertiesInCost() {
@@ -312,7 +332,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of datum properties added.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the cost to set
 	 */
@@ -322,7 +342,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @return the count
 	 */
 	public BigInteger getDatumDaysStored() {
@@ -331,7 +351,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @param datumDaysStored
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -345,7 +365,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal getDatumDaysStoredCost() {
@@ -354,7 +374,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @param datumDaysStoredCost
 	 *        the cost to set
 	 */
@@ -364,7 +384,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of datum queried.
-	 * 
+	 *
 	 * @return the count
 	 */
 	public BigInteger getDatumOut() {
@@ -373,7 +393,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum queried.
-	 * 
+	 *
 	 * @param datumOut
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -387,7 +407,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of datum queried.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal getDatumOutCost() {
@@ -396,7 +416,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of datum queried.
-	 * 
+	 *
 	 * @param datumOutCost
 	 *        the cost to set
 	 */
@@ -406,7 +426,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the overall cost.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getTotalCost() {
@@ -415,7 +435,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the overall cost.
-	 * 
+	 *
 	 * @param totalCost
 	 *        the cost to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -426,7 +446,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of OCPP Chargers.
-	 * 
+	 *
 	 * @return the count
 	 */
 	public BigInteger getOcppChargers() {
@@ -435,7 +455,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OCPP Chargers.
-	 * 
+	 *
 	 * @param ocppChargers
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -449,7 +469,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of OCPP Chargers.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal getOcppChargersCost() {
@@ -458,7 +478,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of OCPP Chargers.
-	 * 
+	 *
 	 * @param ocppChargersCost
 	 *        the cost to set
 	 */
@@ -468,7 +488,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of OSCP Capacity Groups.
-	 * 
+	 *
 	 * @return the count
 	 */
 	public BigInteger getOscpCapacityGroups() {
@@ -477,7 +497,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OSCP Capacity Groups.
-	 * 
+	 *
 	 * @param oscpCapacityGroups
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -491,7 +511,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of OSCP Capacity Groups.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal getOscpCapacityGroupsCost() {
@@ -500,7 +520,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of OSCP Capacity Groups.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsCost
 	 *        the cost to set
 	 */
@@ -553,7 +573,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the overall usage tiers breakdown.
-	 * 
+	 *
 	 * <p>
 	 * The resulting map contains the following keys:
 	 * </p>
@@ -562,12 +582,15 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DATUM_OUT_KEY}</li>
 	 * <li>{@link #DATUM_DAYS_STORED_KEY}</li>
 	 * <li>{@link #INSTRUCTIONS_ISSUED_KEY}</li>
+	 * <li>{@link #FLUX_DATA_IN_KEY}</li>
+	 * <li>{@link #FLUX_DATA_OUT_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_KEY}</li>
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
+	 * <li>{@link #OAUTH_CLIENT_CREDENTIALS_KEY}</li>
 	 * </ol>
-	 * 
+	 *
 	 * @return the map, never {@literal null}
 	 */
 	public Map<String, List<NamedCost>> getTiersCostBreakdown() {
@@ -576,16 +599,19 @@ public class NodeUsage extends BasicLongEntity
 		result.put(DATUM_OUT_KEY, getDatumOutTiersCostBreakdown());
 		result.put(DATUM_DAYS_STORED_KEY, getDatumDaysStoredTiersCostBreakdown());
 		result.put(INSTRUCTIONS_ISSUED_KEY, getInstructionsIssuedTiersCostBreakdown());
+		result.put(FLUX_DATA_IN_KEY, getFluxDataInTiersCostBreakdown());
+		result.put(FLUX_DATA_OUT_KEY, getFluxDataOutTiersCostBreakdown());
 		result.put(OCPP_CHARGERS_KEY, getOcppChargersTiersCostBreakdown());
 		result.put(OSCP_CAPACITY_GROUPS_KEY, getOscpCapacityGroupsTiersCostBreakdown());
 		result.put(OSCP_CAPACITY_KEY, getOscpCapacityTiersCostBreakdown());
 		result.put(DNP3_DATA_POINTS_KEY, getDnp3DataPointsTiersCostBreakdown());
+		result.put(OAUTH_CLIENT_CREDENTIALS_KEY, getOauthClientCredentialsTiersCostBreakdown());
 		return result;
 	}
 
 	/**
 	 * Get the overall usage information.
-	 * 
+	 *
 	 * <p>
 	 * The resulting map contains the following keys:
 	 * </p>
@@ -594,12 +620,15 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DATUM_OUT_KEY}</li>
 	 * <li>{@link #DATUM_DAYS_STORED_KEY}</li>
 	 * <li>{@link #INSTRUCTIONS_ISSUED_KEY}</li>
+	 * <li>{@link #FLUX_DATA_IN_KEY}</li>
+	 * <li>{@link #FLUX_DATA_OUT_KEY}</li>
 	 * <li>{@link #OCPP_CHARGERS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_GROUPS_KEY}</li>
 	 * <li>{@link #OSCP_CAPACITY_KEY}</li>
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
+	 * <li>{@link #OAUTH_CLIENT_CREDENTIALS_KEY}</li>
 	 * </ol>
-	 * 
+	 *
 	 * @return the map, never {@literal null}
 	 */
 	public Map<String, UsageInfo> getUsageInfo() {
@@ -612,6 +641,10 @@ public class NodeUsage extends BasicLongEntity
 				new BigDecimal(datumDaysStored), costs.getDatumDaysStoredCost()));
 		result.put(INSTRUCTIONS_ISSUED_KEY, new UsageInfo(INSTRUCTIONS_ISSUED_KEY,
 				new BigDecimal(instructionsIssued), costs.getInstructionsIssuedCost()));
+		result.put(FLUX_DATA_IN_KEY,
+				new UsageInfo(FLUX_DATA_IN_KEY, new BigDecimal(fluxDataIn), costs.getFluxDataInCost()));
+		result.put(FLUX_DATA_OUT_KEY, new UsageInfo(FLUX_DATA_OUT_KEY, new BigDecimal(fluxDataOut),
+				costs.getFluxDataOutCost()));
 		result.put(OCPP_CHARGERS_KEY, new UsageInfo(OCPP_CHARGERS_KEY, new BigDecimal(ocppChargers),
 				costs.getOcppChargersCost()));
 		result.put(OSCP_CAPACITY_GROUPS_KEY, new UsageInfo(OSCP_CAPACITY_GROUPS_KEY,
@@ -620,12 +653,14 @@ public class NodeUsage extends BasicLongEntity
 				costs.getOscpCapacityCost()));
 		result.put(DNP3_DATA_POINTS_KEY, new UsageInfo(DNP3_DATA_POINTS_KEY,
 				new BigDecimal(dnp3DataPoints), costs.getDnp3DataPointsCost()));
+		result.put(OAUTH_CLIENT_CREDENTIALS_KEY, new UsageInfo(OAUTH_CLIENT_CREDENTIALS_KEY,
+				new BigDecimal(oauthClientCredentials), costs.getOauthClientCredentialsCost()));
 		return result;
 	}
 
 	/**
 	 * Get the node usage costs, per tier.
-	 * 
+	 *
 	 * @return the costs per tier
 	 */
 	@JsonIgnore
@@ -635,7 +670,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the node usage costs.
-	 * 
+	 *
 	 * @param costTiers
 	 *        the costs to set
 	 */
@@ -645,7 +680,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the node datum properties tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 */
 	@JsonIgnore
@@ -656,7 +691,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of datum properties added, per tier.
-	 * 
+	 *
 	 * @return the counts
 	 */
 	public BigInteger[] getDatumPropertiesInTiers() {
@@ -665,7 +700,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum properties added, per tier.
-	 * 
+	 *
 	 * @param datumPropertiesInTiers
 	 *        the counts to set
 	 */
@@ -675,7 +710,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum properties added, per tier, as decimal values.
-	 * 
+	 *
 	 * @param datumPropertiesInTiers
 	 *        the counts to set
 	 */
@@ -685,7 +720,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of datum properties added, per tier.
-	 * 
+	 *
 	 * @return the costs
 	 */
 	public BigDecimal[] getDatumPropertiesInCostTiers() {
@@ -694,7 +729,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of datum properties added.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the cost to set
 	 */
@@ -710,7 +745,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the node datum properties tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 */
 	@JsonIgnore
@@ -721,7 +756,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of datum stored per day (accumulating), per tier.
-	 * 
+	 *
 	 * @return the counts
 	 */
 	public BigInteger[] getDatumDaysStoredTiers() {
@@ -730,7 +765,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum stored per day (accumulating), per tier.
-	 * 
+	 *
 	 * @param datumDaysStoredTiers
 	 *        the counts to set
 	 */
@@ -741,7 +776,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Set the count of datum stored per day (accumulating), per tier, as
 	 * decimals.
-	 * 
+	 *
 	 * @param datumDaysStoredTiers
 	 *        the counts to set
 	 */
@@ -751,7 +786,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal[] getDatumDaysStoredCostTiers() {
@@ -760,7 +795,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @param datumDaysStoredCostTiers
 	 *        the costs to set
 	 */
@@ -776,7 +811,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the node datum properties tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 */
 	@JsonIgnore
@@ -786,7 +821,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of datum queried.
-	 * 
+	 *
 	 * @return the count
 	 */
 	public BigInteger[] getDatumOutTiers() {
@@ -795,7 +830,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum queried, per tier.
-	 * 
+	 *
 	 * @param datumOutTiers
 	 *        the counts to set
 	 */
@@ -805,7 +840,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of datum queried, per tier, as decimals.
-	 * 
+	 *
 	 * @param datumOutTiers
 	 *        the counts to set
 	 */
@@ -815,7 +850,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of datum queried, per tier.
-	 * 
+	 *
 	 * @return the costs
 	 */
 	public BigDecimal[] getDatumOutCostTiers() {
@@ -824,7 +859,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of datum queried, per tier.
-	 * 
+	 *
 	 * @param datumOutCostTiers
 	 *        the costs to set
 	 */
@@ -840,7 +875,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the OCPP Chargers tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 */
 	@JsonIgnore
@@ -850,7 +885,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of OCPP Chargers, per tier.
-	 * 
+	 *
 	 * @return the counts
 	 */
 	public BigInteger[] getOcppChargersTiers() {
@@ -859,7 +894,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OCPP Chargers, per tier.
-	 * 
+	 *
 	 * @param ocppChargersTiers
 	 *        the counts to set
 	 */
@@ -869,7 +904,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OCPP Chargers, per tier, as decimals.
-	 * 
+	 *
 	 * @param ocppChargersTiers
 	 *        the counts to set
 	 */
@@ -879,7 +914,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of OCPP Chargers, per tier.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal[] getOcppChargersCostTiers() {
@@ -888,7 +923,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of OCPP Chargers, per tier.
-	 * 
+	 *
 	 * @param ocppChargersCostTiers
 	 *        the costs to set
 	 */
@@ -904,7 +939,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the OSCP Capacity Groups tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 */
 	@JsonIgnore
@@ -915,7 +950,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of OSCP Capacity Groups, per tier.
-	 * 
+	 *
 	 * @return the counts
 	 */
 	public BigInteger[] getOscpCapacityGroupsTiers() {
@@ -924,7 +959,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OSCP Capacity Groups, per tier.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsTiers
 	 *        the counts to set
 	 */
@@ -934,7 +969,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OSCP Capacity Groups, per tier, as decimals.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsTiers
 	 *        the counts to set
 	 */
@@ -944,7 +979,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of OSCP Capacity Groups, per tier.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal[] getOscpCapacityGroupsCostTiers() {
@@ -953,7 +988,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of OSCP Capacity Groups, per tier.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsCostTiers
 	 *        the costs to set
 	 */
@@ -968,7 +1003,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of DNP3 Data Points.
-	 * 
+	 *
 	 * @return the count
 	 * @since 2.3
 	 */
@@ -978,7 +1013,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of DNP3 Data Points.
-	 * 
+	 *
 	 * @param oscpCapacityGroups
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -993,7 +1028,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of DNP3 Data Points.
-	 * 
+	 *
 	 * @return the cost
 	 * @since 2.3
 	 */
@@ -1003,7 +1038,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of DNP3 Data Points.
-	 * 
+	 *
 	 * @param dnp3DataPointsCost
 	 *        the cost to set
 	 * @since 2.3
@@ -1014,7 +1049,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the DNP3 Data Points tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 * @since 2.3
 	 */
@@ -1025,7 +1060,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of DNP3 Data Points, per tier.
-	 * 
+	 *
 	 * @return the counts
 	 * @since 2.3
 	 */
@@ -1035,7 +1070,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of DNP3 Data Points, per tier.
-	 * 
+	 *
 	 * @param dnp3DataPointsTiers
 	 *        the counts to set
 	 * @since 2.3
@@ -1046,7 +1081,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of DNP3 Data Points, per tier, as decimals.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsTiers
 	 *        the counts to set
 	 * @since 2.3
@@ -1057,7 +1092,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of DNP3 Data Points, per tier.
-	 * 
+	 *
 	 * @return the cost
 	 * @since 2.3
 	 */
@@ -1067,7 +1102,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of DNP3 Data Points, per tier.
-	 * 
+	 *
 	 * @param dnp3DataPointsCostTiers
 	 *        the costs to set
 	 * @since 2.3
@@ -1084,7 +1119,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of Instructions issued.
-	 * 
+	 *
 	 * @return the count
 	 * @since 2.4
 	 */
@@ -1094,7 +1129,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of Instructions issued.
-	 * 
+	 *
 	 * @param instructionsIssued
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -1109,7 +1144,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of Instructions issued.
-	 * 
+	 *
 	 * @return the cost
 	 * @since 2.4
 	 */
@@ -1119,7 +1154,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of Instructions issued.
-	 * 
+	 *
 	 * @param instructionsIssuedCost
 	 *        the cost to set
 	 * @since 2.4
@@ -1130,7 +1165,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the Instructions issued tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 * @since 2.4
 	 */
@@ -1142,7 +1177,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the count of Instructions issued, per tier.
-	 * 
+	 *
 	 * @return the counts
 	 * @since 2.4
 	 */
@@ -1152,7 +1187,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of Instructions issued, per tier.
-	 * 
+	 *
 	 * @param instructionsIssuedTiers
 	 *        the counts to set
 	 * @since 2.4
@@ -1163,7 +1198,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of Instructions issued, per tier, as decimals.
-	 * 
+	 *
 	 * @param instructionsIssuedTiers
 	 *        the counts to set
 	 * @since 2.4
@@ -1174,7 +1209,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of Instructions issued, per tier.
-	 * 
+	 *
 	 * @return the cost
 	 * @since 2.4
 	 */
@@ -1184,7 +1219,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of Instructions issued, per tier.
-	 * 
+	 *
 	 * @param instructionsIssuedCostTiers
 	 *        the costs to set
 	 * @since 2.4
@@ -1200,7 +1235,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the OSCP capacity.
-	 * 
+	 *
 	 * @return the count
 	 * @since 2.5
 	 */
@@ -1210,7 +1245,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the count of OSCP capacity .
-	 * 
+	 *
 	 * @param oscpCapacity
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
@@ -1225,7 +1260,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of OSCP capacity.
-	 * 
+	 *
 	 * @return the cost
 	 * @since 2.5
 	 */
@@ -1235,7 +1270,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of OSCP capacity.
-	 * 
+	 *
 	 * @param oscpCapacityCost
 	 *        the cost to set
 	 * @since 2.5
@@ -1246,7 +1281,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the OSCP capacity tier cost breakdown.
-	 * 
+	 *
 	 * @return the costs, never {@literal null}
 	 * @since 2.5
 	 */
@@ -1257,7 +1292,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the OSCP capacity, per tier.
-	 * 
+	 *
 	 * @return the counts
 	 * @since 2.5
 	 */
@@ -1267,7 +1302,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the OSCP capacity, per tier.
-	 * 
+	 *
 	 * @param oscpCapacityTiers
 	 *        the counts to set
 	 * @since 2.5
@@ -1278,7 +1313,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the OSCP capacity, per tier, as decimals.
-	 * 
+	 *
 	 * @param oscpCapacityTiers
 	 *        the counts to set
 	 * @since 2.5
@@ -1289,7 +1324,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Get the cost of OSCP capacity, per tier.
-	 * 
+	 *
 	 * @return the cost
 	 * @since 2.5
 	 */
@@ -1299,7 +1334,7 @@ public class NodeUsage extends BasicLongEntity
 
 	/**
 	 * Set the cost of OSCP capacity, per tier.
-	 * 
+	 *
 	 * @param oscpCapacityCostTiers
 	 *        the costs to set
 	 * @since 2.5
@@ -1313,4 +1348,354 @@ public class NodeUsage extends BasicLongEntity
 			costsTiers[i].setOscpCapacityCost(val);
 		}
 	}
+
+	/**
+	 * Get the SolarFlux data in.
+	 *
+	 * @return the count
+	 * @since 2.6
+	 */
+	public BigInteger getFluxDataIn() {
+		return fluxDataIn;
+	}
+
+	/**
+	 * Set the count of SolarFlux data in.
+	 *
+	 * @param fluxDataIn
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.6
+	 */
+	public void setFluxDataIn(BigInteger fluxDataIn) {
+		if ( fluxDataIn == null ) {
+			fluxDataIn = BigInteger.ZERO;
+		}
+		this.fluxDataIn = fluxDataIn;
+	}
+
+	/**
+	 * Get the cost of SolarFlux data in.
+	 *
+	 * @return the cost
+	 * @since 2.6
+	 */
+	public BigDecimal getFluxDataInCost() {
+		return costs.getFluxDataInCost();
+	}
+
+	/**
+	 * Set the cost of SolarFlux data in.
+	 *
+	 * @param fluxDataInCost
+	 *        the cost to set
+	 * @since 2.6
+	 */
+	public void setFluxDataInCost(BigDecimal fluxDataInCost) {
+		costs.setFluxDataInCost(fluxDataInCost);
+	}
+
+	/**
+	 * Get the SolarFlux data in tier cost breakdown.
+	 *
+	 * @return the costs, never {@literal null}
+	 * @since 2.6
+	 */
+	@JsonIgnore
+	public List<NamedCost> getFluxDataInTiersCostBreakdown() {
+		return tiersCostBreakdown(fluxDataInTiers, costsTiers, NodeUsageCost::getFluxDataInCost);
+	}
+
+	/**
+	 * Get the SolarFlux data in, per tier.
+	 *
+	 * @return the counts
+	 * @since 2.6
+	 */
+	public BigInteger[] getFluxDataInTiers() {
+		return fluxDataInTiers;
+	}
+
+	/**
+	 * Set the SolarFlux data in, per tier.
+	 *
+	 * @param fluxDataInTiers
+	 *        the counts to set
+	 * @since 2.6
+	 */
+	public void setFluxDataInTiers(BigInteger[] fluxDataInTiers) {
+		this.fluxDataInTiers = fluxDataInTiers;
+	}
+
+	/**
+	 * Set the SolarFlux data in, per tier, as decimals.
+	 *
+	 * @param fluxDataInTiers
+	 *        the counts to set
+	 * @since 2.6
+	 */
+	public void setFluxDataInTiersNumeric(BigDecimal[] fluxDataInTiers) {
+		this.fluxDataInTiers = decimalsToIntegers(fluxDataInTiers);
+	}
+
+	/**
+	 * Get the cost of SolarFlux data in, per tier.
+	 *
+	 * @return the cost
+	 * @since 2.6
+	 */
+	public BigDecimal[] getFluxDataInCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getFluxDataInCost);
+	}
+
+	/**
+	 * Set the cost of SolarFlux data in, per tier.
+	 *
+	 * @param fluxDataInCostTiers
+	 *        the costs to set
+	 * @since 2.6
+	 */
+	public void setFluxDataInCostTiers(BigDecimal[] fluxDataInCostTiers) {
+		prepCostsTiers(fluxDataInCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (fluxDataInCostTiers != null && i < fluxDataInCostTiers.length
+					? fluxDataInCostTiers[i]
+					: null);
+			costsTiers[i].setFluxDataInCost(val);
+		}
+	}
+
+	/**
+	 * Get the SolarFlux data out.
+	 *
+	 * @return the count
+	 * @since 2.6
+	 */
+	public BigInteger getFluxDataOut() {
+		return fluxDataOut;
+	}
+
+	/**
+	 * Set the count of SolarFlux data out.
+	 *
+	 * @param fluxDataOut
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.6
+	 */
+	public void setFluxDataOut(BigInteger fluxDataOut) {
+		if ( fluxDataOut == null ) {
+			fluxDataOut = BigInteger.ZERO;
+		}
+		this.fluxDataOut = fluxDataOut;
+	}
+
+	/**
+	 * Get the cost of SolarFlux data out.
+	 *
+	 * @return the cost
+	 * @since 2.6
+	 */
+	public BigDecimal getFluxDataOutCost() {
+		return costs.getFluxDataOutCost();
+	}
+
+	/**
+	 * Set the cost of SolarFlux data out.
+	 *
+	 * @param fluxDataOutCost
+	 *        the cost to set
+	 * @since 2.6
+	 */
+	public void setFluxDataOutCost(BigDecimal fluxDataOutCost) {
+		costs.setFluxDataOutCost(fluxDataOutCost);
+	}
+
+	/**
+	 * Get the SolarFlux data out tier cost breakdown.
+	 *
+	 * @return the costs, never {@literal null}
+	 * @since 2.6
+	 */
+	@JsonIgnore
+	public List<NamedCost> getFluxDataOutTiersCostBreakdown() {
+		return tiersCostBreakdown(fluxDataOutTiers, costsTiers, NodeUsageCost::getFluxDataOutCost);
+	}
+
+	/**
+	 * Get the SolarFlux data out, per tier.
+	 *
+	 * @return the counts
+	 * @since 2.6
+	 */
+	public BigInteger[] getFluxDataOutTiers() {
+		return fluxDataOutTiers;
+	}
+
+	/**
+	 * Set the SolarFlux data out, per tier.
+	 *
+	 * @param fluxDataOutTiers
+	 *        the counts to set
+	 * @since 2.6
+	 */
+	public void setFluxDataOutTiers(BigInteger[] fluxDataOutTiers) {
+		this.fluxDataOutTiers = fluxDataOutTiers;
+	}
+
+	/**
+	 * Set the SolarFlux data out, per tier, as decimals.
+	 *
+	 * @param fluxDataOutTiers
+	 *        the counts to set
+	 * @since 2.6
+	 */
+	public void setFluxDataOutTiersNumeric(BigDecimal[] fluxDataOutTiers) {
+		this.fluxDataOutTiers = decimalsToIntegers(fluxDataOutTiers);
+	}
+
+	/**
+	 * Get the cost of SolarFlux data out, per tier.
+	 *
+	 * @return the cost
+	 * @since 2.6
+	 */
+	public BigDecimal[] getFluxDataOutCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getFluxDataOutCost);
+	}
+
+	/**
+	 * Set the cost of SolarFlux data out, per tier.
+	 *
+	 * @param fluxDataOutCostTiers
+	 *        the costs to set
+	 * @since 2.6
+	 */
+	public void setFluxDataOutCostTiers(BigDecimal[] fluxDataOutCostTiers) {
+		prepCostsTiers(fluxDataOutCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (fluxDataOutCostTiers != null && i < fluxDataOutCostTiers.length
+					? fluxDataOutCostTiers[i]
+					: null);
+			costsTiers[i].setFluxDataOutCost(val);
+		}
+	}
+
+	/**
+	 * Get the OAuth client credentials.
+	 *
+	 * @return the count
+	 * @since 2.6
+	 */
+	public BigInteger getOauthClientCredentials() {
+		return oauthClientCredentials;
+	}
+
+	/**
+	 * Set the count of OAuth client credentials.
+	 *
+	 * @param oauthClientCredentials
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.6
+	 */
+	public void setOauthClientCredentials(BigInteger oauthClientCredentials) {
+		if ( oauthClientCredentials == null ) {
+			oauthClientCredentials = BigInteger.ZERO;
+		}
+		this.oauthClientCredentials = oauthClientCredentials;
+	}
+
+	/**
+	 * Get the cost of OAuth client credentials.
+	 *
+	 * @return the cost
+	 * @since 2.6
+	 */
+	public BigDecimal getOauthClientCredentialsCost() {
+		return costs.getOauthClientCredentialsCost();
+	}
+
+	/**
+	 * Set the cost of OAuth client credentials.
+	 *
+	 * @param oauthClientCredentialsCost
+	 *        the cost to set
+	 * @since 2.6
+	 */
+	public void setOauthClientCredentialsCost(BigDecimal oauthClientCredentialsCost) {
+		costs.setOauthClientCredentialsCost(oauthClientCredentialsCost);
+	}
+
+	/**
+	 * Get the OAuth client credentials tier cost breakdown.
+	 *
+	 * @return the costs, never {@literal null}
+	 * @since 2.6
+	 */
+	@JsonIgnore
+	public List<NamedCost> getOauthClientCredentialsTiersCostBreakdown() {
+		return tiersCostBreakdown(oauthClientCredentialsTiers, costsTiers,
+				NodeUsageCost::getOauthClientCredentialsCost);
+	}
+
+	/**
+	 * Get the OAuth client credentials, per tier.
+	 *
+	 * @return the counts
+	 * @since 2.6
+	 */
+	public BigInteger[] getOauthClientCredentialsTiers() {
+		return oauthClientCredentialsTiers;
+	}
+
+	/**
+	 * Set the OAuth client credentials, per tier.
+	 *
+	 * @param oauthClientCredentialsTiers
+	 *        the counts to set
+	 * @since 2.6
+	 */
+	public void setOauthClientCredentialsTiers(BigInteger[] oauthClientCredentialsTiers) {
+		this.oauthClientCredentialsTiers = oauthClientCredentialsTiers;
+	}
+
+	/**
+	 * Set the OAuth client credentials, per tier, as decimals.
+	 *
+	 * @param oauthClientCredentialsTiers
+	 *        the counts to set
+	 * @since 2.6
+	 */
+	public void setOauthClientCredentialsTiersNumeric(BigDecimal[] oauthClientCredentialsTiers) {
+		this.oauthClientCredentialsTiers = decimalsToIntegers(oauthClientCredentialsTiers);
+	}
+
+	/**
+	 * Get the cost of OAuth client credentials, per tier.
+	 *
+	 * @return the cost
+	 * @since 2.6
+	 */
+	public BigDecimal[] getOauthClientCredentialsCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getOauthClientCredentialsCost);
+	}
+
+	/**
+	 * Set the cost of OAuth client credentials, per tier.
+	 *
+	 * @param oauthClientCredentialsCostTiers
+	 *        the costs to set
+	 * @since 2.6
+	 */
+	public void setOauthClientCredentialsCostTiers(BigDecimal[] oauthClientCredentialsCostTiers) {
+		prepCostsTiers(oauthClientCredentialsCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (oauthClientCredentialsCostTiers != null
+					&& i < oauthClientCredentialsCostTiers.length ? oauthClientCredentialsCostTiers[i]
+							: null);
+			costsTiers[i].setOauthClientCredentialsCost(val);
+		}
+	}
+
 }
