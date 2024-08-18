@@ -182,9 +182,9 @@ BEGIN
 			, ('flux-data-in', 			100000000000::BIGINT,	0.0000000015::NUMERIC)
 
 			, ('flux-data-out', 		0::BIGINT, 				0.000000009::NUMERIC)
-			, ('flux-data-out', 		1000000000::BIGINT, 	0.000000005::NUMERIC)
+			, ('flux-data-out', 		1000000000::BIGINT, 	0.0000000055::NUMERIC)
 			, ('flux-data-out', 		10000000000::BIGINT, 	0.0000000025::NUMERIC)
-			, ('flux-data-out', 		100000000000::BIGINT,	0.000000001::NUMERIC)
+			, ('flux-data-out', 		100000000000::BIGINT,	0.0000000012::NUMERIC)
 
 			, ('ocpp-chargers', 		0::BIGINT, 				2::NUMERIC)
 			, ('ocpp-chargers', 		250::BIGINT, 			1::NUMERIC)
