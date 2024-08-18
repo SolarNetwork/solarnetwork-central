@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbAuditDatumRollupTests.java - 8/11/2020 6:40:06 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,9 +57,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the database audit rollup stored procedures.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 
@@ -139,11 +139,12 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
+			long f = (i + 1) * 1000L;
 			propCount += p;
 			propUpdateCount += p_u;
 			datumQueryCount += q;
 			AuditDatumEntity audit = AuditDatumEntity.ioAuditDatum(streamId,
-					start.plusHours(i * 3).toInstant(), i + 1L, p, q, p_u);
+					start.plusHours(i * 3).toInstant(), i + 1L, p, q, p_u, f);
 			hourlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, hourlyAudits);
@@ -189,6 +190,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
+			long f = (i + 1) * 1000L;
 			datumCount += (int) r; // query returns int, while AuditDatumEntity uses long
 			datumHourlyCount += (int) h;
 			datumDailyCount += d;
@@ -196,7 +198,7 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			propUpdateCount += p_u;
 			datumQueryCount += q;
 			AuditDatumEntity audit = AuditDatumEntity.dailyAuditDatum(streamId,
-					start.plusHours(i * 24).toInstant(), r, h, d, p, q, p_u);
+					start.plusHours(i * 24).toInstant(), r, h, d, p, q, p_u, f);
 			dailyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, dailyAudits);
@@ -248,12 +250,13 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
+			long f = (i + 1) * 1000L;
 			datumCount += (int) r; // query returns int, while AuditDatumEntity uses long
 			datumHourlyCount += (int) h;
 			datumDailyCount += d;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
-					1, p, q, p_u);
+					1, p, q, p_u, f);
 			monthlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, monthlyAudits);
@@ -301,12 +304,13 @@ public class DbAuditDatumRollupTests extends BaseDatumJdbcTestSupport {
 			long p = (i + 1) * 2L;
 			long p_u = p / 2;
 			long q = (i + 1) * 100L;
+			long f = (i + 1) * 1000L;
 			datumCount += (int) r; // query returns int, while AuditDatumEntity uses long
 			datumHourlyCount += (int) h;
 			datumDailyCount += d;
 			AuditDatumEntity audit = AuditDatumEntity.monthlyAuditDatum(streamId,
 					start.with(TemporalAdjusters.firstDayOfMonth()).plusMonths(i).toInstant(), r, h, d,
-					1, p, q, p_u);
+					1, p, q, p_u, f);
 			monthlyAudits.add(audit);
 		}
 		insertAuditDatum(log, jdbcTemplate, monthlyAudits);

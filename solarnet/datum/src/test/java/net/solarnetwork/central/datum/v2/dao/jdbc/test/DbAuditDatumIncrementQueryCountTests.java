@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbAuditDatumIncrementQueryCountTests.java - 14/12/2020 9:18:06 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,8 +24,8 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.ioAuditDatum;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -45,17 +45,17 @@ import net.solarnetwork.central.datum.v2.dao.StaleAuditDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@literal solardatm.aud_datm_io_inc_datum_q_count}
  * database procedure.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSupport {
 
@@ -98,7 +98,7 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 
 		// THEN
 		DatumTestUtils.assertAuditDatum("Inserted query row", d, AuditDatumEntity.ioAuditDatum(streamId,
-				now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L));
+				now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L));
 
 		// verify stale record added for Day
 		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);
@@ -118,15 +118,15 @@ public class DbAuditDatumIncrementQueryCountTests extends BaseDatumJdbcTestSuppo
 		ObjectDatumStreamMetadata meta = BasicObjectDatumStreamMetadata.emptyMeta(streamId, TEST_TZ,
 				ObjectDatumKind.Node, TEST_NODE_ID, "a");
 		DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
-		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, Collections
-				.singleton(ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L)));
+		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, Collections.singleton(
+				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 123L, 0L, 0L)));
 
 		// WHEN
 		AuditDatum d = incrementAndGet(meta, now, 321);
 
 		// THEN
 		DatumTestUtils.assertAuditDatum("Updated query row", d,
-				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 444L, 0L));
+				ioAuditDatum(streamId, now.truncatedTo(ChronoUnit.HOURS), 0L, 0L, 444L, 0L, 0L));
 
 		// verify stale record added for Day
 		List<StaleAuditDatum> stale = DatumDbUtils.listStaleAuditDatum(jdbcTemplate);

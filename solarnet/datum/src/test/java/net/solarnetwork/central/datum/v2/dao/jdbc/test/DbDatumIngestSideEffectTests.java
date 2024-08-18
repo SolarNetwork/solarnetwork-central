@@ -1,21 +1,21 @@
 /* ==================================================================
  * DbDatumIngestSideEffectTests.java - 3/11/2020 10:52:40 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -62,17 +62,17 @@ import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test DB functions for datum ingest, that populate "stale" records and update
  * audit records.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
@@ -112,8 +112,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
-		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L));
+		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -134,8 +134,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for lone datm", auditHourly, hasSize(1));
-		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L));
+		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -157,8 +157,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for two datum in same hour", auditHourly, hasSize(1));
-		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L, 0L));
+		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -179,8 +179,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for one datum", auditHourly, hasSize(1));
-		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L));
+		assertAuditDatum("1 datum ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L, 0L));
 
 		// WHEN
 		// re-store the same datum, but with one new property added
@@ -196,8 +196,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("Same datum ingested twice updates audit IO data", auditHourly, hasSize(1));
-		assertAuditDatum("1 datum re-ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 7L, 0L, 4L));
+		assertAuditDatum("1 datum re-ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 7L, 0L, 4L, 0L));
 
 	}
 
@@ -224,8 +224,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for two datum", auditHourly, hasSize(1));
-		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L, 0L));
+		assertAuditDatum("2 datum ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 2L, 6L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -254,8 +254,8 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("One hourly audit record created for all datum", auditHourly, hasSize(1));
-		assertAuditDatum("8 datum ingested", auditHourly.get(0), AuditDatumEntity
-				.ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 8L, 24L, 0L, 0L));
+		assertAuditDatum("8 datum ingested", auditHourly.get(0), AuditDatumEntity.ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 8L, 24L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -430,7 +430,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted instantaneous prop", auditHourly.get(0),
-				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L, 0L));
+				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -444,7 +444,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted accumulating prop", auditHourly.get(0),
-				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L, 0L));
+				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -458,7 +458,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted status prop", auditHourly.get(0),
-				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L, 0L));
+				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 1L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -472,7 +472,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
 		assertAuditDatum("Audit record counted instantaneous prop + 2 tags", auditHourly.get(0),
-				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L));
+				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 1L, 3L, 0L, 0L, 0L));
 	}
 
 	@Test
@@ -485,7 +485,7 @@ public class DbDatumIngestSideEffectTests extends BaseDatumJdbcTestSupport {
 
 		List<AuditDatum> auditHourly = listAuditDatum(jdbcTemplate, Aggregation.Hour);
 		assertThat("1 hourly audit record created for datum", auditHourly, hasSize(1));
-		assertAuditDatum("Audit record counted all props and tags", auditHourly.get(0),
-				ioAuditDatum(meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 6L, 19L, 0L, 0L));
+		assertAuditDatum("Audit record counted all props and tags", auditHourly.get(0), ioAuditDatum(
+				meta.getStreamId(), now.truncatedTo(ChronoUnit.HOURS), 6L, 19L, 0L, 0L, 0L));
 	}
 }

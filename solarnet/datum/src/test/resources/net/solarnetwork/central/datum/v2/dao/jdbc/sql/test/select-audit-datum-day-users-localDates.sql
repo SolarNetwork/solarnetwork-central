@@ -14,6 +14,7 @@ SELECT datum.ts_start AS aud_ts,
 	datum.prop_count AS aud_datum_prop_count,
 	datum.prop_u_count AS aud_datum_prop_update_count,
 	datum.datum_q_count AS aud_datum_query_count,
+	datum.flux_byte_count AS aud_datum_flux_byte_count,
 	datum.datum_hourly_count AS aud_datum_hourly_count,
 	CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,
 	NULL::bigint AS aud_datum_monthly_count

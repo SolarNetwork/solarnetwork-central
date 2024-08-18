@@ -1,21 +1,21 @@
 /* ==================================================================
  * AuditDatumEntityRollupRowMapper.java - 20/11/2020 6:27:52 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,11 +32,11 @@ import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Map datum audit rollup rows into {@link AuditDatumRollup} instances.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>ts_start</li>
  * <li>node_id</li>
@@ -46,13 +46,14 @@ import net.solarnetwork.domain.datum.Aggregation;
  * <li>prop_count</li>
  * <li>prop_u_count</li>
  * <li>datum_q_count</li>
+ * <li>flux_byte_count</li>
  * <li>datum_hourly_count</li>
  * <li>datum_daily_count</li>
  * <li>datum_monthly_count</li>
  * </ol>
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRollup> {
@@ -70,9 +71,10 @@ public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRoll
 		Number datumPropertyCount = (Number) rs.getObject(6);
 		Number datumPropertyUpdateCount = (Number) rs.getObject(7);
 		Number datumQueryCount = (Number) rs.getObject(8);
-		Number datumHourlyCount = (Number) rs.getObject(9);
-		Number datumDailyCount = (Number) rs.getObject(10);
-		Number datumMonthlyCount = (Number) rs.getObject(11);
+		Number datumHourlyCount = (Number) rs.getObject(10);
+		Number datumDailyCount = (Number) rs.getObject(11);
+		Number datumMonthlyCount = (Number) rs.getObject(12);
+		Number fluxDataInCount = (Number) rs.getObject(9);
 		return new AuditDatumEntityRollup(nodeId != null ? nodeId.longValue() : null, sourceId,
 				timestamp != null ? timestamp.toInstant() : null, aggregation,
 				datumCount != null ? datumCount.longValue() : null,
@@ -81,7 +83,8 @@ public class AuditDatumEntityRollupRowMapper implements RowMapper<AuditDatumRoll
 				datumMonthlyCount != null ? datumMonthlyCount.intValue() : null,
 				datumPropertyCount != null ? datumPropertyCount.longValue() : null,
 				datumQueryCount != null ? datumQueryCount.longValue() : null,
-				datumPropertyUpdateCount != null ? datumPropertyUpdateCount.longValue() : null);
+				datumPropertyUpdateCount != null ? datumPropertyUpdateCount.longValue() : null,
+				fluxDataInCount != null ? fluxDataInCount.longValue() : null);
 	}
 
 }
