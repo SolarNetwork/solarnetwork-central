@@ -677,3 +677,6 @@ $$
 		SUM(CASE meter_key WHEN 'oscp-cap' THEN total_count ELSE NULL END)::BIGINT > 0 OR
 		SUM(CASE meter_key WHEN 'oauth-client-creds' THEN total_count ELSE NULL END)::BIGINT > 0
 $$;
+
+ALTER TABLE solarbill.bill_invoice_node_usage ADD COLUMN
+    flux_data_in_count	BIGINT NOT NULL DEFAULT 0;

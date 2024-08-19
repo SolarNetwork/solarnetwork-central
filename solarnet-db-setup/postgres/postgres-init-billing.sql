@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS solarbill.bill_invoice_node_usage (
     datum_q_count 		BIGINT NOT NULL DEFAULT 0,
     datum_s_count		BIGINT NOT NULL DEFAULT 0,
     instr_issued_count	BIGINT NOT NULL DEFAULT 0,
+    flux_data_in_count	BIGINT NOT NULL DEFAULT 0,
 	CONSTRAINT bill_invoice_usage_pkey PRIMARY KEY (inv_id, node_id),
 	CONSTRAINT bill_invoice_usage_inv_fk FOREIGN KEY (inv_id)
 		REFERENCES solarbill.bill_invoice (id) MATCH SIMPLE
