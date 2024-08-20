@@ -6,7 +6,12 @@ WITH z AS (
 	WHERE m.stream_id = ?::uuid
 )
 UPDATE solardatm.da_datm_meta SET
-	node_id = ?
+	names_i = ?
+	, names_a = ?
+	, names_s = ?
 FROM z
 WHERE da_datm_meta.stream_id = z.stream_id
+	AND cardinality(names_i) <= ?
+	AND cardinality(names_a) <= ?
+	AND cardinality(names_s) <= ?
 RETURNING da_datm_meta.stream_id, node_id, source_id, names_i, names_a, names_s, jdata, 'n' AS kind, z.time_zone
