@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumStreamMetadataSecurityAspect.java - 21/11/2021 5:52:40 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,18 +34,18 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Security AOP support for {@link DatumStreamMetadataBiz}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.0
  */
 @Aspect
@@ -56,7 +56,7 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
 	 * @param metaDao
@@ -70,19 +70,19 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz.updateIdAttributes(..)) && args(kind, streamId, objectId, sourceId)")
-	public void updateIdAttributesMetadata(ObjectDatumKind kind, UUID streamId, Long objectId,
+	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz.update*Attributes(..)) && args(kind, streamId, objectId, sourceId, ..)")
+	public void updateAttributesMetadata(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId) {
 	}
 
 	/**
 	 * Check access to modifying datum metadata.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node to verify
 	 */
-	@Before("updateIdAttributesMetadata(kind, streamId, objectId, sourceId)")
-	public void updateIdAttributesCheck(ObjectDatumKind kind, UUID streamId, Long objectId,
+	@Before("updateAttributesMetadata(kind, streamId, objectId, sourceId)")
+	public void updateAttributesCheck(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId) {
 		if ( streamId == null || kind == null ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);

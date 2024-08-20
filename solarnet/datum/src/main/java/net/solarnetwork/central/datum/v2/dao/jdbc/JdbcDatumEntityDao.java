@@ -112,7 +112,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataIdAttributes;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataAttributes;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataJson;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.Datum;
@@ -614,19 +614,29 @@ public class JdbcDatumEntityDao
 	@Override
 	public ObjectDatumStreamMetadataId updateIdAttributes(ObjectDatumKind kind, UUID streamId,
 			Long objectId, String sourceId) {
-		UpdateObjectStreamMetadataIdAttributes sql = new UpdateObjectStreamMetadataIdAttributes(kind,
-				streamId, objectId, sourceId);
-		ObjectDatumStreamMetadataId result = jdbcTemplate.execute(sql,
-				new PreparedStatementCallback<ObjectDatumStreamMetadataId>() {
+		ObjectDatumStreamMetadata result = updateAttributes(kind, streamId, objectId, sourceId, null,
+				null, null);
+		return (result != null ? ObjectDatumStreamMetadataId.idForMetadata(result) : null);
+	}
+
+	@Override
+	public ObjectDatumStreamMetadata updateAttributes(ObjectDatumKind kind, UUID streamId, Long objectId,
+			String sourceId, String[] instantaneousProperties, String[] accumulatingProperties,
+			String[] statusProperties) {
+		UpdateObjectStreamMetadataAttributes sql = new UpdateObjectStreamMetadataAttributes(kind,
+				streamId, objectId, sourceId, instantaneousProperties, accumulatingProperties,
+				statusProperties);
+		ObjectDatumStreamMetadata result = jdbcTemplate.execute(sql,
+				new PreparedStatementCallback<ObjectDatumStreamMetadata>() {
 
 					@Override
-					public ObjectDatumStreamMetadataId doInPreparedStatement(PreparedStatement ps)
+					public ObjectDatumStreamMetadata doInPreparedStatement(PreparedStatement ps)
 							throws SQLException, DataAccessException {
-						RowMapper<ObjectDatumStreamMetadataId> rowMapper;
+						RowMapper<ObjectDatumStreamMetadata> rowMapper;
 						if ( kind == ObjectDatumKind.Location ) {
-							rowMapper = ObjectDatumStreamMetadataIdRowMapper.LOCATION_INSTANCE;
+							rowMapper = ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE;
 						} else {
-							rowMapper = ObjectDatumStreamMetadataIdRowMapper.NODE_INSTANCE;
+							rowMapper = ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE;
 						}
 
 						if ( ps.execute() ) {
