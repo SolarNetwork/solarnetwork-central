@@ -117,9 +117,9 @@ app:
           minimum-age-minutes: 720
           schedule: "40 53 * * * *"
         processor:
-          maximum-iterations: 2
+          maximum-iterations: 1000
           maximum-wait-ms: 7200000
-          schedule: "52 3/5 * * * ?"
+          schedule: 60000
     instr:
       cleaner:
         days-older: 30
