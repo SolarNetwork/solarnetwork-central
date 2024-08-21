@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodeUsageCost.java - 22/07/2020 2:11:05 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,43 +28,47 @@ import java.util.Objects;
 
 /**
  * Costs associated with node usage.
- * 
+ *
  * <p>
  * This object is used in different contexts, such as tiered pricing schedules
  * and general node usage calculations.
  * </p>
- * 
+ *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class NodeUsageCost implements Serializable {
 
-	private static final long serialVersionUID = 2764937975318244422L;
+	private static final long serialVersionUID = -4561428148237236228L;
 
 	private BigDecimal datumPropertiesInCost;
 	private BigDecimal datumDaysStoredCost;
 	private BigDecimal datumOutCost;
 	private BigDecimal instructionsIssuedCost;
+	private BigDecimal fluxDataInCost;
+	private BigDecimal fluxDataOutCost;
 	private BigDecimal ocppChargersCost;
 	private BigDecimal oscpCapacityGroupsCost;
 	private BigDecimal oscpCapacityCost;
 	private BigDecimal dnp3DataPointsCost;
+	private BigDecimal oauthClientCredentialsCost;
 
 	/**
 	 * Constructor.
 	 */
 	public NodeUsageCost() {
 		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-				BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+				BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
+				BigDecimal.ZERO);
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * This constructor converts all costs to {@link BigDecimal} values.
 	 * </p>
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -79,11 +83,11 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * This constructor converts all costs to {@link BigDecimal} values.
 	 * </p>
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -105,11 +109,11 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * This constructor converts all costs to {@link BigDecimal} values.
 	 * </p>
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -133,11 +137,11 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * This constructor converts all costs to {@link BigDecimal} values.
 	 * </p>
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -165,11 +169,11 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * This constructor converts all costs to {@link BigDecimal} values.
 	 * </p>
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -199,7 +203,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -214,7 +218,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -236,7 +240,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -260,7 +264,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -281,19 +285,13 @@ public class NodeUsageCost implements Serializable {
 			BigDecimal datumDaysStoredCost, BigDecimal instructionsIssuedCost,
 			BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost,
 			BigDecimal dnp3DataPointsCost) {
-		super();
-		setDatumPropertiesInCost(datumPropertiesInCost);
-		setDatumOutCost(datumOutCost);
-		setDatumDaysStoredCost(datumDaysStoredCost);
-		setInstructionsIssuedCost(instructionsIssuedCost);
-		setOcppChargersCost(ocppChargersCost);
-		setOscpCapacityGroupsCost(oscpCapacityGroupsCost);
-		setDnp3DataPointsCost(dnp3DataPointsCost);
+		this(datumPropertiesInCost, datumOutCost, datumDaysStoredCost, instructionsIssuedCost, null,
+				null, ocppChargersCost, oscpCapacityGroupsCost, null, dnp3DataPointsCost, null);
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the properties in cost
 	 * @param datumOutCost
@@ -316,15 +314,49 @@ public class NodeUsageCost implements Serializable {
 			BigDecimal datumDaysStoredCost, BigDecimal instructionsIssuedCost,
 			BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost, BigDecimal oscpCapacityCost,
 			BigDecimal dnp3DataPointsCost) {
+		this(datumPropertiesInCost, datumOutCost, datumDaysStoredCost, instructionsIssuedCost, null,
+				null, ocppChargersCost, oscpCapacityGroupsCost, oscpCapacityCost, dnp3DataPointsCost,
+				null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param instructionsIssuedCost
+	 *        the instructions issued cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param oscpCapacityCost
+	 *        the OSCP capacity cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @since 1.5
+	 */
+	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
+			BigDecimal datumDaysStoredCost, BigDecimal instructionsIssuedCost, BigDecimal fluxDataInCost,
+			BigDecimal fluxDataOutCost, BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost,
+			BigDecimal oscpCapacityCost, BigDecimal dnp3DataPointsCost,
+			BigDecimal oauthClientCredentialsCost) {
 		super();
 		setDatumPropertiesInCost(datumPropertiesInCost);
 		setDatumOutCost(datumOutCost);
 		setDatumDaysStoredCost(datumDaysStoredCost);
 		setInstructionsIssuedCost(instructionsIssuedCost);
+		setFluxDataInCost(fluxDataInCost);
+		setFluxDataOutCost(fluxDataOutCost);
 		setOcppChargersCost(ocppChargersCost);
 		setOscpCapacityGroupsCost(oscpCapacityGroupsCost);
 		setOscpCapacityCost(oscpCapacityCost);
 		setDnp3DataPointsCost(dnp3DataPointsCost);
+		setOauthClientCredentialsCost(oauthClientCredentialsCost);
 	}
 
 	@Override
@@ -375,7 +407,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the cost of datum properties added.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getDatumPropertiesInCost() {
@@ -384,7 +416,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the cost of datum properties added.
-	 * 
+	 *
 	 * @param datumPropertiesInCost
 	 *        the cost to set (null will be stored as {@literal 0}
 	 */
@@ -397,7 +429,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the cost of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getDatumDaysStoredCost() {
@@ -406,7 +438,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the cost of datum stored per day (accumulating).
-	 * 
+	 *
 	 * @param datumDaysStoredCost
 	 *        the cost to set (null will be stored as {@literal 0}
 	 */
@@ -419,7 +451,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the cost of datum queried.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getDatumOutCost() {
@@ -428,7 +460,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the cost of datum queried.
-	 * 
+	 *
 	 * @param datumOutCost
 	 *        the cost to set (null will be stored as {@literal 0}
 	 */
@@ -441,7 +473,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the instructions issued cost.
-	 * 
+	 *
 	 * @return the cost
 	 */
 	public BigDecimal getInstructionsIssuedCost() {
@@ -450,7 +482,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the instructions issued cost.
-	 * 
+	 *
 	 * @param instructionsIssuedCost
 	 *        the cost to set
 	 */
@@ -460,7 +492,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the OCPP Chargers cost.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getOcppChargersCost() {
@@ -469,7 +501,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the OCPP Chargers cost.
-	 * 
+	 *
 	 * @param ocppChargersCost
 	 *        the cost to set
 	 */
@@ -482,7 +514,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the OSCP Capacity Groups cost.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getOscpCapacityGroupsCost() {
@@ -491,7 +523,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the OSCP Capacity Groups cost.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsCost
 	 *        the cost to set
 	 */
@@ -504,7 +536,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the OSCP capacity cost.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 * @since 1.4
 	 */
@@ -514,7 +546,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the OSCP capacity cost.
-	 * 
+	 *
 	 * @param oscpCapacityCost
 	 *        the cost to set
 	 * @since 1.4
@@ -528,7 +560,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Get the DNP3 Data Points cost.
-	 * 
+	 *
 	 * @return the cost, never {@literal null}
 	 * @since 1.2
 	 */
@@ -538,7 +570,7 @@ public class NodeUsageCost implements Serializable {
 
 	/**
 	 * Set the DNP3 Data Points cost.
-	 * 
+	 *
 	 * @param dnp3DataPointsCost
 	 *        the cost to set
 	 * @since 1.2
@@ -548,6 +580,78 @@ public class NodeUsageCost implements Serializable {
 			dnp3DataPointsCost = BigDecimal.ZERO;
 		}
 		this.dnp3DataPointsCost = dnp3DataPointsCost;
+	}
+
+	/**
+	 * Get the SolarFlux data in cost.
+	 *
+	 * @return the cost, never {@literal null}
+	 * @since 1.5
+	 */
+	public final BigDecimal getFluxDataInCost() {
+		return fluxDataInCost;
+	}
+
+	/**
+	 * Set the SolarFlux data in cost.
+	 *
+	 * @param fluxDataInCost
+	 *        the cost to set
+	 * @since 1.5
+	 */
+	public final void setFluxDataInCost(BigDecimal fluxDataInCost) {
+		if ( fluxDataInCost == null ) {
+			fluxDataInCost = BigDecimal.ZERO;
+		}
+		this.fluxDataInCost = fluxDataInCost;
+	}
+
+	/**
+	 * Get the SolarFlux data out cost.
+	 *
+	 * @return the cost, never {@literal null}
+	 * @since 1.5
+	 */
+	public final BigDecimal getFluxDataOutCost() {
+		return fluxDataOutCost;
+	}
+
+	/**
+	 * Set the SolarFlux data out cost.
+	 *
+	 * @param fluxDataOutCost
+	 *        the cost to set
+	 * @since 1.5
+	 */
+	public final void setFluxDataOutCost(BigDecimal fluxDataOutCost) {
+		if ( fluxDataOutCost == null ) {
+			fluxDataOutCost = BigDecimal.ZERO;
+		}
+		this.fluxDataOutCost = fluxDataOutCost;
+	}
+
+	/**
+	 * Get the OAuth client credentials cost.
+	 *
+	 * @return the cost, never {@literal null}
+	 * @since 1.5
+	 */
+	public final BigDecimal getOauthClientCredentialsCost() {
+		return oauthClientCredentialsCost;
+	}
+
+	/**
+	 * Set the OAuth client credentials cost.
+	 *
+	 * @param oauthClientCredentialsCost
+	 *        the cost to set
+	 * @since 1.5
+	 */
+	public final void setOauthClientCredentialsCost(BigDecimal oauthClientCredentialsCost) {
+		if ( oauthClientCredentialsCost == null ) {
+			oauthClientCredentialsCost = BigDecimal.ZERO;
+		}
+		this.oauthClientCredentialsCost = oauthClientCredentialsCost;
 	}
 
 }

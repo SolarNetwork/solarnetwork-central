@@ -50,7 +50,7 @@ import net.solarnetwork.domain.datum.DatumId;
  * refers to a <b>user</b> entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "ts", "userId", "service", "aggregation", "count" })
 @JsonIgnoreProperties("id")
@@ -148,6 +148,23 @@ public class AuditUserServiceEntity extends BasicIdentity<DatumId> implements Au
 		super(id);
 		this.aggregation = (aggregation == null ? Aggregation.None : aggregation);
 		this.count = count;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("AuditNodeServiceEntity{aggregation=");
+		builder.append(aggregation);
+		builder.append(", userId=");
+		builder.append(getUserId());
+		builder.append(", service=");
+		builder.append(getService());
+		builder.append(", timestamp=");
+		builder.append(getTimestamp());
+		builder.append(", count=");
+		builder.append(count);
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

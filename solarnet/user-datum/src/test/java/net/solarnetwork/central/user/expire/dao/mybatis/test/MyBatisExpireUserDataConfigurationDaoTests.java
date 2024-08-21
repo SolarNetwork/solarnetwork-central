@@ -63,22 +63,22 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.expire.dao.mybatis.MyBatisExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link MyBatisExpireUserDataConfigurationDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -312,7 +312,7 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 	}
 
 	private void insertAuditDatumMonthly(Instant date, UUID streamId) {
-		AuditDatumEntity d = AuditDatumEntity.monthlyAuditDatum(streamId, date, 0L, 0L, 0, 0, 0L, 0L,
+		AuditDatumEntity d = AuditDatumEntity.monthlyAuditDatum(streamId, date, 0L, 0L, 0, 0, 0L, 0L, 0L,
 				0L);
 		DatumDbUtils.insertAuditDatum(log, jdbcTemplate, singleton(d));
 	}

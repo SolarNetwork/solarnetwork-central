@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectAuditDatum.java - 20/11/2020 10:15:11 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,9 +32,9 @@ import net.solarnetwork.domain.datum.Aggregation;
 /**
  * Select for {@link AuditDatum} instances via a {@link AuditDatumCriteria}
  * filter.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class SelectAccumulativeAuditDatum extends SelectAuditDatum
@@ -42,7 +42,7 @@ public class SelectAccumulativeAuditDatum extends SelectAuditDatum
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
@@ -74,6 +74,7 @@ public class SelectAccumulativeAuditDatum extends SelectAuditDatum
 		buf.append("NULL::bigint AS aud_datum_prop_count,\n");
 		buf.append("NULL::bigint AS aud_datum_prop_update_count,\n");
 		buf.append("NULL::bigint AS aud_datum_query_count,\n");
+		buf.append("NULL::bigint AS aud_datum_flux_byte_count,\n");
 		if ( filter.hasDatumRollupCriteria() ) {
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append("SUM(datum.datum_daily_count) AS aud_datum_daily_count,\n");

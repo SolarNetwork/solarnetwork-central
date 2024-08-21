@@ -30,7 +30,10 @@ import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DNP3_DATA_POINTS_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.FLUX_DATA_IN_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.FLUX_DATA_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.INSTRUCTIONS_ISSUED_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OAUTH_CLIENT_CREDENTIALS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OCPP_CHARGERS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_GROUPS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_KEY;
@@ -104,7 +107,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -143,10 +146,13 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String datumOutKey = DATUM_OUT_KEY;
 	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
 	private String instructionsIssuedKey = INSTRUCTIONS_ISSUED_KEY;
+	private String fluxDataInKey = FLUX_DATA_IN_KEY;
+	private String fluxDataOutKey = FLUX_DATA_OUT_KEY;
 	private String ocppChargersKey = OCPP_CHARGERS_KEY;
 	private String oscpCapacityGroupsKey = OSCP_CAPACITY_GROUPS_KEY;
 	private String oscpCapacityKey = OSCP_CAPACITY_KEY;
 	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
+	private String oauthClientCredentialsKey = OAUTH_CLIENT_CREDENTIALS_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
@@ -295,6 +301,24 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				}
 				items.add(item);
 			}
+			if ( usage.getFluxDataIn().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, fluxDataInKey,
+						new BigDecimal(usage.getFluxDataIn()), usage.getFluxDataInCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, FLUX_DATA_IN_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getFluxDataOut().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, fluxDataOutKey,
+						new BigDecimal(usage.getFluxDataOut()), usage.getFluxDataOutCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, FLUX_DATA_OUT_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
 			if ( usage.getOcppChargers().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, ocppChargersKey,
 						new BigDecimal(usage.getOcppChargers()), usage.getOcppChargersCost());
@@ -327,6 +351,16 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, dnp3DataPointsKey,
 						new BigDecimal(usage.getDnp3DataPoints()), usage.getDnp3DataPointsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DNP3_DATA_POINTS_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getOauthClientCredentials().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oauthClientCredentialsKey,
+						new BigDecimal(usage.getOauthClientCredentials()),
+						usage.getOauthClientCredentialsCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OAUTH_CLIENT_CREDENTIALS_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -372,7 +406,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),
 						invoice.getCreated(), nodeUsage.getDescription(),
 						nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
-						nodeUsage.getDatumDaysStored(), nodeUsage.getInstructionsIssued());
+						nodeUsage.getDatumDaysStored(), nodeUsage.getInstructionsIssued(),
+						nodeUsage.getFluxDataIn());
 				invoiceNodeUsages.add(u);
 				if ( !dryRun ) {
 					invoiceNodeUsageDao.save(u);
@@ -724,6 +759,54 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	}
 
 	/**
+	 * Get the item key for SolarFlux data in.
+	 *
+	 * @return the the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#FLUX_DATA_IN_KEY}
+	 * @since 1.5
+	 */
+	public final String getFluxDataInKey() {
+		return fluxDataInKey;
+	}
+
+	/**
+	 * Get the item key for SolarFlux data in.
+	 *
+	 * @param fluxDataInKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.5
+	 */
+	public final void setFluxDataInKey(String fluxDataInKey) {
+		this.fluxDataInKey = requireNonNullArgument(fluxDataInKey, "fluxDataInKey");
+	}
+
+	/**
+	 * Get the item key for SolarFlux data out.
+	 *
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#FLUX_DATA_OUT_KEY}
+	 * @since 1.5
+	 */
+	public final String getFluxDataOutKey() {
+		return fluxDataOutKey;
+	}
+
+	/**
+	 * Set the item key for SolarFlux data out.
+	 *
+	 * @param fluxDataOutKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.5
+	 */
+	public final void setFluxDataOutKey(String fluxDataOutKey) {
+		this.fluxDataOutKey = requireNonNullArgument(fluxDataOutKey, "fluxDataOutKey");
+	}
+
+	/**
 	 * Get the item key for OCPP chargers.
 	 *
 	 * @return the key, never {@literal null}; defaults to
@@ -818,6 +901,31 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 */
 	public void setDnp3DataPointsKey(String dnp3DataPointsKey) {
 		this.dnp3DataPointsKey = requireNonNullArgument(dnp3DataPointsKey, "dnp3DataPointsKey");
+	}
+
+	/**
+	 * Get the item key for OAuth client credentials.
+	 *
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#OAUTH_CLIENT_CREDENTIALS_KEY}
+	 * @since 1.5
+	 */
+	public final String getOauthClientCredentialsKey() {
+		return oauthClientCredentialsKey;
+	}
+
+	/**
+	 * Set the item key for OAuth client credentials.
+	 *
+	 * @param oauthClientCredentialsKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.5
+	 */
+	public final void setOauthClientCredentialsKey(String oauthClientCredentialsKey) {
+		this.oauthClientCredentialsKey = requireNonNullArgument(oauthClientCredentialsKey,
+				"oauthClientCredentialsKey");
 	}
 
 	/**

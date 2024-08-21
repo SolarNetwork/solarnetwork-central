@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumDbUtils.java - 23/11/2020 1:39:27 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -83,6 +83,8 @@ import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleFluxDatum;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.central.domain.AuditNodeServiceValue;
+import net.solarnetwork.central.domain.AuditUserServiceValue;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -95,13 +97,13 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
 
 /**
  * Utilities for working with datum at the database level.
- * 
+ *
  * <p>
  * These utilities are primarily designed to support unit testing.
  * </p>
- * 
+ *
  * @author matt
- * @version 2.3
+ * @version 2.5
  * @since 3.8
  */
 public final class DatumDbUtils {
@@ -151,7 +153,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Extract a sorted set of stream IDs from filter results.
-	 * 
+	 *
 	 * @param provider
 	 *        the results to extract the stream IDs from
 	 * @param comparator
@@ -167,7 +169,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Create a {@link ReadingDatum} out of statistic data.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param agg
@@ -191,7 +193,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Create a {@link ReadingDatum} out of statistic data.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param agg
@@ -214,7 +216,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Extract all elements of a specific class from a list.
-	 * 
+	 *
 	 * @param <T>
 	 *        the type of element to extract
 	 * @param list
@@ -229,17 +231,17 @@ public final class DatumDbUtils {
 
 	/**
 	 * Load JSON datum from a classpath resource.
-	 * 
+	 *
 	 * <p>
 	 * This method loads JSON datum records from a resource, with one JSON datum
 	 * object per line. Empty lines or those starting with a {@literal #}
 	 * character are ignored. An example JSON datum looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:00:00Z","samples":{"i":{"x":1.2},"a":{"w":100}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param resource
 	 *        the name of the resource to load
 	 * @param clazz
@@ -255,18 +257,18 @@ public final class DatumDbUtils {
 
 	/**
 	 * Load JSON datum auxiliary from a classpath resource.
-	 * 
+	 *
 	 * <p>
 	 * This method loads JSON datum auxiliary records from a resource, with one
 	 * JSON datum object per line. Empty lines or those starting with a
 	 * {@literal #} character are ignored. An example JSON datum looks like
 	 * this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","type":"Reset","created":"2020-06-01T12:00:00Z","final":{"a":{"w":100}},"start":{"a":{"w":10}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param resource
 	 *        the name of the resource to load
 	 * @param clazz
@@ -283,7 +285,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Load JSON datum and datum auxiliary objects from a classpath resource.
-	 * 
+	 *
 	 * @param resource
 	 *        the name of the resource to load
 	 * @param clazz
@@ -301,26 +303,26 @@ public final class DatumDbUtils {
 
 	/**
 	 * Load JSON datum and datum auxiliary objects from a classpath resource.
-	 * 
+	 *
 	 * <p>
 	 * This method loads JSON datum and datum auxiliary records from a resource,
 	 * with one JSON datum object per line. Empty lines or those starting with a
 	 * {@literal #} character are ignored. An example JSON datum looks like
 	 * this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","created":"2020-06-01T12:00:00Z","samples":{"i":{"x":1.2},"a":{"w":100}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * <p>
 	 * An example datum auxiliary looks like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","type":"Reset","created":"2020-06-01T12:00:00Z","final":{"a":{"w":100}},"start":{"a":{"w":10}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param resource
 	 *        the name of the resource to load
 	 * @param clazz
@@ -373,18 +375,18 @@ public final class DatumDbUtils {
 
 	/**
 	 * Load JSON aggregate datum objects from a classpath resource.
-	 * 
+	 *
 	 * <p>
 	 * This method loads JSON aggregate datum records from a resource, with one
 	 * JSON datum object per line. Empty lines or those starting with a
 	 * {@literal #} character are ignored. An example JSON aggregate datum looks
 	 * like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T00:00:00Z","kind":"Hour","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}},"stats":{"i":{"x":[6,1.1,3.1],"y":[6,2.0,7.1]},"ra":{"w":[100,200,100]}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param resource
 	 *        the name of the resource to load
 	 * @param clazz
@@ -404,28 +406,28 @@ public final class DatumDbUtils {
 
 	/**
 	 * Load JSON aggregate datum objects from a classpath resource.
-	 * 
+	 *
 	 * <p>
 	 * This method loads JSON aggregate datum records from a resource, with one
 	 * JSON datum object per line. Empty lines or those starting with a
 	 * {@literal #} character are ignored. An example JSON aggregate datum looks
 	 * like this:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T00:00:00Z","kind":"Hour","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}},"stats":{"i":{"x":[6,1.1,3.1],"y":[6,2.0,7.1]},"ra":{"w":[100,200,100]}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * <p>
 	 * Note that "raw" datum can be loaded by specifying
 	 * {@literal "kind":"None"} and leaving out the {@literal "stats"} object.
 	 * For example:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * <code>{"nodeId":1,"sourceId":"a","ts":"2020-06-01T01:02:03Z","kind":"None","samples":{"i":{"x":1.2,"y":2.1},"a":{"w":100}}}</code>
 	 * </pre>
-	 * 
+	 *
 	 * @param resource
 	 *        the name of the resource to load
 	 * @param clazz
@@ -475,7 +477,7 @@ public final class DatumDbUtils {
 	/**
 	 * Create a {@link ObjectDatumStreamMetadata} out of a collection of
 	 * {@link GeneralNodeDatum} instances.
-	 * 
+	 *
 	 * @param datums
 	 *        the datums
 	 * @param timeZoneId
@@ -492,7 +494,7 @@ public final class DatumDbUtils {
 	/**
 	 * Create a {@link ObjectDatumStreamMetadata} out of a collection of
 	 * {@link GeneralNodeDatum} instances.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param timeZoneId
@@ -533,7 +535,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert a set of datum into the {@literal da_datm} table.
-	 * 
+	 *
 	 * @param log
 	 *        an optional logger
 	 * @param jdbcTemplate
@@ -629,7 +631,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert a set of datum into the {@literal da_datm} table.
-	 * 
+	 *
 	 * @param log
 	 *        an optional logger
 	 * @param jdbcTemplate
@@ -666,7 +668,7 @@ public final class DatumDbUtils {
 	/**
 	 * Insert a set of datum for a single stream into the {@literal da_datm}
 	 * table.
-	 * 
+	 *
 	 * @param log
 	 *        an optional logger
 	 * @param jdbcTemplate
@@ -707,7 +709,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert node or location datum metadata.
-	 * 
+	 *
 	 * @param log
 	 *        an optional logger
 	 * @param jdbcTemplate
@@ -729,7 +731,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert datum or location datum stream metadata.
-	 * 
+	 *
 	 * @param log
 	 *        an optional logger
 	 * @param con
@@ -790,7 +792,7 @@ public final class DatumDbUtils {
 	 * Ingest a set of datum into the {@literal da_datm} table, using the
 	 * {@code solardatm.store_datum()} stored procedure that includes side
 	 * effects like "stale" and audit record management.
-	 * 
+	 *
 	 * @param log
 	 *        an optional logger
 	 * @param jdbcTemplate
@@ -847,7 +849,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert auxiliary datum records for a given stream.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -868,7 +870,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert auxiliary datum records for a given stream.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -906,7 +908,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert datum records.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1000,12 +1002,12 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert aggregate datum records.
-	 * 
+	 *
 	 * <p>
 	 * Note that {@link Aggregation#None} is supported, which loads the datum
 	 * into the {@code da_datm} table.
 	 * </p>
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1112,8 +1114,86 @@ public final class DatumDbUtils {
 	}
 
 	/**
+	 * Insert a set of daily {@link AuditNodeServiceValue} entities in the
+	 * database.
+	 *
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param data
+	 *        the data to insert
+	 * @since 2.5
+	 */
+	public static void insertAuditNodeServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<AuditNodeServiceValue> data) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement stmt = con.prepareStatement("""
+						INSERT INTO solardatm.aud_node_daily
+							(node_id, service, ts_start, cnt)
+						VALUES (?, ?, ?, ?)
+						""")) {
+					for ( AuditNodeServiceValue v : data ) {
+						if ( log != null ) {
+							log.debug("Inserting AuditNodeServiceValue: {}", v);
+						}
+						stmt.setObject(1, v.getNodeId());
+						stmt.setObject(2, v.getService());
+						stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
+						stmt.setObject(4, v.getCount());
+						stmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Insert a set of daily {@link AuditNodeServiceValue} entities in the
+	 * database.
+	 *
+	 * @param log
+	 *        a logger for debug message
+	 * @param jdbcTemplate
+	 *        the JDBC template
+	 * @param data
+	 *        the data to insert
+	 * @since 2.5
+	 */
+	public static void insertAuditUserServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
+			Iterable<AuditUserServiceValue> data) {
+		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+
+			@Override
+			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+				try (PreparedStatement stmt = con.prepareStatement("""
+						INSERT INTO solardatm.aud_user_daily
+							(user_id, service, ts_start, cnt)
+						VALUES (?, ?, ?, ?)
+						""")) {
+					for ( AuditUserServiceValue v : data ) {
+						if ( log != null ) {
+							log.debug("Inserting AuditNodeServiceValue: {}", v);
+						}
+						stmt.setObject(1, v.getUserId());
+						stmt.setObject(2, v.getService());
+						stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
+						stmt.setObject(4, v.getCount());
+						stmt.execute();
+					}
+				}
+				return null;
+			}
+		});
+	}
+
+	/**
 	 * Insert audit datum records.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1166,16 +1246,18 @@ public final class DatumDbUtils {
 								datumStmt.setObject(3, d.getDatumPropertyCount());
 								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
 								datumStmt.setObject(5, d.getDatumQueryCount());
-								datumStmt.setObject(6, d.getDatumCount());
+								datumStmt.setObject(6, d.getFluxDataInCount());
+								datumStmt.setObject(7, d.getDatumCount());
 								break;
 
 							case Day:
 								datumStmt.setObject(3, d.getDatumPropertyCount());
 								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
 								datumStmt.setObject(5, d.getDatumQueryCount());
-								datumStmt.setObject(6, d.getDatumCount());
-								datumStmt.setObject(7, d.getDatumHourlyCount());
-								datumStmt.setBoolean(8,
+								datumStmt.setObject(6, d.getFluxDataInCount());
+								datumStmt.setObject(7, d.getDatumCount());
+								datumStmt.setObject(8, d.getDatumHourlyCount());
+								datumStmt.setBoolean(9,
 										d.getDatumDailyCount().intValue() > 0 ? true : false);
 								break;
 
@@ -1183,10 +1265,11 @@ public final class DatumDbUtils {
 								datumStmt.setObject(3, d.getDatumPropertyCount());
 								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
 								datumStmt.setObject(5, d.getDatumQueryCount());
-								datumStmt.setObject(6, d.getDatumCount());
-								datumStmt.setObject(7, d.getDatumHourlyCount());
-								datumStmt.setObject(8, d.getDatumDailyCount());
-								datumStmt.setBoolean(9,
+								datumStmt.setObject(6, d.getFluxDataInCount());
+								datumStmt.setObject(7, d.getDatumCount());
+								datumStmt.setObject(8, d.getDatumHourlyCount());
+								datumStmt.setObject(9, d.getDatumDailyCount());
+								datumStmt.setBoolean(10,
 										d.getDatumMonthlyCount().intValue() > 0 ? true : false);
 								break;
 
@@ -1229,17 +1312,17 @@ public final class DatumDbUtils {
 		buf.append(" (stream_id,ts_start,");
 		switch (kind) {
 			case Hour:
-				buf.append("prop_count,prop_u_count,datum_q_count,datum_count");
+				buf.append("prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count");
 				break;
 
 			case Day:
 				buf.append(
-						"prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_pres");
+						"prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres");
 				break;
 
 			case Month:
 				buf.append(
-						"prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres");
+						"prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres");
 				break;
 
 			default:
@@ -1249,15 +1332,15 @@ public final class DatumDbUtils {
 		buf.append(") VALUES (?::uuid,?,");
 		switch (kind) {
 			case Hour:
-				buf.append("?,?,?,?");
+				buf.append("?,?,?,?,?");
 				break;
 
 			case Day:
-				buf.append("?,?,?,?,?,?");
+				buf.append("?,?,?,?,?,?,?");
 				break;
 
 			case Month:
-				buf.append("?,?,?,?,?,?,?");
+				buf.append("?,?,?,?,?,?,?,?");
 				break;
 
 			default:
@@ -1272,7 +1355,7 @@ public final class DatumDbUtils {
 	 * Ingest a set of datum auxiliary into the {@literal da_datm_aux} table,
 	 * using the {@code solardatm.store_datum_aux()} stored procedure that
 	 * includes side effects like "stale" record management.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1281,7 +1364,7 @@ public final class DatumDbUtils {
 	 *        the stream ID
 	 * @param datums
 	 *        the datum to insert
-	 * 
+	 *
 	 */
 	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
 			Iterable<GeneralNodeDatumAuxiliary> datums) {
@@ -1315,7 +1398,7 @@ public final class DatumDbUtils {
 	 * Ingest a set of datum auxiliary into the {@literal da_datm_aux} table,
 	 * using the {@code solardatm.store_datum_aux()} stored procedure that
 	 * includes side effects like "stale" record management.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1357,7 +1440,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert stale aggregate datum records.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1399,7 +1482,7 @@ public final class DatumDbUtils {
 	/**
 	 * Call the {@code solardatm.process_one_agg_stale_datm} stored procedure to
 	 * compute aggregate data.
-	 * 
+	 *
 	 * @param log
 	 *        the logger to use
 	 * @param jdbcTemplate
@@ -1436,7 +1519,7 @@ public final class DatumDbUtils {
 	/**
 	 * Call the {@code solardatm.process_one_agg_stale_datm} stored procedure to
 	 * compute aggregate data for all aggregate kinds.
-	 * 
+	 *
 	 * @param log
 	 *        the logger to use
 	 * @param jdbcTemplate
@@ -1472,7 +1555,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert stale aggregate datum records.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1505,7 +1588,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Insert stale audit datum records.
-	 * 
+	 *
 	 * @param log
 	 *        a logger for debug message
 	 * @param jdbcTemplate
@@ -1540,7 +1623,7 @@ public final class DatumDbUtils {
 	/**
 	 * Call the {@code solardatm.process_one_aud_stale_datm} stored procedure to
 	 * compute audit data.
-	 * 
+	 *
 	 * @param log
 	 *        the logger to use
 	 * @param jdbcTemplate
@@ -1578,7 +1661,7 @@ public final class DatumDbUtils {
 	/**
 	 * Call the {@code solardatm.process_one_aud_stale_datm} stored procedure to
 	 * compute audit data for all aggregate kinds.
-	 * 
+	 *
 	 * @param log
 	 *        the logger to use
 	 * @param jdbcTemplate
@@ -1611,7 +1694,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the metadata for a stream.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param streamId
@@ -1627,7 +1710,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the available datum auxiliary records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
@@ -1640,7 +1723,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the available stale aggregate datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
@@ -1653,7 +1736,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the available stale aggregate datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param type
@@ -1669,7 +1752,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the available stale audit datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
@@ -1682,7 +1765,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the available stale audit datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param type
@@ -1698,7 +1781,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get the available stale flux datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param type
@@ -1714,7 +1797,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get all available datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
@@ -1726,7 +1809,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get all available node metadata records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
@@ -1743,7 +1826,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get all available node metadata records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @return the results, never {@literal null}
@@ -1759,7 +1842,7 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get all available aggregate datum records.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param kind
@@ -1792,11 +1875,11 @@ public final class DatumDbUtils {
 
 	/**
 	 * Get all available audit datum records.
-	 * 
+	 *
 	 * <p>
 	 * For I/O audit records, use the {@code Hour} aggregation kind.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC accessor
 	 * @param kind
@@ -1811,13 +1894,13 @@ public final class DatumDbUtils {
 		switch (kind) {
 			case Day:
 				tableName = "aud_datm_daily";
-				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_pres";
+				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres";
 				mapper = AuditDatumDailyEntityRowMapper.INSTANCE;
 				break;
 
 			case Month:
 				tableName = "aud_datm_monthly";
-				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres";
+				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres";
 				mapper = AuditDatumMonthlyEntityRowMapper.INSTANCE;
 				break;
 
@@ -1829,7 +1912,7 @@ public final class DatumDbUtils {
 
 			default:
 				tableName = "aud_datm_io";
-				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,datum_count";
+				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count";
 				mapper = AuditDatumIoEntityRowMapper.INSTANCE;
 		}
 		return jdbcTemplate.query(

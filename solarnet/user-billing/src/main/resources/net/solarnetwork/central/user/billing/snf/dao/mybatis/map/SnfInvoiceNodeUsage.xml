@@ -11,6 +11,7 @@
 			, datum_q_count
 			, datum_s_count
 			, instr_issued_count
+			, flux_data_in_count
 		) VALUES (
 			 #{invoiceId}
 			, #{nodeId}
@@ -19,6 +20,7 @@
 			, #{datumOut}
 			, #{datumDaysStored}
 			, #{instructionsIssued}
+			, #{fluxDataIn}
 		)
 		ON CONFLICT (inv_id,node_id) DO NOTHING
 	</insert>
@@ -32,6 +34,7 @@
 		, invu.datum_q_count 		AS bill_invoice_node_usage_datum_q_count
 		, invu.datum_s_count 		AS bill_invoice_node_usage_datum_s_count
 		, invu.instr_issued_count	AS bill_invoice_node_usage_instr_issued_count
+		, invu.flux_data_in_count	AS bill_invoice_node_usage_flux_data_in_count
 	</sql>
 
 	<resultMap id="SnfInvoiceNodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage">
@@ -44,6 +47,7 @@
 			<arg column="bill_invoice_node_usage_datum_q_count" javaType="java.math.BigInteger"/>
 			<arg column="bill_invoice_node_usage_datum_s_count" javaType="java.math.BigInteger"/>
 			<arg column="bill_invoice_node_usage_instr_issued_count" javaType="java.math.BigInteger"/>
+			<arg column="bill_invoice_node_usage_flux_data_in_count" javaType="java.math.BigInteger"/>
 		</constructor>
 	</resultMap>
 
