@@ -27,18 +27,19 @@ import java.util.Locale;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for interacting with a billing system.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface BillingSystem {
 
@@ -67,6 +68,16 @@ public interface BillingSystem {
 	 * @return the info
 	 */
 	BillingSystemInfo getInfo(Locale locale);
+
+	/**
+	 * Get all available named cost tiers.
+	 * 
+	 * @param locale
+	 *        the desired locale
+	 * @return the named cost tiers, or {@literal null} if none supported
+	 * @since 1.2
+	 */
+	List<? extends NamedCostTiers> namedCostTiers(Locale locale);
 
 	/**
 	 * Search for invoices.

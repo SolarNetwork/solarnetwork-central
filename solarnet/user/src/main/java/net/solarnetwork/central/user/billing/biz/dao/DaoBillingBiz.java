@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
@@ -41,13 +40,14 @@ import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * DAO based implementation of {@link BillingBiz} that delegates responsibility
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -92,6 +92,16 @@ public class DaoBillingBiz implements BillingBiz {
 						return bs;
 					}
 				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public BillingSystem billingSystemForKey(String key) {
+		for ( BillingSystem bs : billingSystems ) {
+			if ( bs.supportsAccountingSystemKey(key) ) {
+				return bs;
 			}
 		}
 		return null;

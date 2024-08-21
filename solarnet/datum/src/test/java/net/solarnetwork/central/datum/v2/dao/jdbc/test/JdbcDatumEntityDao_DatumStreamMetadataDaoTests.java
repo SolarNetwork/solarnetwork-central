@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_DatumStreamMetadataDaoTests.java - 19/11/2020 4:41:41 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,6 +42,8 @@ import static net.solarnetwork.codec.JsonUtils.getStringMap;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -94,6 +96,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SimpleLocation;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -102,9 +105,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link DatumStreamMetadataDao}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -1209,6 +1212,269 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		assertThat("Returned stream ID matches", id.getStreamId(), is(meta.getStreamId()));
 		assertThat("Returned object ID new value", id.getObjectId(), is(newLocId));
 		assertThat("Returned source ID new value", id.getSourceId(), is(newSourceId));
+	}
+
+	@Test
+	public void updateAttributes_node_objectAndSourceAndPropNames() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
+		String newSourceId = UUID.randomUUID().toString();
+		String[] newi = new String[] { "aa", "bb", "cc" };
+		String[] newa = new String[] { "dd", "dd" };
+		String[] news = new String[] { "ff" };
+
+		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(),
+				newNodeId, newSourceId, newi, newa, news);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Updated meta returned")
+			.isNotNull()
+			.as("Returned kind matches")
+			.returns(meta.getKind(), from(ObjectDatumStreamMetadata::getKind))
+			.as("Returned object ID is new value")
+			.returns(newNodeId, from(ObjectDatumStreamMetadata::getObjectId))
+			.as("Returned source ID is new value")
+			.returns(newSourceId, from(ObjectDatumStreamMetadata::getSourceId))
+			.satisfies(r -> {
+				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+					.as("Returned i name array is new value")
+					.containsExactly(newi)
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+					.as("Returned a name array is new value")
+					.containsExactly(newa)
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Status))
+					.as("Returned s name array is new value")
+					.containsExactly(news)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateAttributes_node_objectAndSourceAndPropNames_increaseLength() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		Long newNodeId = UUID.randomUUID().getLeastSignificantBits();
+		String newSourceId = UUID.randomUUID().toString();
+		String[] newi = new String[] { "aa", "bb", "cc", "i" };
+		String[] newa = new String[] { "dd", "dd", "a" };
+		String[] news = new String[] { "ff", "s" };
+
+		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(),
+				newNodeId, newSourceId, newi, newa, news);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Updated meta returned")
+			.isNotNull()
+			.as("Returned kind matches")
+			.returns(meta.getKind(), from(ObjectDatumStreamMetadata::getKind))
+			.as("Returned object ID is new value")
+			.returns(newNodeId, from(ObjectDatumStreamMetadata::getObjectId))
+			.as("Returned source ID is new value")
+			.returns(newSourceId, from(ObjectDatumStreamMetadata::getSourceId))
+			.satisfies(r -> {
+				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+					.as("Returned i name array is new value")
+					.containsExactly(newi)
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+					.as("Returned a name array is new value")
+					.containsExactly(newa)
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Status))
+					.as("Returned s name array is new value")
+					.containsExactly(news)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateAttributes_node_propNames_tooFewNames_i() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		String[] newNames = new String[] { "aa" };
+
+		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(), null,
+				null, newNames, null, null);
+
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(meta.getStreamId());
+		filter.setObjectKind(ObjectDatumKind.Node);
+		ObjectDatumStreamMetadata persisted = ((DatumStreamMetadataDao) dao).findStreamMetadata(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No result returned because names_i update array too short")
+			.isNull()
+			;
+
+		then(persisted)
+			.as("Persisted meta returned")
+			.isNotNull()
+			.as("Persisted kind unchanged")
+			.returns(meta.getKind(), from(ObjectDatumStreamMetadata::getKind))
+			.as("Persisted object ID is unchanged")
+			.returns(meta.getObjectId(), from(ObjectDatumStreamMetadata::getObjectId))
+			.as("Persisted source ID is unchanged")
+			.returns(meta.getSourceId(), from(ObjectDatumStreamMetadata::getSourceId))
+			.satisfies(r -> {
+				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+					.as("Returned i name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Instantaneous))
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+					.as("Returned a name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Accumulating))
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Status))
+					.as("Returned s name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Status))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateAttributes_node_propNames_tooFewNames_a() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		String[] newNames = new String[] { "aa" };
+
+		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(), null,
+				null, null, newNames, null);
+
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(meta.getStreamId());
+		filter.setObjectKind(ObjectDatumKind.Node);
+		ObjectDatumStreamMetadata persisted = ((DatumStreamMetadataDao) dao).findStreamMetadata(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No result returned because names_a update array too short")
+			.isNull()
+			;
+
+		then(persisted)
+			.as("Persisted meta returned")
+			.isNotNull()
+			.as("Persisted kind unchanged")
+			.returns(meta.getKind(), from(ObjectDatumStreamMetadata::getKind))
+			.as("Persisted object ID is unchanged")
+			.returns(meta.getObjectId(), from(ObjectDatumStreamMetadata::getObjectId))
+			.as("Persisted source ID is unchanged")
+			.returns(meta.getSourceId(), from(ObjectDatumStreamMetadata::getSourceId))
+			.satisfies(r -> {
+				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+					.as("Returned i name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Instantaneous))
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+					.as("Returned a name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Accumulating))
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Status))
+					.as("Returned s name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Status))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateAttributes_node_propNames_tooFewNames_s() {
+		// GIVEN
+		setupTestNode(); // for TZ
+		ObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(UUID.randomUUID(), TEST_TZ,
+				ObjectDatumKind.Node, TEST_NODE_ID, TEST_SOURCE_ID, new String[] { "a", "b", "c" },
+				new String[] { "d", "e" }, new String[] { "f", "g" });
+		insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
+
+		// WHEN
+		replayAll();
+		String[] newNames = new String[] { "aa" };
+
+		ObjectDatumStreamMetadata result = dao.updateAttributes(meta.getKind(), meta.getStreamId(), null,
+				null, null, null, newNames);
+
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setStreamId(meta.getStreamId());
+		filter.setObjectKind(ObjectDatumKind.Node);
+		ObjectDatumStreamMetadata persisted = ((DatumStreamMetadataDao) dao).findStreamMetadata(filter);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("No result returned because names_a update array too short")
+			.isNull()
+			;
+
+		then(persisted)
+			.as("Persisted meta returned")
+			.isNotNull()
+			.as("Persisted kind unchanged")
+			.returns(meta.getKind(), from(ObjectDatumStreamMetadata::getKind))
+			.as("Persisted object ID is unchanged")
+			.returns(meta.getObjectId(), from(ObjectDatumStreamMetadata::getObjectId))
+			.as("Persisted source ID is unchanged")
+			.returns(meta.getSourceId(), from(ObjectDatumStreamMetadata::getSourceId))
+			.satisfies(r -> {
+				then(r.propertyNamesForType(DatumSamplesType.Instantaneous))
+					.as("Returned i name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Instantaneous))
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Accumulating))
+					.as("Returned a name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Accumulating))
+					;
+				then(r.propertyNamesForType(DatumSamplesType.Status))
+					.as("Returned s name array is unchanged")
+					.containsExactly(meta.propertyNamesForType(DatumSamplesType.Status))
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 }

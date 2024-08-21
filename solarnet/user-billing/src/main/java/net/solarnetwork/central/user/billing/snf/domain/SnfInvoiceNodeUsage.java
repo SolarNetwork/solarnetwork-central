@@ -1,21 +1,21 @@
 /* ==================================================================
  * SnfInvoiceNodeUsage.java - 28/05/2021 6:37:24 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,24 +35,25 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * Invoice node usage details.
- * 
+ *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		implements Differentiable<SnfInvoiceNodeUsage>, InvoiceUsageRecord<Long> {
 
-	private static final long serialVersionUID = -2984725016470283705L;
+	private static final long serialVersionUID = -3504454077400331557L;
 
 	private final String description;
 	private final BigInteger datumPropertiesIn;
 	private final BigInteger datumOut;
 	private final BigInteger datumDaysStored;
 	private final BigInteger instructionsIssued;
+	private final BigInteger fluxDataIn;
 
 	/**
 	 * Create new instance.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param nodeId
@@ -67,22 +68,25 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum days stored count
 	 * @param instructionsIssued
 	 *        the instructions issued count
+	 * @param fluxDataIn
+	 *        the SolarFlux data in count
 	 * @return the new instance
 	 */
 	public static SnfInvoiceNodeUsage nodeUsage(Long invoiceId, Long nodeId, Instant created,
-			long datumPropertiesIn, long datumOut, long datumDaysStored, long instructionsIssued) {
+			long datumPropertiesIn, long datumOut, long datumDaysStored, long instructionsIssued,
+			long fluxDataIn) {
 		return new SnfInvoiceNodeUsage(invoiceId, nodeId, created, BigInteger.valueOf(datumPropertiesIn),
 				BigInteger.valueOf(datumOut), BigInteger.valueOf(datumDaysStored),
-				BigInteger.valueOf(instructionsIssued));
+				BigInteger.valueOf(instructionsIssued), BigInteger.valueOf(fluxDataIn));
 	}
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param nodeId
@@ -104,11 +108,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param nodeId
@@ -134,11 +138,43 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
+	 * @param invoiceId
+	 *        the invoice ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param fluxDataIn
+	 *        the SolarFlux data in count
+	 * @since 1.5
+	 */
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
+			BigInteger instructionsIssued, BigInteger fluxDataIn) {
+		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, datumPropertiesIn, datumOut,
+				datumDaysStored, instructionsIssued);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param nodeId
@@ -162,11 +198,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param nodeId
@@ -194,11 +230,45 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
+	 * @param invoiceId
+	 *        the invoice ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param created
+	 *        the creation date
+	 * @param description
+	 *        the description
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instruction issued count
+	 * @param fluxDataIn
+	 *        the SolarFlux data in count
+	 * @since 1.5
+	 */
+	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created, String description,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
+			BigInteger instructionsIssued, BigInteger fluxDataIn) {
+		this(new SnfInvoiceRelatedPK(invoiceId, nodeId), created, description, datumPropertiesIn,
+				datumOut, datumDaysStored, instructionsIssued, fluxDataIn);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 *
 	 * @param id
 	 *        the ID; the related ID is a node ID
 	 * @param created
@@ -217,11 +287,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID; the related ID is a node ID
 	 * @param created
@@ -243,11 +313,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID; the related ID is a node ID
 	 * @param description
@@ -268,11 +338,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID; the related ID is a node ID
 	 * @param description
@@ -292,22 +362,55 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
 			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
 			BigInteger instructionsIssued) {
+		this(id, created, description, datumPropertiesIn, datumOut, datumDaysStored, instructionsIssued,
+				null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * Any {@literal null} count will be stored as {@link BigInteger#ZERO}.
+	 * </p>
+	 *
+	 * @param id
+	 *        the ID; the related ID is a node ID
+	 * @param description
+	 *        the description
+	 * @param created
+	 *        the creation date
+	 * @param datumPropertiesIn
+	 *        the datum properties in count
+	 * @param datumOut
+	 *        the datum out count
+	 * @param datumDaysStored
+	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instructions issued count
+	 * @param fluxDataIn
+	 *        the SolarFlux data in count
+	 * @since 1.5
+	 */
+	public SnfInvoiceNodeUsage(SnfInvoiceRelatedPK id, Instant created, String description,
+			BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored,
+			BigInteger instructionsIssued, BigInteger fluxDataIn) {
 		super(id, created);
 		this.description = description;
 		this.datumPropertiesIn = (datumPropertiesIn != null ? datumPropertiesIn : BigInteger.ZERO);
 		this.datumOut = (datumOut != null ? datumOut : BigInteger.ZERO);
 		this.datumDaysStored = (datumDaysStored != null ? datumDaysStored : BigInteger.ZERO);
 		this.instructionsIssued = instructionsIssued != null ? instructionsIssued : BigInteger.ZERO;
+		this.fluxDataIn = fluxDataIn != null ? fluxDataIn : BigInteger.ZERO;
 	}
 
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code created} properties are not compared by this method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -322,7 +425,9 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 				&& Objects.equals(datumPropertiesIn, other.datumPropertiesIn)
 				&& Objects.equals(datumOut, other.datumOut)
 				&& Objects.equals(datumDaysStored, other.datumDaysStored)
-				&& Objects.equals(instructionsIssued, other.instructionsIssued);
+				&& Objects.equals(instructionsIssued, other.instructionsIssued)
+				&& Objects.equals(fluxDataIn, other.fluxDataIn)
+				;
 		// @formatter:on
 	}
 
@@ -363,6 +468,10 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 			builder.append("instructionsIssued=");
 			builder.append(instructionsIssued);
 		}
+		if ( fluxDataIn.compareTo(BigInteger.ZERO) > 0 ) {
+			builder.append("fluxDataIn=");
+			builder.append(fluxDataIn);
+		}
 		builder.append("}");
 		return builder.toString();
 	}
@@ -374,21 +483,22 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	@Override
 	public List<InvoiceItemUsageRecord> getUsageRecords() {
-		List<InvoiceItemUsageRecord> recs = new ArrayList<>(3);
+		List<InvoiceItemUsageRecord> recs = new ArrayList<>(5);
 		recs.add(new UsageInfo(NodeUsages.DATUM_PROPS_IN_KEY, new BigDecimal(datumPropertiesIn)));
 		recs.add(new UsageInfo(NodeUsages.DATUM_OUT_KEY, new BigDecimal(datumOut)));
 		recs.add(new UsageInfo(NodeUsages.DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored)));
 		recs.add(new UsageInfo(NodeUsages.INSTRUCTIONS_ISSUED_KEY, new BigDecimal(instructionsIssued)));
+		recs.add(new UsageInfo(NodeUsages.FLUX_DATA_IN_KEY, new BigDecimal(fluxDataIn)));
 		return recs;
 	}
 
 	/**
 	 * Get the invoice ID.
-	 * 
+	 *
 	 * <p>
 	 * This is an alias for {@link SnfInvoiceRelatedPK#getInvoiceId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the invoice ID
 	 */
 	public Long getInvoiceId() {
@@ -398,11 +508,11 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Get the node ID.
-	 * 
+	 *
 	 * <p>
 	 * This is an alias for {@link SnfInvoiceRelatedPK#getId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the node ID
 	 */
 	public Long getNodeId() {
@@ -412,7 +522,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Get the datum properties in count.
-	 * 
+	 *
 	 * @return the count, never {@literal null}
 	 */
 	public BigInteger getDatumPropertiesIn() {
@@ -421,7 +531,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Get the datum out count.
-	 * 
+	 *
 	 * @return the count, never {@literal null}
 	 */
 	public BigInteger getDatumOut() {
@@ -430,7 +540,7 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Get the datum days stored count.
-	 * 
+	 *
 	 * @return the count, never {@literal null}
 	 */
 	public BigInteger getDatumDaysStored() {
@@ -444,12 +554,22 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 
 	/**
 	 * Get the instructions issued count.
-	 * 
-	 * @return the instructionsIssued
+	 *
+	 * @return the count, never {@literal null}
 	 * @since 1.4
 	 */
 	public BigInteger getInstructionsIssued() {
 		return instructionsIssued;
+	}
+
+	/**
+	 * Get the SolarFlux data in count.
+	 *
+	 * @return the count, never {@literal null}
+	 * @since 1.5
+	 */
+	public final BigInteger getFluxDataIn() {
+		return fluxDataIn;
 	}
 
 }

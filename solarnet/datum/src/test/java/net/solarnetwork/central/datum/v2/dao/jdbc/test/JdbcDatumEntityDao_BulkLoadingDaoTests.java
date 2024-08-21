@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_BulkLoadingDaoTests.java - 2/12/2020 5:15:18 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,24 +49,24 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link BulkLoadingDao}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -155,7 +155,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 			ZonedDateTime thisHour = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 			assertThat("One audit hour", audits, hasSize(1));
 			assertAuditDatum("Audit hour", audits.get(0), ioAuditDatum(loaded.get(0).getStreamId(),
-					thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L));
+					thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L, 0L));
 		} finally {
 			// manually clean up transactionally circumvented data import data
 			DatumTestUtils.cleanupDatabase(jdbcTemplate);
@@ -177,7 +177,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 					TEST_SOURCE_ID);
 			DatumDbUtils.insertObjectDatumStreamMetadata(log, jdbcTemplate, singleton(meta));
 			AuditDatum hourAudit = AuditDatumEntity.ioAuditDatum(streamId, thisHour.toInstant(), 1000L,
-					10000L, 123456789L, 0L);
+					10000L, 123456789L, 0L, 234567890L);
 			DatumDbUtils.insertAuditDatum(log, jdbcTemplate, singleton(hourAudit));
 
 			// load 1 hour of data
@@ -208,7 +208,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 					ioAuditDatum(loaded.get(0).getStreamId(), thisHour.toInstant(),
 							datumCount + hourAudit.getDatumCount(),
 							(long) datumCount * 2 + hourAudit.getDatumPropertyCount(),
-							hourAudit.getDatumQueryCount(), 0L));
+							hourAudit.getDatumQueryCount(), 0L, hourAudit.getFluxDataInCount()));
 		} finally {
 			// manually clean up transactionally circumvented data import data
 			DatumTestUtils.cleanupDatabase(jdbcTemplate);
@@ -275,7 +275,7 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 					date = start2;
 				}
 				assertAuditDatum("Audit hour " + i, audits.get(i), ioAuditDatum(streamId,
-						thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L));
+						thisHour.toInstant(), (long) datumCount, (long) datumCount * 2, 0L, 0L, 0L));
 			}
 		} finally {
 			// manually clean up transactionally circumvented data import data

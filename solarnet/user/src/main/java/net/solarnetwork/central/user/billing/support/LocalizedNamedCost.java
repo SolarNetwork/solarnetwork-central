@@ -34,7 +34,7 @@ import net.solarnetwork.central.user.billing.domain.NamedCost;
  * Localized version of {@link NamedCost}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.3
  */
 public class LocalizedNamedCost implements LocalizedNamedCostInfo, NamedCost {
@@ -92,20 +92,28 @@ public class LocalizedNamedCost implements LocalizedNamedCostInfo, NamedCost {
 
 	@Override
 	public String getLocalizedQuantity() {
+		BigInteger val = getQuantity();
+		if ( val == null ) {
+			return null;
+		}
 		NumberFormat fmt = DecimalFormat.getNumberInstance(locale);
-		return fmt.format(getQuantity());
+		return fmt.format(val);
 	}
 
 	@Override
 	public String getLocalizedCost() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode,
-				getCost());
+		BigDecimal val = getCost();
+		return (val != null
+				? MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode, val)
+				: null);
 	}
 
 	@Override
 	public String getLocalizedEffectiveRate() {
-		return MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode,
-				getEffectiveRate());
+		BigDecimal val = getEffectiveRate();
+		return (val != null
+				? MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale, currencyCode, val)
+				: null);
 	}
 
 }

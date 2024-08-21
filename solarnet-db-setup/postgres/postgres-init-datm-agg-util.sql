@@ -333,7 +333,7 @@ BEGIN
 		SELECT
 			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_i
 			, array_agg(
-				ARRAY[cnt, val_min, val_max] ORDER BY idx
+				vec_trim_scale(ARRAY[cnt, val_min, val_max]) ORDER BY idx
 			) AS stat_i
 		FROM di
 	)
@@ -350,7 +350,7 @@ BEGIN
 		SELECT
 			  vec_trim_scale(array_agg(val ORDER BY idx)) AS data_a
 			, array_agg(
-				ARRAY[val, val_min, val_max] ORDER BY idx
+				vec_trim_scale(ARRAY[val, val_min, val_max]) ORDER BY idx
 			) AS read_a
 		FROM da
 	)

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DefaultSnfInvoicingSystem.java - 1/11/2021 11:38:22 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,10 @@ import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DNP3_DATA_POINTS_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.FLUX_DATA_IN_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.FLUX_DATA_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.INSTRUCTIONS_ISSUED_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OAUTH_CLIENT_CREDENTIALS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OCPP_CHARGERS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_GROUPS_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.OSCP_CAPACITY_KEY;
@@ -102,9 +105,9 @@ import net.solarnetwork.service.TemplateRenderer;
 
 /**
  * Default implementation of {@link SnfInvoicingSystem}.
- * 
+ *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -143,16 +146,19 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String datumOutKey = DATUM_OUT_KEY;
 	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
 	private String instructionsIssuedKey = INSTRUCTIONS_ISSUED_KEY;
+	private String fluxDataInKey = FLUX_DATA_IN_KEY;
+	private String fluxDataOutKey = FLUX_DATA_OUT_KEY;
 	private String ocppChargersKey = OCPP_CHARGERS_KEY;
 	private String oscpCapacityGroupsKey = OSCP_CAPACITY_GROUPS_KEY;
 	private String oscpCapacityKey = OSCP_CAPACITY_KEY;
 	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
+	private String oauthClientCredentialsKey = OAUTH_CLIENT_CREDENTIALS_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param accountDao
 	 *        the account DAO
 	 * @param invoiceDao
@@ -295,6 +301,24 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				}
 				items.add(item);
 			}
+			if ( usage.getFluxDataIn().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, fluxDataInKey,
+						new BigDecimal(usage.getFluxDataIn()), usage.getFluxDataInCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, FLUX_DATA_IN_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getFluxDataOut().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, fluxDataOutKey,
+						new BigDecimal(usage.getFluxDataOut()), usage.getFluxDataOutCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, FLUX_DATA_OUT_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
 			if ( usage.getOcppChargers().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, ocppChargersKey,
 						new BigDecimal(usage.getOcppChargers()), usage.getOcppChargersCost());
@@ -327,6 +351,16 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, dnp3DataPointsKey,
 						new BigDecimal(usage.getDnp3DataPoints()), usage.getDnp3DataPointsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DNP3_DATA_POINTS_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getOauthClientCredentials().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, oauthClientCredentialsKey,
+						new BigDecimal(usage.getOauthClientCredentials()),
+						usage.getOauthClientCredentialsCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OAUTH_CLIENT_CREDENTIALS_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -372,7 +406,8 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),
 						invoice.getCreated(), nodeUsage.getDescription(),
 						nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
-						nodeUsage.getDatumDaysStored(), nodeUsage.getInstructionsIssued());
+						nodeUsage.getDatumDaysStored(), nodeUsage.getInstructionsIssued(),
+						nodeUsage.getFluxDataIn());
 				invoiceNodeUsages.add(u);
 				if ( !dryRun ) {
 					invoiceNodeUsageDao.save(u);
@@ -448,7 +483,12 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public MessageSource messageSourceForInvoice(SnfInvoice invoice) {
 		requireNonNullArgument(invoice, "invoice");
 		final Instant version = invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant();
-		return new VersionedMessageDaoMessageSource(messageDao, MESSAGE_BUNDLE_NAMES, version,
+		return messageSourceForDate(version);
+	}
+
+	@Override
+	public MessageSource messageSourceForDate(Instant date) {
+		return new VersionedMessageDaoMessageSource(messageDao, MESSAGE_BUNDLE_NAMES, date,
 				messageCache);
 	}
 
@@ -500,23 +540,23 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Resolve tax codes for a given invoice.
-	 * 
+	 *
 	 * <p>
 	 * This implementation creates tax zone names out of the invoice's address,
 	 * with the following patterns:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>country</code> via {@link Address#getCountry()} (required)</li>
 	 * <li><code>country.state</code> via {@link Address#getCountry()} and
 	 * {@link Address#getStateOrProvince()} (only if state available)</li>
 	 * </ol>
-	 * 
+	 *
 	 * <p>
 	 * The tax date is resolved as the invoice's start date, or the current date
 	 * if that is not available.
 	 * </p>
-	 * 
+	 *
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -572,12 +612,12 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Compute the set of tax items for a given invoice.
-	 * 
+	 *
 	 * <p>
 	 * Existing tax items are ignored in the given invoice. The invoice is not
 	 * mutated in any way.
 	 * </p>
-	 * 
+	 *
 	 * @param invoice
 	 *        the invoice to compute tax items for
 	 * @return the list of tax items, never {@literal null}
@@ -624,7 +664,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the item key for datum properties input usage.
-	 * 
+	 *
 	 * @return the key; defaults to {@link NodeUsage#DATUM_PROPS_IN_KEY}
 	 */
 	public String getDatumPropertiesInKey() {
@@ -633,7 +673,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for datum properties input usage.
-	 * 
+	 *
 	 * @param datumPropertiesInKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
@@ -648,7 +688,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the item key for datum output usage.
-	 * 
+	 *
 	 * @return the key; defaults to {@link NodeUsage#DATUM_OUT_KEY}
 	 */
 	public String getDatumOutKey() {
@@ -657,7 +697,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for datum output usage.
-	 * 
+	 *
 	 * @param datumOutKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
@@ -672,7 +712,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the item key for datum days stored usage.
-	 * 
+	 *
 	 * @return the key; defaults to {@link NodeUsage#DATUM_DAYS_STORED_KEY}
 	 */
 	public String getDatumDaysStoredKey() {
@@ -681,7 +721,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for datum days stored usage.
-	 * 
+	 *
 	 * @param datumDaysStoredKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
@@ -696,7 +736,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the instructions issued key.
-	 * 
+	 *
 	 * @return the key
 	 * @since 1.3
 	 */
@@ -706,7 +746,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the instructions issued key.
-	 * 
+	 *
 	 * @param instructionsIssuedKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
@@ -719,8 +759,56 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	}
 
 	/**
+	 * Get the item key for SolarFlux data in.
+	 *
+	 * @return the the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#FLUX_DATA_IN_KEY}
+	 * @since 1.5
+	 */
+	public final String getFluxDataInKey() {
+		return fluxDataInKey;
+	}
+
+	/**
+	 * Get the item key for SolarFlux data in.
+	 *
+	 * @param fluxDataInKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.5
+	 */
+	public final void setFluxDataInKey(String fluxDataInKey) {
+		this.fluxDataInKey = requireNonNullArgument(fluxDataInKey, "fluxDataInKey");
+	}
+
+	/**
+	 * Get the item key for SolarFlux data out.
+	 *
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#FLUX_DATA_OUT_KEY}
+	 * @since 1.5
+	 */
+	public final String getFluxDataOutKey() {
+		return fluxDataOutKey;
+	}
+
+	/**
+	 * Set the item key for SolarFlux data out.
+	 *
+	 * @param fluxDataOutKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.5
+	 */
+	public final void setFluxDataOutKey(String fluxDataOutKey) {
+		this.fluxDataOutKey = requireNonNullArgument(fluxDataOutKey, "fluxDataOutKey");
+	}
+
+	/**
 	 * Get the item key for OCPP chargers.
-	 * 
+	 *
 	 * @return the key, never {@literal null}; defaults to
 	 *         {@link NodeUsage#OCPP_CHARGERS_KEY}
 	 * @since 1.1
@@ -731,7 +819,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for OCPP chargers.
-	 * 
+	 *
 	 * @param ocppChargersKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
@@ -744,7 +832,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the item key for OSCP Capacity Groups.
-	 * 
+	 *
 	 * @return the key, never {@literal null}; defaults to
 	 *         {@link NodeUsages#OSCP_CAPACITY_GROUPS_KEY}
 	 * @since 1.1
@@ -755,7 +843,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for OSCP Capacity Groups.
-	 * 
+	 *
 	 * @param oscpCapacityGroupsKey
 	 *        the oscpCapacityGroupsKey to set
 	 * @throws IllegalArgumentException
@@ -769,7 +857,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the item key for OSCP Capacity.
-	 * 
+	 *
 	 * @return the key, never {@literal null}; defaults to
 	 *         {@link NodeUsages#OSCP_CAPACITY_KEY}
 	 * @since 1.4
@@ -780,7 +868,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for OSCP Capacity.
-	 * 
+	 *
 	 * @param oscpCapacityKey
 	 *        the oscpCapacityKey to set
 	 * @throws IllegalArgumentException
@@ -793,7 +881,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the item key for DNP3 Data Points.
-	 * 
+	 *
 	 * @return the key, never {@literal null}; defaults to
 	 *         {@link NodeUsage#DNP3_DATA_POINTS_KEY}
 	 * @since 1.2
@@ -804,7 +892,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for DNP3 Data Points.
-	 * 
+	 *
 	 * @param dnp3DataPointsKey
 	 *        the key to set
 	 * @throws IllegalArgumentException
@@ -816,8 +904,33 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	}
 
 	/**
+	 * Get the item key for OAuth client credentials.
+	 *
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsage#OAUTH_CLIENT_CREDENTIALS_KEY}
+	 * @since 1.5
+	 */
+	public final String getOauthClientCredentialsKey() {
+		return oauthClientCredentialsKey;
+	}
+
+	/**
+	 * Set the item key for OAuth client credentials.
+	 *
+	 * @param oauthClientCredentialsKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.5
+	 */
+	public final void setOauthClientCredentialsKey(String oauthClientCredentialsKey) {
+		this.oauthClientCredentialsKey = requireNonNullArgument(oauthClientCredentialsKey,
+				"oauthClientCredentialsKey");
+	}
+
+	/**
 	 * Get the item key for account credit.
-	 * 
+	 *
 	 * @return the key; defaults to {@link AccountBalance#ACCOUNT_CREDIT_KEY}
 	 */
 	public String getAccountCreditKey() {
@@ -826,7 +939,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the item key for account credit.
-	 * 
+	 *
 	 * @param accountCreditKey
 	 *        the accountCreditKey to set
 	 * @throws IllegalArgumentException
@@ -841,12 +954,12 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the optional tax code resolver service to use.
-	 * 
+	 *
 	 * <p>
 	 * If this property is not configured or the service is not available at
 	 * runtime, this class will act as its own resolver.
 	 * </p>
-	 * 
+	 *
 	 * @return the service
 	 */
 	public SnfTaxCodeResolver getTaxCodeResolver() {
@@ -855,7 +968,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the optional tax code resolver service to use.
-	 * 
+	 *
 	 * @param taxCodeResolver
 	 *        the service to set
 	 */
@@ -865,7 +978,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the optional message cache.
-	 * 
+	 *
 	 * @return the cache
 	 */
 	public Cache<String, VersionedMessages> getMessageCache() {
@@ -874,7 +987,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the optional message cache.
-	 * 
+	 *
 	 * @param messageCache
 	 *        the cache to set
 	 */
@@ -884,7 +997,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the invoice delivery services.
-	 * 
+	 *
 	 * @return the services
 	 */
 	public List<SnfInvoiceDeliverer> getDeliveryServices() {
@@ -893,7 +1006,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the invoice delivery services.
-	 * 
+	 *
 	 * @param deliveryServices
 	 *        the services to set
 	 */
@@ -903,7 +1016,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Get the invoice renderer resolver services.
-	 * 
+	 *
 	 * @return the services
 	 */
 	public List<SnfInvoiceRendererResolver> getRendererResolvers() {
@@ -912,7 +1025,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the invoice renderer resolver services.
-	 * 
+	 *
 	 * @param rendererResolvers
 	 *        the services to set
 	 */
@@ -923,7 +1036,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the maximum amount of time to wait for invoice delivery to complete,
 	 * in seconds.
-	 * 
+	 *
 	 * @return the timeout, in seconds
 	 */
 	public int getDeliveryTimeoutSecs() {
@@ -932,7 +1045,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 
 	/**
 	 * Set the maximum amount of time to wait for invoice delivery to complete.
-	 * 
+	 *
 	 * @param deliveryTimeoutSecs
 	 *        the timeout to set, in seconds, or {@literal 0} for no timeout
 	 */

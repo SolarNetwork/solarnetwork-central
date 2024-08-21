@@ -1,21 +1,21 @@
 /* ==================================================================
  * UsageTier.java - 27/05/2021 12:22:54 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,15 +27,16 @@ import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Objects;
+import net.solarnetwork.central.user.billing.domain.NamedCost;
 
 /**
  * A usage tier.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
-public class UsageTier {
+public class UsageTier implements NamedCost {
 
 	/**
 	 * Comparator that sorts {@link UsageTier} objects by {@code key} then
@@ -67,7 +68,7 @@ public class UsageTier {
 
 	/**
 	 * Create a tier without a date.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param quantity
@@ -82,7 +83,7 @@ public class UsageTier {
 
 	/**
 	 * Create a tier without a date.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param quantity
@@ -99,7 +100,7 @@ public class UsageTier {
 
 	/**
 	 * Create a tier without a date.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param quantity
@@ -114,7 +115,7 @@ public class UsageTier {
 
 	/**
 	 * Create a tier without a date.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param quantity
@@ -131,7 +132,7 @@ public class UsageTier {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param key
 	 *        the tier key
 	 * @param quantity
@@ -145,7 +146,7 @@ public class UsageTier {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param key
 	 *        the tier key
 	 * @param quantity
@@ -161,7 +162,7 @@ public class UsageTier {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param key
 	 *        the tier key
 	 * @param quantity
@@ -232,16 +233,21 @@ public class UsageTier {
 
 	/**
 	 * Get the tier key (type).
-	 * 
+	 *
 	 * @return the key
 	 */
 	public String getKey() {
 		return key;
 	}
 
+	@Override
+	public String getName() {
+		return getKey();
+	}
+
 	/**
 	 * Get the tier quantity.
-	 * 
+	 *
 	 * <p>
 	 * The {@code quantity} value can be interpreted in different ways,
 	 * depending on the context it is used in. For example, when used to detail
@@ -250,16 +256,17 @@ public class UsageTier {
 	 * the {@code quantity} represents the count of usage units included in the
 	 * tier.
 	 * </p>
-	 * 
+	 *
 	 * @return the quantity
 	 */
+	@Override
 	public BigInteger getQuantity() {
 		return quantity;
 	}
 
 	/**
 	 * Get the tier cost.
-	 * 
+	 *
 	 * <p>
 	 * The {@code cost} value can be interpreted in different ways, depending on
 	 * the context it is used in. For example, when used to detail a tiered
@@ -267,20 +274,21 @@ public class UsageTier {
 	 * tier. When used to detail an invoice item cost, the {@code cost}
 	 * represents the cost of usage units within the tier.
 	 * </p>
-	 * 
+	 *
 	 * @return the costs
 	 */
+	@Override
 	public BigDecimal getCost() {
 		return cost;
 	}
 
 	/**
 	 * Get the tier date.
-	 * 
+	 *
 	 * <p>
 	 * The {@code date} might be interpreted as an effective date.
 	 * </p>
-	 * 
+	 *
 	 * @return the date, or {@literal null}
 	 */
 	public LocalDate getDate() {

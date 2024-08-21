@@ -1,27 +1,29 @@
 /* ==================================================================
  * MyBatisNodeUsageDao.java - 22/07/2020 10:34:03 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.groupingBy;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,9 +36,9 @@ import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 
 /**
  * MyBatis implementation of {@link NodeUsageDao}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage, Long>
 		implements NodeUsageDao {
@@ -44,7 +46,15 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	/** Query name enumeration. */
 	public enum QueryName {
 
+		/** Find the effective usage tiers for a given date. */
 		FindEffectiveUsageTierForDate("find-EffectiveUsageTier-for-date"),
+
+		/**
+		 * Find the effective usage tiers for all boundary dates.
+		 *
+		 * @since 2.1
+		 */
+		FindEffectiveUsageTiers("find-EffectiveUsageTier-all"),
 
 		/** Find all available usage for a given user and date range. */
 		FindMonthlyUsageForAccount("find-Usage-for-account"),
@@ -64,7 +74,7 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 
 		/**
 		 * Get the query name.
-		 * 
+		 *
 		 * @return the query name
 		 */
 		public String getQueryName() {
@@ -77,6 +87,18 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	 */
 	public MyBatisNodeUsageDao() {
 		super(NodeUsage.class, Long.class);
+	}
+
+	@Override
+	public List<UsageTiers> effectiveUsageTiers() {
+		List<UsageTier> results = selectList(QueryName.FindEffectiveUsageTiers.getQueryName(), null,
+				null, null);
+		if ( results == null ) {
+			return null;
+		}
+		return results.stream().collect(groupingBy(UsageTier::getDate)).entrySet().stream()
+				.map((e) -> new UsageTiers(e.getValue(), e.getKey()))
+				.sorted(comparing(UsageTiers::getDate).reversed()).toList();
 	}
 
 	@Override

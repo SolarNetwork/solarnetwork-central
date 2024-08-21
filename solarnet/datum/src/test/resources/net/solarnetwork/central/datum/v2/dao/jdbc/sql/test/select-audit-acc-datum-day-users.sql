@@ -12,6 +12,7 @@ SELECT datum.ts_start AS aud_ts,
 	NULL::bigint AS aud_datum_prop_count, 
 	NULL::bigint AS aud_datum_prop_update_count,
 	NULL::bigint AS aud_datum_query_count,
+	NULL::bigint AS aud_datum_flux_byte_count,
 	datum.datum_hourly_count AS aud_datum_hourly_count, 
 	datum.datum_daily_count AS aud_datum_daily_count, 
 	datum.datum_monthly_count AS aud_datum_monthly_count

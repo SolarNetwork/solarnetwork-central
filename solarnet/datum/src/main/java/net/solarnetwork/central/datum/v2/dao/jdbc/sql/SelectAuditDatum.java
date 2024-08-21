@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectAuditDatum.java - 20/11/2020 10:15:11 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,9 +40,9 @@ import net.solarnetwork.domain.datum.Aggregation;
 /**
  * Select for {@link AuditDatum} instances via a {@link AuditDatumCriteria}
  * filter.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 3.8
  */
 public class SelectAuditDatum
@@ -71,7 +71,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
@@ -83,7 +83,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param aggregation
@@ -99,7 +99,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Generate SQL SELECT fields for primary key fields (time, node, source).
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
@@ -128,11 +128,13 @@ public class SelectAuditDatum
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
 			buf.append("SUM(datum.prop_u_count) AS aud_datum_prop_update_count,\n");
 			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
+			buf.append("SUM(datum.flux_byte_count) AS aud_datum_flux_byte_count,\n");
 		} else {
 			buf.append("datum.datum_count AS aud_datum_count,\n");
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
 			buf.append("datum.prop_u_count AS aud_datum_prop_update_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
+			buf.append("datum.flux_byte_count AS aud_datum_flux_byte_count,\n");
 		}
 		buf.append("NULL::bigint AS aud_datum_hourly_count,\n");
 		buf.append("NULL::bigint AS aud_datum_daily_count,\n");
@@ -141,7 +143,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Generate SQL SELECT fields for day aggregation.
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
@@ -152,6 +154,7 @@ public class SelectAuditDatum
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
 			buf.append("SUM(datum.prop_u_count) AS aud_datum_prop_update_count,\n");
 			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
+			buf.append("SUM(datum.flux_byte_count) AS aud_datum_flux_byte_count,\n");
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append(
 					"SUM(CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END) AS aud_datum_daily_count,\n");
@@ -160,6 +163,7 @@ public class SelectAuditDatum
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
 			buf.append("datum.prop_u_count AS aud_datum_prop_update_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
+			buf.append("datum.flux_byte_count AS aud_datum_flux_byte_count,\n");
 			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append(
 					"CASE datum.datum_daily_pres WHEN TRUE THEN 1 ELSE 0 END AS aud_datum_daily_count,\n");
@@ -174,6 +178,7 @@ public class SelectAuditDatum
 			buf.append("SUM(datum.prop_count) AS aud_datum_prop_count,\n");
 			buf.append("SUM(datum.prop_u_count) AS aud_datum_prop_update_count,\n");
 			buf.append("SUM(datum.datum_q_count) AS aud_datum_query_count,\n");
+			buf.append("SUM(datum.flux_byte_count) AS aud_datum_flux_byte_count,\n");
 			buf.append("SUM(datum.datum_hourly_count) AS aud_datum_hourly_count,\n");
 			buf.append("SUM(datum.datum_daily_count) AS aud_datum_daily_count,\n");
 			buf.append(
@@ -183,6 +188,7 @@ public class SelectAuditDatum
 			buf.append("datum.prop_count AS aud_datum_prop_count,\n");
 			buf.append("datum.prop_u_count AS aud_datum_prop_update_count,\n");
 			buf.append("datum.datum_q_count AS aud_datum_query_count,\n");
+			buf.append("datum.flux_byte_count AS aud_datum_flux_byte_count,\n");
 			buf.append("datum.datum_hourly_count AS aud_datum_hourly_count,\n");
 			buf.append("datum.datum_daily_count AS aud_datum_daily_count,\n");
 			buf.append(
@@ -192,7 +198,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Generate the full SQL statement, without any specific output ordering.
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
@@ -214,7 +220,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Generate the SQL common table expression.
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
@@ -229,7 +235,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Get the SQL table name to query for audit data.
-	 * 
+	 *
 	 * @return the table name
 	 */
 	protected String auditTableName() {
@@ -244,7 +250,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Generate the SQL {@literal FROM} clause.
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
@@ -256,7 +262,7 @@ public class SelectAuditDatum
 
 	/**
 	 * Generate the SQL {@literal WHERE} clause.
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */

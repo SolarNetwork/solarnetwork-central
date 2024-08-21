@@ -22,6 +22,16 @@
 		FROM solarbill.billing_usage_tiers(#{date,jdbcType=DATE}) tier
 	</select>
 
+	<select id="find-EffectiveUsageTier-all" resultMap="EffectiveUsageTier-FullResult">
+		SELECT 
+			  tier.meter_key 			AS usage_tier_meter_key
+			, tier.min 					AS usage_tier_min
+			, tier.cost 				AS usage_tier_cost
+			, tier.effective_date 		AS usage_tier_effective_date
+		FROM solarbill.billing_usage_tier_effective_dates() d
+			, solarbill.billing_usage_tiers(d.effective_date) tier
+	</select>
+
 	<!-- 
 		Account-level usage (with costs)
 	 -->
@@ -31,19 +41,25 @@
 		, nu.datum_out 			AS node_usage_datum_out
 		, nu.datum_stored 		AS node_usage_datum_stored
 		, nu.instr_issued		AS node_usage_instr_issued
+		, nu.flux_data_in		AS node_usage_flux_data_in
+		, nu.flux_data_out		AS node_usage_flux_data_out
 		, nu.ocpp_chargers		AS node_usage_ocpp_chargers
 		, nu.oscp_cap_groups	AS node_usage_oscp_cap_groups
 		, nu.oscp_cap			AS node_usage_oscp_cap
 		, nu.dnp3_data_points	AS node_usage_dnp3_data_points
+		, nu.oauth_client_creds	AS node_usage_oauth_client_creds
 		
 		, nu.prop_in_tiers 				AS node_usage_prop_in_tiers
 		, nu.datum_out_tiers 			AS node_usage_datum_out_tiers
 		, nu.datum_stored_tiers 		AS node_usage_datum_stored_tiers
 		, nu.instr_issued_tiers 		AS node_usage_instr_issued_tiers
+		, nu.flux_data_in_tiers			AS node_usage_flux_data_in_tiers
+		, nu.flux_data_out_tiers		AS node_usage_flux_data_out_tiers
 		, nu.ocpp_chargers_tiers		AS node_usage_ocpp_chargers_tiers
 		, nu.oscp_cap_groups_tiers		AS node_usage_oscp_cap_groups_tiers
 		, nu.oscp_cap_tiers				AS node_usage_oscp_cap_tiers
 		, nu.dnp3_data_points_tiers		AS node_usage_dnp3_data_points_tiers
+		, nu.oauth_client_creds_tiers	AS node_usage_oauth_client_creds_tiers
 	</sql>
 
 	<resultMap id="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
@@ -51,62 +67,80 @@
 		<result property="datumOut"	 				column="node_usage_datum_out"/>
 		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
 		<result property="instructionsIssued" 		column="node_usage_instr_issued"/>
+		<result property="fluxDataIn" 				column="node_usage_flux_data_in"/>
+		<result property="fluxDataOut" 				column="node_usage_flux_data_out"/>
 		<result property="ocppChargers" 			column="node_usage_ocpp_chargers"/>
 		<result property="oscpCapacityGroups" 		column="node_usage_oscp_cap_groups"/>
 		<result property="oscpCapacity" 			column="node_usage_oscp_cap"/>
 		<result property="dnp3DataPoints" 			column="node_usage_dnp3_data_points"/>
+		<result property="oauthClientCredentials" 	column="node_usage_oauth_client_creds"/>
 
-		<result property="datumPropertiesInTiersNumeric"	column="node_usage_prop_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="datumOutTiersNumeric"	 			column="node_usage_datum_out_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="datumDaysStoredTiersNumeric" 		column="node_usage_datum_stored_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="instructionsIssuedTiersNumeric" 	column="node_usage_instr_issued_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="ocppChargersTiersNumeric" 		column="node_usage_ocpp_chargers_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="oscpCapacityGroupsTiersNumeric" 	column="node_usage_oscp_cap_groups_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="oscpCapacityTiersNumeric" 		column="node_usage_oscp_cap_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="dnp3DataPointsTiersNumeric" 		column="node_usage_dnp3_data_points_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumPropertiesInTiersNumeric"		column="node_usage_prop_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumOutTiersNumeric"	 				column="node_usage_datum_out_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumDaysStoredTiersNumeric" 			column="node_usage_datum_stored_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="instructionsIssuedTiersNumeric" 		column="node_usage_instr_issued_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="fluxDataInTiersNumeric" 				column="node_usage_flux_data_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="fluxDataOutTiersNumeric" 				column="node_usage_flux_data_out_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="ocppChargersTiersNumeric" 			column="node_usage_ocpp_chargers_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oscpCapacityGroupsTiersNumeric" 		column="node_usage_oscp_cap_groups_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oscpCapacityTiersNumeric" 			column="node_usage_oscp_cap_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="dnp3DataPointsTiersNumeric" 			column="node_usage_dnp3_data_points_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oauthClientCredentialsTiersNumeric" 	column="node_usage_oauth_client_creds_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
 	<sql id="fragment-Usage-full-result">
 		  <include refid="fragment-Usage-counts-result"/>
-		, nu.prop_in_cost 			AS node_usage_prop_in_cost
-		, nu.datum_out_cost 		AS node_usage_datum_out_cost
-		, nu.datum_stored_cost 		AS node_usage_datum_stored_cost
-		, nu.instr_issued_cost 		AS node_usage_instr_issued_cost
-		, nu.ocpp_chargers_cost 	AS node_usage_ocpp_chargers_cost
-		, nu.oscp_cap_groups_cost 	AS node_usage_oscp_cap_groups_cost
-		, nu.oscp_cap_cost 			AS node_usage_oscp_cap_cost
-		, nu.dnp3_data_points_cost 	AS node_usage_dnp3_data_points_cost
-		, nu.total_cost				AS node_usage_total_cost
+		, nu.prop_in_cost 				AS node_usage_prop_in_cost
+		, nu.datum_out_cost 			AS node_usage_datum_out_cost
+		, nu.datum_stored_cost 			AS node_usage_datum_stored_cost
+		, nu.instr_issued_cost 			AS node_usage_instr_issued_cost
+		, nu.flux_data_in_cost 			AS node_usage_flux_data_in_cost
+		, nu.flux_data_out_cost 		AS node_usage_flux_data_out_cost
+		, nu.ocpp_chargers_cost 		AS node_usage_ocpp_chargers_cost
+		, nu.oscp_cap_groups_cost 		AS node_usage_oscp_cap_groups_cost
+		, nu.oscp_cap_cost 				AS node_usage_oscp_cap_cost
+		, nu.dnp3_data_points_cost 		AS node_usage_dnp3_data_points_cost
+		, nu.oauth_client_creds_cost 	AS node_usage_oauth_client_creds_cost
+		, nu.total_cost					AS node_usage_total_cost
 		
 		, nu.prop_in_tiers_cost 			AS node_usage_prop_in_tiers_cost
 		, nu.datum_out_tiers_cost 			AS node_usage_datum_out_tiers_cost
 		, nu.datum_stored_tiers_cost 		AS node_usage_datum_stored_tiers_cost
 		, nu.instr_issued_tiers_cost 		AS node_usage_instr_issued_tiers_cost
+		, nu.flux_data_in_tiers_cost 		AS node_usage_flux_data_in_tiers_cost
+		, nu.flux_data_out_tiers_cost 		AS node_usage_flux_data_out_tiers_cost
 		, nu.ocpp_chargers_tiers_cost 		AS node_usage_ocpp_chargers_tiers_cost
 		, nu.oscp_cap_groups_tiers_cost 	AS node_usage_oscp_cap_groups_tiers_cost
 		, nu.oscp_cap_tiers_cost 			AS node_usage_oscp_cap_tiers_cost
 		, nu.dnp3_data_points_tiers_cost 	AS node_usage_dnp3_data_points_tiers_cost
+		, nu.oauth_client_creds_tiers_cost 	AS node_usage_oauth_client_creds_tiers_cost
 	</sql>
 
 	<resultMap id="Usage-FullResult" extends="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
-		<result property="datumPropertiesInCost"	column="node_usage_prop_in_cost"/>
-		<result property="datumOutCost"				column="node_usage_datum_out_cost"/>
-		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
-		<result property="instructionsIssuedCost"	column="node_usage_instr_issued_cost"/>
-		<result property="ocppChargersCost"			column="node_usage_ocpp_chargers_cost"/>
-		<result property="oscpCapacityGroupsCost"	column="node_usage_oscp_cap_groups_cost"/>
-		<result property="oscpCapacityCost"			column="node_usage_oscp_cap_cost"/>
-		<result property="dnp3DataPointsCost"		column="node_usage_dnp3_data_points_cost"/>
-		<result property="totalCost"				column="node_usage_total_cost"/>
+		<result property="datumPropertiesInCost"		column="node_usage_prop_in_cost"/>
+		<result property="datumOutCost"					column="node_usage_datum_out_cost"/>
+		<result property="datumDaysStoredCost"			column="node_usage_datum_stored_cost"/>
+		<result property="instructionsIssuedCost"		column="node_usage_instr_issued_cost"/>
+		<result property="fluxDataInCost"				column="node_usage_flux_data_in_cost"/>
+		<result property="fluxDataOutCost"				column="node_usage_flux_data_out_cost"/>
+		<result property="ocppChargersCost"				column="node_usage_ocpp_chargers_cost"/>
+		<result property="oscpCapacityGroupsCost"		column="node_usage_oscp_cap_groups_cost"/>
+		<result property="oscpCapacityCost"				column="node_usage_oscp_cap_cost"/>
+		<result property="dnp3DataPointsCost"			column="node_usage_dnp3_data_points_cost"/>
+		<result property="oauthClientCredentialsCost"	column="node_usage_oauth_client_creds_cost"/>
+		<result property="totalCost"					column="node_usage_total_cost"/>
 
 		<result property="datumPropertiesInCostTiers"		column="node_usage_prop_in_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumOutCostTiers"				column="node_usage_datum_out_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumDaysStoredCostTiers"			column="node_usage_datum_stored_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="instructionsIssuedCostTiers"		column="node_usage_instr_issued_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="fluxDataInCostTiers"				column="node_usage_flux_data_in_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="fluxDataOutCostTiers"				column="node_usage_flux_data_out_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="ocppChargersCostTiers"			column="node_usage_ocpp_chargers_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="oscpCapacityGroupsCostTiers"		column="node_usage_oscp_cap_groups_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="oscpCapacityCostTiers"			column="node_usage_oscp_cap_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="dnp3DataPointsCostTiers"			column="node_usage_dnp3_data_points_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="oauthClientCredentialsCostTiers"	column="node_usage_oauth_client_creds_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
 	<select id="find-Usage-for-account" parameterType="map" resultMap="Usage-FullResult">
@@ -130,11 +164,13 @@
 		, nu.datum_out 			AS node_usage_datum_out
 		, nu.datum_stored 		AS node_usage_datum_stored
 		, nu.instr_issued 		AS node_usage_instr_issued
+		, nu.flux_data_in 		AS node_usage_flux_data_in
 		
 		, nu.prop_in_tiers 			AS node_usage_prop_in_tiers
 		, nu.datum_out_tiers 		AS node_usage_datum_out_tiers
 		, nu.datum_stored_tiers 	AS node_usage_datum_stored_tiers
 		, nu.instr_issued_tiers 	AS node_usage_instr_issued_tiers
+		, nu.flux_data_in_tiers 	AS node_usage_flux_data_in_tiers
 	</sql>
 
 	<sql id="fragment-NodeUsage-full-result">
