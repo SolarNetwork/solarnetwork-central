@@ -54,10 +54,11 @@ app:
       account-task:
         maximum-iterations: 1000
         maximum-wait-ms: 2400000
-        parallelism: 2
+        parallelism: 1
         schedule: "20 2/5 * * * *"
       invoice-gen:
         maximum-wait-ms: 240000
+        parallelism: 1
         schedule: "0 20 4,20 5,10,15,20 * *"
     datum:
       agg:
