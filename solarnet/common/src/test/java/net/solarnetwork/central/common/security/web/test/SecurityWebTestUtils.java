@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -45,6 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.util.StringUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import net.solarnetwork.security.AuthorizationUtils;
 import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;
 import net.solarnetwork.web.jakarta.security.WebConstants;
@@ -101,15 +102,11 @@ public final class SecurityWebTestUtils {
 	}
 
 	public static String httpDate(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
-		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-		return sdf.format(date);
+		return AuthorizationUtils.AUTHORIZATION_DATE_HEADER_FORMATTER.format(date.toInstant());
 	}
 
 	public static String iso8601Date(Date date) {
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
-		sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-		return sdf.format(date);
+		return AuthorizationUtils.AUTHORIZATION_TIMESTAMP_FORMATTER.format(date.toInstant());
 	}
 
 	private static String[] lowercaseSortedArray(String[] headerNames) {

@@ -1,21 +1,21 @@
 /* ==================================================================
  * ApplicationMetadataEnvironmentPostProcessor.java - 21/02/2022 10:47:26 AM
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -51,9 +51,9 @@ import net.solarnetwork.util.ByteUtils;
 
 /**
  * Load up application metadata into the environment.
- * 
+ *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
 
@@ -68,7 +68,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	/**
 	 * The system environment variable for the maximum application instance ID
 	 * length, when derived from an ECS container ID.
-	 * 
+	 *
 	 * <p>
 	 * The variable value must be an integer; if less than {@literal 1} then no
 	 * maximum length is enforced. If not defined then
@@ -85,9 +85,6 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	/**
 	 * Create a new {@link ApplicationMetadataEnvironmentPostProcessor}
 	 * instance.
-	 * 
-	 * @param logger
-	 *        the logger to use
 	 */
 	public ApplicationMetadataEnvironmentPostProcessor() {
 		super();
@@ -191,7 +188,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 				return null;
 			}
 			int slashIdx = taskId.lastIndexOf('/');
-			if ( slashIdx >= 0 && slashIdx < taskId.length() ) {
+			if ( slashIdx >= 0 && (slashIdx + 1) < taskId.length() ) {
 				// strip cluster ID from taskARN to get final task ID
 				taskId = taskId.substring(slashIdx + 1);
 			}

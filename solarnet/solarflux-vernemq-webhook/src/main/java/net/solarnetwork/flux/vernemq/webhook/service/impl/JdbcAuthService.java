@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -55,7 +54,6 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthService;
 import net.solarnetwork.flux.vernemq.webhook.service.AuthorizationEvaluator;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
-import net.solarnetwork.web.jakarta.security.AuthenticationUtils;
 
 /**
  * {@link AuthService} implementation that uses JDBC to authenticate and authorize requests.
@@ -67,7 +65,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationUtils;
  * </p>
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class JdbcAuthService implements AuthService {
 
@@ -361,9 +359,14 @@ public class JdbcAuthService implements AuthService {
 
   private Map<String, String> signTokenCredentials(final String tokenId, final String tokenSecret) {
     final Instant now = now().truncatedTo(ChronoUnit.SECONDS);
-    final String sig = new Snws2AuthorizationBuilder(tokenId).date(now)
-        .header("X-SN-Date", AuthenticationUtils.httpDate(Date.from(now))).host(snHost).path(snPath)
+    // @formatter:off
+    final String sig = new Snws2AuthorizationBuilder(tokenId)
+        .date(now)
+        .useSnDate(true)
+        .host(snHost)
+        .path(snPath)
         .build(tokenSecret);
+    // @formatter:on
     final Map<String, String> result = delimitedStringToMap(sig, ",", "=");
     result.put(DATE_PASSWORD_TOKEN, Long.toString(now.getEpochSecond()));
     return result;

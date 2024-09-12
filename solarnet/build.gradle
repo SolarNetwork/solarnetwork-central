@@ -6,6 +6,23 @@ buildscript {
 	}
 }
 
+ext {
+	ossrhUsername = 'ossrh-username'
+	ossrhPassword = 'ossrh-password'
+}
+
+allprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+	java {
+		withJavadocJar()
+		withSourcesJar()
+	}
+}
+
 subprojects {
 	apply plugin: "java"
 
@@ -60,12 +77,12 @@ subprojects {
 	javadoc.options {
 		encoding = 'UTF-8'
 		use = true
-		links 'https://docs.oracle.com/javase/21/docs/api/'
+		links 'https://docs.oracle.com/en/java/javase/21/docs/api/'
 		source = "21"
 	}
 
 	ext {
-		awsSdk2Version = '2.26+'
+		awsSdk2Version = '2.26.31'
 		batikVersion = '1.16'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.15.1'
@@ -80,7 +97,7 @@ subprojects {
 		snCommonOcpp201Version = '1.2.3'
 		snCommonOcppWebJakartaVersion = '3.1.0'
 		snCommonPkiBcVersion = '3.1.0'
-		snCommonWebJakartaVersion = '2.0.1'
+		snCommonWebJakartaVersion = '2.0.2'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
 		superCsvVersion = '2.4.0'
@@ -102,7 +119,7 @@ subprojects {
 		]
 	}
 	
-	ext['netty.version'] = '4.1.101.Final'
+	ext['netty.version'] = '4.1.112.Final'
 	
 	dependencies {
 		testImplementation libraries.junit4,
@@ -113,31 +130,12 @@ subprojects {
 	}
 
 	// Disable JavaDoc doclint on Java 8. It's annoying.
-	if (JavaVersion.current().isJava8Compatible()) {
-		allprojects {
-			tasks.withType(Javadoc) {
-				options.addStringOption('Xdoclint:none', '-quiet')
-			}
+	// For jdk10+ we must explicitly choose between html4 and html5, otherwise we get a warning
+	allprojects {
+		tasks.withType(Javadoc) {
+			options.addStringOption('Xdoclint:none', '-quiet')
+			options.addBooleanOption('html5', true)
 		}
-	}
-
-	// For jdk10 we must explicitly choose between html4 and html5, otherwise we get a warning
-	if (JavaVersion.current().isJava10Compatible()) {
-		allprojects {
-			tasks.withType(Javadoc) {
-				options.addBooleanOption('html5', true)
-			}
-		}
-	}
-
-	task javadocJar(type: Jar) {
-		from javadoc
-		archiveClassifier = 'javadoc'
-	}
-
-	task sourcesJar(type: Jar) {
-		from sourceSets.main.allSource
-		archiveClassifier = 'sources'
 	}
 
     pluginManager.withPlugin('eclipse') { 

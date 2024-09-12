@@ -1,11 +1,13 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.3.2' apply false
+	id 'org.springframework.boot' version '3.3.3' apply false
 }
 
 apply plugin: 'java-library'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 dependencyManagement {
 	imports {
@@ -14,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common'
-version = '2.16.0'
+version = '2.16.1'
 
 base {
 	archivesName = 'solarnet-common'
@@ -112,4 +114,51 @@ dependencies {
 
 jar.manifest {
     attributes('Implementation-Version': version)
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			pom {
+				name = project.description
+				description = 'Shared library for all SolarNet projects.'
+				url = 'https://github.com/SolarNetwork/solarnetwork-central'
+				licenses {
+					license {
+						name = 'GNU General Public License, Version 2.0'
+						url = 'https://opensource.org/licenses/GPL-2.0'
+					}
+				}
+				developers {
+					developer {
+						name = 'SolarNetwork Developers'
+						email = 'code@solarnetwork.net'
+						organization = 'SolarNetwork Foundation'
+						organizationUrl = 'https://solarnetwork.net'
+					}
+				}
+				scm {
+					connection = 'scm:git:https://github.com/SolarNetwork/solarnetwork-central.git'
+					developerConnection = 'scm:git:git@github.com:SolarNetwork/solarnetwork-central.git'
+					url = 'https://github.com/SolarNetwork/solarnetwork-central'
+				}
+			}
+		}
+	}
+	repositories {
+		maven {
+			name = "OSSRH"
+			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			credentials {
+				username = ossrhUsername
+				password = ossrhPassword
+			}
+		}
+	}
+}
+
+signing {
+	useGpgCmd()
+	sign publishing.publications.mavenJava
 }
