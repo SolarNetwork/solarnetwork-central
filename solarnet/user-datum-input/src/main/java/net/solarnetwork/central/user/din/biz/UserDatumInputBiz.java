@@ -157,8 +157,8 @@ public interface UserDatumInputBiz {
 	 *        the data content type
 	 * @param in
 	 *        the input data to transform
-	 * @param optional
-	 *        parameters
+	 * @param parameters
+	 *        optional parameters
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */

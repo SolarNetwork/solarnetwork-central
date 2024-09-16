@@ -74,8 +74,8 @@ public class UserDatumInputSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Match methods like {@code *ForUser(userKey, ...)}.
 	 *
-	 * @param userId
-	 *        the user ID
+	 * @param userKey
+	 *        the user key
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.din.biz.UserDatumInputBiz.*Configuration(..)) && args(userKey,..)")
 	public void updateConfigurationForUserKey(UserIdRelated userKey) {
@@ -84,8 +84,8 @@ public class UserDatumInputSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Match preview transform.
 	 *
-	 * @param userId
-	 *        the user ID
+	 * @param userKey
+	 *        the user key
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.din.biz.UserDatumInputBiz.previewTransform(..)) && args(userKey,..)")
 	public void previewTransform(UserIdRelated userKey) {
