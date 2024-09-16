@@ -572,7 +572,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 */
 	@JsonSetter
 	public void setEndReason(ChargeSessionEndReason endReason) {
-		this.endReasons = (endReasons == null ? null : new ChargeSessionEndReason[] { endReason });
+		this.endReasons = (endReason == null ? null : new ChargeSessionEndReason[] { endReason });
 	}
 
 	@Override
