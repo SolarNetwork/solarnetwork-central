@@ -45,7 +45,7 @@ public class MyBatisUserMetadataDao extends
 		implements UserMetadataDao {
 
 	/**
-	 * The query used by {@link #metadataAtPath(Long, String)}.
+	 * The query used by {@link #jsonMetadataAtPath(Long, String)}.
 	 */
 	public static final String QUERY_FOR_METADATA_PATH = "get-user-metadata-at-path";
 

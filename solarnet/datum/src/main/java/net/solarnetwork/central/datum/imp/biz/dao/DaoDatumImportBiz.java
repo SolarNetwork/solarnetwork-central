@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoDatumImportBiz.java - 11/11/2018 7:13:56 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -112,7 +112,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * DAO based {@link DatumImportBiz}.
- * 
+ *
  * @author matt
  * @version 2.3
  */
@@ -147,7 +147,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param scheduler
 	 *        the scheduler, to perform periodic cleanup tasks with
 	 * @param executor
@@ -164,12 +164,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 *         if any argument is {@literal null}
 	 */
 	public DaoDatumImportBiz(TaskScheduler scheduler, AsyncTaskExecutor executor,
-			SolarNodeOwnershipDao userNodeDao, SecurityTokenDao securityTokenDao,
+			SolarNodeOwnershipDao nodeOwnershipDao, SecurityTokenDao securityTokenDao,
 			DatumImportJobInfoDao jobInfoDao, DatumEntityDao datumDao) {
 		super();
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
 		this.executor = requireNonNullArgument(executor, "executor");
-		this.nodeOwnershipDao = requireNonNullArgument(userNodeDao, "userNodeDao");
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.securityTokenDao = requireNonNullArgument(securityTokenDao, "securityTokenDao");
 		this.jobInfoDao = requireNonNullArgument(jobInfoDao, "jobInfoDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
@@ -178,7 +178,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Initialize after properties configured.
-	 * 
+	 *
 	 * <p>
 	 * Call this method once all properties have been configured on the
 	 * instance.
@@ -211,12 +211,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Generate a job group key based on the request user and given group key.
-	 * 
+	 *
 	 * <p>
 	 * If the request does not provide a group key, then a random UUID will be
 	 * generated so the group is effectively unique for the request.
 	 * </p>
-	 * 
+	 *
 	 * @param request
 	 *        the request to get a derived group key for
 	 * @return the group key to use
@@ -533,7 +533,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		/**
 		 * Construct from a task info.
-		 * 
+		 *
 		 * @param info
 		 *        the info
 		 * @param previewCount
@@ -617,12 +617,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		/**
 		 * Construct from a task info.
-		 * 
+		 *
 		 * <p>
 		 * Once this task has been submitted to an executor, call
 		 * {@link #setDelegate(Future)} with the resulting {@code Future}.
 		 * </p>
-		 * 
+		 *
 		 * @param info
 		 *        the info
 		 */
@@ -1006,7 +1006,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Get a {@link SecurityToken} for a given token ID.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to get, or {@literal null}
 	 * @return the token, or {@literal null} if {@code token} is {@literal null}
@@ -1027,7 +1027,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Get a {@link SecurityPolicy} for a given token ID.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the ID of the token to get, or {@literal null}
 	 * @return the policy, or {@literal null} if {@code token} is
@@ -1044,7 +1044,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	/**
 	 * Set the minimum time, in milliseconds, to maintain import job status
 	 * information after the job has completed.
-	 * 
+	 *
 	 * @param completedTaskMinimumCacheTime
 	 *        the time in milliseconds to set
 	 */
@@ -1054,14 +1054,14 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Configure an {@link ExecutorService} to run import preview tasks with.
-	 * 
+	 *
 	 * <p>
 	 * If configured, then all import preview requests via
 	 * {@link #previewStagedImportRequest(DatumImportPreviewRequest)} will be
 	 * executed via this service. If not configured, import preview requests
 	 * will be performed on the calling thread.
 	 * </p>
-	 * 
+	 *
 	 * @param previewExecutor
 	 *        the executor to set
 	 */
@@ -1071,7 +1071,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Set the maximum number of datum to preview in staged import jobs.
-	 * 
+	 *
 	 * @param maxPreviewCount
 	 *        the maximum number of datum to preview; defaults to
 	 *        {@link #DEFAULT_MAX_PREVIEW_COUNT}
@@ -1082,12 +1082,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/**
 	 * Set the import progress log frequency.
-	 * 
+	 *
 	 * <p>
 	 * This controls how often a status log will be emitted, based on the number
 	 * of datum imported.
 	 * </p>
-	 * 
+	 *
 	 * @param progressLogCount
 	 *        the count of datum imported to emit a status log
 	 */
@@ -1098,7 +1098,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	/**
 	 * Set an optional {@link ResourceStorageService} to store import data files
 	 * on.
-	 * 
+	 *
 	 * <p>
 	 * This can be used as shared storage between different applications that
 	 * accept the import data file versus later process it. Files will still be
@@ -1106,7 +1106,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	 * the data file will also be copied to this service so it can be shared by
 	 * other applications.
 	 * </p>
-	 * 
+	 *
 	 * @param resourceStorageService
 	 *        the storage service to use
 	 * @since 1.1
@@ -1118,7 +1118,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	/**
 	 * Get the amount of time to wait for saving import data to resource storage
 	 * before abandoning waiting for the result.
-	 * 
+	 *
 	 * @param resourceStorageWaitMs
 	 *        the time to wait, in milliseconds; defaults to
 	 *        {@link #DEFAULT_RESOURCE_STORAGE_WAIT_MS}

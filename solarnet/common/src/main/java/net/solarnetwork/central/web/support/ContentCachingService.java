@@ -24,9 +24,9 @@ package net.solarnetwork.central.web.support;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.springframework.http.HttpHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpHeaders;
 
 /**
  * Service that supports caching HTTP responses using keys derived from HTTP
@@ -128,9 +128,6 @@ public interface ContentCachingService {
 	 *        the resolved HTTP response headers
 	 * @param content
 	 *        the resolved HTTP response content, or {@literal null} if none
-	 * @param compression
-	 *        if {@code content} has been compressed then the compression type,
-	 *        otherwise {@literal null}
 	 * @throws IOException
 	 *         if any IO error occurs
 	 */

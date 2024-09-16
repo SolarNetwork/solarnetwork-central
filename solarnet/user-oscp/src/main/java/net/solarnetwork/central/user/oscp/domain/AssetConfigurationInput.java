@@ -1,21 +1,21 @@
 /* ==================================================================
  * AssetConfigurationInput.java - 15/08/2022 12:54:42 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import net.solarnetwork.central.oscp.domain.Phase;
 
 /**
  * DTO for asset configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -100,7 +100,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the Capacity Group ID.
-	 * 
+	 *
 	 * @return the ID of the {@link CapacityGroupConfiguration} associated with
 	 *         this entity
 	 */
@@ -110,7 +110,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the Capacity Group ID.
-	 * 
+	 *
 	 * @param capacityGroupId
 	 *        the ID of the capacity group to set
 	 */
@@ -120,7 +120,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get an identifier.
-	 * 
+	 *
 	 * @return the identifier
 	 */
 	public String getIdentifier() {
@@ -129,7 +129,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set an identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *        the identifier to set
 	 */
@@ -139,7 +139,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the audience.
-	 * 
+	 *
 	 * @return the audience
 	 */
 	public OscpRole getAudience() {
@@ -148,7 +148,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the audience.
-	 * 
+	 *
 	 * @param audience
 	 *        the audience to set
 	 * @throws IllegalArgumentException
@@ -168,7 +168,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the datum stream node ID.
-	 * 
+	 *
 	 * @return the nodeId the node ID
 	 */
 	public Long getNodeId() {
@@ -177,7 +177,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the datum stream node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to set
 	 */
@@ -187,7 +187,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the datum stream source ID.
-	 * 
+	 *
 	 * @return the source ID
 	 */
 	public String getSourceId() {
@@ -196,7 +196,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the datum stream source ID.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID to set
 	 */
@@ -206,7 +206,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the asset category.
-	 * 
+	 *
 	 * @return the category
 	 */
 	public AssetCategory getCategory() {
@@ -215,7 +215,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the asset category.
-	 * 
+	 *
 	 * @param category
 	 *        the category to set
 	 */
@@ -225,7 +225,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the phase.
-	 * 
+	 *
 	 * @return the phase
 	 */
 	public Phase getPhase() {
@@ -234,17 +234,17 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the phase.
-	 * 
+	 *
 	 * @param phase
 	 *        the phase to set
 	 */
-	public void setPhase(Phase instantaneousPhase) {
-		this.phase = instantaneousPhase;
+	public void setPhase(Phase phase) {
+		this.phase = phase;
 	}
 
 	/**
 	 * Get the instantaneous configuration.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	public AssetInstantaneousDatumConfigurationInput getInstantaneous() {
@@ -253,7 +253,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the instantaneous configuration
-	 * 
+	 *
 	 * @param instantaneous
 	 *        the configuration to set
 	 */
@@ -263,7 +263,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Get the energy configuration.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	public AssetEnergyDatumConfigurationInput getEnergy() {
@@ -272,7 +272,7 @@ public class AssetConfigurationInput extends BaseOscpConfigurationInput<AssetCon
 
 	/**
 	 * Set the energy configuration.
-	 * 
+	 *
 	 * @param energy
 	 *        the configuration to set
 	 */

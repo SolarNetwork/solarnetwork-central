@@ -91,8 +91,6 @@ public class SelectUserFluxAggregatePublishConfiguration
 	 * 
 	 * @param key
 	 *        the primary key to select
-	 * @param fetchSize
-	 *        the row fetch size
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */

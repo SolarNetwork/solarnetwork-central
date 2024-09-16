@@ -67,8 +67,6 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 	 * <li>time -&gt; connected_date</li>
 	 * <li>user -&gt; user_id</li>
 	 * </ol>
-	 * 
-	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> SORT_KEY_MAPPING;
 	static {

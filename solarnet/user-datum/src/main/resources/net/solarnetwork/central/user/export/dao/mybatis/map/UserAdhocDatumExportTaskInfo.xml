@@ -62,12 +62,6 @@
 			uaet.user_id = #{userId} AND uaet.task_id = #{id}
 	</select>
 	
-	<!--select id="get-UserAdhocDatumExportTaskInfo-for-task-id" parameterType="java.util.UUID" resultMap="UserAdhocDatumExportTaskInfoFullResult">
-		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
-		WHERE
-			uaet.task_id = #{id}
-	</select-->
-	
 	<select id="find-UserAdhocDatumExportTaskInfo-for-user" parameterType="map" resultMap="UserAdhocDatumExportTaskInfoFullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
 		<include refid="fragment-UserAdhocDatumExportTaskInfo-select-full"/>
 		WHERE

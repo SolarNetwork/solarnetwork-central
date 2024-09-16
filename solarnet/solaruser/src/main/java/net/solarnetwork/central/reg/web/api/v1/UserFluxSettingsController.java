@@ -102,8 +102,6 @@ public class UserFluxSettingsController {
 	/**
 	 * Save the default aggregate publish settings for the current user.
 	 *
-	 * @param input
-	 *        the settings to save
 	 * @return an empty result
 	 */
 	@RequestMapping(value = "/agg/pub/default-settings", method = RequestMethod.DELETE)

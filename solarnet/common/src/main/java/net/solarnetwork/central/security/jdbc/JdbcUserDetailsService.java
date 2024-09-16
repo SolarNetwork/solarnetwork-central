@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.jdbc;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,6 +46,7 @@ import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Extension of {@link JdbcDaoImpl} that returns {@link AuthenticatedUser}
@@ -66,7 +68,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
  * </ol>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsService {
 
@@ -85,13 +87,24 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
+	/**
+	 * Constructor.
+	 */
 	public JdbcUserDetailsService() {
-		this(new ObjectMapper());
+		this(JsonUtils.newObjectMapper());
 	}
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param objectMapper
+	 *        the mapper to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
 	public JdbcUserDetailsService(ObjectMapper objectMapper) {
 		super();
-		this.objectMapper = objectMapper;
+		this.objectMapper = requireNonNullArgument(objectMapper, "objectMapper");
 		setUsersByUsernameQuery(DEFAULT_USERS_BY_USERNAME_SQL);
 		setAuthoritiesByUsernameQuery(DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
 	}
@@ -139,8 +152,8 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 						try {
 							policy = objectMapper.readValue(policyJson, BasicSecurityPolicy.class);
 						} catch ( IOException e ) {
-							log.warn("Error deserializing SecurityPolicy from [{}]: {}", policyJson,
-									e.getMessage());
+							log.error("Error deserializing [{}] SecurityPolicy from [{}]: {}", username,
+									policyJson, e.getMessage());
 						}
 					}
 					return new AuthenticatedToken(new User(username, password, enabled, true, true, true,

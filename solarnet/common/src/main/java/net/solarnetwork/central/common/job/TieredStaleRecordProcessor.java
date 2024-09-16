@@ -24,7 +24,6 @@ package net.solarnetwork.central.common.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.osgi.service.event.Event;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -38,17 +37,6 @@ import org.springframework.jdbc.core.JdbcOperations;
  * second argument. The JDBC procedure must return an {@code Integer} result
  * representing the number of rows processed by the call. If the procedure
  * returns zero, the job stops immediately.
- * </p>
- * 
- * <p>
- * If {@code taskCount} is higher than {@code 1} then {@code taskCount} tasks
- * will be submitted to the configured {@link #getExecutorService()}. Depending
- * on the configuration of that service, those tasks might execute in parallel.
- * </p>
- * 
- * <p>
- * The {@link #getParallelism()} value will limit the overall number or stale
- * tier rows processed in one invocation of {@link #handleJob(Event)}.
  * </p>
  * 
  * @author matt

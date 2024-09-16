@@ -126,8 +126,8 @@ public class FtpDestinationProperties {
 	/**
 	 * Get the TLS mode.
 	 *
-	 * @return {@link true} if TLS is implied for {@literal ftps://} URLs, e.g.
-	 *         ports 990 (control) 989 (data)
+	 * @return {@literal true} if TLS is implied for {@literal ftps://} URLs,
+	 *         e.g. ports 990 (control) 989 (data)
 	 */
 	public boolean isImplicitTls() {
 		return implicitTls;
@@ -137,8 +137,8 @@ public class FtpDestinationProperties {
 	 * Set the TLS mode.
 	 *
 	 * @param implicitTls
-	 *        {@link true} if TLS is implied for {@literal ftps://} URLs, e.g.
-	 *        ports 990 (control) 989 (data)
+	 *        {@literal true} if TLS is implied for {@literal ftps://} URLs,
+	 *        e.g. ports 990 (control) 989 (data)
 	 */
 	public void setImplicitTls(boolean implicitTls) {
 		this.implicitTls = implicitTls;

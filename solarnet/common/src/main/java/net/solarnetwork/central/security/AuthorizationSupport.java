@@ -53,10 +53,10 @@ public class AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao to use
+	 * @param nodeOwnershipDao
+	 *        the ownership DAO to use
 	 * @throws IllegalArgumentException
-	 *         if any argumnet is {@literal null}
+	 *         if any argument is {@literal null}
 	 */
 	public AuthorizationSupport(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super();

@@ -34,7 +34,7 @@ public interface ActionCriteria {
 	 * Get the first action.
 	 * 
 	 * <p>
-	 * This returns the first available action from the {@link #getActionIds()}
+	 * This returns the first available action from the {@link #getActions()}
 	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 

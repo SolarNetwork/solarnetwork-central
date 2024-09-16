@@ -84,10 +84,6 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	 *        the SolarFlux publish settings DAO
 	 * @param objectMapper
 	 *        the mapper for JSON
-	 * @param retained
-	 *        {@literal true} to publish each message as retained
-	 * @param publishQos
-	 *        the publish QoS
 	 */
 	public SolarFluxDatumPublisher(SolarNodeOwnershipDao nodeOwnershipDao,
 			FluxPublishSettingsDao fluxPublishSettingsDao, ObjectMapper objectMapper) {

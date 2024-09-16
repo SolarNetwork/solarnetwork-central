@@ -67,8 +67,6 @@ public interface UserFluxBiz {
 	 *
 	 * @param userId
 	 *        the ID of the user to save the configuration for
-	 * @param input
-	 *        the configuration input to save
 	 * @return the configuration, or a default one if no persisted configuration
 	 *         available; never {@literal null}
 	 * @throws IllegalArgumentException

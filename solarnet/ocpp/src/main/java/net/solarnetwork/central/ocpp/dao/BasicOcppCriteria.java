@@ -287,8 +287,8 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * this method.
 	 * </p>
 	 * 
-	 * @param connectorId
-	 *        the ID of the charge point
+	 * @param evseId
+	 *        the ID of the EVSE
 	 * @since 1.2
 	 */
 	@JsonSetter
@@ -567,12 +567,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * into this method.
 	 * </p>
 	 * 
-	 * @param chargeSessionEndReason
+	 * @param endReason
 	 *        the end reason
 	 */
 	@JsonSetter
-	public void setEndReason(ChargeSessionEndReason endReasons) {
-		this.endReasons = (endReasons == null ? null : new ChargeSessionEndReason[] { endReasons });
+	public void setEndReason(ChargeSessionEndReason endReason) {
+		this.endReasons = (endReason == null ? null : new ChargeSessionEndReason[] { endReason });
 	}
 
 	@Override

@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserOscpController.java - 15/08/2022 3:01:10 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,7 +35,6 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 import java.net.URI;
 import java.util.Collection;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.oscp.domain.AssetConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
 import net.solarnetwork.central.oscp.domain.CapacityGroupSettings;
@@ -64,7 +64,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for OSCP management.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -78,11 +78,10 @@ public class UserOscpController {
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param userOcppBiz
-	 *        the user OCPP service
+	 *
+	 * @param userOscpBiz
+	 *        the user OSCP service
 	 */
-
 	public UserOscpController(@Autowired(required = false) UserOscpBiz userOscpBiz) {
 		super();
 		this.userOscpBiz = userOscpBiz;
@@ -90,7 +89,7 @@ public class UserOscpController {
 
 	/**
 	 * Get the {@link UserOscpBiz}.
-	 * 
+	 *
 	 * @return the service; never {@literal null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
@@ -104,7 +103,7 @@ public class UserOscpController {
 
 	/**
 	 * Update a user settings for the current user.
-	 * 
+	 *
 	 * @param input
 	 *        the input
 	 * @return the configuration
@@ -117,10 +116,8 @@ public class UserOscpController {
 	}
 
 	/**
-	 * View a specific user settings.
-	 * 
-	 * @param id
-	 *        the ID of the user settings to view
+	 * View the user settings.
+	 *
 	 * @return the settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/settings")
@@ -130,10 +127,8 @@ public class UserOscpController {
 	}
 
 	/**
-	 * Delete a specific user settings.
-	 * 
-	 * @param id
-	 *        the ID of the user settings to delete
+	 * Delete the user settings.
+	 *
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/settings")
@@ -145,7 +140,7 @@ public class UserOscpController {
 
 	/**
 	 * Get all available capacity provider configurations for the current user.
-	 * 
+	 *
 	 * @return the configurations
 	 */
 	@RequestMapping(method = GET, value = "/capacity-providers")
@@ -157,7 +152,7 @@ public class UserOscpController {
 
 	/**
 	 * Create a new capacity provider configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = POST, value = "/capacity-providers", consumes = APPLICATION_JSON_VALUE)
@@ -172,7 +167,7 @@ public class UserOscpController {
 
 	/**
 	 * Get a capacity provider configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/capacity-providers/{providerId}")
@@ -185,7 +180,7 @@ public class UserOscpController {
 
 	/**
 	 * Update a capacity provider configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = PUT, value = "/capacity-providers/{providerId}", consumes = APPLICATION_JSON_VALUE)
@@ -200,7 +195,7 @@ public class UserOscpController {
 
 	/**
 	 * Delete a capacity provider configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = DELETE, value = "/capacity-providers/{providerId}")
@@ -212,7 +207,7 @@ public class UserOscpController {
 
 	/**
 	 * Get all available capacity optimizer configurations for the current user.
-	 * 
+	 *
 	 * @return the configurations
 	 */
 	@RequestMapping(method = GET, value = "/capacity-optimizers")
@@ -225,7 +220,7 @@ public class UserOscpController {
 
 	/**
 	 * Create a new capacity optimizer configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = POST, value = "/capacity-optimizers", consumes = APPLICATION_JSON_VALUE)
@@ -240,7 +235,7 @@ public class UserOscpController {
 
 	/**
 	 * Get a capacity optimizer configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/capacity-optimizers/{optimizerId}")
@@ -254,7 +249,7 @@ public class UserOscpController {
 
 	/**
 	 * Update a capacity optimizer configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = PUT, value = "/capacity-optimizers/{optimizerId}", consumes = APPLICATION_JSON_VALUE)
@@ -269,7 +264,7 @@ public class UserOscpController {
 
 	/**
 	 * Delete a capacity optimizer configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = DELETE, value = "/capacity-optimizers/{optimizerId}")
@@ -281,7 +276,7 @@ public class UserOscpController {
 
 	/**
 	 * Get all available capacity group configurations for the current user.
-	 * 
+	 *
 	 * @return the configurations
 	 */
 	@RequestMapping(method = GET, value = "/capacity-groups")
@@ -293,7 +288,7 @@ public class UserOscpController {
 
 	/**
 	 * Create a new capacity group configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = POST, value = "/capacity-groups", consumes = APPLICATION_JSON_VALUE)
@@ -308,7 +303,7 @@ public class UserOscpController {
 
 	/**
 	 * Get a capacity group for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/capacity-groups/{groupId}")
@@ -320,7 +315,7 @@ public class UserOscpController {
 
 	/**
 	 * Update a capacity group for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = PUT, value = "/capacity-groups/{groupId}", consumes = APPLICATION_JSON_VALUE)
@@ -333,7 +328,7 @@ public class UserOscpController {
 
 	/**
 	 * Delete a capacity group configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = DELETE, value = "/capacity-groups/{groupId}")
@@ -345,7 +340,7 @@ public class UserOscpController {
 
 	/**
 	 * Get all available capacity group settings for the current user.
-	 * 
+	 *
 	 * @return the capacity group settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/capacity-groups/settings")
@@ -357,7 +352,7 @@ public class UserOscpController {
 
 	/**
 	 * Update a capacity group settings for the current user.
-	 * 
+	 *
 	 * @param id
 	 *        the capacity group ID of the settings to update
 	 * @param input
@@ -374,7 +369,7 @@ public class UserOscpController {
 
 	/**
 	 * View a specific capacity group settings.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the capacity group settings to view
 	 * @return the settings
@@ -387,7 +382,7 @@ public class UserOscpController {
 
 	/**
 	 * Delete a specific capacity group settings.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the capacity group settings to delete
 	 * @return the result
@@ -402,7 +397,7 @@ public class UserOscpController {
 	/**
 	 * Get all available asset configurations within a given capacity group for
 	 * the current user.
-	 * 
+	 *
 	 * @return the configurations
 	 */
 	@RequestMapping(method = GET, value = "/capacity-groups/{groupId}/assets")
@@ -415,7 +410,7 @@ public class UserOscpController {
 
 	/**
 	 * Create a new asset configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = POST, value = "/assets", consumes = APPLICATION_JSON_VALUE)
@@ -430,7 +425,7 @@ public class UserOscpController {
 
 	/**
 	 * Get an asset configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = GET, value = "/assets/{assetId}")
@@ -442,7 +437,7 @@ public class UserOscpController {
 
 	/**
 	 * Update an asset configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = PUT, value = "/assets/{assetId}", consumes = APPLICATION_JSON_VALUE)
@@ -455,7 +450,7 @@ public class UserOscpController {
 
 	/**
 	 * Delete an asset configuration for the current user.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	@RequestMapping(method = DELETE, value = "/assets/{assetId}")

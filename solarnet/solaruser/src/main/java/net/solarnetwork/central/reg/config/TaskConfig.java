@@ -75,7 +75,7 @@ public class TaskConfig {
 	/**
 	 * Expose a ping test for the task scheduler.
 	 *
-	 * @param scheduler
+	 * @param taskScheduler
 	 *        the scheduler
 	 * @return the ping test
 	 * @since 1.2

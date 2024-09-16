@@ -75,8 +75,8 @@ public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConf
 	/**
 	 * Constructor.
 	 *
-	 * @param user
-	 *        ID the user ID
+	 * @param userId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created

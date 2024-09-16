@@ -1,21 +1,21 @@
 /* ==================================================================
  * AssetPropertyConfiguration.java - 6/09/2022 3:00:16 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,7 @@ import java.util.Objects;
 
 /**
  * Base datum configuration for assets.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -41,7 +41,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Copy the properties of this instance into another.
-	 * 
+	 *
 	 * @param copy
 	 *        the instance to copy into
 	 */
@@ -56,12 +56,12 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Test if this entity has the same property values as another.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id}, {@code created}, and {@code modified} properties are not
 	 * compared.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the entity to compare to
 	 * @return {@literal true} if the properties of this entity are equal to the
@@ -69,7 +69,7 @@ public abstract class BaseAssetDatumConfiguration {
 	 */
 	public boolean isSameAs(BaseAssetDatumConfiguration other) {
 		// @formatter:off
-		return (Arrays.equals(this.propertyNames, other.propertyNames) 
+		return (Arrays.equals(this.propertyNames, other.propertyNames)
 				&& Objects.equals(this.unit, other.unit)
 				&& Objects.equals(this.multiplier, other.multiplier)
 				&& Objects.equals(this.statisticType, other.statisticType));
@@ -78,7 +78,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Get the property names.
-	 * 
+	 *
 	 * @return the property names.
 	 */
 	public String[] getPropertyNames() {
@@ -87,7 +87,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Set the property names.
-	 * 
+	 *
 	 * @param propertyNames
 	 *        the property names to set
 	 */
@@ -97,7 +97,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Get the measurement unit.
-	 * 
+	 *
 	 * @return the unit
 	 */
 	public MeasurementUnit getUnit() {
@@ -106,7 +106,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Set the measurement unit.
-	 * 
+	 *
 	 * @param unit
 	 *        the unit to set
 	 */
@@ -116,7 +116,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Get the datum stream property value multiplier.
-	 * 
+	 *
 	 * @return the multiplier to convert property values into {@code unit}, or
 	 *         {@literal null} for no conversion
 	 */
@@ -126,8 +126,8 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Set the datum stream property value multiplier.
-	 * 
-	 * @param instantaneousMultiplier
+	 *
+	 * @param multiplier
 	 *        the multiplier to convert property values into
 	 *        {@code instantaneousUnit}, or {@literal null} for no conversion
 	 */
@@ -137,7 +137,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Get the statistic type.
-	 * 
+	 *
 	 * @return the statistic type
 	 */
 	public StatisticType getStatisticType() {
@@ -146,7 +146,7 @@ public abstract class BaseAssetDatumConfiguration {
 
 	/**
 	 * Set the statistic type.
-	 * 
+	 *
 	 * @param statisticType
 	 *        the statistic type to set
 	 */

@@ -74,8 +74,8 @@ public class UserMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to modify metadata.
 	 * 
-	 * @param userId
-	 *        the user ID
+	 * @param filter
+	 *        the filter to check
 	 */
 	@Before("listMetadata(filter)")
 	public void listMetadataCheck(UserMetadataFilter filter) {

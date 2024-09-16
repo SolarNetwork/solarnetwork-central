@@ -114,11 +114,9 @@ public abstract class DelayedOcassionalProcessor<T>
 	 * @param clock
 	 *        the clock
 	 * @param stats
-	 *        the stats
+	 *        the statistic tracker
 	 * @param scheduler
 	 *        the scheduler
-	 * @param delegate
-	 *        the delegate
 	 * @param items
 	 *        the item buffer; this must support concurrent access
 	 * @throws IllegalArgumentException

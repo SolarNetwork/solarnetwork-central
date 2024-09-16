@@ -164,8 +164,6 @@ public interface Configuration {
 	 *
 	 * @param request
 	 *        the export request
-	 * @param exportTime
-	 *        the time of the export
 	 * @param dateFormatter
 	 *        a formatter to use; if not provided an ISO timestamp formatter
 	 *        will be used

@@ -61,8 +61,6 @@ public class UserUuidLongCompositePK extends BasePK implements Serializable, Clo
 	 * 
 	 * @param userId
 	 *        the user ID to use
-	 * @param groupId
-	 *        the ID of the group to use
 	 * @return the new key instance
 	 */
 	public static UserUuidLongCompositePK unassignedEntityIdKey(Long userId) {

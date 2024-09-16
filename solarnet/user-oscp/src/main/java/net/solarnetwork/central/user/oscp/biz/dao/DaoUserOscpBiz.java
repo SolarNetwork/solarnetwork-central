@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserOscpBiz.java - 15/08/2022 10:40:52 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -63,7 +63,7 @@ import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
 
 /**
  * DAO implementation of {@link UserOscpBiz}.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -82,14 +82,14 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userSettingsDao
 	 *        the user settings DAO
 	 * @param flexibilityProviderDao
 	 *        the flexibility provider DAO
 	 * @param capacityProviderDao
 	 *        the capacity provider DAO
-	 * @param capcityOptimizerDao
+	 * @param capacityOptimizerDao
 	 *        the capacity optimizer DAO
 	 * @param capacityGroupDao
 	 *        the capacity group DAO
@@ -441,7 +441,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	/**
 	 * Configure a {@link SecretsBiz} to use for storing OAuth client secrets.
-	 * 
+	 *
 	 * @param secretsBiz
 	 *        the service to use
 	 */
@@ -451,7 +451,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 
 	/**
 	 * Set the configuration secret key name formatter to use.
-	 * 
+	 *
 	 * @param configSecretsNameFormatter
 	 *        the formatter; defaults to
 	 *        {@link AuthRoleSecretKeyFormatter#INSTANCE}

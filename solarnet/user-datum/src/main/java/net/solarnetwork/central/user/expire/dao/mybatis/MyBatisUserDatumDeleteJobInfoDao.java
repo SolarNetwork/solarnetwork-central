@@ -33,7 +33,6 @@ import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
@@ -62,19 +61,19 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 
 	/**
 	 * The {@code UPDATE} query name used for
-	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
+	 * {@link #updateJobState(UserUuidPK, DatumDeleteJobState, Set)}.
 	 */
 	public static final String UPDATE_JOB_STATE = "update-DatumDeleteJobInfo-state";
 
 	/**
 	 * The {@code UPDATE} query name used for
-	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
+	 * {@link #updateJobState(UserUuidPK, DatumDeleteJobState, Set)}.
 	 */
 	public static final String UPDATE_JOB_CONFIG = "update-DatumDeleteJobInfo-config";
 
 	/**
 	 * The {@code UPDATE} query name used for
-	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)}.
+	 * {@link #updateJobState(UserUuidPK, DatumDeleteJobState, Set)}.
 	 */
 	public static final String UPDATE_JOB_PROGRESS = "update-DatumDeleteJobInfo-progress";
 
@@ -210,7 +209,8 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 
 	/**
 	 * Set the statement name for the
-	 * {@link #updateJobState(UserUuidPK, DatumImportState, Set)} method to use.
+	 * {@link #updateJobState(UserUuidPK, DatumDeleteJobState, Set)} method to
+	 * use.
 	 * 
 	 * @param updateJobState
 	 *        the statement name; defaults to {@link #UPDATE_JOB_STATE}
@@ -232,7 +232,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 
 	/**
 	 * Set the statement name for the
-	 * {@link #updateJobConfigurtation(UserUuidPK, net.solarnetwork.central.datum.imp.domain.Configuration)}
+	 * {@link #updateJobConfiguration(UserUuidPK, GeneralNodeDatumFilter)}
 	 * method to use.
 	 * 
 	 * @param updateJobConfiguration
@@ -244,7 +244,7 @@ public class MyBatisUserDatumDeleteJobInfoDao extends
 
 	/**
 	 * Set the statement name for the
-	 * {@link #updateJobProgress(UserUuidPK, double)} method to use.
+	 * {@link #updateJobProgress(UserUuidPK, double, Long)} method to use.
 	 * 
 	 * @param updateJobProgress
 	 *        the statement name; defaults to {@link #UPDATE_JOB_PROGRESS}

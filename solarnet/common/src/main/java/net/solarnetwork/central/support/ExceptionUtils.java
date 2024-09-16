@@ -164,10 +164,6 @@ public final class ExceptionUtils {
 	 * 
 	 * @param e
 	 *        the exception
-	 * @param object
-	 *        the target object of the exception
-	 * @param objectName
-	 *        the target object name
 	 * @param validator
 	 *        the validator
 	 * @return the result

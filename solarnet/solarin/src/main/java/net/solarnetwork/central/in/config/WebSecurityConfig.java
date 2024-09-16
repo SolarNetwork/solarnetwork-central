@@ -52,6 +52,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.NodeUserDetailsService;
 import net.solarnetwork.central.security.Role;
@@ -63,7 +64,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Security configuration.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
@@ -87,6 +88,9 @@ public class WebSecurityConfig {
 
 	@Autowired
 	private HandlerExceptionResolver handlerExceptionResolver;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@Bean
 	public RequestRejectedHandler requestRejectedHandler() {
@@ -123,7 +127,7 @@ public class WebSecurityConfig {
 
 	@Bean
 	public UserDetailsService userDetailsService() {
-		JdbcUserDetailsService service = new JdbcUserDetailsService();
+		JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
 		service.setDataSource(dataSource);
 		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
 		service.setAuthoritiesByUsernameQuery(

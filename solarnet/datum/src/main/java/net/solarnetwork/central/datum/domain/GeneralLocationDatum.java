@@ -131,8 +131,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	}
 
 	/**
-	 * Convenience method for
-	 * {@link GeneralLocationDatumSamples#getSampleData()}.
+	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
 	 * @return the sample data, or <em>null</em> if none available
 	 */
@@ -198,7 +197,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	}
 
 	/**
-	 * Get the {@link GeneralLocationDatumSamples} object as a JSON string.
+	 * Get the {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
 	 * This method will ignore <em>null</em> values.
@@ -216,7 +215,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 	}
 
 	/**
-	 * Set the {@link GeneralLocationDatumSamples} object via a JSON string.
+	 * Set the {@link DatumSamples} object via a JSON string.
 	 *
 	 * <p>
 	 * This method will remove any previously created

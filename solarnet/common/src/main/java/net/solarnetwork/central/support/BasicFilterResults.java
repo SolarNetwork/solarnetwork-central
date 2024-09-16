@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.FilterResults;
 /**
  * Basic implementation of {@link FilterResults}.
  * 
- * @param T
+ * @param <T>
  *        the result type
  * @author matt
  * @version 1.1

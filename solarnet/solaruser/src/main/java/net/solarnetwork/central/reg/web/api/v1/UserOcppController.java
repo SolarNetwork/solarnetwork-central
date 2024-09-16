@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserOcppController.java - 1/03/2020 7:36:49 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
@@ -50,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
@@ -81,7 +81,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for OCPP management.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -100,7 +100,7 @@ public class UserOcppController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userOcppBiz
 	 *        the user OCPP service
 	 * @param objectMapper
@@ -122,7 +122,7 @@ public class UserOcppController {
 
 	/**
 	 * Get the {@link UserOcppBiz}.
-	 * 
+	 *
 	 * @return the service; never {@literal null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
@@ -136,7 +136,7 @@ public class UserOcppController {
 
 	/**
 	 * Create a response entity out of a save operation on an entity.
-	 * 
+	 *
 	 * @param <T>
 	 *        the entity type
 	 * @param id
@@ -154,7 +154,7 @@ public class UserOcppController {
 
 	/**
 	 * Get all available charge points for the current user.
-	 * 
+	 *
 	 * @return the charge points
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/authorizations")
@@ -166,7 +166,7 @@ public class UserOcppController {
 
 	/**
 	 * Save an authorization.
-	 * 
+	 *
 	 * @param authorization
 	 *        the authorization to save
 	 * @return the saved authorization
@@ -179,7 +179,7 @@ public class UserOcppController {
 
 	/**
 	 * View an authorization.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the authorization to view
 	 * @return the authorization
@@ -192,7 +192,7 @@ public class UserOcppController {
 
 	/**
 	 * Delete an authorization.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the authorization to delete
 	 * @return the result
@@ -206,7 +206,7 @@ public class UserOcppController {
 
 	/**
 	 * Get all available charge points for the current user.
-	 * 
+	 *
 	 * @return the charge points
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers")
@@ -218,7 +218,7 @@ public class UserOcppController {
 
 	/**
 	 * Save a charge point.
-	 * 
+	 *
 	 * @param chargePoint
 	 *        the charge point to save
 	 * @return the saved charge point
@@ -231,7 +231,7 @@ public class UserOcppController {
 
 	/**
 	 * View a specific charge point.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the charge point to view
 	 * @return the system user
@@ -244,7 +244,7 @@ public class UserOcppController {
 
 	/**
 	 * Delete a specific charge point.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the charge point to delete
 	 * @return the result
@@ -258,7 +258,7 @@ public class UserOcppController {
 
 	/**
 	 * Get all available charge point settings for the current user.
-	 * 
+	 *
 	 * @return the charge point settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/settings")
@@ -270,7 +270,7 @@ public class UserOcppController {
 
 	/**
 	 * Save a charge point settings.
-	 * 
+	 *
 	 * @param chargePointSettings
 	 *        the charge point settings to save
 	 * @return the saved charge point settings
@@ -284,7 +284,7 @@ public class UserOcppController {
 
 	/**
 	 * View a specific charge point settings.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the charge point settings to view
 	 * @return the settings
@@ -297,7 +297,7 @@ public class UserOcppController {
 
 	/**
 	 * Delete a specific charge point settings.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the charge point settings to delete
 	 * @return the result
@@ -311,7 +311,7 @@ public class UserOcppController {
 
 	/**
 	 * Query for charger status.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param validationResult
@@ -348,7 +348,7 @@ public class UserOcppController {
 
 	/**
 	 * Query for charger action status.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param validationResult
@@ -386,7 +386,7 @@ public class UserOcppController {
 
 	/**
 	 * Get all available connectors for the current user.
-	 * 
+	 *
 	 * @return the connectors
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/connectors")
@@ -399,7 +399,7 @@ public class UserOcppController {
 
 	/**
 	 * Save a connector.
-	 * 
+	 *
 	 * @param connector
 	 *        the connector to save
 	 * @return the saved connector
@@ -419,7 +419,7 @@ public class UserOcppController {
 
 	/**
 	 * View a specific credential.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param connectorId
@@ -437,7 +437,7 @@ public class UserOcppController {
 
 	/**
 	 * Delete a specific credential.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the ID of the charge point
 	 * @param connectorId
@@ -455,7 +455,7 @@ public class UserOcppController {
 
 	/**
 	 * Get all available OCPP system users for the current user.
-	 * 
+	 *
 	 * @return the system users
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/credentials", params = "!username")
@@ -467,7 +467,7 @@ public class UserOcppController {
 
 	/**
 	 * View a system user by its username.
-	 * 
+	 *
 	 * @param username
 	 *        the username of the system user to view
 	 * @return the system user
@@ -480,7 +480,7 @@ public class UserOcppController {
 
 	/**
 	 * Save a system user.
-	 * 
+	 *
 	 * @param systemUser
 	 *        the system user to save
 	 * @return the saved system user
@@ -493,7 +493,7 @@ public class UserOcppController {
 
 	/**
 	 * View a specific credential.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the system user to view
 	 * @return the system user
@@ -506,7 +506,7 @@ public class UserOcppController {
 
 	/**
 	 * Delete a specific credential.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the system user to delete
 	 * @return the result
@@ -520,7 +520,7 @@ public class UserOcppController {
 
 	/**
 	 * Save user settings.
-	 * 
+	 *
 	 * @param userSettings
 	 *        the settings to save
 	 * @return the saved settings
@@ -532,7 +532,7 @@ public class UserOcppController {
 
 	/**
 	 * View the user settings.
-	 * 
+	 *
 	 * @return the user settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/settings")
@@ -543,7 +543,7 @@ public class UserOcppController {
 
 	/**
 	 * Delete the user settings.
-	 * 
+	 *
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/settings")
@@ -555,10 +555,10 @@ public class UserOcppController {
 
 	/**
 	 * Find filtered charge sessions.
-	 * 
-	 * @param chargePointId
-	 *        the charge point ID
-	 * @return the charge points
+	 *
+	 * @param filter
+	 *        the filter
+	 * @return the charge sessions
 	 * @since 2.2
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/sessions")
@@ -571,7 +571,7 @@ public class UserOcppController {
 
 	/**
 	 * End a charge session.
-	 * 
+	 *
 	 * @param sessionId
 	 *        the ID of the charge session to end
 	 * @param endReason
@@ -592,7 +592,7 @@ public class UserOcppController {
 
 	/**
 	 * View a specific charge session.
-	 * 
+	 *
 	 * @param sessionId
 	 *        the ID of the charge session to view
 	 * @return the session
@@ -606,7 +606,7 @@ public class UserOcppController {
 
 	/**
 	 * Get all incomplete charge sessions for the current user and charge point.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @return the charge points
@@ -622,7 +622,7 @@ public class UserOcppController {
 
 	/**
 	 * Get the charge point status filter validator to use.
-	 * 
+	 *
 	 * @return the validator
 	 */
 	public Validator getChargePointStatusFilterValidator() {
@@ -631,7 +631,7 @@ public class UserOcppController {
 
 	/**
 	 * Set the charge point status filter validator to use.
-	 * 
+	 *
 	 * @param validator
 	 *        the validator to set
 	 * @throws IllegalArgumentException
@@ -650,7 +650,7 @@ public class UserOcppController {
 
 	/**
 	 * Get the charge point action status filter validator to use.
-	 * 
+	 *
 	 * @return the validator
 	 */
 	public Validator getChargePointActionStatusFilterValidator() {
@@ -659,7 +659,7 @@ public class UserOcppController {
 
 	/**
 	 * Set the charge point action status filter validator to use.
-	 * 
+	 *
 	 * @param validator
 	 *        the validator to set
 	 * @throws IllegalArgumentException

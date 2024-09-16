@@ -1,21 +1,21 @@
 /* ==================================================================
  * LocationMetadataController.java - Oct 19, 2014 5:08:40 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,7 +25,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.web.jakarta.domain.Response.response;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
@@ -38,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -53,7 +53,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for location metadata actions.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -67,7 +67,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumMetadataBiz
 	 *        the DatumMetadataBiz to use
 	 */
@@ -87,7 +87,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Query for metadata.
-	 * 
+	 *
 	 * @param query
 	 *        a general search query
 	 * @param command
@@ -129,7 +129,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Find all metadata for a location ID.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param criteria
@@ -145,7 +145,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Get metadata for a single location ID and source ID combination.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param sourceId
@@ -179,7 +179,7 @@ public class LocationMetadataController {
 	/**
 	 * Add metadata to a source. The metadata is merged only, and will not
 	 * replace existing values.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param sourceId
@@ -206,7 +206,7 @@ public class LocationMetadataController {
 	/**
 	 * Completely replace the metadata for a given source ID, or create it if it
 	 * doesn't already exist.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param sourceId
@@ -232,7 +232,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Completely remove the metadata for a given source ID.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID
 	 * @param sourceId
@@ -256,7 +256,7 @@ public class LocationMetadataController {
 
 	/**
 	 * List location requests matching a search filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the search filter
 	 * @return the matching results
@@ -276,9 +276,9 @@ public class LocationMetadataController {
 
 	/**
 	 * Submit a location request.
-	 * 
-	 * @param id
-	 *        the ID of the request to delete
+	 *
+	 * @param locationRequestInfo
+	 *        the info to submit
 	 * @return an empty result
 	 */
 	@ResponseBody
@@ -291,7 +291,7 @@ public class LocationMetadataController {
 
 	/**
 	 * View a specific location request.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the request to view
 	 * @return the request, or an empty result
@@ -304,7 +304,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Delete a specific location request.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the request to delete
 	 * @return an empty result
@@ -319,7 +319,7 @@ public class LocationMetadataController {
 
 	/**
 	 * Delete a specific location request.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the request to delete
 	 * @return an empty result

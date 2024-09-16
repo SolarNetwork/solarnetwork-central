@@ -64,7 +64,6 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *        the action name
 	 * @param created
 	 *        the creation date
-	 * @return the new instance
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code created} is {@literal null}
 	 */
@@ -88,7 +87,6 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *        the action name
 	 * @param created
 	 *        the creation date
-	 * @return the new instance
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code created} is {@literal null}
 	 * @since 1.1
@@ -106,7 +104,6 @@ public class ChargePointActionStatus extends BasicEntity<ChargePointActionStatus
 	 *        the ID
 	 * @param created
 	 *        the creation date
-	 * @return the new instance
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code created} is {@literal null}
 	 */

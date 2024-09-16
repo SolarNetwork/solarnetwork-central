@@ -28,7 +28,7 @@ import net.solarnetwork.util.SearchFilter;
  * Search criteria using a search filter.
  * 
  * <p>
- * See {@link net.solarnetwork.support.SearchFilter} for an LDAP-inspired search
+ * See {@link net.solarnetwork.util.SearchFilter} for an LDAP-inspired search
  * filter style.
  * </p>
  * 

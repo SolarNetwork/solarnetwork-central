@@ -139,8 +139,8 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	 *        the tag to set
 	 */
 	@JsonSetter
-	public void setTag(String kind) {
-		setTags(kind != null ? new String[] { kind } : null);
+	public void setTag(String tag) {
+		setTags(tag != null ? new String[] { tag } : null);
 	}
 
 	@Override

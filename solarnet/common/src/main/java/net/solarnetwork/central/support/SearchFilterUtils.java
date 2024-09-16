@@ -36,7 +36,7 @@ import net.solarnetwork.util.StringUtils;
  * Utilities for working with {@link SearchFilter} objects.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SearchFilterUtils {
 
@@ -218,6 +218,13 @@ public final class SearchFilterUtils {
 			}
 
 			private void appendJsonString(String s) {
+				// handle s when enclosed in " already
+				if ( !s.isEmpty() && s.charAt(0) == '"' ) {
+					s = s.substring(1);
+				}
+				if ( !s.isEmpty() && s.charAt(s.length() - 1) == '"' ) {
+					s = s.substring(0, s.length() - 1);
+				}
 				buf.append("\"");
 				buf.append(s.replace("\"", "\\\""));
 				buf.append("\"");

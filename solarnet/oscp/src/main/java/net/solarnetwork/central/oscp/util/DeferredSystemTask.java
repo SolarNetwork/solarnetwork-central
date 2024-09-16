@@ -1,21 +1,21 @@
 /* ==================================================================
  * DeferredTask.java - 19/08/2022 9:27:30 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -53,7 +53,7 @@ import net.solarnetwork.central.oscp.http.ExternalSystemClient;
 
 /**
  * Abstract {@link Runnable} to help with OSCP system related task execution.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -114,7 +114,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name
 	 *        a display name for events and logs
 	 * @param condition
@@ -156,7 +156,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the remaining tries count.
-	 * 
+	 *
 	 * @param tries
 	 *        the number of tries remaining
 	 * @return this instance, for method chaining
@@ -168,7 +168,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the condition timeout.
-	 * 
+	 *
 	 * @param ms
 	 *        the millisecond condition timeout, or {@code 0} to wait forever
 	 * @return this instance, for method chaining
@@ -180,7 +180,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the start delay.
-	 * 
+	 *
 	 * @param ms
 	 *        the millisecond start delay (after the condition completes)
 	 * @return this instance, for method chaining
@@ -192,7 +192,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the start delay randomness.
-	 * 
+	 *
 	 * @param ms
 	 *        a maximum random millisecond start delay added to the configured
 	 *        {@code startDelay},
@@ -205,7 +205,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the retry delay.
-	 * 
+	 *
 	 * @param ms
 	 *        the millisecond retry delay
 	 * @return this instance, for method chaining
@@ -217,7 +217,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the user event error tags.
-	 * 
+	 *
 	 * @param errorTags
 	 *        the user event tags to use for an error event
 	 * @return this instance, for method chaining
@@ -229,8 +229,8 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the user event success tags.
-	 * 
-	 * @param succesTags
+	 *
+	 * @param successTags
 	 *        the user event tags to use for a success event
 	 * @return this instance, for method chaining
 	 */
@@ -241,9 +241,9 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Set the parameters.
-	 * 
+	 *
 	 * @param parameters
-	 *        the parameters, provided to the {@link SystemContext} returned
+	 *        the parameters, provided to the {@link SystemTaskContext} returned
 	 *        from {@link #context(String...)}
 	 * @return this instance, for method chaining
 	 */
@@ -337,7 +337,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Perform the task.
-	 * 
+	 *
 	 * @throws Exception
 	 *         if an error occurs
 	 */
@@ -345,7 +345,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Load the configuration entity.
-	 * 
+	 *
 	 * @param lock
 	 *        {@literal true} to lock the configuration in the current
 	 *        transaction
@@ -371,7 +371,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	/**
 	 * Load the configuration entity and verify its registration status is
 	 * {@code Registered} and has a supported OSCP version.
-	 * 
+	 *
 	 * @param lock
 	 *        {@literal true} to lock the configuration in the current
 	 *        transaction
@@ -390,7 +390,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	/**
 	 * Load the configuration entity and verify its registration status and
 	 * supported OSCP version.
-	 * 
+	 *
 	 * @param lock
 	 *        {@literal true} to lock the configuration in the current
 	 *        transaction
@@ -424,8 +424,8 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Get the task context.
-	 * 
-	 * @param errorTags
+	 *
+	 * @param extraErrorTags
 	 *        error tags to include in a user event if an error occurs
 	 * @return the context
 	 * @throws ExternalSystemConfigurationException
@@ -443,9 +443,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/**
 	 * Make a HTTP post to the external system.
-	 * 
-	 * @param restOps
-	 *        the REST template
+	 *
 	 * @param path
 	 *        the URL path
 	 * @param body

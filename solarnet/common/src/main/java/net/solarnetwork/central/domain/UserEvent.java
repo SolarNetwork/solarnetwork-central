@@ -39,7 +39,7 @@ import net.solarnetwork.util.UuidUtils;
  * <p>
  * Note that time-based UUIDs are assumed for {@link #getCreated()} to work, and
  * microsecond precision time is assumed for V7 UUIDs. See
- * {@link UuidUtils#extractTimestamp(UUID, boolean)}.
+ * {@link UuidUtils#extractTimestamp(UUID, int)}.
  * </p>
  * 
  * @author matt
@@ -80,12 +80,10 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 	 * 
 	 * @param userId
 	 *        the user ID
-	 * @param created
-	 *        the creation date
 	 * @param eventId
 	 *        the event ID
-	 * @param kind
-	 *        the event kind
+	 * @param tags
+	 *        the event tags
 	 * @param message
 	 *        the message
 	 * @param data

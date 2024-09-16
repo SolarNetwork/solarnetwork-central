@@ -78,8 +78,14 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Check access to modifying datum metadata.
 	 *
-	 * @param nodeId
-	 *        the ID of the node to verify
+	 * @param kind
+	 *        the kind
+	 * @param streamId
+	 *        the ID of the stream to verify
+	 * @param objectId
+	 *        the object ID to verify
+	 * @param sourceId
+	 *        the source ID to verify
 	 */
 	@Before("updateAttributesMetadata(kind, streamId, objectId, sourceId)")
 	public void updateAttributesCheck(ObjectDatumKind kind, UUID streamId, Long objectId,

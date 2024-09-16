@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserDnp3Controller.java - 7/08/2023 10:24:40 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -45,8 +45,6 @@ import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -64,6 +62,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.domain.ServerAuthConfiguration;
 import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
@@ -92,7 +92,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for DNP3 management.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -106,7 +106,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userDnp3Biz
 	 *        the user DNP3 service (optional)
 	 */
@@ -118,7 +118,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Get the {@link UserDnp3Biz}.
-	 * 
+	 *
 	 * @return the service; never {@literal null}
 	 * @throws UnsupportedOperationException
 	 *         if the service is not available
@@ -132,7 +132,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Import a trusted issuer certificate for the current user.
-	 * 
+	 *
 	 * @param data
 	 *        the input
 	 * @return the parsed certificate configurations
@@ -160,7 +160,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * List trusted issuer certificates for the current user.
-	 * 
+	 *
 	 * @param criteria
 	 *        the optional criteria; if not provided then list all certificates
 	 *        for the active user
@@ -175,7 +175,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Delete trusted issuer certificate for the current user.
-	 * 
+	 *
 	 * @param identifier
 	 *        the certificate identifier (subject DN) to delete
 	 * @return the result
@@ -189,7 +189,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Delete trusted issuer certificate for the current user.
-	 * 
+	 *
 	 * @param identifier
 	 *        the certificate identifier (subject DN) to delete
 	 * @return the result
@@ -204,7 +204,7 @@ public class UserDnp3Controller {
 	/**
 	 * Update the enabled status of trusted issuer certificate for the current
 	 * user.
-	 * 
+	 *
 	 * @param input
 	 *        the input
 	 * @return the updated certificate configuration
@@ -225,7 +225,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update trusted issuer certificate enabled status for the current user.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled status to set
 	 * @param criteria
@@ -244,7 +244,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Create a new server configuration.
-	 * 
+	 *
 	 * @param input
 	 *        the configuration input
 	 * @return the result
@@ -261,7 +261,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * List server configurations for the current user.
-	 * 
+	 *
 	 * @param criteria
 	 *        the optional criteria; if not provided then list all servers for
 	 *        the active user
@@ -276,7 +276,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update server enabled status for the current user.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled status to set
 	 * @param criteria
@@ -294,7 +294,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Get a server configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @return the configuration
@@ -312,7 +312,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update a server configuration for the current user.
-	 * 
+	 *
 	 * @param
 	 * @return the configuration
 	 */
@@ -326,7 +326,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Delete a server configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to delete
 	 * @return the result
@@ -340,7 +340,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * List server auth configurations for the current user.
-	 * 
+	 *
 	 * @param criteria
 	 *        the optional criteria; if not provided then list all servers for
 	 *        the active user
@@ -355,7 +355,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Get a server auth configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param identifier
@@ -377,11 +377,9 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update a server auth configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
-	 * @param identifier
-	 *        the identifier to fetch
 	 * @param input
 	 *        the input
 	 * @return the configuration
@@ -397,7 +395,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Delete a server auth configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param identifier
@@ -414,7 +412,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update server auth enabled status for the current user.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled status to set
 	 * @param criteria
@@ -432,7 +430,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * List server measurement configurations for the current user.
-	 * 
+	 *
 	 * @param criteria
 	 *        the optional criteria; if not provided then list all servers for
 	 *        the active user
@@ -447,7 +445,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Get a server measurement configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param index
@@ -469,7 +467,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update a server measurement configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param index
@@ -490,7 +488,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Delete a server measurement configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param index
@@ -507,7 +505,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update server measurement enabled status for the current user.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled status to set
 	 * @param criteria
@@ -525,7 +523,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * List server control configurations for the current user.
-	 * 
+	 *
 	 * @param criteria
 	 *        the optional criteria; if not provided then list all servers for
 	 *        the active user
@@ -540,7 +538,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Get a server control configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param index
@@ -562,7 +560,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update a server control configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param index
@@ -583,7 +581,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Delete a server control configuration for the current user.
-	 * 
+	 *
 	 * @param serverId
 	 *        the server ID to fetch
 	 * @param index
@@ -600,7 +598,7 @@ public class UserDnp3Controller {
 
 	/**
 	 * Update server control enabled status for the current user.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled status to set
 	 * @param criteria
@@ -619,7 +617,7 @@ public class UserDnp3Controller {
 	/**
 	 * Download an example resource to use with the
 	 * {@link #importServerConfigurationCsv(Long, MultipartFile, Locale)} API.
-	 * 
+	 *
 	 * @param accept
 	 *        the desired type: can be CSV or XLSX
 	 * @return the result
@@ -653,12 +651,12 @@ public class UserDnp3Controller {
 	/**
 	 * Import measurement and control configuration for a specific server from a
 	 * CSV resource.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param serverId
 	 *        the ID of the server configuration to import for
 	 * @param data
@@ -682,12 +680,12 @@ public class UserDnp3Controller {
 	/**
 	 * Export measurement and control configuration for a specific server as a
 	 * CSV resource.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param serverId
 	 *        the ID of the server configuration to import for
 	 * @param response

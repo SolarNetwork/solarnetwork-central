@@ -230,8 +230,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	/**
 	 * Set the statement name for the
-	 * {@link #updateJobConfigurtation(UserUuidPK, net.solarnetwork.central.datum.imp.domain.Configuration)}
-	 * method to use.
+	 * {@link #updateJobConfiguration(UserUuidPK, Configuration)} method to use.
 	 *
 	 * @param updateJobConfiguration
 	 *        the statement name; defaults to {@link #UPDATE_JOB_CONFIG}
@@ -242,7 +241,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 
 	/**
 	 * Set the statement name for the
-	 * {@link #updateJobProgress(UserUuidPK, double)} method to use.
+	 * {@link #updateJobProgress(UserUuidPK, double, Long)} method to use.
 	 *
 	 * @param updateJobProgress
 	 *        the statement name; defaults to {@link #UPDATE_JOB_PROGRESS}

@@ -33,7 +33,7 @@ public interface HumanIdDao<T> {
 	/**
 	 * Get a persisted domain object by its human ID.
 	 * 
-	 * @param id
+	 * @param hid
 	 *        the human ID of the object to retrieve
 	 * @return the domain object, or {@literal null} if not found
 	 */

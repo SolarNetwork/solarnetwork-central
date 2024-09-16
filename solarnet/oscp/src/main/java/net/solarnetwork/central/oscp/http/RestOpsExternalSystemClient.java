@@ -293,8 +293,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 	 * @param oauthClientManager
 	 *        the manager
 	 */
-	public void setOauthClientManager(OAuth2AuthorizedClientManager oauthManager) {
-		this.oauthClientManager = oauthManager;
+	public void setOauthClientManager(OAuth2AuthorizedClientManager oauthClientManager) {
+		this.oauthClientManager = oauthClientManager;
 	}
 
 }

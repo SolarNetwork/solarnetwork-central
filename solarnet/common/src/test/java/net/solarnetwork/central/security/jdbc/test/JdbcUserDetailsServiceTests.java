@@ -22,6 +22,11 @@
 
 package net.solarnetwork.central.security.jdbc.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,6 +45,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
+import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicySerializer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -140,6 +146,49 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 		Assert.assertNotNull("Token policy", authToken.getPolicy());
 		Assert.assertEquals("Token source IDs", policy.getSourceIds(),
 				authToken.getPolicy().getSourceIds());
+	}
+
+	@Test
+	public void matchingToken_withExpiry() {
+		// GIVEN
+		final Long userId = 123L;
+		setupTestUser(userId);
+		final BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
+				.withSourceIds(Collections.singleton("Main"))
+				.withNotAfter(Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MILLIS))
+				.build();
+		final String token = setupTestToken(userId, policy);
+
+		// WHEN
+		UserDetails details = service.loadUserByUsername(token);
+
+		// THEN
+		// @formatter:off
+		then(details)
+			.as("Details loaded")
+			.isNotNull()
+			.as("Token ID returned as username")
+			.returns(token, from(UserDetails::getUsername))
+			.as("Type is SecurityToken")
+			.asInstanceOf(type(SecurityToken.class))
+			.as("Token returned as token")
+			.returns(token, from(SecurityToken::getToken))
+			.as("Token type is user")
+			.returns(SecurityTokenType.User, from(SecurityToken::getTokenType))
+			.as("User ID returned")
+			.returns(userId, from(SecurityToken::getUserId))
+			.satisfies(secToken -> {
+				then(secToken.getPolicy())
+					.as("Policy returned")
+					.isNotNull()
+					.as("Policy source IDs returned")
+					.returns(policy.getSourceIds(), from(SecurityPolicy::getSourceIds))
+					.as("Policy expiration date returned")
+					.returns(policy.getNotAfter(), from(SecurityPolicy::getNotAfter))
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 }

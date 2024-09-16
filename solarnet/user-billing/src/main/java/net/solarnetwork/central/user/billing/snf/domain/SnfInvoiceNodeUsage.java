@@ -125,8 +125,8 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
-	 * @param datumDaysStored
-	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instructions issued count
 	 * @since 1.4
 	 */
 	public SnfInvoiceNodeUsage(Long invoiceId, Long nodeId, Instant created,
@@ -155,8 +155,8 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	 *        the datum out count
 	 * @param datumDaysStored
 	 *        the datum days stored count
-	 * @param datumDaysStored
-	 *        the datum days stored count
+	 * @param instructionsIssued
+	 *        the instructions issued count
 	 * @param fluxDataIn
 	 *        the SolarFlux data in count
 	 * @since 1.5

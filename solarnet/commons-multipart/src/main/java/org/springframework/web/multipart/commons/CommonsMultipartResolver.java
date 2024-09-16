@@ -72,7 +72,7 @@ import org.springframework.web.util.WebUtils;
  * @see #CommonsMultipartResolver(ServletContext)
  * @see #setResolveLazily
  * @see #setSupportedMethods
- * @see org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload
+ * @see ServletFileUpload
  * @see org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory
  * @see org.springframework.web.multipart.support.StandardServletMultipartResolver
  */
@@ -210,7 +210,7 @@ public class CommonsMultipartResolver extends CommonsFileUploadSupport
 	 * falling back to the default encoding specified for this resolver.
 	 * @param request current HTTP request
 	 * @return the encoding for the request (never {@code null})
-	 * @see javax.servlet.ServletRequest#getCharacterEncoding
+	 * @see jakarta.servlet.ServletRequest#getCharacterEncoding
 	 * @see #setDefaultEncoding
 	 */
 	protected String determineEncoding(HttpServletRequest request) {

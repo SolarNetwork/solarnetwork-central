@@ -43,8 +43,6 @@ public interface AuditService {
   /**
    * Audit the deliver of a message.
    * 
-   * @param actor
-   *        the actor
    * @param message
    *        the message being delivered
    */

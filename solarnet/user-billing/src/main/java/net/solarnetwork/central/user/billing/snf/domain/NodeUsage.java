@@ -1014,7 +1014,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Set the count of DNP3 Data Points.
 	 *
-	 * @param oscpCapacityGroups
+	 * @param dnp3DataPoints
 	 *        the count to set; if {@literal null} then {@literal 0} will be
 	 *        stored
 	 * @since 2.3
@@ -1082,7 +1082,7 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Set the count of DNP3 Data Points, per tier, as decimals.
 	 *
-	 * @param oscpCapacityGroupsTiers
+	 * @param dnp3DataPointsTiers
 	 *        the counts to set
 	 * @since 2.3
 	 */

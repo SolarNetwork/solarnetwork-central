@@ -50,6 +50,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationDetailsSource;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
@@ -66,7 +67,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Security configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @EnableWebSecurity
@@ -121,8 +122,11 @@ public class WebSecurityConfig {
 		@Autowired
 		private PasswordEncoder passwordEncoder;
 
+		@Autowired
+		private ObjectMapper objectMapper;
+
 		private AuthenticationProvider opsAuthenticationProvider() {
-			JdbcUserDetailsService service = new JdbcUserDetailsService();
+			JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
 			service.setDataSource(dataSource);
 			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
 			service.setAuthoritiesByUsernameQuery(

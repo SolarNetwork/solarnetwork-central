@@ -91,7 +91,7 @@ public final class LocationRequestSqlUtils {
 	 *        the JDBC connection
 	 * @param stmt
 	 *        the JDBC statement
-	 * @param parameterOffset
+	 * @param p
 	 *        the zero-based starting JDBC statement parameter offset
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException

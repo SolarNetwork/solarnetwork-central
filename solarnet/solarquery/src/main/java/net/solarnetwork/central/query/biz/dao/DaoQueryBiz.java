@@ -593,10 +593,11 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	/**
-	 * Get the maximum day time range allowed for hour-of-day aggregate queries
+	 * Set the maximum day time range allowed for hour-of-day aggregate queries
 	 * before a higher aggregation level (e.g. day) is enforced.
 	 * 
-	 * @return the maximum day time range; defaults to {@literal 3650}
+	 * @param maxDaysForDayOfWeekAggregation
+	 *        the maximum day time range; defaults to {@literal 3650}
 	 */
 	public void setMaxDaysForDayOfWeekAggregation(long maxDaysForDayOfWeekAggregation) {
 		this.maxDaysForDayOfWeekAggregation = maxDaysForDayOfWeekAggregation;

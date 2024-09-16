@@ -41,8 +41,6 @@ public class DelegatingParser<T> implements Parser<T> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param parser
-	 *        main parser
 	 * @param delegates
 	 *        the delegates to parse with
 	 * @throws IllegalArgumentException

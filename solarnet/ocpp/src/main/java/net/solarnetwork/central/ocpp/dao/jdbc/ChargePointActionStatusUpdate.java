@@ -67,8 +67,8 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 	 * 
 	 * @param userId
 	 *        the user ID
-	 * @param chargePointId
-	 *        the Charge Point ID
+	 * @param chargePointIdentifier
+	 *        the Charge Point identifier
 	 * @param evseId
 	 *        the EVSE ID (if {@literal null} then {@literal 0} will be used)
 	 * @param connectorId

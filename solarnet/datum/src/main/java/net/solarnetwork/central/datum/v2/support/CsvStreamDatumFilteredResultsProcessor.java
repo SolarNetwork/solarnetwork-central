@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvStreamDatumFilteredResultsProcessor.java - 17/04/2023 2:36:06 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -53,59 +53,59 @@ import net.solarnetwork.domain.datum.StreamDatum;
 /**
  * {@link FilteredResultsProcessor} for encoding overall results into datum
  * stream CSV form.
- * 
+ *
  * <p>
  * This processor requires a {@link ObjectDatumStreamMetadataProvider} instance
  * be provided in the {@code attributes} argument on the
  * {@link #start(Long, Integer, Integer, Map)} method, on the
- * {@link StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR} key.
+ * {@link StreamDatumFilteredResultsProcessor#METADATA_PROVIDER_ATTR} key.
  * </p>
- * 
+ *
  * <h2>Non-aggregate column structure</h2>
- * 
+ *
  * <p>
  * The output CSV column structure for <b>non-aggregate</b> datum starts with:
  * </p>
- * 
+ *
  * <ol>
  * <li><b>ts</b> - timestamp</li>
  * <li><b>streamId</b> - stream ID</li>
  * <li><b>objectId</b> - node or location ID</li>
  * <li><b>sourceId</b> - source ID</li>
  * </ol>
- * 
+ *
  * <p>
  * Then columns are added for all instantaneous, accumulating, and status
  * properties of all available streams. Only unique property names are added as
  * additional columns. A final additional column is added for tags, which are
  * joined into a single comma-delimited string value.
  * </p>
- * 
+ *
  * <p>
  * For example, imagine there are two datum streams being processed, with stream
  * metadata like:
  * </p>
- * 
+ *
  * <pre>{@code [
  * {"i":["a", "b", "c"], "a":["d", "e"], "s":["f", "g"]},
  * {"i":["b", "h", "i"], "a":["c"]}
  * ]}</pre>
- * 
+ *
  * <p>
  * Notice how the {@code b} and {@code c} property names are used in both
  * streams. The resulting CSV column structure would be:
  * </p>
- * 
+ *
  * <pre>{@code
  * ts,streamId,objectId,sourceId,a,b,c,d,e,f,g,h,i,tags
  * }</pre>
- * 
+ *
  * <h2>Aggregate column structure</h2>
- * 
+ *
  * <p>
  * The output CSV column structure for <b>aggregate</b> datum starts with:
  * </p>
- * 
+ *
  * <ol>
  * <li><b>ts_start</b> - starting timestamp</li>
  * <li><b>ts_end</b> - ending timestamp, or empty if implied by the query</li>
@@ -113,56 +113,56 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * <li><b>objectId</b> - node or location ID</li>
  * <li><b>sourceId</b> - source ID</li>
  * </ol>
- * 
+ *
  * <p>
  * Then columns are added for all instantaneous, accumulating, and status
  * properties of all available streams. For each <em>instantaneous</em> property
  * 3 additional statistic columns are added, where <b>{@code P}</b> is the
  * property name:
  * </p>
- * 
+ *
  * <ol>
  * <li><b>{@code P_count}</b> - the number of values within the aggregate
  * period</li>
  * <li><b>{@code P_min}</b> - the minimum value within the aggregate period</li>
  * <li><b>{@code P_max}</b> - the maximum value within the aggregate period</li>
  * </ol>
- * 
+ *
  * <p>
  * For each <em>accumulating</em> property 2 additional statistic columns are
  * added, where <b>{@code P}</b> is the property name:
  * </p>
- * 
+ *
  * <ol>
  * <li><b>{@code P_start}</b> - the value at the start of the aggregate
  * period</li>
  * <li><b>{@code P_end}</b> - the value at the end of the aggregate period</li>
  * </ol>
- * 
+ *
  * <p>
  * A final additional column is added for tags, which are joined into a single
  * comma-delimited string value.
  * </p>
- * 
+ *
  * <p>
  * For example, imagine there are two aggregate datum streams being processed,
  * with stream metadata like:
  * </p>
- * 
+ *
  * <pre>{@code [
  * {"i":["a", "b", "a":["c"], "s":["d"]},
  * {"i":["b"], "a":["e"]}
  * ]}</pre>
- * 
+ *
  * <p>
  * Notice how the {@code b} property name is used in both streams. The resulting
  * CSV column structure would be:
  * </p>
- * 
+ *
  * <pre>{@code
  * ts,streamId,objectId,sourceId,a,a_count,a_min,a_max,b,b_count,b_min,b_max,c,c_start,c_end,d,e,e_start,e_end,tags
  * }</pre>
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.11
@@ -188,7 +188,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param out
 	 *        the output destination
 	 */

@@ -1,21 +1,21 @@
 /* ==================================================================
  * CapacityOptimizerConfiguration.java - 14/08/2022 7:21:50 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Base OSCP configuration entity.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -54,7 +54,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -68,9 +68,9 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param user
-	 *        ID the user ID
+	 *
+	 * @param userId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created
@@ -106,7 +106,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 			return false;
 		}
 		// @formatter:off
-		return (Objects.equals(this.token, other.getToken()) 
+		return (Objects.equals(this.token, other.getToken())
 				&& Objects.equals(this.baseUrl, other.getBaseUrl())
 				&& Objects.equals(this.oscpVersion, other.getOscpVersion())
 				&& Objects.equals(this.flexibilityProviderId, other.getFlexibilityProviderId())
@@ -141,12 +141,12 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Get the authentication token.
-	 * 
+	 *
 	 * <p>
 	 * Note this is normally only included when creating a configuration entity;
 	 * afterwards the token is omitted.
 	 * </p>
-	 * 
+	 *
 	 * @return the token the token
 	 */
 	public String getToken() {
@@ -155,7 +155,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the authentication token.
-	 * 
+	 *
 	 * @param token
 	 *        the token to set
 	 */
@@ -165,7 +165,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Get the base URL to the OSCP API.
-	 * 
+	 *
 	 * @return the baseUrl the base URL
 	 */
 	public String getBaseUrl() {
@@ -174,7 +174,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the base URL to the OSCP API.
-	 * 
+	 *
 	 * @param baseUrl
 	 *        the URL to set
 	 */
@@ -184,7 +184,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Get the OSCP version.
-	 * 
+	 *
 	 * @return the version
 	 */
 	public String getOscpVersion() {
@@ -193,7 +193,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the OSCP version.
-	 * 
+	 *
 	 * @param oscpVersion
 	 *        the version to set
 	 */
@@ -203,7 +203,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Get the registration status.
-	 * 
+	 *
 	 * @return the registrationStatus
 	 */
 	public RegistrationStatus getRegistrationStatus() {
@@ -212,7 +212,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the registration status.
-	 * 
+	 *
 	 * @param registrationStatus
 	 *        the registrationStatus to set
 	 */
@@ -223,7 +223,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	/**
 	 * Get the ID of the Flexibility Provider token associated with this
 	 * configuration.
-	 * 
+	 *
 	 * @return the flexibility provider ID
 	 */
 	@Override
@@ -234,7 +234,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	/**
 	 * Set the ID of the Flexibility Provider token associated with this
 	 * configuration.
-	 * 
+	 *
 	 * @param flexibilityProviderId
 	 *        the flexibility provider ID to set
 	 */
@@ -244,7 +244,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Get the system settings.
-	 * 
+	 *
 	 * @return the settings
 	 */
 	public SystemSettings getSettings() {
@@ -253,7 +253,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the system settings.
-	 * 
+	 *
 	 * @param settings
 	 *        the settings to set
 	 */
@@ -263,7 +263,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Get the last heartbeat time.
-	 * 
+	 *
 	 * @return the heartbeat date
 	 */
 	public Instant getHeartbeatDate() {
@@ -272,17 +272,17 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the last heartbeat time.
-	 * 
+	 *
 	 * @param heartbeatDate
 	 *        the heartbeat date to set
 	 */
-	public void setHeartbeatDate(Instant lastHeartbeat) {
-		this.heartbeatDate = lastHeartbeat;
+	public void setHeartbeatDate(Instant heartbeatDate) {
+		this.heartbeatDate = heartbeatDate;
 	}
 
 	/**
 	 * Get the date after which the system should be considered "offline".
-	 * 
+	 *
 	 * @return the the offline date
 	 */
 	public Instant getOfflineDate() {
@@ -291,7 +291,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 
 	/**
 	 * Set the date after which the system should be considered "offline".
-	 * 
+	 *
 	 * @param offlineDate
 	 *        the offline date to set
 	 */

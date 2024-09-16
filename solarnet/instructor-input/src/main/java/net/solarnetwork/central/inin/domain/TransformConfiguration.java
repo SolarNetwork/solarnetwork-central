@@ -295,8 +295,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	}
 
 	/**
-	 * Set the identifier of the
-	 * {@link net.solarnetwork.central.din.biz.TransformService} to use.
+	 * Set the identifier of the transform service to use.
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier to use

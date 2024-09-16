@@ -33,7 +33,7 @@ import net.solarnetwork.util.SearchFilter;
  * Test cases for the {@link SearchFilterUtils} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SearchFilterUtilsTests {
 
@@ -47,6 +47,18 @@ public class SearchFilterUtilsTests {
 
 		// THEN
 		assertThat("Simple path", result, is(equalTo("$ ? (@.foo == \"bar\")")));
+	}
+
+	@Test
+	public void sqlJsonPath_simpleQuoted() {
+		// GIVEN
+		SearchFilter f = SearchFilter.forLDAPSearchFilterString("(foo=\"123\")");
+
+		// WHEN
+		String result = SearchFilterUtils.toSqlJsonPath(f);
+
+		// THEN
+		assertThat("Simple path with quoted value", result, is(equalTo("$ ? (@.foo == \"123\")")));
 	}
 
 	@Test
