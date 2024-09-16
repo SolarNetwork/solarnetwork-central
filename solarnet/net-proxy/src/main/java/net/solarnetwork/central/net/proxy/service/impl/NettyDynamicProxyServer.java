@@ -1,21 +1,21 @@
 /* ==================================================================
  * NettyDynamicProxyServer.java - 1/08/2023 11:14:02 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -73,7 +73,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Netty implementation of {@link DynamicProxyServer}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -104,11 +104,11 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The loopback address will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param port
 	 *        the server bind port
 	 */
@@ -118,7 +118,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param address
 	 *        the server bind address
 	 * @param port
@@ -130,7 +130,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param bindAddress
 	 *        the server bind address
 	 * @throws IllegalArgumentException
@@ -142,9 +142,9 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param bindAddress
-	 *        the server bind address
+	 *
+	 * @param bindAddresses
+	 *        the server bind addresses
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -207,7 +207,7 @@ public class NettyDynamicProxyServer
 			for ( SocketAddress bindAddress : bindAddresses ) {
 				b.bind(bindAddress).sync()
 				.addListener((f) -> {
-					log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress, 
+					log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
 							Arrays.stream(tlsProtocols).collect(Collectors.joining(", ")));
 				})
 				.channel().closeFuture().addListener((f) -> {
@@ -397,7 +397,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Get the wire-logging flag.
-	 * 
+	 *
 	 * @return {@literal true} if wire-level logging should be enabled
 	 */
 	public boolean isWireLogging() {
@@ -406,7 +406,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Set the wire-logging flag.
-	 * 
+	 *
 	 * @param wireLogging
 	 *        {@literal true} if wire-level logging should be enabled
 	 */
@@ -416,7 +416,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Get the supported TLS protocols.
-	 * 
+	 *
 	 * @return the protocols to support
 	 */
 	public String[] getTlsProtocols() {
@@ -425,7 +425,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Set the supported TLS protocols.
-	 * 
+	 *
 	 * @param tlsProtocols
 	 *        the protocols to support; if {@literal null} then the default
 	 *        protocols will be set
@@ -437,7 +437,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Set the SSL key store.
-	 * 
+	 *
 	 * @return the key store
 	 */
 	public KeyStore getKeyStore() {
@@ -446,7 +446,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Get the SSL key store.
-	 * 
+	 *
 	 * @param keyStore
 	 *        the key store to set
 	 */
@@ -456,7 +456,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Get the SSL key store alias for the server certificate.
-	 * 
+	 *
 	 * @return the key store alias; defaults to {@link #DEFAULT_KEYSTORE_ALIAS}
 	 */
 	public final String getKeyStoreAlias() {
@@ -465,7 +465,7 @@ public class NettyDynamicProxyServer
 
 	/**
 	 * Set the SSL key store alias for the server certificate.
-	 * 
+	 *
 	 * @param keyStoreAlias
 	 *        the key store alias to set; if {@literal null} then
 	 *        {@link #DEFAULT_KEYSTORE_ALIAS} will be used instead
