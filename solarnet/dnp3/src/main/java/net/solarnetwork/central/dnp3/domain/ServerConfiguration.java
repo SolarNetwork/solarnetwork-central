@@ -1,21 +1,21 @@
 /* ==================================================================
  * ServerConfiguration.java - 6/08/2023 10:18:37 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * DNP3 server configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -46,7 +46,7 @@ public class ServerConfiguration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -60,9 +60,9 @@ public class ServerConfiguration
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param user
-	 *        ID the user ID
+	 *
+	 * @param userId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created
@@ -123,7 +123,7 @@ public class ServerConfiguration
 
 	/**
 	 * Get the server ID.
-	 * 
+	 *
 	 * @return the server ID
 	 */
 	public Long getServerId() {
@@ -133,7 +133,7 @@ public class ServerConfiguration
 
 	/**
 	 * Get the name.
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -142,7 +142,7 @@ public class ServerConfiguration
 
 	/**
 	 * Set the name
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 */
