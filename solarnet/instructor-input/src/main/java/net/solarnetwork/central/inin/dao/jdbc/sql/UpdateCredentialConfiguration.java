@@ -59,8 +59,8 @@ public class UpdateCredentialConfiguration implements PreparedStatementCreator, 
 	/**
 	 * Constructor.
 	 *
-	 * @param userId
-	 *        the user ID
+	 * @param id
+	 *        the primary key
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
