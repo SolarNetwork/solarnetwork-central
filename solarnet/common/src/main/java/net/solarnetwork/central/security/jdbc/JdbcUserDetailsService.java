@@ -152,8 +152,8 @@ public class JdbcUserDetailsService extends JdbcDaoImpl implements UserDetailsSe
 						try {
 							policy = objectMapper.readValue(policyJson, BasicSecurityPolicy.class);
 						} catch ( IOException e ) {
-							log.warn("Error deserializing SecurityPolicy from [{}]: {}", policyJson,
-									e.getMessage());
+							log.error("Error deserializing [{}] SecurityPolicy from [{}]: {}", username,
+									policyJson, e.getMessage());
 						}
 					}
 					return new AuthenticatedToken(new User(username, password, enabled, true, true, true,
