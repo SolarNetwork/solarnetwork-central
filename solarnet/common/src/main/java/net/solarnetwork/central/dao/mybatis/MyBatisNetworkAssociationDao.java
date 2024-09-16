@@ -37,8 +37,8 @@ import net.solarnetwork.domain.NetworkAssociation;
 public class MyBatisNetworkAssociationDao extends BaseMyBatisDao implements NetworkAssociationDao {
 
 	/**
-	 * The query used by {@link #getNetworkAssociationForConfirmationKey(String,
-	 * String).
+	 * The query used by
+	 * {@link #getNetworkAssociationForConfirmationKey(String,String)}.
 	 */
 	public static final String QUERY_FOR_CONFIRMATION_CODE = "get-NetworkAssociation-for-code";
 

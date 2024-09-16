@@ -51,10 +51,8 @@ public class ScheduledJob extends BasicJobInfo implements Runnable {
 	/**
 	 * Constructor.
 	 * 
-	 * @param groupId
-	 *        the group ID
-	 * @param id
-	 *        the job ID
+	 * @param key
+	 *        the job key
 	 * @param task
 	 *        the job task
 	 * @param trigger

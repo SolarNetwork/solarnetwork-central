@@ -89,7 +89,7 @@ public interface SchedulerManager {
 	 *        the job group ID
 	 * @param id
 	 *        the job ID
-	 * @param runnable
+	 * @param task
 	 *        the job task
 	 * @param trigger
 	 *        the desired trigger

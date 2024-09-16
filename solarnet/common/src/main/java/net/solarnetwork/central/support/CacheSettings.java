@@ -74,8 +74,6 @@ public class CacheSettings {
 	 *        the key class
 	 * @param valueType
 	 *        the value class
-	 * @param settings
-	 *        the settings
 	 * @param name
 	 *        the name
 	 * @return the new cache instance

@@ -720,7 +720,7 @@ public final class CommonSqlUtils {
 	 *        the SQL statement
 	 * @param forUpdate
 	 *        {@literal true} to use a scroll-insensitive, updatable
-	 *        {@link ResetSet}, or {@literal false} for a forward-only,
+	 *        {@link ResultSet}, or {@literal false} for a forward-only,
 	 *        read-only one
 	 * @return the prepared statement
 	 * @throws SQLException
@@ -808,7 +808,7 @@ public final class CommonSqlUtils {
 	 * 
 	 * @param filter
 	 *        the search criteria
-	 * @param column
+	 * @param colName
 	 *        the date column name to use, e.g. {@code solardatum.ts}
 	 * @param buf
 	 *        the buffer to append the SQL to
@@ -952,10 +952,8 @@ public final class CommonSqlUtils {
 	 *        the JDBC statement
 	 * @param parameterOffset
 	 *        the zero-based starting JDBC statement parameter offset
-	 * @param value
-	 *        the value to set
-	 * @param defaultValue
-	 *        the value to set if {@code value} is {@literal null}
+	 * @param values
+	 *        the values to set
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
 	 *        {@literal null} and {@literal defaultValue} is {@literal null}, or

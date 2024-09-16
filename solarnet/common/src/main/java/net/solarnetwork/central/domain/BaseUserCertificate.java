@@ -61,8 +61,8 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 	/**
 	 * Constructor.
 	 * 
-	 * @param user
-	 *        ID the user ID
+	 * @param userId
+	 *        the user ID
 	 * @param subjectDn
 	 *        the normalized certificate subject DN
 	 * @param created
@@ -81,8 +81,8 @@ public abstract class BaseUserCertificate<C extends BaseUserCertificate<C>>
 	 * The {@code subjectDn} value will be extracted from the certificate.
 	 * </p>
 	 * 
-	 * @param user
-	 *        ID the user ID
+	 * @param userId
+	 *        the user ID
 	 * @param certificate
 	 *        the certificate
 	 * @param created

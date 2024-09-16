@@ -114,9 +114,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	 *
 	 * <p>
 	 * If a {@code templatesCache} is provided then XSLT templates will be
-	 * cached for up to the configured {@code templatesCacheTtl} seconds. The
-	 * templates cache key can be provided by a {@link #PARAM_XSLT_CACHE_KEY}
-	 * parameter value, or will be derived from the XSLT value itself.
+	 * cached for up to the configured {@code templatesCacheTtl} seconds.
 	 * </p>
 	 *
 	 * @param serviceId

@@ -48,9 +48,8 @@ public class UpdateLocationRequest implements PreparedStatementCreator, SqlProvi
 	 * 
 	 * @param request
 	 *        the request to update
-	 * @param throws
-	 *        IllegalArgumentException if {@code request} or {@code request.id}
-	 *        is {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code request} or {@code request.id} is {@literal null}
 	 */
 	public UpdateLocationRequest(LocationRequest request) {
 		super();

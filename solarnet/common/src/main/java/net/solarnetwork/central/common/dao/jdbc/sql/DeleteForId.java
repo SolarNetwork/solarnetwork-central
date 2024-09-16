@@ -48,8 +48,8 @@ public class DeleteForId implements PreparedStatementCreator, SqlProvider {
 	 *        the primary key
 	 * @param tableName
 	 *        the table name
-	 * @param columnNames
-	 *        the column names that correspond to key indexes
+	 * @param columnName
+	 *        the column name that corresponds to the key index
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */

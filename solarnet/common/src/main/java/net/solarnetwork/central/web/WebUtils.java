@@ -264,12 +264,8 @@ public final class WebUtils {
 	 * 
 	 * @param <T>
 	 *        the action argument type
-	 * @param <R>
-	 *        the action return type
 	 * @param action
 	 *        the action to perform
-	 * @param arg
-	 *        the argument to pass to the action
 	 * @param req
 	 *        the HTTP request
 	 * @param tries

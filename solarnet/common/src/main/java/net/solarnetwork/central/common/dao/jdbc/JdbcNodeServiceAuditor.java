@@ -435,7 +435,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 * 
 	 * @param sql
 	 *        the SQL statement to use; defaults to
-	 *        {@link #DEFAULT_NODE_SOURCE_INCREMENT_SQL}
+	 *        {@link #DEFAULT_NODE_SERVICE_INCREMENT_SQL}
 	 */
 	public void setNodeServiceIncrementSql(String sql) {
 		if ( requireNonNullArgument(sql, "sql").equals(nodeServiceIncrementSql) ) {
@@ -455,8 +455,7 @@ public class JdbcNodeServiceAuditor implements NodeServiceAuditor, PingTest, Ser
 	 * </p>
 	 * 
 	 * @param statLogUpdateCount
-	 *        the update count; defaults to
-	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
+	 *        the update count
 	 */
 	public void setStatLogUpdateCount(int statLogUpdateCount) {
 		statCounter.setLogFrequency(statLogUpdateCount);

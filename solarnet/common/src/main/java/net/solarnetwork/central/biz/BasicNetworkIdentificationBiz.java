@@ -61,7 +61,7 @@ public class BasicNetworkIdentificationBiz implements NetworkIdentificationBiz {
 	 *        the port
 	 * @param forceTLS
 	 *        {@literal true} if TLS must be used
-	 * @param networkServiceURLs
+	 * @param networkServiceUrls
 	 *        map of network service URLs to advertise
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}

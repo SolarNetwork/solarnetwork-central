@@ -115,8 +115,6 @@ public abstract class JobSupport implements ManagedJob {
 	 * {@code executorService}.
 	 * </p>
 	 * 
-	 * @param job
-	 *        the job event
 	 * @param taskName
 	 *        a descriptive name for the job task, to use in logging
 	 * @return the {@literal true} if all tasks were completed
@@ -251,7 +249,7 @@ public abstract class JobSupport implements ManagedJob {
 	/**
 	 * Set the unique ID of the job to schedule.
 	 * 
-	 * @param id
+	 * @param jobId
 	 *        the job ID
 	 */
 	public void setId(String jobId) {
@@ -296,12 +294,12 @@ public abstract class JobSupport implements ManagedJob {
 	 * @param schedule
 	 *        the cron expression
 	 */
-	public void setSchedule(String jobCron) {
-		this.schedule = jobCron;
+	public void setSchedule(String schedule) {
+		this.schedule = schedule;
 	}
 
 	/**
-	 * Get the job group to use.
+	 * Get the job group ID to use.
 	 * 
 	 * @return the job group
 	 */
@@ -311,21 +309,17 @@ public abstract class JobSupport implements ManagedJob {
 	}
 
 	/**
-	 * Set the job group to use.
+	 * Set the job group ID to use.
 	 * 
 	 * @param groupId
 	 *        the job group
 	 */
-	public void setGroupId(String jobGroup) {
-		this.groupId = jobGroup;
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
 	}
 
 	/**
 	 * Get the executor to handle parallel job tasks with.
-	 * 
-	 * <p>
-	 * If not defined, then {@link #getExecutorService()} will be used.
-	 * </p>
 	 * 
 	 * @return the service
 	 */
@@ -336,7 +330,7 @@ public abstract class JobSupport implements ManagedJob {
 	/**
 	 * Set the executor to handle parallel job tasks with.
 	 * 
-	 * @param parallelTaskExecutor
+	 * @param parallelTaskExecutorService
 	 *        the service to set
 	 */
 	public void setParallelTaskExecutor(AsyncTaskExecutor parallelTaskExecutorService) {

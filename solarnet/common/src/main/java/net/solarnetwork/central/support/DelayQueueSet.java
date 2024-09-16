@@ -162,10 +162,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * Inserts the specified element into this delay queue. As the queue is
 	 * unbounded this method will never block.
 	 *
-	 * @param e
-	 *        the element to add
-	 * @throws NullPointerException
-	 *         {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void put(E e) {
@@ -183,8 +180,6 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * @param unit
 	 *        This parameter is ignored as the method never blocks
 	 * @return {@code true}
-	 * @throws NullPointerException
-	 *         {@inheritDoc}
 	 */
 	@Override
 	public boolean offer(E e, long timeout, TimeUnit unit) {
@@ -223,7 +218,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 *
 	 * @return the <em>expired head</em> of this queue
 	 * @throws InterruptedException
-	 *         {@inheritDoc}
+	 *         if interrupted while waiting
 	 */
 	@Override
 	public E take() throws InterruptedException {
@@ -270,7 +265,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 *         specified waiting time elapses before an element with an expired
 	 *         delay becomes available
 	 * @throws InterruptedException
-	 *         {@inheritDoc}
+	 *         if interrupted while waiting
 	 */
 	@Override
 	public E poll(long timeout, TimeUnit unit) throws InterruptedException {
@@ -359,31 +354,11 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		}
 	}
 
-	/**
-	 * @throws UnsupportedOperationException
-	 *         {@inheritDoc}
-	 * @throws ClassCastException
-	 *         {@inheritDoc}
-	 * @throws NullPointerException
-	 *         {@inheritDoc}
-	 * @throws IllegalArgumentException
-	 *         {@inheritDoc}
-	 */
 	@Override
 	public int drainTo(Collection<? super E> c) {
 		return drainTo(c, Integer.MAX_VALUE);
 	}
 
-	/**
-	 * @throws UnsupportedOperationException
-	 *         {@inheritDoc}
-	 * @throws ClassCastException
-	 *         {@inheritDoc}
-	 * @throws NullPointerException
-	 *         {@inheritDoc}
-	 * @throws IllegalArgumentException
-	 *         {@inheritDoc}
-	 */
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
 		Objects.requireNonNull(c);

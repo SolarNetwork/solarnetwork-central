@@ -74,7 +74,7 @@ public interface FilteredResultsProcessor<R> extends Closeable, Flushable {
 	 * 
 	 * <p>
 	 * This method should only be called after
-	 * {@link #start(Long, Integer, Integer)} has been called.
+	 * {@link #start(Long, Integer, Integer, Map)} has been called.
 	 * </p>
 	 * 
 	 * @param resultItem
