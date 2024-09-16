@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoFlexibilityProviderBiz.java - 16/08/2022 5:25:42 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -117,7 +117,7 @@ import oscp.v20.VersionUrl;
 
 /**
  * DAO based implementation of {@link FlexibilityProviderBiz}.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -147,7 +147,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * The default version URL map supported by this service.
-	 * 
+	 *
 	 * @return the map
 	 */
 	public static Map<String, String> defaultVersionUrlMap() {
@@ -157,7 +157,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executor
 	 *        the executor to use
 	 * @param externalSystemClient
@@ -172,8 +172,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *        the capacity optimizer configuration DAO
 	 * @param capacityGroupDao
 	 *        the capacity group configuration DAO
-	 * @param userSettingsDao
-	 *        the user settings DAO
 	 * @param capacityGroupSettingsDao
 	 *        the group settings DAo
 	 * @param nodeOwnershipDao
@@ -492,7 +490,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 		/**
 		 * Publish datum.
-		 * 
+		 *
 		 * @param action
 		 *        the OSCP action name
 		 * @param sourceIdSuffix
@@ -843,7 +841,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the transaction template to use.
-	 * 
+	 *
 	 * @return the txTemplate
 	 */
 	public TransactionTemplate getTxTemplate() {
@@ -852,7 +850,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the transaction template to use.
-	 * 
+	 *
 	 * @param txTemplate
 	 *        the txTemplate to set
 	 */
@@ -862,7 +860,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the supported version URLs to the Flexibility Provider service.
-	 * 
+	 *
 	 * @return the version to URL mapping
 	 */
 	public Map<String, String> getVersionUrlMap() {
@@ -871,7 +869,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the supported version URLs to the Flexibility Provider service.
-	 * 
+	 *
 	 * @param versionUrlMap
 	 *        the URL mapping to set
 	 * @throws IllegalArgumentException
@@ -883,7 +881,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the task scheduler.
-	 * 
+	 *
 	 * @return the task scheduler
 	 */
 	public TaskScheduler getTaskScheduler() {
@@ -892,11 +890,11 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the task scheduler.
-	 * 
+	 *
 	 * <p>
 	 * If configured, a delay will be added between retry operations.
 	 * </p>
-	 * 
+	 *
 	 * @param taskScheduler
 	 *        the task scheduler to set
 	 */
@@ -906,7 +904,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the task start condition timeout.
-	 * 
+	 *
 	 * @return the timeout, in milliseconds
 	 */
 	public long getTaskConditionTimeout() {
@@ -915,7 +913,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the task start condition timeout.
-	 * 
+	 *
 	 * @param taskConditionTimeout
 	 *        the timeout to set, in milliseconds
 	 */
@@ -925,7 +923,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the task start delay.
-	 * 
+	 *
 	 * @return the delay, in milliseconds
 	 */
 	public long getTaskStartDelay() {
@@ -934,7 +932,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the task start delay.
-	 * 
+	 *
 	 * @param taskStartDelay
 	 *        the delay to set, in milliseconds
 	 */
@@ -944,7 +942,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the task start delay randomness.
-	 * 
+	 *
 	 * @return the delay, in milliseconds
 	 */
 	public long getTaskStartDelayRandomness() {
@@ -953,7 +951,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the task start delay randomness.
-	 * 
+	 *
 	 * @param taskStartDelayRandomness
 	 *        the delay to set, in milliseconds
 	 */
@@ -963,7 +961,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the task retry delay.
-	 * 
+	 *
 	 * @return the delay, in milliseconds
 	 */
 	public long getTaskRetryDelay() {
@@ -972,7 +970,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the task retry delay.
-	 * 
+	 *
 	 * @param taskRetryDelay
 	 *        the delay to set, in milliseconds
 	 */
@@ -982,7 +980,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the datum DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	public DatumEntityDao getDatumDao() {
@@ -991,7 +989,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the datum DAO.
-	 * 
+	 *
 	 * @param datumDao
 	 *        the DAO to set
 	 */
@@ -1001,7 +999,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the SolarFlux publisher.
-	 * 
+	 *
 	 * @return the publisher, or {@literal null}
 	 */
 	public Consumer<DatumPublishEvent> getFluxPublisher() {
@@ -1010,7 +1008,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
@@ -1020,7 +1018,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Get the source ID template.
-	 * 
+	 *
 	 * @return the template; defaults to
 	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
@@ -1030,11 +1028,11 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
@@ -1042,7 +1040,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * <li><code>{location}</code> - the location (string)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
