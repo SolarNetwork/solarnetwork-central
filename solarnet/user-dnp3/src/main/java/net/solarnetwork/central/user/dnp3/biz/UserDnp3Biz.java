@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserDnp3Biz.java - 1/08/2023 10:16:10 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -54,7 +54,7 @@ import net.solarnetwork.dao.FilterResults;
 
 /**
  * Service API for SolarUser DNP3 support.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -62,7 +62,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Save a collection of X.509 "trusted root" certificates.
-	 * 
+	 *
 	 * @param userId
 	 *        the user to save the certificates for
 	 * @param certificates
@@ -75,7 +75,7 @@ public interface UserDnp3Biz {
 	/**
 	 * List the available trusted issuer certificates for a given user,
 	 * optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get configurations for
 	 * @param filter
@@ -88,7 +88,7 @@ public interface UserDnp3Biz {
 	/**
 	 * Update the enabled status of trusted issuer certificates, optionally
 	 * filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to update configurations for
 	 * @param filter
@@ -101,7 +101,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Delete an existing trusted issuer certificate.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to delete the configuration for
 	 * @param subjectDn
@@ -111,7 +111,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Create a new server configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to create the configuration for
 	 * @param input
@@ -122,7 +122,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Update an existing server configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to update the configuration for
 	 * @param serverId
@@ -139,7 +139,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Update the enabled status of servers, optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to update configurations for
 	 * @param filter
@@ -151,7 +151,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Delete an existing server configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to delete the configuration for
 	 * @param serverId
@@ -162,7 +162,7 @@ public interface UserDnp3Biz {
 	/**
 	 * List the available server configurations for a given user, optionally
 	 * filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get configurations for
 	 * @param filter
@@ -174,7 +174,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Create or update a server auth configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the configuration to update
 	 * @param serverId
@@ -194,7 +194,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Update the enabled status of server auths, optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to update configurations for
 	 * @param filter
@@ -206,7 +206,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Delete an existing server auth configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the configuration to update
 	 * @param serverId
@@ -219,7 +219,7 @@ public interface UserDnp3Biz {
 	/**
 	 * List the available server auth configurations for a given user,
 	 * optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get configurations for
 	 * @param filter
@@ -231,7 +231,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Create or update a server measurement configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the configuration to update
 	 * @param serverId
@@ -251,7 +251,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Update the enabled status of server measurements, optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to update configurations for
 	 * @param filter
@@ -264,7 +264,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Delete a server measurement configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the configuration to update
 	 * @param serverId
@@ -277,7 +277,7 @@ public interface UserDnp3Biz {
 	/**
 	 * List the available server measurement configurations for a given user,
 	 * optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get configurations for
 	 * @param filter
@@ -289,7 +289,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Create or update a server control configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the configuration to update
 	 * @param serverId
@@ -309,7 +309,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Update the enabled status of server controls, optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to update configurations for
 	 * @param filter
@@ -321,7 +321,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Delete a server control configuration.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the configuration to update
 	 * @param serverId
@@ -334,7 +334,7 @@ public interface UserDnp3Biz {
 	/**
 	 * List the available server control configurations for a given user,
 	 * optionally filtered.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get configurations for
 	 * @param filter
@@ -346,16 +346,16 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Get an example server configuration CSV.
-	 * 
+	 *
 	 * <p>
 	 * The supported {@code mimeType} values include:
 	 * </p>
-	 * 
+	 *
 	 * <ul>
 	 * <li>text/csv</li>
 	 * <li>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param mimeType
 	 *        the desired example mime type
 	 * @return the resource
@@ -366,11 +366,11 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Import a CSV resource of server measurement and control configurations.
-	 * 
+	 *
 	 * <p>
 	 * The expected structure of the CSV is:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><b>Node ID</b> - a datum stream node ID</li>
 	 * <li><b>Source ID</b> - a datum stream source ID, or control ID for
@@ -384,7 +384,7 @@ public interface UserDnp3Biz {
 	 * <li><b>Decimal Scale</b> - an optional integer decimal scale to round
 	 * decimals to; empty or -1 for no rounding</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to import configurations for
 	 * @param serverId
@@ -407,7 +407,7 @@ public interface UserDnp3Biz {
 
 	/**
 	 * Export server measurement and control configurations as CSV.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to import configurations for
 	 * @param filter
@@ -419,7 +419,8 @@ public interface UserDnp3Biz {
 	 *        default
 	 * @throws IOException
 	 *         if an IO error occurs
-	 * @see #importServerConfigurationsCsv(Long, Long, InputStreamSource)
+	 * @see #importServerConfigurationsCsv(Long, Long, InputStreamSource,
+	 *      Locale)
 	 */
 	void exportServerConfigurationsCsv(Long userId, ServerDataPointFilter filter, OutputStream out,
 			Locale locale) throws IOException;
