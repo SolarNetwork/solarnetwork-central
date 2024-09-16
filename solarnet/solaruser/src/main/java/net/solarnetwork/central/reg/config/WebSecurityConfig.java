@@ -58,6 +58,7 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
@@ -130,6 +131,9 @@ public class WebSecurityConfig {
 	@Autowired
 	private HandlerExceptionResolver handlerExceptionResolver;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@Bean
 	public RequestRejectedHandler requestRejectedHandler() {
 		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
@@ -137,7 +141,7 @@ public class WebSecurityConfig {
 
 	@Bean
 	public UserDetailsService userDetailsService() {
-		JdbcUserDetailsService service = new JdbcUserDetailsService();
+		JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
 		service.setDataSource(dataSource);
 		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
 		service.setAuthoritiesByUsernameQuery(
@@ -145,16 +149,17 @@ public class WebSecurityConfig {
 		return service;
 	}
 
-	private AuthenticationProvider authenticationProvider() {
+	private AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService());
+		provider.setUserDetailsService(userDetailsService);
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationEventPublisher authEventPublisher) {
-		var mgr = new ProviderManager(authenticationProvider());
+	public AuthenticationManager authenticationManager(UserDetailsService userDetailsService,
+			AuthenticationEventPublisher authEventPublisher) {
+		var mgr = new ProviderManager(authenticationProvider(userDetailsService));
 		mgr.setAuthenticationEventPublisher(authEventPublisher);
 		return mgr;
 	}
@@ -267,8 +272,11 @@ public class WebSecurityConfig {
 		@Autowired
 		private SecurityTokenFilterSettings securityTokenFilterSettings;
 
+		@Autowired
+		private ObjectMapper objectMapper;
+
 		private UserDetailsService tokenUserDetailsService() {
-			JdbcUserDetailsService service = new JdbcUserDetailsService();
+			JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
 			service.setDataSource(dataSource);
 			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
 			service.setAuthoritiesByUsernameQuery(

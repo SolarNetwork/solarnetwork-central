@@ -46,6 +46,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.security.Role;
 import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
@@ -59,7 +60,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
@@ -80,6 +81,9 @@ public class WebSecurityConfig {
 	@Autowired
 	private HandlerExceptionResolver handlerExceptionResolver;
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@Bean
 	public RequestRejectedHandler requestRejectedHandler() {
 		return new HandlerExceptionResolverRequestRejectedHandler(handlerExceptionResolver);
@@ -87,7 +91,7 @@ public class WebSecurityConfig {
 
 	@Bean
 	public UserDetailsService userDetailsService() {
-		JdbcUserDetailsService service = new JdbcUserDetailsService();
+		JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
 		service.setDataSource(dataSource);
 		service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
 		service.setAuthoritiesByUsernameQuery(
@@ -164,10 +168,13 @@ public class WebSecurityConfig {
 		private HandlerExceptionResolver handlerExceptionResolver;
 
 		@Autowired
+		private ObjectMapper objectMapper;
+
+		@Autowired
 		private SecurityTokenFilterSettings securityTokenFilterSettings;
 
 		private UserDetailsService tokenUserDetailsService() {
-			JdbcUserDetailsService service = new JdbcUserDetailsService();
+			JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
 			service.setDataSource(dataSource);
 			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_TOKEN_USERS_BY_USERNAME_SQL);
 			service.setAuthoritiesByUsernameQuery(
