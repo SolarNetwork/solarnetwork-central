@@ -39,7 +39,7 @@ import org.apache.tomcat.util.http.fileupload.servlet.ServletRequestContext;
  * {@code multipart/mixed} encoding type, as specified by
  * <a href="http://www.ietf.org/rfc/rfc1867.txt">RFC 1867</a>.  Use {@link
  * #parseRequest(HttpServletRequest)} to acquire a list of {@link
- * org.apache.commons.fileupload.FileItem}s associated with a given HTML
+ * org.apache.tomcat.util.http.fileupload.FileItem}s associated with a given HTML
  * widget.</p>
  *
  * <p>How the data for individual parts is stored is determined by the factory
@@ -79,7 +79,7 @@ public class ServletFileUpload extends FileUpload {
      * configured, using {@code setFileItemFactory()}, before attempting
      * to parse requests.
      *
-     * @see FileUpload#FileUpload(FileItemFactory)
+     * @see ServletFileUpload#ServletFileUpload(FileItemFactory)
      */
     public ServletFileUpload() {
     }

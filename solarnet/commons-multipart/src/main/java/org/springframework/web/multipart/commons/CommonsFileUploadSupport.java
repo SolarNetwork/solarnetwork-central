@@ -100,7 +100,7 @@ public abstract class CommonsFileUploadSupport {
 	 * Set the maximum allowed size (in bytes) before an upload gets rejected.
 	 * -1 indicates no limit (the default).
 	 * @param maxUploadSize the maximum upload size allowed
-	 * @see org.apache.commons.fileupload.FileUploadBase#setSizeMax
+	 * @see org.apache.tomcat.util.http.fileupload.FileUploadBase#setSizeMax
 	 */
 	public void setMaxUploadSize(long maxUploadSize) {
 		this.fileUpload.setSizeMax(maxUploadSize);
@@ -111,7 +111,7 @@ public abstract class CommonsFileUploadSupport {
 	 * an upload gets rejected. -1 indicates no limit (the default).
 	 * @param maxUploadSizePerFile the maximum upload size per file
 	 * @since 4.2
-	 * @see org.apache.commons.fileupload.FileUploadBase#setFileSizeMax
+	 * @see org.apache.tomcat.util.http.fileupload.FileUploadBase#setFileSizeMax
 	 */
 	public void setMaxUploadSizePerFile(long maxUploadSizePerFile) {
 		this.fileUpload.setFileSizeMax(maxUploadSizePerFile);
@@ -122,7 +122,7 @@ public abstract class CommonsFileUploadSupport {
 	 * Uploaded files will still be received past this amount, but they will not be
 	 * stored in memory. Default is 10240, according to Commons FileUpload.
 	 * @param maxInMemorySize the maximum in memory size allowed
-	 * @see org.apache.commons.fileupload.disk.DiskFileItemFactory#setSizeThreshold
+	 * @see org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory#setSizeThreshold
 	 */
 	public void setMaxInMemorySize(int maxInMemorySize) {
 		this.fileItemFactory.setSizeThreshold(maxInMemorySize);
@@ -137,10 +137,10 @@ public abstract class CommonsFileUploadSupport {
 	 * overriding the character encoding in a filter that invokes the
 	 * {@code ServletRequest.setCharacterEncoding} method.
 	 * @param defaultEncoding the character encoding to use
-	 * @see javax.servlet.ServletRequest#getCharacterEncoding
-	 * @see javax.servlet.ServletRequest#setCharacterEncoding
+	 * @see jakarta.servlet.ServletRequest#getCharacterEncoding
+	 * @see jakarta.servlet.ServletRequest#setCharacterEncoding
 	 * @see WebUtils#DEFAULT_CHARACTER_ENCODING
-	 * @see org.apache.commons.fileupload.FileUploadBase#setHeaderEncoding
+	 * @see org.apache.tomcat.util.http.fileupload.FileUploadBase#setHeaderEncoding
 	 */
 	public void setDefaultEncoding(String defaultEncoding) {
 		this.fileUpload.setHeaderEncoding(defaultEncoding);
@@ -315,7 +315,7 @@ public abstract class CommonsFileUploadSupport {
 	 * potentially holding temporary data on disk.
 	 * <p>Deletes the underlying Commons FileItem instances.
 	 * @param multipartFiles a Collection of MultipartFile instances
-	 * @see org.apache.commons.fileupload.FileItem#delete()
+	 * @see org.apache.tomcat.util.http.fileupload.FileItem#delete()
 	 */
 	protected void cleanupFileItems(MultiValueMap<String, MultipartFile> multipartFiles) {
 		for (List<MultipartFile> files : multipartFiles.values()) {
