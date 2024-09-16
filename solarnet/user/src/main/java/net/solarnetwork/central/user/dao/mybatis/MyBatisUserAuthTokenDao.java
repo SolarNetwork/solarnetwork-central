@@ -49,7 +49,7 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 
 	/**
 	 * The query name used for
-	 * {@link #createAuthorizationV2Builder(String, Instant)}.
+	 * {@link #createSnws2AuthorizationBuilder(String, Instant)}.
 	 */
 	public static final String QUERY_FOR_SIGNING_KEY = "get-snws2-signingkey-for-tokenid";
 

@@ -95,7 +95,7 @@ public final class MoneyUtils {
 	 * 
 	 * <p>
 	 * This method exists because Moneta requires an implementation-specific
-	 * {@link CurrencySymbol} class to get the desired format.
+	 * {@code CurrencySymbol} class to get the desired format.
 	 * </p>
 	 * 
 	 * @param locale
