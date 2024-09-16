@@ -80,7 +80,7 @@ public class MyBatisNodeInstructionDao
 	public static final String UPDATE_STALE_STATE = "update-NodeInstruction-stale-state";
 
 	/**
-	 * Query name used by {@link #purgeIncompletInstructions(Instant)}.
+	 * Query name used by {@link #purgeIncompleteInstructions(Instant)}.
 	 * 
 	 * @since 1.4
 	 */

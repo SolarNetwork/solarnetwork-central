@@ -52,8 +52,10 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Constructor.
 	 * 
-	 * @param userNodeDao
-	 *        the UserNodeDao to use
+	 * @param nodeOwnershipDao
+	 *        the ownership DAO to use
+	 * @param nodeInstructionDao
+	 *        the instruction DAO to use
 	 */
 	public InstructorSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
 			NodeInstructionDao nodeInstructionDao) {
@@ -176,8 +178,8 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * 
 	 * @param instructionIds
 	 *        the instruction IDs
-	 * @param instruction
-	 *        the instruction
+	 * @param instructions
+	 *        the instructions
 	 */
 	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions")
 	public void viewInstructionsAccessCheck(Set<Long> instructionIds,
@@ -217,8 +219,8 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * Allow the current user (or current node) access to updating instructions
 	 * by ID.
 	 * 
-	 * @param instructionId
-	 *        the ID of the instruction being updated
+	 * @param instructionIds
+	 *        the IDs of the instructions being updated
 	 */
 	@Before("updateInstructionsState(instructionIds)")
 	public void updateInstructionsAccessCheck(Set<Long> instructionIds) {
