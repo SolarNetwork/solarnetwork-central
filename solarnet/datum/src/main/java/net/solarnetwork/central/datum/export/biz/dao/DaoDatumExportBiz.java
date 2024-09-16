@@ -652,8 +652,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
-	public void setEventPublisher(AppEventPublisher eventAdmin) {
-		this.eventPublisher = eventAdmin;
+	public void setEventPublisher(AppEventPublisher eventPublisher) {
+		this.eventPublisher = eventPublisher;
 	}
 
 	/**

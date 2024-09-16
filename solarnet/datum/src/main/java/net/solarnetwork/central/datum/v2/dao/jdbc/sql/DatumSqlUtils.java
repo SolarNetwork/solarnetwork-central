@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumSqlUtils.java - 17/11/2020 12:19:21 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -67,7 +67,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
 
 /**
  * SQL utilities for datum.
- * 
+ *
  * @author matt
  * @version 2.4
  * @since 3.8
@@ -89,17 +89,17 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>kind -&gt; agg_kind</li>
 	 * <li>stream -&gt; stream_id</li>
 	 * <li>time -&gt; ts_start</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> STALE_AGGREGATE_SORT_KEY_MAPPING;
@@ -114,11 +114,11 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>loc -&gt; obj_id</li>
 	 * <li>node -&gt; obj_id</li>
@@ -126,7 +126,7 @@ public final class DatumSqlUtils {
 	 * <li>source -&gt; source_id</li>
 	 * <li>stream -&gt; stream_id</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> STREAM_METADATA_SORT_KEY_MAPPING;
@@ -143,17 +143,17 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by datum stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>node -&gt; node_id</li>
 	 * <li>source -&gt; source_id</li>
 	 * <li>stream -&gt; stream_id</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> NODE_STREAM_METADATA_SORT_KEY_MAPPING;
@@ -168,17 +168,17 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by datum stream columns.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the entries from
 	 * {@link #NODE_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>created -&gt; ts</li>
 	 * <li>time -&gt; ts</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> NODE_STREAM_SORT_KEY_MAPPING;
@@ -193,17 +193,17 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by location datum stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>node -&gt; node_id</li>
 	 * <li>source -&gt; source_id</li>
 	 * <li>stream -&gt; stream_id</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> LOCATION_STREAM_METADATA_SORT_KEY_MAPPING;
@@ -218,17 +218,17 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by location datum stream columns.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the entries from
 	 * {@link #LOCATION_STREAM_METADATA_SORT_KEY_MAPPING} and following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>created -&gt; ts</li>
 	 * <li>time -&gt; ts</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> LOCATION_STREAM_SORT_KEY_MAPPING;
@@ -243,18 +243,18 @@ public final class DatumSqlUtils {
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by datum stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>created -&gt; aud_ts</li>
 	 * <li>node -&gt; aud_node_id</li>
 	 * <li>source -&gt; aud_source_id</li>
 	 * <li>time -&gt; aud_ts</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> AUDIT_DATUM_SORT_KEY_MAPPING;
@@ -270,14 +270,14 @@ public final class DatumSqlUtils {
 	/**
 	 * Generate SQL {@literal ORDER BY} criteria for a set of
 	 * {@link SortDescriptor}.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal , key} for each key.
 	 * The leading comma and space characters are <b>not</b> stripped, but the
 	 * returned value indicates the number of characters to trim from the
 	 * results if needed.
 	 * </p>
-	 * 
+	 *
 	 * @param sorts
 	 *        the sorts
 	 * @param sortKeyMapping
@@ -297,17 +297,17 @@ public final class DatumSqlUtils {
 	/**
 	 * Test if a default stream metadata sort key is present in a list of sort
 	 * descriptors.
-	 * 
+	 *
 	 * <p>
 	 * The default list of metadata sort keys used is:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>loc</li>
 	 * <li>node</li>
 	 * <li>source</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sorts
 	 *        the sort descriptors to search for metadata keys in
 	 * @return {@literal true} if some sort descriptor in {@code sorts} is also
@@ -320,14 +320,14 @@ public final class DatumSqlUtils {
 	/**
 	 * Test if a stream metadata sort key is present in a list of sort
 	 * descriptors.
-	 * 
+	 *
 	 * <p>
 	 * This method can be useful for sorting datum stream result sets, to know
 	 * if stream metadata must be available to sort by. For example a SQL query
 	 * might need to include a {@literal JOIN} clause to a stream metadata table
 	 * if a metadata sort key is requested.
 	 * </p>
-	 * 
+	 *
 	 * @param sorts
 	 *        the sort descriptors to search for metadata keys in
 	 * @param orderedMetaSortKeys
@@ -351,13 +351,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -455,13 +455,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find node metadata.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -480,13 +480,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find location metadata.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -505,18 +505,18 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find location metadata.
-	 * 
+	 *
 	 * <p>
 	 * The filter is assumed to be for location metadata if a location ID is
 	 * available; otherwise node metadata is assumed.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -542,11 +542,11 @@ public final class DatumSqlUtils {
 	public enum MetadataSelectStyle {
 		/**
 		 * Query for the minimum metadata.
-		 * 
+		 *
 		 * <p>
 		 * This will output the following columns:
 		 * </p>
-		 * 
+		 *
 		 * <ol>
 		 * <li>stream_id</li>
 		 * <li>obj_id</li>
@@ -557,11 +557,11 @@ public final class DatumSqlUtils {
 
 		/**
 		 * Query for the minimum metadata with time zone information.
-		 * 
+		 *
 		 * <p>
 		 * This will output the following columns:
 		 * </p>
-		 * 
+		 *
 		 * <ol>
 		 * <li>stream_id</li>
 		 * <li>obj_id</li>
@@ -573,11 +573,11 @@ public final class DatumSqlUtils {
 
 		/**
 		 * Query for metadata with time zone and geography information.
-		 * 
+		 *
 		 * <p>
 		 * This will output the following columns:
 		 * </p>
-		 * 
+		 *
 		 * <ol>
 		 * <li>stream_id</li>
 		 * <li>obj_id</li>
@@ -599,11 +599,11 @@ public final class DatumSqlUtils {
 
 		/**
 		 * Query for the full metadata including time zone.
-		 * 
+		 *
 		 * <p>
 		 * This will output the following columns:
 		 * </p>
-		 * 
+		 *
 		 * <ol>
 		 * <li>stream_id</li>
 		 * <li>obj_id</li>
@@ -621,7 +621,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find full node metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -636,7 +636,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find node metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param style
@@ -645,8 +645,8 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereNodeMetadata(ObjectMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria,
+	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			StringBuilder buf) {
@@ -656,7 +656,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find node metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param style
@@ -667,8 +667,8 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereNodeMetadata(ObjectMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria,
+	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			CombiningConfig combiningConfig, StringBuilder buf) {
@@ -678,7 +678,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate a SQL clause for metadata object ID selection.
-	 * 
+	 *
 	 * @param combiningConfig
 	 *        the optional combining configuration
 	 * @param kind
@@ -747,7 +747,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find node metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param style
@@ -767,8 +767,8 @@ public final class DatumSqlUtils {
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
 	 * @see #whereNodeMetadata(ObjectMetadataCriteria, StringBuilder)
-	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see #prepareObjectMetadataFilter(ObjectMetadataCriteria,
+	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, MetadataSelectStyle style,
 			ObjectStreamCriteria streamFilter, String datumTableName, Aggregation aggregation,
@@ -820,7 +820,7 @@ public final class DatumSqlUtils {
 	/**
 	 * Generate SQL {@code INNER JOIN} clause for stream metadata to a datum
 	 * table on the most extreme datum available (earliest or latest).
-	 * 
+	 *
 	 * @param tableName
 	 *        the datum table name
 	 * @param timeColumnName
@@ -852,7 +852,7 @@ public final class DatumSqlUtils {
 	/**
 	 * Generate a SQL {@literal INNER JOIN} clause to limit metadata to a date
 	 * range.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter whose date or local date range to use
 	 * @param tableName
@@ -888,7 +888,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find full location metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -901,7 +901,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find location metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param style
@@ -918,7 +918,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find location metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param style
@@ -937,7 +937,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL query to find location metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param style
@@ -1000,7 +1000,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query to find streams.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param con
@@ -1027,7 +1027,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query to find stream metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param kind
@@ -1119,7 +1119,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query to find node metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param kind
@@ -1135,8 +1135,8 @@ public final class DatumSqlUtils {
 	 *         if any SQL error occurs
 	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
 	 * @see #locationMetadataFilterSql(ObjectMetadataCriteria, StringBuilder)
-	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria,
+	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int prepareObjectMetadataFilter(ObjectMetadataCriteria filter, ObjectDatumKind kind,
 			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
@@ -1154,13 +1154,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query to find datum metadata.
-	 * 
+	 *
 	 * <p>
 	 * The first parameter set If a location ID is provided on the filter, then
 	 * the filter is assumed to be for location metadata; otherwise node
 	 * metadata is assumed.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param con
@@ -1173,8 +1173,8 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @see #whereDatumMetadata(DatumStreamCriteria, StringBuilder)
-	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria,
+	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int prepareDatumMetadataFilter(ObjectStreamCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
@@ -1183,13 +1183,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query to find datum metadata.
-	 * 
+	 *
 	 * <p>
 	 * The first parameter set If a location ID is provided on the filter, then
 	 * the filter is assumed to be for location metadata; otherwise node
 	 * metadata is assumed.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param combiningConfig
@@ -1204,8 +1204,8 @@ public final class DatumSqlUtils {
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @see #whereDatumMetadata(DatumStreamCriteria, StringBuilder)
-	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see #prepareStreamMetadataFilter(StreamMetadataCriteria,
+	 *      ObjectDatumKind, Connection, PreparedStatement, int)
 	 */
 	public static int prepareDatumMetadataFilter(ObjectStreamCriteria filter,
 			CombiningConfig combiningConfig, Connection con, PreparedStatement stmt, int parameterOffset)
@@ -1260,7 +1260,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Get the SQL column name representing the time component of a query.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregate level being queried
 	 * @return if {@code aggregation} is provided and not {@literal None} then
@@ -1272,13 +1272,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -1292,13 +1292,13 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param aggregation
@@ -1325,7 +1325,7 @@ public final class DatumSqlUtils {
 	/**
 	 * A standardized SQL clause for casting a local date to a stream's time
 	 * zone.
-	 * 
+	 *
 	 * <p>
 	 * Can be passed as the {@code zoneClause} to
 	 * {@link #whereLocalDateRange(LocalDateRangeCriteria, Aggregation, String, StringBuilder)}.
@@ -1335,25 +1335,25 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * The {@code zoneClause} argument can be used to cast the local date
 	 * parameters into absolute dates. For example, assuming a stream metadata
 	 * table is available under the alias {@literal s}, a {@code zoneClause} of
 	 * {@literal AT TIME ZONE s.time_zone} would generate SQl like:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * 	AND datum.ts &gt;= ? AT TIME ZONE s.time_zone
 	 * 	AND datum.ts &lt; ? AT TIME ZONE s.time_zone
 	 * </pre>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param aggregation
@@ -1373,30 +1373,30 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria to find stream metadata.
-	 * 
+	 *
 	 * <p>
 	 * The generated SQL will include {@literal date_trunc()} calls on the start
 	 * and/or end date parameters, according to the {@code startRoundingMode}
 	 * and {@code endRoundingMode} parameters.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * The {@code zoneClause} argument can be used to cast the local date
 	 * parameters into absolute dates. For example, assuming a stream metadata
 	 * table is available under the alias {@literal s}, a {@code zoneClause} of
 	 * {@literal AT TIME ZONE s.time_zone} would generate SQl like:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * 	AND datum.ts &gt;= ? AT TIME ZONE s.time_zone
 	 * 	AND datum.ts &lt; ? AT TIME ZONE s.time_zone
 	 * </pre>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param aggregation
@@ -1441,14 +1441,14 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate a rounded date SQL parameter clause.
-	 * 
+	 *
 	 * <p>
 	 * The output is along the lines of {@literal date_trunc('day', ?)}. If no
 	 * rounding mode is needed (because {@code roundingMode} is {@literal null}
 	 * or {@literal UNNECESSARY}) then a simple {@literal ?} placeholder will be
 	 * generated.
 	 * </p>
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation mode
 	 * @param roundingMode
@@ -1488,7 +1488,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate a SQL {@literal INTERVAL} clause for an aggregation.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation
 	 * @param count
@@ -1534,7 +1534,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Get a SQL interval type for an aggregation.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation to get the type for
 	 * @return the type
@@ -1566,7 +1566,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query date range filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param stmt
@@ -1586,7 +1586,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query local date range filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param con
@@ -1612,7 +1612,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query limit/offset.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param con
@@ -1634,7 +1634,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Wrap a SQL query with a {@literal SELECT COUNT(*)} clause.
-	 * 
+	 *
 	 * @param sql
 	 *        the SQL query to wrap
 	 * @return the wrapped query
@@ -1646,14 +1646,14 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Generate a cache key out of a stream filter.
-	 * 
+	 *
 	 * <p>
 	 * If the filter defines a single stream ID, then the
 	 * {@link UUID#toString()} version of that is returned directly. Otherwise,
 	 * the stream IDs are hashed into a SHA-1 digest value, and the hex-encoded
 	 * result of that is returned.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param sortKeyMapping
@@ -1706,7 +1706,7 @@ public final class DatumSqlUtils {
 	/**
 	 * Generate a {@code solardatm.rollup_agg_data()} SQL clause for aggregating
 	 * {@code agg_data} rows.
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 */
@@ -1720,7 +1720,7 @@ public final class DatumSqlUtils {
 	/**
 	 * Generate SQL {@code WHERE} clause components for a metadata search
 	 * filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter to use
 	 * @param buf
@@ -1785,7 +1785,7 @@ public final class DatumSqlUtils {
 
 	/**
 	 * Prepare a SQL query local date range filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param con

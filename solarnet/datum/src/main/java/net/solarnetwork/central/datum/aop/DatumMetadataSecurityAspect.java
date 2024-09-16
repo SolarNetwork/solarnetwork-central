@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumMetadataSecurityAspect.java - Oct 3, 2014 4:21:36 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -50,7 +50,7 @@ import net.solarnetwork.central.security.SecurityUtils;
 
 /**
  * Security AOP support for {@link DatumMetadataBiz}.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -69,7 +69,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
 	 */
@@ -139,7 +139,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to modifying datum metadata.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node to verify
 	 */
@@ -150,7 +150,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to reading datum metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter to verify
 	 */
@@ -162,11 +162,11 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	/**
 	 * Enforce node ID and source ID policy restrictions when requesting the
 	 * available sources for node datum metadata.
-	 * 
+	 *
 	 * First the node ID is verified. Then, for all returned source ID values,
 	 * if the active policy has no source ID restrictions return all values,
 	 * otherwise remove any value not included in the policy.
-	 * 
+	 *
 	 * @param pjp
 	 *        The join point.
 	 * @param nodeIds
@@ -233,7 +233,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to reading datum metadata.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter to verify
 	 * @since 1.3
@@ -264,11 +264,9 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to location requests.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
-	 * @param filter
-	 *        the filter
 	 */
 	@Before("findLocationRequests(userId) || getLocationRequest(userId)")
 	public void viewLocationRequestsCheck(Long userId) {
@@ -277,11 +275,9 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to location requests.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
-	 * @param filter
-	 *        the filter
 	 */
 	@Before("submitLocationRequest(userId) || updateLocationRequest(userId) || removeLocationRequest(userId)")
 	public void modifyLocationRequestsCheck(Long userId) {
@@ -292,7 +288,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * Set the set of roles required to administer location metadata. If more
 	 * than one role is provided, any one role must match for the authorization
 	 * to succeed.
-	 * 
+	 *
 	 * @param locationMetadataAdminRoles
 	 *        the set of roles
 	 * @since 1.2

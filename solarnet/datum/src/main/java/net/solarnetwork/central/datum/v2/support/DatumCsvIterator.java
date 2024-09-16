@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumCsvIterator.java - 8/11/2018 7:22:12 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -41,12 +41,12 @@ import net.solarnetwork.util.CloseableIterator;
 
 /**
  * Iterator that parses CSV data into {@link Datum} objects.
- * 
+ *
  * <p>
  * The CSV must provide the following a header row with the columns at a
  * minimum:
  * </p>
- * 
+ *
  * <ul>
  * <li>A <em>timestamp</em> column named {@literal created}, {@literal ts}, or
  * {@literal date}. The format is determined by the {@link DateTimeFormatter}
@@ -58,14 +58,14 @@ import net.solarnetwork.util.CloseableIterator;
  * <li>A <em>source ID</em> named {@literal sourceId} or
  * {@literal source_id}.</li>
  * </ul>
- * 
+ *
  * <p>
  * Beyond that, additional datum property columns should be named according to
  * the {@link ObjectDatumStreamMetadata} property names resolved for each row
- * via {@link ObjectDatumStreamMetadataProvider.metadataForObjectSource(Long,
- * String)}.
+ * via
+ * {@link ObjectDatumStreamMetadataProvider#metadataForObjectSource(Long, String)}.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -85,12 +85,12 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The timestamp format will be set to the ISO 8601 instant format in UTC,
 	 * such as {@literal '2011-12-03T10:15:30Z'}.
 	 * </p>
-	 * 
+	 *
 	 * @param reader
 	 *        the CSV reader
 	 * @param metaProvider
@@ -107,7 +107,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param reader
 	 *        the CSV reader
 	 * @param metaProvider
@@ -205,7 +205,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 
 	/**
 	 * Parse a single row of CSV data.
-	 * 
+	 *
 	 * @param row
 	 *        the row data
 	 * @return the parsed object, or {@literal null} to skip row and continue

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumFilterCommand.java - Dec 2, 2013 5:39:51 PM
- * 
+ *
  * Copyright 2007-2013 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -51,7 +51,7 @@ import net.solarnetwork.util.StringUtils;
 /**
  * Implementation of {@link LocationDatumFilter}, {@link NodeDatumFilter}, and
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
- * 
+ *
  * @author matt
  * @version 2.4
  */
@@ -108,7 +108,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Construct from a Location filter.
-	 * 
+	 *
 	 * @param loc
 	 *        the location
 	 */
@@ -123,7 +123,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param other
 	 *        the filter to copy
 	 * @since 1.9
@@ -137,7 +137,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param other
 	 *        the filter to copy
 	 * @since 1.10
@@ -156,7 +156,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param other
 	 *        the filter to copy
 	 * @param loc
@@ -487,7 +487,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	/**
 	 * Calls {@link #setAggregation(Aggregation)} for backwards API
 	 * compatibility.
-	 * 
+	 *
 	 * @param aggregate
 	 *        the aggregation to set
 	 */
@@ -497,7 +497,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Get the aggregation key.
-	 * 
+	 *
 	 * @return the aggregation key, never {@literal null}
 	 * @since 1.9
 	 */
@@ -508,12 +508,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the aggregation as a key value.
-	 * 
+	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link Aggregation} key value, then
 	 * {@link Aggregation#None} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 * @since 1.9
@@ -530,7 +530,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Get the partial aggregation.
-	 * 
+	 *
 	 * @return the partial aggregation
 	 * @since 1.15
 	 */
@@ -541,7 +541,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the partial aggregation.
-	 * 
+	 *
 	 * @param partialAggregation
 	 *        the aggregation to set
 	 * @since 1.15
@@ -552,7 +552,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Get the aggregation key.
-	 * 
+	 *
 	 * @return the aggregation key, never {@literal null}
 	 * @since 1.15
 	 */
@@ -563,12 +563,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the aggregation as a key value.
-	 * 
+	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link Aggregation} key value, then
 	 * {@link Aggregation#None} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 * @since 1.15
@@ -649,7 +649,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Toggle the total results count flag.
-	 * 
+	 *
 	 * @param withoutTotalResultsCount
 	 *        the value to set
 	 * @since 1.9
@@ -660,7 +660,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.10
 	 */
 	@Override
@@ -670,7 +670,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the combining type.
-	 * 
+	 *
 	 * @param combiningType
 	 *        the type
 	 * @since 1.10
@@ -681,7 +681,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Get the combining type key.
-	 * 
+	 *
 	 * @return the combining type key, or {@literal null} if not defined
 	 * @since 1.10
 	 */
@@ -692,12 +692,12 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the aggregation as a key value.
-	 * 
+	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link CombiningType} key value,
 	 * then {@literal null} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 * @since 1.10
@@ -714,7 +714,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.10
 	 */
 	@Override
@@ -724,7 +724,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the node ID mappings.
-	 * 
+	 *
 	 * @param nodeIdMappings
 	 *        the mappings to set
 	 * @since 1.10
@@ -735,7 +735,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the node ID mappings value via a list of string encoded mappings.
-	 * 
+	 *
 	 * <p>
 	 * Each mapping in {@code mappings} must be encoded as
 	 * {@literal VIRT_NODE_ID:NODE_ID1,NODE_ID2,...}. That is, a virtual node ID
@@ -746,7 +746,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * includes the colon delimiter, and the remaining values are simple
 	 * strings. In that case a single virtual node ID mapping is created.
 	 * </p>
-	 * 
+	 *
 	 * @param mappings
 	 *        the mappings to set
 	 * @since 1.10
@@ -789,7 +789,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.10
 	 */
 	@Override
@@ -799,7 +799,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the source ID mappings.
-	 * 
+	 *
 	 * @param sourceIdMappings
 	 *        the mappings to set
 	 * @since 1.10
@@ -810,20 +810,20 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the source ID mappings value via a list of string encoded mappings.
-	 * 
+	 *
 	 * <p>
 	 * Each mapping in {@code mappings} must be encoded as
 	 * {@literal VIRT_SOURCE_ID:SOURCE_ID1,SOURCE_ID2,...}. That is, a virtual
 	 * source ID followed by a colon followed by a comma-delimited list of real
 	 * source IDs.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * A special case is handled when the mappings are such that the first
 	 * includes the colon delimiter, and the remaining values are simple
 	 * strings. In that case a single virtual source ID mapping is created.
 	 * </p>
-	 * 
+	 *
 	 * @param mappings
 	 *        the mappings to set
 	 * @since 1.10
@@ -870,7 +870,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Get the datum rollups as key values.
-	 * 
+	 *
 	 * @return the datum rollup type key values, or {@literal null} if not
 	 *         defined
 	 * @since 1.11
@@ -891,7 +891,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the datum rollup types to use.
-	 * 
+	 *
 	 * @param datumRollupTypes
 	 *        the rollup types
 	 * @since 1.11
@@ -908,7 +908,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the reading type.
-	 * 
+	 *
 	 * @param readingType
 	 *        the type to set
 	 * @since 2.3
@@ -919,7 +919,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.8
 	 */
 	@Override
@@ -939,7 +939,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.8
 	 */
 	@Override
@@ -980,7 +980,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set a single property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the {@code propertyNames} array,
@@ -988,7 +988,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * {@code propertyNames} value with a new array containing just the name
 	 * passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 2.4
@@ -1005,7 +1005,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the property names.
-	 * 
+	 *
 	 * @param propertyNames
 	 *        the names to set
 	 * @since 2.4
@@ -1022,7 +1022,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set a single instantaneous property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the
@@ -1030,7 +1030,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * this method replaces any existing {@code instantaneousPropertyNames}
 	 * value with a new array containing just the name passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 2.4
@@ -1047,8 +1047,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the instantaneous property names.
-	 * 
-	 * @param propertyNames
+	 *
+	 * @param instantaneousPropertyNames
 	 *        the names to set
 	 * @since 2.4
 	 */
@@ -1064,7 +1064,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set a single accumulating property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the
@@ -1072,7 +1072,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * method replaces any existing {@code accumulatingPropertyNames} value with
 	 * a new array containing just the name passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 2.4
@@ -1089,8 +1089,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the accumulating property names.
-	 * 
-	 * @param propertyNames
+	 *
+	 * @param accumulatingPropertyNames
 	 *        the names to set
 	 * @since 2.4
 	 */
@@ -1106,7 +1106,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set a single status property name.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single property name
 	 * at a time. The name is still stored on the {@code statusPropertyNames}
@@ -1114,7 +1114,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * {@code statusPropertyNames} value with a new array containing just the
 	 * name passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 * @since 2.4
@@ -1131,8 +1131,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	/**
 	 * Set the status property names.
-	 * 
-	 * @param propertyNames
+	 *
+	 * @param statusPropertyNames
 	 *        the names to set
 	 * @since 2.4
 	 */

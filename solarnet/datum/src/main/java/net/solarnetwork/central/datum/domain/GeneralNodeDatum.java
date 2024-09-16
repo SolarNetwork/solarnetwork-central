@@ -128,7 +128,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	}
 
 	/**
-	 * Convenience method for {@link GeneralNodeDatumSamples#getSampleData()}.
+	 * Convenience method for {@link DatumSamples#getSampleData()}.
 	 *
 	 * @return the sample data, or <em>null</em> if none available
 	 */
@@ -194,7 +194,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	}
 
 	/**
-	 * Get the {@link GeneralNodeDatumSamples} object as a JSON string.
+	 * Get the {@link DatumSamples} object as a JSON string.
 	 *
 	 * <p>
 	 * This method will ignore <em>null</em> values.
@@ -212,7 +212,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 	}
 
 	/**
-	 * Set the {@link GeneralNodeDatumSamples} object via a JSON string.
+	 * Set the {@link DatumSamples} object via a JSON string.
 	 *
 	 * <p>
 	 * This method will remove any previously created GeneralNodeDatumSamples

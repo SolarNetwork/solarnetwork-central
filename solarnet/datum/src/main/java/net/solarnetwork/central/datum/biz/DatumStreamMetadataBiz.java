@@ -126,8 +126,8 @@ public interface DatumStreamMetadataBiz {
 	 *
 	 * <p>
 	 * This can be more efficient than
-	 * {@link #findDatumStreamMetadata(ObjectStreamCriteria)} when all you need
-	 * are the IDs.
+	 * {@link #findDatumStreamMetadata(SecurityActor, ObjectStreamCriteria)}
+	 * when all you need are the IDs.
 	 * </p>
 	 *
 	 * @param actor
