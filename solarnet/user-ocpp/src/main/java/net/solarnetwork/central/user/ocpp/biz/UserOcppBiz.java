@@ -386,13 +386,7 @@ public interface UserOcppBiz {
 	 * 
 	 * @param filter
 	 *        the search criteria
-	 * @param sortDescriptors
-	 *        the optional sort descriptors
-	 * @param offset
-	 *        an optional result offset
-	 * @param max
-	 *        an optional maximum number of returned results
-	 * @return
+	 * @return the results
 	 */
 	FilterResults<ChargeSession, UUID> findFilteredChargeSessions(ChargeSessionFilter filter);
 
