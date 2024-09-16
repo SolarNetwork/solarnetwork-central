@@ -99,10 +99,6 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 	/**
 	 * Constructor.
 	 * 
-	 * @param clock
-	 *        the clock to use
-	 * @param instructionStats
-	 *        the stats to use
 	 * @param chargePointActionClass
 	 *        the charge point action class
 	 * @param centralSystemActionClass
