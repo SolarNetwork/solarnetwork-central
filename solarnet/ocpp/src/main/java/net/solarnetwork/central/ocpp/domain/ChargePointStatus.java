@@ -68,7 +68,6 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        the date the connection was established
 	 * @param sessionId
 	 *        the connection session ID
-	 * @return the new instance
 	 * @throws IllegalArgumentException
 	 *         if {@code userId} or {@code chargePointId} is {@literal null}
 	 */
@@ -92,7 +91,6 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 	 *        the connection session ID
 	 * @param connectedDate
 	 *        the date the connection was established
-	 * @return the new instance
 	 * @throws IllegalArgumentException
 	 *         if {@code id} is {@literal null}
 	 */

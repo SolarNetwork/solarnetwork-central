@@ -70,8 +70,6 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 	 * <li>time -&gt; ts</li>
 	 * <li>user -&gt; user_id</li>
 	 * </ol>
-	 * 
-	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> SORT_KEY_MAPPING;
 	static {
