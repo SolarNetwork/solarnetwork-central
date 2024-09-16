@@ -174,8 +174,8 @@ public interface UserInstructionInputBiz {
 	 *        the accepted output type
 	 * @param instructionResults
 	 *        instruction results to provide to the response transform
-	 * @param optional
-	 *        parameters
+	 * @param parameters
+	 *        optional parameters
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */

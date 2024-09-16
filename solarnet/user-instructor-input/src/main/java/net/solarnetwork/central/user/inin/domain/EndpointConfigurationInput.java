@@ -212,7 +212,8 @@ public class EndpointConfigurationInput
 	/**
 	 * Get the maximum execution seconds.
 	 *
-	 * @return the seconds; defaults to {@link #DEFAULT_MAX_EXECUTION_SECONDS}
+	 * @return the seconds; defaults to
+	 *         {@link EndpointConfiguration#DEFAULT_MAX_EXECUTION_SECONDS}
 	 */
 	public int getMaxExecutionSeconds() {
 		return maxExecutionSeconds;

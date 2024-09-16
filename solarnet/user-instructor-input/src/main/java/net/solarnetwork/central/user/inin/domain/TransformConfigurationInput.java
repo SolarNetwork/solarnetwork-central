@@ -139,8 +139,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	}
 
 	/**
-	 * Get the identifier of the
-	 * {@link net.solarnetwork.central.inin.biz.TransformService} to use.
+	 * Get the identifier of the transform service to use.
 	 *
 	 * @return the identifier
 	 */
@@ -149,8 +148,7 @@ public abstract sealed class TransformConfigurationInput<C extends TransformConf
 	}
 
 	/**
-	 * Set the identifier of the
-	 * {@link net.solarnetwork.central.inin.biz.TransformService} to use.
+	 * Set the identifier of the transform service to use.
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier to use
