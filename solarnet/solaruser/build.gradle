@@ -27,6 +27,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-commons-multipart')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-datum-input')
 	implementation project(':solarnet-dnp3')
