@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseOscpConfigurationEntity.java - 11/08/2022 9:45:01 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -41,7 +41,7 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Base OSCP configuration entity.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -61,7 +61,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -75,9 +75,9 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param user
-	 *        ID the user ID
+	 *
+	 * @param userId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created
@@ -107,12 +107,12 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Test if this entity has the same property values as another.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id}, {@code created}, and {@code modified} properties are not
 	 * compared.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the entity to compare to
 	 * @return {@literal true} if the properties of this entity are equal to the
@@ -120,7 +120,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 	 */
 	public boolean isSameAs(C other) {
 		// @formatter:off
-		return (this.enabled == other.isEnabled() 
+		return (this.enabled == other.isEnabled()
 				&& Objects.equals(this.name, other.getName())
 				&& Objects.equals(serviceProps, other.getServiceProps()));
 		// @formatter:on
@@ -133,7 +133,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get OAuth client settings, if available.
-	 * 
+	 *
 	 * @return the OAuth client settings, or {@literal null} if not available
 	 */
 	public OAuthClientSettings oauthClientSettings() {
@@ -156,7 +156,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Test if OAuth client settings are available.
-	 * 
+	 *
 	 * @return {@literal true} if {@link #oauthClientSettings()} would return a
 	 *         non-{@literal null} instance
 	 */
@@ -171,7 +171,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get a custom URL path, if available.
-	 * 
+	 *
 	 * @param name
 	 *        the unique name of the custom URL path to get
 	 * @return the associated custom URL path, or {@literal null} if not
@@ -194,7 +194,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get a custom URL path, using a fallback value if not available.
-	 * 
+	 *
 	 * @param name
 	 *        the unique name of the custom URL path to get
 	 * @param fallback
@@ -210,7 +210,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get the extra HTTP headers if available.
-	 * 
+	 *
 	 * @return the extra HTTP headers, or {@literal null}
 	 */
 	@SuppressWarnings("unchecked")
@@ -236,7 +236,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get the configuration ID (the entity ID).
-	 * 
+	 *
 	 * @return the configuration ID
 	 */
 	public Long getConfigId() {
@@ -245,7 +245,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get the last modification date.
-	 * 
+	 *
 	 * @return the modified
 	 */
 	public Instant getModified() {
@@ -254,7 +254,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * SGet the last modification date.
-	 * 
+	 *
 	 * @param modified
 	 *        the modified to set
 	 */
@@ -264,7 +264,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get a display name for the configuration.
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -273,7 +273,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Set a display name for the configuration.
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 */
@@ -283,7 +283,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get the enabled flag.
-	 * 
+	 *
 	 * @return the enabled
 	 */
 	public boolean isEnabled() {
@@ -292,7 +292,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Set the enabled flag.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled to set
 	 */
@@ -302,7 +302,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get the service properties.
-	 * 
+	 *
 	 * @return the serviceProps
 	 */
 	public Map<String, Object> getServiceProps() {
@@ -311,7 +311,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Set the service properties.
-	 * 
+	 *
 	 * @param serviceProps
 	 *        the serviceProps to set
 	 */
@@ -321,7 +321,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Add or remove a service property value.
-	 * 
+	 *
 	 * @param key
 	 *        the key to add, or remove if {@code value} is {@literal null}
 	 * @param value
@@ -353,7 +353,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 
 	/**
 	 * Get a service property value.
-	 * 
+	 *
 	 * @param key
 	 *        the key of the property to get
 	 * @return the value associated with {@code key}, or {@literal null} if none

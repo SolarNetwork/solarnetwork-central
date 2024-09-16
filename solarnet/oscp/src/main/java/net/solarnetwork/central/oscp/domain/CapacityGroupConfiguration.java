@@ -1,21 +1,21 @@
 /* ==================================================================
  * CapacityGroupConfiguration.java - 14/08/2022 11:20:31 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Configuration for capacity groups.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -47,7 +47,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -61,9 +61,9 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param user
-	 *        ID the user ID
+	 *
+	 * @param userId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created
@@ -106,7 +106,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 			return false;
 		}
 		// @formatter:off
-		return (Objects.equals(this.identifier, other.identifier) 
+		return (Objects.equals(this.identifier, other.identifier)
 				&& Objects.equals(this.capacityProviderMeasurementPeriod, other.capacityProviderMeasurementPeriod)
 				&& Objects.equals(this.capacityOptimizerMeasurementPeriod, other.capacityOptimizerMeasurementPeriod)
 				&& Objects.equals(this.capacityProviderId, other.capacityProviderId)
@@ -119,7 +119,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	/**
 	 * An asset ID to use to combine all capacity group assets into a single
 	 * virtual asset.
-	 * 
+	 *
 	 * @return a combined virtual asset ID, or {@literal null} to report
 	 *         individual assets
 	 * @since 1.1
@@ -132,7 +132,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Get the group identifier.
-	 * 
+	 *
 	 * @return the identifier
 	 */
 	public String getIdentifier() {
@@ -141,7 +141,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the group identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *        the identifier to set
 	 */
@@ -151,7 +151,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Get the Capacity Provider measurement period.
-	 * 
+	 *
 	 * @return the period
 	 */
 	public MeasurementPeriod getCapacityProviderMeasurementPeriod() {
@@ -160,17 +160,18 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the Capacity Provider measurement period.
-	 * 
+	 *
 	 * @param capacityProviderMeasurementPeriod
 	 *        the period to set
 	 */
-	public void setCapacityProviderMeasurementPeriod(MeasurementPeriod measurementPeriod) {
-		this.capacityProviderMeasurementPeriod = measurementPeriod;
+	public void setCapacityProviderMeasurementPeriod(
+			MeasurementPeriod capacityProviderMeasurementPeriod) {
+		this.capacityProviderMeasurementPeriod = capacityProviderMeasurementPeriod;
 	}
 
 	/**
 	 * Get the Capacity Optimizer measurement period.
-	 * 
+	 *
 	 * @return the period
 	 */
 	public MeasurementPeriod getCapacityOptimizerMeasurementPeriod() {
@@ -179,22 +180,23 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the Capacity Optimizer measurement period.
-	 * 
+	 *
 	 * @param capacityOptimizerMeasurementPeriod
 	 *        the period to set
 	 */
-	public void setCapacityOptimizerMeasurementPeriod(MeasurementPeriod measurementPeriod) {
-		this.capacityOptimizerMeasurementPeriod = measurementPeriod;
+	public void setCapacityOptimizerMeasurementPeriod(
+			MeasurementPeriod capacityOptimizerMeasurementPeriod) {
+		this.capacityOptimizerMeasurementPeriod = capacityOptimizerMeasurementPeriod;
 	}
 
 	/**
 	 * Get the capacity provider ID.
-	 * 
+	 *
 	 * <p>
 	 * The provider's {@code userId} is assumed to be the same as
 	 * {@link #getUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the ID of the associated {@link CapacityProviderConfiguration}
 	 */
 	public Long getCapacityProviderId() {
@@ -203,7 +205,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the capacity provider ID.
-	 * 
+	 *
 	 * @param capacityProviderId
 	 *        the ID of the capacity provider to set
 	 */
@@ -217,7 +219,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 	 * The optimizer's {@code userId} is assumed to be the same as
 	 * {@link #getUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the ID of the associated {@link CapacityOptimizerConfiguration}
 	 */
 	public Long getCapacityOptimizerId() {
@@ -226,7 +228,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the capacity optimizer ID.
-	 * 
+	 *
 	 * @param capacityOptimizerId
 	 *        the ID of the capacity optimizer to set
 	 */
@@ -236,7 +238,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Get the capacity provider last measurement date.
-	 * 
+	 *
 	 * @return the measurement date
 	 */
 	public Instant getCapacityProviderMeasurementDate() {
@@ -245,7 +247,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the capacity provider last measurement date.
-	 * 
+	 *
 	 * @param capacityProviderMeasurementDate
 	 *        the measurement date to set
 	 */
@@ -255,7 +257,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Get the capacity optimizer last measurement date.
-	 * 
+	 *
 	 * @return the measurement date
 	 */
 	public Instant getCapacityOptimizerMeasurementDate() {
@@ -264,7 +266,7 @@ public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<Capa
 
 	/**
 	 * Set the capacity optimizer last measurement date.
-	 * 
+	 *
 	 * @param capacityOptimizerMeasurementDate
 	 *        the measurement date to set
 	 */

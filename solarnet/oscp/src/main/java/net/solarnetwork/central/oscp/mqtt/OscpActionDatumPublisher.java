@@ -52,14 +52,8 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 	 * {@code AtMostOnce}.
 	 * </p>
 	 *
-	 * @param nodeOwnershipDao
-	 *        the node ownership DAO
-	 * @param name
-	 *        the display name of this service
 	 * @param objectMapper
 	 *        the object mapper
-	 * @param topicFn
-	 *        the function to generate the MQTT topic from a datum
 	 */
 	public OscpActionDatumPublisher(ObjectMapper objectMapper) {
 		this(objectMapper, false, MqttQos.AtMostOnce);
@@ -68,10 +62,6 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 	/**
 	 * Constructor.
 	 *
-	 * @param nodeOwnershipDao
-	 *        the node ownership DAO
-	 * @param name
-	 *        the display name of this service
 	 * @param objectMapper
 	 *        the object mapper
 	 * @param retained

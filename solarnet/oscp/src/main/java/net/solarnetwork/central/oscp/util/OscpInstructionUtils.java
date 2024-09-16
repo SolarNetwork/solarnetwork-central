@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpInstructionUtils.java - 6/10/2022 4:55:09 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,7 +40,7 @@ import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Utilities for OSCP instruction support.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -85,22 +85,19 @@ public final class OscpInstructionUtils {
 
 	/**
 	 * Decode a JSON OSCP instruction message.
-	 * 
+	 *
 	 * <p>
 	 * This method will decode the {@code Instruction} parameters of a JSON OSCP
 	 * action message into an OSCP message instance. If {@code params} contains
-	 * a {@link #OCPP_MESSAGE_PARAM} value that is a string, that will be
+	 * a {@link #OSCP_MESSAGE_PARAM} value that is a string, that will be
 	 * treated as an OCPP JSON message and decoded directly. If the value is
 	 * already a {@link ObjectNode} it will be used as-is.
 	 * </p>
-	 * 
+	 *
 	 * @param params
 	 *        the instruction parameters
-	 * @param action
-	 *        the message action to decode
-	 * 
-	 * @param <T>
-	 *        the return type
+	 * @param validator
+	 *        the validator
 	 * @return the result
 	 * @throws IllegalArgumentException
 	 *         if the instruction parameters do not describe a supported OSCP

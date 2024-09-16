@@ -1,21 +1,21 @@
 /* ==================================================================
  * SystemSettings.java - 19/08/2022 2:29:05 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,7 @@ import oscp.v20.RequiredBehaviour;
 
 /**
  * System settings.
- * 
+ *
  * @param heartbeatSeconds
  *        the heartbeat seconds
  * @param measurementStyles
@@ -41,7 +41,7 @@ public record SystemSettings(Integer heartbeatSeconds, Set<MeasurementStyle> mea
 
 	/**
 	 * Get an OSCP 2.0 value for this instance.
-	 * 
+	 *
 	 * @return the OSCP 2.0 value
 	 */
 	public RequiredBehaviour toOscp20Value() {
@@ -60,8 +60,8 @@ public record SystemSettings(Integer heartbeatSeconds, Set<MeasurementStyle> mea
 
 	/**
 	 * Get an instance for an OSCP 2.0 value.
-	 * 
-	 * @param direction
+	 *
+	 * @param behaviour
 	 *        the OSCP 2.0 value to get an instance for
 	 * @return the instance, or {@literal null} if {@code behaviour} is
 	 *         {@literal null}

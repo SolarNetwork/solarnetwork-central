@@ -1,21 +1,21 @@
 /* ==================================================================
  * AssetConfiguration.java - 14/08/2022 5:47:15 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Configuration for an asset.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -50,7 +50,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -64,9 +64,9 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param user
-	 *        ID the user ID
+	 *
+	 * @param userId
+	 *        the user ID
 	 * @param entityId
 	 *        the entity ID
 	 * @param created
@@ -121,7 +121,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 			return false;
 		}
 		// @formatter:off
-		return (Objects.equals(this.capacityGroupId, other.capacityGroupId) 
+		return (Objects.equals(this.capacityGroupId, other.capacityGroupId)
 				&& Objects.equals(this.identifier, other.identifier)
 				&& Objects.equals(this.audience, other.audience)
 				&& Objects.equals(this.nodeId, other.nodeId)
@@ -135,7 +135,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the Capacity Group ID.
-	 * 
+	 *
 	 * @return the ID of the {@link CapacityGroupConfiguration} associated with
 	 *         this entity
 	 */
@@ -145,7 +145,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the Capacity Group ID.
-	 * 
+	 *
 	 * @param capacityGroupId
 	 *        the ID of the capacity group to set
 	 */
@@ -155,7 +155,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get an identifier.
-	 * 
+	 *
 	 * @return the identifier
 	 */
 	public String getIdentifier() {
@@ -164,7 +164,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set an identifier.
-	 * 
+	 *
 	 * @param identifier
 	 *        the identifier to set
 	 */
@@ -174,7 +174,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the audience.
-	 * 
+	 *
 	 * @return the audience
 	 */
 	public OscpRole getAudience() {
@@ -183,7 +183,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the audience.
-	 * 
+	 *
 	 * @param audience
 	 *        the audience to set
 	 * @throws IllegalArgumentException
@@ -203,7 +203,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the datum stream node ID.
-	 * 
+	 *
 	 * @return the nodeId the node ID
 	 */
 	public Long getNodeId() {
@@ -212,7 +212,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the datum stream node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to set
 	 */
@@ -222,7 +222,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the datum stream source ID.
-	 * 
+	 *
 	 * @return the source ID
 	 */
 	public String getSourceId() {
@@ -231,7 +231,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the datum stream source ID.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID to set
 	 */
@@ -241,7 +241,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the asset category.
-	 * 
+	 *
 	 * @return the category
 	 */
 	public AssetCategory getCategory() {
@@ -250,7 +250,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the asset category.
-	 * 
+	 *
 	 * @param category
 	 *        the category to set
 	 */
@@ -260,7 +260,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the phase.
-	 * 
+	 *
 	 * @return the instantaneous phase
 	 */
 	public Phase getPhase() {
@@ -269,17 +269,17 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the phase.
-	 * 
+	 *
 	 * @param phase
 	 *        the phase to set
 	 */
-	public void setPhase(Phase instantaneousPhase) {
-		this.phase = instantaneousPhase;
+	public void setPhase(Phase phase) {
+		this.phase = phase;
 	}
 
 	/**
 	 * Get the instantaneous configuration.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	public AssetInstantaneousDatumConfiguration getInstantaneous() {
@@ -288,7 +288,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the instantaneous configuration
-	 * 
+	 *
 	 * @param instantaneous
 	 *        the configuration to set
 	 */
@@ -298,7 +298,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Get the energy configuration.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	public AssetEnergyDatumConfiguration getEnergy() {
@@ -307,7 +307,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 
 	/**
 	 * Set the energy configuration.
-	 * 
+	 *
 	 * @param energy
 	 *        the configuration to set
 	 */
