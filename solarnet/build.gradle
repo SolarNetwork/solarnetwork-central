@@ -11,18 +11,6 @@ ext {
 	ossrhPassword = 'ossrh-password'
 }
 
-allprojects {
-    apply plugin: 'java'
-
-    repositories {
-        mavenCentral()
-    }
-	java {
-		withJavadocJar()
-		withSourcesJar()
-	}
-}
-
 subprojects {
 	apply plugin: "java"
 
@@ -32,11 +20,12 @@ subprojects {
 		toolchain {
 	        languageVersion = JavaLanguageVersion.of(21)
 	    }
+		withJavadocJar()
+		withSourcesJar()
 	}
 
 	repositories {
 		mavenCentral()
-		//maven { url "https://dev.solarnetwork.net/archive/repository/solarnetwork-stage" }
 	}
 
 	[
