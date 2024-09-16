@@ -22,44 +22,34 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.time.Instant;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserAdhocDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
-import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 
 /**
  * MyBatis implementation of {@link UserDatumExportTaskInfoDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
 public class MyBatisUserAdhocDatumExportTaskInfoDao
 		extends BaseMyBatisUserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UUID>
 		implements UserAdhocDatumExportTaskInfoDao {
 
-	/** The query name used for {@link #getForTaskId(UUID)}. */
-	public static final String QUERY_TASK_INFO_FOR_TASK_ID = "get-UserAdhocDatumExportTaskInfo-for-task-id";
-
 	/**
 	 * The {@code DELETE} query name used for
 	 * {@link #purgeCompletedTasks(Instant)}.
 	 */
 	public static final String UPDATE_PURGE_COMPLETED = "delete-UserAdhocDatumExportTaskInfo-completed";
-
-	/**
-	 * The {@code INSERT} query name used for
-	 * {@link #addAdHocDatumExport(UserDatumExportTaskInfo)}.
-	 */
-	public static final String ADD_AD_HOC_TASK = "add-ad-hoc-task";
 
 	/**
 	 * The query name used for {@link #findTasksForUser(Long, Set, Boolean)}.

@@ -112,10 +112,8 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	 *        the task DAO to use
 	 * @param adhocTaskDao
 	 *        the ad hoc task DAO to use
-	 * @param userNodeDao
-	 *        the user node DAO to use
-	 * @param metaDao
-	 *        the metadata DAO to use
+	 * @param userExportTaskBiz
+	 *        the export task service to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */

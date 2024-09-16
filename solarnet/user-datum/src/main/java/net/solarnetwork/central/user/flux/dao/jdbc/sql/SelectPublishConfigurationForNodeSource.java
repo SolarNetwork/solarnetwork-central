@@ -50,8 +50,12 @@ public class SelectPublishConfigurationForNodeSource implements PreparedStatemen
 	/**
 	 * Constructor.
 	 * 
-	 * @param key
-	 *        the node and source ID primary key to query
+	 * @param userId
+	 *        the user ID
+	 * @param nodeId
+	 *        the node ID
+	 * @param sourceId
+	 *        the source ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
