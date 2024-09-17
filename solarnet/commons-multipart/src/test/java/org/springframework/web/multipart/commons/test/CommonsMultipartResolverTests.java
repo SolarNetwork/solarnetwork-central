@@ -23,14 +23,18 @@
 package org.springframework.web.multipart.commons.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.hc.core5.http.ContentType.MULTIPART_FORM_DATA;
+import static org.apache.hc.core5.http.ContentType.TEXT_PLAIN;
 import static org.apache.hc.core5.http.HttpHeaders.CONTENT_DISPOSITION;
 import static org.assertj.core.api.BDDAssertions.then;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
@@ -39,13 +43,13 @@ import org.apache.hc.client5.http.entity.mime.MultipartPartBuilder;
 import org.apache.hc.client5.http.entity.mime.StringBody;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 /**
@@ -81,7 +85,7 @@ public class CommonsMultipartResolverTests extends BaseHttpIntegrationTests {
 	public void transferTo_file() throws IOException {
 		// GIVEN
 		final String data = "Hello, world.";
-		final StringBody dataBody = new StringBody(data, ContentType.TEXT_PLAIN.withCharset(UTF_8));
+		final StringBody dataBody = new StringBody(data, TEXT_PLAIN.withCharset(UTF_8));
 		final String fileName = "test.txt";
 
 		// @formatter:off
@@ -94,7 +98,7 @@ public class CommonsMultipartResolverTests extends BaseHttpIntegrationTests {
 
 		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
 				.setLaxMode()
-				.setContentType(ContentType.MULTIPART_FORM_DATA)
+				.setContentType(MULTIPART_FORM_DATA)
 				.addPart(dataPart)
 				.build();
 		// @formatter:off
@@ -136,7 +140,7 @@ public class CommonsMultipartResolverTests extends BaseHttpIntegrationTests {
 	public void transferTo_path() throws IOException {
 		// GIVEN
 		final String data = "Hello, world.";
-		final StringBody dataBody = new StringBody(data, ContentType.TEXT_PLAIN.withCharset(UTF_8));
+		final StringBody dataBody = new StringBody(data, TEXT_PLAIN.withCharset(UTF_8));
 		final String fileName = "test.txt";
 
 		// @formatter:off
@@ -149,7 +153,7 @@ public class CommonsMultipartResolverTests extends BaseHttpIntegrationTests {
 
 		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
 				.setLaxMode()
-				.setContentType(ContentType.MULTIPART_FORM_DATA)
+				.setContentType(MULTIPART_FORM_DATA)
 				.addPart(dataPart)
 				.build();
 		// @formatter:off
@@ -183,6 +187,350 @@ public class CommonsMultipartResolverTests extends BaseHttpIntegrationTests {
 			.isNotEmptyFile()
 			.as("Upload contents transferred")
 			.hasBinaryContent(data.getBytes(UTF_8))
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Test handling of the {@code Content-Transfer-Encoding: base64} style
+	 * encoding, where the multipart content is Base64 encoded.
+	 *
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	@Test
+	public void transferTo_file_base64ContentTransferEncoding() throws IOException {
+		// GIVEN
+		final String data = "Hello, world.";
+		final StringBody dataBody = new StringBody(
+				Base64.getMimeEncoder().encodeToString(data.getBytes(UTF_8)),
+				TEXT_PLAIN.withCharset(UTF_8));
+		final String fileName = "test.txt";
+
+		// @formatter:off
+		final MultipartPart dataPart = MultipartPartBuilder.create(dataBody)
+				.addHeader(CONTENT_DISPOSITION, "form-data",
+						Arrays.asList(
+								new BasicNameValuePair("name", "data"),
+								new BasicNameValuePair("filename", fileName)))
+				.addHeader("Content-Transfer-Encoding", "base64")
+				.build();
+
+		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
+				.setStrictMode()
+				.setContentType(MULTIPART_FORM_DATA)
+				.addPart(dataPart)
+				.build();
+		// @formatter:off
+
+		final URI uri = serverUri("/upload").build().toUri();
+		final Path tmp = Files.createTempFile("mp-upload-", null);
+		tempFiles.add(tmp);
+
+		MultipartController.uploadHandler = mpFile -> {
+			try {
+				mpFile.transferTo(tmp.toFile());
+			} catch ( IOException | IllegalStateException e ) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		// WHEN
+		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+			HttpPost post = new HttpPost(uri);
+			post.setEntity(reqBody);
+			client.execute(post, response -> {
+				log.debug("Executed request [{}] and got response status {}", uri, response.getCode());
+				return null;
+			});
+		}
+
+		// THEN
+		// @formatter:off
+		then(tmp)
+			.as("Multipart data transferred to temp file")
+			.isNotEmptyFile()
+			.as("Upload contents transferred")
+			.hasBinaryContent(data.getBytes(UTF_8))
+			;
+		// @formatter:on
+	}
+
+	/**
+	 * Test handling of the {@code Content-Transfer-Encoding: base64} style
+	 * encoding, where the multipart content is Base64 encoded.
+	 *
+	 * @throws IOException
+	 *         if any IO error occurs
+	 */
+	@Test
+	public void transferTo_path_base64ContentTransferEncoding() throws IOException {
+		// GIVEN
+		final String data = "Hello, world.";
+		final StringBody dataBody = new StringBody(
+				Base64.getMimeEncoder().encodeToString(data.getBytes(UTF_8)),
+				TEXT_PLAIN.withCharset(UTF_8));
+		final String fileName = "test.txt";
+
+		// @formatter:off
+		final MultipartPart dataPart = MultipartPartBuilder.create(dataBody)
+				.addHeader(CONTENT_DISPOSITION, "form-data",
+						Arrays.asList(
+								new BasicNameValuePair("name", "data"),
+								new BasicNameValuePair("filename", fileName)))
+				.addHeader("Content-Transfer-Encoding", "base64")
+				.build();
+
+		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
+				.setStrictMode()
+				.setContentType(MULTIPART_FORM_DATA)
+				.addPart(dataPart)
+				.build();
+		// @formatter:off
+
+		final URI uri = serverUri("/upload").build().toUri();
+		final Path tmp = Files.createTempFile("mp-upload-", null);
+		tempFiles.add(tmp);
+
+		MultipartController.uploadHandler = mpFile -> {
+			try {
+				mpFile.transferTo(tmp);
+			} catch ( IOException | IllegalStateException e ) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		// WHEN
+		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+			HttpPost post = new HttpPost(uri);
+			post.setEntity(reqBody);
+			client.execute(post, response -> {
+				log.debug("Executed request [{}] and got response status {}", uri, response.getCode());
+				return null;
+			});
+		}
+
+		// THEN
+		// @formatter:off
+		then(tmp)
+			.as("Multipart data transferred to temp file")
+			.isNotEmptyFile()
+			.as("Upload contents transferred")
+			.hasBinaryContent(data.getBytes(UTF_8))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getBytes() throws IOException {
+		// GIVEN
+		final String data = "Hello, world.";
+		final StringBody dataBody = new StringBody(data, TEXT_PLAIN.withCharset(UTF_8));
+		final String fileName = "test.txt";
+
+		// @formatter:off
+		final MultipartPart dataPart = MultipartPartBuilder.create(dataBody)
+				.addHeader(CONTENT_DISPOSITION, "form-data",
+						Arrays.asList(
+								new BasicNameValuePair("name", "data"),
+								new BasicNameValuePair("filename", fileName)))
+				.build();
+
+		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
+				.setLaxMode()
+				.setContentType(MULTIPART_FORM_DATA)
+				.addPart(dataPart)
+				.build();
+		// @formatter:off
+
+		final URI uri = serverUri("/upload").build().toUri();
+		final ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+
+		MultipartController.uploadHandler = mpFile -> {
+			try {
+				FileCopyUtils.copy(mpFile.getBytes(), tmp);
+			} catch ( IOException | IllegalStateException e ) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		// WHEN
+		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+			HttpPost post = new HttpPost(uri);
+			post.setEntity(reqBody);
+			client.execute(post, response -> {
+				log.debug("Executed request [{}] and got response status {}", uri, response.getCode());
+				return null;
+			});
+		}
+
+		// THEN
+		// @formatter:off
+		then(tmp.toByteArray())
+			.as("Upload contents extracted")
+			.contains(data.getBytes(UTF_8))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getBytes_base64ContentTransferEncoding() throws IOException {
+		// GIVEN
+		final String data = "Hello, world.";
+		final StringBody dataBody = new StringBody(
+				Base64.getMimeEncoder().encodeToString(data.getBytes(UTF_8)),
+				TEXT_PLAIN.withCharset(UTF_8));
+		final String fileName = "test.txt";
+
+		// @formatter:off
+		final MultipartPart dataPart = MultipartPartBuilder.create(dataBody)
+				.addHeader(CONTENT_DISPOSITION, "form-data",
+						Arrays.asList(
+								new BasicNameValuePair("name", "data"),
+								new BasicNameValuePair("filename", fileName)))
+				.addHeader("Content-Transfer-Encoding", "base64")
+				.build();
+
+		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
+				.setStrictMode()
+				.setContentType(MULTIPART_FORM_DATA)
+				.addPart(dataPart)
+				.build();
+		// @formatter:off
+
+		final URI uri = serverUri("/upload").build().toUri();
+		final ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+
+		MultipartController.uploadHandler = mpFile -> {
+			try {
+				FileCopyUtils.copy(mpFile.getBytes(), tmp);
+			} catch ( IOException | IllegalStateException e ) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		// WHEN
+		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+			HttpPost post = new HttpPost(uri);
+			post.setEntity(reqBody);
+			client.execute(post, response -> {
+				log.debug("Executed request [{}] and got response status {}", uri, response.getCode());
+				return null;
+			});
+		}
+
+		// THEN
+		// @formatter:off
+		then(tmp.toByteArray())
+			.as("Upload contents extracted")
+			.contains(data.getBytes(UTF_8))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getInputStream() throws IOException {
+		// GIVEN
+		final String data = "Hello, world.";
+		final StringBody dataBody = new StringBody(data, TEXT_PLAIN.withCharset(UTF_8));
+		final String fileName = "test.txt";
+
+		// @formatter:off
+		final MultipartPart dataPart = MultipartPartBuilder.create(dataBody)
+				.addHeader(CONTENT_DISPOSITION, "form-data",
+						Arrays.asList(
+								new BasicNameValuePair("name", "data"),
+								new BasicNameValuePair("filename", fileName)))
+				.build();
+
+		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
+				.setLaxMode()
+				.setContentType(MULTIPART_FORM_DATA)
+				.addPart(dataPart)
+				.build();
+		// @formatter:off
+
+		final URI uri = serverUri("/upload").build().toUri();
+		final ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+
+		MultipartController.uploadHandler = mpFile -> {
+			try {
+				FileCopyUtils.copy(mpFile.getInputStream(), tmp);
+			} catch ( IOException | IllegalStateException e ) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		// WHEN
+		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+			HttpPost post = new HttpPost(uri);
+			post.setEntity(reqBody);
+			client.execute(post, response -> {
+				log.debug("Executed request [{}] and got response status {}", uri, response.getCode());
+				return null;
+			});
+		}
+
+		// THEN
+		// @formatter:off
+		then(tmp.toByteArray())
+			.as("Upload contents extracted")
+			.contains(data.getBytes(UTF_8))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getInputStream_base64ContentTransferEncoding() throws IOException {
+		// GIVEN
+		final String data = "Hello, world.";
+		final StringBody dataBody = new StringBody(
+				Base64.getMimeEncoder().encodeToString(data.getBytes(UTF_8)),
+				TEXT_PLAIN.withCharset(UTF_8));
+		final String fileName = "test.txt";
+
+		// @formatter:off
+		final MultipartPart dataPart = MultipartPartBuilder.create(dataBody)
+				.addHeader(CONTENT_DISPOSITION, "form-data",
+						Arrays.asList(
+								new BasicNameValuePair("name", "data"),
+								new BasicNameValuePair("filename", fileName)))
+				.addHeader("Content-Transfer-Encoding", "base64")
+				.build();
+
+		final org.apache.hc.core5.http.HttpEntity reqBody = MultipartEntityBuilder.create()
+				.setStrictMode()
+				.setContentType(MULTIPART_FORM_DATA)
+				.addPart(dataPart)
+				.build();
+		// @formatter:off
+
+		final URI uri = serverUri("/upload").build().toUri();
+		final ByteArrayOutputStream tmp = new ByteArrayOutputStream();
+
+		MultipartController.uploadHandler = mpFile -> {
+			try {
+				FileCopyUtils.copy(mpFile.getInputStream(), tmp);
+			} catch ( IOException | IllegalStateException e ) {
+				throw new RuntimeException(e);
+			}
+		};
+
+		// WHEN
+		try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+			HttpPost post = new HttpPost(uri);
+			post.setEntity(reqBody);
+			client.execute(post, response -> {
+				log.debug("Executed request [{}] and got response status {}", uri, response.getCode());
+				return null;
+			});
+		}
+
+		// THEN
+		// @formatter:off
+		then(tmp.toByteArray())
+			.as("Upload contents extracted")
+			.contains(data.getBytes(UTF_8))
 			;
 		// @formatter:on
 	}

@@ -24,8 +24,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.tomcat.util.http.fileupload.FileItem;
+import org.apache.tomcat.util.http.fileupload.FileItemHeaders;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Base64InputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -133,6 +136,12 @@ public class CommonsMultipartFile implements MultipartFile, Serializable {
 	public long getSize() {
 		return this.size;
 	}
+	
+	private boolean isBase64Encoded() {
+		FileItemHeaders headers = this.fileItem.getHeaders();
+		String cte = (headers != null ? headers.getHeader("Content-Transfer-Encoding") : null);
+		return (cte != null && "base64".equalsIgnoreCase(cte));
+	}
 
 	@Override
 	public byte[] getBytes() {
@@ -140,6 +149,9 @@ public class CommonsMultipartFile implements MultipartFile, Serializable {
 			throw new IllegalStateException("File has been moved - cannot be read again");
 		}
 		byte[] bytes = this.fileItem.get();
+		if (bytes != null && bytes.length > 0 && isBase64Encoded()) {
+			bytes = Base64.decodeBase64(bytes);
+		}
 		return (bytes != null ? bytes : new byte[0]);
 	}
 
@@ -149,11 +161,18 @@ public class CommonsMultipartFile implements MultipartFile, Serializable {
 			throw new IllegalStateException("File has been moved - cannot be read again");
 		}
 		InputStream inputStream = this.fileItem.getInputStream();
+		if (inputStream != null && isBase64Encoded()) {
+			inputStream = new Base64InputStream(inputStream);
+		}
 		return (inputStream != null ? inputStream : InputStream.nullInputStream());
 	}
 
 	@Override
 	public void transferTo(File dest) throws IOException, IllegalStateException {
+		if (isBase64Encoded()) {
+			transferTo(dest.toPath());
+			return;
+		}
 		if (!isAvailable()) {
 			throw new IllegalStateException("File has already been moved - cannot be transferred again");
 		}
@@ -190,11 +209,7 @@ public class CommonsMultipartFile implements MultipartFile, Serializable {
 
 	@Override
 	public void transferTo(Path dest) throws IOException, IllegalStateException {
-		if (!isAvailable()) {
-			throw new IllegalStateException("File has already been moved - cannot be transferred again");
-		}
-
-		FileCopyUtils.copy(this.fileItem.getInputStream(), Files.newOutputStream(dest));
+		FileCopyUtils.copy(getInputStream(), Files.newOutputStream(dest));
 	}
 
 	/**

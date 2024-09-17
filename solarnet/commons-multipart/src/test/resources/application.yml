@@ -1,5 +1,6 @@
 logging:
   level:
+    org.apache.hc.client5.http: TRACE
     org.springframework.web.multipart: DEBUG
   pattern:
     console: "${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39}: %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
