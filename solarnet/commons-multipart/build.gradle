@@ -38,6 +38,12 @@ dependencies {
 	
 	// Web
 	implementation 'jakarta.servlet:jakarta.servlet-api'
+	
+	// Testing
+	testImplementation 'org.apache.httpcomponents.client5:httpclient5'
+	testImplementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-tomcat'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
 jar.manifest {
