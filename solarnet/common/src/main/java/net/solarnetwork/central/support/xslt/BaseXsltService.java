@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -56,7 +57,7 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * Base service class for XSLT support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
 		implements EntityResolver {
@@ -255,9 +256,19 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 		return templatesCacheTtl.getSeconds();
 	}
 
-	/** A regular expression matching an XML {@literal DOCTYPE} declaration. */
-	public static final Pattern DOCTYPE_PAT = Pattern.compile("<!DOCTYPE[^>]*>",
-			Pattern.CASE_INSENSITIVE);
+	/**
+	 * A regular expression matching the start of an XML {@literal DOCTYPE}
+	 * declaration.
+	 * 
+	 * <p>
+	 * Note to work around the potential "polynomial regex" issue reported in
+	 * https://github.com/SolarNetwork/solarnetwork-central/security/code-scanning/62
+	 * this pattern changed from matching the entire tag like
+	 * {@literal <!DOCTYPE[^>]*>} to just the start, and stripping the remainder
+	 * of the element is handled manually.
+	 * </p>
+	 */
+	public static final Pattern DOCTYPE_PAT = Pattern.compile("<!DOCTYPE", Pattern.CASE_INSENSITIVE);
 
 	/**
 	 * Get textual input.
@@ -279,8 +290,35 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 		} else if ( input != null ) {
 			result = input.toString();
 		}
-		// remove <!DOCTYPE> declaration
-		return DOCTYPE_PAT.matcher(result).replaceFirst("");
+		// remove <!DOCTYPE> declarations
+		StringBuilder buf = null;
+		while ( true ) {
+			Matcher m = DOCTYPE_PAT.matcher(result);
+			if ( !m.find() ) {
+				break;
+			}
+			if ( buf == null ) {
+				buf = new StringBuilder(result.length());
+			}
+			if ( m.start() > 0 ) {
+				buf.append(result.substring(0, m.start()));
+			}
+			int end = result.indexOf('>', m.end());
+			if ( end > 0 && end < result.length() ) {
+				result = result.substring(end + 1).stripLeading();
+			} else {
+				result = "";
+				break;
+			}
+		}
+		if ( buf != null ) {
+			if ( buf.isEmpty() ) {
+				buf = null;
+			} else {
+				buf.append(result);
+			}
+		}
+		return (buf != null ? buf.toString() : result);
 	}
 
 }
