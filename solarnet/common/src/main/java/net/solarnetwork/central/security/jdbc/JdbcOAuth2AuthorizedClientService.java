@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
+import static net.solarnetwork.central.security.OAuth2ClientUtils.userIdFromClientRegistrationId;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.nio.charset.StandardCharsets;
@@ -91,12 +92,13 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 				, refresh_token_value
 				, refresh_token_issued_at
 			FROM %s
-			WHERE client_registration_id = ? AND principal_name = ?
+			WHERE user_id = ? AND client_registration_id = ? AND principal_name = ?
 			""";
 
 	private static final String SAVE_AUTHORIZED_CLIENT_SQL_TMPL = """
 			INSERT INTO %s (
-				  client_registration_id
+				  user_id
+				, client_registration_id
 				, principal_name
 				, access_token_type
 				, access_token_value
@@ -106,8 +108,8 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 				, refresh_token_value
 				, refresh_token_issued_at
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-			ON CONFLICT (client_registration_id , principal_name) DO UPDATE
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT (user_id, client_registration_id , principal_name) DO UPDATE
 			SET access_token_type = EXCLUDED.access_token_type
 				, access_token_value = EXCLUDED.access_token_value
 				, access_token_issued_at = EXCLUDED.access_token_issued_at
@@ -118,7 +120,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			""";
 
 	private static final String REMOVE_AUTHORIZED_CLIENT_SQL_TMPL = """
-			DELETE FROM %s WHERE client_registration_id = ? AND principal_name = ?
+			DELETE FROM %s WHERE user_id = ? AND client_registration_id = ? AND principal_name = ?
 			""";
 
 	private final JdbcOperations jdbcOperations;
@@ -174,7 +176,11 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 	@SuppressWarnings("unchecked")
 	public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId,
 			String principalName) {
-		final var sql = new SelectAuthorizedClient(clientRegistrationId, principalName);
+		final Long userId = userIdFromClientRegistrationId(clientRegistrationId);
+		if ( userId == null ) {
+			return null;
+		}
+		final var sql = new SelectAuthorizedClient(userId, clientRegistrationId, principalName);
 		List<OAuth2AuthorizedClient> result = this.jdbcOperations.query(sql,
 				this.authorizedClientRowMapper);
 		return !result.isEmpty() ? (T) result.get(0) : null;
@@ -188,17 +194,23 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 
 	@Override
 	public void removeAuthorizedClient(String clientRegistrationId, String principalName) {
-		final var sql = new DeleteAuthorizedClient(clientRegistrationId, principalName);
+		final Long userId = userIdFromClientRegistrationId(clientRegistrationId);
+		if ( userId == null ) {
+			return;
+		}
+		final var sql = new DeleteAuthorizedClient(userId, clientRegistrationId, principalName);
 		this.jdbcOperations.update(sql);
 	}
 
 	private final class SelectAuthorizedClient implements PreparedStatementCreator, SqlProvider {
 
+		private final Long userId;
 		private final String clientRegistrationId;
 		private final String principalName;
 
-		public SelectAuthorizedClient(String clientRegistrationId, String principalName) {
+		public SelectAuthorizedClient(Long userId, String clientRegistrationId, String principalName) {
 			super();
+			this.userId = requireNonNullArgument(userId, "userId");
 			this.clientRegistrationId = requireNonNullArgument(clientRegistrationId,
 					"clientRegistrationId");
 			this.principalName = requireNonNullArgument(principalName, "principalName");
@@ -212,8 +224,9 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 		@Override
 		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 			final PreparedStatement stmt = con.prepareStatement(getSql());
-			stmt.setString(1, clientRegistrationId);
-			stmt.setString(2, principalName);
+			stmt.setObject(1, userId);
+			stmt.setString(2, clientRegistrationId);
+			stmt.setString(3, principalName);
 			return stmt;
 		}
 
@@ -224,7 +237,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 		private final OAuth2AuthorizedClient authorizedClient;
 		private final Authentication principal;
 
-		public UpsertAuthorizedClient(OAuth2AuthorizedClient authorizedClient,
+		private UpsertAuthorizedClient(OAuth2AuthorizedClient authorizedClient,
 				Authentication principal) {
 			super();
 			this.authorizedClient = requireNonNullArgument(authorizedClient, "authorizedClient");
@@ -243,6 +256,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			final OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
 			final OAuth2RefreshToken refreshToken = authorizedClient.getRefreshToken();
 			int p = 0;
+			stmt.setObject(++p, userIdFromClientRegistrationId(clientRegistration.getRegistrationId()));
 			stmt.setString(++p, clientRegistration.getRegistrationId());
 			stmt.setString(++p, principal.getName());
 			stmt.setString(++p, accessToken.getTokenType().getValue());
@@ -267,11 +281,13 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 
 	private final class DeleteAuthorizedClient implements PreparedStatementCreator, SqlProvider {
 
+		private final Long userId;
 		private final String clientRegistrationId;
 		private final String principalName;
 
-		public DeleteAuthorizedClient(String clientRegistrationId, String principalName) {
+		private DeleteAuthorizedClient(Long userId, String clientRegistrationId, String principalName) {
 			super();
+			this.userId = requireNonNullArgument(userId, "userId");
 			this.clientRegistrationId = requireNonNullArgument(clientRegistrationId,
 					"clientRegistrationId");
 			this.principalName = requireNonNullArgument(principalName, "principalName");
@@ -285,8 +301,9 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 		@Override
 		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 			final PreparedStatement stmt = con.prepareStatement(getSql());
-			stmt.setString(1, clientRegistrationId);
-			stmt.setString(2, principalName);
+			stmt.setObject(1, userId);
+			stmt.setString(2, clientRegistrationId);
+			stmt.setString(3, principalName);
 			return stmt;
 		}
 

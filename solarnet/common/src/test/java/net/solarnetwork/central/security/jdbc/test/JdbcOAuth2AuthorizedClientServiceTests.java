@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.jdbc.test;
 
+import static net.solarnetwork.central.security.OAuth2ClientUtils.userIdClientRegistrationId;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -50,6 +51,7 @@ import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.central.test.CommonTestUtils;
 
 /**
  * Test cases for the {@link JdbcOAuth2AuthorizedClientService} class.
@@ -62,11 +64,16 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 	private Map<String, ClientRegistration> clientRegistrations;
 	private JdbcOAuth2AuthorizedClientService service;
 
+	private Long userId;
+
 	@BeforeEach
 	public void setup() {
 		clientRegistrations = new HashMap<>();
 		service = new JdbcOAuth2AuthorizedClientService(jdbcTemplate,
 				new InMemoryClientRegistrationRepository(clientRegistrations));
+
+		userId = CommonTestUtils.randomLong();
+		setupTestUser(userId);
 	}
 
 	private List<Map<String, Object>> allAuthClientServiceRows() {
@@ -86,7 +93,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = "sntest:1:1";
+		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
@@ -117,6 +124,8 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 			.as("Authorized client saved to database row")
 			.hasSize(1)
 			.first(InstanceOfAssertFactories.map(String.class, Object.class))
+			.as("User ID persisted")
+			.containsEntry("user_id", userId)
 			.as("Registration ID persisted")
 			.containsEntry("client_registration_id", registrationId)
 			.as("Principal name from Authentication persisted")
@@ -162,7 +171,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = "sntest:1:1";
+		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
@@ -258,7 +267,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = "sntest:1:1";
+		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
@@ -309,6 +318,8 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 			.as("Refreshed authorized client saved to database row")
 			.hasSize(1)
 			.first(InstanceOfAssertFactories.map(String.class, Object.class))
+			.as("User ID persisted")
+			.containsEntry("user_id", userId)
 			.as("Registration ID persisted")
 			.containsEntry("client_registration_id", registrationId)
 			.as("Principal name from Authentication persisted")
@@ -354,7 +365,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = "sntest:1:1";
+		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
