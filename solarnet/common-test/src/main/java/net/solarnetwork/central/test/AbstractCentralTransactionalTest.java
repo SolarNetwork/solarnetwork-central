@@ -1,21 +1,21 @@
 /* ==================================================================
  * AbstractCentralTransactionalTest.java - Jan 11, 2010 9:59:13 AM
- * 
+ *
  * Copyright 2007-2010 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import org.springframework.test.context.transaction.BeforeTransaction;
 
 /**
  * Base test class for transactional unit tests.
- * 
+ *
  * @author matt
  * @version 3.0
  */
@@ -75,7 +75,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Insert a test node into the sn_node table.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID to assign to the node
 	 */
@@ -85,7 +85,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Insert a test node into the sn_node table.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID to assign to the node
 	 * @param locationId
@@ -101,11 +101,11 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Set a node's name in the sn_node table.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node to save the name for
-	 * @param locationId
-	 *        the location ID
+	 * @param name
+	 *        the name
 	 */
 	protected void saveNodeName(Long nodeId, String name) {
 		jdbcTemplate.update("update solaruser.user_node set disp_name = ? where node_id = ?", name,
@@ -114,7 +114,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Create a test user account in the user table.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -126,7 +126,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Create a test user account in the user table.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param username
@@ -139,7 +139,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Create a test user account in the user table.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -153,7 +153,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Insert a new user-node association into the user_node table.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param nodeId
@@ -166,7 +166,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Set the currently authenticated user.
-	 * 
+	 *
 	 * @param auth
 	 *        the user to set
 	 * @since 1.2
@@ -184,7 +184,7 @@ public abstract class AbstractCentralTransactionalTest
 
 	/**
 	 * Insert a test location into the sn_loc table.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID
 	 */
@@ -195,7 +195,7 @@ public abstract class AbstractCentralTransactionalTest
 	/**
 	 * Insert a test location into the sn_loc table and weather location in the
 	 * sn_weather_loc table.
-	 * 
+	 *
 	 * @param id
 	 *        the location ID to use
 	 * @param timeZoneId

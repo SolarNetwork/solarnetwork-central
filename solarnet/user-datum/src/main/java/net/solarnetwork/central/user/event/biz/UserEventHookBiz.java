@@ -24,16 +24,16 @@ package net.solarnetwork.central.user.event.biz;
 
 import java.util.List;
 import java.util.Locale;
+import net.solarnetwork.central.dao.UserLongIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
-import net.solarnetwork.central.user.domain.UserLongPK;
-import net.solarnetwork.central.user.domain.UserRelatedIdentifiableConfiguration;
+import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * API for user node event hook tasks.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserEventHookBiz {
 
@@ -76,7 +76,7 @@ public interface UserEventHookBiz {
 	 *        the primary key of the configuration to get
 	 * @return the configuration, or {@literal null} if not available
 	 */
-	<T extends UserRelatedIdentifiableConfiguration> T configurationForUser(Long userId,
+	<T extends UserLongIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
 
 	/**
@@ -86,7 +86,8 @@ public interface UserEventHookBiz {
 	 *        the configuration to save
 	 * @return the primary key of the saved configuration
 	 */
-	UserLongPK saveConfiguration(UserRelatedIdentifiableConfiguration configuration);
+	CompositeKey2<Long, Long> saveConfiguration(
+			UserLongIdentifiableConfigurationEntity<?> configuration);
 
 	/**
 	 * Delete a specific configuration.
@@ -94,7 +95,7 @@ public interface UserEventHookBiz {
 	 * @param configuration
 	 *        the configuration to delete
 	 */
-	void deleteConfiguration(UserRelatedIdentifiableConfiguration configuration);
+	void deleteConfiguration(UserLongIdentifiableConfigurationEntity<?> configuration);
 
 	/**
 	 * Get a list of all available configurations for a given user.
@@ -107,7 +108,7 @@ public interface UserEventHookBiz {
 	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
-	<T extends UserRelatedIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
+	<T extends UserLongIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);
 
 }

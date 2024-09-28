@@ -1,21 +1,21 @@
 /* ==================================================================
  * Account.java - 20/07/2020 11:14:01 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,16 +28,16 @@ import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
  * Billing account entity.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class Account extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<Account> {
@@ -57,7 +57,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -69,7 +69,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param created
@@ -81,7 +81,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the long ID
 	 * @param userId
@@ -107,7 +107,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -121,12 +121,12 @@ public class Account extends BasicEntity<UserLongPK>
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -178,7 +178,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the invoice time zone.
-	 * 
+	 *
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
@@ -196,7 +196,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the address.
-	 * 
+	 *
 	 * @return the address
 	 */
 	public Address getAddress() {
@@ -205,7 +205,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the address.
-	 * 
+	 *
 	 * @param address
 	 *        the address to set
 	 */
@@ -215,7 +215,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the currency code.
-	 * 
+	 *
 	 * @return the currencyCode
 	 */
 	public String getCurrencyCode() {
@@ -224,7 +224,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the currency code.
-	 * 
+	 *
 	 * @param currencyCode
 	 *        the currencyCode to set
 	 */
@@ -234,7 +234,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the locale.
-	 * 
+	 *
 	 * @return the locale, as a BCP 47 language tag
 	 */
 	public String getLocale() {
@@ -243,7 +243,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the locale.
-	 * 
+	 *
 	 * @param locale
 	 *        the locale to set, as a BCP 47 language tag
 	 */
@@ -253,7 +253,7 @@ public class Account extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the locale.
-	 * 
+	 *
 	 * @return the locale as represented by the {@link #getLocale()} language
 	 *         tag, or {@link Locale#US} if not available
 	 */

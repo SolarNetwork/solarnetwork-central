@@ -114,7 +114,7 @@ public final class CommonTestUtils {
 	 *
 	 * <p>
 	 * The {@link #DEFAULT_MAX_SCALE} maximum scale and
-	 * {@link RoundingMode#DONW} rounding mode will be used.
+	 * {@link RoundingMode#DOWN} rounding mode will be used.
 	 * </p>
 	 *
 	 * @param expected

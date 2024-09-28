@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.ChargePointIdentity;
 import net.solarnetwork.ocpp.domain.SystemUser;
 
@@ -36,7 +36,7 @@ import net.solarnetwork.ocpp.domain.SystemUser;
  * An OCPP charge point system user.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "allowedChargePointsArray", "allowedChargePointsValue" })
 @JsonPropertyOrder({ "id", "created", "userId", "username", "allowedChargePoints" })

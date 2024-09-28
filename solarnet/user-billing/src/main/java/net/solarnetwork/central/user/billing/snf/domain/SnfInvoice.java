@@ -1,21 +1,21 @@
 /* ==================================================================
  * SnfInvoice.java - 20/07/2020 9:37:06 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,16 +36,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
  * SNF invoice entity.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SnfInvoice extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
@@ -84,7 +84,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param accountId
 	 *        the account ID
 	 */
@@ -95,7 +95,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param accountId
@@ -110,7 +110,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param accountId
 	 *        the account ID
 	 * @param userId
@@ -124,7 +124,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the UUID ID
 	 * @param userId
@@ -158,7 +158,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the total amount of all invoice items.
-	 * 
+	 *
 	 * @return the total cost, never {@literal null}
 	 */
 	public BigDecimal getTotalAmount() {
@@ -172,11 +172,11 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the invoice time zone.
-	 * 
+	 *
 	 * <p>
 	 * This returns the time zone of the configured address.
 	 * </p>
-	 * 
+	 *
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
@@ -199,7 +199,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -213,13 +213,13 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method. The {@code address} and {@code items} values are compared by
 	 * primary key values only.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -285,7 +285,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get a map of invoice items using their ID as map keys.
-	 * 
+	 *
 	 * @return the map
 	 */
 	public Map<UUID, SnfInvoiceItem> itemMap() {
@@ -297,7 +297,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the account ID.
-	 * 
+	 *
 	 * @return the account ID
 	 */
 	public Long getAccountId() {
@@ -306,7 +306,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the address.
-	 * 
+	 *
 	 * @return the address
 	 */
 	public Address getAddress() {
@@ -315,7 +315,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the address.
-	 * 
+	 *
 	 * @param address
 	 *        the address to set
 	 */
@@ -325,7 +325,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the starting date.
-	 * 
+	 *
 	 * @return the starting date (inclusive)
 	 */
 	public LocalDate getStartDate() {
@@ -334,7 +334,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the starting date.
-	 * 
+	 *
 	 * @param startDate
 	 *        the starting date to set (inclusive)
 	 */
@@ -344,7 +344,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the ending date.
-	 * 
+	 *
 	 * @return the ending date (exclusive)
 	 */
 	public LocalDate getEndDate() {
@@ -353,7 +353,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the ending date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the ending date to set (exclusive)
 	 */
@@ -363,7 +363,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the currency code.
-	 * 
+	 *
 	 * @return the currency code
 	 */
 	public String getCurrencyCode() {
@@ -372,7 +372,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the currency code.
-	 * 
+	 *
 	 * @param currencyCode
 	 *        the currency code to set
 	 */
@@ -382,7 +382,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the number of invoice items.
-	 * 
+	 *
 	 * @return the number of items
 	 */
 	public int getItemCount() {
@@ -391,7 +391,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get all invoice items as a map using item key values as map keys.
-	 * 
+	 *
 	 * @return the map, or {@literal null} if {@link #getItems()} returns
 	 *         {@literal null}
 	 */
@@ -411,7 +411,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the invoice items.
-	 * 
+	 *
 	 * @return the items
 	 */
 	public Set<SnfInvoiceItem> getItems() {
@@ -420,7 +420,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the invoice items.
-	 * 
+	 *
 	 * @param items
 	 *        the items to set
 	 */
@@ -430,7 +430,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the node usage records.
-	 * 
+	 *
 	 * @return the usage records
 	 * @since 1.1
 	 */
@@ -440,7 +440,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the node usage records.
-	 * 
+	 *
 	 * @param usages
 	 *        the usages to set
 	 * @since 1.1
@@ -451,7 +451,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the node usage record count.
-	 * 
+	 *
 	 * @return the count
 	 * @since 1.1
 	 */
@@ -461,7 +461,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get a map of invoice usages using their ID as map keys.
-	 * 
+	 *
 	 * @return the map
 	 */
 	public Map<Long, SnfInvoiceNodeUsage> usageMap() {

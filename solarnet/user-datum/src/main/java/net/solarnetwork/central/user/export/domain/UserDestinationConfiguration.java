@@ -30,11 +30,11 @@ import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
  * User related {@link DestinationConfiguration} entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProperties" })
 public class UserDestinationConfiguration extends BaseExportConfigurationEntity
-		implements DestinationConfiguration, UserIdentifiableConfiguration, Serializable {
+		implements DestinationConfiguration, Serializable {
 
 	private static final long serialVersionUID = 4860680512331245447L;
 

@@ -40,12 +40,12 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link MyBatisDatumAppEventAcceptor} class.
@@ -153,7 +153,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		// THEN
 		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
 		assertThat("One task created for matching node/source", taskRows, hasSize(1));
-		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+		assertTaskMap(taskRows.get(0), hookConf.getConfigurationId(), TEST_NODE_ID, TEST_SOURCE_ID,
+				info);
 	}
 
 	@Test
@@ -174,7 +175,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		// THEN
 		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
 		assertThat("One task created for matching node/source", taskRows, hasSize(1));
-		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+		assertTaskMap(taskRows.get(0), hookConf.getConfigurationId(), TEST_NODE_ID, TEST_SOURCE_ID,
+				info);
 	}
 
 	@Test
@@ -194,7 +196,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		// THEN
 		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
 		assertThat("One task created for matching node/source", taskRows, hasSize(1));
-		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+		assertTaskMap(taskRows.get(0), hookConf.getConfigurationId(), TEST_NODE_ID, TEST_SOURCE_ID,
+				info);
 	}
 
 	@Test
@@ -215,7 +218,8 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		// THEN
 		List<Map<String, Object>> taskRows = rows(TASK_TABLE);
 		assertThat("One task created for matching node/source", taskRows, hasSize(1));
-		assertTaskMap(taskRows.get(0), hookConf.getId().getId(), TEST_NODE_ID, TEST_SOURCE_ID, info);
+		assertTaskMap(taskRows.get(0), hookConf.getConfigurationId(), TEST_NODE_ID, TEST_SOURCE_ID,
+				info);
 	}
 
 	@Test
@@ -236,7 +240,7 @@ public class MyBatisDatumAppEventAcceptorTests extends AbstractMyBatisUserEventD
 		dao.offerDatumEvent(event);
 
 		// THEN
-		List<Long> hookIds = asList(hookConf.getId().getId(), hookConf2.getId().getId());
+		List<Long> hookIds = asList(hookConf.getConfigurationId(), hookConf2.getConfigurationId());
 
 		Map<Long, Map<String, Object>> taskRows = rows(TASK_TABLE).stream()
 				.collect(toMap(r -> (Long) r.get("hook_id"), r -> r));

@@ -33,9 +33,11 @@ import org.springframework.context.MessageSource;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.UserLongIdentifiableConfigurationEntity;
+import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
+import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.user.domain.UserLongPK;
-import net.solarnetwork.central.user.domain.UserRelatedIdentifiableConfiguration;
 import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.event.dao.UserNodeEventHookConfigurationDao;
@@ -135,7 +137,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserRelatedIdentifiableConfiguration> T configurationForUser(Long userId,
+	public <T extends UserLongIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id) {
 		if ( userId == null ) {
 			throw new IllegalArgumentException("The userId argument must not be null.");
@@ -156,7 +158,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	}
 
 	private Iterable<? extends SettingSpecifierProvider> providersForServiceProperties(
-			Class<? extends UserRelatedIdentifiableConfiguration> configurationClass) {
+			@SuppressWarnings("rawtypes") Class<? extends UserLongIdentifiableConfigurationEntity> configurationClass) {
 		if ( UserNodeEventHookConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return availableNodeEventHookServices();
 		}
@@ -176,16 +178,16 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends UserRelatedIdentifiableConfiguration> T mergeServiceProperties(T entity) {
-		if ( entity == null || entity.getId() == null || entity.getId().getId() == null ) {
+	private <T extends UserLongIdentifiableConfigurationEntity<?>> T mergeServiceProperties(T entity) {
+		if ( entity == null || entity.getId() == null || entity.getId().keyComponent2() == null ) {
 			return entity;
 		}
 		Map<String, ?> serviceProps = entity.getServiceProperties();
 		if ( serviceProps == null || serviceProps.isEmpty() ) {
 			return entity;
 		}
-		UserRelatedIdentifiableConfiguration existing = configurationForUser(entity.getUserId(),
-				entity.getClass(), entity.getId().getId());
+		UserRelatedIdentifiableConfigurationEntity<?> existing = configurationForUser(entity.getUserId(),
+				entity.getClass(), entity.getId().keyComponent2());
 		if ( existing == null ) {
 			return entity;
 		}
@@ -214,7 +216,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public UserLongPK saveConfiguration(UserRelatedIdentifiableConfiguration configuration) {
+	public CompositeKey2<Long, Long> saveConfiguration(
+			UserLongIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserNodeEventHookConfiguration ) {
 			return nodeEventHookConfigurationDao
 					.save((UserNodeEventHookConfiguration) mergeServiceProperties(configuration));
@@ -224,7 +227,7 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void deleteConfiguration(UserRelatedIdentifiableConfiguration configuration) {
+	public void deleteConfiguration(UserLongIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserNodeEventHookConfiguration ) {
 			nodeEventHookConfigurationDao.delete((UserNodeEventHookConfiguration) configuration);
 		} else {
@@ -235,8 +238,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserRelatedIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
-			Class<T> configurationClass) {
+	public <T extends UserLongIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(
+			Long userId, Class<T> configurationClass) {
 		if ( UserNodeEventHookConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (List<T>) nodeEventHookConfigurationDao.findConfigurationsForUser(userId);
 		}

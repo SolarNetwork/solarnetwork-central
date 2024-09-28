@@ -32,12 +32,12 @@ import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
  * User related {@link OutputConfiguration} entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "compressionTypeKey",
 		"serviceProperties" })
 public class UserOutputConfiguration extends BaseExportConfigurationEntity
-		implements OutputConfiguration, UserIdentifiableConfiguration, Serializable {
+		implements OutputConfiguration, Serializable {
 
 	private static final long serialVersionUID = -1581617729654201770L;
 

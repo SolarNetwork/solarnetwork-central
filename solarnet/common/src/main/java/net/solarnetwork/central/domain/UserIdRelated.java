@@ -31,7 +31,7 @@ package net.solarnetwork.central.domain;
 public interface UserIdRelated {
 
 	/**
-	 * Get the user ID.
+	 * Get the user ID this entity is related to.
 	 * 
 	 * @return the user ID
 	 */

@@ -22,13 +22,13 @@
 
 package net.solarnetwork.central.user.event.dao.mybatis.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

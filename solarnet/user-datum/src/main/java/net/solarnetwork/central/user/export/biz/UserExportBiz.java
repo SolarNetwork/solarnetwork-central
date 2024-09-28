@@ -22,24 +22,24 @@
 
 package net.solarnetwork.central.user.export.biz;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.time.Instant;
+import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
-import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
 /**
  * Service API for user export feature.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserExportBiz {
 
@@ -134,7 +134,7 @@ public interface UserExportBiz {
 	 *        the primary key of the configuration to get
 	 * @return the configuration, or {@literal null} if not available
 	 */
-	<T extends UserIdentifiableConfiguration> T configurationForUser(Long userId,
+	<T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
 
 	/**
@@ -144,7 +144,7 @@ public interface UserExportBiz {
 	 *        the configuration to save
 	 * @return the primary key of the saved configuration
 	 */
-	Long saveConfiguration(UserIdentifiableConfiguration configuration);
+	Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration);
 
 	/**
 	 * Delete a specific configuration.
@@ -152,7 +152,7 @@ public interface UserExportBiz {
 	 * @param configuration
 	 *        the configuration to delete
 	 */
-	void deleteConfiguration(UserIdentifiableConfiguration configuration);
+	void deleteConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration);
 
 	/**
 	 * Get a list of all available data export configurations for a given user.
@@ -165,7 +165,7 @@ public interface UserExportBiz {
 	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
-	<T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
+	<T extends UserRelatedIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);
 
 	/**

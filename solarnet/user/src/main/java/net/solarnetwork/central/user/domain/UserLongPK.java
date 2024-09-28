@@ -23,15 +23,30 @@
 package net.solarnetwork.central.user.domain;
 
 import java.io.Serializable;
+import net.solarnetwork.central.domain.CompositeKey;
+import net.solarnetwork.central.domain.CompositeKey2;
 
 /**
  * Primary key based on a user ID and another {@code Long} ID.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.2
  */
-public class UserLongPK implements Serializable, Cloneable, Comparable<UserLongPK> {
+public class UserLongPK
+		implements Serializable, Cloneable, Comparable<UserLongPK>, CompositeKey2<Long, Long> {
+
+	/**
+	 * A special "not a value" instance to be used for generated user ID values
+	 * yet to be generated.
+	 */
+	public static final Long UNASSIGNED_USER_ID = Long.MIN_VALUE;
+
+	/**
+	 * A special "not a value" instance to be used for generated entity ID
+	 * values yet to be generated.
+	 */
+	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
 
 	private static final long serialVersionUID = -4475927214213411061L;
 
@@ -147,13 +162,66 @@ public class UserLongPK implements Serializable, Cloneable, Comparable<UserLongP
 	}
 
 	@Override
-	protected Object clone() {
+	protected UserLongPK clone() {
 		try {
-			return super.clone();
+			return (UserLongPK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// shouldn't get here
 			throw new RuntimeException(e);
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T keyComponentValue(int index, Object val) {
+		try {
+			if ( index == 0 || index == 1 ) {
+				if ( val == null ) {
+					return (T) UNASSIGNED_ENTITY_ID;
+				} else if ( val instanceof Long n ) {
+					return (T) n;
+				} else if ( val instanceof Number n ) {
+					return (T) Long.valueOf(n.longValue());
+				} else {
+					return (T) Long.valueOf(val.toString());
+				}
+			}
+		} catch ( NumberFormatException e ) {
+			throw new IllegalArgumentException(
+					"Key component %d does not support value %s.".formatted(index, val));
+		}
+		throw new IllegalArgumentException("Key component %d out of range.".formatted(index));
+	}
+
+	@Override
+	public UserLongPK createKey(CompositeKey template, Object... components) {
+		Object v1 = (components != null && components.length > 0 ? components[0]
+				: template != null ? template.keyComponent(0) : null);
+		Object v2 = (components != null && components.length > 1 ? components[1]
+				: template != null ? template.keyComponent(1) : null);
+		Long k1 = (v1 != null ? keyComponentValue(0, v1) : UNASSIGNED_USER_ID);
+		Long k2 = (v2 != null ? keyComponentValue(1, v2) : UNASSIGNED_ENTITY_ID);
+		return new UserLongPK(k1, k2);
+	}
+
+	@Override
+	public final Long keyComponent1() {
+		return getUserId();
+	}
+
+	@Override
+	public final Long keyComponent2() {
+		return getId();
+	}
+
+	@Override
+	public final boolean keyComponentIsAssigned(int index) {
+		if ( index == 0 ) {
+			return userId != null && userId != UNASSIGNED_USER_ID;
+		} else if ( index == 1 ) {
+			return id != null && id != UNASSIGNED_ENTITY_ID;
+		}
+		return CompositeKey2.super.keyComponentIsAssigned(index);
 	}
 
 	public Long getId() {

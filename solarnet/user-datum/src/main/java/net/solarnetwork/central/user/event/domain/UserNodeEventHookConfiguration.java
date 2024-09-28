@@ -28,20 +28,20 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import net.solarnetwork.central.dao.UserLongIdentifiableConfigurationEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
-import net.solarnetwork.central.user.domain.UserRelatedIdentifiableConfiguration;
 import net.solarnetwork.dao.BasicEntity;
 
 /**
  * User and node specific event configuration entity.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @JsonPropertyOrder({ "id", "userId", "created", "name", "topic", "serviceIdentifier", "nodeIds",
 		"sourceIds", "serviceProperties" })
 public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
-		implements UserRelatedIdentifiableConfiguration {
+		implements UserLongIdentifiableConfigurationEntity<UserLongPK> {
 
 	private static final long serialVersionUID = 3878313156603958081L;
 
@@ -51,15 +51,6 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	private String name;
 	private String serviceIdentifier;
 	private Map<String, Object> serviceProps;
-
-	/**
-	 * Default constructor.
-	 * 
-	 * @since 1.1
-	 */
-	public UserNodeEventHookConfiguration() {
-		super(new UserLongPK(), Instant.now());
-	}
 
 	/**
 	 * Constructor.
@@ -82,7 +73,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	 *        the creation date
 	 */
 	public UserNodeEventHookConfiguration(Long userId, Instant created) {
-		this(new UserLongPK(userId, null), created);
+		this(null, userId, created);
 	}
 
 	/**
@@ -99,6 +90,24 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 		this(new UserLongPK(userId, id), created);
 	}
 
+	/**
+	 * Create a copy with a given user ID.
+	 * 
+	 * @param userId
+	 *        the user ID ot assign to the copy
+	 * @return the new copy
+	 */
+	public UserNodeEventHookConfiguration withUserId(Long userId) {
+		UserNodeEventHookConfiguration copy = new UserNodeEventHookConfiguration(getConfigurationId(),
+				userId, getCreated());
+		copy.setName(name);
+		copy.setNodeIds(nodeIds);
+		copy.setServiceIdentifier(serviceIdentifier);
+		copy.setServiceProps(serviceProps);
+		copy.setTopic(topic);
+		return copy;
+	}
+
 	@Override
 	public boolean hasId() {
 		UserLongPK id = getId();
@@ -112,20 +121,6 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	}
 
 	/**
-	 * Set the user ID.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @since 1.1
-	 */
-	public void setUserId(Long userId) {
-		final UserLongPK id = getId();
-		if ( id != null ) {
-			id.setUserId(userId);
-		}
-	}
-
-	/**
 	 * Get the configuration ID.
 	 * 
 	 * @return the configuration ID
@@ -135,21 +130,6 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	public Long getConfigurationId() {
 		final UserLongPK id = getId();
 		return (id != null ? id.getId() : null);
-	}
-
-	/**
-	 * Set the configuration ID.
-	 * 
-	 * @param configurationId
-	 *        the configuration ID to set
-	 * @since 1.1
-	 */
-	@JsonSetter("id")
-	public void setConfigurationId(Long configurationId) {
-		final UserLongPK id = getId();
-		if ( id != null ) {
-			id.setId(configurationId);
-		}
 	}
 
 	/**
