@@ -28,19 +28,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
  * User related entity for {@link DataConfiguration}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps", "active",
 		"expireDays", "datumFilter" })
 public class ExpireUserDataConfiguration extends BaseExpireConfigurationEntity
-		implements UserIdentifiableConfiguration, DataConfiguration, Serializable {
+		implements DataConfiguration, Serializable {
 
 	private static final long serialVersionUID = 1098542708120529779L;
 

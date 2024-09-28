@@ -195,7 +195,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
 				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getId().getId());
+		task.setHookId(conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
@@ -237,7 +237,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
 				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getId().getId());
+		task.setHookId(conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
@@ -281,7 +281,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
 				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getId().getId());
+		task.setHookId(conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 
@@ -333,7 +333,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		UserNodeEventHookConfiguration conf = new UserNodeEventHookConfiguration(
 				UUID.randomUUID().getMostSignificantBits(), TEST_USER_ID, Instant.now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
-		task.setHookId(conf.getId().getId());
+		task.setHookId(conf.getConfigurationId());
 		event.setTask(task);
 		event.setConfig(conf);
 

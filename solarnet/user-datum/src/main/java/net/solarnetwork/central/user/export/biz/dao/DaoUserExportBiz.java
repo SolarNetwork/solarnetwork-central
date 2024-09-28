@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
@@ -62,7 +63,6 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
-import net.solarnetwork.central.user.export.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -78,7 +78,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
@@ -234,7 +234,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserIdentifiableConfiguration> T configurationForUser(Long userId,
+	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id) {
 		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (T) dataConfigDao.get(id, userId);
@@ -248,7 +248,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void deleteConfiguration(UserIdentifiableConfiguration configuration) {
+	public void deleteConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
 			dataConfigDao.delete((UserDataConfiguration) configuration);
 		} else if ( configuration instanceof UserDestinationConfiguration ) {
@@ -261,7 +261,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	}
 
 	private Iterable<? extends SettingSpecifierProvider> providersForServiceProperties(
-			Class<? extends UserIdentifiableConfiguration> configurationClass) {
+			Class<? extends UserRelatedIdentifiableConfigurationEntity<?>> configurationClass) {
 		if ( UserDestinationConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return availableDestinationServices();
 		} else if ( UserOutputConfiguration.class.isAssignableFrom(configurationClass) ) {
@@ -331,7 +331,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public Long saveConfiguration(UserIdentifiableConfiguration configuration) {
+	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
 			return dataConfigDao.store(mergeServiceProperties((UserDataConfiguration) configuration));
 		} else if ( configuration instanceof UserDestinationConfiguration ) {
@@ -347,8 +347,8 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
-			Class<T> configurationClass) {
+	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(
+			Long userId, Class<T> configurationClass) {
 		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (List<T>) dataConfigDao.findConfigurationsForUser(userId);
 		} else if ( UserDestinationConfiguration.class.isAssignableFrom(configurationClass) ) {

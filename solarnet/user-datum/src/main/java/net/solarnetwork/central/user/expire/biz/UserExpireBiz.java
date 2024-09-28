@@ -24,8 +24,8 @@ package net.solarnetwork.central.user.expire.biz;
 
 import java.util.List;
 import java.util.Locale;
+import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
-import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 
@@ -59,7 +59,7 @@ public interface UserExpireBiz {
 	 *        the primary key of the configuration to get
 	 * @return the configuration, or {@literal null} if not available
 	 */
-	<T extends UserIdentifiableConfiguration> T configurationForUser(Long userId,
+	<T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id);
 
 	/**
@@ -69,7 +69,7 @@ public interface UserExpireBiz {
 	 *        the configuration to save
 	 * @return the primary key of the saved configuration
 	 */
-	Long saveConfiguration(UserIdentifiableConfiguration configuration);
+	Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration);
 
 	/**
 	 * Delete a specific configuration.
@@ -77,7 +77,7 @@ public interface UserExpireBiz {
 	 * @param configuration
 	 *        the configuration to delete
 	 */
-	void deleteConfiguration(UserIdentifiableConfiguration configuration);
+	void deleteConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration);
 
 	/**
 	 * Get a list of all available data export configurations for a given user.
@@ -90,7 +90,7 @@ public interface UserExpireBiz {
 	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
-	<T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
+	<T extends UserRelatedIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(Long userId,
 			Class<T> configurationClass);
 
 	/**

@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserIdentifiableConfiguration.java - 25/03/2018 1:18:59 PM
+ * UserLongIdentifiableConfigurationEntity.java - 27/09/2024 2:19:17 pm
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,15 +20,20 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.export.domain;
+package net.solarnetwork.central.dao;
+
+import net.solarnetwork.central.domain.CompositeKey2;
 
 /**
- * User export specific entity for identifiable configuration.
+ * Convenience API for a {@link CompositeKey2} based primary key using a
+ * {@code Long} secondary key component.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserIdentifiableConfiguration
-		extends net.solarnetwork.central.user.domain.UserIdentifiableConfiguration {
+public interface UserLongIdentifiableConfigurationEntity<PK extends CompositeKey2<Long, Long>>
+		extends UserRelatedIdentifiableConfigurationEntity<PK> {
+
+	// nothing else
 
 }

@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserRelatedEntity.java - 1/03/2020 7:12:04 am
+ * UserRelatedIdentifiableConfigurationEntity.java - 25/03/2018 1:18:59 PM
  * 
- * Copyright 2020 SolarNetwork.net Dev Team
+ * Copyright 2018 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,27 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao;
+package net.solarnetwork.central.dao;
 
-import net.solarnetwork.central.user.domain.User;
-import net.solarnetwork.dao.Entity;
+import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
- * API for an entity associated with a {@link User}.
+ * User specific entity for identifiable configuration.
  * 
- * @param <K>
- *        the primary key type
  * @author matt
  * @version 1.0
- * @since 2.1
  */
-public interface UserRelatedEntity<K> extends Entity<K> {
+public interface UserRelatedIdentifiableConfigurationEntity<PK>
+		extends IdentifiableConfiguration, UserRelatedEntity<PK> {
 
 	/**
-	 * Get the user ID this entity relates to.
+	 * Get the user ID associated with this configuration.
 	 * 
 	 * @return the user ID
 	 */
+	@Override
 	Long getUserId();
 
 }

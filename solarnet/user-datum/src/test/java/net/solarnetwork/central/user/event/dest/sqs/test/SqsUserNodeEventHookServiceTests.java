@@ -211,7 +211,7 @@ public class SqsUserNodeEventHookServiceTests {
 		config.setServiceProps(TEST_PROPS);
 
 		UserNodeEventTask event = new UserNodeEventTask(UUID.randomUUID(), now());
-		event.setHookId(config.getId().getId());
+		event.setHookId(config.getConfigurationId());
 		event.setUserId(config.getUserId());
 		event.setNodeId(3L);
 		event.setSourceId("test.soruce");
@@ -232,7 +232,7 @@ public class SqsUserNodeEventHookServiceTests {
 		Map<String, Object> msgData = JsonUtils.getStringMap(msgBody);
 		assertThat("Message object property count", msgData.keySet(),
 				containsInAnyOrder("hookId", "userId", "nodeId", "sourceId", "foo", "val", "uid"));
-		assertThat("Hook ID prop", msgData, hasEntry("hookId", config.getId().getId().intValue()));
+		assertThat("Hook ID prop", msgData, hasEntry("hookId", config.getConfigurationId().intValue()));
 		assertThat("User ID prop", msgData, hasEntry("userId", config.getUserId().intValue()));
 		assertThat("Node ID prop", msgData, hasEntry("nodeId", event.getNodeId().intValue()));
 		assertThat("Source ID prop", msgData, hasEntry("sourceId", event.getSourceId()));

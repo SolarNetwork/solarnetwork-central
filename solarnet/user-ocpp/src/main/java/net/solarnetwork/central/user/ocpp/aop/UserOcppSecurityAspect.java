@@ -28,16 +28,16 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.NodeIdRelated;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.user.dao.UserNodeRelatedEntity;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 
 /**
  * Security enforcing AOP aspect for {@link UserOcppBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -70,7 +70,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 *        the entity
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
-	public void saveUserRelatedEntity(UserRelatedEntity<?> entity) {
+	public void saveUserRelatedEntity(UserIdRelated entity) {
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	 *        the entity
 	 */
 	@Pointcut("execution(* net.solarnetwork.central.user.ocpp.biz.UserOcppBiz.save*(..)) && args(entity,..)")
-	public void saveUserNodeRelatedEntity(UserNodeRelatedEntity<?> entity) {
+	public void saveUserNodeRelatedEntity(NodeIdRelated entity) {
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before("saveUserRelatedEntity(entity)")
-	public void userWriteAccessCheck(UserRelatedEntity<?> entity) {
+	public void userWriteAccessCheck(UserIdRelated entity) {
 		if ( entity == null || entity.getUserId() == null ) {
 			throw new IllegalArgumentException("The entity's userId parameter must not be null.");
 		}
@@ -121,7 +121,7 @@ public class UserOcppSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before("saveUserNodeRelatedEntity(entity)")
-	public void userNodeWriteAccessCheck(UserNodeRelatedEntity<?> entity) {
+	public void userNodeWriteAccessCheck(NodeIdRelated entity) {
 		if ( entity == null || entity.getNodeId() == null ) {
 			throw new IllegalArgumentException("The entity's nodeId parameter must not be null.");
 		}

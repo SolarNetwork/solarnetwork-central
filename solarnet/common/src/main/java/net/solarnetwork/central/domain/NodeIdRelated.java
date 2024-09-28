@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserIdentifiableConfiguration.java - 25/03/2018 1:18:59 PM
+ * NodeIdRelated.java - 27/09/2024 6:29:29 am
  * 
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,26 +20,21 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.domain;
-
-import net.solarnetwork.central.dao.UserRelatedEntity;
-import net.solarnetwork.service.IdentifiableConfiguration;
+package net.solarnetwork.central.domain;
 
 /**
- * User specific entity for identifiable configuration.
+ * API for objects related to a node entity by way of a node ID.
  * 
  * @author matt
- * @version 2.0
+ * @version 1.0
  */
-public interface UserIdentifiableConfiguration
-		extends IdentifiableConfiguration, UserRelatedEntity<Long> {
+public interface NodeIdRelated {
 
 	/**
-	 * Get the user ID associated with this configuration.
+	 * Get node ID this entity relates to.
 	 * 
-	 * @return the user ID
+	 * @return the node ID
 	 */
-	@Override
-	Long getUserId();
+	Long getNodeId();
 
 }

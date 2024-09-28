@@ -27,14 +27,14 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.Authorization;
 
 /**
  * An authorization entity.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonPropertyOrder({ "id", "created", "userId", "token", "enabled", "expired", "expiryDate",
 		"parentId" })

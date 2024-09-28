@@ -1,21 +1,21 @@
 /* ==================================================================
  * Address.java - 20/07/2020 11:14:28 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,15 +28,15 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
  * An address for billing.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class Address extends BasicLongEntity
 		implements UserRelatedEntity<Long>, Differentiable<Address> {
@@ -63,7 +63,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -76,12 +76,12 @@ public class Address extends BasicLongEntity
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id}, {@code userId}, and {@code created} properties are not
 	 * compared by this method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -138,7 +138,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the associated user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to set
 	 */
@@ -148,7 +148,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the display name.
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -157,7 +157,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the display name.
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 */
@@ -167,7 +167,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the email.
-	 * 
+	 *
 	 * @return the email
 	 */
 	public String getEmail() {
@@ -176,7 +176,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the email.
-	 * 
+	 *
 	 * @param email
 	 *        the email to set
 	 */
@@ -186,7 +186,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the country.
-	 * 
+	 *
 	 * @return the country
 	 */
 	public String getCountry() {
@@ -195,7 +195,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the country.
-	 * 
+	 *
 	 * @param country
 	 *        the country to set
 	 */
@@ -205,7 +205,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the time zone ID.
-	 * 
+	 *
 	 * @return the timeZoneId
 	 */
 	public String getTimeZoneId() {
@@ -214,7 +214,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the time zone ID.
-	 * 
+	 *
 	 * @param timeZoneId
 	 *        the timeZoneId to set
 	 */
@@ -224,7 +224,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the address time zone.
-	 * 
+	 *
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
@@ -242,7 +242,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the region.
-	 * 
+	 *
 	 * @return the region
 	 */
 	public String getRegion() {
@@ -251,7 +251,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the region.
-	 * 
+	 *
 	 * @param region
 	 *        the region to set
 	 */
@@ -261,7 +261,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the state/province.
-	 * 
+	 *
 	 * @return the stateOrProvince
 	 */
 	public String getStateOrProvince() {
@@ -270,7 +270,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the state/province.
-	 * 
+	 *
 	 * @param stateOrProvince
 	 *        the stateOrProvince to set
 	 */
@@ -280,7 +280,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the locality (city).
-	 * 
+	 *
 	 * @return the locality
 	 */
 	public String getLocality() {
@@ -289,7 +289,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the locality (city).
-	 * 
+	 *
 	 * @param locality
 	 *        the locality to set
 	 */
@@ -299,7 +299,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the postal code.
-	 * 
+	 *
 	 * @return the postalCode
 	 */
 	public String getPostalCode() {
@@ -308,7 +308,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the postal code.
-	 * 
+	 *
 	 * @param postalCode
 	 *        the postalCode to set
 	 */
@@ -318,7 +318,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Get the street list.
-	 * 
+	 *
 	 * @return the street
 	 */
 	public String[] getStreet() {
@@ -327,7 +327,7 @@ public class Address extends BasicLongEntity
 
 	/**
 	 * Set the street list.
-	 * 
+	 *
 	 * @param street
 	 *        the street to set
 	 */

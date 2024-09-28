@@ -1,21 +1,21 @@
 /* ==================================================================
  * InvoicePayment.java - 29/07/2020 10:52:56 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,16 +27,16 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.UserUuidPK;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
  * Invoice payment entity.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class InvoicePayment extends BasicEntity<UserUuidPK>
 		implements Differentiable<InvoicePayment>, UserRelatedEntity<UserUuidPK> {
@@ -73,7 +73,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param accountId
 	 *        the account ID
 	 * @param paymentId
@@ -87,7 +87,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param accountId
@@ -109,7 +109,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param userId
@@ -150,12 +150,12 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -192,7 +192,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Get the account ID.
-	 * 
+	 *
 	 * @return the account ID
 	 */
 	public Long getAccountId() {
@@ -201,7 +201,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Get the payment ID.
-	 * 
+	 *
 	 * @return the payment ID
 	 */
 	public UUID getPaymentId() {
@@ -210,7 +210,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Get the invoice ID.
-	 * 
+	 *
 	 * @return the invoice ID
 	 */
 	public Long getInvoiceId() {
@@ -219,7 +219,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Get the amount.
-	 * 
+	 *
 	 * @return the amount
 	 */
 	public BigDecimal getAmount() {
@@ -228,7 +228,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 
 	/**
 	 * Set the amount.
-	 * 
+	 *
 	 * @param amount
 	 *        the amount to set
 	 */
