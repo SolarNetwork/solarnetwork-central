@@ -23,7 +23,6 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -32,8 +31,8 @@ import java.util.Objects;
  * @author matt
  * @version 1.1
  */
-public final class UserStringCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserStringCompositePK>, CompositeKey2<Long, String>, UserIdRelated {
+public final class UserStringCompositePK extends BasePK
+		implements UserRelatedCompositeKey<UserStringCompositePK>, CompositeKey2<Long, String> {
 
 	private static final long serialVersionUID = -1781395410683839439L;
 

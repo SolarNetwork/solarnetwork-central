@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.user.domain;
 
-import java.io.Serializable;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.CompositeKey2;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Primary key based on a user ID and another {@code Long} ID.
@@ -33,8 +33,7 @@ import net.solarnetwork.central.domain.CompositeKey2;
  * @version 1.1
  * @since 2.2
  */
-public class UserLongPK
-		implements Serializable, Cloneable, Comparable<UserLongPK>, CompositeKey2<Long, Long> {
+public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, CompositeKey2<Long, Long> {
 
 	/**
 	 * A special "not a value" instance to be used for generated user ID values
@@ -232,6 +231,7 @@ public class UserLongPK
 		this.id = id;
 	}
 
+	@Override
 	public Long getUserId() {
 		return userId;
 	}

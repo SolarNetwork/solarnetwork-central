@@ -4,6 +4,7 @@ plugins {
 
 rootProject.name = 'solarnet'
 
+include "cloud-integrations"
 include "common"
 include "common-test"
 include "commons-multipart"
@@ -34,6 +35,7 @@ include "oscp"
 include "oscp-fp"
 include "oscp-sim-cp"
 
+project(':cloud-integrations').name = "solarnet-cloud-integrations"
 project(':common').name = "solarnet-common"
 project(':common-test').name = "solarnet-common-test"
 project(':commons-multipart').name = "solarnet-commons-multipart"

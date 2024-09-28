@@ -23,7 +23,6 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 import com.fasterxml.uuid.UUIDComparator;
@@ -34,8 +33,8 @@ import com.fasterxml.uuid.UUIDComparator;
  * @author matt
  * @version 1.1
  */
-public final class UserUuidPK extends BasePK implements Serializable, Cloneable, Comparable<UserUuidPK>,
-		CompositeKey2<Long, UUID>, UserIdRelated {
+public final class UserUuidPK extends BasePK
+		implements UserRelatedCompositeKey<UserUuidPK>, CompositeKey2<Long, UUID> {
 
 	private static final long serialVersionUID = 417842772182618447L;
 

@@ -23,7 +23,6 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -31,10 +30,10 @@ import java.util.UUID;
  * Basic implementation of a Long, UUID, Long composite key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class UserUuidLongCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserUuidLongCompositePK>, CompositeKey3<Long, UUID, Long>, UserIdRelated {
+public class UserUuidLongCompositePK extends BasePK
+		implements UserRelatedCompositeKey<UserUuidLongCompositePK>, CompositeKey3<Long, UUID, Long> {
 
 	private static final long serialVersionUID = 5569471640101762323L;
 

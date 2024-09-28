@@ -23,17 +23,16 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Immutable primary key for user-related entities using a Long entity key.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public final class UserLongCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserLongCompositePK>, CompositeKey2<Long, Long>, UserIdRelated {
+public final class UserLongCompositePK extends BasePK
+		implements UserRelatedCompositeKey<UserLongCompositePK>, CompositeKey2<Long, Long> {
 
 	private static final long serialVersionUID = 2537083574768869025L;
 

@@ -23,24 +23,20 @@
 package net.solarnetwork.central.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.time.Instant;
 import net.solarnetwork.central.domain.BasePK;
-import net.solarnetwork.central.domain.CompositeKey;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.dao.BasicEntity;
-import net.solarnetwork.domain.CopyingIdentity;
-import net.solarnetwork.domain.Differentiable;
 
 /**
  * Base mutable user-related configuration entity, where the first component of
  * its primary key is a Long user ID.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
-		extends BasicEntity<K> implements UserRelatedEntity<K>, CopyingIdentity<K, C>, Differentiable<C>,
-		Serializable, Cloneable {
+public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
+		extends BasicEntity<K> implements UserRelatedStdEntity<C, K> {
 
 	private static final long serialVersionUID = -8201311252309117005L;
 

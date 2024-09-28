@@ -23,17 +23,16 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Basic implementation of a Long, Long, String composite key.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public final class UserLongStringCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserLongStringCompositePK>, CompositeKey3<Long, Long, String>, UserIdRelated {
+public final class UserLongStringCompositePK extends BasePK implements
+		UserRelatedCompositeKey<UserLongStringCompositePK>, CompositeKey3<Long, Long, String> {
 
 	private static final long serialVersionUID = 6089539799437151759L;
 
