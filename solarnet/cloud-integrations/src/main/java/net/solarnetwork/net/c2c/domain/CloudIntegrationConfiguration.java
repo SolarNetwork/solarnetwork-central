@@ -41,7 +41,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled" })
+@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "serviceIdentifier",
+		"serviceProperties" })
 public class CloudIntegrationConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudIntegrationConfiguration, UserLongCompositePK>
 		implements
