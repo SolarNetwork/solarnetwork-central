@@ -31,6 +31,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import net.solarnetwork.central.aop.SolarNetCommonAopConfiguration;
+import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
@@ -45,6 +46,8 @@ import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguratio
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.user.billing.aop.SolarNetUserBillingAopConfiguration;
+import net.solarnetwork.central.user.c2c.aop.SolarNetUserCloudIntegrationsAopConfiguration;
+import net.solarnetwork.central.user.c2c.config.SolarNetUserCloudIntegrationsConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.din.aop.SolarNetUserDatumInputAopConfiguration;
 import net.solarnetwork.central.user.din.config.SolarNetUserDatumInputConfiguration;
@@ -74,6 +77,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
+		SolarNetCloudIntegrationsConfiguration.class,
 		SolarNetCommonAopConfiguration.class,
 		SolarNetDatumAopConfiguration.class,
 		SolarNetDatumConfiguration.class,
@@ -86,6 +90,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetInstructorConfiguration.class,
 		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,
+		SolarNetUserCloudIntegrationsAopConfiguration.class,
+		SolarNetUserCloudIntegrationsConfiguration.class,
 		SolarNetUserDatumInputAopConfiguration.class,
 		SolarNetUserDatumInputConfiguration.class,
 		SolarNetUserDnp3AopConfiguration.class,

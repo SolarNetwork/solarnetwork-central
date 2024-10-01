@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.net.c2c.domain;
+package net.solarnetwork.central.c2c.domain;
 
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -90,7 +90,7 @@ public class CloudIntegrationConfiguration
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Credential{");
+		builder.append("CloudIntegration{");
 		if ( getUserId() != null ) {
 			builder.append("userId=");
 			builder.append(getUserId());
