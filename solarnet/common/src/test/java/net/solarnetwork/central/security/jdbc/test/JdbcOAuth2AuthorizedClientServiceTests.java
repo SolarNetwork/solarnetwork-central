@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.security.jdbc.test;
 
-import static net.solarnetwork.central.security.OAuth2ClientUtils.userIdClientRegistrationId;
+import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import static org.assertj.core.api.BDDAssertions.from;
@@ -93,7 +93,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
+		final String registrationId = userIdSystemIdentifier(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
@@ -171,7 +171,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
+		final String registrationId = userIdSystemIdentifier(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
@@ -267,7 +267,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
+		final String registrationId = userIdSystemIdentifier(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)
@@ -365,7 +365,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		final OAuth2RefreshToken refreshToken = new OAuth2RefreshToken("REFRESH", tokenIssueDate,
 				tokenIssueDate.plusSeconds(3600L));
 
-		final String registrationId = userIdClientRegistrationId(userId, "sntest", 1, 2);
+		final String registrationId = userIdSystemIdentifier(userId, "sntest", 1, 2);
 
 		// @formatter:off
 		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(registrationId)

@@ -22,14 +22,17 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Locale;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -75,6 +78,20 @@ public class UserCloudIntegrationsController {
 		Iterable<LocalizedServiceInfo> result = userCloudIntegrationsBiz
 				.availableIntegrationServices(locale);
 		return success(result);
+	}
+
+	/**
+	 * List the available transform services.
+	 *
+	 * @param integrationId
+	 *        the ID of the integration configuration to validate
+	 * @return the services
+	 */
+	@RequestMapping(value = "/integrations/{integrationId}/validate", method = RequestMethod.GET)
+	public Result<Void> validateIntegrationConfiguration(
+			@PathVariable("integrationId") Long integrationId) {
+		UserLongCompositePK id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
+		return userCloudIntegrationsBiz.validateIntegrationConfigurationForId(id);
 	}
 
 }

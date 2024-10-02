@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
+import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
@@ -46,7 +47,13 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class CloudIntegrationConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudIntegrationConfiguration, UserLongCompositePK>
 		implements
-		UserRelatedStdIdentifiableConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK> {
+		UserRelatedStdIdentifiableConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
+		UserIdentifiableSystem {
+
+	/**
+	 * A system identifier component included in {@link #systemIdentifier()}.
+	 */
+	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-i9n";
 
 	private static final long serialVersionUID = 9018138639840148323L;
 
@@ -115,6 +122,30 @@ public class CloudIntegrationConfiguration
 	public Long getConfigId() {
 		UserLongCompositePK id = getId();
 		return (id != null ? id.getEntityId() : null);
+	}
+
+	/**
+	 * Get a unique identifier based on this configuration.
+	 *
+	 * <p>
+	 * The identifier follows this syntax:
+	 * </p>
+	 *
+	 * <pre>{@code
+	 * USER_ID:c2c-int:CONFIG_ID
+	 * }</pre>
+	 *
+	 * <p>
+	 * Where {@code USER_ID} is {@link #getUserId()} and {@code CONFIG_ID} is
+	 * {@link #getConfigId()}.
+	 * </p>
+	 *
+	 * @return the system identifier
+	 * @see #CLOUD_INTEGRATION_SYSTEM_IDENTIFIER
+	 */
+	@Override
+	public String systemIdentifier() {
+		return systemIdentifierForComponents(CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, getConfigId());
 	}
 
 }

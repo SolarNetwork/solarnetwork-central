@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.c2c.biz.impl;
 
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
@@ -30,8 +31,12 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
 
 /**
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
@@ -41,21 +46,43 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
+	private final CloudIntegrationConfigurationDao configurationDao;
 	private final Map<String, CloudIntegrationService> integrationServices;
 
 	/**
 	 * Constructor.
+	 *
+	 * @param configurationDao
+	 *        the configuration DAO
+	 * @param integrationServices
+	 *        the integration services
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public DaoUserCloudIntegrationsBiz(Collection<CloudIntegrationService> integrationServices) {
+	public DaoUserCloudIntegrationsBiz(CloudIntegrationConfigurationDao configurationDao,
+			Collection<CloudIntegrationService> integrationServices) {
 		super();
+		this.configurationDao = requireNonNullArgument(configurationDao, "configurationDao");
 		this.integrationServices = requireNonNullArgument(integrationServices, "integrationServices")
 				.stream().collect(Collectors.toUnmodifiableMap(CloudIntegrationService::getId,
 						Function.identity()));
+
 	}
 
 	@Override
 	public Iterable<LocalizedServiceInfo> availableIntegrationServices(Locale locale) {
 		return localizedServiceSettings(integrationServices.values(), locale);
+	}
+
+	@Override
+	public Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id) {
+		final CloudIntegrationConfiguration conf = requireNonNullObject(
+				configurationDao.get(requireNonNullArgument(id, "id")), id);
+
+		final CloudIntegrationService service = requireNonNullObject(
+				integrationServices.get(conf.getServiceIdentifier()), conf.getServiceIdentifier());
+
+		return service.validate(conf);
 	}
 
 }

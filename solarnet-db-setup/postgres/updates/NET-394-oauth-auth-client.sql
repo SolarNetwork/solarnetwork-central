@@ -1,3 +1,6 @@
+/**
+ * OAuth authorized client persistence.
+ */
 CREATE TABLE solarnet.oauth2_authorized_client (
 	user_id						BIGINT NOT NULL,
 	client_registration_id 		CHARACTER VARYING(128) NOT NULL,

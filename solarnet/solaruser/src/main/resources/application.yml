@@ -59,6 +59,13 @@ app:
     ttl: 600
     heap-max-entries: 1000
     disk-max-size-mb: 100
+  http.client:
+    connections:
+      max-total: 20
+    settings:
+      connect-timeout: 10s
+      connection-request-timeout: 15s
+      socket-timeout: 20s
   inin:
     max-input-length: 8196
     xslt:

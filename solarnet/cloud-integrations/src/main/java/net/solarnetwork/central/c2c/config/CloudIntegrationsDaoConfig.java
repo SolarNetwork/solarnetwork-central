@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserCloudIntegrationsBizConfig.java - 30/09/2024 11:22:23 am
+ * CloudIntegrationsDaoConfig.java - 2/10/2024 4:56:36 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,39 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.c2c.config;
+package net.solarnetwork.central.c2c.config;
 
-import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
-import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
-import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 
 /**
- * Configuration for user cloud integrations services.
+ * Cloud integrations DAO configuration.
  *
  * @author matt
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(CLOUD_INTEGRATIONS)
-public class UserCloudIntegrationsBizConfig {
+public class CloudIntegrationsDaoConfig {
 
 	@Autowired
-	private CloudIntegrationConfigurationDao integrationConfigurationDao;
+	private JdbcOperations jdbcOperations;
 
-	@Autowired
-	private Collection<CloudIntegrationService> integrationServices;
-
+	/**
+	 * The cloud integration configuration DAO.
+	 *
+	 * @return the DAO
+	 */
 	@Bean
-	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
-		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(integrationConfigurationDao,
-				integrationServices);
-		return biz;
+	public CloudIntegrationConfigurationDao cloudIntegrationConfigurationConfigurationDao() {
+		return new JdbcCloudIntegrationConfigurationDao(jdbcOperations);
 	}
 
 }

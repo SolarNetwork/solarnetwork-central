@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.biz;
 
+import java.net.URI;
+import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.Result;
@@ -36,6 +38,31 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  */
 public interface CloudIntegrationService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
+
+	/** An API "base" URL to the external service API. */
+	String API_BASE_WELL_KNOWN_URL = "baseUrl";
+
+	/** An API OAuth token-granting URL used by the external service API. */
+	String TOKEN_WELL_KNOWN_URL = "tokenUrl";
+
+	/** A standard client identifier setting name, for example OAuth. */
+	String CLIENT_ID_SETTING = "oauthClientId";
+
+	/** A standard client secret setting name, for example OAuth. */
+	String CLIENT_SECRET_SETTING = "oauthClientSecret";
+
+	/** A standard username setting name. */
+	String USERNAME_SETTING = "username";
+
+	/** A standard password setting name. */
+	String PASSWORD_SETTING = "password";
+
+	/**
+	 * Get a mapping of "well known" service URIs.
+	 *
+	 * @return the well-known URLs, never {@literal null}
+	 */
+	Map<String, URI> wellKnownUrls();
 
 	/**
 	 * Get the datum stream services supported by this integration.

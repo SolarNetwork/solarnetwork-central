@@ -23,8 +23,11 @@
 package net.solarnetwork.central.user.c2c.aop;
 
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 
@@ -46,6 +49,21 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	 */
 	public UserCloudIntegrationsSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao) {
 		super(nodeOwnershipDao);
+	}
+
+	/**
+	 * Match read methods given a user-related identifier.
+	 *
+	 * @param userKey
+	 *        the user related identifier
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.*ForId(..)) && args(userKey,..)")
+	public void readForUserKey(UserIdRelated userKey) {
+	}
+
+	@Before("readForUserKey(userKey)")
+	public void userKeyReadAccessCheck(UserIdRelated userKey) {
+		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
 }

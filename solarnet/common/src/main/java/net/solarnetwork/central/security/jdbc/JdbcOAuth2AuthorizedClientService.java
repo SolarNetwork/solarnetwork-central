@@ -23,7 +23,7 @@
 package net.solarnetwork.central.security.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
-import static net.solarnetwork.central.security.OAuth2ClientUtils.userIdFromClientRegistrationId;
+import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdFromSystemIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
 import java.nio.charset.StandardCharsets;
@@ -60,6 +60,7 @@ import org.springframework.util.StringUtils;
  * </p>
  * 
  * <pre>{@code TABLE oauth2_authorized_client (
+ *   user_id BIGINT NOT NULL,
  *   client_registration_id varchar(100) NOT NULL,
  *   principal_name varchar(200) NOT NULL,
  *   access_token_type varchar(100) NOT NULL,
@@ -176,7 +177,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 	@SuppressWarnings("unchecked")
 	public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId,
 			String principalName) {
-		final Long userId = userIdFromClientRegistrationId(clientRegistrationId);
+		final Long userId = userIdFromSystemIdentifier(clientRegistrationId);
 		if ( userId == null ) {
 			return null;
 		}
@@ -194,7 +195,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 
 	@Override
 	public void removeAuthorizedClient(String clientRegistrationId, String principalName) {
-		final Long userId = userIdFromClientRegistrationId(clientRegistrationId);
+		final Long userId = userIdFromSystemIdentifier(clientRegistrationId);
 		if ( userId == null ) {
 			return;
 		}
@@ -256,7 +257,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			final OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
 			final OAuth2RefreshToken refreshToken = authorizedClient.getRefreshToken();
 			int p = 0;
-			stmt.setObject(++p, userIdFromClientRegistrationId(clientRegistration.getRegistrationId()));
+			stmt.setObject(++p, userIdFromSystemIdentifier(clientRegistration.getRegistrationId()));
 			stmt.setString(++p, clientRegistration.getRegistrationId());
 			stmt.setString(++p, principal.getName());
 			stmt.setString(++p, accessToken.getTokenType().getValue());

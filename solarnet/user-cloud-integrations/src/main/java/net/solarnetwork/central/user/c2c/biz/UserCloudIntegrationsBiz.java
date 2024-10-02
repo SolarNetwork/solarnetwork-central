@@ -24,7 +24,10 @@ package net.solarnetwork.central.user.c2c.biz;
 
 import java.util.Locale;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
 
 /**
  * Service API for SolarUser cloud integrations support.
@@ -43,5 +46,15 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the integration service info
 	 */
 	Iterable<LocalizedServiceInfo> availableIntegrationServices(Locale locale);
+
+	/**
+	 * Validate a {@link CloudIntegrationConfiguration} is configured
+	 * appropriately.
+	 *
+	 * @param id
+	 *        the ID of the configuration to validate
+	 * @return the validation result, never {@literal null}
+	 */
+	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id);
 
 }
