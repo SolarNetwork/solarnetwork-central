@@ -71,12 +71,12 @@ CREATE TABLE solarcin.cin_datum_stream (
  *
  * @column user_id 		the ID of the account owner
  * @column ds_id 		the ID of the datum stream associated with this configuration
- * @column id 			the ID of the configuration (index order)
+ * @column idx 			the index (order) of the configuration
  * @column created		the creation date
  * @column modified		the modification date
  * @column enabled		a flag to mark the configuration as enabled for use by application or not
- * @column pname 		the datum stream property name to populate
  * @column ptype 		the datum samples type (key)
+ * @column pname 		the datum stream property name to populate
  * @column vref 		the cloud data source value reference
  * @column mult 		an optional multiplication factor to apply to values
  * @column scale 		an optional maximum number of decimal places to round values to
@@ -84,12 +84,12 @@ CREATE TABLE solarcin.cin_datum_stream (
 CREATE TABLE solarcin.cin_datum_stream_prop (
 	user_id			BIGINT NOT NULL,
 	ds_id 			BIGINT NOT NULL,
-	id				SMALLINT NOT NULL,
+	idx				SMALLINT NOT NULL,
 	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
-	pname			CHARACTER VARYING(64) NOT NULL,
 	ptype			CHARACTER(1) NOT NULL,
+	pname			CHARACTER VARYING(64) NOT NULL,
 	vref			CHARACTER VARYING(256) NOT NULL,
 	mult			NUMERIC,
 	scale			SMALLINT,

@@ -112,11 +112,11 @@ public class CloudDatumStreamConfiguration
 			return false;
 		}
 		// @formatter:off
-		return Objects.equals(this.integrationId, other.getIntegrationId())
-				&& Objects.equals(this.schedule, other.getSchedule())
-				&& Objects.equals(this.kind, other.getKind())
-				&& Objects.equals(this.objectId, other.getObjectId())
-				&& Objects.equals(this.sourceId, other.getSourceId())
+		return Objects.equals(this.integrationId, other.integrationId)
+				&& Objects.equals(this.schedule, other.schedule)
+				&& Objects.equals(this.kind, other.kind)
+				&& Objects.equals(this.objectId, other.objectId)
+				&& Objects.equals(this.sourceId, other.sourceId)
 				;
 		// @formatter:on
 	}
@@ -247,8 +247,8 @@ public class CloudDatumStreamConfiguration
 	 * @param objectId
 	 *        the object ID to set
 	 */
-	public final void setObjectId(Long nodeId) {
-		this.objectId = nodeId;
+	public final void setObjectId(Long objectId) {
+		this.objectId = objectId;
 	}
 
 	/**
