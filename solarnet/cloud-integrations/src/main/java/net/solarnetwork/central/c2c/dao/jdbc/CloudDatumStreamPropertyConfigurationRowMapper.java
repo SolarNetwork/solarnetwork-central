@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDatumStreamConfigurationRowMapper.java - 3/10/2024 1:12:26 pm
+ * CloudDatumStreamPropertyConfigurationRowMapper.java - 4/10/2024 8:30:54 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -27,11 +27,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 
 /**
- * Row mapper for {@link CloudDatumStreamConfiguration} entities.
+ * Row mapper for {@link CloudDatumStreamPropertyConfiguration} entities.
  *
  * <p>
  * The expected column order in the SQL results is:
@@ -39,34 +39,33 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  *
  * <ol>
  * <li>user_id (BIGINT)</li>
- * <li>id (BIGINT)</li>
+ * <li>ds_id (BIGINT)</li>
+ * <li>idx (SMALLINT)
  * <li>created (TIMESTAMP)</li>
  * <li>modified (TIMESTAMP)</li>
  * <li>enabled (BOOLEAN)</li>
- * <li>cname (TEXT)</li>
- * <li>sident (TEXT)</li>
- * <li>int_id (BIGINT)</li>
- * <li>schedule (TEXT)</li>
- * <li>kind (CHARACTER)</li>
- * <li>obj_id (BIGINT)</li>
- * <li>source_id (TEXT)</li>
- * <li>sprops (TEXT)</li>
+ * <li>ptype (TEXT)</li>
+ * <li>pname (TEXT)</li>
+ * <li>vref (TEXT)</li>
+ * <li>mult (NUMERIC)</li>
+ * <li>scale (SMALLINT)</li>
  * </ol>
  *
  * @author matt
  * @version 1.0
  */
-public class CloudDatumStreamConfigurationRowMapper implements RowMapper<CloudDatumStreamConfiguration> {
+public class CloudDatumStreamPropertyConfigurationRowMapper
+		implements RowMapper<CloudDatumStreamPropertyConfiguration> {
 
 	/** A default instance. */
-	public static final RowMapper<CloudDatumStreamConfiguration> INSTANCE = new CloudDatumStreamConfigurationRowMapper();
+	public static final RowMapper<CloudDatumStreamPropertyConfiguration> INSTANCE = new CloudDatumStreamPropertyConfigurationRowMapper();
 
 	private final int columnOffset;
 
 	/**
 	 * Default constructor.
 	 */
-	public CloudDatumStreamConfigurationRowMapper() {
+	public CloudDatumStreamPropertyConfigurationRowMapper() {
 		this(0);
 	}
 
@@ -76,28 +75,26 @@ public class CloudDatumStreamConfigurationRowMapper implements RowMapper<CloudDa
 	 * @param columnOffset
 	 *        a column offset to apply
 	 */
-	public CloudDatumStreamConfigurationRowMapper(int columnOffset) {
+	public CloudDatumStreamPropertyConfigurationRowMapper(int columnOffset) {
 		this.columnOffset = columnOffset;
 	}
 
 	@Override
-	public CloudDatumStreamConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public CloudDatumStreamPropertyConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
-		Long entityId = rs.getObject(++p, Long.class);
+		Long dataSourceId = rs.getObject(++p, Long.class);
+		Integer idx = rs.getObject(++p, Integer.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(userId, entityId, ts);
+		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
+				dataSourceId, idx, ts);
 		conf.setModified(getTimestampInstant(rs, ++p));
 		conf.setEnabled(rs.getBoolean(++p));
-		conf.setName(rs.getString(++p));
-		conf.setServiceIdentifier(rs.getString(++p));
-		conf.setIntegrationId(rs.getObject(++p, Long.class));
-		conf.setSchedule(rs.getString(++p));
-		conf.setKind(ObjectDatumKind.forKey(rs.getString(++p)));
-		conf.setObjectId(rs.getObject(++p, Long.class));
-		conf.setSourceId(rs.getString(++p));
-
-		conf.setServicePropsJson(rs.getString(++p));
+		conf.setPropertyType(DatumSamplesType.fromValue(rs.getString(++p)));
+		conf.setPropertyName(rs.getString(++p));
+		conf.setValueReference(rs.getString(++p));
+		conf.setMultiplier(rs.getBigDecimal(++p));
+		conf.setScale(rs.getObject(++p, Integer.class));
 		return conf;
 	}
 

@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.dao;
 
 import java.util.Arrays;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.IndexCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
@@ -33,10 +34,11 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @version 1.0
  */
 public class BasicFilter extends BasicCoreCriteria
-		implements CloudIntegrationFilter, CloudDatumStreamFilter {
+		implements CloudIntegrationFilter, CloudDatumStreamPropertyFilter {
 
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;
+	private Integer[] indexes;
 
 	@Override
 	public BasicFilter clone() {
@@ -69,6 +71,9 @@ public class BasicFilter extends BasicCoreCriteria
 		if ( criteria instanceof CloudDatumStreamCriteria f ) {
 			setDatumStreamIds(f.getDatumStreamIds());
 		}
+		if ( criteria instanceof IndexCriteria f ) {
+			setIndexes(f.getIndexes());
+		}
 	}
 
 	@Override
@@ -77,6 +82,7 @@ public class BasicFilter extends BasicCoreCriteria
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(integrationIds);
 		result = prime * result + Arrays.hashCode(datumStreamIds);
+		result = prime * result + Arrays.hashCode(indexes);
 		return result;
 	}
 
@@ -93,7 +99,8 @@ public class BasicFilter extends BasicCoreCriteria
 		}
 		BasicFilter other = (BasicFilter) obj;
 		return Arrays.equals(integrationIds, other.integrationIds)
-				&& Arrays.equals(datumStreamIds, other.datumStreamIds);
+				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
+				&& Arrays.equals(indexes, other.indexes);
 	}
 
 	@Override
@@ -128,7 +135,7 @@ public class BasicFilter extends BasicCoreCriteria
 
 	@Override
 	public Long getDatumStreamId() {
-		return CloudDatumStreamFilter.super.getDatumStreamId();
+		return CloudDatumStreamPropertyFilter.super.getDatumStreamId();
 	}
 
 	/**
@@ -154,6 +161,41 @@ public class BasicFilter extends BasicCoreCriteria
 	 */
 	public void setDatumStreamIds(Long[] datumStreamIds) {
 		this.datumStreamIds = datumStreamIds;
+	}
+
+	@Override
+	public Integer getIndex() {
+		return CloudDatumStreamPropertyFilter.super.getIndex();
+	}
+
+	/**
+	 * Set the index.
+	 *
+	 * @param index
+	 *        the index to set
+	 */
+	public void setIndex(Integer index) {
+		setIndexes(index != null ? new Integer[] { index } : null);
+	}
+
+	/**
+	 * Get the indexes.
+	 *
+	 * @return the indexes
+	 */
+	@Override
+	public Integer[] getIndexes() {
+		return indexes;
+	}
+
+	/**
+	 * Set the indexes.
+	 *
+	 * @param indexes
+	 *        the indexes to set
+	 */
+	public void setIndexes(Integer[] indexes) {
+		this.indexes = indexes;
 	}
 
 }

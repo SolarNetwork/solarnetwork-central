@@ -53,7 +53,7 @@ CREATE TABLE solarcin.cin_datum_stream (
 	sident			CHARACTER VARYING(128) NOT NULL,
 	int_id			BIGINT,
 	schedule 		CHARACTER VARYING(64),
-	kind 			CHARACTER(1),
+	kind 			CHARACTER(1) NOT NULL,
 	obj_id 			BIGINT,
 	source_id 		CHARACTER VARYING(64),
 	sprops			jsonb,
@@ -93,8 +93,8 @@ CREATE TABLE solarcin.cin_datum_stream_prop (
 	vref			CHARACTER VARYING(256) NOT NULL,
 	mult			NUMERIC,
 	scale			SMALLINT,
-	CONSTRAINT cin_datum_stream_prop_pk PRIMARY KEY (user_id, ds_id, id),
+	CONSTRAINT cin_datum_stream_prop_pk PRIMARY KEY (user_id, ds_id, idx),
 	CONSTRAINT cin_datum_stream_ds_fk FOREIGN KEY (user_id, ds_id)
 		REFERENCES solarcin.cin_datum_stream (user_id, id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );
