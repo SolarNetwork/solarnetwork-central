@@ -30,7 +30,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Helper methods for cloud integrations JDBC tests.
@@ -47,7 +49,7 @@ public class CinJdbcTestUtils {
 	}
 
 	/**
-	 * Create a new credential configuration instance.
+	 * Create a new integration configuration instance.
 	 *
 	 * @param userId
 	 *        the user ID
@@ -67,11 +69,12 @@ public class CinJdbcTestUtils {
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);
 		conf.setServiceProps(serviceProps);
+		conf.setEnabled(true);
 		return conf;
 	}
 
 	/**
-	 * List transform configuration rows.
+	 * List integration configuration rows.
 	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
@@ -82,6 +85,60 @@ public class CinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps
 				.queryForList("select * from solarcin.cin_integration ORDER BY user_id, id");
 		log.debug("solarcin.cin_integration table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new datum stream configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param integrationId
+	 *        the integration ID
+	 * @param kind
+	 *        the stream kind
+	 * @param objectId
+	 *        the stream object ID
+	 * @param sourceId
+	 *        the stream source ID
+	 * @param name
+	 *        the name
+	 * @param serviceId
+	 *        the service ID
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 */
+	public static CloudDatumStreamConfiguration newCloudDatumStreamConfiguration(Long userId,
+			Long integrationId, ObjectDatumKind kind, Long objectId, String sourceId, String name,
+			String serviceId, Map<String, Object> serviceProps) {
+		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
+				unassignedEntityIdKey(userId), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setName(name);
+		conf.setServiceIdentifier(serviceId);
+		conf.setIntegrationId(integrationId);
+		conf.setKind(kind);
+		conf.setObjectId(objectId);
+		conf.setSourceId(sourceId);
+		conf.setServiceProps(serviceProps);
+		conf.setEnabled(true);
+		return conf;
+	}
+
+	/**
+	 * List datum stream configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCloudDatumStreamConfigurationData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solarcin.cin_datum_stream ORDER BY user_id, id");
+		log.debug("solarcin.cin_datum_stream table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

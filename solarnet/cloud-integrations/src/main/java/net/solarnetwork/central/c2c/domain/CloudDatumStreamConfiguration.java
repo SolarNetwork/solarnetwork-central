@@ -24,11 +24,13 @@ package net.solarnetwork.central.c2c.domain;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A cloud datum stream configuration entity.
@@ -42,17 +44,18 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "nodeId",
+@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "objectId",
 		"sourceId", "propertyMappings", "serviceIdentifier", "serviceProperties" })
 public class CloudDatumStreamConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
 		UserRelatedStdIdentifiableConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK> {
 
-	private static final long serialVersionUID = -3993547551875272386L;
+	private static final long serialVersionUID = 6232772467622425418L;
 
 	private Long integrationId;
-	private Long nodeId;
+	private ObjectDatumKind kind;
+	private Long objectId;
 	private String sourceId;
 	private List<CloudDatumStreamPropertyMapping> propertyMappings;
 
@@ -94,6 +97,30 @@ public class CloudDatumStreamConfiguration
 	}
 
 	@Override
+	public void copyTo(CloudDatumStreamConfiguration entity) {
+		super.copyTo(entity);
+		entity.setIntegrationId(integrationId);
+		entity.setKind(kind);
+		entity.setObjectId(objectId);
+		entity.setSourceId(sourceId);
+	}
+
+	@Override
+	public boolean isSameAs(CloudDatumStreamConfiguration other) {
+		boolean result = super.isSameAs(other);
+		if ( !result ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(this.integrationId, other.getIntegrationId())
+				&& Objects.equals(this.kind, other.getKind())
+				&& Objects.equals(this.objectId, other.getObjectId())
+				&& Objects.equals(this.sourceId, other.getSourceId())
+				;
+		// @formatter:on
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("CloudDatumStream{");
@@ -112,9 +139,14 @@ public class CloudDatumStreamConfiguration
 			builder.append(integrationId);
 			builder.append(", ");
 		}
-		if ( nodeId != null ) {
-			builder.append("nodeId=");
-			builder.append(nodeId);
+		if ( kind != null ) {
+			builder.append("kind=");
+			builder.append(kind);
+			builder.append(", ");
+		}
+		if ( objectId != null ) {
+			builder.append("objectId=");
+			builder.append(objectId);
 			builder.append(", ");
 		}
 		if ( sourceId != null ) {
@@ -160,22 +192,41 @@ public class CloudDatumStreamConfiguration
 	}
 
 	/**
-	 * Get the datum stream node ID.
+	 * Get the datum stream kind.
 	 *
-	 * @return the node ID
+	 * @return the kind
 	 */
-	public final Long getNodeId() {
-		return nodeId;
+	public final ObjectDatumKind getKind() {
+		return kind;
 	}
 
 	/**
-	 * Set the datum stream node ID.
+	 * Set the datum stream kind.
 	 *
-	 * @param nodeId
-	 *        the node ID to set
+	 * @param kind
+	 *        the kind to set
 	 */
-	public final void setNodeId(Long nodeId) {
-		this.nodeId = nodeId;
+	public final void setKind(ObjectDatumKind kind) {
+		this.kind = kind;
+	}
+
+	/**
+	 * Get the datum stream object ID.
+	 *
+	 * @return the object ID
+	 */
+	public final Long getObjectId() {
+		return objectId;
+	}
+
+	/**
+	 * Set the datum stream object ID.
+	 *
+	 * @param objectId
+	 *        the object ID to set
+	 */
+	public final void setObjectId(Long nodeId) {
+		this.objectId = nodeId;
 	}
 
 	/**

@@ -37,8 +37,11 @@ CREATE TABLE solarcin.cin_integration (
  * @column enabled		a flag to mark the configuration as enabled for use by application or not
  * @column cname 		a name for the configuration
  * @column sident 		the cloud integration service identifier
- * @column sprops 		the cloud integration service properties
  * @column int_id 		the ID of the cloud integration providing the datum stream
+ * @column kind 		the datum stream object kind (key)
+ * @column obj_id 		the datum stream object ID (node ID, location ID)
+ * @column source_id 	the datum stream source ID
+ * @column sprops 		the cloud integration service properties
  */
 CREATE TABLE solarcin.cin_datum_stream (
 	user_id			BIGINT NOT NULL,
@@ -48,8 +51,11 @@ CREATE TABLE solarcin.cin_datum_stream (
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
 	cname			CHARACTER VARYING(64) NOT NULL,
 	sident			CHARACTER VARYING(128) NOT NULL,
-	sprops			jsonb,
 	int_id			BIGINT,
+	kind 			CHARACTER(1),
+	obj_id 			BIGINT,
+	source_id 		CHARACTER VARYING(64),
+	sprops			jsonb,
 	CONSTRAINT cin_datum_stream_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT cin_datum_stream_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
@@ -57,4 +63,37 @@ CREATE TABLE solarcin.cin_datum_stream (
 	CONSTRAINT cin_datum_stream_int_fk FOREIGN KEY (user_id, int_id)
 		REFERENCES solarcin.cin_integration (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE SET NULL
+);
+
+/**
+ * Cloud datum stream configuration.
+ *
+ * @column user_id 		the ID of the account owner
+ * @column ds_id 		the ID of the datum stream associated with this configuration
+ * @column id 			the ID of the configuration (index order)
+ * @column created		the creation date
+ * @column modified		the modification date
+ * @column enabled		a flag to mark the configuration as enabled for use by application or not
+ * @column pname 		the datum stream property name to populate
+ * @column ptype 		the datum samples type (key)
+ * @column vref 		the cloud data source value reference
+ * @column mult 		an optional multiplication factor to apply to values
+ * @column scale 		an optional maximum number of decimal places to round values to
+ */
+CREATE TABLE solarcin.cin_datum_stream_prop (
+	user_id			BIGINT NOT NULL,
+	ds_id 			BIGINT NOT NULL,
+	id				SMALLINT NOT NULL,
+	created			TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	modified		TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
+	pname			CHARACTER VARYING(64) NOT NULL,
+	ptype			CHARACTER(1) NOT NULL,
+	vref			CHARACTER VARYING(256) NOT NULL,
+	mult			NUMERIC,
+	scale			SMALLINT,
+	CONSTRAINT cin_datum_stream_prop_pk PRIMARY KEY (user_id, ds_id, id),
+	CONSTRAINT cin_datum_stream_ds_fk FOREIGN KEY (user_id, ds_id)
+		REFERENCES solarcin.cin_datum_stream (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE,
 );
