@@ -101,6 +101,15 @@ public final class CommonTestUtils {
 	}
 
 	/**
+	 * Get a random integer value.
+	 *
+	 * @return the integer
+	 */
+	public static Integer randomInt() {
+		return RNG.nextInt();
+	}
+
+	/**
 	 * Get a random long value.
 	 *
 	 * @return the long
