@@ -87,7 +87,7 @@ public class SelectCloudDatumStreamConfiguration
 		buf.append("""
 				SELECT cds.user_id, cds.id, cds.created, cds.modified, cds.enabled
 					, cds.cname, cds.sident
-					, cds.int_id, cds.kind, cds.obj_id, cds.source_id
+					, cds.int_id, cds.schedule, cds.kind, cds.obj_id, cds.source_id
 					, cds.sprops
 				FROM solarcin.cin_datum_stream cds
 				""");

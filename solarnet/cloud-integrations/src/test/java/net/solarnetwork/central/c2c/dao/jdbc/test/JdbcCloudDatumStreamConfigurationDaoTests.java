@@ -105,6 +105,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		// @formatter:off
 		CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
 				integration.getConfigId(),
+				randomString(),
 				ObjectDatumKind.Node,
 				randomLong(),
 				randomString(),
@@ -144,6 +145,8 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 			.containsEntry("sident", conf.getServiceIdentifier())
 			.as("Row integration ID")
 			.containsEntry("int_id", conf.getIntegrationId())
+			.as("Row schedule")
+			.containsEntry("schedule", conf.getSchedule())
 			.as("Row kind key")
 			.containsEntry("kind", String.valueOf(conf.getKind().getKey()))
 			.as("Row object ID")
@@ -247,6 +250,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 				// @formatter:off
 				CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
 						integrationId,
+						randomString(),
 						ObjectDatumKind.Node,
 						randomLong(),
 						randomString(),
@@ -299,6 +303,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 				// @formatter:off
 				CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
 						integrationId,
+						randomString(),
 						ObjectDatumKind.Node,
 						randomLong(),
 						randomString(),

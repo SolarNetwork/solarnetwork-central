@@ -94,6 +94,8 @@ public class CinJdbcTestUtils {
 	 *
 	 * @param userId
 	 *        the user ID
+	 * @param schedule
+	 *        the schedule
 	 * @param integrationId
 	 *        the integration ID
 	 * @param kind
@@ -111,14 +113,15 @@ public class CinJdbcTestUtils {
 	 * @return the entity
 	 */
 	public static CloudDatumStreamConfiguration newCloudDatumStreamConfiguration(Long userId,
-			Long integrationId, ObjectDatumKind kind, Long objectId, String sourceId, String name,
-			String serviceId, Map<String, Object> serviceProps) {
+			Long integrationId, String schedule, ObjectDatumKind kind, Long objectId, String sourceId,
+			String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
 				unassignedEntityIdKey(userId), Instant.now());
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);
 		conf.setIntegrationId(integrationId);
+		conf.setSchedule(schedule);
 		conf.setKind(kind);
 		conf.setObjectId(objectId);
 		conf.setSourceId(sourceId);

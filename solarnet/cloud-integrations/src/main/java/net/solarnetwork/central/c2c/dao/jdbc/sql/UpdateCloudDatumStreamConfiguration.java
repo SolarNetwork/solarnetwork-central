@@ -48,6 +48,7 @@ public class UpdateCloudDatumStreamConfiguration implements PreparedStatementCre
 				, cname = ?
 				, sident = ?
 				, int_id = ?
+				, schedule = ?
 				, kind = ?
 				, obj_id = ?
 				, source_id = ?
@@ -94,6 +95,7 @@ public class UpdateCloudDatumStreamConfiguration implements PreparedStatementCre
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getServiceIdentifier());
 		stmt.setObject(++p, entity.getIntegrationId());
+		stmt.setString(++p, entity.getSchedule());
 		stmt.setString(++p, entity.getKind() != null ? String.valueOf(entity.getKind().getKey()) : null);
 		stmt.setObject(++p, entity.getObjectId());
 		stmt.setString(++p, entity.getSourceId());

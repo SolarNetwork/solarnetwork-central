@@ -52,6 +52,7 @@ CREATE TABLE solarcin.cin_datum_stream (
 	cname			CHARACTER VARYING(64) NOT NULL,
 	sident			CHARACTER VARYING(128) NOT NULL,
 	int_id			BIGINT,
+	schedule 		CHARACTER VARYING(64),
 	kind 			CHARACTER(1),
 	obj_id 			BIGINT,
 	source_id 		CHARACTER VARYING(64),
@@ -66,7 +67,7 @@ CREATE TABLE solarcin.cin_datum_stream (
 );
 
 /**
- * Cloud datum stream configuration.
+ * Cloud datum stream property configuration.
  *
  * @column user_id 		the ID of the account owner
  * @column ds_id 		the ID of the datum stream associated with this configuration

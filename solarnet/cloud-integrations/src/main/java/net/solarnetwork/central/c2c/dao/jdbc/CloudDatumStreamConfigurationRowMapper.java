@@ -46,6 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * <li>cname (TEXT)</li>
  * <li>sident (TEXT)</li>
  * <li>int_id (BIGINT)</li>
+ * <li>schedule (TEXT)</li>
  * <li>kind (CHARACTER)</li>
  * <li>obj_id (BIGINT)</li>
  * <li>source_id (TEXT)</li>
@@ -91,6 +92,7 @@ public class CloudDatumStreamConfigurationRowMapper implements RowMapper<CloudDa
 		conf.setName(rs.getString(++p));
 		conf.setServiceIdentifier(rs.getString(++p));
 		conf.setIntegrationId(rs.getObject(++p, Long.class));
+		conf.setSchedule(rs.getString(++p));
 
 		String kind = rs.getString(++p);
 		if ( kind != null ) {

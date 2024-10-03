@@ -44,13 +44,13 @@ public class InsertCloudDatumStreamConfiguration implements PreparedStatementCre
 	private static final String SQL = """
 			INSERT INTO solarcin.cin_datum_stream (
 				  created,modified,user_id,enabled,cname,sident
-				, int_id,kind,obj_id,source_id
+				, int_id,schedule,kind,obj_id,source_id
 				, sprops
 			)
 			VALUES (
-				  ?,?,?,?,?
-				, ?,?,?,?
-				, ?,?::jsonb)
+				  ?,?,?,?,?,?
+				, ?,?,?,?,?
+				, ?::jsonb)
 			""";
 
 	private final Long userId;
@@ -90,6 +90,7 @@ public class InsertCloudDatumStreamConfiguration implements PreparedStatementCre
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getServiceIdentifier());
 		stmt.setObject(++p, entity.getIntegrationId());
+		stmt.setString(++p, entity.getSchedule());
 		stmt.setString(++p, entity.getKind() != null ? String.valueOf(entity.getKind().getKey()) : null);
 		stmt.setObject(++p, entity.getObjectId());
 		stmt.setString(++p, entity.getSourceId());

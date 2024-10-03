@@ -23,7 +23,6 @@
 package net.solarnetwork.central.c2c.domain;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -44,20 +43,20 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 1.0
  */
 @JsonIgnoreProperties({ "id" })
-@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "objectId",
-		"sourceId", "propertyMappings", "serviceIdentifier", "serviceProperties" })
+@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "integrationId",
+		"schedule", "kind", "objectId", "sourceId", "serviceIdentifier", "serviceProperties" })
 public class CloudDatumStreamConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
 		UserRelatedStdIdentifiableConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK> {
 
-	private static final long serialVersionUID = 6232772467622425418L;
+	private static final long serialVersionUID = 1899493393926823115L;
 
 	private Long integrationId;
+	private String schedule;
 	private ObjectDatumKind kind;
 	private Long objectId;
 	private String sourceId;
-	private List<CloudDatumStreamPropertyMapping> propertyMappings;
 
 	/**
 	 * Constructor.
@@ -100,6 +99,7 @@ public class CloudDatumStreamConfiguration
 	public void copyTo(CloudDatumStreamConfiguration entity) {
 		super.copyTo(entity);
 		entity.setIntegrationId(integrationId);
+		entity.setSchedule(schedule);
 		entity.setKind(kind);
 		entity.setObjectId(objectId);
 		entity.setSourceId(sourceId);
@@ -113,6 +113,7 @@ public class CloudDatumStreamConfiguration
 		}
 		// @formatter:off
 		return Objects.equals(this.integrationId, other.getIntegrationId())
+				&& Objects.equals(this.schedule, other.getSchedule())
 				&& Objects.equals(this.kind, other.getKind())
 				&& Objects.equals(this.objectId, other.getObjectId())
 				&& Objects.equals(this.sourceId, other.getSourceId())
@@ -192,6 +193,27 @@ public class CloudDatumStreamConfiguration
 	}
 
 	/**
+	 * Get the schedule at which to poll for data.
+	 *
+	 * @return the schedule, as either a cron schedule or a number of seconds,
+	 *         or {@literal null} if polling is not used
+	 */
+	public final String getSchedule() {
+		return schedule;
+	}
+
+	/**
+	 * Set the schedule at which to pull data.
+	 *
+	 * @param schedule
+	 *        the schedule to set, as either a cron schedule or a number of
+	 *        seconds, or {@literal null} if polling is not used
+	 */
+	public final void setSchedule(String schedule) {
+		this.schedule = schedule;
+	}
+
+	/**
 	 * Get the datum stream kind.
 	 *
 	 * @return the kind
@@ -246,25 +268,6 @@ public class CloudDatumStreamConfiguration
 	 */
 	public final void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
-	}
-
-	/**
-	 * Get the property mappings.
-	 *
-	 * @return the property mappings
-	 */
-	public final List<CloudDatumStreamPropertyMapping> getPropertyMappings() {
-		return propertyMappings;
-	}
-
-	/**
-	 * Set the property mappings.
-	 *
-	 * @param propertyMappings
-	 *        the property mappings to set
-	 */
-	public final void setPropertyMappings(List<CloudDatumStreamPropertyMapping> propertyMappings) {
-		this.propertyMappings = propertyMappings;
 	}
 
 }
