@@ -35,8 +35,6 @@ import java.util.function.Function;
  * given context, or system.
  * </p>
  * 
- * @param <T>
- *        the type of identifier
  * @author matt
  * @version 1.0
  */

@@ -46,7 +46,7 @@ public interface CloudDatumStreamService
 	 * <p>
 	 * The {@link LocalizedServiceInfo#getId()} of each returned object
 	 * represents the name of a filter parameter that can be passed to
-	 * {@link #dataValueGroups(Map)}.
+	 * {@link #dataValueGroups(Long, Long, Map)}.
 	 * </p>
 	 *
 	 * @param locale
