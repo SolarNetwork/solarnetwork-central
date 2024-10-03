@@ -64,8 +64,8 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	 *
 	 * @param configurationDao
 	 *        the configuration DAO
-	 * @param integrationService
-	 *        the integration service
+	 * @param tokenUri
+	 *        the OAuth token URL
 	 * @param clientAuthMethod
 	 *        the OAuth client authentication method
 	 * @throws IllegalArgumentException
