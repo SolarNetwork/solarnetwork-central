@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.c2c.biz;
 
-import java.util.Locale;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -31,7 +30,6 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
 
 /**
@@ -51,14 +49,12 @@ public interface UserCloudIntegrationsBiz {
 	Iterable<CloudIntegrationService> availableIntegrationServices();
 
 	/**
-	 * Get a localized list of all available {@link CloudIntegrationService}
-	 * information.
+	 * Get a specific {@link CloudIntegrationService} based on its service
+	 * identifier.
 	 *
-	 * @param locale
-	 *        the desired locale
-	 * @return the integration service info, never {@literal null}
+	 * @return the integration service, or {@literal null} if not available
 	 */
-	Iterable<LocalizedServiceInfo> availableIntegrationServices(Locale locale);
+	CloudIntegrationService integrationService(String identifier);
 
 	/**
 	 * Get a list of all available cloud integration configurations for a given

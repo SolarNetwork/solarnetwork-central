@@ -119,12 +119,11 @@ public class LocusEnergyCloudIntegrationService
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public LocusEnergyCloudIntegrationService(LocusEnergyCloudDatumStreamService datumStreamService,
+	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
 		super(SERVICE_IDENTIFIER);
-		this.datumStreamServices = Collections
-				.singleton(requireNonNullArgument(datumStreamService, "datumStreamService"));
+		this.datumStreamServices = requireNonNullArgument(datumStreamServices, "datumStreamServices");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");

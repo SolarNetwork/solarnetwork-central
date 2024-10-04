@@ -66,8 +66,6 @@ import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInp
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.BasicLocalizedServiceInfo;
-import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -132,21 +130,20 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Test
 	public void availableTransformServices() {
-		// GIVEN
-		final BasicLocalizedServiceInfo info = new BasicLocalizedServiceInfo(randomString(),
-				Locale.ENGLISH, null, null, null);
-		given(integrationService.getLocalizedServiceInfo(any(Locale.class))).willReturn(info);
-
 		// WHEN
-		Locale locale = Locale.getDefault();
-		Iterable<LocalizedServiceInfo> result = biz.availableIntegrationServices(locale);
+		Iterable<CloudIntegrationService> result = biz.availableIntegrationServices();
 
 		// THEN
-		then(integrationService).should().getLocalizedServiceInfo(localeCaptor.capture());
+		and.then(result).as("Services returned").containsExactly(integrationService);
+	}
 
-		and.then(localeCaptor.getValue()).as("Provided locale used").isSameAs(locale);
+	@Test
+	public void transformService() {
+		// WHEN
+		CloudIntegrationService result = biz.integrationService(TEST_SERVICE_ID);
 
-		and.then(result).as("Service info returned").containsExactly(info);
+		// THEN
+		and.then(result).as("Service returned").isSameAs(integrationService);
 	}
 
 	@Test

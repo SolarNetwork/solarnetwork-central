@@ -23,10 +23,8 @@
 package net.solarnetwork.central.user.c2c.biz.impl;
 
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -57,7 +55,6 @@ import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationIn
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
-import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.support.SettingUtils;
 
@@ -115,8 +112,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Iterable<LocalizedServiceInfo> availableIntegrationServices(Locale locale) {
-		return localizedServiceSettings(integrationServices.values(), locale);
+	public CloudIntegrationService integrationService(String identifier) {
+		return integrationServices.get(identifier);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

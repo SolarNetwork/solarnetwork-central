@@ -25,6 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
@@ -36,8 +37,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -86,8 +89,30 @@ public class UserCloudIntegrationsController {
 	 */
 	@RequestMapping(value = "/services/integrations", method = RequestMethod.GET)
 	public Result<Iterable<LocalizedServiceInfo>> availableCloudIntegrationServices(Locale locale) {
-		Iterable<LocalizedServiceInfo> result = userCloudIntegrationsBiz
-				.availableIntegrationServices(locale);
+		var services = userCloudIntegrationsBiz.availableIntegrationServices();
+		var result = localizedServiceSettings(services, locale);
+		return success(result);
+	}
+
+	/**
+	 * List the available datum stream services for a given integration service.
+	 *
+	 * @param identifier
+	 *        the {@link CloudIntegrationService} identifier to list the
+	 *        available datum stream services
+	 * @param locale
+	 *        the desired locale
+	 * @return the services
+	 */
+	@RequestMapping(value = "/services/datum-streams", method = RequestMethod.GET)
+	public Result<Iterable<LocalizedServiceInfo>> availableCloudDatumStreamServicesForIntegration(
+			@RequestParam("identifier") String identifier, Locale locale) {
+		final CloudIntegrationService service = userCloudIntegrationsBiz.integrationService(identifier);
+		if ( service == null ) {
+			return success();
+		}
+		final var services = service.datumStreamServices();
+		var result = localizedServiceSettings(services, locale);
 		return success(result);
 	}
 

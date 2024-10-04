@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
@@ -70,7 +71,8 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
 
-	private LocusEnergyCloudDatumStreamService datumStreamService;
+	@Mock
+	private CloudDatumStreamService datumStreamService;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -88,18 +90,12 @@ public class LocusEnergyCloudIntegrationServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		datumStreamService = new LocusEnergyCloudDatumStreamService();
+		service = new LocusEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
+				userEventAppenderBiz, restOps, oauthClientManager);
 
-		ResourceBundleMessageSource ms = new ResourceBundleMessageSource();
-		ms.setBasename(LocusEnergyCloudDatumStreamService.class.getName());
-		datumStreamService.setMessageSource(ms);
-
-		service = new LocusEnergyCloudIntegrationService(datumStreamService, userEventAppenderBiz,
-				restOps, oauthClientManager);
-
-		ms = new ResourceBundleMessageSource();
-		ms.setBasename(LocusEnergyCloudIntegrationService.class.getName());
-		service.setMessageSource(ms);
+		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
+		msg.setBasename(LocusEnergyCloudIntegrationService.class.getName());
+		service.setMessageSource(msg);
 	}
 
 	@Test

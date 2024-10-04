@@ -24,7 +24,9 @@ package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.util.Arrays;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,6 +46,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
@@ -60,6 +63,9 @@ import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
 public class LocusEnergyConfig {
+
+	/** A qualifier for Locus Energy configuraiton. */
+	public static final String LOCUS_ENERGY = "locus-energy";
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppender;
@@ -107,13 +113,13 @@ public class LocusEnergyConfig {
 
 		var manager = new AuthorizedClientServiceOAuth2AuthorizedClientManager(repo, clientService);
 		manager.setAuthorizedClientProvider(provider);
-		manager.setContextAttributesMapper(
-				OAuth2Utils::principalCredentialsContextAttributes);
+		manager.setContextAttributesMapper(OAuth2Utils::principalCredentialsContextAttributes);
 		return manager;
 	}
 
 	@Bean
-	public LocusEnergyCloudDatumStreamService locusEnergyCloudDatumStreamService() {
+	@Qualifier(LOCUS_ENERGY)
+	public CloudDatumStreamService locusEnergyCloudDatumStreamService() {
 		var service = new LocusEnergyCloudDatumStreamService();
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
@@ -125,9 +131,9 @@ public class LocusEnergyConfig {
 
 	@Bean
 	public LocusEnergyCloudIntegrationService locusEnergyCloudIntegrationService(
-			LocusEnergyCloudDatumStreamService datumStreamService) {
+			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
 		var oauthClientManager = oauthAuthorizedClientManager();
-		var service = new LocusEnergyCloudIntegrationService(datumStreamService, userEventAppender,
+		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
 				restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
