@@ -101,7 +101,7 @@ public class LocusEnergyCloudIntegrationService
 		settings.add(new BasicTextFieldSettingSpecifier(CLIENT_SECRET_SETTING, null, true));
 		settings.add(new BasicTextFieldSettingSpecifier(USERNAME_SETTING, null));
 		settings.add(new BasicTextFieldSettingSpecifier(PASSWORD_SETTING, null, true));
-		settings.add(new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null, true));
+		settings.add(new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null));
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
