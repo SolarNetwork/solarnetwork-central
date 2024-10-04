@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.c2c.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
@@ -51,6 +52,7 @@ public class CloudDatumStreamConfigurationInput extends
 
 	private Long objectId;
 
+	@Size(max = 64)
 	private String sourceId;
 
 	/**

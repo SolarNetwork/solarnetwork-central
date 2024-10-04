@@ -49,6 +49,9 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 public class LocusEnergyCloudDatumStreamService extends
 		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements CloudDatumStreamService {
 
+	/** The service identifier. */
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.locus";
+
 	/** The setting for granularity. */
 	public static final String GRANULARITY_SETTING = "granularity";
 
@@ -83,7 +86,7 @@ public class LocusEnergyCloudDatumStreamService extends
 	 * Constructor.
 	 */
 	public LocusEnergyCloudDatumStreamService() {
-		super("net.solarnetwork.c2c.LocusEnergyDatumStreamService");
+		super(SERVICE_IDENTIFIER);
 	}
 
 	@Override
