@@ -61,9 +61,24 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	public void readForUserKey(UserIdRelated userKey) {
 	}
 
+	/**
+	 * Match write methods given a configuration.
+	 *
+	 * @param userKey
+	 *        the user key
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.*Configuration(..)) && args(userKey,..)")
+	public void updateConfigurationForUserKey(UserIdRelated userKey) {
+	}
+
 	@Before("readForUserKey(userKey)")
 	public void userKeyReadAccessCheck(UserIdRelated userKey) {
 		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
+	}
+
+	@Before("updateConfigurationForUserKey(userKey)")
+	public void userKeyWriteAccessCheck(UserIdRelated userKey) {
+		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
 }

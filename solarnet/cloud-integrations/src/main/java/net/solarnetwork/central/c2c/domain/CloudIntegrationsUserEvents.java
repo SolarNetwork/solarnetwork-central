@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudIntegrationUserEvents.java - 2/10/2024 11:03:48 am
+ * CloudIntegrationsUserEvents.java - 2/10/2024 11:03:48 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -35,7 +35,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public interface CloudIntegrationUserEvents {
+public interface CloudIntegrationsUserEvents {
 
 	/** A user event tag for cloud integration. */
 	String CLOUD_INTEGRATION_TAG = "c2c";

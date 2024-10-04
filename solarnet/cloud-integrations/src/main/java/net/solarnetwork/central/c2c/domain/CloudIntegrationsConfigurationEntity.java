@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudIntegrationFilter.java - 1/10/2024 7:40:57 am
+ * CloudIntegrationsConfigurationEntity.java - 4/10/2024 11:04:50 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,14 +20,22 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.dao;
+package net.solarnetwork.central.c2c.domain;
+
+import net.solarnetwork.central.dao.UserRelatedStdEntity;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
- * A filter for cloud integration entities.
+ * API for cloud integration configuration entities.
  *
+ * @param <C>
+ *        the entity type
+ * @param <K>
+ *        the key type
  * @author matt
  * @version 1.0
  */
-public interface CloudIntegrationFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria {
-
+public interface CloudIntegrationsConfigurationEntity<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>>
+		extends UserRelatedStdEntity<C, K> {
+	// empty
 }

@@ -28,7 +28,6 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
-import net.solarnetwork.central.dao.UserRelatedStdEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 
@@ -49,7 +48,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 public class CloudDatumStreamPropertyConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>
 		implements
-		UserRelatedStdEntity<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> {
+		CloudIntegrationsConfigurationEntity<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> {
 
 	private static final long serialVersionUID = 1997920480387562443L;
 

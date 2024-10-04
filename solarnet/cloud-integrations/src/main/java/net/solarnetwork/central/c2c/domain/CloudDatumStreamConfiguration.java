@@ -48,6 +48,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 public class CloudDatumStreamConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
+		CloudIntegrationsConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK> {
 
 	private static final long serialVersionUID = 1899493393926823115L;

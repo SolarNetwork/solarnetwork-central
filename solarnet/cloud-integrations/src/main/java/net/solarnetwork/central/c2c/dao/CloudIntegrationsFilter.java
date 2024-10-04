@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudIntegrationFilter.java - 1/10/2024 7:40:57 am
+ * CloutIntegrationsFilter.java - 4/10/2024 11:10:20 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+
 /**
- * A filter for cloud integration entities.
+ * Base filter for cloud integration entities.
  *
  * @author matt
  * @version 1.0
  */
-public interface CloudIntegrationFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria {
+public interface CloudIntegrationsFilter extends UserCriteria, PaginationCriteria {
 
 }

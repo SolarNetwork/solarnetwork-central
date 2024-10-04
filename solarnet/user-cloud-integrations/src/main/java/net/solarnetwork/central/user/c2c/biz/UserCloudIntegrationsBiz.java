@@ -24,8 +24,13 @@ package net.solarnetwork.central.user.c2c.biz;
 
 import java.util.Locale;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
 
@@ -46,6 +51,90 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the integration service info
 	 */
 	Iterable<LocalizedServiceInfo> availableIntegrationServices(Locale locale);
+
+	/**
+	 * Get a list of all available cloud integration configurations for a given
+	 * user.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param userId
+	 *        the user ID to get configurations for
+	 * @param filter
+	 *        an optional filter
+	 * @param configurationClass
+	 *        the desired configuration type
+	 * @return the available configurations, never {@literal null}
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> configurationsForUser(
+			Long userId, CloudIntegrationsFilter filter, Class<C> configurationClass);
+
+	/**
+	 * Get a specific configuration kind for a given ID.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the primary key type
+	 * @param id
+	 *        the primary key of the configuration to get
+	 * @param configurationClass
+	 *        the configuration type to get
+	 * @return the configuration, or {@literal null} if not available
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C configurationForId(
+			K id, Class<C> configurationClass);
+
+	/**
+	 * Save a cloud integration configuration for a user.
+	 *
+	 * @param <T>
+	 *        the configuration input type
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the primary key type
+	 * @param id
+	 *        the ID of the configuration to save; at a minimum the user ID
+	 *        component must be provided
+	 * @param input
+	 *        the configuration input to save
+	 * @return the saved configuration
+	 */
+	<T extends CloudIntegrationsConfigurationInput<C, K>, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C saveConfiguration(
+			K id, T input);
+
+	/**
+	 * Update the enabled status of configurations, optionally filtered.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 * @param id
+	 *        the ID of the configuration to save; at a minimum the user ID
+	 *        component must be provided
+	 * @param enabled
+	 *        the enabled status to set
+	 * @param configurationClass
+	 *        the configuration type to get
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void enableConfiguration(
+			K id, boolean enabled, Class<C> configurationClass);
+
+	/**
+	 * Delete a specific cloud integration configuration.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the primary key type
+	 * @param id
+	 *        the primary key of the configuration to delete
+	 * @param configurationClass
+	 *        the type of the configuration to delete
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void deleteConfiguration(
+			K id, Class<C> configurationClass);
 
 	/**
 	 * Validate a {@link CloudIntegrationConfiguration} is configured

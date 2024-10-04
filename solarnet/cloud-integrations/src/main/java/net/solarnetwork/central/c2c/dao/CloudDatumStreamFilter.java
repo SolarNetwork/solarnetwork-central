@@ -22,14 +22,12 @@
 
 package net.solarnetwork.central.c2c.dao;
 
-import net.solarnetwork.central.common.dao.UserModifiableFilter;
-
 /**
  * A filter for cloud datum stream entities.
  *
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamFilter extends UserModifiableFilter, CloudDatumStreamCriteria {
+public interface CloudDatumStreamFilter extends CloudIntegrationsFilter, CloudDatumStreamCriteria {
 
 }

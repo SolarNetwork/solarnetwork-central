@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
 
@@ -43,15 +45,21 @@ import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
 public class UserCloudIntegrationsBizConfig {
 
 	@Autowired
-	private CloudIntegrationConfigurationDao integrationConfigurationDao;
+	private CloudIntegrationConfigurationDao integrationDao;
+
+	@Autowired
+	private CloudDatumStreamConfigurationDao datumStreamDao;
+
+	@Autowired
+	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Autowired
 	private Collection<CloudIntegrationService> integrationServices;
 
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
-		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(integrationConfigurationDao,
-				integrationServices);
+		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao,
+				datumStreamPropertyDao, integrationServices);
 		return biz;
 	}
 

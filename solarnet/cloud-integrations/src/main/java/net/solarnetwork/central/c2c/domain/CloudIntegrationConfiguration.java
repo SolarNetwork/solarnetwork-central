@@ -47,6 +47,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class CloudIntegrationConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudIntegrationConfiguration, UserLongCompositePK>
 		implements
+		CloudIntegrationsConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
 		UserRelatedStdIdentifiableConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
 		UserIdentifiableSystem {
 

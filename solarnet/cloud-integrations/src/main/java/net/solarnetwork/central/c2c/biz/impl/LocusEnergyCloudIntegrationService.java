@@ -23,7 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.lang.String.format;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
@@ -48,7 +48,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationUserEvents;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
@@ -62,7 +62,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  */
 public class LocusEnergyCloudIntegrationService
 		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements CloudIntegrationService, CloudIntegrationUserEvents {
+		implements CloudIntegrationService, CloudIntegrationsUserEvents {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
