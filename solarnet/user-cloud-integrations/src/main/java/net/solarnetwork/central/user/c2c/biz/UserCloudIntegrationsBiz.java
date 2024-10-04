@@ -43,12 +43,20 @@ import net.solarnetwork.domain.Result;
 public interface UserCloudIntegrationsBiz {
 
 	/**
+	 * Get a list of all available {@link CloudIntegrationService}
+	 * implementations.
+	 *
+	 * @return the integration services, never {@literal null}
+	 */
+	Iterable<CloudIntegrationService> availableIntegrationServices();
+
+	/**
 	 * Get a localized list of all available {@link CloudIntegrationService}
 	 * information.
 	 *
 	 * @param locale
 	 *        the desired locale
-	 * @return the integration service info
+	 * @return the integration service info, never {@literal null}
 	 */
 	Iterable<LocalizedServiceInfo> availableIntegrationServices(Locale locale);
 

@@ -88,8 +88,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	}
 
 	/**
-	 * Get the identifier of the
-	 * {@link net.solarnetwork.central.din.biz.TransformService} to use.
+	 * Get the identifier of the service to use.
 	 *
 	 * @return the identifier
 	 */
@@ -98,8 +97,7 @@ public abstract class BaseUserRelatedStdIdentifiableConfigurationInput<C extends
 	}
 
 	/**
-	 * Set the identifier of the
-	 * {@link net.solarnetwork.central.din.biz.TransformService} to use.
+	 * Set the identifier of the service to use.
 	 *
 	 * @param serviceIdentifier
 	 *        the identifier to use

@@ -26,7 +26,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 
 /**
@@ -49,6 +53,26 @@ public class CloudIntegrationsDaoConfig {
 	@Bean
 	public CloudIntegrationConfigurationDao cloudIntegrationConfigurationConfigurationDao() {
 		return new JdbcCloudIntegrationConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The cloud datum stream configuration DAO.
+	 *
+	 * @return the DAO
+	 */
+	@Bean
+	public CloudDatumStreamConfigurationDao cloudDatumStreamConfigurationConfigurationDao() {
+		return new JdbcCloudDatumStreamConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The cloud datum stream property configuration DAO.
+	 *
+	 * @return the DAO
+	 */
+	@Bean
+	public CloudDatumStreamPropertyConfigurationDao cloudDatumStreamPropertyConfigurationConfigurationDao() {
+		return new JdbcCloudDatumStreamPropertyConfigurationDao(jdbcOperations);
 	}
 
 }

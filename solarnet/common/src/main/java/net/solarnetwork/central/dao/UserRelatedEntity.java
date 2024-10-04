@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.dao;
 
+import java.util.Set;
+import java.util.function.Function;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.dao.Entity;
 
@@ -31,7 +33,7 @@ import net.solarnetwork.dao.Entity;
  * @param <PK>
  *        the primary key type
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.0
  */
 public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
@@ -43,5 +45,17 @@ public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
 	 */
 	@Override
 	Long getUserId();
+
+	/**
+	 * Mask any sensitive information.
+	 *
+	 * @param sensitiveKeys
+	 *        a function that can supply a set of "sensitive" information keys
+	 *        (names) that should be masked
+	 * @since 1.2
+	 */
+	default void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeys) {
+		// nothing
+	}
 
 }

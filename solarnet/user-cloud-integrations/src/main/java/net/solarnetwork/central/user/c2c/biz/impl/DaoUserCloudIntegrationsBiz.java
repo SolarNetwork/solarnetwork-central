@@ -28,6 +28,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.transaction.annotation.Propagation;
@@ -47,7 +48,6 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
-import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
@@ -59,6 +59,7 @@ import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
@@ -72,6 +73,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final Map<String, CloudIntegrationService> integrationServices;
+	private final Map<String, Set<String>> integrationServiceSecureKeys;
 
 	private Validator validator;
 
@@ -101,7 +103,15 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.integrationServices = requireNonNullArgument(integrationServices, "integrationServices")
 				.stream().collect(Collectors.toUnmodifiableMap(CloudIntegrationService::getId,
 						Function.identity()));
+		this.integrationServiceSecureKeys = integrationServices.stream()
+				.collect(Collectors.toUnmodifiableMap(CloudIntegrationService::getId,
+						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
 
+	}
+
+	@Override
+	public Iterable<CloudIntegrationService> availableIntegrationServices() {
+		return integrationServices.values();
 	}
 
 	@Override
@@ -119,14 +129,12 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		f.setUserId(userId);
 		FilterableDao<C, K, CloudIntegrationsFilter> dao = filterableDao(configurationClass);
 		FilterResults<C, K> result = dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
+
 		// remove credentials before returning
-		boolean eraseCredentials = UserRelatedStdIdentifiableConfigurationEntity.class
-				.isAssignableFrom(configurationClass);
 		for ( C c : result ) {
-			if ( eraseCredentials ) {
-				((UserRelatedStdIdentifiableConfigurationEntity<?, ?>) c).eraseCredentials();
-			}
+			c.maskSensitiveInformation(integrationServiceSecureKeys::get);
 		}
+
 		return result;
 	}
 
@@ -140,9 +148,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		GenericDao<C, K> dao = genericDao(configurationClass);
 		C result = requireNonNullObject(dao.get(id), id);
 
-		if ( result instanceof UserRelatedStdIdentifiableConfigurationEntity<?, ?> r ) {
-			r.eraseCredentials();
-		}
+		// remove credentials before returning
+		result.maskSensitiveInformation(integrationServiceSecureKeys::get);
 
 		return result;
 	}
@@ -164,9 +171,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		K updatedId = requireNonNullObject(dao.save(config), id);
 		C result = requireNonNullObject(dao.get(updatedId), updatedId);
 
-		if ( result instanceof UserRelatedStdIdentifiableConfigurationEntity<?, ?> r ) {
-			r.eraseCredentials();
-		}
+		// remove credentials before returning
+		result.maskSensitiveInformation(integrationServiceSecureKeys::get);
 
 		return result;
 	}

@@ -26,11 +26,14 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * A base user-related entity that is also an identifiable configuration.
@@ -90,6 +93,16 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 				&& Objects.equals(this.servicePropsJson, other.getServicePropsJson())
 				;
 		// @formatter:on
+	}
+
+	@Override
+	public void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider) {
+		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
+				? sensitiveKeyProvider.apply(serviceIdentifier)
+				: null);
+		if ( secureKeys != null && !secureKeys.isEmpty() ) {
+			setServiceProps(StringUtils.sha256MaskedMap(getServiceProps(), secureKeys));
+		}
 	}
 
 	@Override

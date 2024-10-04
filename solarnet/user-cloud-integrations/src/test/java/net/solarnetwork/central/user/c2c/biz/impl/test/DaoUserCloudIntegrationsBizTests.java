@@ -36,8 +36,10 @@ import static org.mockito.BDDMockito.then;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +70,8 @@ import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
@@ -78,6 +82,8 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DaoUserCloudIntegrationsBizTests {
+
+	private static final String TEST_SERVICE_ID = randomString();
 
 	@Mock
 	private CloudIntegrationConfigurationDao integrationDao;
@@ -110,7 +116,13 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@BeforeEach
 	public void setup() {
-		given(integrationService.getId()).willReturn("test");
+		given(integrationService.getId()).willReturn(TEST_SERVICE_ID);
+
+		// provide settings to verify masking sensitive values
+		List<SettingSpecifier> settings = Arrays.asList(new BasicTextFieldSettingSpecifier("foo", null),
+				new BasicTextFieldSettingSpecifier("watchout", null, true));
+		given(integrationService.getSettingSpecifiers()).willReturn(settings);
+
 		biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao, datumStreamPropertyDao,
 				Collections.singleton(integrationService));
 
@@ -141,8 +153,11 @@ public class DaoUserCloudIntegrationsBizTests {
 	public void integrationConfigurations_forUser() {
 		// GIVEN
 		final Long userId = randomLong();
+		final Map<String, Object> sprops = Map.of("foo", "bar", "watchout", "should be masked");
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(userId,
 				randomLong(), now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(sprops);
 		final var daoResults = new BasicFilterResults<CloudIntegrationConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
 		given(integrationDao.findFiltered(any(), isNull(), isNull(), isNull())).willReturn(daoResults);
@@ -157,9 +172,33 @@ public class DaoUserCloudIntegrationsBizTests {
 		BasicFilter expectedFilter = new BasicFilter();
 		expectedFilter.setUserId(userId);
 
-		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+		// @formatter:off
+		and.then(filterCaptor.getValue())
+			.as("Filter has user ID set")
+			.isEqualTo(expectedFilter)
+			;
 
-		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(daoResults)
+			.as("Service props are changed")
+			.satisfies(c -> {
+				and.then(conf.getServiceProps())
+					.as("Has same keys returned from DAO")
+					.containsOnlyKeys(sprops.keySet())
+					.as("Non-senstive property unchanged")
+					.containsEntry("foo", sprops.get("foo"))
+					.hasEntrySatisfying("watchout", v -> {
+						and.then(v)
+							.asInstanceOf(InstanceOfAssertFactories.STRING)
+							.as("Sensitive value is masked with SHA hash")
+							.startsWith("{SSHA-256}")
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -265,6 +304,50 @@ public class DaoUserCloudIntegrationsBizTests {
 	}
 
 	@Test
+	public void integrationConfiguration_forId_maskSensitive() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		Map<String, Object> sprops = Map.of("foo", "bar", "watchout", "should be hidden");
+
+		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(sprops);
+
+		given(integrationDao.get(pk)).willReturn(conf);
+
+		// WHEN
+		CloudIntegrationConfiguration result = biz.configurationForId(pk,
+				CloudIntegrationConfiguration.class);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(conf)
+			.as("Service props are changed")
+			.satisfies(c -> {
+				and.then(conf.getServiceProps())
+					.as("Has same keys returned from DAO")
+					.containsOnlyKeys(sprops.keySet())
+					.as("Non-senstive property unchanged")
+					.containsEntry("foo", sprops.get("foo"))
+					.hasEntrySatisfying("watchout", v -> {
+						and.then(v)
+							.asInstanceOf(InstanceOfAssertFactories.STRING)
+							.as("Sensitive value is masked with SHA hash")
+							.startsWith("{SSHA-256}")
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void datumStreamConfiguration_forId() {
 		// GIVEN
 		Long userId = randomLong();
@@ -305,27 +388,27 @@ public class DaoUserCloudIntegrationsBizTests {
 	@Test
 	public void integrationConfiguration_save() {
 		// GIVEN
-		Long userId = randomLong();
-		Long entityId = randomLong();
-		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
-		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		final Map<String, Object> sprops = Map.of("foo", "bar", "watchout", "should be masked");
+
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(sprops);
 
 		// save and retrieve
 		given(integrationDao.save(any(CloudIntegrationConfiguration.class))).willReturn(pk);
 		given(integrationDao.get(pk)).willReturn(conf);
 
 		// WHEN
-		Map<String, Object> sprops = new LinkedHashMap<>(4);
-		sprops.put("username", "foo");
-		sprops.put("password", "bar");
-		sprops.put("oauthClientId", "bim");
-		sprops.put("oauthClientSecret", "bar");
 
 		CloudIntegrationConfigurationInput input = new CloudIntegrationConfigurationInput();
 		input.setEnabled(true);
 		input.setName(randomString());
 		input.setServiceIdentifier(randomString());
-		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		input.setServiceProperties(sprops);
 		UserLongCompositePK unassignedId = UserLongCompositePK.unassignedEntityIdKey(userId);
 		CloudIntegrationConfiguration result = biz.saveConfiguration(unassignedId, input);
 
@@ -349,6 +432,22 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(result)
 			.as("Result provided from DAO")
 			.isSameAs(conf)
+			.as("Service props are changed")
+			.satisfies(c -> {
+				and.then(conf.getServiceProps())
+					.as("Has same keys returned from DAO")
+					.containsOnlyKeys(sprops.keySet())
+					.as("Non-senstive property unchanged")
+					.containsEntry("foo", sprops.get("foo"))
+					.hasEntrySatisfying("watchout", v -> {
+						and.then(v)
+							.asInstanceOf(InstanceOfAssertFactories.STRING)
+							.as("Sensitive value is masked with SHA hash")
+							.startsWith("{SSHA-256}")
+							;
+					})
+					;
+			})
 			;
 		// @formatter:on
 	}
