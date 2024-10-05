@@ -22,25 +22,28 @@
 
 package net.solarnetwork.central.user.c2c.biz.impl;
 
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -70,6 +73,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final Map<String, CloudIntegrationService> integrationServices;
+	private final Map<String, CloudDatumStreamService<?>> datumStreamServices;
 	private final Map<String, Set<String>> integrationServiceSecureKeys;
 
 	private Validator validator;
@@ -98,11 +102,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
 		this.integrationServices = requireNonNullArgument(integrationServices, "integrationServices")
-				.stream().collect(Collectors.toUnmodifiableMap(CloudIntegrationService::getId,
-						Function.identity()));
-		this.integrationServiceSecureKeys = integrationServices.stream()
-				.collect(Collectors.toUnmodifiableMap(CloudIntegrationService::getId,
-						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
+				.stream()
+				.collect(toUnmodifiableMap(CloudIntegrationService::getId, Function.identity()));
+		this.datumStreamServices = integrationServices.stream()
+				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
+				.collect(toUnmodifiableMap(CloudDatumStreamService::getId, Function.identity()));
+		this.integrationServiceSecureKeys = integrationServices.stream().collect(toUnmodifiableMap(
+				CloudIntegrationService::getId, s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
 
 	}
 
@@ -113,7 +119,12 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Override
 	public CloudIntegrationService integrationService(String identifier) {
-		return integrationServices.get(identifier);
+		return integrationServices.get(requireNonNullArgument(identifier, "identifier"));
+	}
+
+	@Override
+	public CloudDatumStreamService<?> datumStreamService(String identifier) {
+		return datumStreamServices.get(requireNonNullArgument(identifier, "identifier"));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -210,6 +221,18 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		GenericDao<C, K> dao = genericDao(configurationClass);
 		C pk = dao.entityKey(id);
 		dao.delete(pk);
+	}
+
+	@Override
+	public Iterable<CloudDataValue<?>> datumStreamDataValuesForId(UserLongCompositePK id,
+			Map<String, ?> filters) {
+		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
+				"datumStream");
+		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
+				"datumStreamService");
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		Iterable<CloudDataValue<?>> result = (Iterable) service.dataValues(id, filters);
+		return result;
 	}
 
 	@Override

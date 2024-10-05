@@ -24,8 +24,9 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.util.Locale;
 import java.util.Map;
-import net.solarnetwork.central.c2c.domain.CloudDataValueGroup;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
@@ -37,7 +38,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamService
+public interface CloudDatumStreamService<D>
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/**
@@ -56,20 +57,18 @@ public interface CloudDatumStreamService
 	Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale);
 
 	/**
-	 * List data value groups.
+	 * List data values.
 	 *
-	 * @param userId
-	 *        the owner user ID
-	 * @param configId
-	 *        the configuration ID of the {@link CloudDatumStreamConfiguration}
-	 *        to get the data value groups for
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
+	 *        data values for
 	 * @param filters
 	 *        an optional set of search filters to limit the data value groups
 	 *        to; the available key values come from the identifiers returned by
 	 *        {@link #dataValueFilters(Locale)}
-	 * @return the available groups, never {@literal null}
+	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValueGroup> dataValueGroups(Long userId, Long configId, Map<String, ?> filters);
+	Iterable<CloudDataValue<D>> dataValues(UserLongCompositePK id, Map<String, ?> filters);
 
 }

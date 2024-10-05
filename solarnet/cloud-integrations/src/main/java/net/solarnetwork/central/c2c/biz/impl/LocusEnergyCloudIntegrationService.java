@@ -22,9 +22,6 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static java.lang.String.format;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
-import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.ArrayList;
@@ -36,12 +33,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -49,6 +41,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
@@ -64,14 +57,16 @@ public class LocusEnergyCloudIntegrationService
 		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
 		implements CloudIntegrationService, CloudIntegrationsUserEvents {
 
+	/**
+	 * The URL template for sites for a given {@code \{partnerId\}} parameter.
+	 */
+	public static final String V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE = "/v3/partners/{partnerId}/sites";
+
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
 
 	/** The partner identifier setting name. */
 	public static final String PARTNER_ID_SETTING = "partnerId";
-
-	private static final String[] AUTH_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG,
-			AUTHORIZATION_TAG, ERROR_TAG };
 
 	/** The base URL to the Locus Energy API. */
 	public static final URI BASE_URI = URI.create("https://api.locusenergy.com");
@@ -89,11 +84,6 @@ public class LocusEnergyCloudIntegrationService
 			);
 	// @formatter:on
 
-	private final Collection<CloudDatumStreamService> datumStreamServices;
-	private final UserEventAppenderBiz userEventAppenderBiz;
-	private final RestOperations restOps;
-	private final OAuth2AuthorizedClientManager oauthClientManager;
-
 	private static final List<SettingSpecifier> SETTINGS;
 	static {
 		var settings = new ArrayList<SettingSpecifier>(1);
@@ -104,6 +94,11 @@ public class LocusEnergyCloudIntegrationService
 		settings.add(new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null));
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
+
+	private final Collection<CloudDatumStreamService<?>> datumStreamServices;
+	private final UserEventAppenderBiz userEventAppenderBiz;
+	private final RestOperations restOps;
+	private final OAuth2AuthorizedClientManager oauthClientManager;
 
 	/**
 	 * Constructor.
@@ -119,7 +114,7 @@ public class LocusEnergyCloudIntegrationService
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
+	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService<?>> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
 		super(SERVICE_IDENTIFIER);
@@ -145,7 +140,7 @@ public class LocusEnergyCloudIntegrationService
 	}
 
 	@Override
-	public Iterable<CloudDatumStreamService> datumStreamServices() {
+	public Iterable<CloudDatumStreamService<?>> datumStreamServices() {
 		return datumStreamServices;
 	}
 
@@ -154,9 +149,11 @@ public class LocusEnergyCloudIntegrationService
 		// validate by requesting the available sites for the partner ID
 		try {
 			HttpHeaders headers = new HttpHeaders();
-			addAuthorization(config, headers);
+			OAuth2Utils.addOAuthBearerAuthorization(config, headers, oauthClientManager,
+					userEventAppenderBiz);
 
-			final URI uri = UriComponentsBuilder.fromUri(BASE_URI).path("/v3/partners/{partnerId}/sites")
+			final URI uri = UriComponentsBuilder.fromUri(BASE_URI)
+					.path(V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 					.buildAndExpand(config.getServiceProperties()).toUri();
 
 			HttpEntity<Void> req = new HttpEntity<>(null, headers);
@@ -165,39 +162,6 @@ public class LocusEnergyCloudIntegrationService
 			return Result.success();
 		} catch ( Exception e ) {
 			return Result.error("LECI.0001", "Validation failed: " + e.getMessage());
-		}
-	}
-
-	/**
-	 * Add appropriate authorization header values to a given
-	 * {@link HttpHeaders}.
-	 *
-	 * @param config
-	 *        the configuration to authorize
-	 * @param headers
-	 *        the headers to add authorization to
-	 */
-	private void addAuthorization(CloudIntegrationConfiguration config, HttpHeaders headers) {
-		final String username = config.serviceProperty(USERNAME_SETTING, String.class);
-		final String password = config.serviceProperty(PASSWORD_SETTING, String.class);
-		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest
-				.withClientRegistrationId(config.systemIdentifier());
-		if ( username != null && !username.isEmpty() && password != null && !password.isEmpty() ) {
-			authReq.principal(new UsernamePasswordAuthenticationToken(username, password));
-		} else {
-			authReq.principal("%s %s".formatted(config.getId().ident(), config.getName()));
-		}
-		try {
-			OAuth2AuthorizedClient oauthClient = requireNonNullObject(
-					oauthClientManager.authorize(authReq.build()), "oauthClient");
-			OAuth2AccessToken accessToken = oauthClient.getAccessToken();
-			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
-		} catch ( OAuth2AuthorizationException e ) {
-			log.warn("Cloud integration {} authorization failed because of an OAuth error: {}",
-					config.getConfigId(), e.getMessage());
-			userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
-					AUTH_ERROR_TAGS, format("OAuth error: %s", e.getMessage())));
-			throw e;
 		}
 	}
 

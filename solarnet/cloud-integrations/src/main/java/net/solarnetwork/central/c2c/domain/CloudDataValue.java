@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDataValue.java - 29/09/2024 6:15:38 pm
+ * CloudDataValue.java - 5/10/2024 8:41:56 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -22,19 +22,173 @@
 
 package net.solarnetwork.central.c2c.domain;
 
-import net.solarnetwork.domain.LocalizedServiceInfo;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Collection;
+import java.util.Map;
 
 /**
- * API for a cloud "data value".
+ * A cloud data hierarchy component.
  *
  * <p>
- * A "data value" is metadata about some piece of information (data) made
- * available by a cloud service.
+ * This is used to represent the cloud data values that can be mapped into a
+ * datum stream.
  * </p>
  *
  * @author matt
  * @version 1.0
  */
-public interface CloudDataValue extends LocalizedServiceInfo {
+public class CloudDataValue<K> {
+
+	/** Standard metadata key for a street address. */
+	public static final String STREET_ADDRESS_METADATA = "street";
+
+	/** Standard metadata key for a locality (city) name or code. */
+	public static final String LOCALITY_METADATA = "l";
+
+	/** Standard metadata key for a state or province name or code. */
+	public static final String STATE_PROVINCE_METADATA = "st";
+
+	/** Standard metadata key for a country name or code. */
+	public static final String COUNTRY_METADATA = "c";
+
+	/** Standard metadata key for a time zone identifier. */
+	public static final String TIME_ZONE_METADATA = "tz";
+
+	private final K id;
+	private final String identifier;
+	private final String name;
+	private final Map<String, ?> metadata;
+	private final Collection<CloudDataValue<K>> children;
+
+	/**
+	 * Create a new data value instance.
+	 *
+	 * @param id
+	 *        the component ID
+	 * @param identifier
+	 *        the value identifier, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @param metadata
+	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@literal null}
+	 */
+	public static <T> CloudDataValue<T> dataValue(T id, String identifier, String name,
+			Map<String, ?> metadata) {
+		return new CloudDataValue<>(id, identifier, name, metadata);
+	}
+
+	/**
+	 * Create a new data value instance.
+	 *
+	 * @param parent
+	 *        the parent
+	 * @param id
+	 *        the component ID
+	 * @param name
+	 *        the component name
+	 * @param metadata
+	 *        the metadata
+	 * @param children
+	 *        the optional children values
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@literal null}
+	 */
+	public static <T> CloudDataValue<T> dataValue(T id, String identifier, String name,
+			Map<String, ?> metadata, Collection<CloudDataValue<T>> children) {
+		return new CloudDataValue<>(id, identifier, name, metadata, children);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the component ID
+	 * @param identifier
+	 *        the value identifier, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @param metadata
+	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@literal null}
+	 */
+	public CloudDataValue(K id, String identifier, String name, Map<String, ?> metadata) {
+		this(id, identifier, name, metadata, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param parent
+	 *        the parent
+	 * @param id
+	 *        the component ID
+	 * @param name
+	 *        the component name
+	 * @param metadata
+	 *        the metadata
+	 * @param children
+	 *        the optional children values
+	 * @throws IllegalArgumentException
+	 *         if {@code id} is {@literal null}
+	 */
+	public CloudDataValue(K id, String identifier, String name, Map<String, ?> metadata,
+			Collection<CloudDataValue<K>> children) {
+		super();
+		this.id = requireNonNullArgument(id, "id");
+		this.identifier = identifier;
+		this.name = name;
+		this.metadata = metadata;
+		this.children = children;
+	}
+
+	/**
+	 * Get the component identifier.
+	 *
+	 * @return the id, never {@literal null}
+	 */
+	public final K getId() {
+		return id;
+	}
+
+	/**
+	 * Get the data value hierarchy identifier.
+	 *
+	 * @return the identifier, unique within the overall hierarchy, or
+	 *         {@literal null} if this component does not have a data value
+	 *         reference
+	 */
+	public final String getIdentifier() {
+		return identifier;
+	}
+
+	/**
+	 * Get the component name.
+	 *
+	 * @return the name
+	 */
+	public final String getName() {
+		return name;
+	}
+
+	/**
+	 * Get the component metadata.
+	 *
+	 * @return the metadata
+	 */
+	public final Map<String, ?> getMetadata() {
+		return metadata;
+	}
+
+	/**
+	 * Get the component children.
+	 *
+	 * @return the children
+	 */
+	public final Collection<CloudDataValue<K>> getChildren() {
+		return children;
+	}
 
 }

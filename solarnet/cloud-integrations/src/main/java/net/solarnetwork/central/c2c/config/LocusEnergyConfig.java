@@ -41,6 +41,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.DefaultRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
@@ -49,6 +50,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
@@ -74,6 +76,9 @@ public class LocusEnergyConfig {
 	private CloudIntegrationConfigurationDao integrationConfigurationDao;
 
 	@Autowired
+	private CloudDatumStreamConfigurationDao datumStreamConfigurationDao;
+
+	@Autowired
 	private JdbcOperations jdbcOperations;
 
 	@Autowired
@@ -82,7 +87,9 @@ public class LocusEnergyConfig {
 	@Autowired
 	private RestOperations restOps;
 
-	private OAuth2AuthorizedClientManager oauthAuthorizedClientManager() {
+	@Bean
+	@Qualifier(LOCUS_ENERGY)
+	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager() {
 		var repo = new ClientCredentialsClientRegistrationRepository(integrationConfigurationDao,
 				LocusEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST);
@@ -109,6 +116,10 @@ public class LocusEnergyConfig {
 					var client = new DefaultClientCredentialsTokenResponseClient();
 					client.setRestOperations(authRestOps);
 					b.accessTokenResponseClient(client);
+				}).refreshToken(b -> {
+					var client = new DefaultRefreshTokenTokenResponseClient();
+					client.setRestOperations(authRestOps);
+					b.accessTokenResponseClient(client);
 				}).build();
 
 		var manager = new AuthorizedClientServiceOAuth2AuthorizedClientManager(repo, clientService);
@@ -119,8 +130,10 @@ public class LocusEnergyConfig {
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
-	public CloudDatumStreamService locusEnergyCloudDatumStreamService() {
-		var service = new LocusEnergyCloudDatumStreamService();
+	public CloudDatumStreamService<Long> locusEnergyCloudDatumStreamService(
+			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
+		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, restOps,
+				oauthClientManager, integrationConfigurationDao, datumStreamConfigurationDao);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName());
@@ -131,8 +144,8 @@ public class LocusEnergyConfig {
 
 	@Bean
 	public LocusEnergyCloudIntegrationService locusEnergyCloudIntegrationService(
-			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
-		var oauthClientManager = oauthAuthorizedClientManager();
+			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
+			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService<?>> datumStreamServices) {
 		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
 				restOps, oauthClientManager);
 

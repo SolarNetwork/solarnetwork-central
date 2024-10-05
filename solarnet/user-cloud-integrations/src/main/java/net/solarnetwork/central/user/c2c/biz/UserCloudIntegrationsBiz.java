@@ -22,8 +22,13 @@
 
 package net.solarnetwork.central.user.c2c.biz;
 
+import java.util.Locale;
+import java.util.Map;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -55,6 +60,14 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the integration service, or {@literal null} if not available
 	 */
 	CloudIntegrationService integrationService(String identifier);
+
+	/**
+	 * Get a specific {@link CloudDatumStreamService} based on its service
+	 * identifier.
+	 *
+	 * @return the datum stream service, or {@literal null} if not available
+	 */
+	CloudDatumStreamService<?> datumStreamService(String identifier);
 
 	/**
 	 * Get a list of all available cloud integration configurations for a given
@@ -149,5 +162,21 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the validation result, never {@literal null}
 	 */
 	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id);
+
+	/**
+	 * List data values.
+	 *
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
+	 *        data values for
+	 * @param filters
+	 *        an optional set of search filters to limit the data value groups
+	 *        to; the available key values come from the identifiers returned by
+	 *        {@link CloudDatumStreamService#dataValueFilters(Locale)}
+	 * @return the available values, never {@literal null}
+	 *
+	 */
+	Iterable<CloudDataValue<?>> datumStreamDataValuesForId(UserLongCompositePK id,
+			Map<String, ?> filters);
 
 }

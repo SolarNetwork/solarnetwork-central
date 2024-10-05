@@ -52,6 +52,9 @@ public interface CloudIntegrationsUserEvents {
 	/** User event data key for a message. */
 	String MESSAGE_DATA_KEY = "message";
 
+	/** Tags for an authorization error event. */
+	String[] AUTH_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, AUTHORIZATION_TAG, ERROR_TAG };
+
 	/**
 	 * Get a user log event for a configuration ID.
 	 *

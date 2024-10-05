@@ -22,12 +22,28 @@
 
 package net.solarnetwork.central.c2c.http;
 
+import static java.lang.String.format;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * OAuth2 utilities.
@@ -61,6 +77,59 @@ public final class OAuth2Utils {
 					principal.getCredentials());
 		}
 		return contextAttributes;
+	}
+
+	/**
+	 * Add appropriate OAuth authorization header values to a given
+	 * {@link HttpHeaders}.
+	 *
+	 * <p>
+	 * If the {@link CloudIntegrationService#USERNAME_SETTING} and
+	 * {@link CloudIntegrationService#PASSWORD_SETTING} service properties are
+	 * available, they will be used to create a
+	 * {@link UsernamePasswordAuthenticationToken} principal. Otherwise a string
+	 * will be created like {@code "I N"} where {@code I} is the configuration's
+	 * ID's identifier and {@code N} is the configuration name.
+	 * </p>
+	 *
+	 * @param config
+	 *        the configuration to authorize
+	 * @param headers
+	 *        the headers to add authorization to
+	 * @param oauthClientManager
+	 *        the OAuth client manager
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @throws RemoteServiceException
+	 *         if authorization fails
+	 * @throws AuthorizationException
+	 *         if an OAuth client is not returned by the
+	 *         {@code oauthClientManager}
+	 */
+	public static void addOAuthBearerAuthorization(CloudIntegrationConfiguration config,
+			HttpHeaders headers, OAuth2AuthorizedClientManager oauthClientManager,
+			UserEventAppenderBiz userEventAppenderBiz) {
+		final String username = config.serviceProperty(USERNAME_SETTING, String.class);
+		final String password = config.serviceProperty(PASSWORD_SETTING, String.class);
+		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest
+				.withClientRegistrationId(config.systemIdentifier());
+		if ( username != null && !username.isEmpty() && password != null && !password.isEmpty() ) {
+			authReq.principal(new UsernamePasswordAuthenticationToken(username, password));
+		} else {
+			authReq.principal("%s %s".formatted(config.getId().ident(), config.getName()));
+		}
+		try {
+			OAuth2AuthorizedClient oauthClient = requireNonNullObject(
+					oauthClientManager.authorize(authReq.build()), "oauthClient");
+			OAuth2AccessToken accessToken = oauthClient.getAccessToken();
+			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
+		} catch ( OAuth2AuthorizationException e ) {
+			userEventAppenderBiz.addEvent(config.getUserId(),
+					eventForConfiguration(config.getId(), CloudIntegrationsUserEvents.AUTH_ERROR_TAGS,
+							format("OAuth error: %s", e.getMessage())));
+			throw new RemoteServiceException("Error authenticating to cloud integration %d: %s"
+					.formatted(config.getConfigId(), e.getMessage()), e);
+		}
 	}
 
 }

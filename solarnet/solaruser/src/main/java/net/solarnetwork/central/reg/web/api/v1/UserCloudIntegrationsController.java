@@ -30,6 +30,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
 import java.net.URI;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -39,10 +41,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.WebRequest;
 import jakarta.validation.Valid;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -118,6 +123,29 @@ public class UserCloudIntegrationsController {
 		}
 		final var services = service.datumStreamServices();
 		var result = localizedServiceSettings(services, locale);
+		return success(result);
+	}
+
+	/**
+	 * List the available datum stream data filters for a given datum stream
+	 * service.
+	 *
+	 * @param identifier
+	 *        the {@link CloudDatumStreamService} identifier to list the
+	 *        available value filters
+	 * @param locale
+	 *        the desired locale
+	 * @return the services
+	 */
+	@RequestMapping(value = "/services/datum-streams/data-filters", method = RequestMethod.GET)
+	public Result<Iterable<LocalizedServiceInfo>> availableCloudDatumStreamFilters(
+			@RequestParam("identifier") String identifier, Locale locale) {
+		final CloudDatumStreamService<?> service = userCloudIntegrationsBiz
+				.datumStreamService(identifier);
+		if ( service == null ) {
+			return success();
+		}
+		final var result = service.dataValueFilters(locale);
 		return success(result);
 	}
 
@@ -235,6 +263,31 @@ public class UserCloudIntegrationsController {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
 		userCloudIntegrationsBiz.deleteConfiguration(id, CloudDatumStreamConfiguration.class);
 		return success();
+	}
+
+	/**
+	 * List the data values for a datum stream service and an optional filter.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param req
+	 *        the HTTP request to obtain filter parameters from
+	 * @return the values
+	 */
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/data-values", method = RequestMethod.GET)
+	public Result<Iterable<CloudDataValue<?>>> listCloudDatumStreamDataValues(
+			@PathVariable("datumStreamId") Long datumStreamId, WebRequest req) {
+		var filter = new LinkedHashMap<String, Object>(4);
+		for ( Iterator<String> itr = req.getParameterNames(); itr.hasNext(); ) {
+			String param = itr.next();
+			Object val = req.getParameter(param);
+			if ( val != null ) {
+				filter.put(param, val);
+			}
+		}
+		var result = userCloudIntegrationsBiz.datumStreamDataValuesForId(
+				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties", method = RequestMethod.GET)
