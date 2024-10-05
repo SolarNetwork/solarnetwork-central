@@ -62,6 +62,17 @@ public class LocusEnergyCloudIntegrationService
 	 */
 	public static final String V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE = "/v3/partners/{partnerId}/sites";
 
+	/**
+	 * The URL template for components for a given {@code \{siteId\}} parameter.
+	 */
+	public static final String V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE = "/v3/sites/{siteId}/components";
+
+	/**
+	 * The URL template for nodes (data available) for a given
+	 * {@code \{componentId\}} parameter.
+	 */
+	public static final String V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE = "/v3/components/{componentId}/dataavailable";
+
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
 
@@ -95,7 +106,7 @@ public class LocusEnergyCloudIntegrationService
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
-	private final Collection<CloudDatumStreamService<?>> datumStreamServices;
+	private final Collection<CloudDatumStreamService> datumStreamServices;
 	private final UserEventAppenderBiz userEventAppenderBiz;
 	private final RestOperations restOps;
 	private final OAuth2AuthorizedClientManager oauthClientManager;
@@ -114,7 +125,7 @@ public class LocusEnergyCloudIntegrationService
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService<?>> datumStreamServices,
+	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
 		super(SERVICE_IDENTIFIER);
@@ -140,7 +151,7 @@ public class LocusEnergyCloudIntegrationService
 	}
 
 	@Override
-	public Iterable<CloudDatumStreamService<?>> datumStreamServices() {
+	public Iterable<CloudDatumStreamService> datumStreamServices() {
 		return datumStreamServices;
 	}
 

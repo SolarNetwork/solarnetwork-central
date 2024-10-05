@@ -23,8 +23,12 @@
 package net.solarnetwork.central.c2c.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * A cloud data hierarchy component.
@@ -37,7 +41,10 @@ import java.util.Map;
  * @author matt
  * @version 1.0
  */
-public class CloudDataValue<K> {
+@JsonPropertyOrder({ "name", "identifiers", "metadata", "children" })
+public class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
+
+	private static final long serialVersionUID = 782616385882360558L;
 
 	/** Standard metadata key for a street address. */
 	public static final String STREET_ADDRESS_METADATA = "street";
@@ -54,38 +61,45 @@ public class CloudDataValue<K> {
 	/** Standard metadata key for a time zone identifier. */
 	public static final String TIME_ZONE_METADATA = "tz";
 
-	private final K id;
-	private final String identifier;
+	/** Standard metadata key for a device manufacturer name. */
+	public static final String MANUFACTURER_METADATA = "manufacturer";
+
+	/** Standard metadata key for a device model name. */
+	public static final String DEVICE_MODEL_METADATA = "model";
+
+	/** Standard metadata key for a device serial number name. */
+	public static final String DEVICE_SERIAL_NUMBER_METADATA = "serial";
+
+	/** Standard metadata key for a unit of measure name. */
+	public static final String UNIT_OF_MEASURE_METADATA = "unit";
+
+	private final List<String> identifiers;
 	private final String name;
 	private final Map<String, ?> metadata;
-	private final Collection<CloudDataValue<K>> children;
+	private final Collection<CloudDataValue> children;
 
 	/**
 	 * Create a new data value instance.
 	 *
-	 * @param id
-	 *        the component ID
-	 * @param identifier
-	 *        the value identifier, unique within the overall hierarchy
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
 	 * @param name
 	 *        the component name
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@literal null}
 	 */
-	public static <T> CloudDataValue<T> dataValue(T id, String identifier, String name,
+	public static CloudDataValue dataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata) {
-		return new CloudDataValue<>(id, identifier, name, metadata);
+		return new CloudDataValue(identifiers, name, metadata);
 	}
 
 	/**
 	 * Create a new data value instance.
 	 *
-	 * @param parent
-	 *        the parent
-	 * @param id
-	 *        the component ID
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
 	 * @param name
 	 *        the component name
 	 * @param metadata
@@ -93,38 +107,34 @@ public class CloudDataValue<K> {
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@literal null}
 	 */
-	public static <T> CloudDataValue<T> dataValue(T id, String identifier, String name,
-			Map<String, ?> metadata, Collection<CloudDataValue<T>> children) {
-		return new CloudDataValue<>(id, identifier, name, metadata, children);
+	public static CloudDataValue dataValue(List<String> identifiers, String name,
+			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+		return new CloudDataValue(identifiers, name, metadata, children);
 	}
 
 	/**
 	 * Constructor.
 	 *
-	 * @param id
-	 *        the component ID
-	 * @param identifier
-	 *        the value identifier, unique within the overall hierarchy
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
 	 * @param name
 	 *        the component name
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@literal null}
 	 */
-	public CloudDataValue(K id, String identifier, String name, Map<String, ?> metadata) {
-		this(id, identifier, name, metadata, null);
+	public CloudDataValue(List<String> identifiers, String name, Map<String, ?> metadata) {
+		this(identifiers, name, metadata, null);
 	}
 
 	/**
 	 * Constructor.
 	 *
-	 * @param parent
-	 *        the parent
-	 * @param id
-	 *        the component ID
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
 	 * @param name
 	 *        the component name
 	 * @param metadata
@@ -132,42 +142,49 @@ public class CloudDataValue<K> {
 	 * @param children
 	 *        the optional children values
 	 * @throws IllegalArgumentException
-	 *         if {@code id} is {@literal null}
+	 *         if {@code identifiers} or {@code name} is {@literal null}
 	 */
-	public CloudDataValue(K id, String identifier, String name, Map<String, ?> metadata,
-			Collection<CloudDataValue<K>> children) {
+	public CloudDataValue(List<String> identifiers, String name, Map<String, ?> metadata,
+			Collection<CloudDataValue> children) {
 		super();
-		this.id = requireNonNullArgument(id, "id");
-		this.identifier = identifier;
-		this.name = name;
+		this.identifiers = requireNonNullArgument(identifiers, "identifiers");
+		this.name = requireNonNullArgument(name, "name");
 		this.metadata = metadata;
 		this.children = children;
 	}
 
-	/**
-	 * Get the component identifier.
-	 *
-	 * @return the id, never {@literal null}
-	 */
-	public final K getId() {
-		return id;
+	@Override
+	public int compareTo(CloudDataValue o) {
+		final int lenLeft = identifiers.size();
+		final int lenRight = o.identifiers.size();
+		for ( int i = 0, len = Math.min(lenRight, lenRight); i < len; i++ ) {
+			int result = StringUtils.naturalSortCompare(identifiers.get(i), o.identifiers.get(i), true);
+			if ( result != 0 ) {
+				return result;
+			}
+		}
+		if ( lenLeft < lenRight ) {
+			return -1;
+		} else if ( lenLeft > lenRight ) {
+			return 1;
+		}
+		return 0;
 	}
 
 	/**
 	 * Get the data value hierarchy identifier.
 	 *
-	 * @return the identifier, unique within the overall hierarchy, or
-	 *         {@literal null} if this component does not have a data value
-	 *         reference
+	 * @return the identifiers, unique within the overall hierarchy, never
+	 *         {@literal null}
 	 */
-	public final String getIdentifier() {
-		return identifier;
+	public final List<String> getIdentifiers() {
+		return identifiers;
 	}
 
 	/**
 	 * Get the component name.
 	 *
-	 * @return the name
+	 * @return the name, never {@literal null}
 	 */
 	public final String getName() {
 		return name;
@@ -187,7 +204,7 @@ public class CloudDataValue<K> {
 	 *
 	 * @return the children
 	 */
-	public final Collection<CloudDataValue<K>> getChildren() {
+	public final Collection<CloudDataValue> getChildren() {
 		return children;
 	}
 

@@ -67,7 +67,7 @@ public interface UserCloudIntegrationsBiz {
 	 *
 	 * @return the datum stream service, or {@literal null} if not available
 	 */
-	CloudDatumStreamService<?> datumStreamService(String identifier);
+	CloudDatumStreamService datumStreamService(String identifier);
 
 	/**
 	 * Get a list of all available cloud integration configurations for a given
@@ -176,7 +176,6 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValue<?>> datumStreamDataValuesForId(UserLongCompositePK id,
-			Map<String, ?> filters);
+	Iterable<CloudDataValue> datumStreamDataValuesForId(UserLongCompositePK id, Map<String, ?> filters);
 
 }

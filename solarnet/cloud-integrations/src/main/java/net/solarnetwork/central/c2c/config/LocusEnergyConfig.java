@@ -130,7 +130,7 @@ public class LocusEnergyConfig {
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
-	public CloudDatumStreamService<Long> locusEnergyCloudDatumStreamService(
+	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
 		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, restOps,
 				oauthClientManager, integrationConfigurationDao, datumStreamConfigurationDao);
@@ -145,7 +145,7 @@ public class LocusEnergyConfig {
 	@Bean
 	public LocusEnergyCloudIntegrationService locusEnergyCloudIntegrationService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
-			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService<?>> datumStreamServices) {
+			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
 				restOps, oauthClientManager);
 

@@ -38,7 +38,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamService<D>
+public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/**
@@ -69,6 +69,6 @@ public interface CloudDatumStreamService<D>
 	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValue<D>> dataValues(UserLongCompositePK id, Map<String, ?> filters);
+	Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters);
 
 }

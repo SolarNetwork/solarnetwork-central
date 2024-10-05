@@ -140,8 +140,7 @@ public class UserCloudIntegrationsController {
 	@RequestMapping(value = "/services/datum-streams/data-filters", method = RequestMethod.GET)
 	public Result<Iterable<LocalizedServiceInfo>> availableCloudDatumStreamFilters(
 			@RequestParam("identifier") String identifier, Locale locale) {
-		final CloudDatumStreamService<?> service = userCloudIntegrationsBiz
-				.datumStreamService(identifier);
+		final CloudDatumStreamService service = userCloudIntegrationsBiz.datumStreamService(identifier);
 		if ( service == null ) {
 			return success();
 		}
@@ -275,7 +274,7 @@ public class UserCloudIntegrationsController {
 	 * @return the values
 	 */
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/data-values", method = RequestMethod.GET)
-	public Result<Iterable<CloudDataValue<?>>> listCloudDatumStreamDataValues(
+	public Result<Iterable<CloudDataValue>> listCloudDatumStreamDataValues(
 			@PathVariable("datumStreamId") Long datumStreamId, WebRequest req) {
 		var filter = new LinkedHashMap<String, Object>(4);
 		for ( Iterator<String> itr = req.getParameterNames(); itr.hasNext(); ) {

@@ -38,6 +38,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * Repository of OAuth client registrations based on external system
@@ -55,7 +56,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class ClientCredentialsClientRegistrationRepository implements ClientRegistrationRepository {
 
-	private final CloudIntegrationConfigurationDao configurationDao;
+	private final GenericDao<CloudIntegrationConfiguration, UserLongCompositePK> configurationDao;
 	private final URI tokenUri;
 	private final ClientAuthenticationMethod clientAuthMethod;
 

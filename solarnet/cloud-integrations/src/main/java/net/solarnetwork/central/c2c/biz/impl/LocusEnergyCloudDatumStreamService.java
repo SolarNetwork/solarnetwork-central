@@ -23,10 +23,13 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.http.OAuth2Utils.addOAuthBearerAuthorization;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
@@ -38,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -71,9 +75,8 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * @author matt
  * @version 1.0
  */
-public class LocusEnergyCloudDatumStreamService
-		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements CloudDatumStreamService<Long> {
+public class LocusEnergyCloudDatumStreamService extends
+		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements CloudDatumStreamService {
 
 	/** The data value filter key for a site ID. */
 	public static final String SITE_ID_FILTER = "siteId";
@@ -186,41 +189,49 @@ public class LocusEnergyCloudDatumStreamService
 	}
 
 	@Override
-	public Iterable<CloudDataValue<Long>> dataValues(UserLongCompositePK id, Map<String, ?> filters) {
+	public Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters) {
 		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
 				datumStreamDao.get(requireNonNullArgument(id, "id")), "datumStream");
 		final CloudIntegrationConfiguration integration = integrationDao
 				.get(new UserLongCompositePK(datumStream.getUserId(), datumStream.getIntegrationId()));
-		List<CloudDataValue<Long>> result = Collections.emptyList();
-		if ( filters != null && filters.get(COMPONENT_ID_FILTER) != null ) {
-			// TODO list fields for component
+		List<CloudDataValue> result = Collections.emptyList();
+		if ( filters != null && filters.get(SITE_ID_FILTER) != null
+				&& filters.get(COMPONENT_ID_FILTER) != null ) {
+			result = nodesForComponent(integration, filters);
 		} else if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			// TODO list components for site
+			result = componentsForSite(integration, filters);
 		} else {
 			result = sitesForPartner(integration);
 		}
+		Collections.sort(result);
 		return result;
 	}
 
-	private List<CloudDataValue<Long>> sitesForPartner(CloudIntegrationConfiguration integration) {
+	private <T> T httpGet(CloudIntegrationConfiguration integration,
+			Function<HttpEntity<Void>, URI> setup, Function<ResponseEntity<ObjectNode>, T> handler) {
 		HttpHeaders headers = new HttpHeaders();
 		addOAuthBearerAuthorization(integration, headers, oauthClientManager, userEventAppenderBiz);
-
-		final URI uri = UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
-				.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
-				.buildAndExpand(integration.getServiceProperties()).toUri();
+		final HttpEntity<Void> req = new HttpEntity<>(null, headers);
+		final URI uri = setup.apply(req);
 		try {
-			final HttpEntity<Void> req = new HttpEntity<>(null, headers);
 			final ResponseEntity<ObjectNode> res = restOps.exchange(uri, HttpMethod.GET, req,
 					ObjectNode.class);
-			return parseSites(res.getBody());
+			return handler.apply(res);
 		} catch ( HttpClientErrorException e ) {
 			// TODO auth error, try refresh token
 			throw e;
 		}
 	}
 
-	private static List<CloudDataValue<Long>> parseSites(ObjectNode json) {
+	private List<CloudDataValue> sitesForPartner(CloudIntegrationConfiguration integration) {
+		return httpGet(integration,
+				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
+						.buildAndExpand(integration.getServiceProperties()).toUri(),
+				res -> parseSites(res.getBody()));
+	}
+
+	private static List<CloudDataValue> parseSites(ObjectNode json) {
 		assert json != null;
 		/*- EXAMPLE JSON:
 		{
@@ -243,10 +254,9 @@ public class LocusEnergyCloudDatumStreamService
 		  ]
 		}
 		*/
-		List<CloudDataValue<Long>> result = new ArrayList<>(4);
+		List<CloudDataValue> result = new ArrayList<>(4);
 		for ( JsonNode siteNode : json.path("sites") ) {
-			final long id = siteNode.path("id").asLong();
-			final String ident = "/%d".formatted(id);
+			final String id = siteNode.path("id").asText();
 			final String name = siteNode.path("name").asText().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
 			if ( siteNode.hasNonNull("address1") ) {
@@ -264,7 +274,153 @@ public class LocusEnergyCloudDatumStreamService
 			if ( siteNode.hasNonNull("locationTimezone") ) {
 				meta.put(TIME_ZONE_METADATA, siteNode.path("locationTimezone").asText().trim());
 			}
-			result.add(dataValue(id, ident, name, meta.isEmpty() ? null : meta));
+			result.add(dataValue(List.of(id), name, meta.isEmpty() ? null : meta));
+		}
+		return result;
+	}
+
+	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
+			Map<String, ?> filters) {
+		return httpGet(integration,
+				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+						.path(LocusEnergyCloudIntegrationService.V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE)
+						.buildAndExpand(filters).toUri(),
+				res -> parseComponents(res.getBody()));
+	}
+
+	private static List<CloudDataValue> parseComponents(ObjectNode json) {
+		assert json != null;
+		/*- EXAMPLE JSON:
+		{
+		  "statusCode": 200,
+		  "components": [
+		    {
+		      "id": 123456,
+		      "siteId": 234567,
+		      "clientId": 345678,
+		      "parentId": 456789,
+		      "parentType": "SITE",
+		      "nodeId": "AA.BBBBBBBBBB.11",
+		      "name": "Something",
+		      "nodeType": "METER",
+		      "application": "GENERATION",
+		      "generationType": "SOLAR",
+		      "oem": "Manufacturer",
+		      "model": "Device Model",
+		      "isConceptualNode": false
+		    }
+		  ]
+		}
+		*/
+		List<CloudDataValue> result = new ArrayList<>(32);
+		for ( JsonNode compNode : json.path("components") ) {
+			final String id = compNode.path("id").asText();
+			final String siteId = compNode.path("parentId").asText();
+			final String name = compNode.path("name").asText().trim();
+			final var meta = new LinkedHashMap<String, Object>(8);
+			if ( compNode.hasNonNull("oem") ) {
+				meta.put(MANUFACTURER_METADATA, compNode.path("oem").asText().trim());
+			}
+			if ( compNode.hasNonNull("model") ) {
+				meta.put(DEVICE_MODEL_METADATA, compNode.path("model").asText().trim());
+			}
+			if ( compNode.hasNonNull("nodeId") ) {
+				meta.put("nodeId", compNode.path("nodeId").asText().trim());
+			}
+			if ( compNode.hasNonNull("nodeType") ) {
+				meta.put("nodeType", compNode.path("nodeType").asText().trim());
+			}
+			if ( compNode.hasNonNull("application") ) {
+				meta.put("application", compNode.path("application").asText().trim());
+			}
+			if ( compNode.hasNonNull("generationType") ) {
+				meta.put("generationType", compNode.path("generationType").asText().trim());
+			}
+			result.add(dataValue(List.of(siteId, id), name, meta.isEmpty() ? null : meta));
+		}
+		return result;
+	}
+
+	private List<CloudDataValue> nodesForComponent(CloudIntegrationConfiguration integration,
+			Map<String, ?> filters) {
+		return httpGet(integration,
+				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
+						.buildAndExpand(filters).toUri(),
+				res -> parseNodes(res.getBody(), filters));
+	}
+
+	private static List<CloudDataValue> parseNodes(ObjectNode json, Map<String, ?> filters) {
+		assert json != null;
+		assert filters != null && filters.containsKey(SITE_ID_FILTER)
+				&& filters.containsKey(COMPONENT_ID_FILTER);
+		/*- EXAMPLE JSON:
+		{
+		  "statusCode": 200,
+		  "baseFields": [
+		    {
+		      "baseField": "AphA",
+		      "longName": "AC Phase A Current",
+		      "source": "Measured",
+		      "unit": "A",
+		      "aggregations": [
+		        {
+		          "shortName": "AphA_avg",
+		          "aggregation": "avg"
+		        },
+		        {
+		          "shortName": "AphA_max",
+		          "aggregation": "max"
+		        },
+		        {
+		          "shortName": "AphA_min",
+		          "aggregation": "min"
+		        }
+		      ],
+		      "granularities": [
+		        "latest",
+		        "1min",
+		        "5min",
+		        "15min",
+		        "hourly",
+		        "daily",
+		        "monthly",
+		        "yearly"
+		      ]
+		    },
+		  ]
+		}
+		*/
+		final var siteId = filters.get(SITE_ID_FILTER).toString();
+		final var compId = filters.get(COMPONENT_ID_FILTER).toString();
+		List<CloudDataValue> result = new ArrayList<>(32);
+		for ( JsonNode fieldNode : json.path("baseFields") ) {
+			final String id = fieldNode.path("baseField").asText().trim();
+			final String name = fieldNode.path("longName").asText().trim();
+			final var meta = new LinkedHashMap<String, Object>(4);
+			if ( fieldNode.hasNonNull("source") ) {
+				meta.put("source", fieldNode.path("source").asText().trim());
+			}
+			if ( fieldNode.hasNonNull("unit") ) {
+				meta.put(UNIT_OF_MEASURE_METADATA, fieldNode.path("unit").asText().trim());
+			}
+			if ( fieldNode.hasNonNull("model") ) {
+				meta.put(DEVICE_MODEL_METADATA, fieldNode.path("model").asText().trim());
+			}
+			List<CloudDataValue> children = new ArrayList<>(4);
+			for ( JsonNode aggNode : fieldNode.path("aggregations") ) {
+				if ( aggNode.hasNonNull("shortName") && aggNode.hasNonNull("aggregation") ) {
+					final String aggId = aggNode.path("shortName").asText().trim();
+					final String agg = aggNode.path("aggregation").asText().trim();
+					final String aggName = name + ' ' + agg;
+					final var aggMeta = new LinkedHashMap<String, Object>(meta);
+					aggMeta.put("aggregation", agg);
+					children.add(dataValue(List.of(siteId, compId, id, aggId), aggName,
+							aggMeta.isEmpty() ? null : aggMeta));
+				}
+			}
+			result.add(dataValue(List.of(siteId, compId, id), name, meta.isEmpty() ? null : meta,
+					children.isEmpty() ? null : children));
 		}
 		return result;
 	}

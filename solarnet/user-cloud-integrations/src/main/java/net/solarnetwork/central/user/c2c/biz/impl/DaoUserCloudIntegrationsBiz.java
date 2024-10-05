@@ -73,7 +73,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final Map<String, CloudIntegrationService> integrationServices;
-	private final Map<String, CloudDatumStreamService<?>> datumStreamServices;
+	private final Map<String, CloudDatumStreamService> datumStreamServices;
 	private final Map<String, Set<String>> integrationServiceSecureKeys;
 
 	private Validator validator;
@@ -123,7 +123,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public CloudDatumStreamService<?> datumStreamService(String identifier) {
+	public CloudDatumStreamService datumStreamService(String identifier) {
 		return datumStreamServices.get(requireNonNullArgument(identifier, "identifier"));
 	}
 
@@ -224,15 +224,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Iterable<CloudDataValue<?>> datumStreamDataValuesForId(UserLongCompositePK id,
+	public Iterable<CloudDataValue> datumStreamDataValuesForId(UserLongCompositePK id,
 			Map<String, ?> filters) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");
 		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
 				"datumStreamService");
-		@SuppressWarnings({ "unchecked", "rawtypes" })
-		Iterable<CloudDataValue<?>> result = (Iterable) service.dataValues(id, filters);
-		return result;
+		return service.dataValues(id, filters);
 	}
 
 	@Override

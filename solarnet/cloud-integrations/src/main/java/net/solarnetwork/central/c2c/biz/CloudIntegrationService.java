@@ -69,7 +69,7 @@ public interface CloudIntegrationService
 	 *
 	 * @return the supported datum stream services, never {@literal null}
 	 */
-	Iterable<CloudDatumStreamService<?>> datumStreamServices();
+	Iterable<CloudDatumStreamService> datumStreamServices();
 
 	/**
 	 * Validate a configuration.
