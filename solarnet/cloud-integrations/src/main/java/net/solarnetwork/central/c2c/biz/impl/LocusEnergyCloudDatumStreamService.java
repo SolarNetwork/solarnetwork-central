@@ -412,9 +412,11 @@ public class LocusEnergyCloudDatumStreamService extends
 				if ( aggNode.hasNonNull("shortName") && aggNode.hasNonNull("aggregation") ) {
 					final String aggId = aggNode.path("shortName").asText().trim();
 					final String agg = aggNode.path("aggregation").asText().trim();
+					if ( agg.isEmpty() ) {
+						continue;
+					}
 					final String aggName = name + ' ' + agg;
-					final var aggMeta = new LinkedHashMap<String, Object>(meta);
-					aggMeta.put("aggregation", agg);
+					final var aggMeta = Map.of("aggregation", agg);
 					children.add(dataValue(List.of(siteId, compId, id, aggId), aggName,
 							aggMeta.isEmpty() ? null : aggMeta));
 				}
