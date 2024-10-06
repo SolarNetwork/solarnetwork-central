@@ -41,7 +41,7 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "name", "identifiers", "metadata", "children" })
+@JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
 
 	private static final long serialVersionUID = 782616385882360558L;
@@ -75,11 +75,37 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 
 	private final List<String> identifiers;
 	private final String name;
+	private final String reference;
 	private final Map<String, ?> metadata;
 	private final Collection<CloudDataValue> children;
 
 	/**
+	 * Generate a path-like reference value out of a list of identifiers.
+	 *
+	 * @param identifiers
+	 *        the identifiers
+	 * @return the reference value, never {@literal null}
+	 */
+	public static String pathReferenceValue(Collection<String> identifiers) {
+		var buf = new StringBuilder();
+		if ( identifiers != null && !identifiers.isEmpty() ) {
+			for ( String ident : identifiers ) {
+				buf.append('/').append(ident);
+			}
+		}
+		if ( buf.isEmpty() ) {
+			buf.append('/');
+		}
+		return buf.toString();
+	}
+
+	/**
 	 * Create a new data value instance.
+	 *
+	 * <p>
+	 * The {@code reference} will be set to a path-like value using the
+	 * {@code identifier} components.
+	 * </p>
 	 *
 	 * @param identifiers
 	 *        the value identifiers, unique within the overall hierarchy
@@ -92,11 +118,16 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata) {
-		return new CloudDataValue(identifiers, name, metadata);
+		return new CloudDataValue(identifiers, name, pathReferenceValue(identifiers), metadata);
 	}
 
 	/**
 	 * Create a new data value instance.
+	 *
+	 * <p>
+	 * The {@code reference} will be set to a path-like value using the
+	 * {@code identifier} components.
+	 * </p>
 	 *
 	 * @param identifiers
 	 *        the value identifiers, unique within the overall hierarchy
@@ -111,32 +142,38 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 */
 	public static CloudDataValue dataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata, Collection<CloudDataValue> children) {
-		return new CloudDataValue(identifiers, name, metadata, children);
+		return new CloudDataValue(identifiers, name, pathReferenceValue(identifiers), metadata,
+				children);
 	}
 
 	/**
-	 * Constructor.
+	 * Create a new data value instance.
 	 *
 	 * @param identifiers
 	 *        the value identifiers, unique within the overall hierarchy
 	 * @param name
 	 *        the component name
+	 * @param reference
+	 *        the unique hierarchy reference
 	 * @param metadata
 	 *        the metadata
 	 * @throws IllegalArgumentException
 	 *         if {@code identifiers} or {@code name} is {@literal null}
 	 */
-	public CloudDataValue(List<String> identifiers, String name, Map<String, ?> metadata) {
-		this(identifiers, name, metadata, null);
+	public static CloudDataValue dataValue(List<String> identifiers, String name, String reference,
+			Map<String, ?> metadata) {
+		return new CloudDataValue(identifiers, name, reference, metadata);
 	}
 
 	/**
-	 * Constructor.
+	 * Create a new data value instance.
 	 *
 	 * @param identifiers
 	 *        the value identifiers, unique within the overall hierarchy
 	 * @param name
 	 *        the component name
+	 * @param reference
+	 *        the unique hierarchy reference
 	 * @param metadata
 	 *        the metadata
 	 * @param children
@@ -144,11 +181,52 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 * @throws IllegalArgumentException
 	 *         if {@code identifiers} or {@code name} is {@literal null}
 	 */
-	public CloudDataValue(List<String> identifiers, String name, Map<String, ?> metadata,
-			Collection<CloudDataValue> children) {
+	public static CloudDataValue dataValue(List<String> identifiers, String name, String reference,
+			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+		return new CloudDataValue(identifiers, name, reference, metadata, children);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @param reference
+	 *        the unique hierarchy reference
+	 * @param metadata
+	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 */
+	public CloudDataValue(List<String> identifiers, String name, String reference,
+			Map<String, ?> metadata) {
+		this(identifiers, name, reference, metadata, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @param reference
+	 *        the unique hierarchy reference
+	 * @param metadata
+	 *        the metadata
+	 * @param children
+	 *        the optional children values
+	 * @throws IllegalArgumentException
+	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 */
+	public CloudDataValue(List<String> identifiers, String name, String reference,
+			Map<String, ?> metadata, Collection<CloudDataValue> children) {
 		super();
 		this.identifiers = requireNonNullArgument(identifiers, "identifiers");
 		this.name = requireNonNullArgument(name, "name");
+		this.reference = requireNonNullArgument(reference, "reference");
 		this.metadata = metadata;
 		this.children = children;
 	}
@@ -188,6 +266,15 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 */
 	public final String getName() {
 		return name;
+	}
+
+	/**
+	 * Get the reference.
+	 *
+	 * @return the reference
+	 */
+	public final String getReference() {
+		return reference;
 	}
 
 	/**
