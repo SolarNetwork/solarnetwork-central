@@ -114,8 +114,8 @@ public class LocusEnergyCloudIntegrationService
 	/**
 	 * Constructor.
 	 *
-	 * @param datumStreamService
-	 *        the datum stream service
+	 * @param datumStreamServices
+	 *        the datum stream services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param restOps

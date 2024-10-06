@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.c2c.biz;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -29,10 +30,12 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
@@ -120,6 +123,25 @@ public interface UserCloudIntegrationsBiz {
 	 */
 	<T extends CloudIntegrationsConfigurationInput<C, K>, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C saveConfiguration(
 			K id, T input);
+
+	/**
+	 * Save a list of cloud datum stream property configurations.
+	 *
+	 * <p>
+	 * This method will first <b>delete</b> all configurations for the given
+	 * {@code groupId}, then <b>insert</b> the given configurations, assigning
+	 * {@code index} key component values based on list order.
+	 * </p>
+	 * </p>
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID of the configurations to delete
+	 * @param inputs
+	 *        the configuration inputs to save
+	 * @return the saved configurations
+	 */
+	List<CloudDatumStreamPropertyConfiguration> replaceDatumStreamPropertyConfiguration(
+			UserLongCompositePK datumStreamId, List<CloudDatumStreamPropertyConfigurationInput> inputs);
 
 	/**
 	 * Update the enabled status of configurations, optionally filtered.

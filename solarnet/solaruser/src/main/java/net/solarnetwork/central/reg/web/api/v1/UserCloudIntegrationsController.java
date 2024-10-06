@@ -32,6 +32,7 @@ import static org.springframework.web.servlet.mvc.method.annotation.MvcUriCompon
 import java.net.URI;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -299,16 +300,12 @@ public class UserCloudIntegrationsController {
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties", method = RequestMethod.POST)
-	public ResponseEntity<Result<CloudDatumStreamPropertyConfiguration>> createCloudDatumStreamPropertyConfiguration(
+	public Result<List<CloudDatumStreamPropertyConfiguration>> replaceCloudDatumStreamPropertyConfigurations(
 			@PathVariable("datumStreamId") Long datumStreamId,
-			@Valid @RequestBody CloudDatumStreamPropertyConfigurationInput input) {
-		var id = UserLongIntegerCompositePK.unassignedEntityIdKey(getCurrentActorUserId(),
-				datumStreamId);
-		var result = userCloudIntegrationsBiz.saveConfiguration(id, input);
-		URI loc = uriWithoutHost(fromMethodCall(
-				on(UserCloudIntegrationsController.class).getCloudDatumStreamPropertyConfiguration(
-						result.getDatumStreamId(), result.getIndex())));
-		return ResponseEntity.created(loc).body(success(result));
+			@Valid @RequestBody List<CloudDatumStreamPropertyConfigurationInput> inputs) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		var result = userCloudIntegrationsBiz.replaceDatumStreamPropertyConfiguration(id, inputs);
+		return success(result);
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties/{index}", method = RequestMethod.GET)

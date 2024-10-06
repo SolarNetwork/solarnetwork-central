@@ -33,4 +33,24 @@ import java.io.Serializable;
 public interface UserRelatedCompositeKey<K extends UserIdRelated & CompositeKey & Comparable<K> & Serializable>
 		extends UserIdRelated, CompositeKey, Comparable<K>, Serializable {
 
+	/**
+	 * Get the user ID.
+	 * 
+	 * @return the user ID
+	 */
+	@Override
+	default Long getUserId() {
+		return (Long) keyComponent(0);
+	}
+
+	/**
+	 * Test if the user ID is assigned.
+	 * 
+	 * @return {@literal true} if the user ID value is assigned,
+	 *         {@literal false} if it is considered "not a value"
+	 */
+	default boolean userIdIsAssigned() {
+		return keyComponentIsAssigned(0);
+	}
+
 }

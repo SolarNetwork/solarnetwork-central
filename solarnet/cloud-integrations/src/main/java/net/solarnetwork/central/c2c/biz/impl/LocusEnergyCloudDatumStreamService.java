@@ -315,7 +315,7 @@ public class LocusEnergyCloudDatumStreamService extends
 		List<CloudDataValue> result = new ArrayList<>(32);
 		for ( JsonNode compNode : json.path("components") ) {
 			final String id = compNode.path("id").asText();
-			final String siteId = compNode.path("parentId").asText();
+			final String siteId = compNode.path("siteId").asText();
 			final String name = compNode.path("name").asText().trim();
 			final var meta = new LinkedHashMap<String, Object>(8);
 			if ( compNode.hasNonNull("oem") ) {

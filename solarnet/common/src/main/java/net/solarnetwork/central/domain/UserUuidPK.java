@@ -131,16 +131,6 @@ public final class UserUuidPK extends BasePK
 	}
 
 	/**
-	 * Get the user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	public final Long getUserId() {
-		return userId;
-	}
-
-	/**
 	 * Get the UUID.
 	 * 
 	 * @return the UUID
@@ -151,12 +141,12 @@ public final class UserUuidPK extends BasePK
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final UUID keyComponent2() {
-		return getUuid();
+		return uuid;
 	}
 
 	@Override
@@ -167,16 +157,6 @@ public final class UserUuidPK extends BasePK
 			return uuid != UNASSIGNED_UUID_ID;
 		}
 		return CompositeKey2.super.keyComponentIsAssigned(index);
-	}
-
-	/**
-	 * Test if the user ID is assigned.
-	 * 
-	 * @return {@literal true} if the user ID value is assigned,
-	 *         {@literal false} if it is considered "not a value"
-	 */
-	public final boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
 	}
 
 	/**

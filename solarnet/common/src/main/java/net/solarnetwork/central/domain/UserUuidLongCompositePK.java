@@ -176,16 +176,6 @@ public class UserUuidLongCompositePK extends BasePK
 	}
 
 	/**
-	 * Get the user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	public final Long getUserId() {
-		return userId;
-	}
-
-	/**
 	 * Get the group ID.
 	 * 
 	 * @return the user ID
@@ -205,17 +195,17 @@ public class UserUuidLongCompositePK extends BasePK
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final UUID keyComponent2() {
-		return getGroupId();
+		return groupId;
 	}
 
 	@Override
 	public final Long keyComponent3() {
-		return getEntityId();
+		return entityId;
 	}
 
 	@Override
@@ -228,16 +218,6 @@ public class UserUuidLongCompositePK extends BasePK
 			return entityId != UNASSIGNED_ENTITY_ID;
 		}
 		return CompositeKey3.super.keyComponentIsAssigned(index);
-	}
-
-	/**
-	 * Test if the user ID is assigned.
-	 * 
-	 * @return {@literal true} if the user ID value is assigned,
-	 *         {@literal false} if it is considered "not a value"
-	 */
-	public final boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
 	}
 
 	/**

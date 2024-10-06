@@ -205,12 +205,12 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final Long keyComponent2() {
-		return getId();
+		return id;
 	}
 
 	@Override
@@ -223,19 +223,31 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		return CompositeKey2.super.keyComponentIsAssigned(index);
 	}
 
+	/**
+	 * Get the ID.
+	 * 
+	 * @return the ID
+	 */
 	public Long getId() {
 		return id;
 	}
 
+	/**
+	 * Set the ID.
+	 * 
+	 * @param id
+	 *        the ID to set
+	 */
 	public void setId(Long id) {
 		this.id = id;
 	}
 
-	@Override
-	public Long getUserId() {
-		return userId;
-	}
-
+	/**
+	 * Set the uesr ID.
+	 * 
+	 * @param userId
+	 *        the user ID to set
+	 */
 	public void setUserId(Long userId) {
 		this.userId = userId;
 	}

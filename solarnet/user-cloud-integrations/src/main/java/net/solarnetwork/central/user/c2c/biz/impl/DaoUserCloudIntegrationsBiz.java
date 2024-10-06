@@ -22,10 +22,14 @@
 
 package net.solarnetwork.central.user.c2c.biz.impl;
 
+import static java.time.Instant.now;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -54,6 +58,7 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
@@ -151,8 +156,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C configurationForId(
 			K id, Class<C> configurationClass) {
 		requireNonNullArgument(id, "id");
-		requireNonNullArgument(id.getUserId(), "id.userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
+		if ( !id.userIdIsAssigned() ) {
+			throw new IllegalArgumentException("The userId must be provided.");
+		}
+
 		GenericDao<C, K> dao = genericDao(configurationClass);
 		C result = requireNonNullObject(dao.get(id), id);
 
@@ -167,8 +175,10 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	public <T extends CloudIntegrationsConfigurationInput<C, K>, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C saveConfiguration(
 			K id, T input) {
 		requireNonNullArgument(id, "id");
-		requireNonNullArgument(id.getUserId(), "id.userId");
 		requireNonNullArgument(input, "input");
+		if ( !id.userIdIsAssigned() ) {
+			throw new IllegalArgumentException("The userId must be provided.");
+		}
 
 		validateInput(input);
 
@@ -187,11 +197,43 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
+	public List<CloudDatumStreamPropertyConfiguration> replaceDatumStreamPropertyConfiguration(
+			UserLongCompositePK datumStreamId, List<CloudDatumStreamPropertyConfigurationInput> inputs) {
+		requireNonNullArgument(datumStreamId, "datumStreamId");
+		if ( !(datumStreamId.userIdIsAssigned() && datumStreamId.entityIdIsAssigned()) ) {
+			throw new IllegalArgumentException("The userId and entityId components must be provided.");
+		}
+
+		requireNonNullArgument(inputs, "inputs");
+
+		// delete all for given group ID
+		final UserLongIntegerCompositePK deleteId = UserLongIntegerCompositePK
+				.unassignedEntityIdKey(datumStreamId.getUserId(), datumStreamId.getEntityId());
+		datumStreamPropertyDao.delete(datumStreamPropertyDao.entityKey(deleteId));
+
+		final Instant now = now();
+		final var result = new ArrayList<CloudDatumStreamPropertyConfiguration>(inputs.size());
+		int idx = 0;
+		for ( var input : inputs ) {
+			validateInput(input);
+			var config = input.toEntity(new UserLongIntegerCompositePK(datumStreamId.getUserId(),
+					datumStreamId.getEntityId(), idx++), now);
+			datumStreamPropertyDao.save(config);
+			result.add(config);
+		}
+		return result;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
 	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void enableConfiguration(
 			K id, boolean enabled, Class<C> configurationClass) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
+		if ( !id.userIdIsAssigned() ) {
+			throw new IllegalArgumentException("The userId must be provided.");
+		}
 
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(id.getUserId());

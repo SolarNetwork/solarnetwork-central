@@ -102,7 +102,7 @@ public final class OAuth2Utils {
 	 *        the user event appender service
 	 * @throws RemoteServiceException
 	 *         if authorization fails
-	 * @throws AuthorizationException
+	 * @throws net.solarnetwork.central.security.AuthorizationException
 	 *         if an OAuth client is not returned by the
 	 *         {@code oauthClientManager}
 	 */
