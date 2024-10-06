@@ -23,6 +23,11 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -33,6 +38,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.net.URI;
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,6 +64,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.Result.ErrorDetail;
 
 /**
  * Test cases for the {@link LocusEnergyCloudIntegrationService}
@@ -99,6 +106,71 @@ public class LocusEnergyCloudIntegrationServiceTests {
 	}
 
 	@Test
+	public void validate_missingAuthSettings() {
+		// GIVEN
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		conf.setServiceProps(Map.of(
+				"foo", "bar"
+			));
+		// @formatter:on
+
+		// WHEN
+		Result<Void> result = service.validate(conf, Locale.getDefault());
+
+		// THEN
+		// @formatter:off
+		then(restOps).shouldHaveNoInteractions();
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is NOT success")
+			.returns(false, from(Result::getSuccess))
+			.satisfies(r -> {
+				and.then(r.getErrors())
+					.as("Error details provided for missing authentication settings")
+					.hasSize(5)
+					.satisfies(errors -> {
+						and.then(errors)
+							.as("Error detail")
+							.element(0)
+							.as("OAuth client ID flagged")
+							.returns(OAUTH_CLIENT_ID_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(1)
+							.as("OAuth client secret flagged")
+							.returns(OAUTH_CLIENT_SECRET_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(2)
+							.as("Username flagged")
+							.returns(USERNAME_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(3)
+							.as("Password flagged")
+							.returns(PASSWORD_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(4)
+							.as("Partner ID flagged")
+							.returns(PARTNER_ID_SETTING, from(ErrorDetail::getLocation))
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void validate_ok() {
 		// GIVEN
 		final String tokenUri = "https://example.com/oauth/token";
@@ -112,11 +184,11 @@ public class LocusEnergyCloudIntegrationServiceTests {
 				randomLong(), now());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
-				"partnerId", partnerId,
-				"clientId", clientId,
-				"clientSecret",
-				clientSecret, "username",
-				username, "password", password
+				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				LocusEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
 			));
 
 		@SuppressWarnings("deprecation")
@@ -138,14 +210,15 @@ public class LocusEnergyCloudIntegrationServiceTests {
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
 		final URI sitesForPartnerId = LocusEnergyCloudIntegrationService.BASE_URI
-				.resolve("/v3/partners/%d/sites".formatted(partnerId));
+				.resolve(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE
+						.replace("{partnerId}", partnerId.toString()));
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
 		given(restOps.exchange(eq(sitesForPartnerId), eq(HttpMethod.GET), any(), eq(String.class)))
 				.willReturn(res);
 
 		// WHEN
 
-		Result<Void> result = service.validate(conf);
+		Result<Void> result = service.validate(conf, Locale.getDefault());
 
 		// THEN
 		// @formatter:off

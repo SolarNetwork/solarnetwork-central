@@ -38,7 +38,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.UnknownContentTypeException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 
 /**
@@ -93,8 +93,8 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 *        the result type
 	 * @param description
 	 *        a description of the operation, for example "List sites"
-	 * @param entity
-	 *        the entity making the request on behalf of
+	 * @param integration
+	 *        the integration making the request on behalf of
 	 * @param responseType
 	 *        the HTTP response type
 	 * @param setup
@@ -104,7 +104,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 *        function to parse the HTTP response
 	 * @return the parsed response object
 	 */
-	public <R, T> T httpGet(String description, CloudIntegrationsConfigurationEntity<?, ?> entity,
+	public <R, T> T httpGet(String description, CloudIntegrationConfiguration integration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
 		final var headers = new HttpHeaders();
@@ -115,35 +115,39 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			return handler.apply(res);
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}", description,
-					entity.getClass().getSimpleName(), entity.getId().ident(), uri, e.getMessage());
-			userEventAppenderBiz.addEvent(entity.getUserId(), eventForConfiguration(entity,
+					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					e.getMessage());
+			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("Communication error: %s", e.getMessage())));
 			throw e;
 		} catch ( RestClientResponseException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because the HTTP status {} was returned.",
-					description, entity.getClass().getSimpleName(), entity.getId().ident(), uri,
-					e.getStatusCode());
-			userEventAppenderBiz.addEvent(entity.getUserId(), eventForConfiguration(entity,
+					description, integration.getClass().getSimpleName(), integration.getId().ident(),
+					uri, e.getStatusCode());
+			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("Invalid HTTP status returned: %s", e.getStatusCode())));
 			throw e;
 		} catch ( UnknownContentTypeException e ) {
 			log.warn(
 					"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
-					entity.getClass().getSimpleName(), entity.getId().ident(), uri, e.getContentType());
-			userEventAppenderBiz.addEvent(entity.getUserId(),
-					eventForConfiguration(entity, errorEventTags,
+					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					e.getContentType());
+			userEventAppenderBiz.addEvent(integration.getUserId(),
+					eventForConfiguration(integration, errorEventTags,
 							format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
 			throw e;
 		} catch ( OAuth2AuthorizationException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}",
-					entity.getClass().getSimpleName(), entity.getId().ident(), uri, e.getMessage());
-			userEventAppenderBiz.addEvent(entity.getUserId(), eventForConfiguration(entity,
+					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					e.getMessage());
+			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("OAuth error: %s", e.getMessage())));
 			throw e;
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}",
-					entity.getClass().getSimpleName(), entity.getId().ident(), uri, e.toString(), e);
-			userEventAppenderBiz.addEvent(entity.getUserId(), eventForConfiguration(entity,
+					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					e.toString(), e);
+			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("Unknown error: %s", e.toString())));
 			throw e;
 		}

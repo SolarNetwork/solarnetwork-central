@@ -27,15 +27,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
@@ -97,8 +99,6 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 	 *        the user event appender service
 	 * @param restOps
 	 *        the REST operations
-	 * @param oauthClientManager
-	 *        the OAuth client manager
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -106,13 +106,44 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps) {
 		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, userEventAppenderBiz, SETTINGS,
 				WELL_KNOWN_URLS,
-				new RestOperationsHelper(LoggerFactory.getLogger(SolarEdgeCloudIntegrationService.class),
+				new SolarEdgeRestOperationsHelper(
+						LoggerFactory.getLogger(SolarEdgeCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS));
 	}
 
 	@Override
-	public Result<Void> validate(CloudIntegrationConfiguration config) {
-		// TODO
-		return null;
+	public Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale) {
+		// check that authentication settings provided
+		List<ErrorDetail> errorDetails = new ArrayList<>(2);
+
+		final String accountKey = integration.serviceProperty(ACCOUNT_KEY_SETTING, String.class);
+		if ( accountKey == null || accountKey.isEmpty() ) {
+			String errMsg = getMessageSource().getMessage("error.accountKey.missing", null, locale);
+			errorDetails.add(new ErrorDetail(ACCOUNT_KEY_SETTING, null, errMsg));
+		}
+
+		final String apiKey = integration.serviceProperty(API_KEY_SETTING, String.class);
+		if ( apiKey == null || apiKey.isEmpty() ) {
+			String errMsg = getMessageSource().getMessage("error.apiKey.missing", null, locale);
+			errorDetails.add(new ErrorDetail(API_KEY_SETTING, null, errMsg));
+		}
+
+		if ( !errorDetails.isEmpty() ) {
+			String errMsg = getMessageSource().getMessage("error.settings.missing", null, locale);
+			return Result.error("SECI.0001", errMsg, errorDetails);
+		}
+
+		// validate by requesting the available sites for the partner ID
+		try {
+			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
+					(req) -> UriComponentsBuilder.fromUri(SolarEdgeCloudIntegrationService.BASE_URI)
+							.path(SolarEdgeCloudIntegrationService.V2_SITES_LIST_URL).buildAndExpand()
+							.toUri(),
+					res -> res.getBody());
+			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
+			return Result.success();
+		} catch ( Exception e ) {
+			return Result.error("SECI.0002", "Validation failed: " + e.getMessage());
+		}
 	}
 }

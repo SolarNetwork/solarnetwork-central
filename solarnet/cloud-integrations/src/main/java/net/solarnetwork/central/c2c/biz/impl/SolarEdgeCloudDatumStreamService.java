@@ -22,16 +22,26 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -39,7 +49,6 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -77,7 +86,8 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 			CloudDatumStreamConfigurationDao datumStreamDao, RestOperations restOps) {
 		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz, integrationDao,
 				datumStreamDao, Collections.emptyList(),
-				new RestOperationsHelper(LoggerFactory.getLogger(SolarEdgeCloudDatumStreamService.class),
+				new SolarEdgeRestOperationsHelper(
+						LoggerFactory.getLogger(SolarEdgeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS));
 	}
 
@@ -100,8 +110,73 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 		final CloudIntegrationConfiguration integration = integrationDao
 				.get(new UserLongCompositePK(datumStream.getUserId(), datumStream.getIntegrationId()));
 		List<CloudDataValue> result = Collections.emptyList();
-		// TODO
+		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
+			// TODO
+		} else {
+			result = sites(integration);
+		}
 		Collections.sort(result);
+		return result;
+	}
+
+	private List<CloudDataValue> sites(CloudIntegrationConfiguration integration) {
+		return restOpsHelper.httpGet("List sites", integration, ObjectNode.class,
+				(req) -> UriComponentsBuilder.fromUri(SolarEdgeCloudIntegrationService.BASE_URI)
+						.path(SolarEdgeCloudIntegrationService.V2_SITES_LIST_URL).buildAndExpand()
+						.toUri(),
+				res -> parseSites(res.getBody()));
+	}
+
+	private static List<CloudDataValue> parseSites(ObjectNode json) {
+		assert json != null;
+		/*- EXAMPLE JSON:
+		[
+		  {
+		    "siteId": 93082,
+		    "name": "Smith, John CRM1234",
+		    "peakPower": 6.14,
+		    "installationDate": "2022-11-10",
+		    "location": {
+		      "address": "2888 Main St",
+		      "city": "Green Bay",
+		      "state": "Wisconsin",
+		      "zip": "54311",
+		      "country": "United States"
+		    },
+		    "activationStatus": "Active",
+		    "note": "Created via API, triggered from CRM"
+		  }
+		]
+		*/
+		List<CloudDataValue> result = new ArrayList<>(4);
+		for ( JsonNode siteNode : json ) {
+			final String id = siteNode.path("siteId").asText();
+			final String name = siteNode.path("name").asText().trim();
+			final var meta = new LinkedHashMap<String, Object>(4);
+			final JsonNode locNode = siteNode.path("location");
+			if ( locNode.hasNonNull("address") ) {
+				meta.put(STREET_ADDRESS_METADATA, locNode.path("address").asText().trim());
+			}
+			if ( locNode.hasNonNull("city") ) {
+				meta.put(LOCALITY_METADATA, locNode.path("city").asText().trim());
+			}
+			if ( locNode.hasNonNull("state") ) {
+				meta.put(STATE_PROVINCE_METADATA, locNode.path("state").asText().trim());
+			}
+			if ( locNode.hasNonNull("country") ) {
+				meta.put(COUNTRY_METADATA, locNode.path("country").asText().trim());
+			}
+			if ( locNode.hasNonNull("zip") ) {
+				meta.put(POSTAL_CODE_METADATA, locNode.path("zip").asText().trim());
+			}
+			if ( siteNode.hasNonNull("activationStatus") ) {
+				meta.put("activationStatus", siteNode.path("activationStatus").asText().trim());
+			}
+			if ( siteNode.hasNonNull("note") ) {
+				meta.put("note", siteNode.path("note").asText().trim());
+			}
+			result.add(dataValue(List.of(id), name, meta.isEmpty() ? null : meta));
+		}
 		return result;
 	}
 

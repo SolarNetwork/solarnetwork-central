@@ -30,6 +30,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -277,14 +278,14 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id) {
+	public Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id, Locale locale) {
 		final CloudIntegrationConfiguration conf = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(id, "id")), id);
 
 		final CloudIntegrationService service = requireNonNullObject(
 				integrationServices.get(conf.getServiceIdentifier()), conf.getServiceIdentifier());
 
-		return service.validate(conf);
+		return service.validate(conf, Locale.getDefault());
 	}
 
 	private void validateInput(final Object input) {

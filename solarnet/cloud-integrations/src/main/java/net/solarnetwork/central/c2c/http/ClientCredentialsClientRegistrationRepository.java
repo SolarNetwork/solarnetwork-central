@@ -22,8 +22,8 @@
 
 package net.solarnetwork.central.c2c.http;
 
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CLIENT_ID_SETTING;
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CLIENT_SECRET_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.systemIdentifierLongComponents;
@@ -96,8 +96,8 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 					"Configuration for registration ID %s not found.".formatted(registrationId), 1);
 		}
 
-		final String clientId = conf.serviceProperty(CLIENT_ID_SETTING, String.class);
-		final String clientSecret = conf.serviceProperty(CLIENT_SECRET_SETTING, String.class);
+		final String clientId = conf.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class);
+		final String clientSecret = conf.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class);
 
 		final String username = conf.serviceProperty(USERNAME_SETTING, String.class);
 		final String password = conf.serviceProperty(PASSWORD_SETTING, String.class);

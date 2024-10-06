@@ -1,5 +1,5 @@
 /* ==================================================================
- * OAuth2RestOperationsHelper.java - 7/10/2024 8:57:02 am
+ * SolarEdgeRestOperationsHelper.java - 7/10/2024 10:49:34 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,31 +20,30 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.http;
+package net.solarnetwork.central.c2c.biz.impl;
 
-import static net.solarnetwork.central.c2c.http.OAuth2Utils.addOAuthBearerAuthorization;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.ACCOUNT_KEY_HEADER;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.ACCOUNT_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.API_KEY_HEADER;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.API_KEY_SETTING;
 import java.net.URI;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 
 /**
- * Helper for HTTP interactions using {@link RestOperations} with
- * {@link OAuth2AuthorizedClientManager} support.
+ * Extension of {@link RestOperationsHelper} with support for SolarEdge style
+ * authentication.
  *
  * @author matt
  * @version 1.0
  */
-public class OAuth2RestOperationsHelper extends RestOperationsHelper {
-
-	/** The OAuth client manager. */
-	protected final OAuth2AuthorizedClientManager oauthClientManager;
+public class SolarEdgeRestOperationsHelper extends RestOperationsHelper {
 
 	/**
 	 * Constructor.
@@ -57,16 +56,12 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        the REST operations
 	 * @param errorEventTags
 	 *        the error event tags
-	 * @param oauthClientManager
-	 *        the OAuth client manager
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags,
-			OAuth2AuthorizedClientManager oauthClientManager) {
+	public SolarEdgeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
+			RestOperations restOps, String[] errorEventTags) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags);
-		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
 	}
 
 	@Override
@@ -74,7 +69,14 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
 		return super.httpGet(description, integration, responseType, (headers) -> {
-			addOAuthBearerAuthorization(integration, headers, oauthClientManager, userEventAppenderBiz);
+			final String accountKey = integration.serviceProperty(ACCOUNT_KEY_SETTING, String.class);
+			if ( accountKey != null ) {
+				headers.add(ACCOUNT_KEY_HEADER, accountKey);
+			}
+			final String apiKey = integration.serviceProperty(API_KEY_SETTING, String.class);
+			if ( apiKey != null ) {
+				headers.add(API_KEY_HEADER, apiKey);
+			}
 			return setup.apply(headers);
 		}, handler);
 	}

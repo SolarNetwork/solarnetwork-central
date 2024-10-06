@@ -49,6 +49,9 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	/** Standard metadata key for a street address. */
 	public static final String STREET_ADDRESS_METADATA = "street";
 
+	/** Standard metadata key for a postal code. */
+	public static final String POSTAL_CODE_METADATA = "postalCode";
+
 	/** Standard metadata key for a locality (city) name or code. */
 	public static final String LOCALITY_METADATA = "l";
 

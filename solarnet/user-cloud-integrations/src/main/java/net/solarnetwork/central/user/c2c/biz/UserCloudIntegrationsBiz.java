@@ -181,9 +181,11 @@ public interface UserCloudIntegrationsBiz {
 	 *
 	 * @param id
 	 *        the ID of the configuration to validate
+	 * @param locale
+	 *        the desired locale for any error messages
 	 * @return the validation result, never {@literal null}
 	 */
-	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id);
+	Result<Void> validateIntegrationConfigurationForId(UserLongCompositePK id, Locale locale);
 
 	/**
 	 * List data values.

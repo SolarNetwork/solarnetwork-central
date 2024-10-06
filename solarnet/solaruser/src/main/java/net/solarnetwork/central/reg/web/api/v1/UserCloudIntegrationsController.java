@@ -205,13 +205,15 @@ public class UserCloudIntegrationsController {
 	 *
 	 * @param integrationId
 	 *        the ID of the integration configuration to validate
+	 * @param locale
+	 *        the desired locale
 	 * @return the services
 	 */
 	@RequestMapping(value = "/integrations/{integrationId}/validate", method = RequestMethod.GET)
 	public Result<Void> validateIntegrationConfiguration(
-			@PathVariable("integrationId") Long integrationId) {
+			@PathVariable("integrationId") Long integrationId, Locale locale) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
-		return userCloudIntegrationsBiz.validateIntegrationConfigurationForId(id);
+		return userCloudIntegrationsBiz.validateIntegrationConfigurationForId(id, locale);
 	}
 
 	@RequestMapping(value = "/datum-streams", method = RequestMethod.GET)

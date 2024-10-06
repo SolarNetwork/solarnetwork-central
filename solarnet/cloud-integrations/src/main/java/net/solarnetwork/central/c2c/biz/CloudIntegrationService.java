@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.net.URI;
+import java.util.Locale;
 import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Identity;
@@ -46,10 +47,10 @@ public interface CloudIntegrationService
 	String TOKEN_WELL_KNOWN_URL = "tokenUrl";
 
 	/** A standard client identifier setting name, for example OAuth. */
-	String CLIENT_ID_SETTING = "oauthClientId";
+	String OAUTH_CLIENT_ID_SETTING = "oauthClientId";
 
 	/** A standard client secret setting name, for example OAuth. */
-	String CLIENT_SECRET_SETTING = "oauthClientSecret";
+	String OAUTH_CLIENT_SECRET_SETTING = "oauthClientSecret";
 
 	/** A standard username setting name. */
 	String USERNAME_SETTING = "username";
@@ -79,8 +80,12 @@ public interface CloudIntegrationService
 	 * valid, such as credentials.
 	 * </p>
 	 *
+	 * @param integration
+	 *        the integration configuration to validate
+	 * @param locale
+	 *        the locale to use for error messages
 	 * @return the validation results, never {@literal null}
 	 */
-	Result<Void> validate(CloudIntegrationConfiguration config);
+	Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale);
 
 }
