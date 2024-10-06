@@ -22,17 +22,13 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -40,11 +36,9 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
-import net.solarnetwork.central.c2c.http.OAuth2Utils;
+import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
@@ -53,9 +47,10 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * @author matt
  * @version 1.0
  */
-public class LocusEnergyCloudIntegrationService
-		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
-		implements CloudIntegrationService, CloudIntegrationsUserEvents {
+public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudIntegrationService {
+
+	/** The service identifier. */
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
 
 	/**
 	 * The URL template for sites for a given {@code \{partnerId\}} parameter.
@@ -72,9 +67,6 @@ public class LocusEnergyCloudIntegrationService
 	 * {@code \{componentId\}} parameter.
 	 */
 	public static final String V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE = "/v3/components/{componentId}/dataavailable";
-
-	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
 
 	/** The partner identifier setting name. */
 	public static final String PARTNER_ID_SETTING = "partnerId";
@@ -106,11 +98,6 @@ public class LocusEnergyCloudIntegrationService
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
-	private final Collection<CloudDatumStreamService> datumStreamServices;
-	private final UserEventAppenderBiz userEventAppenderBiz;
-	private final RestOperations restOps;
-	private final OAuth2AuthorizedClientManager oauthClientManager;
-
 	/**
 	 * Constructor.
 	 *
@@ -128,48 +115,24 @@ public class LocusEnergyCloudIntegrationService
 	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(SERVICE_IDENTIFIER);
-		this.datumStreamServices = requireNonNullArgument(datumStreamServices, "datumStreamServices");
-		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
-		this.restOps = requireNonNullArgument(restOps, "restOps");
-		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
+		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, userEventAppenderBiz, SETTINGS,
+				WELL_KNOWN_URLS,
+				new OAuth2RestOperationsHelper(
+						LoggerFactory.getLogger(LocusEnergyCloudIntegrationService.class),
+						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, oauthClientManager),
+				oauthClientManager);
 	}
 
 	@Override
-	public String getDisplayName() {
-		return "Locus Energy";
-	}
-
-	@Override
-	public List<SettingSpecifier> getSettingSpecifiers() {
-		return SETTINGS;
-	}
-
-	@Override
-	public Map<String, URI> wellKnownUrls() {
-		return WELL_KNOWN_URLS;
-	}
-
-	@Override
-	public Iterable<CloudDatumStreamService> datumStreamServices() {
-		return datumStreamServices;
-	}
-
-	@Override
-	public Result<Void> validate(CloudIntegrationConfiguration config) {
+	public Result<Void> validate(CloudIntegrationConfiguration integration) {
 		// validate by requesting the available sites for the partner ID
 		try {
-			HttpHeaders headers = new HttpHeaders();
-			OAuth2Utils.addOAuthBearerAuthorization(config, headers, oauthClientManager,
-					userEventAppenderBiz);
-
-			final URI uri = UriComponentsBuilder.fromUri(BASE_URI)
-					.path(V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
-					.buildAndExpand(config.getServiceProperties()).toUri();
-
-			HttpEntity<Void> req = new HttpEntity<>(null, headers);
-			ResponseEntity<String> res = restOps.exchange(uri, HttpMethod.GET, req, String.class);
-			log.debug("Validation of config {} succeeded: {}", config.getConfigId(), res.getBody());
+			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
+					(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+							.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
+							.buildAndExpand(integration.getServiceProperties()).toUri(),
+					res -> res.getBody());
+			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {
 			return Result.error("LECI.0001", "Validation failed: " + e.getMessage());

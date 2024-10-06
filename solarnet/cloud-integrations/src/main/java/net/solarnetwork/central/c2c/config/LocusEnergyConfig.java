@@ -48,6 +48,7 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2AccessToken
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -57,7 +58,7 @@ import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 
 /**
- * Configuration for the {@link LocusEnergyCloudDatumStreamService}.
+ * Configuration for the Locus Energy cloud integration services.
  *
  * @author matt
  * @version 1.0
@@ -132,8 +133,8 @@ public class LocusEnergyConfig {
 	@Qualifier(LOCUS_ENERGY)
 	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, restOps,
-				oauthClientManager, integrationConfigurationDao, datumStreamConfigurationDao);
+		var service = new LocusEnergyCloudDatumStreamService(userEventAppender,
+				integrationConfigurationDao, datumStreamConfigurationDao, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName());
@@ -143,7 +144,7 @@ public class LocusEnergyConfig {
 	}
 
 	@Bean
-	public LocusEnergyCloudIntegrationService locusEnergyCloudIntegrationService(
+	public CloudIntegrationService locusEnergyCloudIntegrationService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
 			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,

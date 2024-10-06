@@ -31,6 +31,34 @@ package net.solarnetwork.central.domain;
 public interface CompositeKey {
 
 	/**
+	 * Get a short identifier string.
+	 * 
+	 * <p>
+	 * This implementation returns a string like {@code (x,y,...)} where all key
+	 * components are joined with a comma delimiter and the whole key surrounded
+	 * by parentheses. Unassigned key components will be represented as an empty
+	 * string.
+	 * </p>
+	 * 
+	 * @return the identifier
+	 * @since 1.2
+	 */
+	default String ident() {
+		StringBuilder buf = new StringBuilder('(');
+		final int len = keyComponentLength();
+		for ( int i = 0; i < len; i++ ) {
+			if ( i > 0 ) {
+				buf.append(',');
+			}
+			if ( keyComponentIsAssigned(i) ) {
+				buf.append(keyComponent(i));
+			}
+		}
+		buf.append(')');
+		return buf.toString();
+	}
+
+	/**
 	 * Get the number of components in the composite key.
 	 * 
 	 * @return the number of components

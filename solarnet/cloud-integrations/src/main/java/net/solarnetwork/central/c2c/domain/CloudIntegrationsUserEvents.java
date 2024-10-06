@@ -46,6 +46,9 @@ public interface CloudIntegrationsUserEvents {
 	/** A user event tag for an authorization event. */
 	String AUTHORIZATION_TAG = "auth";
 
+	/** A user event tag for an HTTP event. */
+	String HTTP_TAG = "http";
+
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
 
@@ -54,6 +57,9 @@ public interface CloudIntegrationsUserEvents {
 
 	/** Tags for an authorization error event. */
 	String[] AUTH_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, AUTHORIZATION_TAG, ERROR_TAG };
+
+	/** Tags for an HTTP error event. */
+	String[] HTTP_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, HTTP_TAG, ERROR_TAG };
 
 	/**
 	 * Get a user log event for a configuration ID.
@@ -75,4 +81,23 @@ public interface CloudIntegrationsUserEvents {
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
 
+	/**
+	 * Get a user log event for a configuration.
+	 *
+	 * @param config
+	 *        the configuration
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the log event
+	 */
+	static LogEventInfo eventForConfiguration(CloudIntegrationsConfigurationEntity<?, ?> config,
+			String[] baseTags, String message, String... extraTags) {
+		Map<String, Object> data = new HashMap<>(4);
+		data.put(CONFIG_ID_DATA_KEY, config.getId().keyComponent(1));
+		return event(baseTags, message, getJSONString(data, null), extraTags);
+	}
 }

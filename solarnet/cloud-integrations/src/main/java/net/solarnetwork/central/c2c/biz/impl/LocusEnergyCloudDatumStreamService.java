@@ -31,24 +31,17 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
-import static net.solarnetwork.central.c2c.http.OAuth2Utils.addOAuthBearerAuthorization;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -60,13 +53,13 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.MultiValueSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 
 /**
@@ -75,17 +68,16 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * @author matt
  * @version 1.0
  */
-public class LocusEnergyCloudDatumStreamService extends
-		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements CloudDatumStreamService {
+public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
+
+	/** The service identifier. */
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.locus";
 
 	/** The data value filter key for a site ID. */
 	public static final String SITE_ID_FILTER = "siteId";
 
 	/** The data value filter key for a component ID. */
 	private static final String COMPONENT_ID_FILTER = "componentId";
-
-	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.locus";
 
 	/** The setting for granularity. */
 	public static final String GRANULARITY_SETTING = "granularity";
@@ -117,48 +109,32 @@ public class LocusEnergyCloudDatumStreamService extends
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
-	private final UserEventAppenderBiz userEventAppenderBiz;
-	private final RestOperations restOps;
-	private final OAuth2AuthorizedClientManager oauthClientManager;
-	private final CloudIntegrationConfigurationDao integrationDao;
-	private final CloudDatumStreamConfigurationDao datumStreamDao;
-
 	/**
 	 * Constructor.
 	 *
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
-	 * @param restOps
-	 *        the REST operations
-	 * @param oauthClientManager
-	 *        the OAuth client manager
 	 * @param integrationDao
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param restOps
+	 *        the REST operations
+	 * @param oauthClientManager
+	 *        the OAuth client manager
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public LocusEnergyCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, OAuth2AuthorizedClientManager oauthClientManager,
 			CloudIntegrationConfigurationDao integrationDao,
-			CloudDatumStreamConfigurationDao datumStreamDao) {
-		super(SERVICE_IDENTIFIER);
-		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
-		this.restOps = requireNonNullArgument(restOps, "restOps");
-		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
-		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
-		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
-	}
-
-	@Override
-	public String getDisplayName() {
-		return "Locus Energy Datum Stream Service";
-	}
-
-	@Override
-	public List<SettingSpecifier> getSettingSpecifiers() {
-		return SETTINGS;
+			CloudDatumStreamConfigurationDao datumStreamDao, RestOperations restOps,
+			OAuth2AuthorizedClientManager oauthClientManager) {
+		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz,
+				integrationDao, datumStreamDao, SETTINGS,
+				new OAuth2RestOperationsHelper(
+						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
+						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, oauthClientManager),
+				oauthClientManager);
 	}
 
 	@Override
@@ -207,24 +183,8 @@ public class LocusEnergyCloudDatumStreamService extends
 		return result;
 	}
 
-	private <T> T httpGet(CloudIntegrationConfiguration integration,
-			Function<HttpEntity<Void>, URI> setup, Function<ResponseEntity<ObjectNode>, T> handler) {
-		HttpHeaders headers = new HttpHeaders();
-		addOAuthBearerAuthorization(integration, headers, oauthClientManager, userEventAppenderBiz);
-		final HttpEntity<Void> req = new HttpEntity<>(null, headers);
-		final URI uri = setup.apply(req);
-		try {
-			final ResponseEntity<ObjectNode> res = restOps.exchange(uri, HttpMethod.GET, req,
-					ObjectNode.class);
-			return handler.apply(res);
-		} catch ( HttpClientErrorException e ) {
-			// TODO auth error, try refresh token
-			throw e;
-		}
-	}
-
 	private List<CloudDataValue> sitesForPartner(CloudIntegrationConfiguration integration) {
-		return httpGet(integration,
+		return restOpsHelper.httpGet("List sites", integration, ObjectNode.class,
 				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
 						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
@@ -281,7 +241,7 @@ public class LocusEnergyCloudDatumStreamService extends
 
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
-		return httpGet(integration,
+		return restOpsHelper.httpGet("List components for site", integration, ObjectNode.class,
 				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
 						.path(LocusEnergyCloudIntegrationService.V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
@@ -343,7 +303,7 @@ public class LocusEnergyCloudDatumStreamService extends
 
 	private List<CloudDataValue> nodesForComponent(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
-		return httpGet(integration,
+		return restOpsHelper.httpGet("List fields for component", integration, ObjectNode.class,
 				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
 						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
