@@ -206,11 +206,12 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		requireNonNullArgument(inputs, "inputs");
 
-		// delete all for given group ID
+		// delete all for given datum stream ID
 		final UserLongIntegerCompositePK deleteId = UserLongIntegerCompositePK
 				.unassignedEntityIdKey(datumStreamId.getUserId(), datumStreamId.getEntityId());
 		datumStreamPropertyDao.delete(datumStreamPropertyDao.entityKey(deleteId));
 
+		// then insert properties
 		final Instant now = now();
 		final var result = new ArrayList<CloudDatumStreamPropertyConfiguration>(inputs.size());
 		int idx = 0;
