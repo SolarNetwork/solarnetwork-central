@@ -88,7 +88,7 @@ public class SelectCloudDatumStreamPropertyConfiguration
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				SELECT cdsp.user_id, cdsp.ds_id, cdsp.idx, cdsp.created, cdsp.modified, cdsp.enabled
-					, cdsp.ptype, cdsp.pname, cdsp.vref, cdsp.mult, cdsp.scale
+					, cdsp.ptype, cdsp.pname, cdsp.vtype, cdsp.vref, cdsp.mult, cdsp.scale
 				FROM solarcin.cin_datum_stream_prop cdsp
 				""");
 	}

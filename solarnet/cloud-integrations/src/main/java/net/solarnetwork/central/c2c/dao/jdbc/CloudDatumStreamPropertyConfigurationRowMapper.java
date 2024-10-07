@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 
 /**
@@ -46,6 +47,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
  * <li>enabled (BOOLEAN)</li>
  * <li>ptype (TEXT)</li>
  * <li>pname (TEXT)</li>
+ * <li>vtype (TEXT)</li>
  * <li>vref (TEXT)</li>
  * <li>mult (NUMERIC)</li>
  * <li>scale (SMALLINT)</li>
@@ -92,6 +94,7 @@ public class CloudDatumStreamPropertyConfigurationRowMapper
 		conf.setEnabled(rs.getBoolean(++p));
 		conf.setPropertyType(DatumSamplesType.fromValue(rs.getString(++p)));
 		conf.setPropertyName(rs.getString(++p));
+		conf.setValueType(CloudDatumStreamValueType.fromValue(rs.getString(++p)));
 		conf.setValueReference(rs.getString(++p));
 		conf.setMultiplier(rs.getBigDecimal(++p));
 		conf.setScale(rs.getObject(++p, Integer.class));

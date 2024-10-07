@@ -25,7 +25,11 @@ package net.solarnetwork.central.user.c2c.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.time.Instant;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -41,10 +45,24 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 		implements
 		CloudIntegrationsConfigurationInput<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> {
 
+	@NotNull
 	private DatumSamplesType propertyType;
+
+	@NotNull
+	@NotBlank
+	@Size(max = 64)
 	private String propertyName;
+
+	@NotNull
+	private CloudDatumStreamValueType valueType = CloudDatumStreamValueType.Reference;
+
+	@NotNull
+	@NotBlank
+	@Size(max = 4096)
 	private String valueReference;
+
 	private BigDecimal multiplier;
+
 	private Integer scale;
 
 	/**
@@ -67,6 +85,7 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 		super.populateConfiguration(conf);
 		conf.setPropertyType(propertyType);
 		conf.setPropertyName(propertyName);
+		conf.setValueType(valueType);
 		conf.setValueReference(valueReference);
 		conf.setMultiplier(multiplier);
 		conf.setScale(scale);
@@ -108,6 +127,25 @@ public class CloudDatumStreamPropertyConfigurationInput extends
 	 */
 	public final void setPropertyName(String propertyName) {
 		this.propertyName = propertyName;
+	}
+
+	/**
+	 * Get the value type.
+	 *
+	 * @return the value type
+	 */
+	public final CloudDatumStreamValueType getValueType() {
+		return valueType;
+	}
+
+	/**
+	 * Set the value type.
+	 *
+	 * @param valueType
+	 *        the value type to set
+	 */
+	public final void setValueType(CloudDatumStreamValueType valueType) {
+		this.valueType = valueType;
 	}
 
 	/**

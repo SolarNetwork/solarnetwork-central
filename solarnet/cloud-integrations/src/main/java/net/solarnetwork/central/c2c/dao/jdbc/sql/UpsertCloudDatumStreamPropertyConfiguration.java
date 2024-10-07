@@ -46,16 +46,17 @@ public class UpsertCloudDatumStreamPropertyConfiguration
 	private static final String SQL = """
 			INSERT INTO solarcin.cin_datum_stream_prop (
 				  created,modified,user_id,ds_id,idx,enabled
-				, ptype,pname,vref,mult,scale
+				, ptype,pname,vtype,vref,mult,scale
 			)
 			VALUES (
 				  ?,?,?,?,?,?
-				, ?,?,?,?,?)
+				, ?,?,?,?,?,?)
 			ON CONFLICT (user_id, ds_id, idx) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
 					, ptype = EXCLUDED.ptype
 					, pname = EXCLUDED.pname
+					, vtype = EXCLUDED.vtype
 					, vref = EXCLUDED.vref
 					, mult = EXCLUDED.mult
 					, scale = EXCLUDED.scale
@@ -106,6 +107,7 @@ public class UpsertCloudDatumStreamPropertyConfiguration
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getPropertyType().keyValue());
 		stmt.setString(++p, entity.getPropertyName());
+		stmt.setString(++p, entity.getValueType().keyValue());
 		stmt.setString(++p, entity.getValueReference());
 		stmt.setBigDecimal(++p, entity.getMultiplier());
 		stmt.setObject(++p, entity.getScale());

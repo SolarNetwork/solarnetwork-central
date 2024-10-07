@@ -46,6 +46,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPropertyConfigu
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
@@ -125,6 +126,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDaoTests extends AbstractJ
 				0,
 				DatumSamplesType.Instantaneous,
 				randomString(),
+				CloudDatumStreamValueType.Reference,
 				randomString(),
 				new BigDecimal("1.234"),
 				2
@@ -198,6 +200,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDaoTests extends AbstractJ
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setPropertyType(DatumSamplesType.Accumulating);
 		conf.setPropertyName(randomString());
+		conf.setValueType(CloudDatumStreamValueType.SpelExpression);
 		conf.setValueReference(randomString());
 		conf.setMultiplier(new BigDecimal("4.321"));
 		conf.setScale(3);
@@ -254,6 +257,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDaoTests extends AbstractJ
 								0,
 								DatumSamplesType.Instantaneous,
 								randomString(),
+								CloudDatumStreamValueType.Reference,
 								randomString(),
 								new BigDecimal("1.234"),
 								2
@@ -304,6 +308,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDaoTests extends AbstractJ
 								0,
 								DatumSamplesType.Instantaneous,
 								randomString(),
+								CloudDatumStreamValueType.Reference,
 								randomString(),
 								new BigDecimal("1.234"),
 								2

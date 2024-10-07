@@ -43,7 +43,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id" })
+@JsonIgnoreProperties({ "id", "fullyConfigured" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "integrationId",
 		"schedule", "kind", "objectId", "sourceId", "serviceIdentifier", "serviceProperties" })
 public class CloudDatumStreamConfiguration

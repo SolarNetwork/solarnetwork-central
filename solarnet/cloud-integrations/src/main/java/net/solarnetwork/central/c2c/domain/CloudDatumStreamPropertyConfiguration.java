@@ -45,18 +45,19 @@ import net.solarnetwork.util.NumberUtils;
  * @author matt
  * @version 1.0
  */
-@JsonIgnoreProperties({ "id" })
+@JsonIgnoreProperties({ "id", "fullyConfigured" })
 @JsonPropertyOrder({ "userId", "datumStreamId", "index", "created", "modified", "enabled",
-		"propertyType", "propertyName", "valueReference", "multiplier", "scale" })
+		"propertyType", "propertyName", "valueType", "valueReference", "multiplier", "scale" })
 public class CloudDatumStreamPropertyConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>
 		implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> {
 
-	private static final long serialVersionUID = 1997920480387562443L;
+	private static final long serialVersionUID = -3814015511662489974L;
 
 	private DatumSamplesType propertyType;
 	private String propertyName;
+	private CloudDatumStreamValueType valueType;
 	private String valueReference;
 	private BigDecimal multiplier;
 	private Integer scale;
@@ -104,6 +105,7 @@ public class CloudDatumStreamPropertyConfiguration extends
 		super.copyTo(entity);
 		entity.setPropertyType(propertyType);
 		entity.setPropertyName(propertyName);
+		entity.setValueType(valueType);
 		entity.setValueReference(valueReference);
 		entity.setMultiplier(multiplier);
 		entity.setScale(scale);
@@ -118,6 +120,7 @@ public class CloudDatumStreamPropertyConfiguration extends
 		// @formatter:off
 		return Objects.equals(this.propertyType, other.propertyType)
 				&& Objects.equals(this.propertyName, other.propertyName)
+				&& Objects.equals(this.valueType, other.valueType)
 				&& Objects.equals(this.valueReference, other.valueReference)
 				&& Objects.equals(this.multiplier, other.multiplier)
 				&& Objects.equals(this.scale, other.scale)
@@ -128,7 +131,7 @@ public class CloudDatumStreamPropertyConfiguration extends
 	@Override
 	public boolean isFullyConfigured() {
 		return propertyType != null && propertyName != null && !propertyName.isEmpty()
-				&& valueReference != null && !valueReference.isEmpty();
+				&& valueType != null && valueReference != null && !valueReference.isEmpty();
 	}
 
 	/**
@@ -197,6 +200,11 @@ public class CloudDatumStreamPropertyConfiguration extends
 		if ( propertyName != null ) {
 			builder.append("propertyName=");
 			builder.append(propertyName);
+			builder.append(", ");
+		}
+		if ( valueType != null ) {
+			builder.append("valueType=");
+			builder.append(valueType);
 			builder.append(", ");
 		}
 		if ( valueReference != null ) {
@@ -276,6 +284,25 @@ public class CloudDatumStreamPropertyConfiguration extends
 	 */
 	public final void setPropertyName(String propertyName) {
 		this.propertyName = propertyName;
+	}
+
+	/**
+	 * Get the value type.
+	 *
+	 * @return the value type
+	 */
+	public final CloudDatumStreamValueType getValueType() {
+		return valueType;
+	}
+
+	/**
+	 * Set the value type.
+	 *
+	 * @param valueType
+	 *        the value type to set
+	 */
+	public final void setValueType(CloudDatumStreamValueType valueType) {
+		this.valueType = valueType;
 	}
 
 	/**

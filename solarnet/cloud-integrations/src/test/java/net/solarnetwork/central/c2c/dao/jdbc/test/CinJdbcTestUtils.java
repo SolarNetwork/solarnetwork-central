@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -164,6 +165,8 @@ public class CinJdbcTestUtils {
 	 *        the property type
 	 * @param propertyName
 	 *        the property name
+	 * @param valueType
+	 *        the value type
 	 * @param valueReference
 	 *        the source value reference
 	 * @param multiplier
@@ -174,12 +177,14 @@ public class CinJdbcTestUtils {
 	 */
 	public static CloudDatumStreamPropertyConfiguration newCloudDatumStreamPropertyConfiguration(
 			Long userId, Long datumStreamId, Integer index, DatumSamplesType propertyType,
-			String propertyName, String valueReference, BigDecimal multiplier, Integer scale) {
+			String propertyName, CloudDatumStreamValueType valueType, String valueReference,
+			BigDecimal multiplier, Integer scale) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
 				datumStreamId, index, Instant.now());
 		conf.setModified(conf.getCreated());
 		conf.setPropertyType(propertyType);
 		conf.setPropertyName(propertyName);
+		conf.setValueType(valueType);
 		conf.setValueReference(valueReference);
 		conf.setMultiplier(multiplier);
 		conf.setScale(scale);

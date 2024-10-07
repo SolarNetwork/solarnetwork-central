@@ -31,6 +31,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.DateUtils;
@@ -52,6 +53,7 @@ public class CloudDatumStreamPropertyConfigurationTests {
 		entity.setEnabled(true);
 		entity.setPropertyType(DatumSamplesType.Accumulating);
 		entity.setPropertyName(randomString());
+		entity.setValueType(CloudDatumStreamValueType.Reference);
 		entity.setValueReference(randomString());
 		entity.setMultiplier(new BigDecimal("1.23"));
 		entity.setScale(6);
@@ -73,6 +75,7 @@ public class CloudDatumStreamPropertyConfigurationTests {
 					"enabled":true,
 					"propertyType":"a",
 					"propertyName":"%s",
+					"valueType":"r",
 					"valueReference":"%s",
 					"multiplier":1.23,
 					"scale":6

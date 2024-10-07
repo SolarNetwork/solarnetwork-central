@@ -77,7 +77,8 @@ CREATE TABLE solarcin.cin_datum_stream (
  * @column enabled		a flag to mark the configuration as enabled for use by application or not
  * @column ptype 		the datum samples type (key)
  * @column pname 		the datum stream property name to populate
- * @column vref 		the cloud data source value reference
+ * @column vtype		the value type (reference or expression)
+ * @column vref 		the cloud data source value reference, or expression
  * @column mult 		an optional multiplication factor to apply to values
  * @column scale 		an optional maximum number of decimal places to round values to
  */
@@ -90,7 +91,8 @@ CREATE TABLE solarcin.cin_datum_stream_prop (
 	enabled			BOOLEAN NOT NULL DEFAULT FALSE,
 	ptype			CHARACTER(1) NOT NULL,
 	pname			CHARACTER VARYING(64) NOT NULL,
-	vref			CHARACTER VARYING(256) NOT NULL,
+	vtype			CHARACTER(1) NOT NULL,
+	vref			CHARACTER VARYING(4096) NOT NULL,
 	mult			NUMERIC,
 	scale			SMALLINT,
 	CONSTRAINT cin_datum_stream_prop_pk PRIMARY KEY (user_id, ds_id, idx),
