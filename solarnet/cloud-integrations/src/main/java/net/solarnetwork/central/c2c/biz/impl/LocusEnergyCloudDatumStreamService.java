@@ -28,6 +28,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADAT
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.MANUFACTURER_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
@@ -261,6 +262,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 			if ( siteNode.hasNonNull("locale1") ) {
 				meta.put(STATE_PROVINCE_METADATA, siteNode.path("locale1").asText().trim());
+			}
+			if ( siteNode.hasNonNull("postalCode") ) {
+				meta.put(POSTAL_CODE_METADATA, siteNode.path("postalCode").asText().trim());
 			}
 			if ( siteNode.hasNonNull("countryCode") ) {
 				meta.put(COUNTRY_METADATA, siteNode.path("countryCode").asText().trim());
