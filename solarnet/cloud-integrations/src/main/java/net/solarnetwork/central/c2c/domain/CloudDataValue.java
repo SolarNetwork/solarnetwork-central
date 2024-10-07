@@ -125,6 +125,23 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	}
 
 	/**
+	 * Create a new data value instance without any {@code reference} value.
+	 *
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @param metadata
+	 *        the metadata
+	 * @throws IllegalArgumentException
+	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 */
+	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
+			Map<String, ?> metadata) {
+		return new CloudDataValue(identifiers, name, null, metadata);
+	}
+
+	/**
 	 * Create a new data value instance.
 	 *
 	 * <p>
@@ -229,7 +246,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 		super();
 		this.identifiers = requireNonNullArgument(identifiers, "identifiers");
 		this.name = requireNonNullArgument(name, "name");
-		this.reference = requireNonNullArgument(reference, "reference");
+		this.reference = reference;
 		this.metadata = metadata;
 		this.children = children;
 	}
@@ -274,7 +291,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	/**
 	 * Get the reference.
 	 *
-	 * @return the reference
+	 * @return the reference, or {@literal null}
 	 */
 	public final String getReference() {
 		return reference;
@@ -283,7 +300,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	/**
 	 * Get the component metadata.
 	 *
-	 * @return the metadata
+	 * @return the metadata, or {@literal null}
 	 */
 	public final Map<String, ?> getMetadata() {
 		return metadata;

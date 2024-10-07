@@ -34,6 +34,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
@@ -272,7 +273,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			if ( siteNode.hasNonNull("locationTimezone") ) {
 				meta.put(TIME_ZONE_METADATA, siteNode.path("locationTimezone").asText().trim());
 			}
-			result.add(dataValue(List.of(id), name, meta.isEmpty() ? null : meta));
+			result.add(intermediateDataValue(List.of(id), name, meta.isEmpty() ? null : meta));
 		}
 		return result;
 	}
@@ -334,7 +335,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			if ( compNode.hasNonNull("generationType") ) {
 				meta.put("generationType", compNode.path("generationType").asText().trim());
 			}
-			result.add(dataValue(List.of(siteId, id), name, meta.isEmpty() ? null : meta));
+			result.add(intermediateDataValue(List.of(siteId, id), name, meta.isEmpty() ? null : meta));
 		}
 		return result;
 	}
