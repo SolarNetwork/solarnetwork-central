@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarNetCloudIntegrationsConfiguration.java - 30/09/2024 11:48:02 am
+ * CloudIntegrationsExpressionService.java - 8/10/2024 7:59:23 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,20 +20,36 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.config;
+package net.solarnetwork.central.c2c.biz;
+
+import java.util.Map;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 
 /**
- * Marker interface for the cloud integrations configuration package.
+ * API for a service that can evaluate expressions.
  *
  * @author matt
  * @version 1.0
  */
-public interface SolarNetCloudIntegrationsConfiguration {
+public interface CloudIntegrationsExpressionService {
 
-	/** A qualifier for cloud integrations support. */
-	String CLOUD_INTEGRATIONS = "c2c";
-
-	/** A qualifier for cloud integrations expression support. */
-	String CLOUD_INTEGRATIONS_EXPRESSIONS = "c2c-expr";
+	/**
+	 * Evaluate a property expression.
+	 *
+	 * @param <T>
+	 *        the result type
+	 * @param property
+	 *        the property to evaluate
+	 * @param root
+	 *        the root object, for example a
+	 *        {@link net.solarnetwork.domain.datum.DatumSamplesExpressionRoot}
+	 * @param variables
+	 *        optional expression variables
+	 * @param resultClass
+	 *        the result type
+	 * @return the result
+	 */
+	<T> T evaluateDatumPropertyExpression(CloudDatumStreamPropertyConfiguration property, Object root,
+			Map<String, Object> variables, Class<T> resultClass);
 
 }

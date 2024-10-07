@@ -22,13 +22,22 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.NumberUtils.narrow;
+import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
+import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 
 /**
@@ -49,6 +58,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/** The datum stream property configuration DAO. */
 	protected final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
+	/** The expression service. */
+	protected final CloudIntegrationsExpressionService expressionService;
+
 	/**
 	 * Constructor.
 	 *
@@ -58,6 +70,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the display name
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param expressionService
+	 *        the expression service
 	 * @param integrationDao
 	 *        the integration DAO
 	 * @param datumStreamDao
@@ -70,15 +84,60 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *         if any argument is {@literal null}
 	 */
 	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName,
-			UserEventAppenderBiz userEventAppenderBiz, CloudIntegrationConfigurationDao integrationDao,
+			UserEventAppenderBiz userEventAppenderBiz,
+			CloudIntegrationsExpressionService expressionService,
+			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, settings);
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
+		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
+	}
+
+	/**
+	 * Evaluate a set of property expressions.
+	 *
+	 * @param configurations
+	 *        the property configurations
+	 * @param datum
+	 * @param parameters
+	 */
+	public void evaulateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
+			MutableDatum datum, Map<String, ?> parameters) {
+		if ( configurations == null || configurations.isEmpty() || datum == null ) {
+			return;
+		}
+		DatumSamplesExpressionRoot root = new DatumSamplesExpressionRoot(datum,
+				datum.asSampleOperations(), parameters);
+		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
+			if ( !config.getValueType().isExpression() ) {
+				continue;
+			}
+			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamId",
+					config.getDatumStreamId());
+			Object val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
+					Object.class);
+			if ( val != null ) {
+				Object propVal = switch (config.getPropertyType()) {
+					case Accumulating, Instantaneous -> {
+						// convert to number
+						if ( val instanceof Number ) {
+							yield val;
+						} else {
+							yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+						}
+					}
+					case Status, Tag -> val.toString();
+				};
+				propVal = config.applyValueTransforms(propVal);
+				datum.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
+						config.getPropertyName(), propVal);
+			}
+		}
 	}
 
 }

@@ -44,6 +44,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
@@ -75,6 +76,8 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 *
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param expressionService
+	 *        the expression service
 	 * @param integrationDao
 	 *        the integration DAO
 	 * @param datumStreamDao
@@ -87,11 +90,13 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 *         if any argument is {@literal null}
 	 */
 	public SolarEdgeCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
+			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz, integrationDao,
-				datumStreamDao, datumStreamPropertyDao, Collections.emptyList(),
+		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz,
+				expressionService, integrationDao, datumStreamDao, datumStreamPropertyDao,
+				Collections.emptyList(),
 				new SolarEdgeRestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS));

@@ -38,6 +38,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.security:spring-security-core'
 	implementation 'org.springframework.security:spring-security-oauth2-jose'
+	implementation 'org.springframework:spring-expression'
 	
 	// DAO
 	runtimeOnly "org.postgresql:postgresql"
@@ -53,9 +54,11 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
+	implementation 'commons-codec:commons-codec'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
+	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'org.hibernate.validator:hibernate-validator'
 	implementation 'org.slf4j:slf4j-api'

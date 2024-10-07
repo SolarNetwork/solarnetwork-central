@@ -67,6 +67,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
@@ -141,6 +142,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param expressionService
+	 *        the expression service
 	 * @param integrationDao
 	 *        the integration DAO
 	 * @param datumStreamDao
@@ -155,12 +158,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *         if any argument is {@literal null}
 	 */
 	public LocusEnergyCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
+			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
 		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz,
-				integrationDao, datumStreamDao, datumStreamPropertyDao, SETTINGS,
+				expressionService, integrationDao, datumStreamDao, datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, oauthClientManager),
@@ -444,11 +448,22 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(integrationId), "integration");
 
-		final List<CloudDatumStreamPropertyConfiguration> properties = datumStreamPropertyDao
-				.findAll(datumStream.getUserId(), datumStream.getConfigId(), null).stream().filter(c -> {
-					return c.isEnabled() && c.isFullyConfigured();
-				}).toList();
-		if ( properties.isEmpty() ) {
+		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
+				datumStream.getConfigId(), null);
+		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
+				allProperties.size());
+		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
+		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
+			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
+				continue;
+			}
+			if ( conf.getValueType().isExpression() ) {
+				exprProps.add(conf);
+			} else {
+				valueProps.add(conf);
+			}
+		}
+		if ( valueProps.isEmpty() ) {
 			String errMsg = ms.getMessage("error.datumStream.noProperties", null, locale);
 			return Result.error("LECDS.0001", errMsg);
 		}
@@ -456,7 +471,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		// group requests by component, field names
 		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
 		final var fieldNamesByProperty = new LinkedHashMap<UserLongIntegerCompositePK, String>(8);
-		for ( CloudDatumStreamPropertyConfiguration config : properties ) {
+		for ( CloudDatumStreamPropertyConfiguration config : valueProps ) {
 			Matcher m = VALUE_REF_PATTERN.matcher(config.getValueReference());
 			if ( !m.matches() ) {
 				continue;
@@ -524,7 +539,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 
 		DatumSamples samples = new DatumSamples();
-		for ( CloudDatumStreamPropertyConfiguration property : properties ) {
+		for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
 			String fieldName = fieldNamesByProperty.get(property.getId());
 			JsonNode val = datumValues.get(fieldName);
 			if ( val != null ) {
@@ -555,7 +570,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 		}
 
-		return Result.success(new GeneralDatum(datumStream.datumId(ts), samples));
+		final var datum = new GeneralDatum(datumStream.datumId(ts), samples);
+		evaulateExpressions(exprProps, datum, Map.of("integrationId", datumStream.getIntegrationId()));
+		return Result.success(datum);
 	}
 
 }

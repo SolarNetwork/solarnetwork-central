@@ -79,6 +79,7 @@ subprojects {
 		myBatisStarterVersion = '3.0.3'
 		saxonVersion = '12.4'
 		snCommonVersion = '3.21.1'
+		snCommonExprSpelVersion = '3.1.0'
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '4.0.1'
 		snCommonOcppVersion = '4.3.0'

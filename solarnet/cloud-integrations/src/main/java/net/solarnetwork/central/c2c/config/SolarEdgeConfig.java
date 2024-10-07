@@ -34,6 +34,7 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -68,10 +69,13 @@ public class SolarEdgeConfig {
 	@Autowired
 	private RestOperations restOps;
 
+	@Autowired
+	private CloudIntegrationsExpressionService expressionService;
+
 	@Bean
 	@Qualifier(SOLAREDGE)
 	public CloudDatumStreamService solarEdgeCloudDatumStreamService() {
-		var service = new SolarEdgeCloudDatumStreamService(userEventAppender,
+		var service = new SolarEdgeCloudDatumStreamService(userEventAppender, expressionService,
 				integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamPropertyConfigurationDao, restOps);
 

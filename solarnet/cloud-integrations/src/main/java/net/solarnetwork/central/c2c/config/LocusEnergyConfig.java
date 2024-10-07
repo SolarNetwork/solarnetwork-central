@@ -49,6 +49,7 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -91,6 +92,9 @@ public class LocusEnergyConfig {
 
 	@Autowired
 	private RestOperations restOps;
+
+	@Autowired
+	private CloudIntegrationsExpressionService expressionService;
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
@@ -137,7 +141,7 @@ public class LocusEnergyConfig {
 	@Qualifier(LOCUS_ENERGY)
 	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new LocusEnergyCloudDatumStreamService(userEventAppender,
+		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, expressionService,
 				integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamPropertyConfigurationDao, restOps, oauthClientManager);
 

@@ -34,17 +34,28 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CloudDatumStreamValueType {
 
 	/** A value reference to a cloud data source. */
-	Reference('r'),
+	Reference('r', false),
 
 	/** A SPEL expression. */
-	SpelExpression('s'),
+	SpelExpression('s', true),
 
 	;
 
 	private final String key;
+	private final boolean expression;
 
-	private CloudDatumStreamValueType(char key) {
+	private CloudDatumStreamValueType(char key, boolean expression) {
 		this.key = String.valueOf(key);
+		this.expression = expression;
+	}
+
+	/**
+	 * Test if this enum represents an expression value type.
+	 *
+	 * @return {@literal true} if this is an expression value type
+	 */
+	public final boolean isExpression() {
+		return expression;
 	}
 
 	/**
