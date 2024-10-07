@@ -96,6 +96,11 @@ public class CloudIntegrationConfiguration
 	}
 
 	@Override
+	public boolean isFullyConfigured() {
+		return true; // can't really tell with this one
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("CloudIntegration{");

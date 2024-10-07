@@ -39,6 +39,7 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigur
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.Datum;
 
 /**
  * Service API for SolarUser cloud integrations support.
@@ -201,5 +202,17 @@ public interface UserCloudIntegrationsBiz {
 	 *
 	 */
 	Iterable<CloudDataValue> datumStreamDataValuesForId(UserLongCompositePK id, Map<String, ?> filters);
+
+	/**
+	 * Get the latest available data from a datum stream.
+	 *
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
+	 *        datum for
+	 * @param locale
+	 *        the desired locale for any error messages
+	 * @return the result, never {@literal null}
+	 */
+	Result<Datum> latestDatumStreamDatumForId(UserLongCompositePK id, Locale locale);
 
 }

@@ -27,6 +27,7 @@ import java.util.List;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -57,6 +58,8 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamPropertyDao
+	 *        the datum stream property DAO
 	 * @param settings
 	 *        the service settings
 	 * @param restOpsHelper
@@ -66,10 +69,11 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 */
 	public BaseRestOperationsCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, CloudIntegrationConfigurationDao integrationDao,
-			CloudDatumStreamConfigurationDao datumStreamDao, List<SettingSpecifier> settings,
-			RestOperationsHelper restOpsHelper) {
+			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
+			List<SettingSpecifier> settings, RestOperationsHelper restOpsHelper) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, integrationDao, datumStreamDao,
-				settings);
+				datumStreamPropertyDao, settings);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}
 

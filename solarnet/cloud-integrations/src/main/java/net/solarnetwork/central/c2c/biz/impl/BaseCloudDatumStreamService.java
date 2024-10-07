@@ -27,6 +27,7 @@ import java.util.List;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.settings.SettingSpecifier;
 
@@ -45,6 +46,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/** The datum stream configuration DAO. */
 	protected final CloudDatumStreamConfigurationDao datumStreamDao;
 
+	/** The datum stream property configuration DAO. */
+	protected final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
+
 	/**
 	 * Constructor.
 	 *
@@ -58,6 +62,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamPropertyDao
+	 *        the datum stream property DAO
 	 * @param settings
 	 *        the service settings
 	 * @throws IllegalArgumentException
@@ -65,10 +71,14 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName,
 			UserEventAppenderBiz userEventAppenderBiz, CloudIntegrationConfigurationDao integrationDao,
-			CloudDatumStreamConfigurationDao datumStreamDao, List<SettingSpecifier> settings) {
+			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
+			List<SettingSpecifier> settings) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, settings);
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
+				"datumStreamPropertyDao");
 	}
 
 }

@@ -37,6 +37,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 
 /**
@@ -62,13 +63,17 @@ public class SolarEdgeConfig {
 	private CloudDatumStreamConfigurationDao datumStreamConfigurationDao;
 
 	@Autowired
+	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyConfigurationDao;
+
+	@Autowired
 	private RestOperations restOps;
 
 	@Bean
 	@Qualifier(SOLAREDGE)
 	public CloudDatumStreamService solarEdgeCloudDatumStreamService() {
 		var service = new SolarEdgeCloudDatumStreamService(userEventAppender,
-				integrationConfigurationDao, datumStreamConfigurationDao, restOps);
+				integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamPropertyConfigurationDao, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SolarEdgeCloudDatumStreamService.class.getName());

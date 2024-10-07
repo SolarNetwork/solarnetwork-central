@@ -37,5 +37,18 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  */
 public interface CloudIntegrationsConfigurationEntity<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		extends UserRelatedStdEntity<C, K> {
-	// empty
+
+	/**
+	 * Test if this configuration is "fully" configured.
+	 *
+	 * <p>
+	 * This can be used to filter out configurations that are only partially
+	 * configured, and thus should not be used.
+	 * </p>
+	 *
+	 * @return {@literal true} if this configuration contains all required
+	 *         settings to function as intended
+	 */
+	boolean isFullyConfigured();
+
 }

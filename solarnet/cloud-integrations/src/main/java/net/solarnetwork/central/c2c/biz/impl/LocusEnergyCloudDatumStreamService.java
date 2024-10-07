@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_MODEL_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
@@ -32,13 +34,30 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METAD
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.NumberUtils.narrow;
+import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -49,14 +68,22 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.MultiValueSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -118,6 +145,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamPropertyDao
+	 *        the datum stream property DAO
 	 * @param restOps
 	 *        the REST operations
 	 * @param oauthClientManager
@@ -127,10 +156,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 */
 	public LocusEnergyCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			CloudIntegrationConfigurationDao integrationDao,
-			CloudDatumStreamConfigurationDao datumStreamDao, RestOperations restOps,
+			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
 		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz,
-				integrationDao, datumStreamDao, SETTINGS,
+				integrationDao, datumStreamDao, datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, oauthClientManager),
@@ -185,7 +215,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 
 	private List<CloudDataValue> sitesForPartner(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List sites", integration, ObjectNode.class,
-				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+				(req) -> UriComponentsBuilder.fromUri(BASE_URI)
 						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSites(res.getBody()));
@@ -242,7 +272,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List components for site", integration, ObjectNode.class,
-				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+				(req) -> UriComponentsBuilder.fromUri(BASE_URI)
 						.path(LocusEnergyCloudIntegrationService.V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseComponents(res.getBody()));
@@ -304,7 +334,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	private List<CloudDataValue> nodesForComponent(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List fields for component", integration, ObjectNode.class,
-				(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
+				(req) -> UriComponentsBuilder.fromUri(BASE_URI)
 						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseNodes(res.getBody(), filters));
@@ -385,6 +415,147 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 					children.isEmpty() ? null : children));
 		}
 		return result;
+	}
+
+	/**
+	 * Value reference pattern, with component matching groups.
+	 *
+	 * <p>
+	 * The matching groups are
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>siteId</li>
+	 * <li>componentId</li>
+	 * <li>baseField</li>
+	 * <li>field</li>
+	 * </ol>
+	 */
+	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(\\d+)/(\\d+)/([^/]+)/(.+)");
+
+	@Override
+	public Result<Datum> latestDatum(CloudDatumStreamConfiguration datumStream, Locale locale) {
+		requireNonNullArgument(datumStream, "datumStream");
+		requireNonNullArgument(locale, "locale");
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+
+		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
+				datumStream.getIntegrationId());
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(integrationId), "integration");
+
+		final List<CloudDatumStreamPropertyConfiguration> properties = datumStreamPropertyDao
+				.findAll(datumStream.getUserId(), datumStream.getConfigId(), null).stream().filter(c -> {
+					return c.isEnabled() && c.isFullyConfigured();
+				}).toList();
+		if ( properties.isEmpty() ) {
+			String errMsg = ms.getMessage("error.datumStream.noProperties", null, locale);
+			return Result.error("LECDS.0001", errMsg);
+		}
+
+		// group requests by component, field names
+		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
+		final var fieldNamesByProperty = new LinkedHashMap<UserLongIntegerCompositePK, String>(8);
+		for ( CloudDatumStreamPropertyConfiguration config : properties ) {
+			Matcher m = VALUE_REF_PATTERN.matcher(config.getValueReference());
+			if ( !m.matches() ) {
+				continue;
+			}
+			fieldNamesByComponent.computeIfAbsent(m.group(2), k -> new LinkedHashSet<String>(8))
+					.add(m.group(4));
+			fieldNamesByProperty.put(config.getId(), m.group(4));
+		}
+
+		// make parallel requests for all data, using the oldest reported timestamp if more than one
+		final AtomicReference<Instant> tsRef = new AtomicReference<>();
+		final ConcurrentMap<String, JsonNode> datumValues = new ConcurrentHashMap<>(8, 0.9f, 2);
+		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			List<Future<?>> futures = new ArrayList<>(fieldNamesByComponent.size());
+			for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
+				Set<String> fieldNames = reqEntry.getValue();
+				futures.add(executor.submit(() -> {
+					ObjectNode json = restOpsHelper.httpGet("Fetch data", integration, ObjectNode.class,
+							(headers) -> {
+							// @formatter:off
+								return UriComponentsBuilder.fromUri(BASE_URI)
+										.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
+										.queryParam("gran", "latest")
+										.queryParam("tz", "Z")
+										.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
+										.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
+										.toUri();
+								// @formatter:on
+							}, (res) -> res.getBody());
+					for ( JsonNode dataNode : json.path("data") ) {
+						if ( dataNode instanceof ObjectNode o ) {
+							for ( Iterator<Entry<String, JsonNode>> itr = o.fields(); itr.hasNext(); ) {
+								Entry<String, JsonNode> e = itr.next();
+								if ( "ts".equals(e.getKey()) ) {
+									// return the oldest of any timestamp
+									try {
+										Instant dataTs = Instant.parse(e.getValue().asText());
+										tsRef.getAndUpdate(v -> {
+											return v == null || dataTs.isBefore(v) ? dataTs : v;
+										});
+									} catch ( DateTimeParseException dtpe ) {
+										// ignore and continue
+									}
+								} else if ( fieldNames.contains(e.getKey()) ) {
+									datumValues.put(e.getKey(), e.getValue());
+								}
+							}
+						}
+					}
+				}));
+			}
+			for ( Future<?> f : futures ) {
+				f.get(); // throw ExecutionException
+			}
+		} catch ( Exception e ) {
+			Throwable t = e.getCause();
+			String errMsg = ms.getMessage("error.dataRequest", new Object[] { t.getMessage() }, locale);
+			return Result.error("LECDS.0002", errMsg);
+		}
+
+		final Instant ts = tsRef.get();
+		if ( ts == null ) {
+			String errMsg = ms.getMessage("error.missingTimestamp", null, locale);
+			return Result.error("LECDS.0003", errMsg);
+		}
+
+		DatumSamples samples = new DatumSamples();
+		for ( CloudDatumStreamPropertyConfiguration property : properties ) {
+			String fieldName = fieldNamesByProperty.get(property.getId());
+			JsonNode val = datumValues.get(fieldName);
+			if ( val != null ) {
+				DatumSamplesType propType = property.getPropertyType();
+				Object propVal = switch (propType) {
+					case Accumulating, Instantaneous -> {
+						// convert to number
+						if ( val.isBigDecimal() ) {
+							yield val.decimalValue();
+						} else if ( val.isFloat() ) {
+							yield val.floatValue();
+						} else if ( val.isDouble() ) {
+							yield val.doubleValue();
+						} else if ( val.isBigInteger() ) {
+							yield val.bigIntegerValue();
+						} else if ( val.isLong() ) {
+							yield val.longValue();
+						} else if ( val.isFloat() ) {
+							yield val.floatValue();
+						} else {
+							yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+						}
+					}
+					case Status, Tag -> val.asText();
+				};
+				propVal = property.applyValueTransforms(propVal);
+				samples.putSampleValue(propType, property.getPropertyName(), propVal);
+			}
+		}
+
+		return Result.success(new GeneralDatum(datumStream.datumId(ts), samples));
 	}
 
 }

@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
@@ -52,6 +53,8 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.Datum;
 
 /**
  * SolarEdge implementation of {@link CloudDatumStreamService}.
@@ -76,6 +79,8 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamPropertyDao
+	 *        the datum stream property DAO
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
@@ -83,9 +88,10 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 */
 	public SolarEdgeCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			CloudIntegrationConfigurationDao integrationDao,
-			CloudDatumStreamConfigurationDao datumStreamDao, RestOperations restOps) {
+			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps) {
 		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz, integrationDao,
-				datumStreamDao, Collections.emptyList(),
+				datumStreamDao, datumStreamPropertyDao, Collections.emptyList(),
 				new SolarEdgeRestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS));
@@ -178,6 +184,14 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 			result.add(dataValue(List.of(id), name, meta.isEmpty() ? null : meta));
 		}
 		return result;
+	}
+
+	@Override
+	public Result<Datum> latestDatum(CloudDatumStreamConfiguration datumStream, Locale locale) {
+		requireNonNullArgument(datumStream, "datumStream");
+		requireNonNullArgument(locale, "locale");
+		// TODO
+		return null;
 	}
 
 }

@@ -62,6 +62,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.Datum;
 
 /**
  * Web service API for cloud integrations management.
@@ -290,6 +291,22 @@ public class UserCloudIntegrationsController {
 		var result = userCloudIntegrationsBiz.datumStreamDataValuesForId(
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter);
 		return success(result);
+	}
+
+	/**
+	 * List the data values for a datum stream service and an optional filter.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param locale
+	 *        the desired locale for any error messages
+	 * @return the result
+	 */
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/latest-datum", method = RequestMethod.GET)
+	public Result<Datum> cloudDatumStreamLatestDatum(@PathVariable("datumStreamId") Long datumStreamId,
+			Locale locale) {
+		return userCloudIntegrationsBiz.latestDatumStreamDatumForId(
+				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), locale);
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties", method = RequestMethod.GET)

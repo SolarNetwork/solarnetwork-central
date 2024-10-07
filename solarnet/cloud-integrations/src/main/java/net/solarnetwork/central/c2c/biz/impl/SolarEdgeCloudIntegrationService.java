@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -114,22 +116,23 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 	@Override
 	public Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale) {
 		// check that authentication settings provided
-		List<ErrorDetail> errorDetails = new ArrayList<>(2);
+		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 
 		final String accountKey = integration.serviceProperty(ACCOUNT_KEY_SETTING, String.class);
 		if ( accountKey == null || accountKey.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.accountKey.missing", null, locale);
+			String errMsg = ms.getMessage("error.accountKey.missing", null, locale);
 			errorDetails.add(new ErrorDetail(ACCOUNT_KEY_SETTING, null, errMsg));
 		}
 
 		final String apiKey = integration.serviceProperty(API_KEY_SETTING, String.class);
 		if ( apiKey == null || apiKey.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.apiKey.missing", null, locale);
+			String errMsg = ms.getMessage("error.apiKey.missing", null, locale);
 			errorDetails.add(new ErrorDetail(API_KEY_SETTING, null, errMsg));
 		}
 
 		if ( !errorDetails.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.settings.missing", null, locale);
+			String errMsg = ms.getMessage("error.settings.missing", null, locale);
 			return Result.error("SECI.0001", errMsg, errorDetails);
 		}
 

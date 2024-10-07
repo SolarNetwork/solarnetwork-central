@@ -23,6 +23,8 @@
 package net.solarnetwork.central.c2c.domain;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -30,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.util.NumberUtils;
 
 /**
  * A cloud datum stream property configuration entity.
@@ -120,6 +123,56 @@ public class CloudDatumStreamPropertyConfiguration extends
 				&& Objects.equals(this.scale, other.scale)
 				;
 		// @formatter:on
+	}
+
+	@Override
+	public boolean isFullyConfigured() {
+		return propertyType != null && propertyName != null && !propertyName.isEmpty()
+				&& valueReference != null && !valueReference.isEmpty();
+	}
+
+	/**
+	 * Apply the configured unit multiplier and decimal scale, if appropriate.
+	 *
+	 * @param propVal
+	 *        the property value to transform; only {@link Number} values will
+	 *        be transformed
+	 * @return the transformed property value to use
+	 */
+	public Object applyValueTransforms(Object propVal) {
+		if ( propVal instanceof Number n ) {
+			if ( multiplier != null ) {
+				propVal = applyUnitMultiplier(n, multiplier);
+			}
+			if ( scale != null ) {
+				propVal = applyDecimalScale(n, scale);
+			}
+		}
+		return propVal;
+	}
+
+	private static Number applyDecimalScale(Number value, int decimalScale) {
+		if ( decimalScale < 0 ) {
+			return value;
+		}
+		if ( value instanceof Byte || value instanceof Short || value instanceof Integer
+				|| value instanceof Long || value instanceof BigInteger ) {
+			// no decimal here
+			return value;
+		}
+		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
+		if ( v.scale() > decimalScale ) {
+			v = v.setScale(decimalScale, RoundingMode.HALF_UP);
+		}
+		return v;
+	}
+
+	private static Number applyUnitMultiplier(Number value, BigDecimal multiplier) {
+		if ( BigDecimal.ONE.compareTo(multiplier) == 0 ) {
+			return value;
+		}
+		BigDecimal v = NumberUtils.bigDecimalForNumber(value);
+		return v.multiply(multiplier);
 	}
 
 	@Override

@@ -65,6 +65,7 @@ import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
@@ -286,6 +287,15 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				integrationServices.get(conf.getServiceIdentifier()), conf.getServiceIdentifier());
 
 		return service.validate(conf, Locale.getDefault());
+	}
+
+	@Override
+	public Result<Datum> latestDatumStreamDatumForId(UserLongCompositePK id, Locale locale) {
+		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
+				"datumStream");
+		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
+				"datumStreamService");
+		return service.latestDatum(datumStream, locale);
 	}
 
 	private void validateInput(final Object input) {

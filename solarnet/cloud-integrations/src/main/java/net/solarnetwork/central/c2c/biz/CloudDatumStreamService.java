@@ -29,6 +29,8 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 
@@ -70,5 +72,21 @@ public interface CloudDatumStreamService
 	 *
 	 */
 	Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters);
+
+	/**
+	 * Get the latest available datum for a datum stream configuration.
+	 *
+	 * <p>
+	 * This method can be used to verify a datum stream's configuration is
+	 * valid, such as credentials and the mapping onto datum.
+	 * </p>
+	 *
+	 * @param datumStream
+	 *        the datum stream configuration to get the latest datum for
+	 * @param locale
+	 *        the locale to use for error messages
+	 * @return the result, never {@literal null}
+	 */
+	Result<Datum> latestDatum(CloudDatumStreamConfiguration datumStream, Locale locale);
 
 }

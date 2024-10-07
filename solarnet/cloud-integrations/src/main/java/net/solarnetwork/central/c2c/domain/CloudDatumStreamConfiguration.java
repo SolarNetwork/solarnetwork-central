@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
@@ -120,6 +121,28 @@ public class CloudDatumStreamConfiguration
 				&& Objects.equals(this.sourceId, other.sourceId)
 				;
 		// @formatter:on
+	}
+
+	@Override
+	public boolean isFullyConfigured() {
+		return integrationId != null && kind != null && objectId != null && sourceId != null
+				&& !sourceId.isEmpty();
+	}
+
+	/**
+	 * Create a datum ID with a given timestamp.
+	 *
+	 * <p>
+	 * The kind, object ID, and source ID values of this configuration will be
+	 * used.
+	 * </p>
+	 *
+	 * @param ts
+	 *        the desired timestamp of the ID
+	 * @return the ID
+	 */
+	public DatumId datumId(Instant ts) {
+		return new DatumId(kind, objectId, sourceId, ts);
 	}
 
 	@Override

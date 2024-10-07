@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -69,6 +71,11 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 	 * {@code \{componentId\}} parameter.
 	 */
 	public static final String V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE = "/v3/components/{componentId}/dataavailable";
+
+	/**
+	 * The URL template for data for a given {@code \{componentId\}} parameter.
+	 */
+	public static final String V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE = "/v3/components/{componentId}/data";
 
 	/** The partner identifier setting name. */
 	public static final String PARTNER_ID_SETTING = "partnerId";
@@ -128,12 +135,13 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 	@Override
 	public Result<Void> validate(CloudIntegrationConfiguration integration, Locale locale) {
 		// check that authentication settings provided
-		List<ErrorDetail> errorDetails = new ArrayList<>(2);
+		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 
 		final String oauthClientId = integration
 				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, String.class);
 		if ( oauthClientId == null || oauthClientId.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.oauthClientId.missing", null, locale);
+			String errMsg = ms.getMessage("error.oauthClientId.missing", null, locale);
 			errorDetails
 					.add(new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, null, errMsg));
 		}
@@ -141,8 +149,7 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 		final String oauthClientSecret = integration
 				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, String.class);
 		if ( oauthClientSecret == null || oauthClientSecret.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.oauthClientSecret.missing", null,
-					locale);
+			String errMsg = ms.getMessage("error.oauthClientSecret.missing", null, locale);
 			errorDetails.add(
 					new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, null, errMsg));
 		}
@@ -150,25 +157,25 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 		final String username = integration.serviceProperty(CloudIntegrationService.USERNAME_SETTING,
 				String.class);
 		if ( username == null || username.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.username.missing", null, locale);
+			String errMsg = ms.getMessage("error.username.missing", null, locale);
 			errorDetails.add(new ErrorDetail(CloudIntegrationService.USERNAME_SETTING, null, errMsg));
 		}
 
 		final String password = integration.serviceProperty(CloudIntegrationService.PASSWORD_SETTING,
 				String.class);
 		if ( password == null || password.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.password.missing", null, locale);
+			String errMsg = ms.getMessage("error.password.missing", null, locale);
 			errorDetails.add(new ErrorDetail(CloudIntegrationService.PASSWORD_SETTING, null, errMsg));
 		}
 
 		final String partnerId = integration.serviceProperty(PARTNER_ID_SETTING, String.class);
 		if ( partnerId == null || partnerId.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.partnerId.missing", null, locale);
+			String errMsg = ms.getMessage("error.partnerId.missing", null, locale);
 			errorDetails.add(new ErrorDetail(PARTNER_ID_SETTING, null, errMsg));
 		}
 
 		if ( !errorDetails.isEmpty() ) {
-			String errMsg = getMessageSource().getMessage("error.settings.missing", null, locale);
+			String errMsg = ms.getMessage("error.settings.missing", null, locale);
 			return Result.error("LECI.0001", errMsg, errorDetails);
 		}
 

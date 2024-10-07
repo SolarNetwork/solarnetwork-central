@@ -52,6 +52,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
@@ -78,6 +79,9 @@ public class LocusEnergyConfig {
 
 	@Autowired
 	private CloudDatumStreamConfigurationDao datumStreamConfigurationDao;
+
+	@Autowired
+	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyConfigurationDao;
 
 	@Autowired
 	private JdbcOperations jdbcOperations;
@@ -134,7 +138,8 @@ public class LocusEnergyConfig {
 	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
 		var service = new LocusEnergyCloudDatumStreamService(userEventAppender,
-				integrationConfigurationDao, datumStreamConfigurationDao, restOps, oauthClientManager);
+				integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamPropertyConfigurationDao, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName());
