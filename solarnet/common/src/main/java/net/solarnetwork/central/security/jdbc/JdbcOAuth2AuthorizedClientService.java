@@ -41,6 +41,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.SqlProvider;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -124,6 +125,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			DELETE FROM %s WHERE user_id = ? AND client_registration_id = ? AND principal_name = ?
 			""";
 
+	private final BytesEncryptor encryptor;
 	private final JdbcOperations jdbcOperations;
 	private final RowMapper<OAuth2AuthorizedClient> authorizedClientRowMapper;
 	private final String sqlSelect;
@@ -136,20 +138,24 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 	 * Constructs a {@code JdbcOAuth2AuthorizedClientService} using the provided
 	 * parameters.
 	 * 
+	 * @param encryptor
+	 *        the encryptor
 	 * @param jdbcOperations
 	 *        the JDBC operations
 	 * @param clientRegistrationRepository
 	 *        the repository of client registrations
 	 */
-	public JdbcOAuth2AuthorizedClientService(JdbcOperations jdbcOperations,
+	public JdbcOAuth2AuthorizedClientService(BytesEncryptor encryptor, JdbcOperations jdbcOperations,
 			ClientRegistrationRepository clientRegistrationRepository) {
-		this(jdbcOperations, clientRegistrationRepository, DEFAULT_TABLE_NAME);
+		this(encryptor, jdbcOperations, clientRegistrationRepository, DEFAULT_TABLE_NAME);
 	}
 
 	/**
 	 * Constructs a {@code JdbcOAuth2AuthorizedClientService} using the provided
 	 * parameters.
 	 * 
+	 * @param encryptor
+	 *        the encryptor
 	 * @param jdbcOperations
 	 *        the JDBC operations
 	 * @param clientRegistrationRepository
@@ -157,12 +163,12 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 	 * @param tableName
 	 *        the SQL table name to use
 	 */
-	public JdbcOAuth2AuthorizedClientService(JdbcOperations jdbcOperations,
+	public JdbcOAuth2AuthorizedClientService(BytesEncryptor encryptor, JdbcOperations jdbcOperations,
 			ClientRegistrationRepository clientRegistrationRepository, String tableName) {
-		requireNonNullArgument(jdbcOperations, "jdbcOperations");
+		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
+		this.jdbcOperations = requireNonNullArgument(jdbcOperations, "jdbcOperations");
 		requireNonNullArgument(clientRegistrationRepository, "clientRegistrationRepository");
 		requireNonNullArgument(tableName, "tableName");
-		this.jdbcOperations = jdbcOperations;
 
 		OAuth2AuthorizedClientRowMapper authorizedClientRowMapper = new OAuth2AuthorizedClientRowMapper(
 				clientRegistrationRepository);
@@ -268,7 +274,8 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			byte[] refreshTokenValue = null;
 			Timestamp refreshTokenIssuedAt = null;
 			if ( refreshToken != null ) {
-				refreshTokenValue = refreshToken.getTokenValue().getBytes(StandardCharsets.UTF_8);
+				refreshTokenValue = encryptor
+						.encrypt(refreshToken.getTokenValue().getBytes(StandardCharsets.UTF_8));
 				if ( refreshToken.getIssuedAt() != null ) {
 					refreshTokenIssuedAt = Timestamp.from(refreshToken.getIssuedAt());
 				}
@@ -314,7 +321,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 	 * The default {@link RowMapper} that maps the current row in
 	 * {@code java.sql.ResultSet} to {@link OAuth2AuthorizedClient}.
 	 */
-	public static class OAuth2AuthorizedClientRowMapper implements RowMapper<OAuth2AuthorizedClient> {
+	private final class OAuth2AuthorizedClientRowMapper implements RowMapper<OAuth2AuthorizedClient> {
 
 		private final ClientRegistrationRepository clientRegistrationRepository;
 
@@ -348,7 +355,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			OAuth2RefreshToken refreshToken = null;
 			byte[] refreshTokenValue = rs_.getBytes(8);
 			if ( refreshTokenValue != null ) {
-				tokenValue = new String(refreshTokenValue, StandardCharsets.UTF_8);
+				tokenValue = new String(encryptor.decrypt(refreshTokenValue), StandardCharsets.UTF_8);
 				issuedAt = getTimestampInstant(rs_, 9);
 				refreshToken = new OAuth2RefreshToken(tokenValue, issuedAt);
 			}

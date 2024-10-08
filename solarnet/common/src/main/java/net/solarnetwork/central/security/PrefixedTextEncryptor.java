@@ -41,11 +41,17 @@ import net.solarnetwork.util.ObjectUtils;
  * implementation should be used only when the plain text version of the
  * password is required for further processing, such as decrypting a
  * previously-encrypted secret.
+ * </p>
+ * 
+ * <p>
+ * This class also implements {@link BytesEncryptor} and encrypts/decrypts
+ * without any prefix added.
+ * </p>
  * 
  * @author matt
  * @version 1.0
  */
-public class PrefixedTextEncryptor implements TextEncryptor {
+public final class PrefixedTextEncryptor implements TextEncryptor, BytesEncryptor {
 
 	private final String prefix;
 	private final BytesEncryptor encryptor;
@@ -88,7 +94,7 @@ public class PrefixedTextEncryptor implements TextEncryptor {
 			return text;
 		}
 
-		byte[] cipherText = encryptor.encrypt(Utf8.encode(text));
+		byte[] cipherText = encrypt(Utf8.encode(text));
 		return prefix + Base64.getUrlEncoder().encodeToString(cipherText);
 	}
 
@@ -102,7 +108,17 @@ public class PrefixedTextEncryptor implements TextEncryptor {
 			return encryptedText;
 		}
 		byte[] cipherText = Base64.getUrlDecoder().decode(encryptedText.substring(prefix.length()));
-		return Utf8.decode(encryptor.decrypt(cipherText));
+		return Utf8.decode(decrypt(cipherText));
+	}
+
+	@Override
+	public byte[] encrypt(byte[] byteArray) {
+		return encryptor.encrypt(byteArray);
+	}
+
+	@Override
+	public byte[] decrypt(byte[] encryptedByteArray) {
+		return encryptor.decrypt(encryptedByteArray);
 	}
 
 	/**

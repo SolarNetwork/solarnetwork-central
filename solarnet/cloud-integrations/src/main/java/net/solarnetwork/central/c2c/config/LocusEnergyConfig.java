@@ -35,6 +35,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -99,6 +100,10 @@ public class LocusEnergyConfig {
 	private TextEncryptor encryptor;
 
 	@Autowired
+	@Qualifier(CLOUD_INTEGRATIONS)
+	private BytesEncryptor bytesEncryptor;
+
+	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
 	@Bean
@@ -109,7 +114,7 @@ public class LocusEnergyConfig {
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
 				integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS);
 
-		var clientService = new JdbcOAuth2AuthorizedClientService(jdbcOperations, repo);
+		var clientService = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations, repo);
 
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()

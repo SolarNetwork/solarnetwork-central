@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security.jdbc.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
@@ -48,6 +49,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.central.test.CommonDbTestUtils;
@@ -61,6 +63,7 @@ import net.solarnetwork.central.test.CommonTestUtils;
  */
 public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDaoTestSupport {
 
+	private PrefixedTextEncryptor encryptor;
 	private Map<String, ClientRegistration> clientRegistrations;
 	private JdbcOAuth2AuthorizedClientService service;
 
@@ -68,8 +71,9 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 
 	@BeforeEach
 	public void setup() {
+		encryptor = PrefixedTextEncryptor.aesTextEncryptor(randomString(), randomString());
 		clientRegistrations = new HashMap<>();
-		service = new JdbcOAuth2AuthorizedClientService(jdbcTemplate,
+		service = new JdbcOAuth2AuthorizedClientService(encryptor, jdbcTemplate,
 				new InMemoryClientRegistrationRepository(clientRegistrations));
 
 		userId = CommonTestUtils.randomLong();
@@ -136,7 +140,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 			.hasEntrySatisfying("access_token_value", value -> {
 				then(value)
 					.asInstanceOf(InstanceOfAssertFactories.BYTE_ARRAY)
-					.containsExactly(accessToken.getTokenValue().getBytes(StandardCharsets.UTF_8))
+					.containsExactly(accessToken.getTokenValue().getBytes(UTF_8))
 					;
 			})
 			.as("Access token issue date persisted")
@@ -149,7 +153,13 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 			.hasEntrySatisfying("refresh_token_value", value -> {
 				then(value)
 					.asInstanceOf(InstanceOfAssertFactories.BYTE_ARRAY)
-					.containsExactly(refreshToken.getTokenValue().getBytes(StandardCharsets.UTF_8))
+					.as("Can decrypt refresh token value back to original plain text")
+					.satisfies(cipherText -> {
+						then(encryptor.decrypt(cipherText))
+							.as("Decrypted value same as original plain text")
+							.isEqualTo(refreshToken.getTokenValue().getBytes(UTF_8))
+							;
+					})
 					;
 			})
 			.as("Refresh token issue date persisted")
@@ -343,7 +353,13 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 			.hasEntrySatisfying("refresh_token_value", value -> {
 				then(value)
 					.asInstanceOf(InstanceOfAssertFactories.BYTE_ARRAY)
-					.containsExactly(refreshToken2.getTokenValue().getBytes(StandardCharsets.UTF_8))
+					.as("Can decrypt refresh token value back to original plain text")
+					.satisfies(cipherText -> {
+						then(encryptor.decrypt(cipherText))
+							.as("Decrypted value same as original plain text")
+							.isEqualTo(refreshToken2.getTokenValue().getBytes(UTF_8))
+							;
+					})
 					;
 			})
 			.as("Refresh token issue date persisted")
