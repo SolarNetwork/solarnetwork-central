@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
@@ -44,6 +45,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -60,6 +62,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -113,31 +116,17 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	/** The setting for granularity. */
 	public static final String GRANULARITY_SETTING = "granularity";
 
-	private static final List<SettingSpecifier> SETTINGS;
+	/** The service settings. */
+	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-
-		// @formatter:off
 		// menu for granularity
-		var granularitySpec = new BasicMultiValueSettingSpecifier(
-				GRANULARITY_SETTING, "latest");
-		var granularityTitles = new LinkedHashMap<String, String>(2);
-		for (String g : new String[] {
-				"latest",
-		        "1min",
-		        "5min",
-		        "15min",
-		        "hourly",
-		        "daily",
-		        "monthly",
-		        "yearly"}) {
-			granularityTitles.put(g, g);
-		}
+		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
+				LocusEnergyGranularity.Latest.getKey());
+		var granularityTitles = Arrays.stream(LocusEnergyGranularity.values()).collect(Collectors
+				.toUnmodifiableMap(LocusEnergyGranularity::getKey, LocusEnergyGranularity::getKey));
 		granularitySpec.setValueTitles(granularityTitles);
-		settings.add(granularitySpec);
-		// @formatter:on
 
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(granularitySpec);
 	}
 
 	/**
@@ -504,8 +493,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 							// @formatter:off
 								return UriComponentsBuilder.fromUri(BASE_URI)
 										.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
-										.queryParam("gran", "latest")
-										.queryParam("tz", "Z")
+										.queryParam("gran", LocusEnergyGranularity.Latest.getKey())
+										.queryParam("tz", UTC.getId())
 										.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
 										.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
 										.toUri();
