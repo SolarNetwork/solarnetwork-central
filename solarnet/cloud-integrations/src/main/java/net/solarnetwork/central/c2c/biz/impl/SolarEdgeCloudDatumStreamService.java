@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -76,6 +77,8 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 *
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param expressionService
 	 *        the expression service
 	 * @param integrationDao
@@ -90,16 +93,17 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 *         if any argument is {@literal null}
 	 */
 	public SolarEdgeCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
-			CloudIntegrationsExpressionService expressionService,
+			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz,
+		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamPropertyDao,
 				Collections.emptyList(),
 				new SolarEdgeRestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS));
+						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						integrationServiceIdentifier -> SolarEdgeCloudIntegrationService.SECURE_SETTINGS));
 	}
 
 	@Override

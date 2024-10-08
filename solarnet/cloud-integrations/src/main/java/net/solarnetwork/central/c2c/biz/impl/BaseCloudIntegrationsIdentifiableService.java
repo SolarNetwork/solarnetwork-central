@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -46,6 +47,9 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	/** The user event appender service. */
 	protected final UserEventAppenderBiz userEventAppenderBiz;
 
+	/** A sensitive value encryptor. */
+	protected final TextEncryptor encryptor;
+
 	/** The service settings. */
 	protected final List<SettingSpecifier> settings;
 
@@ -58,16 +62,20 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	 *        the display name
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param settings
 	 *        the service settings
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public BaseCloudIntegrationsIdentifiableService(String serviceIdentifier, String displayName,
-			UserEventAppenderBiz userEventAppenderBiz, List<SettingSpecifier> settings) {
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			List<SettingSpecifier> settings) {
 		super(serviceIdentifier);
 		this.displayName = requireNonNullArgument(displayName, "displayName");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
+		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.settings = requireNonNullArgument(settings, "settings");
 	}
 

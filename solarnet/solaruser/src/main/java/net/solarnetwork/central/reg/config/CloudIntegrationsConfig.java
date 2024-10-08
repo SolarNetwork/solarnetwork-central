@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudIntegrationsCacheConfig.java - 8/10/2024 9:31:24 am
+ * CloudIntegrationsConfig.java - 8/10/2024 9:31:24 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -26,11 +26,13 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.expression.Expression;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
+import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
 
 /**
@@ -40,7 +42,7 @@ import net.solarnetwork.central.support.CacheSettings;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-public class CloudIntegrationsCacheConfig implements SolarNetCloudIntegrationsConfiguration {
+public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	@Autowired
 	private CacheManager cacheManager;
@@ -58,6 +60,14 @@ public class CloudIntegrationsCacheConfig implements SolarNetCloudIntegrationsCo
 			@Qualifier(CLOUD_INTEGRATIONS_EXPRESSIONS) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, Expression.class,
 				CLOUD_INTEGRATIONS_EXPRESSIONS + "-cache");
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS)
+	public PrefixedTextEncryptor cloudIntegrationsTextEncryptor(
+			@Value("${app.c2c.encryptor.password}") String password,
+			@Value("${app.c2c.encryptor.salt-hex}") String salt) {
+		return PrefixedTextEncryptor.aesTextEncryptor(password, salt);
 	}
 
 }

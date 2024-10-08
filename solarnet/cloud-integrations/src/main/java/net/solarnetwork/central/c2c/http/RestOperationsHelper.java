@@ -26,12 +26,14 @@ import static java.lang.String.format;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.util.Set;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
@@ -61,6 +63,12 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	/** The error event tags. */
 	protected final String[] errorEventTags;
 
+	/** The sensitive key encryptor. */
+	protected final TextEncryptor encryptor;
+
+	/** The sensitive key provider. */
+	protected final Function<String, Set<String>> sensitiveKeyProvider;
+
 	/**
 	 * Constructor.
 	 *
@@ -72,16 +80,23 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 *        the REST operations
 	 * @param errorEventTags
 	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags) {
+			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			Function<String, Set<String>> sensitiveKeyProvider) {
 		super();
 		this.log = requireNonNullArgument(log, "log");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
 		this.restOps = requireNonNullArgument(restOps, "restOps");
 		this.errorEventTags = requireNonNullArgument(errorEventTags, "errorEventTags");
+		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
+		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");
 	}
 
 	/**

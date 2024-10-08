@@ -25,10 +25,12 @@ package net.solarnetwork.central.c2c.http;
 import static net.solarnetwork.central.c2c.http.OAuth2Utils.addOAuthBearerAuthorization;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.util.Set;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -57,15 +59,20 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        the REST operations
 	 * @param errorEventTags
 	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
 	 * @param oauthClientManager
 	 *        the OAuth client manager
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags,
+			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			Function<String, Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(log, userEventAppenderBiz, restOps, errorEventTags);
+		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
 	}
 
@@ -74,7 +81,9 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
 		return super.httpGet(description, integration, responseType, (headers) -> {
-			addOAuthBearerAuthorization(integration, headers, oauthClientManager, userEventAppenderBiz);
+			final var decrypted = integration.clone();
+			decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
+			addOAuthBearerAuthorization(decrypted, headers, oauthClientManager, userEventAppenderBiz);
 			return setup.apply(headers);
 		}, handler);
 	}

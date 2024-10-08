@@ -62,6 +62,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -144,6 +145,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param expressionService
 	 *        the expression service
 	 * @param integrationDao
@@ -160,16 +163,18 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *         if any argument is {@literal null}
 	 */
 	public LocusEnergyCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
-			CloudIntegrationsExpressionService expressionService,
+			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz,
+		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, oauthClientManager),
+						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
+						oauthClientManager),
 				oauthClientManager);
 	}
 

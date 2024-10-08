@@ -25,9 +25,11 @@ package net.solarnetwork.central.user.c2c.config;
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -56,10 +58,14 @@ public class UserCloudIntegrationsBizConfig {
 	@Autowired
 	private Collection<CloudIntegrationService> integrationServices;
 
+	@Qualifier(CLOUD_INTEGRATIONS)
+	@Autowired
+	private TextEncryptor textEncryptor;
+
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
 		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao,
-				datumStreamPropertyDao, integrationServices);
+				datumStreamPropertyDao, textEncryptor, integrationServices);
 		return biz;
 	}
 

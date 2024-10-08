@@ -29,6 +29,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -70,6 +71,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the display name
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param expressionService
 	 *        the expression service
 	 * @param integrationDao
@@ -84,13 +87,13 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *         if any argument is {@literal null}
 	 */
 	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName,
-			UserEventAppenderBiz userEventAppenderBiz,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, settings);
+		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");

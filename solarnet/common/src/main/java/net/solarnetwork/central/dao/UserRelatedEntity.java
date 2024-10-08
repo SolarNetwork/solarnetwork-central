@@ -24,6 +24,7 @@ package net.solarnetwork.central.dao;
 
 import java.util.Set;
 import java.util.function.Function;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.dao.Entity;
 
@@ -49,12 +50,30 @@ public interface UserRelatedEntity<PK> extends Entity<PK>, UserIdRelated {
 	/**
 	 * Mask any sensitive information.
 	 *
-	 * @param sensitiveKeys
+	 * @param sensitiveKeyProvider
 	 *        a function that can supply a set of "sensitive" information keys
 	 *        (names) that should be masked
+	 * @param encryptor
+	 *        the encryptor to use
 	 * @since 1.2
 	 */
-	default void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeys) {
+	default void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+			TextEncryptor encryptor) {
+		// nothing
+	}
+
+	/**
+	 * Unmask any sensitive information.
+	 *
+	 * @param sensitiveKeyProvider
+	 *        a function that can supply a set of "sensitive" information keys
+	 *        (names) that should be masked
+	 * @param encryptor
+	 *        the encryptor to use
+	 * @since 1.2
+	 */
+	default void unmaskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+			TextEncryptor encryptor) {
 		// nothing
 	}
 

@@ -30,8 +30,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -42,6 +44,7 @@ import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * SolarEdge implementation of {@link CloudIntegrationService}.
@@ -84,13 +87,18 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 			);
 	// @formatter:on
 
-	private static final List<SettingSpecifier> SETTINGS;
+	/** The service settings . */
+	public static final List<SettingSpecifier> SETTINGS;
 	static {
 		var settings = new ArrayList<SettingSpecifier>(1);
 		settings.add(new BasicTextFieldSettingSpecifier(ACCOUNT_KEY_SETTING, null, true));
 		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
+
+	/** The service secure setting keys. */
+	public static final Set<String> SECURE_SETTINGS = Collections
+			.unmodifiableSet(SettingUtils.secureKeys(SETTINGS));
 
 	/**
 	 * Constructor.
@@ -99,18 +107,21 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 	 *        the datum stream services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param restOps
 	 *        the REST operations
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public SolarEdgeCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, userEventAppenderBiz, SETTINGS,
-				WELL_KNOWN_URLS,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
+		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, userEventAppenderBiz, encryptor,
+				SETTINGS, WELL_KNOWN_URLS,
 				new SolarEdgeRestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeCloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS));
+						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						integrationServiceIdentifier -> SECURE_SETTINGS));
 	}
 
 	@Override

@@ -24,13 +24,16 @@ package net.solarnetwork.central.security.test;
 
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
 import static net.solarnetwork.central.security.SecurityUtils.becomeNode;
+import static org.assertj.core.api.BDDAssertions.and;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +46,7 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
@@ -57,8 +61,9 @@ import net.solarnetwork.central.security.SecurityUtils;
  * Test cases for the {@link SecurityUtils} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class SecurityUtilsTests {
 
@@ -66,6 +71,9 @@ public class SecurityUtilsTests {
 
 	@Mock
 	private SolarNodeOwnershipDao nodeOwnershipDao;
+
+	@Mock
+	private TextEncryptor textEncryptor;
 
 	private void becomeUser(String... roles) {
 		User userDetails = new User("test@localhost", "foobar", AuthorityUtils.NO_AUTHORITIES);
@@ -224,4 +232,187 @@ public class SecurityUtilsTests {
 		assertThat("User token actor with policy gets node IDs returned from policy, restricted by DAO",
 				nodeIds, is(arrayContaining(expected)));
 	}
+
+	@Test
+	public void encrpytedMap() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("foo");
+
+		var encryptedValue = "foo-encrypted";
+		given(textEncryptor.encrypt(data.get("foo"))).willReturn(encryptedValue);
+
+		// WHEN
+		var result = SecurityUtils.encryptedMap(data, secureKeys, textEncryptor);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map provided")
+			.isNotNull()
+			.as("New map instance returned")
+			.isNotSameAs(data)
+			.as("Has same keys as input map")
+			.containsOnlyKeys(data.keySet())
+			.as("Non-secure value left alone")
+			.containsEntry("bim", data.get("bim"))
+			.as("Secure value encrypted")
+			.containsEntry("foo", encryptedValue)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void encryptedMap_noSecureKeys() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("other");
+
+		// WHEN
+		var result = SecurityUtils.encryptedMap(data, secureKeys, textEncryptor);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map is same instance as provided")
+			.isSameAs(data)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void encrpytedMap_exception() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("foo");
+
+		var ex = new RuntimeException();
+		given(textEncryptor.encrypt(data.get("foo"))).willThrow(ex);
+
+		// WHEN
+		var result = SecurityUtils.encryptedMap(data, secureKeys, textEncryptor);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map provided")
+			.isNotNull()
+			.as("New map instance returned")
+			.isNotSameAs(data)
+			.as("Has same keys as input map")
+			.containsOnlyKeys(data.keySet())
+			.as("Non-secure value left alone")
+			.containsEntry("bim", data.get("bim"))
+			.as("Secure value that failed to encrypt returned as-is")
+			.containsEntry("foo", data.get("foo"))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void decrpytedMap() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("foo");
+
+		var decryptedValue = "foo-decrypted";
+		given(textEncryptor.decrypt(data.get("foo"))).willReturn(decryptedValue);
+
+		// WHEN
+		var result = SecurityUtils.decryptedMap(data, secureKeys, textEncryptor);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map provided")
+			.isNotNull()
+			.as("New map instance returned")
+			.isNotSameAs(data)
+			.as("Has same keys as input map")
+			.containsOnlyKeys(data.keySet())
+			.as("Non-secure value left alone")
+			.containsEntry("bim", data.get("bim"))
+			.as("Secure value decrypted")
+			.containsEntry("foo", decryptedValue)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void decryptedMap_noSecureKeys() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("other");
+
+		// WHEN
+		var result = SecurityUtils.decryptedMap(data, secureKeys, textEncryptor);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map is same instance as provided")
+			.isSameAs(data)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void decrpytedMap_exception() {
+		// GIVEN
+		var data = new LinkedHashMap<String, String>(8);
+		data.put("foo", "bar");
+		data.put("bim", "bam");
+
+		var secureKeys = Set.of("foo");
+
+		var ex = new RuntimeException();
+		given(textEncryptor.decrypt(data.get("foo"))).willThrow(ex);
+
+		// WHEN
+		var result = SecurityUtils.decryptedMap(data, secureKeys, textEncryptor);
+
+		// THEN
+		then(textEncryptor).shouldHaveNoMoreInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Result map provided")
+			.isNotNull()
+			.as("New map instance returned")
+			.isNotSameAs(data)
+			.as("Has same keys as input map")
+			.containsOnlyKeys(data.keySet())
+			.as("Non-secure value left alone")
+			.containsEntry("bim", data.get("bim"))
+			.as("Secure value that failed to decrypt returned as-is")
+			.containsEntry("foo", data.get("foo"))
+			;
+		// @formatter:on
+	}
+
 }

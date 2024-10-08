@@ -30,7 +30,10 @@ import static net.solarnetwork.central.domain.UserIdentifiableSystem.systemIdent
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -59,6 +62,8 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	private final GenericDao<CloudIntegrationConfiguration, UserLongCompositePK> configurationDao;
 	private final URI tokenUri;
 	private final ClientAuthenticationMethod clientAuthMethod;
+	private final TextEncryptor textEncryptor;
+	private final Function<String, Set<String>> sensitiveKeysProvider;
 
 	/**
 	 * Constructor.
@@ -74,11 +79,15 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 	 */
 	public ClientCredentialsClientRegistrationRepository(
 			CloudIntegrationConfigurationDao configurationDao, URI tokenUri,
-			ClientAuthenticationMethod clientAuthMethod) {
+			ClientAuthenticationMethod clientAuthMethod, TextEncryptor textEncryptor,
+			Function<String, Set<String>> sensitiveKeysProvider) {
 		super();
 		this.configurationDao = requireNonNullArgument(configurationDao, "configurationDao");
 		this.tokenUri = requireNonNullArgument(tokenUri, "tokenUri");
 		this.clientAuthMethod = requireNonNullArgument(clientAuthMethod, "clientAuthMethod");
+		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
+		this.sensitiveKeysProvider = requireNonNullArgument(sensitiveKeysProvider,
+				"sensitiveKeysProvider");
 	}
 
 	@SuppressWarnings("deprecation")
@@ -95,6 +104,8 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 			throw new EmptyResultDataAccessException(
 					"Configuration for registration ID %s not found.".formatted(registrationId), 1);
 		}
+		conf.clone();
+		conf.unmaskSensitiveInformation(sensitiveKeysProvider, textEncryptor);
 
 		final String clientId = conf.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class);
 		final String clientSecret = conf.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class);

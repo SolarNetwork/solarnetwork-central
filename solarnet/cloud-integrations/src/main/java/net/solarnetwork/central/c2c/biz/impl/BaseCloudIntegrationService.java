@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
@@ -58,6 +59,8 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 *        the datum stream services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param settings
 	 *        the service settings
 	 * @param wellKnownUrls
@@ -67,9 +70,9 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 */
 	public BaseCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, List<SettingSpecifier> settings,
-			Map<String, URI> wellKnownUrls) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, settings);
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls) {
+		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
 		this.datumStreamServices = requireNonNullArgument(datumStreamServices, "datumStreamServices");
 		this.wellKnownUrls = requireNonNullArgument(wellKnownUrls, "wellKnownUrls");
 	}

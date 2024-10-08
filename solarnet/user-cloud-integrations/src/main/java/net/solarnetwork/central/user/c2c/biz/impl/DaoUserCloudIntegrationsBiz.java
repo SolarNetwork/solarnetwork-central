@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
@@ -79,6 +80,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudIntegrationConfigurationDao integrationDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
+	private final TextEncryptor textEncryptor;
 	private final Map<String, CloudIntegrationService> integrationServices;
 	private final Map<String, CloudDatumStreamService> datumStreamServices;
 	private final Map<String, Set<String>> integrationServiceSecureKeys;
@@ -94,6 +96,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *        the datum stream DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
+	 * @param textEncryptor
+	 *        the encryptor to handle sensitive properties with
 	 * @param integrationServices
 	 *        the integration services
 	 * @throws IllegalArgumentException
@@ -101,13 +105,14 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 */
 	public DaoUserCloudIntegrationsBiz(CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
-			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
 		super();
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
+		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = requireNonNullArgument(integrationServices, "integrationServices")
 				.stream()
 				.collect(toUnmodifiableMap(CloudIntegrationService::getId, Function.identity()));
@@ -144,12 +149,6 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		f.setUserId(userId);
 		FilterableDao<C, K, CloudIntegrationsFilter> dao = filterableDao(configurationClass);
 		FilterResults<C, K> result = dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
-
-		// remove credentials before returning
-		for ( C c : result ) {
-			c.maskSensitiveInformation(integrationServiceSecureKeys::get);
-		}
-
 		return result;
 	}
 
@@ -165,9 +164,6 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		GenericDao<C, K> dao = genericDao(configurationClass);
 		C result = requireNonNullObject(dao.get(id), id);
-
-		// remove credentials before returning
-		result.maskSensitiveInformation(integrationServiceSecureKeys::get);
 
 		return result;
 	}
@@ -186,13 +182,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		C config = input.toEntity(id);
 
+		// make sensitive properties
+		config.maskSensitiveInformation(integrationServiceSecureKeys::get, textEncryptor);
+
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
 		K updatedId = requireNonNullObject(dao.save(config), id);
 		C result = requireNonNullObject(dao.get(updatedId), updatedId);
-
-		// remove credentials before returning
-		result.maskSensitiveInformation(integrationServiceSecureKeys::get);
 
 		return result;
 	}

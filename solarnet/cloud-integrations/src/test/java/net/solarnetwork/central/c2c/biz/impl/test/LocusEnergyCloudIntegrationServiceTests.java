@@ -51,6 +51,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -93,12 +94,15 @@ public class LocusEnergyCloudIntegrationServiceTests {
 	@Captor
 	private ArgumentCaptor<OAuth2AuthorizeRequest> authRequestCaptor;
 
+	@Mock
+	private TextEncryptor encryptor;
+
 	private LocusEnergyCloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
 		service = new LocusEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, restOps, oauthClientManager);
+				userEventAppenderBiz, encryptor, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasename(LocusEnergyCloudIntegrationService.class.getName());

@@ -28,12 +28,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.util.StringUtils;
 
 /**
  * A base user-related entity that is also an identifiable configuration.
@@ -96,12 +97,24 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	}
 
 	@Override
-	public void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider) {
+	public void maskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+			TextEncryptor encryptor) {
 		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
 				? sensitiveKeyProvider.apply(serviceIdentifier)
 				: null);
 		if ( secureKeys != null && !secureKeys.isEmpty() ) {
-			setServiceProps(StringUtils.sha256MaskedMap(getServiceProps(), secureKeys));
+			setServiceProps(SecurityUtils.encryptedMap(getServiceProps(), secureKeys, encryptor));
+		}
+	}
+
+	@Override
+	public void unmaskSensitiveInformation(Function<String, Set<String>> sensitiveKeyProvider,
+			TextEncryptor encryptor) {
+		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
+				? sensitiveKeyProvider.apply(serviceIdentifier)
+				: null);
+		if ( secureKeys != null && !secureKeys.isEmpty() ) {
+			setServiceProps(SecurityUtils.decryptedMap(getServiceProps(), secureKeys, encryptor));
 		}
 	}
 

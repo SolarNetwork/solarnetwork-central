@@ -27,6 +27,7 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -57,6 +58,8 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 *        the datum stream services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param settings
 	 *        the service settings
 	 * @param wellKnownUrls
@@ -68,10 +71,11 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	 */
 	public BaseRestOperationsCloudIntegrationService(String serviceIdentifier, String displayName,
 			Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, List<SettingSpecifier> settings,
-			Map<String, URI> wellKnownUrls, RestOperationsHelper restOpsHelper) {
-		super(serviceIdentifier, displayName, datumStreamServices, userEventAppenderBiz, settings,
-				wellKnownUrls);
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			List<SettingSpecifier> settings, Map<String, URI> wellKnownUrls,
+			RestOperationsHelper restOpsHelper) {
+		super(serviceIdentifier, displayName, datumStreamServices, userEventAppenderBiz, encryptor,
+				settings, wellKnownUrls);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}
 

@@ -35,6 +35,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
@@ -94,6 +95,10 @@ public class LocusEnergyConfig {
 	private RestOperations restOps;
 
 	@Autowired
+	@Qualifier(CLOUD_INTEGRATIONS)
+	private TextEncryptor encryptor;
+
+	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
 	@Bean
@@ -101,7 +106,8 @@ public class LocusEnergyConfig {
 	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager() {
 		var repo = new ClientCredentialsClientRegistrationRepository(integrationConfigurationDao,
 				LocusEnergyCloudIntegrationService.TOKEN_URI,
-				ClientAuthenticationMethod.CLIENT_SECRET_POST);
+				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
+				integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS);
 
 		var clientService = new JdbcOAuth2AuthorizedClientService(jdbcOperations, repo);
 
@@ -141,8 +147,8 @@ public class LocusEnergyConfig {
 	@Qualifier(LOCUS_ENERGY)
 	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, expressionService,
-				integrationConfigurationDao, datumStreamConfigurationDao,
+		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, encryptor,
+				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamPropertyConfigurationDao, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
@@ -157,7 +163,7 @@ public class LocusEnergyConfig {
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
 			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
-				restOps, oauthClientManager);
+				encryptor, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudIntegrationService.class.getName());

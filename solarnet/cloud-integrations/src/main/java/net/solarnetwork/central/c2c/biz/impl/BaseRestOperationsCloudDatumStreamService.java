@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -55,6 +56,8 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *        the display name
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param expressionService
 	 *        the expression service
 	 * @param integrationDao
@@ -71,14 +74,14 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *         if any argument is {@literal null}
 	 */
 	public BaseRestOperationsCloudDatumStreamService(String serviceIdentifier, String displayName,
-			UserEventAppenderBiz userEventAppenderBiz,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperationsHelper restOpsHelper) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, expressionService, integrationDao,
-				datumStreamDao, datumStreamPropertyDao, settings);
+		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+				integrationDao, datumStreamDao, datumStreamPropertyDao, settings);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}
 

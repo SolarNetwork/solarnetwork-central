@@ -30,8 +30,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -44,6 +46,7 @@ import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * Locus Energy implementation of {@link CloudIntegrationService}.
@@ -96,7 +99,8 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 			);
 	// @formatter:on
 
-	private static final List<SettingSpecifier> SETTINGS;
+	/** The service settings. */
+	public static final List<SettingSpecifier> SETTINGS;
 	static {
 		var settings = new ArrayList<SettingSpecifier>(1);
 		settings.add(new BasicTextFieldSettingSpecifier(OAUTH_CLIENT_ID_SETTING, null));
@@ -107,6 +111,10 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
+	/** The service secure setting keys. */
+	public static final Set<String> SECURE_SETTINGS = Collections
+			.unmodifiableSet(SettingUtils.secureKeys(SETTINGS));
+
 	/**
 	 * Constructor.
 	 *
@@ -114,6 +122,8 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 	 *        the datum stream services
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param restOps
 	 *        the REST operations
 	 * @param oauthClientManager
@@ -122,13 +132,14 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 	 *         if any argument is {@literal null}
 	 */
 	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, RestOperations restOps,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, userEventAppenderBiz, SETTINGS,
-				WELL_KNOWN_URLS,
+		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, userEventAppenderBiz, encryptor,
+				SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, oauthClientManager),
+						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager),
 				oauthClientManager);
 	}
 

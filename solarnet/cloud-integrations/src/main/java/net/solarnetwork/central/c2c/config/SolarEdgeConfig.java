@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -70,13 +71,17 @@ public class SolarEdgeConfig {
 	private RestOperations restOps;
 
 	@Autowired
+	@Qualifier(CLOUD_INTEGRATIONS)
+	private TextEncryptor encryptor;
+
+	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
 	@Bean
 	@Qualifier(SOLAREDGE)
 	public CloudDatumStreamService solarEdgeCloudDatumStreamService() {
-		var service = new SolarEdgeCloudDatumStreamService(userEventAppender, expressionService,
-				integrationConfigurationDao, datumStreamConfigurationDao,
+		var service = new SolarEdgeCloudDatumStreamService(userEventAppender, encryptor,
+				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamPropertyConfigurationDao, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
@@ -90,7 +95,7 @@ public class SolarEdgeConfig {
 	public CloudIntegrationService solarEdgeCloudIntegrationService(
 			@Qualifier(SOLAREDGE) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new SolarEdgeCloudIntegrationService(datumStreamServices, userEventAppender,
-				restOps);
+				encryptor, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SolarEdgeCloudIntegrationService.class.getName());

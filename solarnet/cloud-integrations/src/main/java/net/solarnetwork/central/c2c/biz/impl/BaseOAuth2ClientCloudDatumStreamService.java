@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -56,6 +57,8 @@ public abstract class BaseOAuth2ClientCloudDatumStreamService
 	 *        the display name
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
 	 * @param expressionService
 	 *        the expression service
 	 * @param integrationDao
@@ -74,15 +77,15 @@ public abstract class BaseOAuth2ClientCloudDatumStreamService
 	 *         if any argument is {@literal null}
 	 */
 	public BaseOAuth2ClientCloudDatumStreamService(String serviceIdentifier, String displayName,
-			UserEventAppenderBiz userEventAppenderBiz,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperationsHelper restOpsHelper,
 			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, expressionService, integrationDao,
-				datumStreamDao, datumStreamPropertyDao, settings, restOpsHelper);
+		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+				integrationDao, datumStreamDao, datumStreamPropertyDao, settings, restOpsHelper);
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
 	}
 

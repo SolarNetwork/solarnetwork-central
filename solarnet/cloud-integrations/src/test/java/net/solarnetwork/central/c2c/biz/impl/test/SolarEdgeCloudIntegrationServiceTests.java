@@ -46,6 +46,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -75,12 +76,15 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	@Mock
 	private RestOperations restOps;
 
+	@Mock
+	private TextEncryptor encryptor;
+
 	private SolarEdgeCloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
 		service = new SolarEdgeCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, restOps);
+				userEventAppenderBiz, encryptor, restOps);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasename(SolarEdgeCloudIntegrationService.class.getName());
