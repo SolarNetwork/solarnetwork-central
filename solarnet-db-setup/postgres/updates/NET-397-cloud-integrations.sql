@@ -96,7 +96,64 @@ CREATE TABLE solarcin.cin_datum_stream_prop (
 	mult			NUMERIC,
 	scale			SMALLINT,
 	CONSTRAINT cin_datum_stream_prop_pk PRIMARY KEY (user_id, ds_id, idx),
-	CONSTRAINT cin_datum_stream_ds_fk FOREIGN KEY (user_id, ds_id)
+	CONSTRAINT cin_datum_stream_prop_ds_fk FOREIGN KEY (user_id, ds_id)
 		REFERENCES solarcin.cin_datum_stream (user_id, id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+/**
+ * Cloud datum stream poll task table.
+ * 
+ * @column user_id 		the ID of the account owner
+ * @column ds_id 		the ID of the datum stream associated with this configuration
+ * @column status 		task status, e.g. queued, executing, error
+ * @column exec_at 		the next scheduled time for the poll task to execute
+ * @column start_at     the starting date to query data from
+ */
+CREATE TABLE solarcin.cin_datum_stream_poll_task (
+	user_id			BIGINT NOT NULL,
+	ds_id 			BIGINT NOT NULL,
+	status 			CHARACTER(1) NOT NULL,
+	exec_at 		TIMESTAMP WITH TIME ZONE NOT NULL,
+	start_at 		TIMESTAMP WITH TIME ZONE NOT NULL,
+	message 		TEXT,
+	jdata 			JSONB,
+	CONSTRAINT cin_datum_stream_poll_task_pk PRIMARY KEY (user_id, ds_id),
+	CONSTRAINT cin_datum_stream_poll_task_ds_fk FOREIGN KEY (user_id, ds_id)
+		REFERENCES solarcin.cin_datum_stream (user_id, id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+-- index to speed up claim task query
+CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solarcin.cin_datum_stream_poll_task
+	(exec_at);
+
+/**************************************************************************************************
+ * FUNCTION solarnet.claim_datum_export_task()
+ *
+ * "Claim" an export task from the solarnet.sn_datum_export_task table that has a status of 'q'
+ * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
+ * based on the created column.
+ *
+ * @return the claimed row, if one was able to be claimed
+ */
+CREATE OR REPLACE FUNCTION solarcin.claim_datum_stream_poll_task()
+	RETURNS solarcin.cin_datum_stream_poll_task LANGUAGE plpgsql VOLATILE AS
+$$
+DECLARE
+	rec solarcin.cin_datum_stream_poll_task;
+	curs CURSOR FOR SELECT * FROM solarcin.cin_datum_stream_poll_task
+			WHERE status = 'q'
+			AND exec_at <= CURRENT_TIMESTAMP
+			LIMIT 1
+			FOR UPDATE SKIP LOCKED;
+BEGIN
+	OPEN curs;
+	FETCH NEXT FROM curs INTO rec;
+	IF FOUND THEN
+		UPDATE solarcin.cin_datum_stream_poll_task SET status = 'p' WHERE CURRENT OF curs;
+	END IF;
+	CLOSE curs;
+	RETURN rec;
+END
+$$;
