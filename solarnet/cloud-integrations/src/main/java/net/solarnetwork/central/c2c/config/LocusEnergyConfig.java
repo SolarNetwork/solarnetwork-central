@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.config;
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -152,9 +153,10 @@ public class LocusEnergyConfig {
 	@Qualifier(LOCUS_ENERGY)
 	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new LocusEnergyCloudDatumStreamService(userEventAppender, encryptor,
-				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
-				datumStreamPropertyConfigurationDao, restOps, oauthClientManager);
+		var service = new LocusEnergyCloudDatumStreamService(Executors::newVirtualThreadPerTaskExecutor,
+				userEventAppender, encryptor, expressionService, integrationConfigurationDao,
+				datumStreamConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
+				oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName());

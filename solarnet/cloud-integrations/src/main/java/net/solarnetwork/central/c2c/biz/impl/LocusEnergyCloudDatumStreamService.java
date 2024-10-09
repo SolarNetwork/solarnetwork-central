@@ -23,6 +23,8 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
@@ -44,9 +46,11 @@ import static org.springframework.util.StringUtils.collectionToCommaDelimitedStr
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -54,12 +58,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SequencedCollection;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -67,10 +70,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -80,13 +86,14 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -129,9 +136,16 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		SETTINGS = List.of(granularitySpec);
 	}
 
+	private Supplier<ExecutorService> executorSupplier;
+
 	/**
 	 * Constructor.
 	 *
+	 * @param executorSupplier
+	 *        a supplier of {@link ExecutorService} instances; this supplier
+	 *        will be invoked, then closed, on demand; this style supports
+	 *        virtual threads, for a shared instance implementation the
+	 *        {@code close} method will need to be overwritten
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -151,8 +165,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public LocusEnergyCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
-			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
+	public LocusEnergyCloudDatumStreamService(Supplier<ExecutorService> executorSupplier,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
@@ -165,6 +180,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager),
 				oauthClientManager);
+		this.executorSupplier = requireNonNullArgument(executorSupplier, "executorSupplier");
 	}
 
 	@Override
@@ -420,6 +436,23 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		return result;
 	}
 
+	@Override
+	public Datum latestDatum(CloudDatumStreamConfiguration datumStream) {
+		final var data = queryForDatum(datumStream, null);
+		if ( data.isEmpty() ) {
+			return null;
+		}
+		return data.getLast();
+	}
+
+	@Override
+	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter) {
+		requireNonNullArgument(datumStream, "datumStream");
+		requireNonNullArgument(filter, "filter");
+		return queryForDatum(datumStream, filter);
+	}
+
 	/**
 	 * Value reference pattern, with component matching groups.
 	 *
@@ -434,16 +467,35 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 * <li>field</li>
 	 * </ol>
 	 */
-	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(\\d+)/(\\d+)/([^/]+)/(.+)");
+	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(-?\\d+)/(-?\\d+)/([^/]+)/(.+)");
 
-	@Override
-	public Result<Datum> latestDatum(CloudDatumStreamConfiguration datumStream, Locale locale) {
+	/**
+	 * Query for datum.
+	 *
+	 * @param datumStream
+	 *        the stream to query
+	 * @param filter
+	 *        an optional filter; if not provided then query for the latest
+	 *        datum only
+	 * @param locale
+	 *        the locale for messages
+	 * @return the results
+	 */
+	private SequencedCollection<Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
-		requireNonNullArgument(locale, "locale");
+
 		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 
+		if ( !datumStream.isFullyConfigured() ) {
+			String msg = "Datum stream is not fully configured.";
+			Errors errors = new BindException(datumStream, "datumStream");
+			errors.reject("error.datumStream.notFullyConfigured", null, msg);
+			throw new ValidationException(msg, errors, ms);
+		}
+
 		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				datumStream.getIntegrationId());
+				requireNonNullArgument(datumStream.getIntegrationId(), "datumStream.integrationId"));
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(integrationId), "integration");
 
@@ -463,9 +515,17 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 		}
 		if ( valueProps.isEmpty() ) {
-			String errMsg = ms.getMessage("error.datumStream.noProperties", null, locale);
-			return Result.error("LECDS.0001", errMsg);
+			String msg = "Datum stream has no properties.";
+			Errors errors = new BindException(datumStream, "datumStream");
+			errors.reject("error.datumStream.noProperties", null, msg);
+			throw new ValidationException(msg, errors, ms);
 		}
+
+		final LocusEnergyGranularity granularity = (filter == null || !filter.hasDateRange()
+				|| datumStream.serviceProperty(GRANULARITY_SETTING, String.class) == null
+						? LocusEnergyGranularity.Latest
+						: LocusEnergyGranularity.fromValue(
+								datumStream.serviceProperty(GRANULARITY_SETTING, String.class)));
 
 		// group requests by component, field names
 		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
@@ -480,98 +540,128 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			fieldNamesByProperty.put(config.getId(), m.group(4));
 		}
 
-		// make parallel requests for all data, using the oldest reported timestamp if more than one
-		final AtomicReference<Instant> tsRef = new AtomicReference<>();
-		final ConcurrentMap<String, JsonNode> datumValues = new ConcurrentHashMap<>(8, 0.9f, 2);
-		try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-			List<Future<?>> futures = new ArrayList<>(fieldNamesByComponent.size());
+		List<Map<String, JsonNode>> data = new ArrayList<>(fieldNamesByComponent.size());
+		try (var executor = executorSupplier.get()) {
+			List<Future<Map<String, JsonNode>>> futures = new ArrayList<>(fieldNamesByComponent.size());
 			for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
 				Set<String> fieldNames = reqEntry.getValue();
 				futures.add(executor.submit(() -> {
 					ObjectNode json = restOpsHelper.httpGet("Fetch data", integration, ObjectNode.class,
 							(headers) -> {
 							// @formatter:off
-								return UriComponentsBuilder.fromUri(BASE_URI)
+								UriComponentsBuilder b = UriComponentsBuilder.fromUri(BASE_URI)
 										.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
-										.queryParam("gran", LocusEnergyGranularity.Latest.getKey())
+										.queryParam("gran", granularity.getKey())
 										.queryParam("tz", UTC.getId())
 										.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
-										.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
-										.toUri();
+										;
 								// @formatter:on
+								if ( granularity != LocusEnergyGranularity.Latest ) {
+									// add date range
+									var start = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
+									b.queryParam("start", ISO_LOCAL_DATE_TIME.format(start));
+
+									var end = filter.getEndDate().truncatedTo(ChronoUnit.SECONDS);
+									if ( granularity.getConstraint() != null ) {
+										// enforce max time constraint
+										var maxEnd = Instant
+												.from(granularity.getConstraint().addTo(start));
+										if ( end.isAfter(maxEnd) ) {
+											end = maxEnd;
+										}
+									}
+									b.queryParam("end", ISO_LOCAL_DATE_TIME.format(end));
+								}
+								return b.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
+										.toUri();
+
 							}, (res) -> res.getBody());
+					Map<String, JsonNode> datumValues = new LinkedHashMap<>(fieldNames.size());
 					for ( JsonNode dataNode : json.path("data") ) {
-						if ( dataNode instanceof ObjectNode o ) {
+						if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
 							for ( Iterator<Entry<String, JsonNode>> itr = o.fields(); itr.hasNext(); ) {
 								Entry<String, JsonNode> e = itr.next();
-								if ( "ts".equals(e.getKey()) ) {
-									// return the oldest of any timestamp
-									try {
-										Instant dataTs = Instant.parse(e.getValue().asText());
-										tsRef.getAndUpdate(v -> {
-											return v == null || dataTs.isBefore(v) ? dataTs : v;
-										});
-									} catch ( DateTimeParseException dtpe ) {
-										// ignore and continue
-									}
-								} else if ( fieldNames.contains(e.getKey()) ) {
+								if ( "ts".equals(e.getKey()) || fieldNames.contains(e.getKey()) ) {
 									datumValues.put(e.getKey(), e.getValue());
 								}
 							}
 						}
 					}
+					return datumValues;
 				}));
 			}
-			for ( Future<?> f : futures ) {
-				f.get(); // throw ExecutionException
+			if ( futures.isEmpty() ) {
+				throw new RuntimeException("Where is the future?");
+			}
+			for ( var f : futures ) {
+				data.add(f.get());
 			}
 		} catch ( Exception e ) {
-			Throwable t = e.getCause();
-			String errMsg = ms.getMessage("error.dataRequest", new Object[] { t.getMessage() }, locale);
-			return Result.error("LECDS.0002", errMsg);
+			String msg = "Error requesting data.";
+			Throwable t = e;
+			while ( t.getCause() != null ) {
+				t = t.getCause();
+			}
+			Errors errors = new BindException(datumStream, "datumStream");
+			errors.reject("error.dataRequest", new Object[] { t.getMessage() }, msg);
+			throw new ValidationException(msg, errors, ms, t);
 		}
 
-		final Instant ts = tsRef.get();
-		if ( ts == null ) {
-			String errMsg = ms.getMessage("error.missingTimestamp", null, locale);
-			return Result.error("LECDS.0003", errMsg);
-		}
+		// merge multiple streams based on timestamp
+		final Map<Instant, GeneralDatum> result = new HashMap<>(data.size());
+		for ( Map<String, JsonNode> datumValues : data ) {
+			final Instant ts;
+			try {
+				ts = Instant.parse(datumValues.get("ts").asText());
+			} catch ( DateTimeParseException dtpe ) {
+				// ignore and continue
+				continue;
+			}
 
-		DatumSamples samples = new DatumSamples();
-		for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
-			String fieldName = fieldNamesByProperty.get(property.getId());
-			JsonNode val = datumValues.get(fieldName);
-			if ( val != null ) {
-				DatumSamplesType propType = property.getPropertyType();
-				Object propVal = switch (propType) {
-					case Accumulating, Instantaneous -> {
-						// convert to number
-						if ( val.isBigDecimal() ) {
-							yield val.decimalValue();
-						} else if ( val.isFloat() ) {
-							yield val.floatValue();
-						} else if ( val.isDouble() ) {
-							yield val.doubleValue();
-						} else if ( val.isBigInteger() ) {
-							yield val.bigIntegerValue();
-						} else if ( val.isLong() ) {
-							yield val.longValue();
-						} else if ( val.isFloat() ) {
-							yield val.floatValue();
-						} else {
-							yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+			final GeneralDatum datum = result.computeIfAbsent(ts,
+					k -> new GeneralDatum(datumStream.datumId(k), new DatumSamples()));
+			final DatumSamples samples = datum.getSamples();
+
+			for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
+				String fieldName = fieldNamesByProperty.get(property.getId());
+				JsonNode val = datumValues.get(fieldName);
+				if ( val != null ) {
+					DatumSamplesType propType = property.getPropertyType();
+					Object propVal = switch (propType) {
+						case Accumulating, Instantaneous -> {
+							// convert to number
+							if ( val.isBigDecimal() ) {
+								yield val.decimalValue();
+							} else if ( val.isFloat() ) {
+								yield val.floatValue();
+							} else if ( val.isDouble() ) {
+								yield val.doubleValue();
+							} else if ( val.isBigInteger() ) {
+								yield val.bigIntegerValue();
+							} else if ( val.isLong() ) {
+								yield val.longValue();
+							} else if ( val.isFloat() ) {
+								yield val.floatValue();
+							} else {
+								yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+							}
 						}
-					}
-					case Status, Tag -> val.asText();
-				};
-				propVal = property.applyValueTransforms(propVal);
-				samples.putSampleValue(propType, property.getPropertyName(), propVal);
+						case Status, Tag -> val.asText();
+					};
+					propVal = property.applyValueTransforms(propVal);
+					samples.putSampleValue(propType, property.getPropertyName(), propVal);
+				}
 			}
 		}
 
-		final var datum = new GeneralDatum(datumStream.datumId(ts), samples);
-		evaulateExpressions(exprProps, datum, Map.of("integrationId", datumStream.getIntegrationId()));
-		return Result.success(datum);
-	}
+		// evaluate expressions on merged datum
+		if ( !exprProps.isEmpty() ) {
+			for ( GeneralDatum datum : result.values() ) {
+				evaulateExpressions(exprProps, datum,
+						Map.of("integrationId", datumStream.getIntegrationId()));
+			}
+		}
 
+		return result.values().stream().sorted(Identity.sortByIdentity()).collect(toList());
+	}
 }

@@ -24,12 +24,13 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.SequencedCollection;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.settings.SettingSpecifierProvider;
@@ -83,10 +84,25 @@ public interface CloudDatumStreamService
 	 *
 	 * @param datumStream
 	 *        the datum stream configuration to get the latest datum for
-	 * @param locale
-	 *        the locale to use for error messages
 	 * @return the result, never {@literal null}
 	 */
-	Result<Datum> latestDatum(CloudDatumStreamConfiguration datumStream, Locale locale);
+	Datum latestDatum(CloudDatumStreamConfiguration datumStream);
+
+	/**
+	 * Get the latest available datum for a datum stream configuration.
+	 *
+	 * <p>
+	 * This method can be used to verify a datum stream's configuration is
+	 * valid, such as credentials and the mapping onto datum.
+	 * </p>
+	 *
+	 * @param datumStream
+	 *        the datum stream configuration to get the latest datum for
+	 * @param filter
+	 *        the query filter
+	 * @return the result, never {@literal null}
+	 */
+	SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter);
 
 }

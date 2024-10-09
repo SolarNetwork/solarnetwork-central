@@ -209,10 +209,8 @@ public interface UserCloudIntegrationsBiz {
 	 * @param id
 	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
 	 *        datum for
-	 * @param locale
-	 *        the desired locale for any error messages
 	 * @return the result, never {@literal null}
 	 */
-	Result<Datum> latestDatumStreamDatumForId(UserLongCompositePK id, Locale locale);
+	Datum latestDatumStreamDatumForId(UserLongCompositePK id);
 
 }

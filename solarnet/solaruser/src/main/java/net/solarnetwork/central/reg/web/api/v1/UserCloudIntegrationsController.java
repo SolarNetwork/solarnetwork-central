@@ -298,15 +298,12 @@ public class UserCloudIntegrationsController {
 	 *
 	 * @param datumStreamId
 	 *        the datum stream ID
-	 * @param locale
-	 *        the desired locale for any error messages
 	 * @return the result
 	 */
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/latest-datum", method = RequestMethod.GET)
-	public Result<Datum> cloudDatumStreamLatestDatum(@PathVariable("datumStreamId") Long datumStreamId,
-			Locale locale) {
-		return userCloudIntegrationsBiz.latestDatumStreamDatumForId(
-				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), locale);
+	public Result<Datum> cloudDatumStreamLatestDatum(@PathVariable("datumStreamId") Long datumStreamId) {
+		return success(userCloudIntegrationsBiz.latestDatumStreamDatumForId(
+				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId)));
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties", method = RequestMethod.GET)

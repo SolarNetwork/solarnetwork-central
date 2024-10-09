@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import java.time.Period;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * Enumeration of Locus Energy data granularity values.
@@ -87,6 +88,29 @@ public enum LocusEnergyGranularity {
 	 */
 	public final Period getConstraint() {
 		return constraint;
+	}
+
+	/**
+	 * Get an enum instance for a name or key value.
+	 *
+	 * @param value
+	 *        the enumeration name or key value, case-insensitve
+	 * @return the enum; if {@code value} is {@literal null} or empty then
+	 *         {@link #Latest} is returned
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not a valid value
+	 */
+	@JsonCreator
+	public static LocusEnergyGranularity fromValue(String value) {
+		if ( value == null || value.isEmpty() ) {
+			return Latest;
+		}
+		for ( LocusEnergyGranularity e : LocusEnergyGranularity.values() ) {
+			if ( value.equalsIgnoreCase(e.key) || value.equalsIgnoreCase(e.name()) ) {
+				return e;
+			}
+		}
+		throw new IllegalArgumentException("Unknown LocusEnergyGranularity value [" + value + "]");
 	}
 
 }

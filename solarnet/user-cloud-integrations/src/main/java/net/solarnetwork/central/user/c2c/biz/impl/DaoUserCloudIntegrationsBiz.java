@@ -286,12 +286,12 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Result<Datum> latestDatumStreamDatumForId(UserLongCompositePK id, Locale locale) {
+	public Datum latestDatumStreamDatumForId(UserLongCompositePK id) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");
 		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
 				"datumStreamService");
-		return service.latestDatum(datumStream, locale);
+		return service.latestDatum(datumStream);
 	}
 
 	private void validateInput(final Object input) {

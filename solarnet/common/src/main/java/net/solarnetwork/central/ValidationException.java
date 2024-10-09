@@ -29,7 +29,7 @@ import org.springframework.validation.Errors;
  * Exception for validation errors.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class ValidationException extends RuntimeException {
 
@@ -68,6 +68,21 @@ public class ValidationException extends RuntimeException {
 	}
 
 	/**
+	 * Constructor with Errors and a MessageSource.
+	 * 
+	 * @param message
+	 *        the message
+	 * @param errors
+	 *        the errors
+	 * @param messageSource
+	 *        the message source to use to resolve the Errors against
+	 * @since 1.2
+	 */
+	public ValidationException(String message, Errors errors, MessageSource messageSource) {
+		this(message, errors, messageSource, null);
+	}
+
+	/**
 	 * Constructor with Errors and a MessageSource and root cause.
 	 * 
 	 * @param errors
@@ -78,7 +93,25 @@ public class ValidationException extends RuntimeException {
 	 *        the causing exception
 	 */
 	public ValidationException(Errors errors, MessageSource messageSource, Throwable cause) {
-		super(cause);
+		this(null, errors, messageSource, cause);
+	}
+
+	/**
+	 * Constructor with Errors and a MessageSource and root cause.
+	 * 
+	 * @param message
+	 *        the message
+	 * @param errors
+	 *        the errors
+	 * @param messageSource
+	 *        the message source to use to resolve the Errors against
+	 * @param cause
+	 *        the causing exception
+	 * @since 1.2
+	 */
+	public ValidationException(String message, Errors errors, MessageSource messageSource,
+			Throwable cause) {
+		super(message, cause);
 		this.errors = errors;
 		this.messageSource = messageSource;
 	}
