@@ -40,7 +40,7 @@ public interface CloudDatumStreamPollTaskDao {
 	 * This method will "claim" a task that is currently in a "queued" state,
 	 * changing the state to "claimed".
 	 *
-	 * @return a claimed job, or {@literal null} if none could be claimed
+	 * @return a claimed task, or {@literal null} if none could be claimed
 	 */
 	CloudDatumStreamPollTaskEntity claimQueuedTask();
 
