@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -52,6 +53,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
@@ -292,6 +294,16 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
 				"datumStreamService");
 		return service.latestDatum(datumStream);
+	}
+
+	@Override
+	public SequencedCollection<? extends Datum> listDatumStreamDatumForId(UserLongCompositePK id,
+			CloudDatumStreamQueryFilter filter) {
+		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
+				"datumStream");
+		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
+				"datumStreamService");
+		return service.datum(datumStream, filter);
 	}
 
 	private void validateInput(final Object input) {

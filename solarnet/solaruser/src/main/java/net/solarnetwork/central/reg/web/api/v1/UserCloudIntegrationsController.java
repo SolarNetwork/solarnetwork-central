@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.SequencedCollection;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,6 +49,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -304,6 +306,20 @@ public class UserCloudIntegrationsController {
 	public Result<Datum> cloudDatumStreamLatestDatum(@PathVariable("datumStreamId") Long datumStreamId) {
 		return success(userCloudIntegrationsBiz.latestDatumStreamDatumForId(
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId)));
+	}
+
+	/**
+	 * List the data values for a datum stream service and an optional filter.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @return the result
+	 */
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/datum", method = RequestMethod.GET)
+	public Result<SequencedCollection<? extends Datum>> cloudDatumStreamListDatum(
+			@PathVariable("datumStreamId") Long datumStreamId, BasicQueryFilter filter) {
+		return success(userCloudIntegrationsBiz.listDatumStreamDatumForId(
+				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter));
 	}
 
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties", method = RequestMethod.GET)

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -122,8 +123,20 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			}
 			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamId",
 					config.getDatumStreamId());
-			Object val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
-					Object.class);
+			Object val = null;
+			try {
+				val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
+						Object.class);
+			} catch ( Exception e ) {
+				Throwable t = e;
+				while ( t.getCause() != null ) {
+					t = t.getCause();
+				}
+				String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+				userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
+						EXPRESSION_ERROR_TAGS, "Error evaluating datum stream property expression.",
+						Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
+			}
 			if ( val != null ) {
 				Object propVal = switch (config.getPropertyType()) {
 					case Accumulating, Instantaneous -> {

@@ -25,12 +25,14 @@ package net.solarnetwork.central.user.c2c.biz;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SequencedCollection;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -212,5 +214,18 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the result, never {@literal null}
 	 */
 	Datum latestDatumStreamDatumForId(UserLongCompositePK id);
+
+	/**
+	 * List datum for a datum stream configuration matching search criteria.
+	 *
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
+	 *        datum for
+	 * @param filter
+	 *        the search criteria
+	 * @return the result, never {@literal null}
+	 */
+	SequencedCollection<? extends Datum> listDatumStreamDatumForId(UserLongCompositePK id,
+			CloudDatumStreamQueryFilter filter);
 
 }

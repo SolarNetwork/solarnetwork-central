@@ -91,18 +91,13 @@ public interface CloudDatumStreamService
 	/**
 	 * Get the latest available datum for a datum stream configuration.
 	 *
-	 * <p>
-	 * This method can be used to verify a datum stream's configuration is
-	 * valid, such as credentials and the mapping onto datum.
-	 * </p>
-	 *
 	 * @param datumStream
 	 *        the datum stream configuration to get the latest datum for
 	 * @param filter
 	 *        the query filter
 	 * @return the result, never {@literal null}
 	 */
-	SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	SequencedCollection<? extends Datum> datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter);
 
 }

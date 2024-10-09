@@ -24,7 +24,6 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
@@ -446,7 +445,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	@Override
-	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	public SequencedCollection<? extends Datum> datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
@@ -469,6 +468,24 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/(-?\\d+)/(-?\\d+)/([^/]+)/(.+)");
 
+	private LocusEnergyGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter) {
+		if ( filter == null || !filter.hasDateRange() ) {
+			return LocusEnergyGranularity.Latest;
+		}
+		LocusEnergyGranularity granularity = null;
+		try {
+			granularity = LocusEnergyGranularity
+					.fromValue(datumStream.serviceProperty(GRANULARITY_SETTING, String.class));
+			if ( granularity == LocusEnergyGranularity.Latest ) {
+				granularity = null;
+			}
+		} catch ( IllegalArgumentException e ) {
+			// ignore
+		}
+		return (granularity != null ? granularity : LocusEnergyGranularity.FiveMinute);
+	}
+
 	/**
 	 * Query for datum.
 	 *
@@ -481,7 +498,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the locale for messages
 	 * @return the results
 	 */
-	private SequencedCollection<Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
+	private SequencedCollection<? extends Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 
@@ -521,11 +538,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			throw new ValidationException(msg, errors, ms);
 		}
 
-		final LocusEnergyGranularity granularity = (filter == null || !filter.hasDateRange()
-				|| datumStream.serviceProperty(GRANULARITY_SETTING, String.class) == null
-						? LocusEnergyGranularity.Latest
-						: LocusEnergyGranularity.fromValue(
-								datumStream.serviceProperty(GRANULARITY_SETTING, String.class)));
+		final LocusEnergyGranularity granularity = resolveGranularity(datumStream, filter);
 
 		// group requests by component, field names
 		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
@@ -540,9 +553,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			fieldNamesByProperty.put(config.getId(), m.group(4));
 		}
 
-		List<Map<String, JsonNode>> data = new ArrayList<>(fieldNamesByComponent.size());
+		List<List<Map<String, JsonNode>>> data = new ArrayList<>(fieldNamesByComponent.size());
 		try (var executor = executorSupplier.get()) {
-			List<Future<Map<String, JsonNode>>> futures = new ArrayList<>(fieldNamesByComponent.size());
+			List<Future<List<Map<String, JsonNode>>>> futures = new ArrayList<>(
+					fieldNamesByComponent.size());
 			for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
 				Set<String> fieldNames = reqEntry.getValue();
 				futures.add(executor.submit(() -> {
@@ -552,14 +566,15 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 								UriComponentsBuilder b = UriComponentsBuilder.fromUri(BASE_URI)
 										.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
 										.queryParam("gran", granularity.getKey())
-										.queryParam("tz", UTC.getId())
+										.queryParam("tz", "UTC")
 										.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
 										;
 								// @formatter:on
 								if ( granularity != LocusEnergyGranularity.Latest ) {
 									// add date range
 									var start = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
-									b.queryParam("start", ISO_LOCAL_DATE_TIME.format(start));
+									b.queryParam("start",
+											ISO_LOCAL_DATE_TIME.format(start.atOffset(UTC)));
 
 									var end = filter.getEndDate().truncatedTo(ChronoUnit.SECONDS);
 									if ( granularity.getConstraint() != null ) {
@@ -570,24 +585,29 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 											end = maxEnd;
 										}
 									}
-									b.queryParam("end", ISO_LOCAL_DATE_TIME.format(end));
+									b.queryParam("end", ISO_LOCAL_DATE_TIME.format(end.atOffset(UTC)));
 								}
 								return b.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
 										.toUri();
 
 							}, (res) -> res.getBody());
-					Map<String, JsonNode> datumValues = new LinkedHashMap<>(fieldNames.size());
+					List<Map<String, JsonNode>> datumValuesList = new ArrayList<>();
 					for ( JsonNode dataNode : json.path("data") ) {
 						if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
+							Map<String, JsonNode> datumValues = new LinkedHashMap<>(fieldNames.size());
 							for ( Iterator<Entry<String, JsonNode>> itr = o.fields(); itr.hasNext(); ) {
 								Entry<String, JsonNode> e = itr.next();
 								if ( "ts".equals(e.getKey()) || fieldNames.contains(e.getKey()) ) {
 									datumValues.put(e.getKey(), e.getValue());
 								}
 							}
+							// if did not find ts + at least one property, ignore
+							if ( datumValues.size() > 1 ) {
+								datumValuesList.add(datumValues);
+							}
 						}
 					}
-					return datumValues;
+					return datumValuesList;
 				}));
 			}
 			if ( futures.isEmpty() ) {
@@ -609,47 +629,49 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 
 		// merge multiple streams based on timestamp
 		final Map<Instant, GeneralDatum> result = new HashMap<>(data.size());
-		for ( Map<String, JsonNode> datumValues : data ) {
-			final Instant ts;
-			try {
-				ts = Instant.parse(datumValues.get("ts").asText());
-			} catch ( DateTimeParseException dtpe ) {
-				// ignore and continue
-				continue;
-			}
+		for ( List<Map<String, JsonNode>> datumValuesList : data ) {
+			for ( Map<String, JsonNode> datumValues : datumValuesList ) {
+				final Instant ts;
+				try {
+					ts = Instant.parse(datumValues.get("ts").asText());
+				} catch ( DateTimeParseException dtpe ) {
+					// ignore and continue
+					continue;
+				}
 
-			final GeneralDatum datum = result.computeIfAbsent(ts,
-					k -> new GeneralDatum(datumStream.datumId(k), new DatumSamples()));
-			final DatumSamples samples = datum.getSamples();
+				final GeneralDatum datum = result.computeIfAbsent(ts,
+						k -> new GeneralDatum(datumStream.datumId(k), new DatumSamples()));
+				final DatumSamples samples = datum.getSamples();
 
-			for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
-				String fieldName = fieldNamesByProperty.get(property.getId());
-				JsonNode val = datumValues.get(fieldName);
-				if ( val != null ) {
-					DatumSamplesType propType = property.getPropertyType();
-					Object propVal = switch (propType) {
-						case Accumulating, Instantaneous -> {
-							// convert to number
-							if ( val.isBigDecimal() ) {
-								yield val.decimalValue();
-							} else if ( val.isFloat() ) {
-								yield val.floatValue();
-							} else if ( val.isDouble() ) {
-								yield val.doubleValue();
-							} else if ( val.isBigInteger() ) {
-								yield val.bigIntegerValue();
-							} else if ( val.isLong() ) {
-								yield val.longValue();
-							} else if ( val.isFloat() ) {
-								yield val.floatValue();
-							} else {
-								yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+				for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
+					String fieldName = fieldNamesByProperty.get(property.getId());
+					JsonNode val = datumValues.get(fieldName);
+					if ( val != null ) {
+						DatumSamplesType propType = property.getPropertyType();
+						Object propVal = switch (propType) {
+							case Accumulating, Instantaneous -> {
+								// convert to number
+								if ( val.isBigDecimal() ) {
+									yield val.decimalValue();
+								} else if ( val.isFloat() ) {
+									yield val.floatValue();
+								} else if ( val.isDouble() ) {
+									yield val.doubleValue();
+								} else if ( val.isBigInteger() ) {
+									yield val.bigIntegerValue();
+								} else if ( val.isLong() ) {
+									yield val.longValue();
+								} else if ( val.isFloat() ) {
+									yield val.floatValue();
+								} else {
+									yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+								}
 							}
-						}
-						case Status, Tag -> val.asText();
-					};
-					propVal = property.applyValueTransforms(propVal);
-					samples.putSampleValue(propType, property.getPropertyName(), propVal);
+							case Status, Tag -> val.asText();
+						};
+						propVal = property.applyValueTransforms(propVal);
+						samples.putSampleValue(propType, property.getPropertyName(), propVal);
+					}
 				}
 			}
 		}
@@ -662,6 +684,6 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 		}
 
-		return result.values().stream().sorted(Identity.sortByIdentity()).collect(toList());
+		return result.values().stream().sorted(Identity.sortByIdentity()).toList();
 	}
 }
