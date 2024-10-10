@@ -297,7 +297,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public SequencedCollection<? extends Datum> listDatumStreamDatumForId(UserLongCompositePK id,
+	public SequencedCollection<Datum> listDatumStreamDatumForId(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");

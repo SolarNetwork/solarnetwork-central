@@ -44,7 +44,8 @@ public interface CompositeKey {
 	 * @since 1.2
 	 */
 	default String ident() {
-		StringBuilder buf = new StringBuilder('(');
+		StringBuilder buf = new StringBuilder(64);
+		buf.append('(');
 		final int len = keyComponentLength();
 		for ( int i = 0; i < len; i++ ) {
 			if ( i > 0 ) {

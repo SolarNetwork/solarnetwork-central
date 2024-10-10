@@ -82,8 +82,6 @@ public class CloudDatumStreamPollTaskEntity
 	 *        the user ID
 	 * @param dataSourceId
 	 *        the data source ID
-	 * @param created
-	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */

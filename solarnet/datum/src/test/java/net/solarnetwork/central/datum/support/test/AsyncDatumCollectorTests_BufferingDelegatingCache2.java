@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support.test;
 
+import static net.solarnetwork.central.datum.support.DatumUtils.convertGeneralDatum;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
@@ -69,6 +70,7 @@ import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
@@ -331,6 +333,11 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
 			doStore(entity);
 			return null;
+		}
+
+		@Override
+		public DatumPK store(Datum datum) {
+			return persist(convertGeneralDatum(datum));
 		}
 
 		@Override

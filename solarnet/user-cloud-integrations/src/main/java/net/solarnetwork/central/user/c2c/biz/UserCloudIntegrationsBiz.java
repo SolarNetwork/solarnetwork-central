@@ -225,7 +225,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the search criteria
 	 * @return the result, never {@literal null}
 	 */
-	SequencedCollection<? extends Datum> listDatumStreamDatumForId(UserLongCompositePK id,
+	SequencedCollection<Datum> listDatumStreamDatumForId(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter);
 
 }

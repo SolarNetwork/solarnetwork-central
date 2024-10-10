@@ -60,13 +60,16 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 
 	@Override
 	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
-		try {
+		int count = 0;
+		while ( remainingIterataions.getAndDecrement() > 0 ) {
 			CloudDatumStreamPollTaskEntity task = service.claimQueuedTask();
-			// TODO execute task
-		} finally {
-			// TODO cleanup
+			if ( task == null ) {
+				break;
+			}
+			count++;
+			service.executeTask(task);
 		}
-		return 0;
+		return count;
 	}
 
 }

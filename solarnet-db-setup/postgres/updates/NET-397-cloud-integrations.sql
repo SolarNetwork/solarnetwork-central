@@ -117,7 +117,7 @@ CREATE TABLE solarcin.cin_datum_stream_poll_task (
 	exec_at 		TIMESTAMP WITH TIME ZONE NOT NULL,
 	start_at 		TIMESTAMP WITH TIME ZONE NOT NULL,
 	message 		TEXT,
-	jdata 			JSONB,
+	sprops 			JSONB,
 	CONSTRAINT cin_datum_stream_poll_task_pk PRIMARY KEY (user_id, ds_id),
 	CONSTRAINT cin_datum_stream_poll_task_ds_fk FOREIGN KEY (user_id, ds_id)
 		REFERENCES solarcin.cin_datum_stream (user_id, id) MATCH SIMPLE
@@ -138,7 +138,7 @@ CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solarcin.cin_datum_stream_po
  * @return the claimed row, if one was able to be claimed
  */
 CREATE OR REPLACE FUNCTION solarcin.claim_datum_stream_poll_task()
-	RETURNS solarcin.cin_datum_stream_poll_task LANGUAGE plpgsql VOLATILE AS
+	RETURNS SETOF solarcin.cin_datum_stream_poll_task LANGUAGE plpgsql VOLATILE ROWS 1 AS
 $$
 DECLARE
 	rec solarcin.cin_datum_stream_poll_task;
@@ -152,8 +152,10 @@ BEGIN
 	FETCH NEXT FROM curs INTO rec;
 	IF FOUND THEN
 		UPDATE solarcin.cin_datum_stream_poll_task SET status = 'p' WHERE CURRENT OF curs;
+		rec.status = 'p';
+		RETURN NEXT rec;
 	END IF;
 	CLOSE curs;
-	RETURN rec;
+	RETURN;
 END
 $$;

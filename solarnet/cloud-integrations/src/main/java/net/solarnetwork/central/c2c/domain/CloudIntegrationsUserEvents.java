@@ -53,6 +53,9 @@ public interface CloudIntegrationsUserEvents {
 	/** A user event tag for an expression event. */
 	String EXPRESSION_TAG = "expr";
 
+	/** A user event tag for a datum stream poll event. */
+	String POLL_TAG = "poll";
+
 	/** User event data key for a configuration ID. */
 	String CONFIG_ID_DATA_KEY = "configId";
 
@@ -79,6 +82,9 @@ public interface CloudIntegrationsUserEvents {
 
 	/** Tags for an expression error event. */
 	String[] EXPRESSION_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, EXPRESSION_TAG };
+
+	/** Tags for a poll error event. */
+	String[] POLL_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, POLL_TAG };
 
 	/**
 	 * Populate user-related composite key components to a parameter map.
