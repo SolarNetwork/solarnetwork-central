@@ -445,7 +445,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	@Override
-	public SequencedCollection<? extends Datum> datum(CloudDatumStreamConfiguration datumStream,
+	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
@@ -498,7 +498,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the locale for messages
 	 * @return the results
 	 */
-	private SequencedCollection<? extends Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
+	private SequencedCollection<Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 
@@ -684,6 +684,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 		}
 
-		return result.values().stream().sorted(Identity.sortByIdentity()).toList();
+		return result.values().stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast)
+				.toList();
 	}
 }

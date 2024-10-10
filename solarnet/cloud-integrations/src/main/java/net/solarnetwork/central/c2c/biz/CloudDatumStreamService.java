@@ -97,7 +97,7 @@ public interface CloudDatumStreamService
 	 *        the query filter
 	 * @return the result, never {@literal null}
 	 */
-	SequencedCollection<? extends Datum> datum(CloudDatumStreamConfiguration datumStream,
+	SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter);
 
 }
