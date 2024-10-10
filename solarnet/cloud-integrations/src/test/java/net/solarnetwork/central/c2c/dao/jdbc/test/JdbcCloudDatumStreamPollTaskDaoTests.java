@@ -350,7 +350,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// @formatter:off
 		then(result)
-			.as("Retrieved entity matches inserted row")
+			.as("Retrieved entity matches with with Queued state")
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
 			;
@@ -402,7 +402,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// @formatter:off
 		then(result)
-			.as("Retrieved entity matches inserted row")
+			.as("Retrieved entity matches row with executeAt in the past")
 			.isEqualTo(expected)
 			.matches(c -> c.isSameAs(expected), "Claimed entity has Claimed state")
 			;
