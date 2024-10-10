@@ -289,6 +289,67 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	}
 
 	@Test
+	public void updateState() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		final BasicClaimableJobState newState = BasicClaimableJobState.Claimed;
+		boolean result = dao.updateTaskState(last.getId(), newState,
+				new LinkedHashSet<>(asList(BasicClaimableJobState.Queued)));
+		CloudDatumStreamPollTaskEntity updated = dao.get(last.getId());
+
+		// THEN
+		List<Map<String, Object>> data = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1);
+
+		// @formatter:off
+		then(result)
+			.as("True returned because row updated")
+			.isTrue()
+			;
+
+		CloudDatumStreamPollTaskEntity expected = last.clone();
+		expected.setState(newState);
+
+		then(updated)
+			.as("Retrieved entity matches updated source")
+			.isEqualTo(last)
+			.as("Entity saved updated state")
+			.matches(c -> c.isSameAs(expected))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateState_noMatch() {
+		// GIVEN
+		insert();
+
+		// WHEN
+		final BasicClaimableJobState newState = BasicClaimableJobState.Completed;
+		boolean result = dao.updateTaskState(last.getId(), newState,
+				new LinkedHashSet<>(asList(BasicClaimableJobState.Claimed)));
+		CloudDatumStreamPollTaskEntity updated = dao.get(last.getId());
+
+		// THEN
+		List<Map<String, Object>> data = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+		then(data).as("Table has 1 row").hasSize(1);
+
+		// @formatter:off
+		then(result)
+			.as("False returned because row not updated because state did not match")
+			.isFalse()
+			;
+
+		then(updated).as("Retrieved entity matches updated source")
+			.isEqualTo(last)
+			.matches(c -> c.isSameAs(last), "Entity keeps original values")
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void delete() {
 		// GIVEN
 		insert();

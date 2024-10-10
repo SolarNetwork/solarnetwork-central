@@ -34,6 +34,7 @@ import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamPollTaskEntity;
+import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamPollTaskEntityState;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpsertCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
@@ -157,6 +158,18 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 			}
 			return null;
 		});
+	}
+
+	@Override
+	public boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
+			SequencedSet<BasicClaimableJobState> expectedStates) {
+		BasicFilter filter = null;
+		if ( expectedStates != null ) {
+			filter = new BasicFilter();
+			filter.setClaimableJobStates(expectedStates);
+		}
+		var sql = new UpdateCloudDatumStreamPollTaskEntityState(id, desiredState, filter);
+		return jdbcOps.update(sql) != 0;
 	}
 
 	@Override

@@ -50,12 +50,28 @@ public interface CloudDatumStreamPollTaskDao extends
 	/**
 	 * Update the state of a specific poll task.
 	 *
-	 * @param info
-	 *        the info to save
+	 * @param id
+	 *        the ID of the task to update the state of
+	 * @param desiredState
+	 *        the state to update the task to
 	 * @param expectedStates
 	 *        a set of states that must include the task's current state in
 	 *        order to change it to {@code desiredState}, or {@literal null} if
 	 *        the current state of the task does not matter
+	 * @return {@literal true} if the task state was changed
+	 */
+	boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
+			SequencedSet<BasicClaimableJobState> expectedStates);
+
+	/**
+	 * Update a specific poll task.
+	 *
+	 * @param info
+	 *        the info to save
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to the info's given state, or {@literal null}
+	 *        if the current state of the task does not matter
 	 * @return {@literal true} if the task state was changed
 	 */
 	boolean updateTask(CloudDatumStreamPollTaskEntity info,
