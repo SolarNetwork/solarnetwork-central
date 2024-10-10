@@ -23,8 +23,14 @@
 package net.solarnetwork.central.c2c.dao;
 
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.SequencedSet;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
+import net.solarnetwork.central.domain.ClaimableJobState;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
@@ -33,12 +39,13 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicFilter extends BasicCoreCriteria
-		implements CloudIntegrationFilter, CloudDatumStreamPropertyFilter {
+public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFilter,
+		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter {
 
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;
 	private Integer[] indexes;
+	private SequencedSet<BasicClaimableJobState> claimableJobStates;
 
 	@Override
 	public BasicFilter clone() {
@@ -65,14 +72,36 @@ public class BasicFilter extends BasicCoreCriteria
 	@Override
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
-		if ( criteria instanceof CloudIntegrationCriteria f ) {
+		if ( criteria instanceof BasicFilter f ) {
 			setIntegrationIds(f.getIntegrationIds());
-		}
-		if ( criteria instanceof CloudDatumStreamCriteria f ) {
 			setDatumStreamIds(f.getDatumStreamIds());
-		}
-		if ( criteria instanceof IndexCriteria f ) {
 			setIndexes(f.getIndexes());
+			setClaimableJobStates(f.getClaimableJobStates());
+		} else {
+			if ( criteria instanceof CloudIntegrationCriteria f ) {
+				setIntegrationIds(f.getIntegrationIds());
+			}
+			if ( criteria instanceof CloudDatumStreamCriteria f ) {
+				setDatumStreamIds(f.getDatumStreamIds());
+			}
+			if ( criteria instanceof IndexCriteria f ) {
+				setIndexes(f.getIndexes());
+			}
+			if ( criteria instanceof ClaimableJobStateCriteria f ) {
+				var set = f.getClaimableJobStates();
+				SequencedSet<BasicClaimableJobState> copy = null;
+				if ( set != null ) {
+					for ( ClaimableJobState s : set ) {
+						if ( s instanceof BasicClaimableJobState j ) {
+							if ( copy == null ) {
+								copy = new LinkedHashSet<>(set.size());
+							}
+							copy.add(j);
+						}
+					}
+				}
+				setClaimableJobStates(copy);
+			}
 		}
 	}
 
@@ -83,6 +112,7 @@ public class BasicFilter extends BasicCoreCriteria
 		result = prime * result + Arrays.hashCode(integrationIds);
 		result = prime * result + Arrays.hashCode(datumStreamIds);
 		result = prime * result + Arrays.hashCode(indexes);
+		result = prime * result + Objects.hashCode(claimableJobStates);
 		return result;
 	}
 
@@ -100,7 +130,8 @@ public class BasicFilter extends BasicCoreCriteria
 		BasicFilter other = (BasicFilter) obj;
 		return Arrays.equals(integrationIds, other.integrationIds)
 				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
-				&& Arrays.equals(indexes, other.indexes);
+				&& Arrays.equals(indexes, other.indexes)
+				&& Objects.equals(claimableJobStates, other.claimableJobStates);
 	}
 
 	@Override
@@ -196,6 +227,21 @@ public class BasicFilter extends BasicCoreCriteria
 	 */
 	public void setIndexes(Integer[] indexes) {
 		this.indexes = indexes;
+	}
+
+	@Override
+	public final SequencedSet<BasicClaimableJobState> getClaimableJobStates() {
+		return claimableJobStates;
+	}
+
+	/**
+	 * Set the claimable job states.
+	 *
+	 * @param claimableJobStates
+	 *        the states to set
+	 */
+	public final void setClaimableJobStates(SequencedSet<BasicClaimableJobState> claimableJobStates) {
+		this.claimableJobStates = claimableJobStates;
 	}
 
 }

@@ -71,8 +71,8 @@ public class CloudDatumStreamPollTaskEntity
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	private CloudDatumStreamPollTaskEntity(UserLongCompositePK id) {
-		super(id, null);
+	public CloudDatumStreamPollTaskEntity(UserLongCompositePK id) {
+		super(id);
 	}
 
 	/**
@@ -117,9 +117,9 @@ public class CloudDatumStreamPollTaskEntity
 		// @formatter:off
 		return Objects.equals(this.state, other.state)
 				&& Objects.equals(this.executeAt, other.executeAt)
-				&& Objects.equals(this.executeAt, other.executeAt)
+				&& Objects.equals(this.startAt, other.startAt)
 				&& Objects.equals(this.message, other.message)
-				&& Objects.equals(this.servicePropsJson, other.servicePropsJson)
+				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
 				;
 		// @formatter:on
 	}

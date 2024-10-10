@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Basic implementation of {@link ClaimableJobState} as an enumeration.
  * 
@@ -56,14 +59,24 @@ public enum BasicClaimableJobState implements ClaimableJobState {
 	 */
 	Completed(COMPLETED_KEY);
 
-	private final char key;
+	private final String key;
 
 	private BasicClaimableJobState(char key) {
-		this.key = key;
+		this.key = String.valueOf(key);
 	}
 
 	@Override
 	public char getKey() {
+		return key.charAt(0);
+	}
+
+	/**
+	 * Get a key value for this enum.
+	 *
+	 * @return the key as a string
+	 */
+	@JsonValue
+	public String keyValue() {
 		return key;
 	}
 
@@ -77,11 +90,35 @@ public enum BasicClaimableJobState implements ClaimableJobState {
 	 */
 	public static BasicClaimableJobState forKey(char key) {
 		for ( BasicClaimableJobState type : BasicClaimableJobState.values() ) {
-			if ( type.key == key ) {
+			if ( type.getKey() == key ) {
 				return type;
 			}
 		}
 		return BasicClaimableJobState.Unknown;
+	}
+
+	/**
+	 * Get an enum instance for a name or key value.
+	 *
+	 * @param value
+	 *        the enumeration name or key value, case-insensitve
+	 * @return the enum, or {@literal null} if value is {@literal null} or empty
+	 * @throws IllegalArgumentException
+	 *         if {@code value} is not a valid value
+	 * @since 1.1
+	 */
+	@JsonCreator
+	public static BasicClaimableJobState fromValue(String value) {
+		if ( value == null || value.isEmpty() ) {
+			return null;
+		}
+		final char key = value.length() == 1 ? Character.toLowerCase(value.charAt(0)) : 0;
+		for ( BasicClaimableJobState e : BasicClaimableJobState.values() ) {
+			if ( key == e.getKey() || value.equalsIgnoreCase(e.name()) ) {
+				return e;
+			}
+		}
+		throw new IllegalArgumentException("Unknown BasicClaimableJobState value [" + value + "]");
 	}
 
 }

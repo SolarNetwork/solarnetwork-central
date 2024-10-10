@@ -32,9 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -204,6 +206,53 @@ public class CinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
 				"select * from solarcin.cin_datum_stream_prop ORDER BY user_id, ds_id, idx");
 		log.debug("solarcin.cin_datum_stream_prop table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new datum stream configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param state
+	 *        the state
+	 * @param executeAt
+	 *        the execution time
+	 * @param startAt
+	 *        the query start time
+	 * @param message
+	 *        a message
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 */
+	public static CloudDatumStreamPollTaskEntity newCloudDatumStreamPollTaskEntity(Long userId,
+			Long datumStreamId, BasicClaimableJobState state, Instant executeAt, Instant startAt,
+			String message, Map<String, Object> serviceProps) {
+		CloudDatumStreamPollTaskEntity conf = new CloudDatumStreamPollTaskEntity(userId, datumStreamId);
+		conf.setState(state);
+		conf.setExecuteAt(executeAt);
+		conf.setStartAt(startAt);
+		conf.setMessage(message);
+		conf.setServiceProps(serviceProps);
+		return conf;
+	}
+
+	/**
+	 * List datum stream configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCloudDatumStreamPollTaskEntityData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps.queryForList(
+				"select * from solarcin.cin_datum_stream_poll_task ORDER BY user_id, ds_id");
+		log.debug("solarcin.cin_datum_stream_poll_task table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

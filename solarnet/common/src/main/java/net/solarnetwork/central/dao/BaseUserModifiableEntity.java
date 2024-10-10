@@ -48,6 +48,19 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 	 * 
 	 * @param id
 	 *        the ID
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 1.2
+	 */
+	public BaseUserModifiableEntity(K id) {
+		super(requireNonNullArgument(id, "id"), null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the ID
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException

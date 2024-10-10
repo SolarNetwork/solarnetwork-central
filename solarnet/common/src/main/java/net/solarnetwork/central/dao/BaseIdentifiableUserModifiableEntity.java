@@ -91,7 +91,8 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 		// @formatter:off
 		return Objects.equals(this.name, other.getName())
 				&& Objects.equals(this.serviceIdentifier, other.getServiceIdentifier())
-				&& Objects.equals(this.servicePropsJson, other.getServicePropsJson())
+				// compare decoded JSON, as JSON key order not assumed
+				&& Objects.equals(getServiceProperties(), other.getServiceProperties())
 				;
 		// @formatter:on
 	}
