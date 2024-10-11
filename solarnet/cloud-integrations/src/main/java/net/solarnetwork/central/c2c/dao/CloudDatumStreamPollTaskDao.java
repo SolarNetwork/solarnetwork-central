@@ -26,6 +26,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
  * DAO API for {@link CloudDatumStreamPollTaskEntity} entities.
@@ -33,8 +34,9 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamPollTaskDao extends
-		GenericCompositeKey2Dao<CloudDatumStreamPollTaskEntity, UserLongCompositePK, Long, Long> {
+public interface CloudDatumStreamPollTaskDao
+		extends GenericCompositeKey2Dao<CloudDatumStreamPollTaskEntity, UserLongCompositePK, Long, Long>,
+		FilterableDao<CloudDatumStreamPollTaskEntity, UserLongCompositePK, CloudDatumStreamPollTaskFilter> {
 
 	/**
 	 * Claim a queued task.

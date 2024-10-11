@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
@@ -56,6 +57,9 @@ public class UserCloudIntegrationsBizConfig {
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Autowired
+	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+
+	@Autowired
 	private Collection<CloudIntegrationService> integrationServices;
 
 	@Qualifier(CLOUD_INTEGRATIONS)
@@ -65,7 +69,7 @@ public class UserCloudIntegrationsBizConfig {
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
 		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao,
-				datumStreamPropertyDao, textEncryptor, integrationServices);
+				datumStreamPropertyDao, datumStreamPollTaskDao, textEncryptor, integrationServices);
 		return biz;
 	}
 

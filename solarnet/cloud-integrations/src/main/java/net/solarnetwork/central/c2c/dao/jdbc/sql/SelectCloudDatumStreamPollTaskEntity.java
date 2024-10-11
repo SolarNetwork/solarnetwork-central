@@ -31,7 +31,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.c2c.dao.CloudDatumStreamFilter;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
@@ -48,7 +48,7 @@ public class SelectCloudDatumStreamPollTaskEntity
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
-	private final CloudDatumStreamFilter filter;
+	private final CloudDatumStreamPollTaskFilter filter;
 	private final int fetchSize;
 
 	/**
@@ -57,7 +57,7 @@ public class SelectCloudDatumStreamPollTaskEntity
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectCloudDatumStreamPollTaskEntity(CloudDatumStreamFilter filter) {
+	public SelectCloudDatumStreamPollTaskEntity(CloudDatumStreamPollTaskFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
 	}
 
@@ -67,7 +67,7 @@ public class SelectCloudDatumStreamPollTaskEntity
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectCloudDatumStreamPollTaskEntity(CloudDatumStreamFilter filter, int fetchSize) {
+	public SelectCloudDatumStreamPollTaskEntity(CloudDatumStreamPollTaskFilter filter, int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
 		this.fetchSize = fetchSize;
@@ -101,6 +101,9 @@ public class SelectCloudDatumStreamPollTaskEntity
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cdspt.ds_id", where);
 		}
+		if ( filter.hasClaimableJobStateCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.claimableJobStateKeys(), "cdspt.status", where);
+		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
 		}
@@ -129,6 +132,9 @@ public class SelectCloudDatumStreamPollTaskEntity
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
 		}
+		if ( filter.hasClaimableJobStateCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.claimableJobStateKeys());
+		}
 		return p;
 	}
 
@@ -143,6 +149,7 @@ public class SelectCloudDatumStreamPollTaskEntity
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
 			sqlCore(buf);
+			sqlWhere(buf);
 			return CommonSqlUtils.wrappedCountQuery(buf.toString());
 		}
 

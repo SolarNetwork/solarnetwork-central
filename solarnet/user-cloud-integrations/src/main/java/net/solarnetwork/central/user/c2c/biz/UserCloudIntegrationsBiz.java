@@ -28,15 +28,19 @@ import java.util.Map;
 import java.util.SequencedCollection;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
@@ -206,7 +210,7 @@ public interface UserCloudIntegrationsBiz {
 	Iterable<CloudDataValue> datumStreamDataValuesForId(UserLongCompositePK id, Map<String, ?> filters);
 
 	/**
-	 * Get the latest available data from a datum stream.
+	 * Get the latest available datum from a datum stream.
 	 *
 	 * @param id
 	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
@@ -216,7 +220,7 @@ public interface UserCloudIntegrationsBiz {
 	Datum latestDatumStreamDatumForId(UserLongCompositePK id);
 
 	/**
-	 * List datum for a datum stream configuration matching search criteria.
+	 * List datum matching search criteria for a datum stream configuration.
 	 *
 	 * @param id
 	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
@@ -227,5 +231,50 @@ public interface UserCloudIntegrationsBiz {
 	 */
 	SequencedCollection<Datum> listDatumStreamDatumForId(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter);
+
+	/**
+	 * Get a list of all available cloud datum stream poll tasks for a given
+	 * user.
+	 *
+	 * @param userId
+	 *        the user ID to get entities for
+	 * @param filter
+	 *        an optional filter
+	 * @return the available entities, never {@literal null}
+	 */
+	FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> datumStreamPollTasksForUser(
+			Long userId, CloudDatumStreamPollTaskFilter filter);
+
+	/**
+	 * Update the state of a datum stream poll task.
+	 *
+	 * @param id
+	 *        the ID of the task to update the state of
+	 * @param desiredState
+	 *        the state to update the task to
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to {@code desiredState}, or {@literal null} if
+	 *        the current state of the task does not matter
+	 * @return the resulting task, or {@literal null} if no such task exists
+	 */
+	CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
+			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates);
+
+	/**
+	 * Save a datum stream poll task.
+	 *
+	 * @param id
+	 *        the ID of the {@link CloudDatumStreamConfiguration}
+	 * @param input
+	 *        the info to save
+	 * @param expectedStates
+	 *        a set of states that must include the task's current state in
+	 *        order to change it to the info's given state, or {@literal null}
+	 *        if the current state of the task does not matter
+	 * @return the resulting task
+	 */
+	CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
+			CloudDatumStreamPollTaskEntityInput input, BasicClaimableJobState... expectedStates);
 
 }

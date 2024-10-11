@@ -47,21 +47,26 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
 import net.solarnetwork.dao.FilterResults;
@@ -82,6 +87,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudIntegrationConfigurationDao integrationDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
+	private final CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
 	private final TextEncryptor textEncryptor;
 	private final Map<String, CloudIntegrationService> integrationServices;
 	private final Map<String, CloudDatumStreamService> datumStreamServices;
@@ -98,6 +104,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *        the datum stream DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
+	 * @param datumStreamPollTaskDao
+	 *        the datum stream poll task DAO
 	 * @param textEncryptor
 	 *        the encryptor to handle sensitive properties with
 	 * @param integrationServices
@@ -107,13 +115,16 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 */
 	public DaoUserCloudIntegrationsBiz(CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
-			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, TextEncryptor textEncryptor,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
+			CloudDatumStreamPollTaskDao datumStreamPollTaskDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
 		super();
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
+		this.datumStreamPollTaskDao = requireNonNullArgument(datumStreamPollTaskDao,
+				"datumStreamPollTaskDao");
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = requireNonNullArgument(integrationServices, "integrationServices")
 				.stream()
@@ -294,6 +305,50 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
 				"datumStreamService");
 		return service.latestDatum(datumStream);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> datumStreamPollTasksForUser(
+			Long userId, CloudDatumStreamPollTaskFilter filter) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
+			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(desiredState, "desiredState");
+		if ( !id.allKeyComponentsAreAssigned() ) {
+			throw new IllegalArgumentException(
+					"The userId and datumStreamId components must be provided.");
+		}
+		// only update state if a user-settable value (start, stop)
+		if ( desiredState == BasicClaimableJobState.Queued
+				|| desiredState == BasicClaimableJobState.Completed ) {
+			datumStreamPollTaskDao.updateTaskState(id, desiredState, expectedStates);
+		}
+		return datumStreamPollTaskDao.get(id);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
+			CloudDatumStreamPollTaskEntityInput input, BasicClaimableJobState... expectedStates) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(input, "input");
+		if ( !id.allKeyComponentsAreAssigned() ) {
+			throw new IllegalArgumentException(
+					"The userId and datumStreamId components must be provided.");
+		}
+
+		validateInput(input);
+
+		CloudDatumStreamPollTaskEntity entity = input.toEntity(id);
+		datumStreamPollTaskDao.updateTask(entity, expectedStates);
+		return datumStreamPollTaskDao.get(id);
 	}
 
 	@Override

@@ -26,18 +26,23 @@ import static java.time.Instant.now;
 import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamPollTaskEntity;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
@@ -181,6 +186,100 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// THEN
 		then(result).as("Retrieved entity matches source").isEqualTo(last);
+	}
+
+	@Test
+	public void findFiltered_forUser() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 2;
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long streamId = createDatumStream(userId, integrationId, Map.of("bim", "bam"))
+							.getConfigId();
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							streamId,
+							BasicClaimableJobState.Queued,
+							Instant.now(),
+							Instant.now(),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		// WHEN
+		final CloudDatumStreamPollTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream()
+				.filter(e -> randomConf.getUserId().equals(e.getUserId()))
+				.toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(results).as("Results for single user returned").contains(expected);
+	}
+
+	@Test
+	public void findFiltered_forUserAndState() throws Exception {
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int streamCount = 10;
+		final List<CloudDatumStreamPollTaskEntity> confs = new ArrayList<>(
+				userCount * integrationCount * streamCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int g = 0; g < integrationCount; g++ ) {
+				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
+				for ( int s = 0; s < streamCount; s++ ) {
+					final Long streamId = createDatumStream(userId, integrationId, Map.of("bim", "bam"))
+							.getConfigId();
+					// @formatter:off
+					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
+							userId,
+							streamId,
+							BasicClaimableJobState.values()[s % BasicClaimableJobState.values().length],
+							Instant.now(),
+							Instant.now(),
+							randomString(),
+							null
+							);
+					// @formatter:on
+					dao.save(entity);
+					confs.add(entity);
+				}
+			}
+		}
+
+		// WHEN
+		final CloudDatumStreamPollTaskEntity randomConf = confs.get(RNG.nextInt(confs.size()));
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomConf.getUserId());
+		filter.setClaimableJobStates(new BasicClaimableJobState[] { BasicClaimableJobState.Claimed,
+				BasicClaimableJobState.Executing });
+		var results = dao.findFiltered(filter);
+
+		// THEN
+		CloudDatumStreamPollTaskEntity[] expected = confs.stream()
+				.filter(e -> randomConf.getUserId().equals(e.getUserId())
+						&& EnumSet.of(BasicClaimableJobState.Claimed, BasicClaimableJobState.Executing)
+								.contains(e.getState()))
+				.toArray(CloudDatumStreamPollTaskEntity[]::new);
+		then(results).as("Results for single user and specified states returned").contains(expected);
 	}
 
 	@Test

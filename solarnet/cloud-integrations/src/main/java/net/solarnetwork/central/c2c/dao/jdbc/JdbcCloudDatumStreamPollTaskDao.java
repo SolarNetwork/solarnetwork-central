@@ -31,6 +31,7 @@ import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudDatumStreamPollTaskEntityState;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -98,6 +100,16 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 				entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0 ? new UserLongCompositePK(userId, entity.getDatumStreamId()) : null);
+	}
+
+	@Override
+	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> findFiltered(
+			CloudDatumStreamPollTaskFilter filter, List<SortDescriptor> sorts, Integer offset,
+			Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);
+		return executeFilterQuery(jdbcOps, filter, sql,
+				CloudDatumStreamPollTaskEntityRowMapper.INSTANCE);
 	}
 
 	@Override

@@ -26,7 +26,7 @@ package net.solarnetwork.central.domain;
  * API for a composite key.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CompositeKey {
 
@@ -41,7 +41,7 @@ public interface CompositeKey {
 	 * </p>
 	 * 
 	 * @return the identifier
-	 * @since 1.2
+	 * @since 1.3
 	 */
 	default String ident() {
 		StringBuilder buf = new StringBuilder(64);
@@ -83,6 +83,24 @@ public interface CompositeKey {
 	 *         "assigned", {@literal false} otherwise
 	 */
 	boolean keyComponentIsAssigned(int index);
+
+	/**
+	 * Test if all key components have assigned values.
+	 * 
+	 * @return {@literal true} if all key component values should be considered
+	 *         "assigned", {@literal false} otherwise
+	 * @see #keyComponentIsAssigned(int)
+	 * @since 1.3
+	 */
+	default boolean allKeyComponentsAreAssigned() {
+		final int len = keyComponentLength();
+		for ( int i = 0; i < len; i++ ) {
+			if ( !keyComponentIsAssigned(i) ) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * Get the key component for a specific index.
