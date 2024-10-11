@@ -27,7 +27,9 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -40,6 +42,9 @@ import net.solarnetwork.codec.JsonUtils;
  * @author matt
  * @version 1.0
  */
+@JsonIgnoreProperties({ "id", "enabled" })
+@JsonPropertyOrder({ "userId", "datumStreamId", "state", "executeAt", "startAt", "message",
+		"serviceProperties" })
 public class CloudDatumStreamPollTaskEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamPollTaskEntity, UserLongCompositePK> {
 
