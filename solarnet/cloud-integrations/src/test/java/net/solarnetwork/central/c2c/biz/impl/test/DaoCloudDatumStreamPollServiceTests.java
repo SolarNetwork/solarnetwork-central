@@ -42,7 +42,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -189,8 +188,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
 
 		// update task state to "processing"
-		given(taskDao.updateTaskState(datumStream.getId(), Executing,
-				new LinkedHashSet<>(List.of(Claimed)))).willReturn(true);
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
 
 		// query for data associated with service configured on datum stream
 		// here we return a datum for "5 min ago"
@@ -209,7 +207,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(datumDao.store(any(Datum.class))).willReturn(datumId1, datumId2);
 
 		// update task details
-		given(taskDao.updateTask(any(), eq(new LinkedHashSet<>(List.of(Executing))))).willReturn(true);
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
 
 		// WHEN
 		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
@@ -230,7 +228,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.returns(clock.instant(), from(CloudDatumStreamQueryFilter::getEndDate))
 			;
 
-		then(taskDao).should().updateTask(taskCaptor.capture(), eq(new LinkedHashSet<>(List.of(Executing))));
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
 		and.then(taskCaptor.getValue())
 			.as("Task to update is copy of given task")
 			.isNotSameAs(task)
@@ -279,7 +277,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
 
 		// update task details for ownerhip check failure
-		given(taskDao.updateTask(any(), eq(new LinkedHashSet<>(List.of(Claimed))))).willReturn(true);
+		given(taskDao.updateTask(any(), eq(Claimed))).willReturn(true);
 
 		// WHEN
 		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
@@ -292,7 +290,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(taskDao).should().updateTask(taskCaptor.capture(), eq(new LinkedHashSet<>(List.of(Claimed))));
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Claimed));
 		and.then(taskCaptor.getValue())
 			.as("Task to update is copy of given task")
 			.isNotSameAs(task)

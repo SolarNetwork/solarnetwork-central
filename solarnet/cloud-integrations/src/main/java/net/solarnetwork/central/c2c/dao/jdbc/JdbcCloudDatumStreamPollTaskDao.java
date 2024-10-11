@@ -28,7 +28,6 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
 import java.util.Collection;
 import java.util.List;
-import java.util.SequencedSet;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
@@ -162,7 +161,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
-			SequencedSet<BasicClaimableJobState> expectedStates) {
+			BasicClaimableJobState... expectedStates) {
 		BasicFilter filter = null;
 		if ( expectedStates != null ) {
 			filter = new BasicFilter();
@@ -174,7 +173,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public boolean updateTask(CloudDatumStreamPollTaskEntity info,
-			SequencedSet<BasicClaimableJobState> expectedStates) {
+			BasicClaimableJobState... expectedStates) {
 		BasicFilter filter = null;
 		if ( expectedStates != null ) {
 			filter = new BasicFilter();

@@ -45,7 +45,7 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;
 	private Integer[] indexes;
-	private SequencedSet<BasicClaimableJobState> claimableJobStates;
+	private BasicClaimableJobState[] claimableJobStates;
 
 	@Override
 	public BasicFilter clone() {
@@ -88,19 +88,19 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 				setIndexes(f.getIndexes());
 			}
 			if ( criteria instanceof ClaimableJobStateCriteria f ) {
-				var set = f.getClaimableJobStates();
+				var states = f.getClaimableJobStates();
 				SequencedSet<BasicClaimableJobState> copy = null;
-				if ( set != null ) {
-					for ( ClaimableJobState s : set ) {
+				if ( states != null && states.length > 0 ) {
+					for ( ClaimableJobState s : states ) {
 						if ( s instanceof BasicClaimableJobState j ) {
 							if ( copy == null ) {
-								copy = new LinkedHashSet<>(set.size());
+								copy = new LinkedHashSet<>(states.length);
 							}
 							copy.add(j);
 						}
 					}
 				}
-				setClaimableJobStates(copy);
+				setClaimableJobStates(copy.toArray(BasicClaimableJobState[]::new));
 			}
 		}
 	}
@@ -230,7 +230,7 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	}
 
 	@Override
-	public final SequencedSet<BasicClaimableJobState> getClaimableJobStates() {
+	public final BasicClaimableJobState[] getClaimableJobStates() {
 		return claimableJobStates;
 	}
 
@@ -240,7 +240,7 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	 * @param claimableJobStates
 	 *        the states to set
 	 */
-	public final void setClaimableJobStates(SequencedSet<BasicClaimableJobState> claimableJobStates) {
+	public final void setClaimableJobStates(BasicClaimableJobState[] claimableJobStates) {
 		this.claimableJobStates = claimableJobStates;
 	}
 

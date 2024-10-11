@@ -31,8 +31,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -188,13 +186,12 @@ public class DaoCloudDatumStreamPollService
 					log.warn("Error executing datum stream {} poll task", taskInfo.getId().ident(), e);
 					var errMsg = "Error executing poll task.";
 					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage());
-					var expectedState = new LinkedHashSet<>(List.of(taskInfo.getState()));
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
-					taskDao.updateTask(taskInfo, expectedState);
+					taskDao.updateTask(taskInfo, taskInfo.getState());
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} poll task state after error",
 							taskInfo.getId().ident(), e2);
@@ -223,7 +220,7 @@ public class DaoCloudDatumStreamPollService
 				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 						eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg));
-				taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(startState)));
+				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
 
@@ -241,14 +238,13 @@ public class DaoCloudDatumStreamPollService
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
 							datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
-					taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(startState)));
+					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
 				}
 			}
 
 			// save task state to Executing (TODO maybe we don't need this step?)
-			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing,
-					new LinkedHashSet<>(List.of(startState))) ) {
+			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
 				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to udpate task state from Claimed to Executing.";
@@ -268,7 +264,7 @@ public class DaoCloudDatumStreamPollService
 				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
-				taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(Executing)));
+				taskDao.updateTask(taskInfo, Executing);
 				return taskInfo;
 			}
 
@@ -286,7 +282,7 @@ public class DaoCloudDatumStreamPollService
 				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
-				taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(Executing)));
+				taskDao.updateTask(taskInfo, Executing);
 				return taskInfo;
 			}
 
@@ -345,7 +341,7 @@ public class DaoCloudDatumStreamPollService
 			taskInfo.setServiceProps(null);
 
 			// save task state
-			if ( !taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(Executing))) ) {
+			if ( !taskDao.updateTask(taskInfo, Executing) ) {
 				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";

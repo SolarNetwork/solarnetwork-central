@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.dao;
 
-import java.util.SequencedSet;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -61,7 +60,7 @@ public interface CloudDatumStreamPollTaskDao extends
 	 * @return {@literal true} if the task state was changed
 	 */
 	boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
-			SequencedSet<BasicClaimableJobState> expectedStates);
+			BasicClaimableJobState... expectedStates);
 
 	/**
 	 * Update a specific poll task.
@@ -74,7 +73,6 @@ public interface CloudDatumStreamPollTaskDao extends
 	 *        if the current state of the task does not matter
 	 * @return {@literal true} if the task state was changed
 	 */
-	boolean updateTask(CloudDatumStreamPollTaskEntity info,
-			SequencedSet<BasicClaimableJobState> expectedStates);
+	boolean updateTask(CloudDatumStreamPollTaskEntity info, BasicClaimableJobState... expectedStates);
 
 }

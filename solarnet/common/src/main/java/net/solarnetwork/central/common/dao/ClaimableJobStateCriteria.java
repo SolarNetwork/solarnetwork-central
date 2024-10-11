@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.common.dao;
 
-import java.util.SequencedSet;
 import net.solarnetwork.central.domain.ClaimableJobState;
 
 /**
@@ -45,8 +44,8 @@ public interface ClaimableJobStateCriteria {
 	 * @return the first state, or {@literal null} if not available
 	 */
 	default ClaimableJobState getClaimableJobState() {
-		SequencedSet<? extends ClaimableJobState> states = getClaimableJobStates();
-		return (states != null ? states.getFirst() : null);
+		ClaimableJobState[] states = getClaimableJobStates();
+		return (states != null && states.length > 0 ? states[0] : null);
 	}
 
 	/**
@@ -54,7 +53,7 @@ public interface ClaimableJobStateCriteria {
 	 * 
 	 * @return set of states (may be {@literal null})
 	 */
-	SequencedSet<? extends ClaimableJobState> getClaimableJobStates();
+	ClaimableJobState[] getClaimableJobStates();
 
 	/**
 	 * Test if this filter has any claimable job state criteria.
@@ -68,14 +67,19 @@ public interface ClaimableJobStateCriteria {
 	/**
 	 * Get the set of claimable job state keys.
 	 * 
-	 * @return the claimable job states, and key values
+	 * @return the claimable job states, as key values
 	 */
 	default String[] claimableJobStateKeys() {
-		SequencedSet<? extends ClaimableJobState> states = getClaimableJobStates();
-		if ( states == null || states.isEmpty() ) {
+		ClaimableJobState[] states = getClaimableJobStates();
+		final int len = (states != null ? states.length : 0);
+		if ( len < 1 ) {
 			return null;
 		}
-		return states.stream().map(s -> s.keyValue()).toArray(String[]::new);
+		String[] result = new String[states.length];
+		for ( int i = 0; i < len; i++ ) {
+			result[i] = states[i].keyValue();
+		}
+		return result;
 	}
 
 }

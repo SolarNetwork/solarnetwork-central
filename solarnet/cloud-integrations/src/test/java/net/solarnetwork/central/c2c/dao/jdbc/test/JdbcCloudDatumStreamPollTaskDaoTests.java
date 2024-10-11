@@ -23,7 +23,6 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.time.Instant.now;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamPollTaskEntity;
@@ -35,7 +34,6 @@ import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -229,8 +227,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		Map<String, Object> props = Collections.singletonMap("bar", "foo");
 		conf.setServiceProps(props);
 
-		boolean result = dao.updateTask(conf,
-				new LinkedHashSet<>(asList(BasicClaimableJobState.Queued)));
+		boolean result = dao.updateTask(conf, BasicClaimableJobState.Queued);
 		CloudDatumStreamPollTaskEntity updated = dao.get(conf.getId());
 
 		// THEN
@@ -267,8 +264,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		Map<String, Object> props = Collections.singletonMap("bar", "foo");
 		conf.setServiceProps(props);
 
-		boolean result = dao.updateTask(conf,
-				new LinkedHashSet<>(asList(BasicClaimableJobState.Claimed)));
+		boolean result = dao.updateTask(conf, BasicClaimableJobState.Claimed);
 		CloudDatumStreamPollTaskEntity updated = dao.get(conf.getId());
 
 		// THEN
@@ -295,8 +291,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// WHEN
 		final BasicClaimableJobState newState = BasicClaimableJobState.Claimed;
-		boolean result = dao.updateTaskState(last.getId(), newState,
-				new LinkedHashSet<>(asList(BasicClaimableJobState.Queued)));
+		boolean result = dao.updateTaskState(last.getId(), newState, BasicClaimableJobState.Queued);
 		CloudDatumStreamPollTaskEntity updated = dao.get(last.getId());
 
 		// THEN
@@ -328,8 +323,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// WHEN
 		final BasicClaimableJobState newState = BasicClaimableJobState.Completed;
-		boolean result = dao.updateTaskState(last.getId(), newState,
-				new LinkedHashSet<>(asList(BasicClaimableJobState.Claimed)));
+		boolean result = dao.updateTaskState(last.getId(), newState, BasicClaimableJobState.Claimed);
 		CloudDatumStreamPollTaskEntity updated = dao.get(last.getId());
 
 		// THEN
