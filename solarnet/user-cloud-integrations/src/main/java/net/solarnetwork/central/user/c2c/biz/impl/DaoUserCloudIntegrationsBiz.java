@@ -311,8 +311,10 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Override
 	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> datumStreamPollTasksForUser(
 			Long userId, CloudDatumStreamPollTaskFilter filter) {
-		// TODO Auto-generated method stub
-		return null;
+		requireNonNullArgument(userId, "userId");
+		BasicFilter f = new BasicFilter(filter);
+		f.setUserId(userId);
+		return datumStreamPollTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

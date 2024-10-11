@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.c2c.domain;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -54,6 +55,8 @@ public class CloudDatumStreamPollTaskEntityInput {
 	private String message;
 
 	private Map<String, Object> serviceProperties;
+
+	private Set<BasicClaimableJobState> requiredStates;
 
 	/**
 	 * Constructor.
@@ -170,6 +173,25 @@ public class CloudDatumStreamPollTaskEntityInput {
 	 */
 	public void setServiceProperties(Map<String, Object> serviceProperties) {
 		this.serviceProperties = serviceProperties;
+	}
+
+	/**
+	 * Get a list of states the job must have in order to perform an update.
+	 *
+	 * @return the states, or {@literal null}
+	 */
+	public final Set<BasicClaimableJobState> getRequiredStates() {
+		return requiredStates;
+	}
+
+	/**
+	 * Set a list of states the job must have in order to perform an update.
+	 *
+	 * @param requiredStates
+	 *        the states to set, or {@literal null}
+	 */
+	public final void setRequiredStates(Set<BasicClaimableJobState> requiredStates) {
+		this.requiredStates = requiredStates;
 	}
 
 }

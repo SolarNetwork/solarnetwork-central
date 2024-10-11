@@ -52,12 +52,16 @@ import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskStateInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -152,6 +156,10 @@ public class UserCloudIntegrationsController {
 		return success(result);
 	}
 
+	/*
+	 * ======================= Integrations =======================
+	 */
+
 	@RequestMapping(value = "/integrations", method = RequestMethod.GET)
 	public Result<FilterResults<CloudIntegrationConfiguration, UserLongCompositePK>> listCloudIntegrationConfigurations(
 			BasicFilter filter) {
@@ -219,6 +227,10 @@ public class UserCloudIntegrationsController {
 		return userCloudIntegrationsBiz.validateIntegrationConfigurationForId(id, locale);
 	}
 
+	/*
+	 * ======================= Datum Stream =======================
+	 */
+
 	@RequestMapping(value = "/datum-streams", method = RequestMethod.GET)
 	public Result<FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK>> listCloudDatumStreamConfigurations(
 			BasicFilter filter) {
@@ -269,6 +281,10 @@ public class UserCloudIntegrationsController {
 		userCloudIntegrationsBiz.deleteConfiguration(id, CloudDatumStreamConfiguration.class);
 		return success();
 	}
+
+	/*
+	 * ======================= Datum Stream Datum =======================
+	 */
 
 	/**
 	 * List the data values for a datum stream service and an optional filter.
@@ -322,6 +338,10 @@ public class UserCloudIntegrationsController {
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter));
 	}
 
+	/*
+	 * ======================= Datum Stream Properties =======================
+	 */
+
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/properties", method = RequestMethod.GET)
 	public Result<FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>> listCloudDatumStreamPropertyConfigurations(
 			@PathVariable("datumStreamId") Long datumStreamId, BasicFilter filter) {
@@ -374,4 +394,40 @@ public class UserCloudIntegrationsController {
 		return success();
 	}
 
+	/*
+	 * ======================= Datum Stream Poll Tasks =======================
+	 */
+
+	@RequestMapping(value = "/datum-stream-poll-tasks", method = RequestMethod.GET)
+	public Result<FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK>> listCloudDatumStreamPollTasks(
+			BasicFilter filter) {
+		var result = userCloudIntegrationsBiz.datumStreamPollTasksForUser(getCurrentActorUserId(),
+				filter);
+		return success(result);
+	}
+
+	@RequestMapping(value = "/datum-stream-poll-tasks/{datumStreamId}", method = RequestMethod.PUT)
+	public Result<CloudDatumStreamPollTaskEntity> updateCloudDatumStreamPollTask(
+			@PathVariable("datumStreamId") Long datumStreamId,
+			@Valid @RequestBody CloudDatumStreamPollTaskEntityInput input) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		BasicClaimableJobState[] requiredStates = null;
+		if ( input.getRequiredStates() != null && !input.getRequiredStates().isEmpty() ) {
+			requiredStates = input.getRequiredStates().toArray(BasicClaimableJobState[]::new);
+		}
+		return success(userCloudIntegrationsBiz.saveDatumStreamPollTask(id, input, requiredStates));
+	}
+
+	@RequestMapping(value = "/datum-stream-poll-tasks/{datumStreamId}/state", method = RequestMethod.POST)
+	public Result<CloudDatumStreamPollTaskEntity> updateCloudDatumStreamPollTaskState(
+			@PathVariable("datumStreamId") Long datumStreamId,
+			@Valid @RequestBody CloudDatumStreamPollTaskStateInput input) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		BasicClaimableJobState[] requiredStates = null;
+		if ( input.getRequiredStates() != null && !input.getRequiredStates().isEmpty() ) {
+			requiredStates = input.getRequiredStates().toArray(BasicClaimableJobState[]::new);
+		}
+		return success(userCloudIntegrationsBiz.updateDatumStreamPollTaskState(id, input.getState(),
+				requiredStates));
+	}
 }
