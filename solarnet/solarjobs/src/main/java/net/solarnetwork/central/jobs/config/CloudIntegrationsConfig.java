@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.jobs.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import javax.cache.Cache;
@@ -43,8 +43,8 @@ import net.solarnetwork.central.support.CacheSettings;
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
+@Configuration(proxyBeanMethods = false)
 public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	@Autowired

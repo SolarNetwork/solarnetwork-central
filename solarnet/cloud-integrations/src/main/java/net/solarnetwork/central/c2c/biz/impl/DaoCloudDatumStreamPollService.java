@@ -23,11 +23,14 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
+import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +39,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
+import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
@@ -50,11 +53,14 @@ import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
@@ -73,6 +79,7 @@ public class DaoCloudDatumStreamPollService
 
 	private final Clock clock;
 	private final UserEventAppenderBiz userEventAppenderBiz;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final CloudDatumStreamPollTaskDao taskDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
 	private final DatumWriteOnlyDao datumDao;
@@ -87,14 +94,17 @@ public class DaoCloudDatumStreamPollService
 	 *        the clock to use
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO
 	 * @param taskDao
 	 *        the task DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
 	 * @param datumDao
 	 *        the datum DAO
-	 * @param executorSupplier
-	 *        the executor supplier
+	 * @param executor
+	 *        the executor; this must be exclusive to this service, as it will
+	 *        be shut down when this service is shut down
 	 * @param datumStreamServiceProvider
 	 *        function that provides a {@link CloudDatumStreamService} for a
 	 *        given service identifier
@@ -102,17 +112,18 @@ public class DaoCloudDatumStreamPollService
 	 *         if any argument is {@literal null}
 	 */
 	public DaoCloudDatumStreamPollService(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
-			CloudDatumStreamPollTaskDao taskDao, CloudDatumStreamConfigurationDao datumStreamDao,
-			DatumWriteOnlyDao datumDao, Supplier<ExecutorService> executorSupplier,
+			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamPollTaskDao taskDao,
+			CloudDatumStreamConfigurationDao datumStreamDao, DatumWriteOnlyDao datumDao,
+			ExecutorService executor,
 			Function<String, CloudDatumStreamService> datumStreamServiceProvider) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.userEventAppenderBiz = requireNonNullArgument(userEventAppenderBiz, "userEventAppenderBiz");
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
-		this.executorService = requireNonNullArgument(
-				requireNonNullArgument(executorSupplier, "executorSupplier").get(), "executor");
+		this.executorService = requireNonNullArgument(executor, "executor");
 		this.datumStreamServiceProvider = requireNonNullArgument(datumStreamServiceProvider,
 				"datumStreamServiceProvider");
 	}
@@ -166,14 +177,74 @@ public class DaoCloudDatumStreamPollService
 
 		@Override
 		public CloudDatumStreamPollTaskEntity call() throws Exception {
+			try {
+				return executeTask();
+			} catch ( Exception e ) {
+				Throwable t = e;
+				while ( t.getCause() != null ) {
+					t = t.getCause();
+				}
+				try {
+					log.warn("Error executing datum stream {} poll task", taskInfo.getId().ident(), e);
+					var errMsg = "Error executing poll task.";
+					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage());
+					var expectedState = new LinkedHashSet<>(List.of(taskInfo.getState()));
+					taskInfo.setMessage(errMsg);
+					taskInfo.putServiceProps(errData);
+					taskInfo.setState(Completed); // stop processing job
+					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
+							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
+					taskDao.updateTask(taskInfo, expectedState);
+				} catch ( Exception e2 ) {
+					log.warn("Error updating datum stream {} poll task state after error",
+							taskInfo.getId().ident(), e2);
+					// ignore, return original
+				}
+				throw e;
+			}
+		}
+
+		private CloudDatumStreamPollTaskEntity executeTask() throws Exception {
 			final Instant execTime = clock.instant();
 
 			final CloudDatumStreamConfiguration datumStream = datumStreamDao.get(taskInfo.getId());
 			if ( datumStream == null ) {
 				// configuration has been deleted... abort
-				return null;
+				return taskInfo;
 			}
+
 			final String datumStreamIdent = datumStream.getId().ident();
+
+			if ( !datumStream.isFullyConfigured() ) {
+				var errMsg = "Datum stream not fully configured.";
+				userEventAppenderBiz.addEvent(datumStream.getUserId(),
+						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg));
+				taskInfo.setMessage(errMsg);
+				taskInfo.setState(Completed); // stop processing job
+				userEventAppenderBiz.addEvent(taskInfo.getUserId(),
+						eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg));
+				taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(startState)));
+				return taskInfo;
+			}
+
+			if ( datumStream.getKind() == ObjectDatumKind.Node ) {
+				SolarNodeOwnership ownership = nodeOwnershipDao
+						.ownershipForNodeId(datumStream.getObjectId());
+				if ( ownership == null || !taskInfo.getUserId().equals(ownership.getUserId()) ) {
+					log.warn(
+							"Refusing to execute datum stream {} poll task because task owner {} does not own node {}",
+							datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
+					var errMsg = "Access denied to configured node.";
+					var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getObjectId());
+					taskInfo.setMessage(errMsg);
+					taskInfo.putServiceProps(errData);
+					taskInfo.setState(Completed); // stop processing job
+					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+							datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+					taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(startState)));
+					return taskInfo;
+				}
+			}
 
 			// save task state to Executing (TODO maybe we don't need this step?)
 			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing,
@@ -184,22 +255,20 @@ public class DaoCloudDatumStreamPollService
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
-				return null;
+				return taskInfo;
 			}
+			taskInfo.setState(Executing);
 
 			final Trigger schedule = triggerForSchedule(datumStream);
 			if ( schedule == null ) {
 				var errMsg = "Datum Stream service schedule not provided or usable.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getSchedule());
 				taskInfo.setMessage(errMsg);
-				if ( taskInfo.getServiceProps() == null ) {
-					taskInfo.setServiceProps(errData);
-				} else {
-					taskInfo.getServiceProps().putAll(errData);
-				}
-				taskInfo.setState(BasicClaimableJobState.Completed); // stop processing job
+				taskInfo.putServiceProps(errData);
+				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+				taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(Executing)));
 				return taskInfo;
 			}
 
@@ -213,14 +282,11 @@ public class DaoCloudDatumStreamPollService
 				var errMsg = "Configured Datum Stream service not available.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStream.getServiceIdentifier());
 				taskInfo.setMessage(errMsg);
-				if ( taskInfo.getServiceProps() == null ) {
-					taskInfo.setServiceProps(errData);
-				} else {
-					taskInfo.getServiceProps().putAll(errData);
-				}
-				taskInfo.setState(BasicClaimableJobState.Completed); // stop processing job
+				taskInfo.putServiceProps(errData);
+				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+				taskDao.updateTask(taskInfo, new LinkedHashSet<>(List.of(Executing)));
 				return taskInfo;
 			}
 
@@ -258,13 +324,19 @@ public class DaoCloudDatumStreamPollService
 			}
 
 			// calculate the next execution time based on the datum stream schedule
+			var now = clock.instant();
 			var ctx = new SimpleTriggerContext(clock);
-			ctx.update(execDate, execTime, clock.instant());
-			Instant nextExecTime = schedule.nextExecution(ctx);
+			Instant nextExecTime = execDate;
+			while ( nextExecTime.isBefore(now) ) {
+				// skip any missed execution times between last actual execution and now...
+				ctx.update(nextExecTime,
+						(ctx.lastScheduledExecution() == null ? execTime : nextExecTime), now);
+				nextExecTime = schedule.nextExecution(ctx).truncatedTo(ChronoUnit.SECONDS);
+			}
 			taskInfo.setExecuteAt(nextExecTime);
 
 			// reset task back to Queued so it can be executed again
-			taskInfo.setState(BasicClaimableJobState.Queued);
+			taskInfo.setState(Queued);
 
 			// reset message back to null
 			taskInfo.setMessage(null);
@@ -290,7 +362,11 @@ public class DaoCloudDatumStreamPollService
 	private Trigger triggerForSchedule(CloudDatumStreamConfiguration datumStream) {
 		assert datumStream != null;
 		final String schedule = datumStream.getSchedule();
-		return SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
+		Trigger t = SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
+		if ( t instanceof PeriodicTrigger pt ) {
+			pt.setFixedRate(false);
+		}
+		return t;
 	}
 
 	/**

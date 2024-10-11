@@ -23,7 +23,9 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
+import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -61,8 +63,11 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -86,6 +91,9 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
+
+	@Mock
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private CloudDatumStreamPollTaskDao taskDao;
@@ -117,8 +125,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		clock = Clock.fixed(Instant.now().truncatedTo(ChronoUnit.HOURS).plusSeconds(1), ZoneOffset.UTC);
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
-		service = new DaoCloudDatumStreamPollService(clock, userEventAppenderBiz, taskDao,
-				datumStreamDao, datumDao, () -> new CallingThreadExecutorService(),
+		service = new DaoCloudDatumStreamPollService(clock, userEventAppenderBiz, nodeOwnershipDao,
+				taskDao, datumStreamDao, datumDao, new CallingThreadExecutorService(),
 				datumStreamServices::get);
 	}
 
@@ -174,6 +182,11 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		// look up datum stream associated with task
 		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
 
 		// update task state to "processing"
 		given(taskDao.updateTaskState(datumStream.getId(), Executing,
@@ -233,6 +246,75 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getMessage))
 			.as("No service properties generated for successful execution")
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_notNodeOwner() throws Exception {
+		// GIVEN
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setIntegrationId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// verify node ownership (returning different user, so not owner)
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), -1L, "NZ", UTC,
+				true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// update task details for ownerhip check failure
+		given(taskDao.updateTask(any(), eq(new LinkedHashSet<>(List.of(Claimed))))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
+		task.setState(Claimed);
+		task.setExecuteAt(hour);
+		task.setStartAt(hour.minusSeconds(300));
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(new LinkedHashSet<>(List.of(Claimed))));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Completed to signal error")
+			.returns(Completed, from(CloudDatumStreamPollTaskEntity::getState))
+			.as("Task execute date is unchanged")
+			.returns(task.getExecuteAt(), from(CloudDatumStreamPollTaskEntity::getExecuteAt))
+			.as("Task start date is unchanged")
+			.returns(task.getStartAt(), from(CloudDatumStreamPollTaskEntity::getStartAt))
+			.as("Update task with error details")
+			.satisfies(t -> {
+				and.then(t.getMessage())
+					.as("Message generated for ownership failure")
+					.containsIgnoringCase("denied")
+					;
+				and.then(t.getServiceProps())
+					.as("Offending node ID provided in error data")
+					.containsEntry(CloudIntegrationsUserEvents.SOURCE_DATA_KEY, datumStream.getObjectId())
+					;
+			})
 			;
 
 		and.then(resultTask)

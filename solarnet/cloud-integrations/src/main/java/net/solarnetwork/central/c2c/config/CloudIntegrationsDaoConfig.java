@@ -22,14 +22,18 @@
 
 package net.solarnetwork.central.c2c.config;
 
+import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 
@@ -40,6 +44,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDa
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
+@Profile(CLOUD_INTEGRATIONS)
 public class CloudIntegrationsDaoConfig {
 
 	@Autowired
@@ -73,6 +78,16 @@ public class CloudIntegrationsDaoConfig {
 	@Bean
 	public CloudDatumStreamPropertyConfigurationDao cloudDatumStreamPropertyConfigurationConfigurationDao() {
 		return new JdbcCloudDatumStreamPropertyConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The cloud datum stream poll task DAO.
+	 *
+	 * @return the DAO
+	 */
+	@Bean
+	public CloudDatumStreamPollTaskDao cloudDatumStreamPollTaskDaoDao() {
+		return new JdbcCloudDatumStreamPollTaskDao(jdbcOperations);
 	}
 
 }

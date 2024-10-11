@@ -308,6 +308,22 @@ public class CloudDatumStreamPollTaskEntity
 	}
 
 	/**
+	 * Add a collection of service properties.
+	 *
+	 * @param props
+	 *        the properties to add
+	 */
+	public void putServiceProps(Map<String, Object> props) {
+		Map<String, Object> serviceProps = getServiceProps();
+		if ( serviceProps == null ) {
+			serviceProps = props;
+		} else {
+			serviceProps.putAll(props);
+		}
+		setServiceProps(serviceProps);
+	}
+
+	/**
 	 * Get the service properties.
 	 *
 	 * @return the service properties

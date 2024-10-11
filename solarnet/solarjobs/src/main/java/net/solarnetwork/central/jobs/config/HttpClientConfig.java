@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.jobs.config;
 
 import java.time.Duration;
 import java.util.Arrays;

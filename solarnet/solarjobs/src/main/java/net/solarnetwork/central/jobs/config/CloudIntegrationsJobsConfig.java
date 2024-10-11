@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudIntegrationsExpressionConfig.java - 8/10/2024 8:55:48 am
+ * CloudIntegrationsJobsConfig.java - 11/10/2024 11:27:31 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -20,41 +20,35 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.config;
+package net.solarnetwork.central.jobs.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
-import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.springframework.expression.Expression;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
+import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskProcessor;
+import net.solarnetwork.central.scheduler.ManagedJob;
 
 /**
- * Cloud integrations expression configuration.
+ * Cloud integrations jobs configuration.
  *
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class CloudIntegrationsExpressionConfig implements SolarNetCloudIntegrationsConfiguration {
+@Configuration(proxyBeanMethods = false)
+public class CloudIntegrationsJobsConfig {
 
-	@Primary
+	@Autowired
+	private CloudDatumStreamPollService cloudDatumStreamPollService;
+
+	@ConfigurationProperties(prefix = "app.job.c2c.ds-poll")
 	@Bean
-	public SpelCloudIntegrationsExpressionService spelCloudIntegrationsExpressionService(
-	// @formatter:off
-			@Qualifier(CLOUD_INTEGRATIONS_EXPRESSIONS)
-			@Autowired(required = false)
-			Cache<String, Expression> expressionCache
-			// @formatter:on
-	) {
-		var service = new SpelCloudIntegrationsExpressionService();
-		service.setExpressionCache(expressionCache);
-		return service;
+	public ManagedJob cloudDatumStreamPollTaskProcessor() {
+		return new CloudDatumStreamPollTaskProcessor(cloudDatumStreamPollService);
 	}
 
 }

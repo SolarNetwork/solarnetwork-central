@@ -64,12 +64,12 @@ dependencies {
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	
 	// Utils
-	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'commons-codec:commons-codec'
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
     implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 		

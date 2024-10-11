@@ -36,4 +36,7 @@ public interface SolarNetCloudIntegrationsConfiguration {
 	/** A qualifier for cloud integrations expression support. */
 	String CLOUD_INTEGRATIONS_EXPRESSIONS = "c2c-expr";
 
+	/** A qualifier for cloud integrations polling support. */
+	String CLOUD_INTEGRATIONS_POLL = "c2c-poll";
+
 }

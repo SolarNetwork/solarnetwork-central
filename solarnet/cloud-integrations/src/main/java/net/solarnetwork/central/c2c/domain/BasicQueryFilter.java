@@ -43,6 +43,17 @@ public final class BasicQueryFilter implements CloudDatumStreamQueryFilter {
 	}
 
 	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BasicQueryFilter{startDate=");
+		builder.append(startDate);
+		builder.append(", endDate=");
+		builder.append(endDate);
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
 	public Instant getStartDate() {
 		return startDate;
 	}

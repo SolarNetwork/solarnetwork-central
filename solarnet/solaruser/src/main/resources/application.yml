@@ -72,9 +72,9 @@ app:
     connections:
       max-total: 20
     settings:
-      connect-timeout: 10s
-      connection-request-timeout: 15s
-      socket-timeout: 20s
+      connect-timeout: "10s"
+      connection-request-timeout: "15s"
+      socket-timeout: "20s"
   inin:
     max-input-length: 8196
     xslt:

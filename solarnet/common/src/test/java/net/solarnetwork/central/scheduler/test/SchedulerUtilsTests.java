@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.scheduler.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
+import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
@@ -73,6 +77,67 @@ public class SchedulerUtilsTests {
 
 		// THEN
 		then(desc).isEqualTo("every PT10M (fix)");
+	}
+
+	@Test
+	public void trigger_cron() {
+		// GIVEN
+		final String schedule = "0 */5 * * * *";
+
+		// WHEN
+		Trigger t = SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
+
+		// THEN
+		// @formatter:off
+		then(t)
+			.as("Cron trigger created")
+			.isInstanceOf(CronTrigger.class)
+			.asInstanceOf(type(CronTrigger.class))
+			.returns(schedule, from(CronTrigger::getExpression))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void periodic_fixed() {
+		// GIVEN
+		final String schedule = "60";
+
+		// WHEN
+		Trigger t = SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
+
+		// THEN
+		// @formatter:off
+		then(t)
+			.as("Periodic trigger created from simple number")
+			.isInstanceOf(PeriodicTrigger.class)
+			.asInstanceOf(type(PeriodicTrigger.class))
+			.returns(Duration.ofSeconds(60), from(PeriodicTrigger::getPeriodDuration))
+			.as("When period >= 60s then fixed rate is used")
+			.returns(true, from(PeriodicTrigger::isFixedRate))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void periodic_delay() {
+		// GIVEN
+		final String schedule = "59";
+
+		// WHEN
+		Trigger t = SchedulerUtils.triggerForExpression(schedule, TimeUnit.SECONDS, false);
+
+		// THEN
+		// @formatter:off
+		then(t)
+			.as("Periodic trigger created from simple number")
+			.isInstanceOf(PeriodicTrigger.class)
+			.asInstanceOf(type(PeriodicTrigger.class))
+			.returns(Duration.ofSeconds(59), from(PeriodicTrigger::getPeriodDuration))
+			.as("When period < 60s then delay is used")
+			.returns(false, from(PeriodicTrigger::isFixedRate))
+			;
+		// @formatter:on
 	}
 
 }
