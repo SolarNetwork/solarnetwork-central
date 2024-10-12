@@ -181,7 +181,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		// WHEN
 		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> result = biz
-				.configurationsForUser(userId, null, CloudIntegrationConfiguration.class);
+				.listConfigurationsForUser(userId, null, CloudIntegrationConfiguration.class);
 
 		// THEN
 		then(integrationDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(), isNull());
@@ -215,7 +215,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		// WHEN
 		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> result = biz
-				.configurationsForUser(userId, null, CloudDatumStreamConfiguration.class);
+				.listConfigurationsForUser(userId, null, CloudDatumStreamConfiguration.class);
 
 		// THEN
 		then(datumStreamDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(), isNull());
@@ -241,7 +241,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		// WHEN
 		FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> result = biz
-				.configurationsForUser(userId, null, CloudDatumStreamPropertyConfiguration.class);
+				.listConfigurationsForUser(userId, null, CloudDatumStreamPropertyConfiguration.class);
 
 		// THEN
 		then(datumStreamPropertyDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(),
@@ -271,7 +271,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		filter.setUserId(randomLong()); // should be replaced
 		filter.setDatumStreamId(conf.getDatumStreamId());
 		FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> result = biz
-				.configurationsForUser(userId, filter, CloudDatumStreamPropertyConfiguration.class);
+				.listConfigurationsForUser(userId, filter, CloudDatumStreamPropertyConfiguration.class);
 
 		// THEN
 		then(datumStreamPropertyDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(),
@@ -783,6 +783,30 @@ public class DaoUserCloudIntegrationsBizTests {
 		// @formatter:off
 		and.then(result)
 			.as("Result provided from DAO")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamPollTaskEntity_delete() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
+
+		given(datumStreamPollTaskDao.entityKey(pk)).willReturn(entity);
+
+		// WHEN
+		biz.deleteDatumStreamPollTask(pk);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamPollTaskDao).should().delete(datumStreamPollTaskCaptor.capture());
+
+		and.then(datumStreamPollTaskCaptor.getValue())
+			.as("DAO passed entity returned from entityKey()")
 			.isSameAs(entity)
 			;
 		// @formatter:on

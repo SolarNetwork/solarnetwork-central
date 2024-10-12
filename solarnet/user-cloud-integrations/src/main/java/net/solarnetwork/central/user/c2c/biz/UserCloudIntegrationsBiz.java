@@ -93,7 +93,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the desired configuration type
 	 * @return the available configurations, never {@literal null}
 	 */
-	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> configurationsForUser(
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> listConfigurationsForUser(
 			Long userId, CloudIntegrationsFilter filter, Class<C> configurationClass);
 
 	/**
@@ -164,7 +164,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param configurationClass
 	 *        the configuration type to get
 	 */
-	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void enableConfiguration(
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void updateConfigurationEnabled(
 			K id, boolean enabled, Class<C> configurationClass);
 
 	/**
@@ -207,7 +207,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValue> datumStreamDataValuesForId(UserLongCompositePK id, Map<String, ?> filters);
+	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK id, Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum from a datum stream.
@@ -229,7 +229,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the search criteria
 	 * @return the result, never {@literal null}
 	 */
-	SequencedCollection<Datum> listDatumStreamDatumForId(UserLongCompositePK id,
+	SequencedCollection<Datum> listDatumStreamDatum(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter);
 
 	/**
@@ -242,7 +242,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        an optional filter
 	 * @return the available entities, never {@literal null}
 	 */
-	FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> datumStreamPollTasksForUser(
+	FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> listDatumStreamPollTasksForUser(
 			Long userId, CloudDatumStreamPollTaskFilter filter);
 
 	/**
@@ -276,5 +276,13 @@ public interface UserCloudIntegrationsBiz {
 	 */
 	CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
 			CloudDatumStreamPollTaskEntityInput input, BasicClaimableJobState... expectedStates);
+
+	/**
+	 * Delete a specific datum stream poll task.
+	 *
+	 * @param id
+	 *        the primary key of the entity to delete
+	 */
+	void deleteDatumStreamPollTask(UserLongCompositePK id);
 
 }

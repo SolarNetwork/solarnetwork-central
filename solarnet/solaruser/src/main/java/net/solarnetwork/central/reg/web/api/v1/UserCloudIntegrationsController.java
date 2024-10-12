@@ -163,7 +163,7 @@ public class UserCloudIntegrationsController {
 	@RequestMapping(value = "/integrations", method = RequestMethod.GET)
 	public Result<FilterResults<CloudIntegrationConfiguration, UserLongCompositePK>> listCloudIntegrationConfigurations(
 			BasicFilter filter) {
-		var result = userCloudIntegrationsBiz.configurationsForUser(getCurrentActorUserId(), filter,
+		var result = userCloudIntegrationsBiz.listConfigurationsForUser(getCurrentActorUserId(), filter,
 				CloudIntegrationConfiguration.class);
 		return success(result);
 	}
@@ -199,7 +199,7 @@ public class UserCloudIntegrationsController {
 			@PathVariable("integrationId") Long integrationId,
 			@PathVariable("enabled") boolean enabled) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
-		userCloudIntegrationsBiz.enableConfiguration(id, enabled, CloudIntegrationConfiguration.class);
+		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled, CloudIntegrationConfiguration.class);
 		return success();
 	}
 
@@ -234,7 +234,7 @@ public class UserCloudIntegrationsController {
 	@RequestMapping(value = "/datum-streams", method = RequestMethod.GET)
 	public Result<FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK>> listCloudDatumStreamConfigurations(
 			BasicFilter filter) {
-		var result = userCloudIntegrationsBiz.configurationsForUser(getCurrentActorUserId(), filter,
+		var result = userCloudIntegrationsBiz.listConfigurationsForUser(getCurrentActorUserId(), filter,
 				CloudDatumStreamConfiguration.class);
 		return success(result);
 	}
@@ -270,7 +270,7 @@ public class UserCloudIntegrationsController {
 			@PathVariable("datumStreamId") Long datumStreamId,
 			@PathVariable("enabled") boolean enabled) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
-		userCloudIntegrationsBiz.enableConfiguration(id, enabled, CloudDatumStreamConfiguration.class);
+		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled, CloudDatumStreamConfiguration.class);
 		return success();
 	}
 
@@ -306,7 +306,7 @@ public class UserCloudIntegrationsController {
 				filter.put(param, val);
 			}
 		}
-		var result = userCloudIntegrationsBiz.datumStreamDataValuesForId(
+		var result = userCloudIntegrationsBiz.listDatumStreamDataValues(
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter);
 		return success(result);
 	}
@@ -334,7 +334,7 @@ public class UserCloudIntegrationsController {
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/datum", method = RequestMethod.GET)
 	public Result<SequencedCollection<? extends Datum>> cloudDatumStreamListDatum(
 			@PathVariable("datumStreamId") Long datumStreamId, BasicQueryFilter filter) {
-		return success(userCloudIntegrationsBiz.listDatumStreamDatumForId(
+		return success(userCloudIntegrationsBiz.listDatumStreamDatum(
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter));
 	}
 
@@ -346,7 +346,7 @@ public class UserCloudIntegrationsController {
 	public Result<FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>> listCloudDatumStreamPropertyConfigurations(
 			@PathVariable("datumStreamId") Long datumStreamId, BasicFilter filter) {
 		filter.setDatumStreamId(datumStreamId);
-		var result = userCloudIntegrationsBiz.configurationsForUser(getCurrentActorUserId(), filter,
+		var result = userCloudIntegrationsBiz.listConfigurationsForUser(getCurrentActorUserId(), filter,
 				CloudDatumStreamPropertyConfiguration.class);
 		return success(result);
 	}
@@ -381,7 +381,7 @@ public class UserCloudIntegrationsController {
 			@PathVariable("datumStreamId") Long datumStreamId, @PathVariable("index") Integer index,
 			@PathVariable("enabled") boolean enabled) {
 		var id = new UserLongIntegerCompositePK(getCurrentActorUserId(), datumStreamId, index);
-		userCloudIntegrationsBiz.enableConfiguration(id, enabled,
+		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled,
 				CloudDatumStreamPropertyConfiguration.class);
 		return success();
 	}
@@ -401,7 +401,7 @@ public class UserCloudIntegrationsController {
 	@RequestMapping(value = "/datum-stream-poll-tasks", method = RequestMethod.GET)
 	public Result<FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK>> listCloudDatumStreamPollTasks(
 			BasicFilter filter) {
-		var result = userCloudIntegrationsBiz.datumStreamPollTasksForUser(getCurrentActorUserId(),
+		var result = userCloudIntegrationsBiz.listDatumStreamPollTasksForUser(getCurrentActorUserId(),
 				filter);
 		return success(result);
 	}
@@ -416,6 +416,14 @@ public class UserCloudIntegrationsController {
 			requiredStates = input.getRequiredStates().toArray(BasicClaimableJobState[]::new);
 		}
 		return success(userCloudIntegrationsBiz.saveDatumStreamPollTask(id, input, requiredStates));
+	}
+
+	@RequestMapping(value = "/datum-stream-poll-tasks/{datumStreamId}", method = RequestMethod.DELETE)
+	public Result<Void> deleteCloudDatumStreamPollTask(
+			@PathVariable("datumStreamId") Long datumStreamId) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		userCloudIntegrationsBiz.deleteDatumStreamPollTask(id);
+		return success();
 	}
 
 	@RequestMapping(value = "/datum-stream-poll-tasks/{datumStreamId}/state", method = RequestMethod.POST)

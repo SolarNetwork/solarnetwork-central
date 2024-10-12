@@ -154,7 +154,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> configurationsForUser(
+	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> listConfigurationsForUser(
 			Long userId, CloudIntegrationsFilter filter, Class<C> configurationClass) {
 		requireNonNullArgument(userId, "userId");
 		requireNonNullArgument(configurationClass, "configurationClass");
@@ -238,7 +238,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void enableConfiguration(
+	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void updateConfigurationEnabled(
 			K id, boolean enabled, Class<C> configurationClass) {
 		requireNonNullArgument(id, "id");
 		requireNonNullArgument(id.getUserId(), "id.userId");
@@ -278,7 +278,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Iterable<CloudDataValue> datumStreamDataValuesForId(UserLongCompositePK id,
+	public Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK id,
 			Map<String, ?> filters) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");
@@ -309,7 +309,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> datumStreamPollTasksForUser(
+	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> listDatumStreamPollTasksForUser(
 			Long userId, CloudDatumStreamPollTaskFilter filter) {
 		requireNonNullArgument(userId, "userId");
 		BasicFilter f = new BasicFilter(filter);
@@ -353,8 +353,19 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return datumStreamPollTaskDao.get(id);
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public SequencedCollection<Datum> listDatumStreamDatumForId(UserLongCompositePK id,
+	public void deleteDatumStreamPollTask(UserLongCompositePK id) {
+		requireNonNullArgument(id, "id");
+		if ( !id.allKeyComponentsAreAssigned() ) {
+			throw new IllegalArgumentException(
+					"The userId and datumStreamId components must be provided.");
+		}
+		datumStreamPollTaskDao.delete(datumStreamPollTaskDao.entityKey(id));
+	}
+
+	@Override
+	public SequencedCollection<Datum> listDatumStreamDatum(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");
