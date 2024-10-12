@@ -191,7 +191,7 @@ public class DaoCloudDatumStreamPollService
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
-					taskDao.updateTask(taskInfo, taskInfo.getState());
+					taskDao.updateTask(taskInfo);
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} poll task state after error",
 							taskInfo.getId().ident(), e2);

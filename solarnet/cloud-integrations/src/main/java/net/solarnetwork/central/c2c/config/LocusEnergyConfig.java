@@ -25,7 +25,6 @@ package net.solarnetwork.central.c2c.config;
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -33,6 +32,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -107,6 +107,9 @@ public class LocusEnergyConfig {
 	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
+	@Autowired
+	private AsyncTaskExecutor taskExecutor;
+
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
 	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager() {
@@ -153,10 +156,9 @@ public class LocusEnergyConfig {
 	@Qualifier(LOCUS_ENERGY)
 	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new LocusEnergyCloudDatumStreamService(Executors::newVirtualThreadPerTaskExecutor,
-				userEventAppender, encryptor, expressionService, integrationConfigurationDao,
-				datumStreamConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
-				oauthClientManager);
+		var service = new LocusEnergyCloudDatumStreamService(taskExecutor, userEventAppender, encryptor,
+				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamPropertyConfigurationDao, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName());

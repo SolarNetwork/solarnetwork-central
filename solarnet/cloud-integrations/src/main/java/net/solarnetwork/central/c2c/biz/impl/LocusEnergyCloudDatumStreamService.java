@@ -59,14 +59,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SequencedCollection;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
@@ -135,16 +134,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		SETTINGS = List.of(granularitySpec);
 	}
 
-	private Supplier<ExecutorService> executorSupplier;
+	private AsyncTaskExecutor executor;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param executorSupplier
-	 *        a supplier of {@link ExecutorService} instances; this supplier
-	 *        will be invoked, then closed, on demand; this style supports
-	 *        virtual threads, for a shared instance implementation the
-	 *        {@code close} method will need to be overwritten
+	 * @param executor
+	 *        an executor
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -164,7 +160,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public LocusEnergyCloudDatumStreamService(Supplier<ExecutorService> executorSupplier,
+	public LocusEnergyCloudDatumStreamService(AsyncTaskExecutor executor,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
@@ -179,7 +175,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager),
 				oauthClientManager);
-		this.executorSupplier = requireNonNullArgument(executorSupplier, "executorSupplier");
+		this.executor = requireNonNullArgument(executor, "executor");
 	}
 
 	@Override
@@ -475,10 +471,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 		LocusEnergyGranularity granularity = null;
 		try {
-			granularity = LocusEnergyGranularity
-					.fromValue(datumStream.serviceProperty(GRANULARITY_SETTING, String.class));
-			if ( granularity == LocusEnergyGranularity.Latest ) {
-				granularity = null;
+			String granSetting = datumStream.serviceProperty(GRANULARITY_SETTING, String.class);
+			if ( granSetting != null && !granSetting.isEmpty() ) {
+				granularity = LocusEnergyGranularity.fromValue(granSetting);
 			}
 		} catch ( IllegalArgumentException e ) {
 			// ignore
@@ -553,8 +548,15 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			fieldNamesByProperty.put(config.getId(), m.group(4));
 		}
 
+		if ( fieldNamesByComponent.isEmpty() ) {
+			String msg = "Datum stream has no valid property references.";
+			Errors errors = new BindException(datumStream, "datumStream");
+			errors.reject("error.datumStream.noProperties", null, msg);
+			throw new ValidationException(msg, errors, ms);
+		}
+
 		List<List<Map<String, JsonNode>>> data = new ArrayList<>(fieldNamesByComponent.size());
-		try (var executor = executorSupplier.get()) {
+		try {
 			List<Future<List<Map<String, JsonNode>>>> futures = new ArrayList<>(
 					fieldNamesByComponent.size());
 			for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
@@ -609,9 +611,6 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 					}
 					return datumValuesList;
 				}));
-			}
-			if ( futures.isEmpty() ) {
-				throw new RuntimeException("Where is the future?");
 			}
 			for ( var f : futures ) {
 				data.add(f.get());

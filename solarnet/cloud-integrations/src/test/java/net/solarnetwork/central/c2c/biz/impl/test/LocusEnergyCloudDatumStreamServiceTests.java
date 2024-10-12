@@ -54,6 +54,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.task.support.TaskExecutorAdapter;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -82,7 +83,6 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
-import net.solarnetwork.central.test.NonClosingExecutorService;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -139,7 +139,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	public void setup() {
 		ExecutorService executor = new CallingThreadExecutorService();
 		expressionService = new SpelCloudIntegrationsExpressionService();
-		service = new LocusEnergyCloudDatumStreamService(() -> new NonClosingExecutorService(executor),
+		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
 				datumStreamPropertyDao, restOps, oauthClientManager);
 
