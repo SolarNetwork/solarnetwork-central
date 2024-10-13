@@ -186,12 +186,13 @@ public class DaoCloudDatumStreamPollService
 					log.warn("Error executing datum stream {} poll task", taskInfo.getId().ident(), e);
 					var errMsg = "Error executing poll task.";
 					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage());
+					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
-					taskDao.updateTask(taskInfo);
+					taskDao.updateTask(taskInfo, oldState);
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} poll task state after error",
 							taskInfo.getId().ident(), e2);

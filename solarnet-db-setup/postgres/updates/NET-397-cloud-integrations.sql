@@ -126,7 +126,7 @@ CREATE TABLE solarcin.cin_datum_stream_poll_task (
 
 -- index to speed up claim task query
 CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solarcin.cin_datum_stream_poll_task
-	(exec_at);
+	(exec_at) WHERE status = 'q';
 
 /**************************************************************************************************
  * FUNCTION solarnet.claim_datum_export_task()
@@ -159,3 +159,69 @@ BEGIN
 	RETURN;
 END
 $$;
+
+
+/**************************************************************************************************
+ * TRIGGER function that automatically updates datum stream poll task statuses when updating
+ * the enabled flag on an integration: stopping associated tasks when disabling the integration
+ * and starting otherwise.
+ */
+CREATE OR REPLACE FUNCTION solarcin.change_integration_enabled()
+	RETURNS "trigger"  LANGUAGE plpgsql VOLATILE AS
+$$
+BEGIN
+	UPDATE solarcin.cin_datum_stream_poll_task
+	SET status = CASE NEW.enabled WHEN TRUE THEN 'q' ELSE 'c' END
+	WHERE status =  CASE NEW.enabled WHEN TRUE THEN 'c' ELSE 'q' END
+	AND user_id = NEW.user_id
+	AND ds_id IN (
+		SELECT id
+		FROM solarcin.cin_datum_stream
+		WHERE user_id = NEW.user_id
+		AND int_id = NEW.id
+		AND enabled = TRUE
+	);
+
+	RETURN NEW;
+END
+$$;
+
+CREATE TRIGGER change_integration_enabled
+  BEFORE UPDATE
+  ON solarcin.cin_integration
+  FOR EACH ROW
+  WHEN (OLD.enabled IS DISTINCT FROM NEW.enabled)
+  EXECUTE PROCEDURE solarcin.change_integration_enabled();
+
+/**************************************************************************************************
+ * TRIGGER function that automatically updates datum stream poll task statuses when updating
+ * the enabled flag on a datum stream: stopping associated tasks when disabling the daum stream
+ * and starting otherwise.
+ */
+CREATE OR REPLACE FUNCTION solarcin.change_datum_stream_enabled()
+	RETURNS "trigger"  LANGUAGE plpgsql VOLATILE AS
+$$
+BEGIN
+	UPDATE solarcin.cin_datum_stream_poll_task
+	SET status = CASE NEW.enabled WHEN TRUE THEN 'q' ELSE 'c' END
+	WHERE status =  CASE NEW.enabled WHEN TRUE THEN 'c' ELSE 'q' END
+	AND user_id = NEW.user_id
+	AND ds_id = NEW.id
+	AND EXISTS (
+		SELECT 1
+		FROM solarcin.cin_integration
+		WHERE user_id = NEW.user_id
+		AND id = NEW.int_id
+		AND enabled = TRUE
+	);
+
+	RETURN NEW;
+END
+$$;
+
+CREATE TRIGGER change_datum_stream_enabled
+  BEFORE UPDATE
+  ON solarcin.cin_datum_stream
+  FOR EACH ROW
+  WHEN (OLD.enabled IS DISTINCT FROM NEW.enabled)
+  EXECUTE PROCEDURE solarcin.change_datum_stream_enabled();
