@@ -125,6 +125,12 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 500
+  oauth:
+    client:
+      registration-cache:
+        ttl: 120
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
   ocpp.v16:
     mqtt.instr-handler:
       mqtt-topic: "instr/OCPP_v16"

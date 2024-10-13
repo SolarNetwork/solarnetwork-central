@@ -175,6 +175,12 @@ app:
           maximum-wait-ms: 299000
           parallelism: 4
           schedule: "40 18/20 * * * *"
+  oauth:
+    client:
+      registration-cache:
+        ttl: 21600
+        heap-max-entries: 50
+        disk-max-size-mb: 1
     ocpp:
       charge-session-cleaner:
         schedule: "40 30 5 * * *"

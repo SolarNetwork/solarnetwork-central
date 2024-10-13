@@ -23,8 +23,10 @@
 package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.util.Arrays;
 import java.util.Collection;
+import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -46,6 +48,8 @@ import org.springframework.security.oauth2.client.endpoint.DefaultClientCredenti
 import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.DefaultRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
@@ -61,6 +65,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
+import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 
 /**
  * Configuration for the Locus Energy cloud integration services.
@@ -112,11 +117,15 @@ public class LocusEnergyConfig {
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
-	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager() {
-		var repo = new ClientCredentialsClientRegistrationRepository(integrationConfigurationDao,
-				LocusEnergyCloudIntegrationService.TOKEN_URI,
+	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager(
+			@Autowired(required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
+		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
+				integrationConfigurationDao, LocusEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
 				integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS);
+		if ( cache != null ) {
+			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
+		}
 
 		var clientService = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations, repo);
 
