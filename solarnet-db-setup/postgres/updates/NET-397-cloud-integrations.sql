@@ -129,7 +129,7 @@ CREATE TABLE solardin.cin_datum_stream_poll_task (
 
 -- index to speed up claim task query
 CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solardin.cin_datum_stream_poll_task
-	(exec_at) INCLUDE (status);
+	(exec_at DESC) INCLUDE (status);
 
 
 /**************************************************************************************************
