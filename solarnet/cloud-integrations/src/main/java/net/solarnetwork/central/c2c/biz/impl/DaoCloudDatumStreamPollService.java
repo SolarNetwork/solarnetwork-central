@@ -33,8 +33,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -154,12 +156,26 @@ public class DaoCloudDatumStreamPollService
 
 	@Override
 	public CloudDatumStreamPollTaskEntity claimQueuedTask() {
+		if ( executorService.isShutdown() ) {
+			return null;
+		}
 		return taskDao.claimQueuedTask();
 	}
 
 	@Override
 	public Future<CloudDatumStreamPollTaskEntity> executeTask(CloudDatumStreamPollTaskEntity task) {
-		return executorService.submit(new CloudDatumStreamPollTask(task));
+		try {
+			return executorService.submit(new CloudDatumStreamPollTask(task));
+		} catch ( RejectedExecutionException e ) {
+			log.warn("Datum stream poll task execution rejected, resetting state to Queued: {}",
+					e.getMessage());
+			// go back to queued
+			if ( !taskDao.updateTaskState(task.getId(), Queued, task.getState()) ) {
+				log.warn("Failed to update rejected datum stream poll task {} state from {} to Queued",
+						task.getId().ident(), task.getState());
+			}
+			return CompletableFuture.failedFuture(e);
+		}
 	}
 
 	private final class CloudDatumStreamPollTask implements Callable<CloudDatumStreamPollTaskEntity> {

@@ -34,6 +34,7 @@ import static net.solarnetwork.domain.datum.DatumId.nodeId;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
@@ -45,7 +46,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +73,6 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
-import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -106,6 +111,9 @@ public class DaoCloudDatumStreamPollServiceTests {
 	@Mock
 	private CloudDatumStreamService datumStreamService;
 
+	@Mock
+	private ExecutorService executor;
+
 	@Captor
 	private ArgumentCaptor<CloudDatumStreamQueryFilter> queryFilterCaptor;
 
@@ -125,8 +133,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
 		service = new DaoCloudDatumStreamPollService(clock, userEventAppenderBiz, nodeOwnershipDao,
-				taskDao, datumStreamDao, datumDao, new CallingThreadExecutorService(),
-				datumStreamServices::get);
+				taskDao, datumStreamDao, datumDao, executor, datumStreamServices::get);
 	}
 
 	@Test
@@ -168,6 +175,17 @@ public class DaoCloudDatumStreamPollServiceTests {
 	@Test
 	public void executeTask() throws Exception {
 		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
@@ -257,6 +275,16 @@ public class DaoCloudDatumStreamPollServiceTests {
 	@Test
 	public void executeTask_notNodeOwner() throws Exception {
 		// GIVEN
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
 		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
@@ -320,6 +348,47 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.isSameAs(taskCaptor.getValue())
 			;
 
+		// @formatter:on
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void executeTask_shutdown() throws Exception {
+		// GIVEN
+		// submit task
+		final var rejectedException = new RejectedExecutionException("Executor is shut down.");
+		given(executor.submit(any(Callable.class))).willThrow(rejectedException);
+
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setIntegrationId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// update task state to "queued"
+		given(taskDao.updateTaskState(datumStream.getId(), Queued, Claimed)).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
+		task.setState(Claimed);
+		task.setExecuteAt(hour);
+		task.setStartAt(hour.minusSeconds(300));
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+
+		// THEN
+		// @formatter:off
+		and.thenThrownBy(() -> result.get(1, TimeUnit.MINUTES), "Task fails to execute")
+			.isInstanceOf(ExecutionException.class)
+			.extracting(e -> e.getCause())
+			.as("The exception cause is the one thrown by the submit() call")
+			.isSameAs(rejectedException)
+			;
 		// @formatter:on
 	}
 
