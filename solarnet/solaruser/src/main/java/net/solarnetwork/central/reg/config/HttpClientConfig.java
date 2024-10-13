@@ -146,6 +146,7 @@ public class HttpClientConfig {
 			RequestConfig requestConfig) {
 		// @formatter:off
         return HttpClients.custom()
+        		.disableCookieManagement()
         		.setDefaultRequestConfig(requestConfig)
         		.useSystemProperties()
                 .setConnectionManager(connectionManager)
