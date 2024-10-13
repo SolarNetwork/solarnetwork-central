@@ -200,6 +200,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public int resetAbandondedExecutingTasks(Instant olderThan) {
+		// reset tasks in Executing older than olderThan to Queued
 		BasicFilter filter = new BasicFilter();
 		filter.setClaimableJobStates(new BasicClaimableJobState[] { BasicClaimableJobState.Executing });
 		filter.setEndDate(olderThan);
