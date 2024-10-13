@@ -42,7 +42,7 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 public class InsertCloudIntegrationConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solarcin.cin_integration (
+			INSERT INTO solardin.cin_integration (
 				created,modified,user_id,enabled,cname,sident,sprops
 			)
 			VALUES (?,?,?,?,?,?,?::jsonb)

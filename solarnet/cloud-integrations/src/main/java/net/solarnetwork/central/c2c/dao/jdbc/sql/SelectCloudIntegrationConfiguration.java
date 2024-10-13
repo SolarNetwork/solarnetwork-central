@@ -87,7 +87,7 @@ public class SelectCloudIntegrationConfiguration
 		buf.append("""
 				SELECT ci.user_id, ci.id, ci.created, ci.modified, ci.enabled
 					, ci.cname, ci.sident, ci.sprops
-				FROM solarcin.cin_integration ci
+				FROM solardin.cin_integration ci
 				""");
 	}
 

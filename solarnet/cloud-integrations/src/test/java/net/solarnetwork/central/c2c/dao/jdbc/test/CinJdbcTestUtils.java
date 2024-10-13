@@ -89,8 +89,8 @@ public class CinJdbcTestUtils {
 	public static List<Map<String, Object>> allCloudIntegrationConfigurationData(
 			JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps
-				.queryForList("select * from solarcin.cin_integration ORDER BY user_id, id");
-		log.debug("solarcin.cin_integration table has {} items: [{}]", data.size(),
+				.queryForList("select * from solardin.cin_integration ORDER BY user_id, id");
+		log.debug("solardin.cin_integration table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
@@ -146,8 +146,8 @@ public class CinJdbcTestUtils {
 	public static List<Map<String, Object>> allCloudDatumStreamConfigurationData(
 			JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps
-				.queryForList("select * from solarcin.cin_datum_stream ORDER BY user_id, id");
-		log.debug("solarcin.cin_datum_stream table has {} items: [{}]", data.size(),
+				.queryForList("select * from solardin.cin_datum_stream ORDER BY user_id, id");
+		log.debug("solardin.cin_datum_stream table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
@@ -204,8 +204,8 @@ public class CinJdbcTestUtils {
 	public static List<Map<String, Object>> allCloudDatumStreamPropertyConfigurationData(
 			JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
-				"select * from solarcin.cin_datum_stream_prop ORDER BY user_id, ds_id, idx");
-		log.debug("solarcin.cin_datum_stream_prop table has {} items: [{}]", data.size(),
+				"select * from solardin.cin_datum_stream_prop ORDER BY user_id, ds_id, idx");
+		log.debug("solardin.cin_datum_stream_prop table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}
@@ -251,8 +251,8 @@ public class CinJdbcTestUtils {
 	public static List<Map<String, Object>> allCloudDatumStreamPollTaskEntityData(
 			JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
-				"select * from solarcin.cin_datum_stream_poll_task ORDER BY user_id, ds_id");
-		log.debug("solarcin.cin_datum_stream_poll_task table has {} items: [{}]", data.size(),
+				"select * from solardin.cin_datum_stream_poll_task ORDER BY user_id, ds_id");
+		log.debug("solardin.cin_datum_stream_poll_task table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

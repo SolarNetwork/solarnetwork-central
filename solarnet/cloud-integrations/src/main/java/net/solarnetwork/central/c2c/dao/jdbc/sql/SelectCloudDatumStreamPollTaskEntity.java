@@ -88,7 +88,7 @@ public class SelectCloudDatumStreamPollTaskEntity
 				SELECT cdspt.user_id, cdspt.ds_id
 					, cdspt.status, cdspt.exec_at, cdspt.start_at, cdspt.message
 					, cdspt.sprops
-				FROM solarcin.cin_datum_stream_poll_task cdspt
+				FROM solardin.cin_datum_stream_poll_task cdspt
 				""");
 	}
 

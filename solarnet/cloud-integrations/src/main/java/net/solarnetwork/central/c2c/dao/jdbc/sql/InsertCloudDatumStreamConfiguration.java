@@ -42,7 +42,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 public class InsertCloudDatumStreamConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solarcin.cin_datum_stream (
+			INSERT INTO solardin.cin_datum_stream (
 				  created,modified,user_id,enabled,cname,sident
 				, int_id,schedule,kind,obj_id,source_id
 				, sprops

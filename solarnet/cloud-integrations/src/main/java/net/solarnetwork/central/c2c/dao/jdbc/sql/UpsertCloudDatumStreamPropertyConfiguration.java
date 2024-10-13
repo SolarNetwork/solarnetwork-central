@@ -44,7 +44,7 @@ public class UpsertCloudDatumStreamPropertyConfiguration
 		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solarcin.cin_datum_stream_prop (
+			INSERT INTO solardin.cin_datum_stream_prop (
 				  created,modified,user_id,ds_id,idx,enabled
 				, ptype,pname,vtype,vref,mult,scale
 			)

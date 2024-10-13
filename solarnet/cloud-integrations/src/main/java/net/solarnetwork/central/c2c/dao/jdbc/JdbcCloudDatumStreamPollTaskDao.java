@@ -52,7 +52,7 @@ import net.solarnetwork.domain.SortDescriptor;
  */
 public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTaskDao {
 
-	public static String DEFAULT_CLAIM_JOB_SQL = "{call solarcin.claim_datum_stream_poll_task()}";
+	public static String DEFAULT_CLAIM_JOB_SQL = "{call solardin.claim_datum_stream_poll_task()}";
 
 	private final JdbcOperations jdbcOps;
 	private final String claimTaskSql;
@@ -145,7 +145,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 		throw new UnsupportedOperationException();
 	}
 
-	private static final String TABLE_NAME = "solarcin.cin_datum_stream_poll_task";
+	private static final String TABLE_NAME = "solardin.cin_datum_stream_poll_task";
 	private static final String ID_COLUMN_NAME = "ds_id";
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 

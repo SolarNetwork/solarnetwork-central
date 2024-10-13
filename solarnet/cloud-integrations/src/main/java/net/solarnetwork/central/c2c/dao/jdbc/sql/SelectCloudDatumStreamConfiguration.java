@@ -89,7 +89,7 @@ public class SelectCloudDatumStreamConfiguration
 					, cds.cname, cds.sident
 					, cds.int_id, cds.schedule, cds.kind, cds.obj_id, cds.source_id
 					, cds.sprops
-				FROM solarcin.cin_datum_stream cds
+				FROM solardin.cin_datum_stream cds
 				""");
 	}
 

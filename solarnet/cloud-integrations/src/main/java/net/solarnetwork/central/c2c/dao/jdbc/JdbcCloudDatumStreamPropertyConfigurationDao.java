@@ -130,7 +130,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 		throw new UnsupportedOperationException();
 	}
 
-	private static final String TABLE_NAME = "solarcin.cin_datum_stream_prop";
+	private static final String TABLE_NAME = "solardin.cin_datum_stream_prop";
 	private static final String DATASOURCE_ID_COLUMN_NAME = "ds_id";
 	private static final String INDEX_COLUMN_NAME = "idx";
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", DATASOURCE_ID_COLUMN_NAME,

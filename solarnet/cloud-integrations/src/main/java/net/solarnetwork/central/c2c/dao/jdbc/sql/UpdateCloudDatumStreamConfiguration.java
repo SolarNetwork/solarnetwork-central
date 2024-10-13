@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class UpdateCloudDatumStreamConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			UPDATE solarcin.cin_datum_stream
+			UPDATE solardin.cin_datum_stream
 			SET modified = ?
 				, cname = ?
 				, sident = ?

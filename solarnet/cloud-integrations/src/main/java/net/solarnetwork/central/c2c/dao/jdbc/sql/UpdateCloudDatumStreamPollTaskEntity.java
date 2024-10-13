@@ -45,7 +45,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class UpdateCloudDatumStreamPollTaskEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			UPDATE solarcin.cin_datum_stream_poll_task
+			UPDATE solardin.cin_datum_stream_poll_task
 			SET status = ?
 				, exec_at = ?
 				, start_at = ?

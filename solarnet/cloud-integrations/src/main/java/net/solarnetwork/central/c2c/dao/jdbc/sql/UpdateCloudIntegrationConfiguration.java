@@ -43,7 +43,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class UpdateCloudIntegrationConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			UPDATE solarcin.cin_integration
+			UPDATE solardin.cin_integration
 			SET modified = ?
 				, cname = ?
 				, sident = ?

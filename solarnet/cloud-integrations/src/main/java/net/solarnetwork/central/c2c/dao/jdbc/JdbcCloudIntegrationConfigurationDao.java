@@ -129,7 +129,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 		throw new UnsupportedOperationException();
 	}
 
-	private static final String TABLE_NAME = "solarcin.cin_integration";
+	private static final String TABLE_NAME = "solardin.cin_integration";
 	private static final String ID_COLUMN_NAME = "id";
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", ID_COLUMN_NAME };
 

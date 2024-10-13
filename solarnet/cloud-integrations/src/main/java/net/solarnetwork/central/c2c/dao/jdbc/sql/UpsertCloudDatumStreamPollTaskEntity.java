@@ -42,7 +42,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 public class UpsertCloudDatumStreamPollTaskEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solarcin.cin_datum_stream_poll_task (
+			INSERT INTO solardin.cin_datum_stream_poll_task (
 				  user_id,ds_id
 				, status,exec_at,start_at,message,sprops
 			)
