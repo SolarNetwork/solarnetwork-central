@@ -90,6 +90,10 @@ app:
         maximum-wait-ms: 60000
         parallelism: 1
         schedule: 5000
+      ds-poll-reset-abandoned:
+        maximum-wait-ms: 60000
+        schedule: 60000
+        minimum-age: "15m"
     datum:
       agg:
         hourly:

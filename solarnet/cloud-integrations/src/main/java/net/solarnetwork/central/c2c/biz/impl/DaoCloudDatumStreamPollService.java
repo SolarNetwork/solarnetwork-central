@@ -366,6 +366,12 @@ public class DaoCloudDatumStreamPollService
 		return t;
 	}
 
+	@Override
+	public int resetAbandondedExecutingTasks(Instant olderThan) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	/**
 	 * Get the maximum length of time to wait for executing tasks to complete
 	 * when {@link #serviceDidShutdown()} is invoked.

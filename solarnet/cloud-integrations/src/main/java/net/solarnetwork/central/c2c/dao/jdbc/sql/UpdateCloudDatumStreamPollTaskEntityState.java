@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.sql;
 
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareDateRange;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.prepareOptimizedArrayParameter;
+import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereDateRange;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.whereOptimizedArrayContains;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
@@ -34,7 +36,6 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Support for UPDATE for {@link CloudDatumStreamPollTaskEntity} entity state.
@@ -47,49 +48,26 @@ public class UpdateCloudDatumStreamPollTaskEntityState implements PreparedStatem
 	private static final String SQL = """
 			UPDATE solarcin.cin_datum_stream_poll_task
 			SET status = ?
-			WHERE user_id = ? AND ds_id = ?
 			""";
 
-	private final UserLongCompositePK id;
 	private final BasicClaimableJobState desiredState;
 	private final CloudDatumStreamPollTaskFilter filter;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param id
-	 *        the primary key
-	 * @param desiredState
-	 *        the desired state
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
-	 */
-	public UpdateCloudDatumStreamPollTaskEntityState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState) {
-		this(id, desiredState, null);
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param id
-	 *        the primary key
 	 * @param desiredState
 	 *        the desired state
 	 * @param filter
-	 *        an optional filter to restrict the update to
+	 *        a filter to restrict the update to
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}, other than {@code filter}
+	 *         if any argument is {@literal null}
 	 */
-	public UpdateCloudDatumStreamPollTaskEntityState(UserLongCompositePK id,
-			BasicClaimableJobState desiredState, CloudDatumStreamPollTaskFilter filter) {
+	public UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState desiredState,
+			CloudDatumStreamPollTaskFilter filter) {
 		super();
-		this.id = requireNonNullArgument(id, "id");
 		this.desiredState = requireNonNullArgument(desiredState, "desiredState");
-		if ( !id.entityIdIsAssigned() ) {
-			throw new IllegalArgumentException("Entity ID must be assigned");
-		}
-		this.filter = filter;
+		this.filter = requireNonNullArgument(filter, "filter");
 	}
 
 	@Override
@@ -108,33 +86,43 @@ public class UpdateCloudDatumStreamPollTaskEntityState implements PreparedStatem
 		int p = 0;
 		stmt.setString(++p, desiredState.keyValue());
 
-		stmt.setObject(++p, id.getUserId());
-		stmt.setObject(++p, id.getEntityId());
-
 		prepareCore(con, stmt, p);
 
 		return stmt;
 	}
 
 	private void sqlWhere(StringBuilder buf) {
-		if ( filter == null ) {
-			return;
-		}
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
+		if ( filter.hasUserCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "user_id", where);
+		}
+		if ( filter.hasDatumStreamCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "ds_id", where);
+		}
 		if ( filter.hasClaimableJobStateCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.claimableJobStateKeys(), "status", where);
 		}
+		if ( filter.hasDate() ) {
+			idx += whereDateRange(filter, "exec_at", where);
+		}
 		if ( idx > 0 ) {
-			buf.append("AND").append(where.substring(4));
+			buf.append("WHERE").append(where.substring(4));
 		}
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		if ( filter != null ) {
-			if ( filter.hasClaimableJobStateCriteria() ) {
-				p = prepareOptimizedArrayParameter(con, stmt, p, filter.claimableJobStateKeys());
-			}
+		if ( filter.hasUserCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
+		}
+		if ( filter.hasDatumStreamCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
+		}
+		if ( filter.hasClaimableJobStateCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.claimableJobStateKeys());
+		}
+		if ( filter.hasDate() ) {
+			p = prepareDateRange(filter, stmt, p);
 		}
 		return p;
 	}

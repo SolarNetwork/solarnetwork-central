@@ -126,7 +126,7 @@ CREATE TABLE solarcin.cin_datum_stream_poll_task (
 
 -- index to speed up claim task query
 CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solarcin.cin_datum_stream_poll_task
-	(exec_at) WHERE status = 'q';
+	(exec_at) INCLUDE (status);
 
 /**************************************************************************************************
  * FUNCTION solarnet.claim_datum_export_task()

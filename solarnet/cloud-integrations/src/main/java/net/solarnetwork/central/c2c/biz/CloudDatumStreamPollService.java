@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz;
 
+import java.time.Instant;
 import java.util.concurrent.Future;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 
@@ -53,4 +54,18 @@ public interface CloudDatumStreamPollService {
 	 * @return the task future
 	 */
 	Future<CloudDatumStreamPollTaskEntity> executeTask(CloudDatumStreamPollTaskEntity task);
+
+	/**
+	 * Reset poll tasks that are in the executing state but have an execute date
+	 * older than a given date.
+	 *
+	 * <p>
+	 * The intention of this method is to "reset" a task that was inadvertently
+	 * left in an executing state, for example after a server restart.
+	 * </p>
+	 *
+	 * @return the number of tasks reset
+	 */
+	int resetAbandondedExecutingTasks(Instant olderThan);
+
 }

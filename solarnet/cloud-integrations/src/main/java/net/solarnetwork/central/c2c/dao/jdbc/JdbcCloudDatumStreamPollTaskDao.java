@@ -26,6 +26,7 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.CallableStatement;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -174,12 +175,14 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 	@Override
 	public boolean updateTaskState(UserLongCompositePK id, BasicClaimableJobState desiredState,
 			BasicClaimableJobState... expectedStates) {
-		BasicFilter filter = null;
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(
+				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
+		filter.setDatumStreamId(requireNonNullArgument(id.getEntityId(), "id.entityId"));
 		if ( expectedStates != null ) {
-			filter = new BasicFilter();
 			filter.setClaimableJobStates(expectedStates);
 		}
-		var sql = new UpdateCloudDatumStreamPollTaskEntityState(id, desiredState, filter);
+		var sql = new UpdateCloudDatumStreamPollTaskEntityState(desiredState, filter);
 		return jdbcOps.update(sql) != 0;
 	}
 
@@ -193,6 +196,15 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 		}
 		var sql = new UpdateCloudDatumStreamPollTaskEntity(info.getId(), info, filter);
 		return jdbcOps.update(sql) != 0;
+	}
+
+	@Override
+	public int resetAbandondedExecutingTasks(Instant olderThan) {
+		BasicFilter filter = new BasicFilter();
+		filter.setClaimableJobStates(new BasicClaimableJobState[] { BasicClaimableJobState.Executing });
+		filter.setEndDate(olderThan);
+		var sql = new UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState.Queued, filter);
+		return jdbcOps.update(sql);
 	}
 
 }

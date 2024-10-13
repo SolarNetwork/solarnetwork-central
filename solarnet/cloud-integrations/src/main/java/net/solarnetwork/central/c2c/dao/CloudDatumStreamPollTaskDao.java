@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import java.time.Instant;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -76,5 +77,18 @@ public interface CloudDatumStreamPollTaskDao
 	 * @return {@literal true} if the task state was changed
 	 */
 	boolean updateTask(CloudDatumStreamPollTaskEntity info, BasicClaimableJobState... expectedStates);
+
+	/**
+	 * Reset poll tasks that are in the executing state but have an execute date
+	 * older than a given date.
+	 *
+	 * <p>
+	 * The intention of this method is to "reset" a task that was inadvertently
+	 * left in an executing state, for example after a server restart.
+	 * </p>
+	 *
+	 * @return the number of tasks reset
+	 */
+	int resetAbandondedExecutingTasks(Instant olderThan);
 
 }

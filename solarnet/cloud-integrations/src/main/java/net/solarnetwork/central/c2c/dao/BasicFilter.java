@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.ClaimableJobState;
+import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
@@ -46,6 +48,8 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	private Long[] datumStreamIds;
 	private Integer[] indexes;
 	private BasicClaimableJobState[] claimableJobStates;
+	private Instant startDate;
+	private Instant endDate;
 
 	@Override
 	public BasicFilter clone() {
@@ -77,6 +81,8 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 			setDatumStreamIds(f.getDatumStreamIds());
 			setIndexes(f.getIndexes());
 			setClaimableJobStates(f.getClaimableJobStates());
+			setStartDate(f.getStartDate());
+			setEndDate(f.getEndDate());
 		} else {
 			if ( criteria instanceof CloudIntegrationCriteria f ) {
 				setIntegrationIds(f.getIntegrationIds());
@@ -102,6 +108,10 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 				}
 				setClaimableJobStates(copy.toArray(BasicClaimableJobState[]::new));
 			}
+			if ( criteria instanceof DateRangeCriteria f ) {
+				setStartDate(f.getStartDate());
+				setEndDate(f.getEndDate());
+			}
 		}
 	}
 
@@ -112,7 +122,8 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		result = prime * result + Arrays.hashCode(integrationIds);
 		result = prime * result + Arrays.hashCode(datumStreamIds);
 		result = prime * result + Arrays.hashCode(indexes);
-		result = prime * result + Objects.hashCode(claimableJobStates);
+		result = prime * result + Arrays.hashCode(claimableJobStates);
+		result = prime * result + Objects.hash(startDate, endDate);
 		return result;
 	}
 
@@ -131,7 +142,8 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		return Arrays.equals(integrationIds, other.integrationIds)
 				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
 				&& Arrays.equals(indexes, other.indexes)
-				&& Objects.equals(claimableJobStates, other.claimableJobStates);
+				&& Objects.equals(claimableJobStates, other.claimableJobStates)
+				&& Objects.equals(startDate, other.startDate) && Objects.equals(endDate, other.endDate);
 	}
 
 	@Override
@@ -242,6 +254,36 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	 */
 	public final void setClaimableJobStates(BasicClaimableJobState[] claimableJobStates) {
 		this.claimableJobStates = claimableJobStates;
+	}
+
+	@Override
+	public Instant getStartDate() {
+		return startDate;
+	}
+
+	/**
+	 * Set the start date.
+	 *
+	 * @param startDate
+	 *        the date to set
+	 */
+	public void setStartDate(Instant startDate) {
+		this.startDate = startDate;
+	}
+
+	@Override
+	public Instant getEndDate() {
+		return endDate;
+	}
+
+	/**
+	 * Set the end date.
+	 *
+	 * @param endDate
+	 *        the date to set
+	 */
+	public void setEndDate(Instant endDate) {
+		this.endDate = endDate;
 	}
 
 }

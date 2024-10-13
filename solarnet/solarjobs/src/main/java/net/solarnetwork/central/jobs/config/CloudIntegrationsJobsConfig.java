@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskProcessor;
+import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskResetAbandoned;
 import net.solarnetwork.central.scheduler.ManagedJob;
 
 /**
@@ -49,6 +50,12 @@ public class CloudIntegrationsJobsConfig {
 	@Bean
 	public ManagedJob cloudDatumStreamPollTaskProcessor() {
 		return new CloudDatumStreamPollTaskProcessor(cloudDatumStreamPollService);
+	}
+
+	@ConfigurationProperties(prefix = "app.job.c2c.ds-poll-reset-abandoned")
+	@Bean
+	public ManagedJob cloudDatumStreamPollTaskResetAbandonedJob() {
+		return new CloudDatumStreamPollTaskResetAbandoned(cloudDatumStreamPollService);
 	}
 
 }

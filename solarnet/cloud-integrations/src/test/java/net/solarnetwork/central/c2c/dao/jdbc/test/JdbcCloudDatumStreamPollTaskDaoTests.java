@@ -563,4 +563,46 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		// @formatter:on
 	}
 
+	@Test
+	public void resetAbandoned() {
+		// GIVEN
+		final int datumStreamCount = 10;
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+
+		final List<CloudDatumStreamPollTaskEntity> pollTasks = new ArrayList<>(datumStreamCount);
+
+		for ( int i = 0; i < datumStreamCount; i++ ) {
+			final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+					integration.getConfigId(), null);
+			CloudDatumStreamPollTaskEntity conf = newCloudDatumStreamPollTaskEntity(userId,
+					datumStream.getConfigId(),
+					i == 0 || RNG.nextBoolean() ? BasicClaimableJobState.Executing
+							: BasicClaimableJobState.Queued,
+					start.plusSeconds(60 * i), now().truncatedTo(ChronoUnit.DAYS), randomString(), null);
+			pollTasks.add(dao.get(dao.save(conf)));
+		}
+
+		final List<CloudDatumStreamPollTaskEntity> executingTasks = pollTasks.stream()
+				.filter(e -> e.getState() == BasicClaimableJobState.Executing).toList();
+		final CloudDatumStreamPollTaskEntity randomExecutingTask = executingTasks
+				.get(RNG.nextInt(executingTasks.size()));
+
+		allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+
+		// WHEN
+		final Instant minimumDate = randomExecutingTask.getExecuteAt().plusSeconds(1);
+		int count = dao.resetAbandondedExecutingTasks(minimumDate);
+
+		// THEN
+		final int expectedCount = (int) executingTasks.stream()
+				.filter(e -> e.getExecuteAt().isBefore(minimumDate)).count();
+		// @formatter:off
+		then(count)
+			.as("Should reset all tasks in executing state older than given minimum date")
+			.isEqualTo(expectedCount)
+			;
+		// @formatter:on
+	}
+
 }

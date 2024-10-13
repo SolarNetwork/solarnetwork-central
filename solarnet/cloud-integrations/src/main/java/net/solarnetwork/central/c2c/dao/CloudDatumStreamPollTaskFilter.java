@@ -23,14 +23,20 @@
 package net.solarnetwork.central.c2c.dao;
 
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
+import net.solarnetwork.dao.DateRangeCriteria;
 
 /**
  * A filter for cloud datum stream poll task entities.
+ *
+ * <p>
+ * Note that the {@link DateRangeCriteria} component applies to the
+ * {@code execute} date of the poll task entity.
+ * </p>
  *
  * @author matt
  * @version 1.0
  */
 public interface CloudDatumStreamPollTaskFilter
-		extends CloudDatumStreamFilter, ClaimableJobStateCriteria {
+		extends CloudDatumStreamFilter, ClaimableJobStateCriteria, DateRangeCriteria {
 
 }
