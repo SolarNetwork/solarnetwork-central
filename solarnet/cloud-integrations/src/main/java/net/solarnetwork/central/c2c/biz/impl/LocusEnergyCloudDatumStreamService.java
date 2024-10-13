@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.util.Collections.unmodifiableMap;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
@@ -127,8 +128,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
 				LocusEnergyGranularity.Latest.getKey());
-		var granularityTitles = Arrays.stream(LocusEnergyGranularity.values()).collect(Collectors
-				.toUnmodifiableMap(LocusEnergyGranularity::getKey, LocusEnergyGranularity::getKey));
+		var granularityTitles = unmodifiableMap(Arrays.stream(LocusEnergyGranularity.values())
+				.collect(Collectors.toMap(LocusEnergyGranularity::getKey, LocusEnergyGranularity::getKey,
+						(l, r) -> r,
+						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
 		SETTINGS = List.of(granularitySpec);
