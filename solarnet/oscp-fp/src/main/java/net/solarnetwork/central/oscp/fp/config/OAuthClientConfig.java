@@ -22,12 +22,11 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.util.Arrays;
 import javax.cache.Cache;
-import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,7 +47,7 @@ import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
 import net.solarnetwork.central.oscp.http.ExternalSystemClientRegistrationRepository;
 import net.solarnetwork.central.oscp.http.RestOpsExternalSystemClient;
-import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 
 /**
  * OAuth client configuration.
@@ -59,12 +58,6 @@ import net.solarnetwork.central.support.CacheSettings;
 @Configuration(proxyBeanMethods = false)
 public class OAuthClientConfig {
 
-	/** A qualifier to use for OAuth client registration. */
-	public static final String OAUTH_CLIENT_REGISTRATION = "oauth-client-reg";
-
-	@Autowired
-	private CacheManager cacheManager;
-
 	@Autowired
 	private ExternalSystemSupportDao systemSupportDao;
 
@@ -72,26 +65,11 @@ public class OAuthClientConfig {
 	private SecretsBiz secretsBiz;
 
 	@Bean
-	@Qualifier(OAUTH_CLIENT_REGISTRATION)
-	@ConfigurationProperties(prefix = "app.oauth.client.registration-cache")
-	public CacheSettings oauthClientRegistrationCacheSettings() {
-		return new CacheSettings();
-	}
-
-	@Bean
-	@Qualifier(OAUTH_CLIENT_REGISTRATION)
-	public Cache<String, ClientRegistration> oauthClientRegistrationCache(
-			@Qualifier(OAUTH_CLIENT_REGISTRATION) CacheSettings settings) {
-		return settings.createCache(cacheManager, String.class, ClientRegistration.class,
-				OAUTH_CLIENT_REGISTRATION);
-	}
-
-	@Bean
 	public ClientRegistrationRepository oauthClientRegistrationRepository(
 			@Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
-		var repo = new ExternalSystemClientRegistrationRepository(cache, systemSupportDao);
+		var repo = new ExternalSystemClientRegistrationRepository(systemSupportDao);
 		repo.setSecretsBiz(secretsBiz);
-		return repo;
+		return new CachingOAuth2ClientRegistrationRepository(cache, repo);
 	}
 
 	@Bean

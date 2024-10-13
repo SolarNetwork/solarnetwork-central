@@ -26,9 +26,38 @@ package net.solarnetwork.central.domain;
  * API for a composite key.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CompositeKey {
+
+	/**
+	 * Get a short identifier string.
+	 * 
+	 * <p>
+	 * This implementation returns a string like {@code (x,y,...)} where all key
+	 * components are joined with a comma delimiter and the whole key surrounded
+	 * by parentheses. Unassigned key components will be represented as an empty
+	 * string.
+	 * </p>
+	 * 
+	 * @return the identifier
+	 * @since 1.3
+	 */
+	default String ident() {
+		StringBuilder buf = new StringBuilder(64);
+		buf.append('(');
+		final int len = keyComponentLength();
+		for ( int i = 0; i < len; i++ ) {
+			if ( i > 0 ) {
+				buf.append(',');
+			}
+			if ( keyComponentIsAssigned(i) ) {
+				buf.append(keyComponent(i));
+			}
+		}
+		buf.append(')');
+		return buf.toString();
+	}
 
 	/**
 	 * Get the number of components in the composite key.
@@ -54,6 +83,24 @@ public interface CompositeKey {
 	 *         "assigned", {@literal false} otherwise
 	 */
 	boolean keyComponentIsAssigned(int index);
+
+	/**
+	 * Test if all key components have assigned values.
+	 * 
+	 * @return {@literal true} if all key component values should be considered
+	 *         "assigned", {@literal false} otherwise
+	 * @see #keyComponentIsAssigned(int)
+	 * @since 1.3
+	 */
+	default boolean allKeyComponentsAreAssigned() {
+		final int len = keyComponentLength();
+		for ( int i = 0; i < len; i++ ) {
+			if ( !keyComponentIsAssigned(i) ) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * Get the key component for a specific index.

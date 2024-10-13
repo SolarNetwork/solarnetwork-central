@@ -23,7 +23,6 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -32,8 +31,8 @@ import java.util.Objects;
  * @author matt
  * @version 1.1
  */
-public final class UserStringCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserStringCompositePK>, CompositeKey2<Long, String>, UserIdRelated {
+public final class UserStringCompositePK extends BasePK
+		implements UserRelatedCompositeKey<UserStringCompositePK>, CompositeKey2<Long, String> {
 
 	private static final long serialVersionUID = -1781395410683839439L;
 
@@ -128,29 +127,6 @@ public final class UserStringCompositePK extends BasePK implements Serializable,
 	}
 
 	/**
-	 * Get a short identifier string.
-	 * 
-	 * <p>
-	 * The format of the returned string is {@code (userId,entityId)}.
-	 * </p>
-	 * 
-	 * @return the identifier
-	 */
-	public String ident() {
-		return String.format("(%d,%d)", userId, entityId);
-	}
-
-	/**
-	 * Get the user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	public final Long getUserId() {
-		return userId;
-	}
-
-	/**
 	 * Get the entity ID.
 	 * 
 	 * @return the entity ID
@@ -161,12 +137,12 @@ public final class UserStringCompositePK extends BasePK implements Serializable,
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final String keyComponent2() {
-		return getEntityId();
+		return entityId;
 	}
 
 	@Override
@@ -177,16 +153,6 @@ public final class UserStringCompositePK extends BasePK implements Serializable,
 			return entityId != UNASSIGNED_ENTITY_ID;
 		}
 		return CompositeKey2.super.keyComponentIsAssigned(index);
-	}
-
-	/**
-	 * Test if the user ID is assigned.
-	 * 
-	 * @return {@literal true} if the user ID value is assigned,
-	 *         {@literal false} if it is considered "not a value"
-	 */
-	public final boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
 	}
 
 	/**

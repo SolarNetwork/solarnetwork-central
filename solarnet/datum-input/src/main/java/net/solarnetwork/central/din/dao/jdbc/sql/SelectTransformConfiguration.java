@@ -142,6 +142,7 @@ public class SelectTransformConfiguration
 		public String getSql() {
 			StringBuilder buf = new StringBuilder();
 			sqlCore(buf);
+			sqlWhere(buf);
 			return CommonSqlUtils.wrappedCountQuery(buf.toString());
 		}
 

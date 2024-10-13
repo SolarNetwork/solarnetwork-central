@@ -23,7 +23,6 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -31,10 +30,10 @@ import java.util.UUID;
  * Basic implementation of a Long, UUID, Integer composite key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class UserUuidIntegerCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserUuidIntegerCompositePK>, CompositeKey3<Long, UUID, Integer>, UserIdRelated {
+public class UserUuidIntegerCompositePK extends BasePK implements
+		UserRelatedCompositeKey<UserUuidIntegerCompositePK>, CompositeKey3<Long, UUID, Integer> {
 
 	private static final long serialVersionUID = -7492906234566578908L;
 
@@ -149,29 +148,6 @@ public class UserUuidIntegerCompositePK extends BasePK implements Serializable, 
 	}
 
 	/**
-	 * Get a short identifier string.
-	 * 
-	 * <p>
-	 * The format of the returned string is {@code (userId,groupId,entityId)}.
-	 * </p>
-	 * 
-	 * @return the identifier
-	 */
-	public String ident() {
-		return String.format("(%d,%s,%d)", userId, groupId, entityId);
-	}
-
-	/**
-	 * Get the user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	public final Long getUserId() {
-		return userId;
-	}
-
-	/**
 	 * Get the group ID.
 	 * 
 	 * @return the user ID
@@ -191,17 +167,17 @@ public class UserUuidIntegerCompositePK extends BasePK implements Serializable, 
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final UUID keyComponent2() {
-		return getGroupId();
+		return groupId;
 	}
 
 	@Override
 	public final Integer keyComponent3() {
-		return getEntityId();
+		return entityId;
 	}
 
 	@Override
@@ -214,16 +190,6 @@ public class UserUuidIntegerCompositePK extends BasePK implements Serializable, 
 			return entityId != UNASSIGNED_ENTITY_ID;
 		}
 		return CompositeKey3.super.keyComponentIsAssigned(index);
-	}
-
-	/**
-	 * Test if the user ID is assigned.
-	 * 
-	 * @return {@literal true} if the user ID value is assigned,
-	 *         {@literal false} if it is considered "not a value"
-	 */
-	public final boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
 	}
 
 	/**

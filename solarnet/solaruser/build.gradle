@@ -26,6 +26,7 @@ configurations {
 }
 
 dependencies {
+	implementation project(':solarnet-cloud-integrations')
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-commons-multipart')
 	implementation project(':solarnet-datum')
@@ -37,6 +38,7 @@ dependencies {
 	implementation project(':solarnet-oscp')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
+	implementation project(':solarnet-user-cloud-integrations')
 	implementation project(':solarnet-user-datum')
 	implementation project(':solarnet-user-datum-input')
 	implementation project(':solarnet-user-dnp3')
@@ -67,6 +69,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
     implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 		

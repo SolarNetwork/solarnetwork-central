@@ -82,9 +82,12 @@ public final class SchedulerUtils {
 			try {
 				try {
 					long frequency = Long.parseLong(expression);
-					PeriodicTrigger trigger = new PeriodicTrigger(
-							Duration.of(frequency, timeUnit.toChronoUnit()));
-					trigger.setFixedRate(true);
+					var dur = Duration.of(frequency, timeUnit.toChronoUnit());
+					PeriodicTrigger trigger = new PeriodicTrigger(dur);
+					if ( dur.getSeconds() >= 60 ) {
+						// when schedule is 1min or more, switched to "fixed rate" style
+						trigger.setFixedRate(true);
+					}
 					return trigger;
 				} catch ( NumberFormatException e ) {
 					// ignore

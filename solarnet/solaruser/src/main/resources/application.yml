@@ -9,6 +9,15 @@ app:
       html-template-cache:
         ttl: 3600
   cache.persistence.path: "var/cache"
+  c2c:
+    cache.expression-cache:
+      tti: 3600
+      ttl: 0
+      heap-max-entries: 5000
+      disk-max-size-mb: 0
+    encryptor:
+      password: "Secret123"
+      salt-hex: "01234567"
   datasource:
     hikari:
       minimumIdle: 1
@@ -59,6 +68,13 @@ app:
     ttl: 600
     heap-max-entries: 1000
     disk-max-size-mb: 100
+  http.client:
+    connections:
+      max-total: 20
+    settings:
+      connect-timeout: "10s"
+      connection-request-timeout: "15s"
+      socket-timeout: "20s"
   inin:
     max-input-length: 8196
     xslt:
@@ -109,6 +125,12 @@ app:
     flush-delay: 10000
     connection-recovery-delay: 15000
     stat-log-update-count: 500
+  oauth:
+    client:
+      registration-cache:
+        ttl: 120
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
   ocpp.v16:
     mqtt.instr-handler:
       mqtt-topic: "instr/OCPP_v16"

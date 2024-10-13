@@ -23,7 +23,6 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
 import com.fasterxml.uuid.UUIDComparator;
@@ -34,8 +33,8 @@ import com.fasterxml.uuid.UUIDComparator;
  * @author matt
  * @version 1.1
  */
-public final class UserUuidPK extends BasePK implements Serializable, Cloneable, Comparable<UserUuidPK>,
-		CompositeKey2<Long, UUID>, UserIdRelated {
+public final class UserUuidPK extends BasePK
+		implements UserRelatedCompositeKey<UserUuidPK>, CompositeKey2<Long, UUID> {
 
 	private static final long serialVersionUID = 417842772182618447L;
 
@@ -132,16 +131,6 @@ public final class UserUuidPK extends BasePK implements Serializable, Cloneable,
 	}
 
 	/**
-	 * Get the user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	public final Long getUserId() {
-		return userId;
-	}
-
-	/**
 	 * Get the UUID.
 	 * 
 	 * @return the UUID
@@ -152,12 +141,12 @@ public final class UserUuidPK extends BasePK implements Serializable, Cloneable,
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final UUID keyComponent2() {
-		return getUuid();
+		return uuid;
 	}
 
 	@Override
@@ -168,16 +157,6 @@ public final class UserUuidPK extends BasePK implements Serializable, Cloneable,
 			return uuid != UNASSIGNED_UUID_ID;
 		}
 		return CompositeKey2.super.keyComponentIsAssigned(index);
-	}
-
-	/**
-	 * Test if the user ID is assigned.
-	 * 
-	 * @return {@literal true} if the user ID value is assigned,
-	 *         {@literal false} if it is considered "not a value"
-	 */
-	public final boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
 	}
 
 	/**

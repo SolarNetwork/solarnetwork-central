@@ -23,13 +23,15 @@
 package net.solarnetwork.central.datum.domain;
 
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.datum.DatumSamplesContainer;
 
 /**
  * API for a general object/source/timestamp primary key style entity.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface GeneralObjectDatum<K extends GeneralObjectDatumKey> extends Entity<K> {
+public interface GeneralObjectDatum<K extends GeneralObjectDatumKey>
+		extends Entity<K>, DatumSamplesContainer {
 
 }
