@@ -125,6 +125,9 @@ public class UpdateCloudDatumStreamPollTaskEntity implements PreparedStatementCr
 	}
 
 	private void sqlWhere(StringBuilder buf) {
+		if ( filter == null ) {
+			return;
+		}
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasClaimableJobStateCriteria() ) {
@@ -136,8 +139,10 @@ public class UpdateCloudDatumStreamPollTaskEntity implements PreparedStatementCr
 	}
 
 	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
-		if ( filter.hasClaimableJobStateCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.claimableJobStateKeys());
+		if ( filter != null ) {
+			if ( filter.hasClaimableJobStateCriteria() ) {
+				p = prepareOptimizedArrayParameter(con, stmt, p, filter.claimableJobStateKeys());
+			}
 		}
 		return p;
 	}

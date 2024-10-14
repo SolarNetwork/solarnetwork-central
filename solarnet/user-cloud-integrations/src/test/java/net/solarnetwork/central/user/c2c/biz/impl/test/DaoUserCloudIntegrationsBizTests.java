@@ -616,8 +616,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		CloudDatumStreamPollTaskEntity entity = new CloudDatumStreamPollTaskEntity(pk);
 
 		// save and retrieve
-		given(datumStreamPollTaskDao.updateTask(any(CloudDatumStreamPollTaskEntity.class)))
-				.willReturn(true);
+		given(datumStreamPollTaskDao.save(any(CloudDatumStreamPollTaskEntity.class))).willReturn(pk);
 		given(datumStreamPollTaskDao.get(pk)).willReturn(entity);
 
 		// WHEN
@@ -634,7 +633,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		// THEN
 		// @formatter:off
-		then(datumStreamPollTaskDao).should().updateTask(datumStreamPollTaskCaptor.capture());
+		then(datumStreamPollTaskDao).should().save(datumStreamPollTaskCaptor.capture());
 
 		and.then(datumStreamPollTaskCaptor.getValue())
 			.as("Entity ID on DAO save is argument to service")
