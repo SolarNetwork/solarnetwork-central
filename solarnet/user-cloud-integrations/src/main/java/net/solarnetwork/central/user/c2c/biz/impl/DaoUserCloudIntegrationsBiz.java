@@ -349,7 +349,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		validateInput(input);
 
 		CloudDatumStreamPollTaskEntity entity = input.toEntity(id);
-		datumStreamPollTaskDao.updateTask(entity, expectedStates);
+		if ( expectedStates == null || expectedStates.length < 1 ) {
+			datumStreamPollTaskDao.save(entity);
+		} else {
+			datumStreamPollTaskDao.updateTask(entity, expectedStates);
+		}
 		return datumStreamPollTaskDao.get(id);
 	}
 
