@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.ocpp.domain.ChargePointConnector;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
@@ -39,7 +39,7 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "chargePointId", "evseId", "connectorId", "userId", "created", "info" })

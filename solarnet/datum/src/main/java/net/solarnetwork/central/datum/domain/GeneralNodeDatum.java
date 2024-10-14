@@ -45,7 +45,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @JsonPropertyOrder({ "created", "nodeId", "sourceId" })
 public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable,
@@ -240,6 +240,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		this.posted = posted;
 	}
 
+	@Override
 	@SerializeIgnore
 	@JsonIgnore
 	public DatumSamples getSamples() {

@@ -30,6 +30,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
@@ -49,10 +50,11 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * Main entry point for the SolarJobs application.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
+		SolarNetCloudIntegrationsConfiguration.class,
 		SolarNetDatumConfiguration.class,
 		SolarNetDatumExportConfiguration.class,
 		SolarNetDatumImportConfiguration.class,

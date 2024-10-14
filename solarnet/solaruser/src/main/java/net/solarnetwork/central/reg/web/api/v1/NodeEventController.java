@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodeEventController.java - 17/06/2020 6:23:18 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,8 +37,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -48,7 +48,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for node event hook management.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 2.3
@@ -63,7 +63,7 @@ public class NodeEventController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param eventHookBiz
 	 *        the event hook biz to use
 	 * @throws IllegalArgumentException
@@ -116,12 +116,12 @@ public class NodeEventController {
 			@RequestBody UserNodeEventHookConfiguration config) {
 		if ( eventHookBiz != null ) {
 			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
+				config = config.withUserId(SecurityUtils.getCurrentActorUserId());
 			}
-			UserLongPK id = eventHookBiz.saveConfiguration(config);
+			CompositeKey2<Long, Long> id = eventHookBiz.saveConfiguration(config);
 			if ( id != null ) {
-				config = eventHookBiz.configurationForUser(id.getUserId(),
-						UserNodeEventHookConfiguration.class, id.getId());
+				config = eventHookBiz.configurationForUser(id.keyComponent1(),
+						UserNodeEventHookConfiguration.class, id.keyComponent2());
 				return response(maskConfiguration(config, serviceSettings, (Void) -> {
 					return eventHookBiz.availableNodeEventHookServices();
 				}));

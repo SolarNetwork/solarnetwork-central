@@ -22,21 +22,24 @@
 
 package net.solarnetwork.central.test;
 
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
+import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.util.ClassUtils;
 
 /**
  * Common test utilities.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public final class CommonTestUtils {
 
@@ -101,12 +104,21 @@ public final class CommonTestUtils {
 	}
 
 	/**
-	 * Get a random long value.
+	 * Get a random positive integer value.
+	 *
+	 * @return the integer
+	 */
+	public static Integer randomInt() {
+		return Math.abs(RNG.nextInt());
+	}
+
+	/**
+	 * Get a random positive long value.
 	 *
 	 * @return the long
 	 */
 	public static Long randomLong() {
-		return RNG.nextLong();
+		return Math.abs(RNG.nextLong());
 	}
 
 	/**
@@ -114,7 +126,7 @@ public final class CommonTestUtils {
 	 *
 	 * <p>
 	 * The {@link #DEFAULT_MAX_SCALE} maximum scale and
-	 * {@link RoundingMode#DONW} rounding mode will be used.
+	 * {@link RoundingMode#DOWN} rounding mode will be used.
 	 * </p>
 	 *
 	 * @param expected
@@ -205,6 +217,26 @@ public final class CommonTestUtils {
 			}
 
 		};
+	}
+
+	/**
+	 * Load a UTF-8 string classpath resource.
+	 *
+	 * @param resource
+	 *        the resource to load
+	 * @param clazz
+	 *        the class from which to load the resource
+	 * @return the resource
+	 * @throws RuntimeException
+	 *         if any error occurs
+	 */
+	public static String utf8StringResource(String resource, Class<?> clazz) {
+		try {
+			return FileCopyUtils.copyToString(
+					new InputStreamReader(clazz.getResourceAsStream(resource), StandardCharsets.UTF_8));
+		} catch ( Exception e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }

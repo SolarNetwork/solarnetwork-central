@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
+import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
 import net.solarnetwork.central.user.event.biz.dao.DaoUserEventHookBiz;
@@ -64,7 +65,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserEventHookBiz} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserEventHookBizTests {
 
@@ -270,7 +271,7 @@ public class DaoUserEventHookBizTests {
 
 		// WHEN
 		replayAll();
-		UserLongPK result = biz.saveConfiguration(conf);
+		CompositeKey2<Long, Long> result = biz.saveConfiguration(conf);
 
 		// THEN
 		assertThat("PK result matches", result, sameInstance(pk));
@@ -311,7 +312,7 @@ public class DaoUserEventHookBizTests {
 
 		// WHEN
 		replayAll(hookService);
-		UserLongPK result = biz.saveConfiguration(conf);
+		CompositeKey2<Long, Long> result = biz.saveConfiguration(conf);
 
 		// THEN
 		assertThat("PK result matches", result, sameInstance(conf.getId()));

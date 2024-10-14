@@ -23,17 +23,16 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Immutable primary key for user-related entities using a Long entity key.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public final class UserLongCompositePK extends BasePK implements Serializable, Cloneable,
-		Comparable<UserLongCompositePK>, CompositeKey2<Long, Long>, UserIdRelated {
+public final class UserLongCompositePK extends BasePK
+		implements UserRelatedCompositeKey<UserLongCompositePK>, CompositeKey2<Long, Long> {
 
 	private static final long serialVersionUID = 2537083574768869025L;
 
@@ -128,29 +127,6 @@ public final class UserLongCompositePK extends BasePK implements Serializable, C
 	}
 
 	/**
-	 * Get a short identifier string.
-	 * 
-	 * <p>
-	 * The format of the returned string is {@code (userId,entityId)}.
-	 * </p>
-	 * 
-	 * @return the identifier
-	 */
-	public String ident() {
-		return String.format("(%d,%d)", userId, entityId);
-	}
-
-	/**
-	 * Get the user ID.
-	 * 
-	 * @return the user ID
-	 */
-	@Override
-	public final Long getUserId() {
-		return userId;
-	}
-
-	/**
 	 * Get the entity ID.
 	 * 
 	 * @return the entity ID
@@ -161,12 +137,12 @@ public final class UserLongCompositePK extends BasePK implements Serializable, C
 
 	@Override
 	public final Long keyComponent1() {
-		return getUserId();
+		return userId;
 	}
 
 	@Override
 	public final Long keyComponent2() {
-		return getEntityId();
+		return entityId;
 	}
 
 	@Override
@@ -177,17 +153,6 @@ public final class UserLongCompositePK extends BasePK implements Serializable, C
 			return entityId != UNASSIGNED_ENTITY_ID;
 		}
 		return CompositeKey2.super.keyComponentIsAssigned(index);
-	}
-
-	/**
-	 * Test if the entity ID is assigned.
-	 * 
-	 * @return {@literal true} if the entity ID value is assigned,
-	 *         {@literal false} if it is considered "not a value"
-	 * @since 1.2
-	 */
-	public final boolean userIdIsAssigned() {
-		return keyComponentIsAssigned(0);
 	}
 
 	/**

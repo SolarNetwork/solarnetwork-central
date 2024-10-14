@@ -27,14 +27,14 @@ import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.security.AuthorizationSupport;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
 
 /**
  * Security enforcing AOP aspect for user event APIs.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -55,15 +55,15 @@ public class UserEventSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.user.event.biz.*Biz.save*(..)) && args(config,..)")
-	public void saveConfiguration(UserRelatedEntity<?> config) {
+	public void saveConfiguration(UserIdRelated config) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.user.event.biz.*Biz.delete*(..)) && args(config,..)")
-	public void deleteConfiguration(UserRelatedEntity<?> config) {
+	public void deleteConfiguration(UserIdRelated config) {
 	}
 
 	@Pointcut("execution(* net.solarnetwork.central.user.event.biz.*Biz.*ForConfiguration(..)) && args(config,..)")
-	public void actionForConfiguration(UserRelatedEntity<?> config) {
+	public void actionForConfiguration(UserIdRelated config) {
 	}
 
 	@Before("actionForUser(userId)")
@@ -72,7 +72,7 @@ public class UserEventSecurityAspect extends AuthorizationSupport {
 	}
 
 	@Before("saveConfiguration(config) || deleteConfiguration(config) || actionForConfiguration(config)")
-	public void saveConfigurationCheck(UserRelatedEntity<?> config) {
+	public void saveConfigurationCheck(UserIdRelated config) {
 		final Long userId = (config != null ? config.getUserId() : null);
 		requireUserWriteAccess(userId);
 	}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support;
 
+import static net.solarnetwork.central.datum.support.DatumUtils.convertGeneralDatum;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -85,7 +86,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
@@ -338,6 +339,15 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		// note the stream ID is not known at this point
 		return new ObjectDatumPK(id.getKind(), id.getObjectId(), id.getSourceId(), id.getTimestamp(),
 				null);
+	}
+
+	@Override
+	public DatumPK store(net.solarnetwork.domain.datum.Datum datum) {
+		if ( datum == null || datum.getObjectId() == null || datum.getSourceId() == null ) {
+			return null;
+		}
+		var d = convertGeneralDatum(datum);
+		return persist(d);
 	}
 
 	@Override

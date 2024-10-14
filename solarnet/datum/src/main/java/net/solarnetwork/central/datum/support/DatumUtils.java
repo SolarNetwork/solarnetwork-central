@@ -30,6 +30,7 @@ import org.springframework.util.PathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
+import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
@@ -42,7 +43,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Utilities for Datum domain classes.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public final class DatumUtils {
 
@@ -165,7 +166,7 @@ public final class DatumUtils {
 	 *         {@literal null}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Object convertGeneralDatum(Datum datum) {
+	public static GeneralObjectDatum<?> convertGeneralDatum(Datum datum) {
 		if ( datum == null ) {
 			return null;
 		}

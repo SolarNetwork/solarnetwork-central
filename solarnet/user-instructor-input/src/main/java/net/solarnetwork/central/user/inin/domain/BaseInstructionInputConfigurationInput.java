@@ -23,9 +23,8 @@
 package net.solarnetwork.central.user.inin.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
-import net.solarnetwork.central.domain.CompositeKey;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Base DTO for datum input configuration.
@@ -37,7 +36,7 @@ import net.solarnetwork.central.domain.CompositeKey;
  * @author matt
  * @version 1.0
  */
-public abstract class BaseInstructionInputConfigurationInput<C extends BaseUserModifiableEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
+public abstract class BaseInstructionInputConfigurationInput<C extends BaseUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		implements InstructionInputConfigurationInput<C, K> {
 
 	private boolean enabled;

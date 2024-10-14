@@ -29,8 +29,8 @@ import java.util.Locale;
 import org.springframework.context.MessageSource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
-import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
 import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
@@ -90,7 +90,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserIdentifiableConfiguration> T configurationForUser(Long userId,
+	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id) {
 		if ( ExpireUserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (T) dataConfigDao.get(id, userId);
@@ -100,7 +100,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public void deleteConfiguration(UserIdentifiableConfiguration configuration) {
+	public void deleteConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof ExpireUserDataConfiguration ) {
 			dataConfigDao.delete((ExpireUserDataConfiguration) configuration);
 		} else {
@@ -111,8 +111,8 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@SuppressWarnings("unchecked")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public <T extends UserIdentifiableConfiguration> List<T> configurationsForUser(Long userId,
-			Class<T> configurationClass) {
+	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> List<T> configurationsForUser(
+			Long userId, Class<T> configurationClass) {
 		if ( ExpireUserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
 			return (List<T>) dataConfigDao.findConfigurationsForUser(userId);
 		}
@@ -121,7 +121,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public Long saveConfiguration(UserIdentifiableConfiguration configuration) {
+	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof ExpireUserDataConfiguration ) {
 			return dataConfigDao.store((ExpireUserDataConfiguration) configuration);
 		}

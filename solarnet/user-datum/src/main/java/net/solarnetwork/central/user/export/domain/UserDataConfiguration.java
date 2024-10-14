@@ -35,11 +35,11 @@ import net.solarnetwork.codec.JsonUtils;
  * User related entity for {@link DataConfiguration}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps" })
 public class UserDataConfiguration extends BaseExportConfigurationEntity
-		implements DataConfiguration, UserIdentifiableConfiguration, Serializable {
+		implements DataConfiguration, Serializable {
 
 	private static final long serialVersionUID = 866381003784859350L;
 

@@ -30,6 +30,7 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeCountQuery;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
+import static net.solarnetwork.central.datum.support.DatumUtils.convertGeneralDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.AggregateDatumEntityRowMapper.mapperForAggregate;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.sql.FindObjectStreamMetadataIds.FIND_METADATA_IDS_FOR_STREAM_ID;
 import static net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor.METADATA_PROVIDER_ATTR;
@@ -110,8 +111,7 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectReadingDifference;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStreamMetadata;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreDatum;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreLocationDatum;
-import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreNodeDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.StoreGeneralObjectDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataAttributes;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.UpdateObjectStreamMetadataJson;
 import net.solarnetwork.central.datum.v2.domain.AuditDatum;
@@ -144,7 +144,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -212,39 +212,16 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
-	public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> entity) {
-		if ( entity instanceof GeneralNodeDatum d ) {
-			return store(d);
-		} else if ( entity instanceof GeneralLocationDatum d ) {
-			return store(d);
-		}
-		throw new IllegalArgumentException("Unsupported entity " + entity);
-	}
-
-	@Override
-	public DatumPK store(DatumEntity datum) {
-		StoreDatum sql = new StoreDatum(datum);
-		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
-
-			@Override
-			public DatumPK doInCallableStatement(CallableStatement cs)
-					throws SQLException, DataAccessException {
-				cs.execute();
-				return datum.getId();
-			}
-		});
-	}
-
-	@Override
-	public DatumPK store(GeneralNodeDatum datum) {
-		if ( datum == null || datum.getNodeId() == null || datum.getSourceId() == null ) {
+	public DatumPK persist(GeneralObjectDatum<? extends GeneralObjectDatumKey> datum) {
+		if ( datum == null || datum.getId() == null || datum.getId().getObjectId() == null
+				|| datum.getId().getSourceId() == null ) {
 			return null;
 		}
 		DatumSamples s = datum.getSamples();
 		if ( s == null || s.isEmpty() ) {
 			return null;
 		}
-		StoreNodeDatum sql = new StoreNodeDatum(datum);
+		var sql = new StoreGeneralObjectDatum(datum);
 		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
 
 			@Override
@@ -264,28 +241,36 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
-	public DatumPK store(GeneralLocationDatum datum) {
-		if ( datum == null || datum.getLocationId() == null || datum.getSourceId() == null ) {
+	public DatumPK store(net.solarnetwork.domain.datum.Datum datum) {
+		if ( datum == null || datum.getObjectId() == null || datum.getSourceId() == null ) {
 			return null;
 		}
-		DatumSamples s = datum.getSamples();
-		if ( s == null || s.isEmpty() ) {
-			return null;
-		}
-		StoreLocationDatum sql = new StoreLocationDatum(datum);
+		var d = convertGeneralDatum(datum);
+		return persist(d);
+	}
+
+	@Override
+	public DatumPK store(DatumEntity datum) {
+		StoreDatum sql = new StoreDatum(datum);
 		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
 
 			@Override
 			public DatumPK doInCallableStatement(CallableStatement cs)
 					throws SQLException, DataAccessException {
 				cs.execute();
-				Object streamId = cs.getObject(1);
-				return new DatumPK(
-						(streamId instanceof UUID ? (UUID) streamId
-								: streamId != null ? UUID.fromString(streamId.toString()) : null),
-						sql.getTimestamp());
+				return datum.getId();
 			}
 		});
+	}
+
+	@Override
+	public DatumPK store(GeneralNodeDatum datum) {
+		return persist(datum);
+	}
+
+	@Override
+	public DatumPK store(GeneralLocationDatum datum) {
+		return persist(datum);
 	}
 
 	@Override
@@ -772,7 +757,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-
+		
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

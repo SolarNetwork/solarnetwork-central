@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Validator;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -58,7 +59,6 @@ import net.solarnetwork.central.ocpp.domain.UserSettings;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.ocpp.biz.UserOcppBiz;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -71,7 +71,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link UserOcppBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoUserOcppBiz implements UserOcppBiz {
 

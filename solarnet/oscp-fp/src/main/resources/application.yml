@@ -61,9 +61,9 @@ app:
   oauth:
     client:
       registration-cache:
-        ttl: 21600
-        heap-max-entries: 50
-        disk-max-size-mb: 1
+        ttl: 120
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
   oscp.v20:
     mqtt.instr-handler:
       mqtt-topic: "instr/OSCP_v20"

@@ -111,6 +111,9 @@ public class WebSecurityConfig {
 	/** The instruction input authority. */
 	public static final String INSTRUCTION_INPUT_AUTHORITY = "ROLE_INSTRUCTION_INPUT";
 
+	/** The cloud integrations authority. */
+	public static final String CLOUD_INTEGRATIONS_AUTHORITY = "ROLE_CLOUD_INTEGRATIONS";
+
 	/** A HTTP header to indicate the response contains the login form page. */
 	public static final String LOGIN_PAGE_HEADER = "X-LoginFormPage";
 
@@ -224,6 +227,7 @@ public class WebSecurityConfig {
 								.requestMatchers("/*.do").permitAll()
 								.requestMatchers("/register/**").permitAll()
 								.requestMatchers("/u/sec/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+								.requestMatchers("/u/sec/c2c/**").hasAnyAuthority(CLOUD_INTEGRATIONS_AUTHORITY)
 								.requestMatchers("/u/sec/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
 								.requestMatchers("/u/sec/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
 								.requestMatchers("/u/sec/event/**").hasAnyAuthority(EVENT_AUTHORITY)
@@ -355,6 +359,7 @@ public class WebSecurityConfig {
 						matchers.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
 								.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 								.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
+								.requestMatchers("/api/v1/sec/user/c2c/**").hasAnyAuthority(CLOUD_INTEGRATIONS_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
 								.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)

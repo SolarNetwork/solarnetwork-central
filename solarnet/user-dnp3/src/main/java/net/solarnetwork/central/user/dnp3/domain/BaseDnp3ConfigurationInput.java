@@ -23,9 +23,8 @@
 package net.solarnetwork.central.user.dnp3.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.io.Serializable;
 import net.solarnetwork.central.dao.BaseUserModifiableEntity;
-import net.solarnetwork.central.domain.CompositeKey;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Base DTO for DNP3 configuration.
@@ -35,9 +34,9 @@ import net.solarnetwork.central.domain.CompositeKey;
  * @param <K>
  *        the key type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public abstract class BaseDnp3ConfigurationInput<C extends BaseUserModifiableEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable>
+public abstract class BaseDnp3ConfigurationInput<C extends BaseUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		implements Dnp3ConfigurationInput<C, K> {
 
 	private boolean enabled;

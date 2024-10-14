@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -40,7 +40,7 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "chargePointId", "userId", "created", "publishToSolarIn", "publishToSolarFlux",

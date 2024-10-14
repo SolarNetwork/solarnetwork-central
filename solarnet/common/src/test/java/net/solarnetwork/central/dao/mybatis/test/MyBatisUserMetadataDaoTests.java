@@ -135,9 +135,9 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 			.containsExactly(lastDatum)
 			.asInstanceOf(InstanceOfAssertFactories.type(FilterResults.class))
 			.as("Total results not returned")
-			.returns(null, from(FilterResults::getTotalResults))
+			.returns(null, from(r -> r.getTotalResults()))
 			.as("Returned results same as list size")
-			.returns(1, from(FilterResults::getReturnedResultCount))
+			.returns(1, from(r -> r.getReturnedResultCount()))
 			;
 		// @formatter:on
 	}

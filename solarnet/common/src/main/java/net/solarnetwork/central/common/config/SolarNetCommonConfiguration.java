@@ -34,5 +34,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ComponentScan
 public class SolarNetCommonConfiguration {
-	// nothing here
+
+	/** A qualifier to use for OAuth client registration. */
+	public static final String OAUTH_CLIENT_REGISTRATION = "oauth-client-reg";
+
 }

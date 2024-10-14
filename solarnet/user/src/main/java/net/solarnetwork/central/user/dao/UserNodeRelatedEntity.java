@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.dao;
 
+import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.central.domain.NodeIdRelated;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodePK;
 
@@ -31,16 +33,17 @@ import net.solarnetwork.central.user.domain.UserNodePK;
  * @param <K>
  *        the primary key type
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.1
  */
-public interface UserNodeRelatedEntity<K> extends UserRelatedEntity<K> {
+public interface UserNodeRelatedEntity<K> extends UserRelatedEntity<K>, NodeIdRelated {
 
 	/**
 	 * Get node ID this entity relates to.
 	 * 
 	 * @return the node ID
 	 */
+	@Override
 	Long getNodeId();
 
 	/**

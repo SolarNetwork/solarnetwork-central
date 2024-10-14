@@ -32,11 +32,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.server.ServerHttpRequest;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.central.domain.UserIdRelated;
 import net.solarnetwork.central.ocpp.dao.CentralSystemUserDao;
 import net.solarnetwork.central.ocpp.dao.UserSettingsDao;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.UserSettings;
-import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.ocpp.domain.ChargePointAuthorizationDetails;
 import net.solarnetwork.ocpp.domain.SystemUser;
@@ -48,7 +48,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
@@ -153,7 +153,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 
 		Long userId = null;
 
-		if ( user instanceof UserRelatedEntity<?> u ) {
+		if ( user instanceof UserIdRelated u ) {
 			userId = u.getUserId();
 		} else if ( pathHidRegex != null ) {
 			Matcher m = pathHidRegex.matcher(request.getURI().getPath());

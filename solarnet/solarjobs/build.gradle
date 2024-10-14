@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarJobs'
-version = '2.9.6'
+version = '2.10.0'
 
 base {
 	archivesName = 'solarjobs'
@@ -22,6 +22,7 @@ configurations {
 }
 
 dependencies {
+	implementation project(':solarnet-cloud-integrations')
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
@@ -34,6 +35,7 @@ dependencies {
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -44,6 +46,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 

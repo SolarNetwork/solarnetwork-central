@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '2.16.3'
+version = '2.17.0'
 
 base {
 	archivesName = 'solaruser'
@@ -26,6 +26,7 @@ configurations {
 }
 
 dependencies {
+	implementation project(':solarnet-cloud-integrations')
 	implementation project(':solarnet-common')
 	implementation project(':solarnet-commons-multipart')
 	implementation project(':solarnet-datum')
@@ -37,6 +38,7 @@ dependencies {
 	implementation project(':solarnet-oscp')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-user-billing')
+	implementation project(':solarnet-user-cloud-integrations')
 	implementation project(':solarnet-user-datum')
 	implementation project(':solarnet-user-datum-input')
 	implementation project(':solarnet-user-dnp3')
@@ -50,6 +52,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -67,6 +70,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
     implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.ehcache:ehcache'
 	implementation "org.tukaani:xz:${xzVersion}"
 		

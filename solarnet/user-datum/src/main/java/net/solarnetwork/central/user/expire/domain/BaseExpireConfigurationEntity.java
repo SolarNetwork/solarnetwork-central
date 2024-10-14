@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.dao.BaseEntity;
-import net.solarnetwork.central.user.domain.UserIdentifiableConfiguration;
+import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.SerializeIgnore;
 
@@ -37,10 +37,10 @@ import net.solarnetwork.domain.SerializeIgnore;
  * Base class for expire configuration entities.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class BaseExpireConfigurationEntity extends BaseEntity
-		implements UserIdentifiableConfiguration, Serializable {
+		implements UserRelatedIdentifiableConfigurationEntity<Long>, Serializable {
 
 	private static final long serialVersionUID = 3903309200783206216L;
 

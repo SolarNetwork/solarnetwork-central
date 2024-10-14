@@ -128,19 +128,6 @@ public final class LongStringCompositePK extends BasePK implements Serializable,
 	}
 
 	/**
-	 * Get a short identifier string.
-	 * 
-	 * <p>
-	 * The format of the returned string is {@code (groupId,entityId)}.
-	 * </p>
-	 * 
-	 * @return the identifier
-	 */
-	public String ident() {
-		return String.format("(%d,%d)", groupId, entityId);
-	}
-
-	/**
 	 * Get the user ID.
 	 * 
 	 * @return the user ID
