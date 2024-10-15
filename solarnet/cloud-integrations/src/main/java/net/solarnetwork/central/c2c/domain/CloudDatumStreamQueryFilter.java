@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import net.solarnetwork.central.common.dao.ParameterCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 
 /**
@@ -30,6 +31,6 @@ import net.solarnetwork.dao.DateRangeCriteria;
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamQueryFilter extends DateRangeCriteria {
+public interface CloudDatumStreamQueryFilter extends DateRangeCriteria, ParameterCriteria {
 
 }

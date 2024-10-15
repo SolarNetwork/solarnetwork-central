@@ -78,6 +78,7 @@ import net.solarnetwork.central.datum.imp.biz.DatumImportValidationException;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
 import net.solarnetwork.central.datum.imp.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.imp.domain.BasicDatumImportReceipt;
+import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;
 import net.solarnetwork.central.datum.imp.domain.DatumImportPreviewRequest;
@@ -453,9 +454,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					"No InputService found for ID " + inputConfig.getServiceIdentifier());
 		}
 
+		BasicInputConfiguration basicInput = new BasicInputConfiguration(inputConfig);
+		basicInput.setUserId(info.getUserId());
+
 		BasicDatumImportResource resource = new BasicDatumImportResource(
 				new FileSystemResource(dataFile), inputService.getInputContentType());
-		return inputService.createImportContext(inputConfig, resource, progressListener);
+		return inputService.createImportContext(basicInput, resource, progressListener);
 	}
 
 	private boolean fetchImportResource(File dataFile) throws IOException {

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumImportController.java - 7/11/2018 6:57:54 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -76,7 +76,7 @@ import net.solarnetwork.web.jakarta.support.MultipartFileResource;
 
 /**
  * Web service API for datum import management.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.33
@@ -92,7 +92,7 @@ public class DatumImportController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param importBiz
 	 *        the import biz to use
 	 */
@@ -103,7 +103,7 @@ public class DatumImportController {
 
 	/**
 	 * Handle an {@link DatumImportValidationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @return an error response object
@@ -118,7 +118,7 @@ public class DatumImportController {
 
 	/**
 	 * Handle an {@link DatumImportValidationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @return an error response object
@@ -154,7 +154,7 @@ public class DatumImportController {
 
 	/**
 	 * Get a list of all available input format services.
-	 * 
+	 *
 	 * @param locale
 	 *        the locale to use
 	 * @return the services
@@ -175,12 +175,12 @@ public class DatumImportController {
 
 	/**
 	 * Upload a datum import configuration with associated data.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param config
 	 *        the import configuration
 	 * @param data
@@ -197,6 +197,9 @@ public class DatumImportController {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			BasicDatumImportResource resource = new BasicDatumImportResource(
 					new MultipartFileResource(data), data.getContentType());
+			if ( config.getInputConfig() != null ) {
+				config.getInputConfig().setUserId(userId);
+			}
 			BasicDatumImportRequest request = new BasicDatumImportRequest(config, userId);
 			try {
 				result = importBiz.submitDatumImportRequest(request, resource);
@@ -209,7 +212,7 @@ public class DatumImportController {
 
 	/**
 	 * Preview a previously staged import request.
-	 * 
+	 *
 	 * @param jobId
 	 *        the ID of the staged import job to preview
 	 * @param count
@@ -263,12 +266,12 @@ public class DatumImportController {
 
 	/**
 	 * Get the status for a specific job.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param states
 	 *        an optional array of states to limit the results to, or
 	 *        {@literal null} to include all states
@@ -296,12 +299,12 @@ public class DatumImportController {
 
 	/**
 	 * Get the status for a specific job.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the job to get the status for
 	 * @return the status
@@ -319,12 +322,12 @@ public class DatumImportController {
 
 	/**
 	 * Change the state of a job from {@code Staged} to {@code Queued}.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the job to get the status for
 	 * @return the status
@@ -343,12 +346,12 @@ public class DatumImportController {
 
 	/**
 	 * Update the configuration of a job.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the job to update
 	 * @param config
@@ -369,12 +372,12 @@ public class DatumImportController {
 
 	/**
 	 * Retract a job from executing.
-	 * 
+	 *
 	 * <p>
 	 * The actor must have an associated user ID as provided by
 	 * {@link SecurityUtils#getCurrentActorUserId()}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the job to retract
 	 * @return the status

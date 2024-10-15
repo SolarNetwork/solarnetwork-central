@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.SequencedCollection;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,6 +53,7 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -74,7 +74,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -199,7 +199,8 @@ public class UserCloudIntegrationsController {
 			@PathVariable("integrationId") Long integrationId,
 			@PathVariable("enabled") boolean enabled) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
-		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled, CloudIntegrationConfiguration.class);
+		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled,
+				CloudIntegrationConfiguration.class);
 		return success();
 	}
 
@@ -270,7 +271,8 @@ public class UserCloudIntegrationsController {
 			@PathVariable("datumStreamId") Long datumStreamId,
 			@PathVariable("enabled") boolean enabled) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
-		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled, CloudDatumStreamConfiguration.class);
+		userCloudIntegrationsBiz.updateConfigurationEnabled(id, enabled,
+				CloudDatumStreamConfiguration.class);
 		return success();
 	}
 
@@ -332,7 +334,7 @@ public class UserCloudIntegrationsController {
 	 * @return the result
 	 */
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/datum", method = RequestMethod.GET)
-	public Result<SequencedCollection<? extends Datum>> cloudDatumStreamListDatum(
+	public Result<CloudDatumStreamQueryResult> cloudDatumStreamListDatum(
 			@PathVariable("datumStreamId") Long datumStreamId, BasicQueryFilter filter) {
 		return success(userCloudIntegrationsBiz.listDatumStreamDatum(
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter));

@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.c2c.biz;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SequencedCollection;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
@@ -35,6 +34,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -229,7 +229,7 @@ public interface UserCloudIntegrationsBiz {
 	 *        the search criteria
 	 * @return the result, never {@literal null}
 	 */
-	SequencedCollection<Datum> listDatumStreamDatum(UserLongCompositePK id,
+	CloudDatumStreamQueryResult listDatumStreamDatum(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter);
 
 	/**

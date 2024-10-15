@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -57,6 +56,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
@@ -80,7 +80,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -369,7 +369,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public SequencedCollection<Datum> listDatumStreamDatum(UserLongCompositePK id,
+	public CloudDatumStreamQueryResult listDatumStreamDatum(UserLongCompositePK id,
 			CloudDatumStreamQueryFilter filter) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");

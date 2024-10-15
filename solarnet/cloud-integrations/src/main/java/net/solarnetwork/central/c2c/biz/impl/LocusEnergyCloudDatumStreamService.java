@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -82,10 +81,13 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -440,11 +442,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		if ( data.isEmpty() ) {
 			return null;
 		}
-		return data.getLast();
+		return data.getResults().getLast();
 	}
 
 	@Override
-	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
@@ -474,7 +476,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 		LocusEnergyGranularity granularity = null;
 		try {
-			String granSetting = datumStream.serviceProperty(GRANULARITY_SETTING, String.class);
+			String granSetting = null;
+			if ( filter.hasParameterCriteria()
+					&& filter.getParameters().get(GRANULARITY_SETTING) instanceof String s ) {
+				granSetting = s;
+			} else {
+				granSetting = datumStream.serviceProperty(GRANULARITY_SETTING, String.class);
+			}
 			if ( granSetting != null && !granSetting.isEmpty() ) {
 				granularity = LocusEnergyGranularity.fromValue(granSetting);
 			}
@@ -496,7 +504,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the locale for messages
 	 * @return the results
 	 */
-	private SequencedCollection<Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
+	private CloudDatumStreamQueryResult queryForDatum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 
@@ -537,6 +545,28 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 
 		final LocusEnergyGranularity granularity = resolveGranularity(datumStream, filter);
+		final Instant filterEndDate = (granularity != LocusEnergyGranularity.Latest
+				? filter.getEndDate().truncatedTo(ChronoUnit.SECONDS)
+				: null);
+		final Instant startDate;
+		final Instant endDate;
+		if ( granularity != LocusEnergyGranularity.Latest ) {
+			// add date range
+			startDate = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
+
+			var end = filterEndDate;
+			if ( granularity.getConstraint() != null ) {
+				// enforce max time constraint
+				var maxEnd = startDate.plus(granularity.getConstraint());
+				if ( end.isAfter(maxEnd) ) {
+					end = maxEnd;
+				}
+			}
+			endDate = end;
+		} else {
+			startDate = null;
+			endDate = null;
+		}
 
 		// group requests by component, field names
 		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
@@ -577,20 +607,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 								// @formatter:on
 								if ( granularity != LocusEnergyGranularity.Latest ) {
 									// add date range
-									var start = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
 									b.queryParam("start",
-											ISO_LOCAL_DATE_TIME.format(start.atOffset(UTC)));
-
-									var end = filter.getEndDate().truncatedTo(ChronoUnit.SECONDS);
-									if ( granularity.getConstraint() != null ) {
-										// enforce max time constraint
-										var maxEnd = Instant
-												.from(granularity.getConstraint().addTo(start));
-										if ( end.isAfter(maxEnd) ) {
-											end = maxEnd;
-										}
-									}
-									b.queryParam("end", ISO_LOCAL_DATE_TIME.format(end.atOffset(UTC)));
+											ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
+									b.queryParam("end",
+											ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC)));
 								}
 								return b.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
 										.toUri();
@@ -686,7 +706,24 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 		}
 
-		return result.values().stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast)
-				.toList();
+		BasicQueryFilter nextQueryFilter = null;
+		if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {
+			// provide next date range to try
+			nextQueryFilter = BasicQueryFilter.copyOf(filter);
+			nextQueryFilter.setStartDate(endDate);
+
+			var end = filterEndDate;
+			if ( granularity.getConstraint() != null ) {
+				// enforce max time constraint
+				end = endDate.plus(granularity.getConstraint());
+				if ( end.isAfter(filterEndDate) ) {
+					end = filterEndDate;
+				}
+			}
+			nextQueryFilter.setEndDate(end);
+		}
+
+		return new BasicCloudDatumStreamQueryResult(nextQueryFilter, result.values().stream()
+				.sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 	}
 }

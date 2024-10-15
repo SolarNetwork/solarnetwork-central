@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SequencedCollection;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -53,6 +52,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
@@ -204,7 +204,7 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	}
 
 	@Override
-	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");

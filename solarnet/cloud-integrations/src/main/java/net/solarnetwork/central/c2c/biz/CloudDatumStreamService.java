@@ -24,10 +24,10 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.util.Locale;
 import java.util.Map;
-import java.util.SequencedCollection;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -89,7 +89,8 @@ public interface CloudDatumStreamService
 	Datum latestDatum(CloudDatumStreamConfiguration datumStream);
 
 	/**
-	 * Get the latest available datum for a datum stream configuration.
+	 * List datum for a datum stream configuration that match some filter
+	 * criteria.
 	 *
 	 * @param datumStream
 	 *        the datum stream configuration to get the latest datum for
@@ -97,7 +98,7 @@ public interface CloudDatumStreamService
 	 *        the query filter
 	 * @return the result, never {@literal null}
 	 */
-	SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter);
 
 }
