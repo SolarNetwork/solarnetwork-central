@@ -40,7 +40,7 @@ import net.solarnetwork.util.DateUtils;
  * Test cases for the {@link CloudDatumStreamPropertyConfiguration} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamPropertyConfigurationTests {
 
@@ -68,7 +68,7 @@ public class CloudDatumStreamPropertyConfigurationTests {
 			.isEqualToIgnoringWhitespace("""
 				{
 					"userId":%d,
-					"datumStreamId":%d,
+					"datumStreamMappingId":%d,
 					"index":%d,
 					"created":"%s",
 					"modified":"%s",
@@ -82,7 +82,7 @@ public class CloudDatumStreamPropertyConfigurationTests {
 				}
 				""".formatted(
 						entity.getUserId(),
-						entity.getDatumStreamId(),
+						entity.getDatumStreamMappingId(),
 						entity.getIndex(),
 						DateUtils.ISO_DATE_TIME_ALT_UTC.format(entity.getCreated()),
 						DateUtils.ISO_DATE_TIME_ALT_UTC.format(entity.getModified()),

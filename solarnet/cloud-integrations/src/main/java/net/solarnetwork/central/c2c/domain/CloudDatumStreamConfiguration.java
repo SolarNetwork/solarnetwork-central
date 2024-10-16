@@ -37,15 +37,18 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  *
  * <p>
  * The purpose of this entity is to provide external cloud datum stream schedule
- * and information mapping the cloud data into a datum stream.
+ * and information mapping the cloud data into a datum stream. An associated
+ * {@link CloudDatumStreamMappingConfiguration} defines the actual mapping of
+ * cloud data references to datum stream properties.
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured" })
-@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "integrationId",
-		"schedule", "kind", "objectId", "sourceId", "serviceIdentifier", "serviceProperties" })
+@JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name",
+		"datumStreamMappingId", "schedule", "kind", "objectId", "sourceId", "serviceIdentifier",
+		"serviceProperties" })
 public class CloudDatumStreamConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
@@ -54,7 +57,7 @@ public class CloudDatumStreamConfiguration
 
 	private static final long serialVersionUID = 1899493393926823115L;
 
-	private Long integrationId;
+	private Long datumStreamMappingId;
 	private String schedule;
 	private ObjectDatumKind kind;
 	private Long objectId;
@@ -100,7 +103,7 @@ public class CloudDatumStreamConfiguration
 	@Override
 	public void copyTo(CloudDatumStreamConfiguration entity) {
 		super.copyTo(entity);
-		entity.setIntegrationId(integrationId);
+		entity.setDatumStreamMappingId(datumStreamMappingId);
 		entity.setSchedule(schedule);
 		entity.setKind(kind);
 		entity.setObjectId(objectId);
@@ -114,7 +117,7 @@ public class CloudDatumStreamConfiguration
 			return false;
 		}
 		// @formatter:off
-		return Objects.equals(this.integrationId, other.integrationId)
+		return Objects.equals(this.datumStreamMappingId, other.datumStreamMappingId)
 				&& Objects.equals(this.schedule, other.schedule)
 				&& Objects.equals(this.kind, other.kind)
 				&& Objects.equals(this.objectId, other.objectId)
@@ -125,7 +128,7 @@ public class CloudDatumStreamConfiguration
 
 	@Override
 	public boolean isFullyConfigured() {
-		return integrationId != null && kind != null && objectId != null && sourceId != null
+		return datumStreamMappingId != null && kind != null && objectId != null && sourceId != null
 				&& !sourceId.isEmpty();
 	}
 
@@ -159,9 +162,14 @@ public class CloudDatumStreamConfiguration
 			builder.append(getConfigId());
 			builder.append(", ");
 		}
-		if ( integrationId != null ) {
-			builder.append("integrationId=");
-			builder.append(integrationId);
+		if ( getName() != null ) {
+			builder.append("name=");
+			builder.append(getName());
+			builder.append(", ");
+		}
+		if ( datumStreamMappingId != null ) {
+			builder.append("datumStreamMappingId=");
+			builder.append(datumStreamMappingId);
 			builder.append(", ");
 		}
 		if ( kind != null ) {
@@ -196,24 +204,24 @@ public class CloudDatumStreamConfiguration
 	}
 
 	/**
-	 * Get the associated {@link CloudIntegrationConfiguration}
+	 * Get the associated {@link CloudDatumStreamMappingConfiguration}
 	 * {@code configId}.
 	 *
-	 * @return the integration ID
+	 * @return the datum stream mapping ID
 	 */
-	public final Long getIntegrationId() {
-		return integrationId;
+	public final Long getDatumStreamMappingId() {
+		return datumStreamMappingId;
 	}
 
 	/**
-	 * Set the associated {@link CloudIntegrationConfiguration}
+	 * Set the associated {@link CloudDatumStreamMappingConfiguration}
 	 * {@code configId}.
 	 *
-	 * @param integrationId
+	 * @param datumStreamMappingId
 	 *        the integration ID to set
 	 */
-	public final void setIntegrationId(Long integrationId) {
-		this.integrationId = integrationId;
+	public final void setDatumStreamMappingId(Long datumStreamMappingId) {
+		this.datumStreamMappingId = datumStreamMappingId;
 	}
 
 	/**

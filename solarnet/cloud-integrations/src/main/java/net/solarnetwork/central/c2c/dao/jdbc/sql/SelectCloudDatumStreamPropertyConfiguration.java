@@ -41,7 +41,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectCloudDatumStreamPropertyConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -87,7 +87,7 @@ public class SelectCloudDatumStreamPropertyConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT cdsp.user_id, cdsp.ds_id, cdsp.idx, cdsp.created, cdsp.modified, cdsp.enabled
+				SELECT cdsp.user_id, cdsp.map_id, cdsp.idx, cdsp.created, cdsp.modified, cdsp.enabled
 					, cdsp.ptype, cdsp.pname, cdsp.vtype, cdsp.vref, cdsp.mult, cdsp.scale
 				FROM solardin.cin_datum_stream_prop cdsp
 				""");
@@ -99,8 +99,8 @@ public class SelectCloudDatumStreamPropertyConfiguration
 		if ( filter.hasUserCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getUserIds(), "cdsp.user_id", where);
 		}
-		if ( filter.hasDatumStreamCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cdsp.ds_id", where);
+		if ( filter.hasDatumStreamMappingCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cdsp.map_id", where);
 		}
 		if ( filter.hasIndexCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getIndexes(), "cdsp.idx", where);
@@ -111,7 +111,7 @@ public class SelectCloudDatumStreamPropertyConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY cdsp.user_id, cdsp.ds_id, cdsp.idx");
+		buf.append("ORDER BY cdsp.user_id, cdsp.map_id, cdsp.idx");
 	}
 
 	@Override
@@ -130,8 +130,8 @@ public class SelectCloudDatumStreamPropertyConfiguration
 		if ( filter.hasUserCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}
-		if ( filter.hasDatumStreamCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
+		if ( filter.hasDatumStreamMappingCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());
 		}
 		if ( filter.hasIndexCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());

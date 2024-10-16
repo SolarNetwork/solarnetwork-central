@@ -29,6 +29,7 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
@@ -40,7 +41,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseRestOperationsCloudDatumStreamService extends BaseCloudDatumStreamService {
 
@@ -64,6 +65,8 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamMappingDao
+	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
 	 * @param settings
@@ -78,10 +81,11 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperationsHelper restOpsHelper) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
-				integrationDao, datumStreamDao, datumStreamPropertyDao, settings);
+				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}
 

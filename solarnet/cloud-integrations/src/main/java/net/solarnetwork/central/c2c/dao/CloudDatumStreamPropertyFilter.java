@@ -28,8 +28,9 @@ import net.solarnetwork.central.common.dao.IndexCriteria;
  * A filter for cloud datum stream property entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface CloudDatumStreamPropertyFilter extends CloudDatumStreamFilter, IndexCriteria {
+public interface CloudDatumStreamPropertyFilter extends CloudIntegrationsFilter,
+		CloudIntegrationCriteria, CloudDatumStreamMappingCriteria, IndexCriteria {
 
 }

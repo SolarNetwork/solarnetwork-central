@@ -60,18 +60,20 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
+import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
 
 /**
  * Configuration for the Locus Energy cloud integration services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -88,6 +90,9 @@ public class LocusEnergyConfig {
 
 	@Autowired
 	private CloudDatumStreamConfigurationDao datumStreamConfigurationDao;
+
+	@Autowired
+	private CloudDatumStreamMappingConfigurationDao datumStreamMappingConfigurationDao;
 
 	@Autowired
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyConfigurationDao;
@@ -158,7 +163,7 @@ public class LocusEnergyConfig {
 		var manager = new AuthorizedClientServiceOAuth2AuthorizedClientManager(repo, clientService);
 		manager.setAuthorizedClientProvider(provider);
 		manager.setContextAttributesMapper(OAuth2Utils::principalCredentialsContextAttributes);
-		return manager;
+		return new RetryingOAuth2AuthorizedClientManager(manager, clientService);
 	}
 
 	@Bean
@@ -167,7 +172,8 @@ public class LocusEnergyConfig {
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
 		var service = new LocusEnergyCloudDatumStreamService(taskExecutor, userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
-				datumStreamPropertyConfigurationDao, restOps, oauthClientManager);
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
+				oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName());

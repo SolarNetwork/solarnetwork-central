@@ -43,10 +43,10 @@ import net.solarnetwork.util.NumberUtils;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured" })
-@JsonPropertyOrder({ "userId", "datumStreamId", "index", "created", "modified", "enabled",
+@JsonPropertyOrder({ "userId", "datumStreamMappingId", "index", "created", "modified", "enabled",
 		"propertyType", "propertyName", "valueType", "valueReference", "multiplier", "scale" })
 public class CloudDatumStreamPropertyConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>
@@ -187,9 +187,9 @@ public class CloudDatumStreamPropertyConfiguration extends
 			builder.append(getUserId());
 			builder.append(", ");
 		}
-		if ( getDatumStreamId() != null ) {
-			builder.append("datumStreamId=");
-			builder.append(getDatumStreamId());
+		if ( getDatumStreamMappingId() != null ) {
+			builder.append("datumStreamMappingId=");
+			builder.append(getDatumStreamMappingId());
 			builder.append(", ");
 		}
 		if ( propertyType != null ) {
@@ -229,11 +229,11 @@ public class CloudDatumStreamPropertyConfiguration extends
 	}
 
 	/**
-	 * Get the cloud datum stream ID.
+	 * Get the cloud datum stream mapping ID.
 	 *
-	 * @return the cloud datum stream ID
+	 * @return the cloud datum stream mapping ID
 	 */
-	public Long getDatumStreamId() {
+	public Long getDatumStreamMappingId() {
 		UserLongIntegerCompositePK id = getId();
 		return (id != null ? id.getGroupId() : null);
 	}

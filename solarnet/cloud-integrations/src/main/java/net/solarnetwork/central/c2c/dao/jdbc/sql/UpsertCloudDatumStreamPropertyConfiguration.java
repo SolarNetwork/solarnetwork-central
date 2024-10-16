@@ -38,20 +38,20 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
  * {@link CloudDatumStreamPropertyConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UpsertCloudDatumStreamPropertyConfiguration
 		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.cin_datum_stream_prop (
-				  created,modified,user_id,ds_id,idx,enabled
+				  created,modified,user_id,map_id,idx,enabled
 				, ptype,pname,vtype,vref,mult,scale
 			)
 			VALUES (
 				  ?,?,?,?,?,?
 				, ?,?,?,?,?,?)
-			ON CONFLICT (user_id, ds_id, idx) DO UPDATE
+			ON CONFLICT (user_id, map_id, idx) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, enabled = EXCLUDED.enabled
 					, ptype = EXCLUDED.ptype
@@ -63,7 +63,7 @@ public class UpsertCloudDatumStreamPropertyConfiguration
 			""";
 
 	private final Long userId;
-	private final Long datumStreamId;
+	private final Long datumStreamMappingId;
 	private final Integer index;
 	private final CloudDatumStreamPropertyConfiguration entity;
 
@@ -72,18 +72,18 @@ public class UpsertCloudDatumStreamPropertyConfiguration
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param datumStreamId
-	 *        the datum stream ID
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UpsertCloudDatumStreamPropertyConfiguration(Long userId, Long datumStreamId,
+	public UpsertCloudDatumStreamPropertyConfiguration(Long userId, Long datumStreamMappingId,
 			CloudDatumStreamPropertyConfiguration entity) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
-		this.datumStreamId = requireNonNullArgument(datumStreamId, "datumStreamId");
+		this.datumStreamMappingId = requireNonNullArgument(datumStreamMappingId, "datumStreamMappingId");
 		this.index = requireNonNullArgument(entity.getIndex(), "entity.index");
 		this.entity = requireNonNullArgument(entity, "entity");
 	}
@@ -102,7 +102,7 @@ public class UpsertCloudDatumStreamPropertyConfiguration
 		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, mod);
 		stmt.setObject(++p, userId);
-		stmt.setObject(++p, datumStreamId);
+		stmt.setObject(++p, datumStreamMappingId);
 		stmt.setObject(++p, index);
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getPropertyType().keyValue());

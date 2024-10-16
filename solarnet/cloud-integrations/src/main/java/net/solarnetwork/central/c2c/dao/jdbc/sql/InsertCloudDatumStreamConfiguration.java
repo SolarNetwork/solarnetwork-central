@@ -37,14 +37,14 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
  * Support for INSERT for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InsertCloudDatumStreamConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.cin_datum_stream (
 				  created,modified,user_id,enabled,cname,sident
-				, int_id,schedule,kind,obj_id,source_id
+				, map_id,schedule,kind,obj_id,source_id
 				, sprops
 			)
 			VALUES (
@@ -89,7 +89,7 @@ public class InsertCloudDatumStreamConfiguration implements PreparedStatementCre
 		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getServiceIdentifier());
-		stmt.setObject(++p, entity.getIntegrationId());
+		stmt.setObject(++p, entity.getDatumStreamMappingId());
 		stmt.setString(++p, entity.getSchedule());
 		stmt.setString(++p, entity.getKind() != null ? String.valueOf(entity.getKind().getKey()) : null);
 		stmt.setObject(++p, entity.getObjectId());

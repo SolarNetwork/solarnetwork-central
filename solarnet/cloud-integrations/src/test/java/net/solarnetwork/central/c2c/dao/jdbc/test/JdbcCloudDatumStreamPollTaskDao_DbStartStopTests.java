@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamPollTaskEntityData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudIntegrationConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamPollTaskEntity;
@@ -41,9 +42,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -57,17 +60,19 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * stream and integration enabled columns.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private JdbcCloudIntegrationConfigurationDao integrationDao;
 	private JdbcCloudDatumStreamConfigurationDao datumStreamDao;
+	private JdbcCloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private JdbcCloudDatumStreamPollTaskDao datumStreamPollTaskDao;
 	private Long userId;
 
 	private Map<UserLongCompositePK, CloudIntegrationConfiguration> integrations;
 	private Map<UserLongCompositePK, CloudDatumStreamConfiguration> datumStreams;
+	private Map<UserLongCompositePK, CloudDatumStreamMappingConfiguration> datumStreamMappings;
 	private Map<UserLongCompositePK, CloudDatumStreamPollTaskEntity> datumStreamPollTasks;
 
 	@BeforeEach
@@ -75,9 +80,11 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		integrationDao = new JdbcCloudIntegrationConfigurationDao(jdbcTemplate);
 		datumStreamDao = new JdbcCloudDatumStreamConfigurationDao(jdbcTemplate);
+		datumStreamMappingDao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
 		datumStreamPollTaskDao = new JdbcCloudDatumStreamPollTaskDao(jdbcTemplate);
 
 		integrations = new LinkedHashMap<>();
+		datumStreamMappings = new LinkedHashMap<>();
 		datumStreams = new LinkedHashMap<>();
 		datumStreamPollTasks = new LinkedHashMap<>();
 	}
@@ -91,14 +98,24 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		return entity;
 	}
 
-	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long integrationId,
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
 			boolean enabled) {
 		CloudDatumStreamConfiguration conf = CinJdbcTestUtils.newCloudDatumStreamConfiguration(userId,
-				integrationId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
+				datumStreamMappingId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
 				randomString(), randomString(), null);
 		conf.setEnabled(enabled);
 		CloudDatumStreamConfiguration entity = datumStreamDao.get(datumStreamDao.save(conf));
 		datumStreams.put(entity.getId(), entity);
+		return entity;
+	}
+
+	private CloudDatumStreamMappingConfiguration createDatumStreamMapping(Long userId,
+			Long integrationId, Map<String, Object> props) {
+		CloudDatumStreamMappingConfiguration conf = CinJdbcTestUtils
+				.newCloudDatumStreamMappingConfiguration(userId, integrationId, randomString(), props);
+		CloudDatumStreamMappingConfiguration entity = datumStreamMappingDao
+				.get(datumStreamMappingDao.save(conf));
+		datumStreamMappings.put(entity.getId(), entity);
 		return entity;
 	}
 
@@ -128,8 +145,10 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		for ( int i = 0; i < integrationCount; i++ ) {
 			CloudIntegrationConfiguration integration = createIntegration(userId, true);
 			for ( int d = 0; d < datumStreamCount; d++ ) {
+				CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+						integration.getConfigId(), null);
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
-						integration.getConfigId(), RNG.nextBoolean());
+						mapping.getConfigId(), RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(), Queued);
 			}
 		}
@@ -144,6 +163,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 
 		// THEN
 		allCloudIntegrationConfigurationData(jdbcTemplate);
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
 		final List<Map<String, Object>> taskRows = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
 
@@ -158,14 +178,16 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 						.satisfies(row -> {
 							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
 									userId, (Long)row.get("ds_id")));
-							BasicClaimableJobState expectedState = datumStream.getIntegrationId()
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
+							BasicClaimableJobState expectedState = mapping.getIntegrationId()
 										.equals(randomIntegration.getConfigId()) && datumStream.isEnabled()
 									? Completed : Queued;
 							then(row)
 								.as("""
 									Task state only Completed for datum stream %d that was enabled under
 									integration %d that was then disabled: %s
-									""", datumStream.getConfigId(), datumStream.getIntegrationId(), datumStream)
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})
@@ -184,14 +206,23 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 		for ( int i = 0; i < integrationCount; i++ ) {
 			CloudIntegrationConfiguration integration = createIntegration(userId, false);
 			for ( int d = 0; d < datumStreamCount; d++ ) {
+				CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+						integration.getConfigId(), null);
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
-						integration.getConfigId(), RNG.nextBoolean());
+						mapping.getConfigId(), RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(), Completed);
 			}
 		}
 
+		allCloudIntegrationConfigurationData(jdbcTemplate);
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
+		allCloudDatumStreamConfigurationData(jdbcTemplate);
+		allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
+
 		final CloudIntegrationConfiguration randomIntegration = integrations.values().stream().toList()
 				.get(RNG.nextInt(integrationCount));
+
+		log.info("Enabling integration {}", randomIntegration.getConfigId());
 
 		// WHEN
 		BasicFilter filter = new BasicFilter();
@@ -200,6 +231,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 
 		// THEN
 		allCloudIntegrationConfigurationData(jdbcTemplate);
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		allCloudDatumStreamConfigurationData(jdbcTemplate);
 		final List<Map<String, Object>> taskRows = allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
 
@@ -214,14 +246,16 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 						.satisfies(row -> {
 							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
 									userId, (Long)row.get("ds_id")));
-							BasicClaimableJobState expectedState = datumStream.getIntegrationId()
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
+							BasicClaimableJobState expectedState = mapping.getIntegrationId()
 										.equals(randomIntegration.getConfigId()) && datumStream.isEnabled()
 									? Queued : Completed;
 							then(row)
 								.as("""
 									Task state only Queued for datum stream %d that was enabled under
 									integration %d that was then enabled: %s
-									""", datumStream.getConfigId(), datumStream.getIntegrationId(), datumStream)
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})
@@ -241,8 +275,10 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 			CloudIntegrationConfiguration integration = createIntegration(userId,
 					i == 0 ? true : RNG.nextBoolean());
 			for ( int d = 0; d < datumStreamCount; d++ ) {
+				CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+						integration.getConfigId(), null);
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
-						integration.getConfigId(), true);
+						mapping.getConfigId(), true);
 				createDatumStreamPollTask(userId, datumStream.getConfigId(),
 						integration.isEnabled() ? Queued : Completed);
 			}
@@ -252,9 +288,12 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 				.filter(CloudIntegrationConfiguration::isEnabled).toList();
 		final CloudIntegrationConfiguration randomIntegration = enabledIntegrations
 				.get(RNG.nextInt(enabledIntegrations.size()));
-		final CloudDatumStreamConfiguration randomDatumStream = datumStreams.values().stream()
-				.filter(ds -> ds.getIntegrationId().equals(randomIntegration.getConfigId())).toList()
+		final CloudDatumStreamMappingConfiguration randomMapping = datumStreamMappings.values().stream()
+				.filter(map -> map.getIntegrationId().equals(randomIntegration.getConfigId())).toList()
 				.get(RNG.nextInt(datumStreamCount));
+		final CloudDatumStreamConfiguration randomDatumStream = datumStreams.values().stream()
+				.filter(ds -> ds.getDatumStreamMappingId().equals(randomMapping.getConfigId())).findAny()
+				.get();
 
 		// WHEN
 		BasicFilter filter = new BasicFilter();
@@ -277,8 +316,10 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 						.satisfies(row -> {
 							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
 									userId, (Long)row.get("ds_id")));
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
 							CloudIntegrationConfiguration integration = integrations.get(new UserLongCompositePK(
-									userId, datumStream.getIntegrationId()));
+									userId, mapping.getIntegrationId()));
 							BasicClaimableJobState expectedState = datumStream.getConfigId()
 										.equals(randomDatumStream.getConfigId()) || !integration.isEnabled()
 									? Completed : Queued;
@@ -286,7 +327,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 								.as("""
 									Task state only Completed for datum stream %d that was enabled under
 									integration %d that was then disabled: %s
-									""", datumStream.getConfigId(), datumStream.getIntegrationId(), datumStream)
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})
@@ -306,17 +347,23 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 			CloudIntegrationConfiguration integration = createIntegration(userId,
 					i == 0 ? true : RNG.nextBoolean());
 			for ( int d = 0; d < datumStreamCount; d++ ) {
+				CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+						integration.getConfigId(), null);
 				CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
-						integration.getConfigId(), i == 0 && d == 0 ? false : RNG.nextBoolean());
+						mapping.getConfigId(), i == 0 && d == 0 ? false : RNG.nextBoolean());
 				createDatumStreamPollTask(userId, datumStream.getConfigId(),
 						integration.isEnabled() && datumStream.isEnabled() ? Queued : Completed);
 			}
 		}
 
 		final List<CloudDatumStreamConfiguration> disabledDatumStreams = datumStreams.values().stream()
-				.filter(e -> !e.isEnabled() && integrations
-						.get(new UserLongCompositePK(userId, e.getIntegrationId())).isEnabled())
-				.toList();
+				.filter(e -> {
+					CloudDatumStreamMappingConfiguration mapping = datumStreamMappings
+							.get(new UserLongCompositePK(userId, e.getDatumStreamMappingId()));
+					return !e.isEnabled() && integrations
+							.get(new UserLongCompositePK(userId, mapping.getIntegrationId()))
+							.isEnabled();
+				}).toList();
 		final CloudDatumStreamConfiguration randomDatumStream = disabledDatumStreams
 				.get(RNG.nextInt(disabledDatumStreams.size()));
 
@@ -345,8 +392,10 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 						.satisfies(row -> {
 							CloudDatumStreamConfiguration datumStream = datumStreams.get(new UserLongCompositePK(
 									userId, (Long)row.get("ds_id")));
+							CloudDatumStreamMappingConfiguration mapping = datumStreamMappings.get(new UserLongCompositePK(
+									userId, datumStream.getDatumStreamMappingId()));
 							CloudIntegrationConfiguration integration = integrations.get(new UserLongCompositePK(
-									userId, datumStream.getIntegrationId()));
+									userId, mapping.getIntegrationId()));
 							BasicClaimableJobState expectedState = datumStream.getConfigId()
 										.equals(randomDatumStream.getConfigId())
 										|| (integration.isEnabled() && datumStream.isEnabled())
@@ -355,7 +404,7 @@ public class JdbcCloudDatumStreamPollTaskDao_DbStartStopTests extends AbstractJU
 								.as("""
 									Task state only Queued for datum stream %d that was disabled under
 									integration %d that was then enabled: %s
-									""", datumStream.getConfigId(), datumStream.getIntegrationId(), datumStream)
+									""", datumStream.getConfigId(), datumStream.getDatumStreamMappingId(), datumStream)
 								.containsEntry("status", expectedState.keyValue())
 								;
 						})

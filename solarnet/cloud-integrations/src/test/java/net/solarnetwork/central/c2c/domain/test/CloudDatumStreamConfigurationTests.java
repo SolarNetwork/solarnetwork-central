@@ -38,7 +38,7 @@ import net.solarnetwork.util.DateUtils;
  * Test cases for the {@link CloudDatumStreamConfiguration} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamConfigurationTests {
 
@@ -52,7 +52,7 @@ public class CloudDatumStreamConfigurationTests {
 		entity.setServiceIdentifier(randomString());
 		entity.setServiceProps(Map.of("foo", "bar"));
 		entity.setName(randomString());
-		entity.setIntegrationId(randomLong());
+		entity.setDatumStreamMappingId(randomLong());
 		entity.setSchedule(randomString());
 		entity.setKind(ObjectDatumKind.Node);
 		entity.setObjectId(randomLong());
@@ -73,7 +73,7 @@ public class CloudDatumStreamConfigurationTests {
 					"modified":"%s",
 					"enabled":true,
 					"name":"%s",
-					"integrationId":%d,
+					"datumStreamMappingId":%d,
 					"schedule":"%s",
 					"kind":"n",
 					"objectId":%d,
@@ -89,7 +89,7 @@ public class CloudDatumStreamConfigurationTests {
 						DateUtils.ISO_DATE_TIME_ALT_UTC.format(entity.getCreated()),
 						DateUtils.ISO_DATE_TIME_ALT_UTC.format(entity.getModified()),
 						entity.getName(),
-						entity.getIntegrationId(),
+						entity.getDatumStreamMappingId(),
 						entity.getSchedule(),
 						entity.getObjectId(),
 						entity.getSourceId(),

@@ -1,27 +1,28 @@
 /* ==================================================================
  * SimpleCsvDatumImportInputFormatServiceTests.java - 8/11/2018 1:19:01 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.imp.standard.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.contains;
@@ -59,11 +60,13 @@ import net.solarnetwork.settings.SettingSpecifier;
 
 /**
  * Test cases for the {@link SimpleCsvDatumImportInputFormatService} class.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SimpleCsvDatumImportInputFormatServiceTests {
+
+	private static final Long TEST_USER_ID = randomLong();
 
 	@Test
 	public void settings() {
@@ -83,7 +86,7 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 	public void parse_basic() throws IOException {
 		// GIVEN
 		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
-		BasicInputConfiguration config = new BasicInputConfiguration();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		config.setTimeZoneId("UTC");
 		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
 		serviceProps.put("instantaneousDataColumns", "D-E");
@@ -188,7 +191,7 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 	public void parseCustomDateFormat() throws IOException {
 		// GIVEN
 		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
-		BasicInputConfiguration config = new BasicInputConfiguration();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
 		serviceProps.put("instantaneousDataColumns", "D-E");
 		serviceProps.put("accumulatingDataColumns", "F");
@@ -255,7 +258,7 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 	public void badNodeId() throws IOException {
 		// GIVEN
 		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
-		BasicInputConfiguration config = new BasicInputConfiguration();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
 		serviceProps.put("instantaneousDataColumns", "D");
 		config.setServiceProps(serviceProps);
@@ -280,7 +283,7 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 	public void columZeroIgnored() throws IOException {
 		// GIVEN
 		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
-		BasicInputConfiguration config = new BasicInputConfiguration();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
 		serviceProps.put("instantaneousDataColumns", "0");
 		config.setServiceProps(serviceProps);
@@ -303,7 +306,7 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 	public void badDstDate() throws IOException {
 		// GIVEN
 		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
-		BasicInputConfiguration config = new BasicInputConfiguration();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
 		serviceProps.put("instantaneousDataColumns", "D");
 		String datePattern = "yyyy-MM-dd HH:mm:ss";
@@ -338,7 +341,7 @@ public class SimpleCsvDatumImportInputFormatServiceTests {
 	public void badDate() throws IOException {
 		// GIVEN
 		SimpleCsvDatumImportInputFormatService service = new SimpleCsvDatumImportInputFormatService();
-		BasicInputConfiguration config = new BasicInputConfiguration();
+		BasicInputConfiguration config = new BasicInputConfiguration(TEST_USER_ID);
 		Map<String, Object> serviceProps = new LinkedHashMap<>(4);
 		serviceProps.put("instantaneousDataColumns", "D");
 		String datePattern = "yyyy-MM-dd HH:mm:ss";

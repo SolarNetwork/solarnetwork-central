@@ -40,7 +40,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
  *
  * <ol>
  * <li>user_id (BIGINT)</li>
- * <li>ds_id (BIGINT)</li>
+ * <li>map_id (BIGINT)</li>
  * <li>idx (SMALLINT)
  * <li>created (TIMESTAMP)</li>
  * <li>modified (TIMESTAMP)</li>
@@ -54,7 +54,7 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamPropertyConfigurationRowMapper
 		implements RowMapper<CloudDatumStreamPropertyConfiguration> {

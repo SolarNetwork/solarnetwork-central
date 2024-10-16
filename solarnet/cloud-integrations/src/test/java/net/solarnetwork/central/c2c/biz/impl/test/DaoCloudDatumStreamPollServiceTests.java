@@ -65,6 +65,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
@@ -82,7 +83,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link DaoCloudDatumStreamPollService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -190,7 +191,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now());
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
 		datumStream.setKind(ObjectDatumKind.Node);
@@ -216,7 +217,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 		final Datum datum2 = new GeneralDatum(
 				nodeId(datumStream.getObjectId(), datumStream.getSourceId(), hour.minusSeconds(120)),
 				new DatumSamples(Map.of("watts", 234), Map.of("wattHours", 34567L), null));
-		given(datumStreamService.datum(same(datumStream), any())).willReturn(List.of(datum1, datum2));
+		given(datumStreamService.datum(same(datumStream), any()))
+				.willReturn(new BasicCloudDatumStreamQueryResult(List.of(datum1, datum2)));
 
 		// persist datum
 		final var streamId = UUID.randomUUID();
@@ -289,7 +291,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now());
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
 		datumStream.setKind(ObjectDatumKind.Node);
@@ -363,7 +365,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now());
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
 		datumStream.setKind(ObjectDatumKind.Node);

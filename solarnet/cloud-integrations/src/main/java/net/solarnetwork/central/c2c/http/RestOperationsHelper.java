@@ -47,7 +47,7 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
@@ -118,10 +118,13 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 * @param handler
 	 *        function to parse the HTTP response
 	 * @return the parsed response object
+	 * @throws IllegalArgumentException
+	 *         if {@code integration} is {@literal null}
 	 */
 	public <R, T> T httpGet(String description, CloudIntegrationConfiguration integration,
 			Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
+		requireNonNullArgument(integration, "integration");
 		final var headers = new HttpHeaders();
 		final URI uri = setup.apply(headers);
 		final var req = new HttpEntity<Void>(null, headers);

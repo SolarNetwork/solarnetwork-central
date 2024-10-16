@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SequencedCollection;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -48,11 +47,13 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
@@ -63,7 +64,7 @@ import net.solarnetwork.domain.datum.Datum;
  * SolarEdge implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -86,6 +87,8 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamMappingDao
+	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
 	 * @param restOps
@@ -97,10 +100,11 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps) {
 		super(SERVICE_IDENTIFIER, "SolarEdge Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamPropertyDao,
-				Collections.emptyList(),
+				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+				datumStreamPropertyDao, Collections.emptyList(),
 				new SolarEdgeRestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
@@ -123,8 +127,8 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters) {
 		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
 				datumStreamDao.get(requireNonNullArgument(id, "id")), "datumStream");
-		final CloudIntegrationConfiguration integration = integrationDao
-				.get(new UserLongCompositePK(datumStream.getUserId(), datumStream.getIntegrationId()));
+		final CloudIntegrationConfiguration integration = integrationDao.get(
+				new UserLongCompositePK(datumStream.getUserId(), datumStream.getDatumStreamMappingId()));
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			// TODO
@@ -204,7 +208,7 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	}
 
 	@Override
-	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");

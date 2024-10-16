@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseDatumImportBizTests.java - 10/11/2018 11:54:04 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.support.test;
 
 import static java.util.Collections.singletonList;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -65,11 +66,13 @@ import net.solarnetwork.settings.SettingSpecifier;
 
 /**
  * Test cases for the {@link BaseDatumImportBiz} class.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class BaseDatumImportBizTests {
+
+	private static final Long TEST_USER_ID = randomLong();
 
 	private class TestDatumImportBiz extends BaseDatumImportBiz {
 
@@ -239,7 +242,7 @@ public class BaseDatumImportBizTests {
 	@Test
 	public void inputServiceForIdNoList() {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
-		BasicInputConfiguration conf = new BasicInputConfiguration();
+		BasicInputConfiguration conf = new BasicInputConfiguration(TEST_USER_ID);
 		conf.setServiceIdentifier("foo");
 		assertThat("No service list", biz.optionalService(biz.getInputServices(), conf), nullValue());
 	}
@@ -257,7 +260,7 @@ public class BaseDatumImportBizTests {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
 		DatumImportInputFormatService service = new TestInputFormatService();
 		biz.setInputServices(singletonList(service));
-		BasicInputConfiguration conf = new BasicInputConfiguration();
+		BasicInputConfiguration conf = new BasicInputConfiguration(TEST_USER_ID);
 		conf.setServiceIdentifier("foo");
 		assertThat("No match", biz.optionalService(biz.getInputServices(), conf), nullValue());
 	}
@@ -267,7 +270,7 @@ public class BaseDatumImportBizTests {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
 		DatumImportInputFormatService service = new TestInputFormatService();
 		biz.setInputServices(singletonList(service));
-		BasicInputConfiguration conf = new BasicInputConfiguration();
+		BasicInputConfiguration conf = new BasicInputConfiguration(TEST_USER_ID);
 		conf.setServiceIdentifier(service.getId());
 		assertThat("Match", biz.optionalService(biz.getInputServices(), conf), sameInstance(service));
 	}

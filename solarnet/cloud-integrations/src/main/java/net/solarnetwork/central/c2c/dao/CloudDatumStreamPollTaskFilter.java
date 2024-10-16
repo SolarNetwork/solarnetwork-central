@@ -36,7 +36,7 @@ import net.solarnetwork.dao.DateRangeCriteria;
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamPollTaskFilter
-		extends CloudDatumStreamFilter, ClaimableJobStateCriteria, DateRangeCriteria {
+public interface CloudDatumStreamPollTaskFilter extends CloudIntegrationsFilter,
+		CloudDatumStreamCriteria, ClaimableJobStateCriteria, DateRangeCriteria {
 
 }

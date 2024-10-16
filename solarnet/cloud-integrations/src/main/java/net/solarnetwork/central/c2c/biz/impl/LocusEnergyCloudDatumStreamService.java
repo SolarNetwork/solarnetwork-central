@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.SequencedCollection;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -80,12 +79,17 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -106,7 +110,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * Locus Energy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -154,6 +158,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamMappingDao
+	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
 	 * @param restOps
@@ -168,10 +174,12 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager) {
 		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamPropertyDao, SETTINGS,
+				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
@@ -212,8 +220,12 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters) {
 		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
 				datumStreamDao.get(requireNonNullArgument(id, "id")), "datumStream");
+		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
+				datumStreamMappingDao.get(new UserLongCompositePK(datumStream.getUserId(),
+						datumStream.getDatumStreamMappingId())),
+				"datumStreamMapping");
 		final CloudIntegrationConfiguration integration = integrationDao
-				.get(new UserLongCompositePK(datumStream.getUserId(), datumStream.getIntegrationId()));
+				.get(new UserLongCompositePK(datumStream.getUserId(), mapping.getIntegrationId()));
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
@@ -440,11 +452,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		if ( data.isEmpty() ) {
 			return null;
 		}
-		return data.getLast();
+		return data.getResults().getLast();
 	}
 
 	@Override
-	public SequencedCollection<Datum> datum(CloudDatumStreamConfiguration datumStream,
+	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
@@ -474,7 +486,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 		LocusEnergyGranularity granularity = null;
 		try {
-			String granSetting = datumStream.serviceProperty(GRANULARITY_SETTING, String.class);
+			String granSetting = null;
+			if ( filter.hasParameterCriteria()
+					&& filter.getParameters().get(GRANULARITY_SETTING) instanceof String s ) {
+				granSetting = s;
+			} else {
+				granSetting = datumStream.serviceProperty(GRANULARITY_SETTING, String.class);
+			}
 			if ( granSetting != null && !granSetting.isEmpty() ) {
 				granularity = LocusEnergyGranularity.fromValue(granSetting);
 			}
@@ -496,7 +514,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the locale for messages
 	 * @return the results
 	 */
-	private SequencedCollection<Datum> queryForDatum(CloudDatumStreamConfiguration datumStream,
+	private CloudDatumStreamQueryResult queryForDatum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 
@@ -509,13 +527,18 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			throw new ValidationException(msg, errors, ms);
 		}
 
+		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
+				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
+		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
+				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
+
 		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				requireNonNullArgument(datumStream.getIntegrationId(), "datumStream.integrationId"));
+				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(integrationId), "integration");
 
 		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
-				datumStream.getConfigId(), null);
+				mapping.getConfigId(), null);
 		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
 				allProperties.size());
 		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
@@ -537,6 +560,28 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 
 		final LocusEnergyGranularity granularity = resolveGranularity(datumStream, filter);
+		final Instant filterEndDate = (granularity != LocusEnergyGranularity.Latest
+				? filter.getEndDate().truncatedTo(ChronoUnit.SECONDS)
+				: null);
+		final Instant startDate;
+		final Instant endDate;
+		if ( granularity != LocusEnergyGranularity.Latest ) {
+			// add date range
+			startDate = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
+
+			var end = filterEndDate;
+			if ( granularity.getConstraint() != null ) {
+				// enforce max time constraint
+				var maxEnd = startDate.plus(granularity.getConstraint());
+				if ( end.isAfter(maxEnd) ) {
+					end = maxEnd;
+				}
+			}
+			endDate = end;
+		} else {
+			startDate = null;
+			endDate = null;
+		}
 
 		// group requests by component, field names
 		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
@@ -577,20 +622,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 								// @formatter:on
 								if ( granularity != LocusEnergyGranularity.Latest ) {
 									// add date range
-									var start = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
 									b.queryParam("start",
-											ISO_LOCAL_DATE_TIME.format(start.atOffset(UTC)));
-
-									var end = filter.getEndDate().truncatedTo(ChronoUnit.SECONDS);
-									if ( granularity.getConstraint() != null ) {
-										// enforce max time constraint
-										var maxEnd = Instant
-												.from(granularity.getConstraint().addTo(start));
-										if ( end.isAfter(maxEnd) ) {
-											end = maxEnd;
-										}
-									}
-									b.queryParam("end", ISO_LOCAL_DATE_TIME.format(end.atOffset(UTC)));
+											ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
+									b.queryParam("end",
+											ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC)));
 								}
 								return b.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
 										.toUri();
@@ -682,11 +717,29 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		if ( !exprProps.isEmpty() ) {
 			for ( GeneralDatum datum : result.values() ) {
 				evaulateExpressions(exprProps, datum,
-						Map.of("integrationId", datumStream.getIntegrationId()));
+						Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
+								"integrationId", mapping.getIntegrationId()));
 			}
 		}
 
-		return result.values().stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast)
-				.toList();
+		BasicQueryFilter nextQueryFilter = null;
+		if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {
+			// provide next date range to try
+			nextQueryFilter = BasicQueryFilter.copyOf(filter);
+			nextQueryFilter.setStartDate(endDate);
+
+			var end = filterEndDate;
+			if ( granularity.getConstraint() != null ) {
+				// enforce max time constraint
+				end = endDate.plus(granularity.getConstraint());
+				if ( end.isAfter(filterEndDate) ) {
+					end = filterEndDate;
+				}
+			}
+			nextQueryFilter.setEndDate(end);
+		}
+
+		return new BasicCloudDatumStreamQueryResult(nextQueryFilter, result.values().stream()
+				.sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 	}
 }

@@ -45,7 +45,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * <li>enabled (BOOLEAN)</li>
  * <li>cname (TEXT)</li>
  * <li>sident (TEXT)</li>
- * <li>int_id (BIGINT)</li>
+ * <li>map_id (BIGINT)</li>
  * <li>schedule (TEXT)</li>
  * <li>kind (CHARACTER)</li>
  * <li>obj_id (BIGINT)</li>
@@ -54,7 +54,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * </ol>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamConfigurationRowMapper implements RowMapper<CloudDatumStreamConfiguration> {
 
@@ -91,7 +91,7 @@ public class CloudDatumStreamConfigurationRowMapper implements RowMapper<CloudDa
 		conf.setEnabled(rs.getBoolean(++p));
 		conf.setName(rs.getString(++p));
 		conf.setServiceIdentifier(rs.getString(++p));
-		conf.setIntegrationId(rs.getObject(++p, Long.class));
+		conf.setDatumStreamMappingId(rs.getObject(++p, Long.class));
 		conf.setSchedule(rs.getString(++p));
 		conf.setKind(ObjectDatumKind.forKey(rs.getString(++p)));
 		conf.setObjectId(rs.getObject(++p, Long.class));

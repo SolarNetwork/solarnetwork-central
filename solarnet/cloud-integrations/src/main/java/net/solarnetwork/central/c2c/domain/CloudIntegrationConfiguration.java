@@ -114,6 +114,11 @@ public class CloudIntegrationConfiguration
 			builder.append(getConfigId());
 			builder.append(", ");
 		}
+		if ( getName() != null ) {
+			builder.append("name=");
+			builder.append(getName());
+			builder.append(", ");
+		}
 		builder.append("enabled=");
 		builder.append(isEnabled());
 		builder.append("}");

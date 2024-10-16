@@ -27,7 +27,7 @@ import java.time.Instant;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -36,14 +36,14 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * DTO for cloud datum stream configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudDatumStreamConfigurationInput extends
 		BaseUserRelatedStdIdentifiableConfigurationInput<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
 		CloudIntegrationsConfigurationInput<CloudDatumStreamConfiguration, UserLongCompositePK> {
 
-	private Long integrationId;
+	private Long datumStreamMappingId;
 
 	private String schedule;
 
@@ -73,7 +73,7 @@ public class CloudDatumStreamConfigurationInput extends
 	@Override
 	protected void populateConfiguration(CloudDatumStreamConfiguration conf) {
 		super.populateConfiguration(conf);
-		conf.setIntegrationId(integrationId);
+		conf.setDatumStreamMappingId(datumStreamMappingId);
 		conf.setSchedule(schedule);
 		conf.setKind(kind);
 		conf.setObjectId(objectId);
@@ -81,24 +81,24 @@ public class CloudDatumStreamConfigurationInput extends
 	}
 
 	/**
-	 * Get the associated {@link CloudIntegrationConfiguration}
+	 * Get the associated {@link CloudDatumStreamMappingConfiguration}
 	 * {@code configId}.
 	 *
-	 * @return the integration ID
+	 * @return the datum stream mapping ID
 	 */
-	public final Long getIntegrationId() {
-		return integrationId;
+	public final Long getDatumStreamMappingId() {
+		return datumStreamMappingId;
 	}
 
 	/**
-	 * Set the associated {@link CloudIntegrationConfiguration}
+	 * Set the associated {@link CloudDatumStreamMappingConfiguration}
 	 * {@code configId}.
 	 *
-	 * @param integrationId
-	 *        the integration ID to set
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID to set
 	 */
-	public final void setIntegrationId(Long integrationId) {
-		this.integrationId = integrationId;
+	public final void setDatumStreamMappingId(Long datumStreamMappingId) {
+		this.datumStreamMappingId = datumStreamMappingId;
 	}
 
 	/**
