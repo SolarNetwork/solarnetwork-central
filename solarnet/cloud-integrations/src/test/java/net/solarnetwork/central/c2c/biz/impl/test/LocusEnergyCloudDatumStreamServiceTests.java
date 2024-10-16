@@ -161,6 +161,12 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		return "/123/%d/%s/%s".formatted(componentId, baseName, fieldName);
 	}
 
+	private static String componentValueRefWithPlaceholders(String fieldName) {
+		final int sep = fieldName.lastIndexOf('_');
+		final String baseName = fieldName.substring(0, sep);
+		return "/{siteId}/{componentId}/%s/%s".formatted(baseName, fieldName);
+	}
+
 	@Test
 	public void requestLatest_singleComponent() {
 		// GIVEN
@@ -222,6 +228,136 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(nodeId);
 		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		@SuppressWarnings("deprecation")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final ObjectNode resJson = getObjectFromJSON(
+				utf8StringResource("locus-energy-data-for-component-01.json", getClass()),
+				ObjectNode.class);
+		final var res = new ResponseEntity<ObjectNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
+
+		// WHEN
+		Datum result = service.latestDatum(datumStream);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(ObjectNode.class));
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI")
+			.isEqualTo(BASE_URI.resolve(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE.replace("{componentId}", componentId.toString())
+						+ "?gran=latest&tz=UTC&fields=W_avg,TotWhExp_max"))
+			;
+
+		and.then(httpEntityCaptor.getValue().getHeaders())
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
+		DatumSamples expectedSamples = new DatumSamples();
+		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.isNotNull()
+			.as("Datum kind is from DatumStream configuration")
+			.returns(datumStream.getKind(), from(Datum::getKind))
+			.as("Datum object ID is from DatumStream configuration")
+			.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+			.as("Datum source ID is from DatumStream configuration")
+			.returns(datumStream.getSourceId(), from(Datum::getSourceId))
+			.as("Datum timestamp from JSON response")
+			.returns(Instant.parse("2014-04-01T12:00:00Z"), from(Datum::getTimestamp))
+			.as("Datum samples from JSON response")
+			.returns(expectedSamples, Datum::asSampleOperations)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestLatest_singleComponent_withPlaceholderValueRefs() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final Long partnerId = randomLong();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long componentId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				LocusEnergyCloudIntegrationService.PARTNER_ID_SETTING, partnerId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				LocusEnergyCloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				LocusEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				LocusEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(componentValueRefWithPlaceholders("W_avg"));
+
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Accumulating);
+		prop2.setPropertyName("wattHours");
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(componentValueRefWithPlaceholders("TotWhExp_max"));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// configure placeholders for site, component ID
+		datumStream.setServiceProps(
+				Map.of(CloudDatumStreamMappingConfiguration.PLACEHOLDERS_SERVICE_PROPERTY,
+						Map.of("siteId", (Object) 321, "componentId", componentId)));
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
