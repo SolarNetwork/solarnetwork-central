@@ -1,5 +1,5 @@
 /* ==================================================================
- * SelectCloudDatumStreamPropertyConfiguration.java - 4/10/2024 9:11:00 am
+ * SelectCloudDatumStreamMappingConfiguration.java - 16/10/2024 7:23:45 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -31,25 +31,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyFilter;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.CountPreparedStatementCreatorProvider;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
 
 /**
- * Support for SELECT for {@link CloudDatumStreamPropertyConfiguration}
- * entities.
+ * Support for SELECT for {@link CloudDatumStreamMappingConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class SelectCloudDatumStreamPropertyConfiguration
+public class SelectCloudDatumStreamMappingConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
 
-	private final CloudDatumStreamPropertyFilter filter;
+	private final CloudDatumStreamMappingFilter filter;
 	private final int fetchSize;
 
 	/**
@@ -58,7 +57,7 @@ public class SelectCloudDatumStreamPropertyConfiguration
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectCloudDatumStreamPropertyConfiguration(CloudDatumStreamPropertyFilter filter) {
+	public SelectCloudDatumStreamMappingConfiguration(CloudDatumStreamMappingFilter filter) {
 		this(filter, DEFAULT_FETCH_SIZE);
 	}
 
@@ -68,7 +67,7 @@ public class SelectCloudDatumStreamPropertyConfiguration
 	 * @param filter
 	 *        the filter
 	 */
-	public SelectCloudDatumStreamPropertyConfiguration(CloudDatumStreamPropertyFilter filter,
+	public SelectCloudDatumStreamMappingConfiguration(CloudDatumStreamMappingFilter filter,
 			int fetchSize) {
 		super();
 		this.filter = requireNonNullArgument(filter, "filter");
@@ -87,9 +86,9 @@ public class SelectCloudDatumStreamPropertyConfiguration
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT cdsp.user_id, cdsp.map_id, cdsp.idx, cdsp.created, cdsp.modified, cdsp.enabled
-					, cdsp.ptype, cdsp.pname, cdsp.vtype, cdsp.vref, cdsp.mult, cdsp.scale
-				FROM solardin.cin_datum_stream_prop cdsp
+				SELECT cdm.user_id, cdm.id, cdm.created, cdm.modified
+					, cdm.cname, cdm.int_id, cdm.sprops
+				FROM solardin.cin_datum_stream_map cdm
 				""");
 	}
 
@@ -97,13 +96,13 @@ public class SelectCloudDatumStreamPropertyConfiguration
 		StringBuilder where = new StringBuilder();
 		int idx = 0;
 		if ( filter.hasUserCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getUserIds(), "cdsp.user_id", where);
+			idx += whereOptimizedArrayContains(filter.getUserIds(), "cdm.user_id", where);
 		}
 		if ( filter.hasDatumStreamMappingCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cdsp.map_id", where);
+			idx += whereOptimizedArrayContains(filter.getDatumStreamMappingIds(), "cdm.id", where);
 		}
-		if ( filter.hasIndexCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getIndexes(), "cdsp.idx", where);
+		if ( filter.hasIntegrationCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getIntegrationIds(), "cdm.int_id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -111,7 +110,7 @@ public class SelectCloudDatumStreamPropertyConfiguration
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY cdsp.user_id, cdsp.map_id, cdsp.idx");
+		buf.append("ORDER BY cdm.user_id, cdm.id");
 	}
 
 	@Override
@@ -133,8 +132,8 @@ public class SelectCloudDatumStreamPropertyConfiguration
 		if ( filter.hasDatumStreamMappingCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamMappingIds());
 		}
-		if ( filter.hasIndexCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIndexes());
+		if ( filter.hasIntegrationCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIntegrationIds());
 		}
 		return p;
 	}

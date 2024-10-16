@@ -100,7 +100,7 @@ public final class CommonTestUtils {
 	 * @return the string
 	 */
 	public static String randomString() {
-		return UUID.randomUUID().toString().replace("-", "");
+		return UUID.randomUUID().toString().replace("-", "").substring(0, 14);
 	}
 
 	/**

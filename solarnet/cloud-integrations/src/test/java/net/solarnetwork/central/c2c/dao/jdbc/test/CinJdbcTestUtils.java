@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
@@ -44,7 +45,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Helper methods for cloud integrations JDBC tests.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CinJdbcTestUtils {
 
@@ -102,8 +103,8 @@ public class CinJdbcTestUtils {
 	 *        the user ID
 	 * @param schedule
 	 *        the schedule
-	 * @param integrationId
-	 *        the integration ID
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID
 	 * @param kind
 	 *        the stream kind
 	 * @param objectId
@@ -119,14 +120,14 @@ public class CinJdbcTestUtils {
 	 * @return the entity
 	 */
 	public static CloudDatumStreamConfiguration newCloudDatumStreamConfiguration(Long userId,
-			Long integrationId, String schedule, ObjectDatumKind kind, Long objectId, String sourceId,
-			String name, String serviceId, Map<String, Object> serviceProps) {
+			Long datumStreamMappingId, String schedule, ObjectDatumKind kind, Long objectId,
+			String sourceId, String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
 				unassignedEntityIdKey(userId), Instant.now());
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);
-		conf.setIntegrationId(integrationId);
+		conf.setDatumStreamMappingId(datumStreamMappingId);
 		conf.setSchedule(schedule);
 		conf.setKind(kind);
 		conf.setObjectId(objectId);
@@ -153,14 +154,54 @@ public class CinJdbcTestUtils {
 	}
 
 	/**
+	 * Create a new datum stream mapping configuration instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param integrationId
+	 *        the integration ID
+	 * @param name
+	 *        the name
+	 * @param serviceProps
+	 *        the service properties
+	 * @return the entity
+	 */
+	public static CloudDatumStreamMappingConfiguration newCloudDatumStreamMappingConfiguration(
+			Long userId, Long integrationId, String name, Map<String, Object> serviceProps) {
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
+				unassignedEntityIdKey(userId), Instant.now());
+		conf.setModified(conf.getCreated());
+		conf.setName(name);
+		conf.setIntegrationId(integrationId);
+		conf.setServiceProps(serviceProps);
+		return conf;
+	}
+
+	/**
+	 * List datum stream mapping configuration rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allCloudDatumStreamMappingConfigurationData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.cin_datum_stream_map ORDER BY user_id, id");
+		log.debug("solardin.cin_datum_stream_map table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
 	 * Create a new datum stream property configuration instance.
 	 *
 	 * @param userId
 	 *        the user ID
 	 * @param schedule
 	 *        the schedule
-	 * @param datumStreamId
-	 *        the datum stream ID
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID
 	 * @param index
 	 *        the index
 	 * @param propertyType
@@ -178,11 +219,11 @@ public class CinJdbcTestUtils {
 	 * @return the entity
 	 */
 	public static CloudDatumStreamPropertyConfiguration newCloudDatumStreamPropertyConfiguration(
-			Long userId, Long datumStreamId, Integer index, DatumSamplesType propertyType,
+			Long userId, Long datumStreamMappingId, Integer index, DatumSamplesType propertyType,
 			String propertyName, CloudDatumStreamValueType valueType, String valueReference,
 			BigDecimal multiplier, Integer scale) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				datumStreamId, index, Instant.now());
+				datumStreamMappingId, index, Instant.now());
 		conf.setModified(conf.getCreated());
 		conf.setPropertyType(propertyType);
 		conf.setPropertyName(propertyName);
@@ -204,7 +245,7 @@ public class CinJdbcTestUtils {
 	public static List<Map<String, Object>> allCloudDatumStreamPropertyConfigurationData(
 			JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
-				"select * from solardin.cin_datum_stream_prop ORDER BY user_id, ds_id, idx");
+				"select * from solardin.cin_datum_stream_prop ORDER BY user_id, map_id, idx");
 		log.debug("solardin.cin_datum_stream_prop table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;

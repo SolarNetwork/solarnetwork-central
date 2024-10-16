@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDatumStreamPropertyConfigurationRowMapper.java - 4/10/2024 8:30:54 am
+ * CloudDatumStreamMappingConfigurationRowMapper.java - 16/10/2024 7:08:57 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -27,12 +27,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import org.springframework.jdbc.core.RowMapper;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
-import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 
 /**
- * Row mapper for {@link CloudDatumStreamPropertyConfiguration} entities.
+ * Row mapper for {@link CloudDatumStreamMappingConfiguration} entities.
  *
  * <p>
  * The expected column order in the SQL results is:
@@ -40,34 +38,29 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
  *
  * <ol>
  * <li>user_id (BIGINT)</li>
- * <li>map_id (BIGINT)</li>
- * <li>idx (SMALLINT)
+ * <li>id (BIGINT)</li>
  * <li>created (TIMESTAMP)</li>
  * <li>modified (TIMESTAMP)</li>
- * <li>enabled (BOOLEAN)</li>
- * <li>ptype (TEXT)</li>
- * <li>pname (TEXT)</li>
- * <li>vtype (TEXT)</li>
- * <li>vref (TEXT)</li>
- * <li>mult (NUMERIC)</li>
- * <li>scale (SMALLINT)</li>
+ * <li>cname (TEXT)</li>
+ * <li>int_id (BIGINT)</li>
+ * <li>sprops (TEXT)</li>
  * </ol>
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class CloudDatumStreamPropertyConfigurationRowMapper
-		implements RowMapper<CloudDatumStreamPropertyConfiguration> {
+public class CloudDatumStreamMappingConfigurationRowMapper
+		implements RowMapper<CloudDatumStreamMappingConfiguration> {
 
 	/** A default instance. */
-	public static final RowMapper<CloudDatumStreamPropertyConfiguration> INSTANCE = new CloudDatumStreamPropertyConfigurationRowMapper();
+	public static final RowMapper<CloudDatumStreamMappingConfiguration> INSTANCE = new CloudDatumStreamMappingConfigurationRowMapper();
 
 	private final int columnOffset;
 
 	/**
 	 * Default constructor.
 	 */
-	public CloudDatumStreamPropertyConfigurationRowMapper() {
+	public CloudDatumStreamMappingConfigurationRowMapper() {
 		this(0);
 	}
 
@@ -77,27 +70,23 @@ public class CloudDatumStreamPropertyConfigurationRowMapper
 	 * @param columnOffset
 	 *        a column offset to apply
 	 */
-	public CloudDatumStreamPropertyConfigurationRowMapper(int columnOffset) {
+	public CloudDatumStreamMappingConfigurationRowMapper(int columnOffset) {
 		this.columnOffset = columnOffset;
 	}
 
 	@Override
-	public CloudDatumStreamPropertyConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public CloudDatumStreamMappingConfiguration mapRow(ResultSet rs, int rowNum) throws SQLException {
 		int p = columnOffset;
 		Long userId = rs.getObject(++p, Long.class);
-		Long dataSourceId = rs.getObject(++p, Long.class);
-		Integer idx = rs.getObject(++p, Integer.class);
+		Long entityId = rs.getObject(++p, Long.class);
 		Instant ts = getTimestampInstant(rs, ++p);
-		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				dataSourceId, idx, ts);
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(userId,
+				entityId, ts);
 		conf.setModified(getTimestampInstant(rs, ++p));
-		conf.setEnabled(rs.getBoolean(++p));
-		conf.setPropertyType(DatumSamplesType.fromValue(rs.getString(++p)));
-		conf.setPropertyName(rs.getString(++p));
-		conf.setValueType(CloudDatumStreamValueType.fromValue(rs.getString(++p)));
-		conf.setValueReference(rs.getString(++p));
-		conf.setMultiplier(rs.getBigDecimal(++p));
-		conf.setScale(rs.getObject(++p, Integer.class));
+		conf.setName(rs.getString(++p));
+		conf.setIntegrationId(rs.getObject(++p, Long.class));
+
+		conf.setServicePropsJson(rs.getString(++p));
 		return conf;
 	}
 

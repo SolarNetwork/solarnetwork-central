@@ -35,6 +35,7 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -46,7 +47,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -56,6 +57,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 
 	/** The datum stream configuration DAO. */
 	protected final CloudDatumStreamConfigurationDao datumStreamDao;
+
+	/** The datum stream mapping configuration DAO. */
+	protected final CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 
 	/** The datum stream property configuration DAO. */
 	protected final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
@@ -80,6 +84,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the integration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamMappingDao
+	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
 	 * @param settings
@@ -92,12 +98,15 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumStreamMappingDao = requireNonNullArgument(datumStreamMappingDao,
+				"datumStreamMappingDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
 	}
@@ -122,7 +131,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				continue;
 			}
 			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamId",
-					config.getDatumStreamId());
+					config.getDatumStreamMappingId());
 			Object val = null;
 			try {
 				val = expressionService.evaluateDatumPropertyExpression(config, root, vars,

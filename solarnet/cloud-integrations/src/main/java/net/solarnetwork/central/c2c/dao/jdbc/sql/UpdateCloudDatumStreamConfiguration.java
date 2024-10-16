@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * Support for UPDATE for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UpdateCloudDatumStreamConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -47,7 +47,7 @@ public class UpdateCloudDatumStreamConfiguration implements PreparedStatementCre
 			SET modified = ?
 				, cname = ?
 				, sident = ?
-				, int_id = ?
+				, map_id = ?
 				, schedule = ?
 				, kind = ?
 				, obj_id = ?
@@ -94,7 +94,7 @@ public class UpdateCloudDatumStreamConfiguration implements PreparedStatementCre
 
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getServiceIdentifier());
-		stmt.setObject(++p, entity.getIntegrationId());
+		stmt.setObject(++p, entity.getDatumStreamMappingId());
 		stmt.setString(++p, entity.getSchedule());
 		stmt.setString(++p, entity.getKind() != null ? String.valueOf(entity.getKind().getKey()) : null);
 		stmt.setObject(++p, entity.getObjectId());

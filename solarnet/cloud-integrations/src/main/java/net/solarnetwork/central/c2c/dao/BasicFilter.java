@@ -41,11 +41,13 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFilter,
+public class BasicFilter extends BasicCoreCriteria
+		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
 		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter {
 
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;
+	private Long[] datumStreamMappingIds;
 	private Integer[] indexes;
 	private BasicClaimableJobState[] claimableJobStates;
 	private Instant startDate;
@@ -79,6 +81,7 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		if ( criteria instanceof BasicFilter f ) {
 			setIntegrationIds(f.getIntegrationIds());
 			setDatumStreamIds(f.getDatumStreamIds());
+			setDatumStreamMappingIds(f.getDatumStreamMappingIds());
 			setIndexes(f.getIndexes());
 			setClaimableJobStates(f.getClaimableJobStates());
 			setStartDate(f.getStartDate());
@@ -89,6 +92,9 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 			}
 			if ( criteria instanceof CloudDatumStreamCriteria f ) {
 				setDatumStreamIds(f.getDatumStreamIds());
+			}
+			if ( criteria instanceof CloudDatumStreamMappingCriteria f ) {
+				setDatumStreamMappingIds(f.getDatumStreamMappingIds());
 			}
 			if ( criteria instanceof IndexCriteria f ) {
 				setIndexes(f.getIndexes());
@@ -121,6 +127,7 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		int result = super.hashCode();
 		result = prime * result + Arrays.hashCode(integrationIds);
 		result = prime * result + Arrays.hashCode(datumStreamIds);
+		result = prime * result + Arrays.hashCode(datumStreamMappingIds);
 		result = prime * result + Arrays.hashCode(indexes);
 		result = prime * result + Arrays.hashCode(claimableJobStates);
 		result = prime * result + Objects.hash(startDate, endDate);
@@ -141,6 +148,7 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 		BasicFilter other = (BasicFilter) obj;
 		return Arrays.equals(integrationIds, other.integrationIds)
 				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
+				&& Arrays.equals(datumStreamMappingIds, other.datumStreamMappingIds)
 				&& Arrays.equals(indexes, other.indexes)
 				&& Objects.equals(claimableJobStates, other.claimableJobStates)
 				&& Objects.equals(startDate, other.startDate) && Objects.equals(endDate, other.endDate);
@@ -178,14 +186,14 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 
 	@Override
 	public Long getDatumStreamId() {
-		return CloudDatumStreamPropertyFilter.super.getDatumStreamId();
+		return CloudDatumStreamFilter.super.getDatumStreamId();
 	}
 
 	/**
-	 * Set the datumStream ID.
+	 * Set the datum stream ID.
 	 *
 	 * @param datumStreamId
-	 *        the datumStream ID to set
+	 *        the datum stream ID to set
 	 */
 	public void setDatumStreamId(Long datumStreamId) {
 		setDatumStreamIds(datumStreamId != null ? new Long[] { datumStreamId } : null);
@@ -197,13 +205,44 @@ public class BasicFilter extends BasicCoreCriteria implements CloudIntegrationFi
 	}
 
 	/**
-	 * Set the datumStream IDs.
+	 * Set the datum stream IDs.
 	 *
 	 * @param datumStreamIds
-	 *        the datumStream IDs to set
+	 *        the datum stream IDs to set
 	 */
 	public void setDatumStreamIds(Long[] datumStreamIds) {
 		this.datumStreamIds = datumStreamIds;
+	}
+
+	@Override
+	public Long getDatumStreamMappingId() {
+		return CloudDatumStreamMappingFilter.super.getDatumStreamMappingId();
+	}
+
+	/**
+	 * Set the datum stream mapping ID.
+	 *
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID to set
+	 */
+	public void setDatumStreamMappingId(Long datumStreamMappingId) {
+		setDatumStreamMappingIds(
+				datumStreamMappingId != null ? new Long[] { datumStreamMappingId } : null);
+	}
+
+	@Override
+	public Long[] getDatumStreamMappingIds() {
+		return datumStreamMappingIds;
+	}
+
+	/**
+	 * Set the datum stream mapping IDs.
+	 *
+	 * @param datumStreamMappingIds
+	 *        the datum stream mapping IDs to set
+	 */
+	public void setDatumStreamMappingIds(Long[] datumStreamMappingIds) {
+		this.datumStreamMappingIds = datumStreamMappingIds;
 	}
 
 	@Override

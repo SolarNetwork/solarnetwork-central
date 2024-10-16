@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDatumStreamPollTaskFilter.java - 10/10/2024 12:18:59 pm
+ * CloudDatumStreamMappingFilter.java - 16/10/2024 7:28:44 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -22,21 +22,13 @@
 
 package net.solarnetwork.central.c2c.dao;
 
-import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
-
 /**
- * A filter for cloud datum stream poll task entities.
- *
- * <p>
- * Note that the {@link DateRangeCriteria} component applies to the
- * {@code execute} date of the poll task entity.
- * </p>
+ * A filter for cloud datum stream property mapping entities.
  *
  * @author matt
  * @version 1.0
  */
-public interface CloudDatumStreamPollTaskFilter extends CloudIntegrationsFilter,
-		CloudDatumStreamCriteria, ClaimableJobStateCriteria, DateRangeCriteria {
+public interface CloudDatumStreamMappingFilter extends CloudIntegrationsFilter,
+		CloudIntegrationCriteria, CloudDatumStreamMappingCriteria {
 
 }

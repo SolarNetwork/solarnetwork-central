@@ -40,7 +40,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudDatumStreamConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectCloudDatumStreamConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -87,7 +87,7 @@ public class SelectCloudDatumStreamConfiguration
 		buf.append("""
 				SELECT cds.user_id, cds.id, cds.created, cds.modified, cds.enabled
 					, cds.cname, cds.sident
-					, cds.int_id, cds.schedule, cds.kind, cds.obj_id, cds.source_id
+					, cds.map_id, cds.schedule, cds.kind, cds.obj_id, cds.source_id
 					, cds.sprops
 				FROM solardin.cin_datum_stream cds
 				""");

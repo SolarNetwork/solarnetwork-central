@@ -29,10 +29,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
@@ -41,7 +43,7 @@ import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDa
  * Cloud integrations DAO configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -68,6 +70,16 @@ public class CloudIntegrationsDaoConfig {
 	@Bean
 	public CloudDatumStreamConfigurationDao cloudDatumStreamConfigurationConfigurationDao() {
 		return new JdbcCloudDatumStreamConfigurationDao(jdbcOperations);
+	}
+
+	/**
+	 * The cloud datum stream mapping configuration DAO.
+	 *
+	 * @return the DAO
+	 */
+	@Bean
+	public CloudDatumStreamMappingConfigurationDao cloudDatumStreamMappingConfigurationConfigurationDao() {
+		return new JdbcCloudDatumStreamMappingConfigurationDao(jdbcOperations);
 	}
 
 	/**

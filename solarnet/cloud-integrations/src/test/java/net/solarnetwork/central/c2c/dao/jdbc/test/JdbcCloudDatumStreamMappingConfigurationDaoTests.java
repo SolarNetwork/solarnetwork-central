@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcCloudDatumStreamConfigurationDaoTests.java - 3/10/2024 1:36:39 pm
+ * JdbcCloudDatumStreamMappingConfigurationDaoTests.java - 16/10/2024 7:38:50 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -23,9 +23,8 @@
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
 import static java.util.Collections.singletonMap;
-import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
-import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamConfiguration;
-import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudDatumStreamMappingConfiguration;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -41,10 +40,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
-import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -53,29 +50,26 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Test cases for the {@link JdbcCloudDatumStreamConfigurationDao} class.
+ * Test cases for the {@link JdbcCloudDatumStreamMappingConfigurationDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
+public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private JdbcCloudIntegrationConfigurationDao integrationDao;
-	private JdbcCloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
-	private JdbcCloudDatumStreamConfigurationDao dao;
+	private JdbcCloudDatumStreamMappingConfigurationDao dao;
 	private Long userId;
 
-	private CloudDatumStreamConfiguration last;
+	private CloudDatumStreamMappingConfiguration last;
 
 	@BeforeEach
 	public void setup() {
-		dao = new JdbcCloudDatumStreamConfigurationDao(jdbcTemplate);
+		dao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		integrationDao = new JdbcCloudIntegrationConfigurationDao(jdbcTemplate);
-		datumStreamMappingDao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
 	}
 
 	private CloudIntegrationConfiguration createIntegration(Long userId, Map<String, Object> props) {
@@ -85,19 +79,10 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		return entity;
 	}
 
-	private CloudDatumStreamMappingConfiguration createDatumStreamMapping(Long userId,
-			Long integrationId, Map<String, Object> props) {
-		CloudDatumStreamMappingConfiguration conf = CinJdbcTestUtils
-				.newCloudDatumStreamMappingConfiguration(userId, integrationId, randomString(), props);
-		CloudDatumStreamMappingConfiguration entity = datumStreamMappingDao
-				.get(datumStreamMappingDao.save(conf));
-		return entity;
-	}
-
 	@Test
 	public void entityKey() {
 		UserLongCompositePK id = new UserLongCompositePK(randomLong(), randomLong());
-		CloudDatumStreamConfiguration result = dao.entityKey(id);
+		CloudDatumStreamMappingConfiguration result = dao.entityKey(id);
 
 		// @formatter:off
 		then(result)
@@ -114,20 +99,13 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId,
 				singletonMap("bim", "bam"));
-		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
-				integration.getConfigId(), Map.of("bif", "bop"));
 
 		Map<String, Object> props = singletonMap("foo", "bar");
 		// @formatter:off
-		CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
-				mapping.getConfigId(),
+		CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+				integration.getConfigId(),
 				randomString(),
-				ObjectDatumKind.Node,
-				randomLong(),
-				randomString(),
-				randomString(),
-				randomString(), props)
-				;
+				props);
 		// @formatter:on
 
 		// WHEN
@@ -144,7 +122,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 			.doesNotReturn(null, UserLongCompositePK::getEntityId)
 			;
 
-		List<Map<String, Object>> data = allCloudDatumStreamConfigurationData(jdbcTemplate);
+		List<Map<String, Object>> data = allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		then(data).as("Table has 1 row").hasSize(1).asInstanceOf(list(Map.class))
 			.element(0, map(String.class, Object.class))
 			.as("Row user ID")
@@ -157,18 +135,8 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 			.containsEntry("modified", Timestamp.from(conf.getModified()))
 			.as("Row name")
 			.containsEntry("cname", conf.getName())
-			.as("Row service ID")
-			.containsEntry("sident", conf.getServiceIdentifier())
-			.as("Row datum stream mapping ID")
-			.containsEntry("map_id", conf.getDatumStreamMappingId())
-			.as("Row schedule")
-			.containsEntry("schedule", conf.getSchedule())
-			.as("Row kind key")
-			.containsEntry("kind", String.valueOf(conf.getKind().getKey()))
-			.as("Row object ID")
-			.containsEntry("obj_id", conf.getObjectId())
-			.as("Row source ID")
-			.containsEntry("source_id", conf.getSourceId())
+			.as("Row integration ID")
+			.containsEntry("int_id", conf.getIntegrationId())
 			.as("Row service properties")
 			.hasEntrySatisfying("sprops", o -> {
 				then(JsonUtils.getStringMap(o.toString()))
@@ -186,7 +154,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		insert();
 
 		// WHEN
-		CloudDatumStreamConfiguration result = dao.get(last.getId());
+		CloudDatumStreamMappingConfiguration result = dao.get(last.getId());
 
 		// THEN
 		then(result).as("Retrieved entity matches source").isEqualTo(last);
@@ -198,23 +166,18 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		insert();
 
 		// WHEN
-		CloudDatumStreamConfiguration conf = last.copyWithId(last.getId());
-		conf.setEnabled(false);
+		CloudDatumStreamMappingConfiguration conf = last.copyWithId(last.getId());
 		conf.setModified(Instant.now().plusMillis(474));
 		conf.setName(randomString());
-		conf.setServiceIdentifier(randomString());
-		conf.setKind(ObjectDatumKind.Location);
-		conf.setObjectId(randomLong());
-		conf.setSourceId(randomString());
 
 		Map<String, Object> props = Collections.singletonMap("bar", "foo");
 		conf.setServiceProps(props);
 
 		UserLongCompositePK result = dao.save(conf);
-		CloudDatumStreamConfiguration updated = dao.get(result);
+		CloudDatumStreamMappingConfiguration updated = dao.get(result);
 
 		// THEN
-		List<Map<String, Object>> data = allCloudDatumStreamConfigurationData(jdbcTemplate);
+		List<Map<String, Object>> data = allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		then(data).as("Table has 1 row").hasSize(1);
 		// @formatter:off
 		then(updated).as("Retrieved entity matches updated source")
@@ -233,7 +196,7 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		dao.delete(last);
 
 		// THEN
-		List<Map<String, Object>> data = allCloudDatumStreamConfigurationData(jdbcTemplate);
+		List<Map<String, Object>> data = allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
 		then(data).as("Row deleted from db").isEmpty();
 	}
 
@@ -242,48 +205,48 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		// GIVEN
 		final int count = 3;
 		final int userCount = 3;
-		final int integrationCount = 3;
-		final int mappingCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
+		final List<Long> integrationIds = new ArrayList<>(userCount);
+		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>(count);
 
 		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
 
-		for ( int u = 0; u < userCount; u++ ) {
-			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-			userIds.add(userId);
-			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
-				for ( int m = 0; m < mappingCount; m++ ) {
-					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
-					for ( int ds = 0; ds < count; ds++ ) {
-						// @formatter:off
-						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
-								mappingId,
-								randomString(),
-								ObjectDatumKind.Node,
-								randomLong(),
-								randomString(),
-								randomString(),
-								randomString(), props)
-								;
-						// @formatter:on
-						UserLongCompositePK id = dao.create(userId, conf);
-						conf = conf.copyWithId(id);
-						confs.add(conf);
-					}
+		for ( int i = 0; i < count; i++ ) {
+			for ( int u = 0; u < userCount; u++ ) {
+				Long userId;
+				Long integrationId;
+				if ( i == 0 ) {
+					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+					userIds.add(userId);
+
+					integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+					integrationIds.add(integrationId);
+				} else {
+					userId = userIds.get(u);
+					integrationId = integrationIds.get(u);
 				}
+
+				// @formatter:off
+				CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+						integrationId,
+						randomString(),
+						props
+						);
+				// @formatter:on
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
 			}
 		}
 
 		// WHEN
-		final Long randomUserId = userIds.get(RNG.nextInt(userIds.size()));
-		Collection<CloudDatumStreamConfiguration> results = dao.findAll(randomUserId, null);
+		final Long userId = userIds.get(1);
+		Collection<CloudDatumStreamMappingConfiguration> results = dao.findAll(userId, null);
 
 		// THEN
-		CloudDatumStreamConfiguration[] expected = confs.stream()
-				.filter(e -> randomUserId.equals(e.getUserId()))
-				.toArray(CloudDatumStreamConfiguration[]::new);
+		CloudDatumStreamMappingConfiguration[] expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId()))
+				.toArray(CloudDatumStreamMappingConfiguration[]::new);
 		then(results).as("Results for single user returned").contains(expected);
 	}
 
@@ -292,51 +255,51 @@ public class JdbcCloudDatumStreamConfigurationDaoTests extends AbstractJUnit5Jdb
 		// GIVEN
 		final int count = 3;
 		final int userCount = 3;
-		final int integrationCount = 3;
-		final int mappingCount = 3;
 		final List<Long> userIds = new ArrayList<>(userCount);
-		final List<CloudDatumStreamConfiguration> confs = new ArrayList<>(count);
+		final List<Long> integrationIds = new ArrayList<>(userCount);
+		final List<CloudDatumStreamMappingConfiguration> confs = new ArrayList<>(count);
 
 		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
 
-		for ( int u = 0; u < userCount; u++ ) {
-			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
-			userIds.add(userId);
-			for ( int i = 0; i < integrationCount; i++ ) {
-				Long integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
-				for ( int m = 0; m < mappingCount; m++ ) {
-					Long mappingId = createDatumStreamMapping(userId, integrationId, null).getConfigId();
-					for ( int ds = 0; ds < count; ds++ ) {
-						// @formatter:off
-						CloudDatumStreamConfiguration conf = newCloudDatumStreamConfiguration(userId,
-								mappingId,
-								randomString(),
-								ObjectDatumKind.Node,
-								randomLong(),
-								randomString(),
-								randomString(),
-								randomString(), props)
-								;
-						// @formatter:on
-						UserLongCompositePK id = dao.create(userId, conf);
-						conf = conf.copyWithId(id);
-						confs.add(conf);
-					}
+		for ( int i = 0; i < count; i++ ) {
+			for ( int u = 0; u < userCount; u++ ) {
+				Long userId;
+				Long integrationId;
+				if ( i == 0 ) {
+					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+					userIds.add(userId);
+
+					integrationId = createIntegration(userId, singletonMap("bim", "bam")).getConfigId();
+					integrationIds.add(integrationId);
+				} else {
+					userId = userIds.get(u);
+					integrationId = integrationIds.get(u);
 				}
+
+				// @formatter:off
+				CloudDatumStreamMappingConfiguration conf = newCloudDatumStreamMappingConfiguration(userId,
+						integrationId,
+						randomString(),
+						props
+						);
+				// @formatter:on
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
 			}
 		}
 
 		// WHEN
-		final Long randomUserId = userIds.get(RNG.nextInt(userIds.size()));
+		final Long userId = userIds.get(1);
 		final BasicFilter filter = new BasicFilter();
-		filter.setUserId(randomUserId);
-		FilterResults<CloudDatumStreamConfiguration, UserLongCompositePK> results = dao
+		filter.setUserId(userId);
+		FilterResults<CloudDatumStreamMappingConfiguration, UserLongCompositePK> results = dao
 				.findFiltered(filter);
 
 		// THEN
-		CloudDatumStreamConfiguration[] expected = confs.stream()
-				.filter(e -> randomUserId.equals(e.getUserId()))
-				.toArray(CloudDatumStreamConfiguration[]::new);
+		CloudDatumStreamMappingConfiguration[] expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId()))
+				.toArray(CloudDatumStreamMappingConfiguration[]::new);
 		then(results).as("Results for single user returned").contains(expected);
 	}
 

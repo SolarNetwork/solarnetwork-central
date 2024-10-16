@@ -44,9 +44,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -61,16 +63,17 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamPollTaskDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private JdbcCloudIntegrationConfigurationDao integrationDao;
 	private JdbcCloudDatumStreamConfigurationDao datumStreamDao;
+	private JdbcCloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private JdbcCloudDatumStreamPollTaskDao dao;
 	private Long userId;
 
-	private CloudIntegrationConfiguration lastIntegration;
+	private CloudDatumStreamMappingConfiguration lastMapping;
 	private CloudDatumStreamPollTaskEntity last;
 
 	@BeforeEach
@@ -79,22 +82,32 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 		integrationDao = new JdbcCloudIntegrationConfigurationDao(jdbcTemplate);
 		datumStreamDao = new JdbcCloudDatumStreamConfigurationDao(jdbcTemplate);
+		datumStreamMappingDao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
 	}
 
 	private CloudIntegrationConfiguration createIntegration(Long userId, Map<String, Object> props) {
 		CloudIntegrationConfiguration conf = CinJdbcTestUtils.newCloudIntegrationConfiguration(userId,
 				randomString(), randomString(), props);
 		CloudIntegrationConfiguration entity = integrationDao.get(integrationDao.save(conf));
-		lastIntegration = entity;
 		return entity;
 	}
 
-	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long integrationId,
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId,
 			Map<String, Object> props) {
 		CloudDatumStreamConfiguration conf = CinJdbcTestUtils.newCloudDatumStreamConfiguration(userId,
-				integrationId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
+				datumStreamMappingId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
 				randomString(), randomString(), props);
 		CloudDatumStreamConfiguration entity = datumStreamDao.get(datumStreamDao.save(conf));
+		return entity;
+	}
+
+	private CloudDatumStreamMappingConfiguration createDatumStreamMapping(Long userId,
+			Long integrationId, Map<String, Object> props) {
+		CloudDatumStreamMappingConfiguration conf = CinJdbcTestUtils
+				.newCloudDatumStreamMappingConfiguration(userId, integrationId, randomString(), props);
+		CloudDatumStreamMappingConfiguration entity = datumStreamMappingDao
+				.get(datumStreamMappingDao.save(conf));
+		lastMapping = entity;
 		return entity;
 	}
 
@@ -117,8 +130,10 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	public void insert() {
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
-		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+		CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
 				integration.getConfigId(), null);
+		final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+				mapping.getConfigId(), null);
 
 		Map<String, Object> props = singletonMap("foo", "bar");
 		// @formatter:off
@@ -201,7 +216,9 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			for ( int g = 0; g < integrationCount; g++ ) {
 				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
 				for ( int s = 0; s < streamCount; s++ ) {
-					final Long streamId = createDatumStream(userId, integrationId, Map.of("bim", "bam"))
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final Long streamId = createDatumStream(userId, mappingId, Map.of("bim", "bam"))
 							.getConfigId();
 					// @formatter:off
 					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
@@ -246,7 +263,9 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			for ( int g = 0; g < integrationCount; g++ ) {
 				final Long integrationId = createIntegration(userId, Map.of("foo", "bar")).getConfigId();
 				for ( int s = 0; s < streamCount; s++ ) {
-					final Long streamId = createDatumStream(userId, integrationId, Map.of("bim", "bam"))
+					final Long mappingId = createDatumStreamMapping(userId, integrationId, null)
+							.getConfigId();
+					final Long streamId = createDatumStream(userId, mappingId, Map.of("bim", "bam"))
 							.getConfigId();
 					// @formatter:off
 					CloudDatumStreamPollTaskEntity entity = newCloudDatumStreamPollTaskEntity(
@@ -478,7 +497,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 
 		// add another, but not in Queued state so not claimable
 		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
-				lastIntegration.getConfigId(), null);
+				lastMapping.getConfigId(), null);
+		datumStream2.setDatumStreamMappingId(lastMapping.getConfigId());
 		// @formatter:off
 		CloudDatumStreamPollTaskEntity conf2 = newCloudDatumStreamPollTaskEntity(userId,
 				datumStream2.getConfigId(),
@@ -515,10 +535,12 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 	public void claimTask_execAtInPast() {
 		// GIVEN
 		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+				integration.getConfigId(), null);
 		final CloudDatumStreamConfiguration datumStream1 = createDatumStream(userId,
-				integration.getConfigId(), null);
+				mapping.getConfigId(), null);
 		final CloudDatumStreamConfiguration datumStream2 = createDatumStream(userId,
-				integration.getConfigId(), null);
+				mapping.getConfigId(), null);
 
 		// @formatter:off
 		// 1st task executeAt in future: cannot be claimed
@@ -569,12 +591,14 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		final int datumStreamCount = 10;
 		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		final CloudIntegrationConfiguration integration = createIntegration(userId, null);
+		final CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+				integration.getConfigId(), null);
 
 		final List<CloudDatumStreamPollTaskEntity> pollTasks = new ArrayList<>(datumStreamCount);
 
 		for ( int i = 0; i < datumStreamCount; i++ ) {
 			final CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
-					integration.getConfigId(), null);
+					mapping.getConfigId(), null);
 			CloudDatumStreamPollTaskEntity conf = newCloudDatumStreamPollTaskEntity(userId,
 					datumStream.getConfigId(),
 					i == 0 || RNG.nextBoolean() ? BasicClaimableJobState.Executing

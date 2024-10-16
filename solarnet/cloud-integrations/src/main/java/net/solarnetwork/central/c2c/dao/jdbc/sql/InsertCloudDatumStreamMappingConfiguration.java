@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertCloudDatumStreamConfiguration.java - 3/10/2024 1:23:14 pm
+ * InsertCloudDatumStreamMappingConfiguration.java - 16/10/2024 7:12:10 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -31,30 +31,26 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 
 /**
- * Support for INSERT for {@link CloudDatumStreamConfiguration} entities.
+ * Support for INSERT for {@link CloudDatumStreamMappingConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class InsertCloudDatumStreamConfiguration implements PreparedStatementCreator, SqlProvider {
+public class InsertCloudDatumStreamMappingConfiguration
+		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solardin.cin_datum_stream (
-				  created,modified,user_id,enabled,cname,sident
-				, map_id,schedule,kind,obj_id,source_id
-				, sprops
+			INSERT INTO solardin.cin_datum_stream_map (
+				created,modified,user_id,cname,int_id,sprops
 			)
-			VALUES (
-				  ?,?,?,?,?,?
-				, ?,?,?,?,?
-				, ?::jsonb)
+			VALUES (?,?,?,?,?,?::jsonb)
 			""";
 
 	private final Long userId;
-	private final CloudDatumStreamConfiguration entity;
+	private final CloudDatumStreamMappingConfiguration entity;
 
 	/**
 	 * Constructor.
@@ -66,7 +62,8 @@ public class InsertCloudDatumStreamConfiguration implements PreparedStatementCre
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public InsertCloudDatumStreamConfiguration(Long userId, CloudDatumStreamConfiguration entity) {
+	public InsertCloudDatumStreamMappingConfiguration(Long userId,
+			CloudDatumStreamMappingConfiguration entity) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
 		this.entity = requireNonNullArgument(entity, "entity");
@@ -86,14 +83,8 @@ public class InsertCloudDatumStreamConfiguration implements PreparedStatementCre
 		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, mod);
 		stmt.setObject(++p, userId);
-		stmt.setBoolean(++p, entity.isEnabled());
 		stmt.setString(++p, entity.getName());
-		stmt.setString(++p, entity.getServiceIdentifier());
-		stmt.setObject(++p, entity.getDatumStreamMappingId());
-		stmt.setString(++p, entity.getSchedule());
-		stmt.setString(++p, entity.getKind() != null ? String.valueOf(entity.getKind().getKey()) : null);
-		stmt.setObject(++p, entity.getObjectId());
-		stmt.setString(++p, entity.getSourceId());
+		stmt.setObject(++p, entity.getIntegrationId());
 		stmt.setString(++p, entity.getServicePropsJson());
 		return stmt;
 	}

@@ -39,6 +39,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 
@@ -46,7 +47,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
  * Configuration for the SolarEdge cloud integration services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -63,6 +64,9 @@ public class SolarEdgeConfig {
 
 	@Autowired
 	private CloudDatumStreamConfigurationDao datumStreamConfigurationDao;
+
+	@Autowired
+	private CloudDatumStreamMappingConfigurationDao datumStreamMappingConfigurationDao;
 
 	@Autowired
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyConfigurationDao;
@@ -82,7 +86,7 @@ public class SolarEdgeConfig {
 	public CloudDatumStreamService solarEdgeCloudDatumStreamService() {
 		var service = new SolarEdgeCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
-				datumStreamPropertyConfigurationDao, restOps);
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(SolarEdgeCloudDatumStreamService.class.getName());

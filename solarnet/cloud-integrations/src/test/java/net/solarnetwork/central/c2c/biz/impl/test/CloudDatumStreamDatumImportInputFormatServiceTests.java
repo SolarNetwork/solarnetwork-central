@@ -75,7 +75,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -110,7 +110,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 
 		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());
@@ -184,7 +184,7 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 
 		final var datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID, randomLong(), now());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setKind(ObjectDatumKind.Node);
 		datumStream.setObjectId(randomLong());
 		datumStream.setSourceId(randomString());

@@ -46,6 +46,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -53,6 +54,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
@@ -80,12 +82,13 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 	private final CloudIntegrationConfigurationDao integrationDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
+	private final CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
 	private final TextEncryptor textEncryptor;
@@ -102,6 +105,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *        the configuration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamMappingDao
+	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
 	 *        the datum stream property DAO
 	 * @param datumStreamPollTaskDao
@@ -115,12 +120,15 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 */
 	public DaoUserCloudIntegrationsBiz(CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			CloudDatumStreamPollTaskDao datumStreamPollTaskDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
 		super();
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumStreamMappingDao = requireNonNullArgument(datumStreamMappingDao,
+				"datumStreamMappingDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
 		this.datumStreamPollTaskDao = requireNonNullArgument(datumStreamPollTaskDao,
@@ -209,17 +217,18 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public List<CloudDatumStreamPropertyConfiguration> replaceDatumStreamPropertyConfiguration(
-			UserLongCompositePK datumStreamId, List<CloudDatumStreamPropertyConfigurationInput> inputs) {
-		requireNonNullArgument(datumStreamId, "datumStreamId");
-		if ( !(datumStreamId.userIdIsAssigned() && datumStreamId.entityIdIsAssigned()) ) {
+			UserLongCompositePK datumStreamMappingId,
+			List<CloudDatumStreamPropertyConfigurationInput> inputs) {
+		requireNonNullArgument(datumStreamMappingId, "datumStreamMappingId");
+		if ( !(datumStreamMappingId.userIdIsAssigned() && datumStreamMappingId.entityIdIsAssigned()) ) {
 			throw new IllegalArgumentException("The userId and entityId components must be provided.");
 		}
 
 		requireNonNullArgument(inputs, "inputs");
 
 		// delete all for given datum stream ID
-		final UserLongIntegerCompositePK deleteId = UserLongIntegerCompositePK
-				.unassignedEntityIdKey(datumStreamId.getUserId(), datumStreamId.getEntityId());
+		final UserLongIntegerCompositePK deleteId = UserLongIntegerCompositePK.unassignedEntityIdKey(
+				datumStreamMappingId.getUserId(), datumStreamMappingId.getEntityId());
 		datumStreamPropertyDao.delete(datumStreamPropertyDao.entityKey(deleteId));
 
 		// then insert properties
@@ -228,8 +237,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		int idx = 0;
 		for ( var input : inputs ) {
 			validateInput(input);
-			var config = input.toEntity(new UserLongIntegerCompositePK(datumStreamId.getUserId(),
-					datumStreamId.getEntityId(), idx++), now);
+			var config = input.toEntity(new UserLongIntegerCompositePK(datumStreamMappingId.getUserId(),
+					datumStreamMappingId.getEntityId(), idx++), now);
 			datumStreamPropertyDao.save(config);
 			result.add(config);
 		}
@@ -402,11 +411,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			Class<C> clazz) {
 		GenericDao<C, K> result = null;
 		if ( CloudIntegrationConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (integrationDao);
+			result = (GenericDao<C, K>) integrationDao;
 		} else if ( CloudDatumStreamConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (datumStreamDao);
+			result = (GenericDao<C, K>) datumStreamDao;
+		} else if ( CloudDatumStreamMappingConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) datumStreamMappingDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (datumStreamPropertyDao);
+			result = (GenericDao<C, K>) datumStreamPropertyDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -419,11 +430,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			Class<?> clazz) {
 		UserModifiableEnabledStatusDao<F> result = null;
 		if ( CloudIntegrationConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (integrationDao);
+			result = (UserModifiableEnabledStatusDao<F>) integrationDao;
 		} else if ( CloudDatumStreamConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (datumStreamDao);
+			result = (UserModifiableEnabledStatusDao<F>) datumStreamDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (datumStreamPropertyDao);
+			result = (UserModifiableEnabledStatusDao<F>) datumStreamPropertyDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -436,11 +447,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			Class<C> clazz) {
 		FilterableDao<C, K, F> result = null;
 		if ( CloudIntegrationConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (integrationDao);
+			result = (FilterableDao<C, K, F>) integrationDao;
 		} else if ( CloudDatumStreamConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (datumStreamDao);
+			result = (FilterableDao<C, K, F>) datumStreamDao;
+		} else if ( CloudDatumStreamMappingConfiguration.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) datumStreamMappingDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (datumStreamPropertyDao);
+			result = (FilterableDao<C, K, F>) datumStreamPropertyDao;
 		}
 		if ( result != null ) {
 			return result;

@@ -83,7 +83,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link DaoCloudDatumStreamPollService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -191,7 +191,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now());
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
 		datumStream.setKind(ObjectDatumKind.Node);
@@ -291,7 +291,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now());
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
 		datumStream.setKind(ObjectDatumKind.Node);
@@ -365,7 +365,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
 				randomLong(), now());
-		datumStream.setIntegrationId(randomLong());
+		datumStream.setDatumStreamMappingId(randomLong());
 		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
 		datumStream.setSchedule("0 0/5 * * * *");
 		datumStream.setKind(ObjectDatumKind.Node);

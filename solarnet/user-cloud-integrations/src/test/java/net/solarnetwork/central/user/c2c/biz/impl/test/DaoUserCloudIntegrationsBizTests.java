@@ -58,10 +58,12 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -71,6 +73,7 @@ import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
@@ -86,7 +89,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -99,6 +102,9 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Mock
 	private CloudDatumStreamConfigurationDao datumStreamDao;
+
+	@Mock
+	private CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 
 	@Mock
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
@@ -117,6 +123,9 @@ public class DaoUserCloudIntegrationsBizTests {
 
 	@Captor
 	private ArgumentCaptor<CloudDatumStreamConfiguration> datumStreamCaptor;
+
+	@Captor
+	private ArgumentCaptor<CloudDatumStreamMappingConfiguration> datumStreamMappingCaptor;
 
 	@Captor
 	private ArgumentCaptor<CloudDatumStreamPropertyConfiguration> datumStreamPropertyCaptor;
@@ -141,8 +150,9 @@ public class DaoUserCloudIntegrationsBizTests {
 				new BasicTextFieldSettingSpecifier("watchout", null, true));
 		given(integrationService.getSettingSpecifiers()).willReturn(settings);
 
-		biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao, datumStreamPropertyDao,
-				datumStreamPollTaskDao, textEncryptor, Collections.singleton(integrationService));
+		biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao, datumStreamMappingDao,
+				datumStreamPropertyDao, datumStreamPollTaskDao, textEncryptor,
+				Collections.singleton(integrationService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -229,6 +239,33 @@ public class DaoUserCloudIntegrationsBizTests {
 	}
 
 	@Test
+	public void datumStreamMappingConfigurations_forUser() {
+		// GIVEN
+		final Long userId = randomLong();
+		final CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
+				userId, randomLong(), now());
+		final var daoResults = new BasicFilterResults<CloudDatumStreamMappingConfiguration, UserLongCompositePK>(
+				Arrays.asList(conf));
+		given(datumStreamMappingDao.findFiltered(any(), isNull(), isNull(), isNull()))
+				.willReturn(daoResults);
+
+		// WHEN
+		FilterResults<CloudDatumStreamMappingConfiguration, UserLongCompositePK> result = biz
+				.listConfigurationsForUser(userId, null, CloudDatumStreamMappingConfiguration.class);
+
+		// THEN
+		then(datumStreamMappingDao).should().findFiltered(filterCaptor.capture(), isNull(), isNull(),
+				isNull());
+
+		BasicFilter expectedFilter = new BasicFilter();
+		expectedFilter.setUserId(userId);
+
+		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+
+		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
+	}
+
+	@Test
 	public void datumStreamPropertyConfigurations_forUser() {
 		// GIVEN
 		final Long userId = randomLong();
@@ -256,7 +293,7 @@ public class DaoUserCloudIntegrationsBizTests {
 	}
 
 	@Test
-	public void datumStreamPropertyConfigurations_forUserAndDatumStream() {
+	public void datumStreamPropertyConfigurations_forUserAndDatumStreamMapping() {
 		// GIVEN
 		final Long userId = randomLong();
 		final CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(
@@ -269,7 +306,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		// WHEN
 		BasicFilter filter = new BasicFilter();
 		filter.setUserId(randomLong()); // should be replaced
-		filter.setDatumStreamId(conf.getDatumStreamId());
+		filter.setDatumStreamMappingId(conf.getDatumStreamMappingId());
 		FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK> result = biz
 				.listConfigurationsForUser(userId, filter, CloudDatumStreamPropertyConfiguration.class);
 
@@ -279,7 +316,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		BasicFilter expectedFilter = new BasicFilter();
 		expectedFilter.setUserId(userId);
-		expectedFilter.setDatumStreamId(conf.getDatumStreamId());
+		expectedFilter.setDatumStreamMappingId(conf.getDatumStreamMappingId());
 
 		and.then(filterCaptor.getValue()).as("Filter has user ID and datum stream ID set")
 				.isEqualTo(expectedFilter);
@@ -318,6 +355,24 @@ public class DaoUserCloudIntegrationsBizTests {
 		// WHEN
 		CloudDatumStreamConfiguration result = biz.configurationForId(pk,
 				CloudDatumStreamConfiguration.class);
+
+		// THEN
+		and.then(result).as("Result provided from DAO").isSameAs(conf);
+	}
+
+	@Test
+	public void datumStreamMappingConfiguration_forId() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now());
+
+		given(datumStreamMappingDao.get(pk)).willReturn(conf);
+
+		// WHEN
+		CloudDatumStreamMappingConfiguration result = biz.configurationForId(pk,
+				CloudDatumStreamMappingConfiguration.class);
 
 		// THEN
 		and.then(result).as("Result provided from DAO").isSameAs(conf);
@@ -435,7 +490,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		input.setName(randomString());
 		input.setServiceIdentifier(randomString());
 		input.setServiceProperties(new LinkedHashMap<>(sprops));
-		input.setIntegrationId(randomLong());
+		input.setDatumStreamMappingId(randomLong());
 		input.setSchedule(randomString());
 		input.setKind(ObjectDatumKind.Node);
 		input.setObjectId(randomLong());
@@ -458,8 +513,8 @@ public class DaoUserCloudIntegrationsBizTests {
 			.returns(input.getServiceIdentifier(), from(CloudDatumStreamConfiguration::getServiceIdentifier))
 			.as("Service properties from input passed to DAO")
 			.returns(input.getServiceProperties(), from(CloudDatumStreamConfiguration::getServiceProperties))
-			.as("Integration ID from input passed to DAO")
-			.returns(input.getIntegrationId(), from(CloudDatumStreamConfiguration::getIntegrationId))
+			.as("Datum steram mapping ID from input passed to DAO")
+			.returns(input.getDatumStreamMappingId(), from(CloudDatumStreamConfiguration::getDatumStreamMappingId))
 			.as("Schedule from input passed to DAO")
 			.returns(input.getSchedule(), from(CloudDatumStreamConfiguration::getSchedule))
 			.as("Kind from input passed to DAO")
@@ -468,6 +523,55 @@ public class DaoUserCloudIntegrationsBizTests {
 			.returns(input.getObjectId(), from(CloudDatumStreamConfiguration::getObjectId))
 			.as("Source ID from input passed to DAO")
 			.returns(input.getSourceId(), from(CloudDatumStreamConfiguration::getSourceId))
+			;
+
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(conf)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamMappingConfiguration_save() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now());
+
+		// save and retrieve
+		given(datumStreamMappingDao.save(any(CloudDatumStreamMappingConfiguration.class)))
+				.willReturn(pk);
+		given(datumStreamMappingDao.get(pk)).willReturn(conf);
+
+		// WHEN
+		Map<String, Object> sprops = new LinkedHashMap<>(4);
+		sprops.put("foo", "bar");
+
+		CloudDatumStreamMappingConfigurationInput input = new CloudDatumStreamMappingConfigurationInput();
+		input.setEnabled(true);
+		input.setName(randomString());
+		input.setServiceProperties(new LinkedHashMap<>(sprops));
+		input.setIntegrationId(randomLong());
+		UserLongCompositePK unassignedId = UserLongCompositePK.unassignedEntityIdKey(userId);
+		CloudDatumStreamMappingConfiguration result = biz.saveConfiguration(unassignedId, input);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamMappingDao).should().save(datumStreamMappingCaptor.capture());
+
+		and.then(datumStreamMappingCaptor.getValue())
+			.as("Entity ID unassigned on DAO save")
+			.returns(unassignedId, from(CloudDatumStreamMappingConfiguration::getId))
+			.as("Enabled from input passed to DAO")
+			.returns(input.isEnabled(), from(CloudDatumStreamMappingConfiguration::isEnabled))
+			.as("Name from input passed to DAO")
+			.returns(input.getName(), from(CloudDatumStreamMappingConfiguration::getName))
+			.as("Service properties from input passed to DAO")
+			.returns(input.getServiceProperties(), from(CloudDatumStreamMappingConfiguration::getServiceProperties))
+			.as("Integration ID from input passed to DAO")
+			.returns(input.getIntegrationId(), from(CloudDatumStreamMappingConfiguration::getIntegrationId))
 			;
 
 		and.then(result)
@@ -576,6 +680,30 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		and.then(datumStreamCaptor.getValue())
 			.as("DatumStream ID as provided")
+			.returns(pk, from(Entity::getId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void datumStreamMappingConfiguration_delete() {
+		// GIVEN
+		Long userId = randomLong();
+		Long entityId = randomLong();
+		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(pk, now());
+
+		given(datumStreamMappingDao.entityKey(pk)).willReturn(conf);
+
+		// WHEN
+		biz.deleteConfiguration(pk, CloudDatumStreamMappingConfiguration.class);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamMappingDao).should().delete(datumStreamMappingCaptor.capture());
+
+		and.then(datumStreamMappingCaptor.getValue())
+			.as("Datum stream mapping ID as provided")
 			.returns(pk, from(Entity::getId))
 			;
 		// @formatter:on

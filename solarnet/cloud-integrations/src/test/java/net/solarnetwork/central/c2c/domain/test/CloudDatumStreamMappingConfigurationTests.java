@@ -1,5 +1,5 @@
 /* ==================================================================
- * CloudDatumStreamPropertyConfigurationTests.java - 4/10/2024 7:15:28 am
+ * CloudDatumStreamMappingConfigurationTests.java - 16/10/2024 8:09:23 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -22,41 +22,34 @@
 
 package net.solarnetwork.central.c2c.domain.test;
 
-import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.util.DateUtils;
 
 /**
- * Test cases for the {@link CloudDatumStreamPropertyConfiguration} class.
+ * Test cases for the {@link CloudDatumStreamMappingConfiguration} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class CloudDatumStreamPropertyConfigurationTests {
+public class CloudDatumStreamMappingConfigurationTests {
 
 	@Test
 	public void toJson() {
 		// GIVEN
-		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
-				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+		CloudDatumStreamMappingConfiguration entity = new CloudDatumStreamMappingConfiguration(
+				randomLong(), randomLong(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
 		entity.setModified(entity.getCreated().plusSeconds(1));
-		entity.setEnabled(true);
-		entity.setPropertyType(DatumSamplesType.Accumulating);
-		entity.setPropertyName(randomString());
-		entity.setValueType(CloudDatumStreamValueType.Reference);
-		entity.setValueReference(randomString());
-		entity.setMultiplier(new BigDecimal("1.23"));
-		entity.setScale(6);
+		entity.setServiceProps(Map.of("foo", "bar"));
+		entity.setName(randomString());
+		entity.setIntegrationId(randomLong());
 
 		// WHEN
 		String json = JsonUtils.getJSONString(entity);
@@ -68,26 +61,22 @@ public class CloudDatumStreamPropertyConfigurationTests {
 			.isEqualToIgnoringWhitespace("""
 				{
 					"userId":%d,
-					"datumStreamMappingId":%d,
-					"index":%d,
+					"configId":%d,
 					"created":"%s",
 					"modified":"%s",
-					"enabled":true,
-					"propertyType":"a",
-					"propertyName":"%s",
-					"valueType":"r",
-					"valueReference":"%s",
-					"multiplier":1.23,
-					"scale":6
+					"name":"%s",
+					"integrationId":%d,
+					"serviceProperties":{
+						"foo":"bar"
+					}
 				}
 				""".formatted(
 						entity.getUserId(),
-						entity.getDatumStreamMappingId(),
-						entity.getIndex(),
+						entity.getConfigId(),
 						DateUtils.ISO_DATE_TIME_ALT_UTC.format(entity.getCreated()),
 						DateUtils.ISO_DATE_TIME_ALT_UTC.format(entity.getModified()),
-						entity.getPropertyName(),
-						entity.getValueReference()
+						entity.getName(),
+						entity.getIntegrationId()
 					))
 			;
 		// @formatter:on

@@ -132,23 +132,25 @@ public interface UserCloudIntegrationsBiz {
 			K id, T input);
 
 	/**
-	 * Save a list of cloud datum stream property configurations.
+	 * Save a list of cloud datum stream mapping property configurations.
 	 *
 	 * <p>
 	 * This method will first <b>delete</b> all configurations for the given
-	 * {@code groupId}, then <b>insert</b> the given configurations, assigning
-	 * {@code index} key component values based on list order.
+	 * {@code datumStreamMappingId}, then <b>insert</b> the given
+	 * configurations, assigning {@code index} key component values based on
+	 * list order.
 	 * </p>
 	 * </p>
 	 *
-	 * @param datumStreamId
-	 *        the datum stream ID of the configurations to delete
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID of the configurations to delete
 	 * @param inputs
 	 *        the configuration inputs to save
 	 * @return the saved configurations
 	 */
 	List<CloudDatumStreamPropertyConfiguration> replaceDatumStreamPropertyConfiguration(
-			UserLongCompositePK datumStreamId, List<CloudDatumStreamPropertyConfigurationInput> inputs);
+			UserLongCompositePK datumStreamMappingId,
+			List<CloudDatumStreamPropertyConfigurationInput> inputs);
 
 	/**
 	 * Update the enabled status of configurations, optionally filtered.

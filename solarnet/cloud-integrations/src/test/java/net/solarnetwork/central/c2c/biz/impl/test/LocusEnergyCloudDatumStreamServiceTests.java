@@ -76,10 +76,12 @@ import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyGranularity;
 import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
@@ -95,7 +97,7 @@ import net.solarnetwork.test.CallingThreadExecutorService;
  * Test cases for the {@link LocusEnergyCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -125,6 +127,9 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	private CloudDatumStreamConfigurationDao datumStreamDao;
 
 	@Mock
+	private CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
+
+	@Mock
 	private CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 
 	@Captor
@@ -143,7 +148,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expressionService = new SpelCloudIntegrationsExpressionService();
 		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
-				datumStreamPropertyDao, restOps, oauthClientManager);
+				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasename(LocusEnergyCloudIntegrationService.class.getName());
@@ -181,19 +186,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -201,15 +203,25 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
@@ -300,19 +312,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -320,15 +329,25 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId1, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId2, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
@@ -427,19 +446,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -447,15 +463,25 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId1, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId2, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
@@ -552,19 +578,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -572,15 +595,25 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
@@ -705,19 +738,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -725,15 +755,25 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
@@ -834,19 +874,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -854,15 +891,25 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")
@@ -954,21 +1001,16 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
-		// configure datum stream
-		final Long nodeId = randomLong();
-		final String sourceId = randomString();
-		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		datumStream.setIntegrationId(integration.getConfigId());
-		datumStream.setKind(ObjectDatumKind.Node);
-		datumStream.setObjectId(nodeId);
-		datumStream.setSourceId(sourceId);
-		datumStream.setServiceProps(
-				Map.of(LocusEnergyCloudDatumStreamService.GRANULARITY_SETTING, "daily"));
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
 
 		// configure datum stream properties
 		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 1, now());
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
 		prop1.setEnabled(true);
 		prop1.setPropertyType(DatumSamplesType.Instantaneous);
 		prop1.setPropertyName("watts");
@@ -976,15 +1018,27 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		prop1.setValueReference(componentValueRef(componentId, "W_avg"));
 
 		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
-				TEST_USER_ID, datumStream.getConfigId(), 2, now());
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
 		prop2.setEnabled(true);
 		prop2.setPropertyType(DatumSamplesType.Accumulating);
 		prop2.setPropertyName("wattHours");
 		prop2.setValueType(CloudDatumStreamValueType.Reference);
 		prop2.setValueReference(componentValueRef(componentId, "TotWhExp_max"));
 
-		given(datumStreamPropertyDao.findAll(TEST_USER_ID, datumStream.getConfigId(), null))
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
 				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		datumStream.setServiceProps(
+				Map.of(LocusEnergyCloudDatumStreamService.GRANULARITY_SETTING, "daily"));
 
 		// @formatter:off
 		@SuppressWarnings("deprecation")

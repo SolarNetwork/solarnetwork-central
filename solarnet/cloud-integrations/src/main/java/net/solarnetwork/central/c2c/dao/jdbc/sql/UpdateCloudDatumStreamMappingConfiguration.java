@@ -1,5 +1,5 @@
 /* ==================================================================
- * InsertCloudDatumStreamConfiguration.java - 3/10/2024 1:23:14 pm
+ * UpdateCloudDatumStreamMappingConfiguration.java - 16/10/2024 7:22:24 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -31,45 +31,48 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
- * Support for INSERT for {@link CloudDatumStreamConfiguration} entities.
+ * Support for UPDATE for {@link CloudDatumStreamMappingConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public class InsertCloudDatumStreamConfiguration implements PreparedStatementCreator, SqlProvider {
+public class UpdateCloudDatumStreamMappingConfiguration
+		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			INSERT INTO solardin.cin_datum_stream (
-				  created,modified,user_id,enabled,cname,sident
-				, map_id,schedule,kind,obj_id,source_id
-				, sprops
-			)
-			VALUES (
-				  ?,?,?,?,?,?
-				, ?,?,?,?,?
-				, ?::jsonb)
+			UPDATE solardin.cin_datum_stream_map
+			SET modified = ?
+				, cname = ?
+				, int_id = ?
+				, sprops = ?::jsonb
+			WHERE user_id = ? AND id = ?
 			""";
 
-	private final Long userId;
-	private final CloudDatumStreamConfiguration entity;
+	private final UserLongCompositePK id;
+	private final CloudDatumStreamMappingConfiguration entity;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param userId
-	 *        the user ID
+	 * @param id
+	 *        the primary key
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public InsertCloudDatumStreamConfiguration(Long userId, CloudDatumStreamConfiguration entity) {
+	public UpdateCloudDatumStreamMappingConfiguration(UserLongCompositePK id,
+			CloudDatumStreamMappingConfiguration entity) {
 		super();
-		this.userId = requireNonNullArgument(userId, "userId");
+		this.id = requireNonNullArgument(id, "id");
 		this.entity = requireNonNullArgument(entity, "entity");
+		if ( !id.entityIdIsAssigned() ) {
+			throw new IllegalArgumentException("Entity ID must be assigned");
+		}
 	}
 
 	@Override
@@ -79,22 +82,19 @@ public class InsertCloudDatumStreamConfiguration implements PreparedStatementCre
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql(), Statement.RETURN_GENERATED_KEYS);
-		Timestamp ts = Timestamp.from(entity.getCreated() != null ? entity.getCreated() : Instant.now());
-		Timestamp mod = entity.getModified() != null ? Timestamp.from(entity.getModified()) : null;
+		PreparedStatement stmt = con.prepareStatement(getSql(), Statement.NO_GENERATED_KEYS);
+		Timestamp mod = Timestamp
+				.from(entity.getModified() != null ? entity.getModified() : Instant.now());
 		int p = 0;
-		stmt.setTimestamp(++p, ts);
 		stmt.setTimestamp(++p, mod);
-		stmt.setObject(++p, userId);
-		stmt.setBoolean(++p, entity.isEnabled());
+
 		stmt.setString(++p, entity.getName());
-		stmt.setString(++p, entity.getServiceIdentifier());
-		stmt.setObject(++p, entity.getDatumStreamMappingId());
-		stmt.setString(++p, entity.getSchedule());
-		stmt.setString(++p, entity.getKind() != null ? String.valueOf(entity.getKind().getKey()) : null);
-		stmt.setObject(++p, entity.getObjectId());
-		stmt.setString(++p, entity.getSourceId());
+		stmt.setObject(++p, entity.getIntegrationId());
 		stmt.setString(++p, entity.getServicePropsJson());
+
+		stmt.setObject(++p, id.getUserId());
+		stmt.setObject(++p, id.getEntityId());
+
 		return stmt;
 	}
 

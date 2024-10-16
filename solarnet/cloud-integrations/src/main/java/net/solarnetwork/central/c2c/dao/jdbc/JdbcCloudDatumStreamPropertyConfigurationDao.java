@@ -81,7 +81,8 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 		final var sql = new UpsertCloudDatumStreamPropertyConfiguration(userId, datumStreamId, entity);
 		int count = jdbcOps.update(sql);
 		return (count > 0
-				? new UserLongIntegerCompositePK(userId, entity.getDatumStreamId(), entity.getIndex())
+				? new UserLongIntegerCompositePK(userId, entity.getDatumStreamMappingId(),
+						entity.getIndex())
 				: null);
 	}
 
@@ -109,7 +110,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 
 	@Override
 	public UserLongIntegerCompositePK save(CloudDatumStreamPropertyConfiguration entity) {
-		return create(entity.getUserId(), entity.getDatumStreamId(), entity);
+		return create(entity.getUserId(), entity.getDatumStreamMappingId(), entity);
 	}
 
 	@Override
@@ -117,7 +118,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 		var filter = new BasicFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
-		filter.setDatumStreamId(requireNonNullArgument(id.getGroupId(), "id.groupId"));
+		filter.setDatumStreamMappingId(requireNonNullArgument(id.getGroupId(), "id.groupId"));
 		filter.setIndex(requireNonNullArgument(id.getEntityId(), "id.entityId"));
 		var sql = new SelectCloudDatumStreamPropertyConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
@@ -131,7 +132,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	}
 
 	private static final String TABLE_NAME = "solardin.cin_datum_stream_prop";
-	private static final String DATASOURCE_ID_COLUMN_NAME = "ds_id";
+	private static final String DATASOURCE_ID_COLUMN_NAME = "map_id";
 	private static final String INDEX_COLUMN_NAME = "idx";
 	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", DATASOURCE_ID_COLUMN_NAME,
 			INDEX_COLUMN_NAME };
@@ -146,8 +147,10 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	@Override
 	public int updateEnabledStatus(Long userId, CloudDatumStreamPropertyFilter filter, boolean enabled) {
 		UserLongIntegerCompositePK key = filter != null && filter.hasIndexCriteria()
-				? new UserLongIntegerCompositePK(userId, filter.getDatumStreamId(), filter.getIndex())
-				: UserLongIntegerCompositePK.unassignedEntityIdKey(userId, filter.getDatumStreamId());
+				? new UserLongIntegerCompositePK(userId, filter.getDatumStreamMappingId(),
+						filter.getIndex())
+				: UserLongIntegerCompositePK.unassignedEntityIdKey(userId,
+						filter.getDatumStreamMappingId());
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);
 	}
