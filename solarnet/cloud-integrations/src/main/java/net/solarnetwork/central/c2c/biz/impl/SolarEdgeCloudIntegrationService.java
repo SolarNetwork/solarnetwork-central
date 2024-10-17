@@ -69,7 +69,7 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 	/** The JSON and {@code problem+json} accept HTTP header value. */
 	public static final String JSON_AND_PROBLEM_ACCEPT_HEADER_VALUE = "application/json, application/problem+json";
 
-	/** The base URL to the Locus Energy API. */
+	/** The base URL to the SolarEdge API. */
 	public static final URI BASE_URI = URI.create("https://monitoringapi.solaredge.com");
 
 	/** An API key setting name. */

@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarEdgeConfig.java - 7/10/2024 7:12:26 am
+ * SolrenViewConfig.java - 17/10/2024 11:26:16 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import java.time.Clock;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -36,25 +37,26 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
-import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudDatumStreamService;
-import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 
 /**
- * Configuration for the SolarEdge cloud integration services.
+ * Configuration for the SolrevView cloud integration services.
  *
  * @author matt
  * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class SolarEdgeConfig {
+public class SolrenViewConfig {
 
-	/** A qualifier for SolarEdge configuraiton. */
-	public static final String SOLAREDGE = "solaredge";
+	/** A qualifier for SolrenView configuraiton. */
+	public static final String SOLRENVIEW = "solrenview";
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppender;
@@ -82,28 +84,30 @@ public class SolarEdgeConfig {
 	private CloudIntegrationsExpressionService expressionService;
 
 	@Bean
-	@Qualifier(SOLAREDGE)
-	public CloudDatumStreamService solarEdgeCloudDatumStreamService() {
-		var service = new SolarEdgeCloudDatumStreamService(userEventAppender, encryptor,
+	@Qualifier(SOLRENVIEW)
+	public CloudDatumStreamService solrenViewCloudDatumStreamService() {
+		var service = new SolrenViewCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
-				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps);
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
+				Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(SolarEdgeCloudDatumStreamService.class.getName());
+		msgSource.setBasenames(SolrenViewCloudDatumStreamService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;
 	}
 
 	@Bean
-	@Qualifier(SOLAREDGE)
-	public CloudIntegrationService solarEdgeCloudIntegrationService(
-			@Qualifier(SOLAREDGE) Collection<CloudDatumStreamService> datumStreamServices) {
-		var service = new SolarEdgeCloudIntegrationService(datumStreamServices, userEventAppender,
+	@Qualifier(SOLRENVIEW)
+	public CloudIntegrationService solrenViewCloudIntegrationService(
+			@Qualifier(SOLRENVIEW) Collection<CloudDatumStreamService> datumStreamServices) {
+		var service = new SolrenViewCloudIntegrationService(datumStreamServices, userEventAppender,
 				encryptor, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(SolarEdgeCloudIntegrationService.class.getName());
+		msgSource.setBasenames(SolrenViewCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;

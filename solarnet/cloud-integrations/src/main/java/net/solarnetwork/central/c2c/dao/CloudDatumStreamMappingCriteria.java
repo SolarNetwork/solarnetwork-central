@@ -35,8 +35,8 @@ public interface CloudDatumStreamMappingCriteria {
 	 *
 	 * <p>
 	 * This returns the first available datum stream mapping ID from the
-	 * {@link #getDatumStreamPropertyMappingIds()} array, or {@literal null} if
-	 * not available.
+	 * {@link #getDatumStreamMappingIds()} array, or {@literal null} if not
+	 * available.
 	 * </p>
 	 *
 	 * @return the first datum stream mapping ID, or {@literal null} if not

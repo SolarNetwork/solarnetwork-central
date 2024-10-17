@@ -474,12 +474,12 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	@Override
-	public Datum latestDatum(CloudDatumStreamConfiguration datumStream) {
+	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		final var data = queryForDatum(datumStream, null);
 		if ( data.isEmpty() ) {
 			return null;
 		}
-		return data.getResults().getLast();
+		return Collections.singletonList(data.getResults().getLast());
 	}
 
 	@Override
@@ -620,7 +620,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 				continue;
 			}
 			// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
-			String componentId = resolvePlaceholders(m.group(2), datumStream);
+			String componentId = m.group(2);
 			String fieldName = m.group(4);
 			fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<String>(8))
 					.add(fieldName);
@@ -770,7 +770,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			nextQueryFilter.setEndDate(end);
 		}
 
-		return new BasicCloudDatumStreamQueryResult(nextQueryFilter, result.values().stream()
+		return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter, result.values().stream()
 				.sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 	}
 }

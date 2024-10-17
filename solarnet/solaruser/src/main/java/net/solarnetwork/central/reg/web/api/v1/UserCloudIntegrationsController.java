@@ -76,7 +76,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -428,7 +428,8 @@ public class UserCloudIntegrationsController {
 	 * @return the result
 	 */
 	@RequestMapping(value = "/datum-streams/{datumStreamId}/latest-datum", method = RequestMethod.GET)
-	public Result<Datum> cloudDatumStreamLatestDatum(@PathVariable("datumStreamId") Long datumStreamId) {
+	public Result<Iterable<Datum>> cloudDatumStreamLatestDatum(
+			@PathVariable("datumStreamId") Long datumStreamId) {
 		return success(userCloudIntegrationsBiz.latestDatumStreamDatumForId(
 				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId)));
 	}

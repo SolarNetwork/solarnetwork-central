@@ -1,0 +1,109 @@
+<sunSpecPlantExtract t="2024-10-16T22:57:51Z">
+  <plant id="487b9ac5-7da1-4b77-98b6-02df51b432cf" v="1" locale="en-US">
+    <name>Example Solar Site - Carport</name>
+    <activationDate>2017-11-17</activationDate>
+    <location>
+      <latitude/>
+      <longitude/>
+      <line1>123 Main Street</line1>
+      <city>Anytown</city>
+      <state>CT</state>
+      <postal>06825</postal>
+      <timezone>-4:00</timezone>
+    </location>
+  </plant>
+  <sunspecData v="1" periodStart="2024-10-16T22:50:00Z" periodEnd="2024-10-16T22:55:00Z">
+    <d lid="34:AD:E4:10:10:6A" man="solren" mod="254_3.2231" t="2024-10-16T22:27:44Z">
+      <m id="103" sn="1013811710134">
+        <p id="WH">1000</p>
+        <p id="WHL">517756000</p>
+        <p id="W">390.000</p>
+        <p id="PPVphAB">478</p>
+        <p id="PPVphBC">479</p>
+        <p id="PPVphCA">478</p>
+        <p id="DCV">576</p>
+        <p id="A">2</p>
+      </m>
+      <m id="103" sn="1013811710042">
+        <p id="WH">0</p>
+        <p id="WHL">514789000</p>
+        <p id="W">425.000</p>
+        <p id="PPVphAB">478</p>
+        <p id="PPVphBC">479</p>
+        <p id="PPVphCA">477</p>
+        <p id="DCV">583</p>
+        <p id="A">2</p>
+      </m>
+      <m id="103" sn="1013811710079">
+        <p id="WH">1000</p>
+        <p id="WHL">378875000</p>
+        <p id="W">262.963</p>
+        <p id="PPVphAB">479</p>
+        <p id="PPVphBC">480</p>
+        <p id="PPVphCA">477</p>
+        <p id="DCV">567</p>
+        <p id="A">1</p>
+      </m>
+      <m id="103" sn="1013811710063">
+        <p id="WH">0</p>
+        <p id="WHL">429159000</p>
+        <p id="W">400.000</p>
+        <p id="PPVphAB">478</p>
+        <p id="PPVphBC">479</p>
+        <p id="PPVphCA">477</p>
+        <p id="DCV">536</p>
+        <p id="A">3</p>
+      </m>
+      <m id="103" sn="1013811710061">
+        <p id="WH">0</p>
+        <p id="WHL">376518000</p>
+        <p id="W">365.517</p>
+        <p id="PPVphAB">478</p>
+        <p id="PPVphBC">479</p>
+        <p id="PPVphCA">477</p>
+        <p id="DCV">560</p>
+        <p id="A">2</p>
+      </m>
+      <m id="103" sn="1013811710124">
+        <p id="WH">null</p>
+        <p id="WHL">366092000</p>
+        <p id="W">null</p>
+        <p id="PPVphAB">null</p>
+        <p id="PPVphBC">null</p>
+        <p id="PPVphCA">null</p>
+        <p id="DCV">null</p>
+        <p id="A">null</p>
+      </m>
+      <m id="103" sn="1013811710044">
+        <p id="WH">0</p>
+        <p id="WHL">506336000</p>
+        <p id="W">403.333</p>
+        <p id="PPVphAB">478</p>
+        <p id="PPVphBC">479</p>
+        <p id="PPVphCA">477</p>
+        <p id="DCV">555</p>
+        <p id="A">2</p>
+      </m>
+      <m id="103" sn="1013811708054">
+        <p id="WH">0</p>
+        <p id="WHL">516643000</p>
+        <p id="W">413.793</p>
+        <p id="PPVphAB">478</p>
+        <p id="PPVphBC">479</p>
+        <p id="PPVphCA">477</p>
+        <p id="DCV">587</p>
+        <p id="A">2</p>
+      </m>
+      <m id="103" sn="1013811821088">
+        <p id="WH">0</p>
+        <p id="WHL">273637000</p>
+        <p id="W">358.621</p>
+        <p id="PPVphAB">482</p>
+        <p id="PPVphBC">483</p>
+        <p id="PPVphCA">480</p>
+        <p id="DCV">577</p>
+        <p id="A">2</p>
+      </m>
+    </d>
+  </sunspecData>
+</sunSpecPlantExtract>

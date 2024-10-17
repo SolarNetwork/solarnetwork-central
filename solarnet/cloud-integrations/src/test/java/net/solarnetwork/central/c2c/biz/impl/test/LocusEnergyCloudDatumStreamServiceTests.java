@@ -71,6 +71,7 @@ import org.springframework.web.client.RestOperations;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyGranularity;
@@ -151,7 +152,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasename(LocusEnergyCloudIntegrationService.class.getName());
+		msg.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msg);
 	}
 
@@ -255,7 +257,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
-		Datum result = service.latestDatum(datumStream);
+		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
@@ -277,7 +279,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from HTTP response")
-			.isNotNull()
+			.hasSize(1)
+			.element(0)
 			.as("Datum kind is from DatumStream configuration")
 			.returns(datumStream.getKind(), from(Datum::getKind))
 			.as("Datum object ID is from DatumStream configuration")
@@ -385,7 +388,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(ObjectNode.class))).willReturn(res);
 
 		// WHEN
-		Datum result = service.latestDatum(datumStream);
+		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
@@ -407,7 +410,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from HTTP response")
-			.isNotNull()
+			.hasSize(1)
+			.element(0)
 			.as("Datum kind is from DatumStream configuration")
 			.returns(datumStream.getKind(), from(Datum::getKind))
 			.as("Datum object ID is from DatumStream configuration")
@@ -515,7 +519,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				.willReturn(res2);
 
 		// WHEN
-		Datum result = service.latestDatum(datumStream);
+		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
@@ -541,7 +545,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from multiple HTTP responses are merged based on timestamps")
-			.isNotNull()
+			.hasSize(1)
+			.element(0)
 			.as("Datum kind is from DatumStream configuration")
 			.returns(datumStream.getKind(), from(Datum::getKind))
 			.as("Datum object ID is from DatumStream configuration")
@@ -649,7 +654,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				.willReturn(res2);
 
 		// WHEN
-		Datum result = service.latestDatum(datumStream);
+		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
@@ -674,7 +679,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
 		and.then(result)
 			.as("Datum parsed from multiple HTTP responses with different timestamps returns datum with highest timestamp")
-			.isNotNull()
+			.hasSize(1)
+			.element(0)
 			.as("Datum kind is from DatumStream configuration")
 			.returns(datumStream.getKind(), from(Datum::getKind))
 			.as("Datum object ID is from DatumStream configuration")

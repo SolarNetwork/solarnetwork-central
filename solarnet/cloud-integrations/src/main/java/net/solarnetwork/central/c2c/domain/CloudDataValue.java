@@ -39,7 +39,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -75,6 +75,13 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 
 	/** Standard metadata key for a unit of measure name. */
 	public static final String UNIT_OF_MEASURE_METADATA = "unit";
+
+	/**
+	 * A wildcard identifier value.
+	 *
+	 * @since 1.1
+	 */
+	public static final String WILDCARD_IDENTIFIER = "*";
 
 	private final List<String> identifiers;
 	private final String name;
@@ -139,6 +146,26 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
 			Map<String, ?> metadata) {
 		return new CloudDataValue(identifiers, name, null, metadata);
+	}
+
+	/**
+	 * Create a new data value instance without any {@code reference} value.
+	 *
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @param metadata
+	 *        the metadata
+	 * @param children
+	 *        the optional children values
+	 * @throws IllegalArgumentException
+	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 * @since 1.1
+	 */
+	public static CloudDataValue intermediateDataValue(List<String> identifiers, String name,
+			Map<String, ?> metadata, Collection<CloudDataValue> children) {
+		return new CloudDataValue(identifiers, name, null, metadata, children);
 	}
 
 	/**

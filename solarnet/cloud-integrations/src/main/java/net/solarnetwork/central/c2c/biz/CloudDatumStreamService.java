@@ -39,7 +39,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -62,7 +62,7 @@ public interface CloudDatumStreamService
 	/**
 	 * List data values.
 	 *
-	 * @param id
+	 * @param datumStreamId
 	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
 	 *        data values for
 	 * @param filters
@@ -72,7 +72,7 @@ public interface CloudDatumStreamService
 	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters);
+	Iterable<CloudDataValue> dataValues(UserLongCompositePK datumStreamId, Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum for a datum stream configuration.
@@ -86,7 +86,7 @@ public interface CloudDatumStreamService
 	 *        the datum stream configuration to get the latest datum for
 	 * @return the result, never {@literal null}
 	 */
-	Datum latestDatum(CloudDatumStreamConfiguration datumStream);
+	Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream);
 
 	/**
 	 * List datum for a datum stream configuration that match some filter

@@ -218,7 +218,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		// THEN
 		CloudIntegrationConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId())).toArray(CloudIntegrationConfiguration[]::new);
-		then(results).as("Results for single user returned").contains(expected);
+		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 
 	@Test
@@ -259,7 +259,7 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		// THEN
 		CloudIntegrationConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId())).toArray(CloudIntegrationConfiguration[]::new);
-		then(results).as("Results for single user returned").contains(expected);
+		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 
 }

@@ -247,7 +247,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		CloudDatumStreamMappingConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId()))
 				.toArray(CloudDatumStreamMappingConfiguration[]::new);
-		then(results).as("Results for single user returned").contains(expected);
+		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 
 	@Test
@@ -300,7 +300,7 @@ public class JdbcCloudDatumStreamMappingConfigurationDaoTests extends AbstractJU
 		CloudDatumStreamMappingConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId()))
 				.toArray(CloudDatumStreamMappingConfiguration[]::new);
-		then(results).as("Results for single user returned").contains(expected);
+		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 
 }
