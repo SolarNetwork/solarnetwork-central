@@ -191,7 +191,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -470,9 +470,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
 					"integrationId", mapping.getIntegrationId());
 			for ( Map<String, GeneralDatum> e : datum.values() ) {
-				for ( GeneralDatum d : e.values() ) {
-					evaulateExpressions(exprProps, d, parameters);
-				}
+				evaulateExpressions(exprProps, e.values(), parameters);
 			}
 		}
 

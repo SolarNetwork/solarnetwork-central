@@ -47,7 +47,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -112,55 +112,62 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
-	 * Evaluate a set of property expressions.
+	 * Evaluate a set of property expressions on a set of datum.
 	 *
 	 * @param configurations
 	 *        the property configurations
 	 * @param datum
+	 *        the datum to evaluate expressions on
 	 * @param parameters
+	 *        parameters to pass to the expressions
 	 */
 	public void evaulateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
-			MutableDatum datum, Map<String, ?> parameters) {
-		if ( configurations == null || configurations.isEmpty() || datum == null ) {
+			Collection<? extends MutableDatum> datum, Map<String, ?> parameters) {
+		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return;
 		}
-		DatumSamplesExpressionRoot root = new DatumSamplesExpressionRoot(datum,
-				datum.asSampleOperations(), parameters);
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
 			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
-			Object val = null;
-			try {
-				val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
-						Object.class);
-			} catch ( Exception e ) {
-				Throwable t = e;
-				while ( t.getCause() != null ) {
-					t = t.getCause();
-				}
-				String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
-				userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
-						EXPRESSION_ERROR_TAGS, "Error evaluating datum stream property expression.",
-						Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
-			}
-			if ( val != null ) {
-				Object propVal = switch (config.getPropertyType()) {
-					case Accumulating, Instantaneous -> {
-						// convert to number
-						if ( val instanceof Number ) {
-							yield val;
-						} else {
-							yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
-						}
+			for ( MutableDatum d : datum ) {
+				DatumSamplesExpressionRoot root = new DatumSamplesExpressionRoot(d,
+						d.asSampleOperations(), parameters);
+				Object val = null;
+				try {
+					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
+							Object.class);
+				} catch ( Exception e ) {
+					Throwable t = e;
+					while ( t.getCause() != null ) {
+						t = t.getCause();
 					}
-					case Status, Tag -> val.toString();
-				};
-				propVal = config.applyValueTransforms(propVal);
-				datum.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
-						config.getPropertyName(), propVal);
+					String exMsg = (t.getMessage() != null ? t.getMessage()
+							: t.getClass().getSimpleName());
+					userEventAppenderBiz.addEvent(config.getUserId(),
+							eventForConfiguration(config.getId(), EXPRESSION_ERROR_TAGS,
+									"Error evaluating datum stream property expression.",
+									Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY,
+											config.getValueReference())));
+				}
+				if ( val != null ) {
+					Object propVal = switch (config.getPropertyType()) {
+						case Accumulating, Instantaneous -> {
+							// convert to number
+							if ( val instanceof Number ) {
+								yield val;
+							} else {
+								yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+							}
+						}
+						case Status, Tag -> val.toString();
+					};
+					propVal = config.applyValueTransforms(propVal);
+					d.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
+							config.getPropertyName(), propVal);
+				}
 			}
 		}
 	}
