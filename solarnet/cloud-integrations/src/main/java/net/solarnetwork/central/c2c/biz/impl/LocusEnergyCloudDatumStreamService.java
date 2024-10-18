@@ -139,7 +139,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -748,10 +748,10 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 
 		// evaluate expressions on merged datum
 		if ( !exprProps.isEmpty() ) {
+			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
+					"integrationId", mapping.getIntegrationId());
 			for ( GeneralDatum datum : result.values() ) {
-				evaulateExpressions(exprProps, datum,
-						Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
-								"integrationId", mapping.getIntegrationId()));
+				evaulateExpressions(exprProps, datum, parameters);
 			}
 		}
 
