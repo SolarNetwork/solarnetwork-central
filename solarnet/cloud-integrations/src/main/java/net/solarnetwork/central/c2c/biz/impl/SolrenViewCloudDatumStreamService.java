@@ -191,7 +191,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -463,6 +463,17 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 						refsByComponent));
 			}
 			startDate = periodEndDate;
+		}
+
+		// evaluate expressions on merged datum
+		if ( !exprProps.isEmpty() ) {
+			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
+					"integrationId", mapping.getIntegrationId());
+			for ( Map<String, GeneralDatum> e : datum.values() ) {
+				for ( GeneralDatum d : e.values() ) {
+					evaulateExpressions(exprProps, d, parameters);
+				}
+			}
 		}
 
 		return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null, datum.values().stream()

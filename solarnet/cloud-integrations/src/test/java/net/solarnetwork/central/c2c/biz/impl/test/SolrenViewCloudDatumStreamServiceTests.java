@@ -80,6 +80,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -89,7 +90,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SolrenViewCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -262,9 +263,6 @@ public class SolrenViewCloudDatumStreamServiceTests {
 			)
 			;
 
-		DatumSamples expectedSamples = new DatumSamples();
-		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
-		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(2)
@@ -359,7 +357,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		// @formatter:off
 		datumStream.setServiceProps(Map.of(
 				SolrenViewCloudDatumStreamService.GRANULARITY_SETTING, "5min",
-				net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY, Map.of(
+				CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY, Map.of(
 						SolrenViewCloudDatumStreamService.SITE_ID_FILTER, siteId
 				),
 				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
@@ -399,9 +397,6 @@ public class SolrenViewCloudDatumStreamServiceTests {
 			)
 			;
 
-		DatumSamples expectedSamples = new DatumSamples();
-		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
-		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(2)
@@ -553,6 +548,144 @@ public class SolrenViewCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestLatest_expr() {
+		// GIVEN
+		final Long siteId = randomLong();
+		final String componentId1 = "1013811710134";
+		final String componentId2 = "1013811710042";
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		c1p1.setEnabled(true);
+		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p1.setPropertyName("ab");
+		c1p1.setValueType(CloudDatumStreamValueType.Reference);
+		c1p1.setValueReference(placeholderComponentValueRef("PPVphAB"));
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		c1p2.setEnabled(true);
+		c1p2.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p2.setPropertyName("bc");
+		c1p2.setValueType(CloudDatumStreamValueType.Reference);
+		c1p2.setValueReference(placeholderComponentValueRef("PPVphBC"));
+
+		final CloudDatumStreamPropertyConfiguration c1p3 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 3, now());
+		c1p3.setEnabled(true);
+		c1p3.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p3.setPropertyName("ca");
+		c1p3.setValueType(CloudDatumStreamValueType.Reference);
+		c1p3.setValueReference(placeholderComponentValueRef("PPVphCA"));
+
+		final CloudDatumStreamPropertyConfiguration c1p4 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 4, now());
+		c1p4.setEnabled(true);
+		c1p4.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p4.setPropertyName("voltage");
+		c1p4.setValueType(CloudDatumStreamValueType.SpelExpression);
+		c1p4.setValueReference("round(rms({ab, bc, ca}), 1)");
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2, c1p3, c1p4));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				SolrenViewCloudDatumStreamService.GRANULARITY_SETTING, "5min",
+				CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY, Map.of(
+						SolrenViewCloudDatumStreamService.SITE_ID_FILTER, siteId
+				),
+				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						componentId1, sourceId + "/ONE",
+						componentId2, sourceId + "/TWO"
+				)
+		));
+		// @formatter:on
+		// @formatter:on
+
+		// request data
+		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
+		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+
+		// WHEN
+		Iterable<Datum> result = service.latestDatum(datumStream);
+
+		// THEN
+		// @formatter:off
+
+		// expected date range is clock-aligned
+		Instant expectedEndDate = clock.instant();
+		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
+
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					.as("Datum timestamp based on query start date")
+					.returns(expectedStartDate, Datum::getTimestamp)
+					;
+			})
+			.satisfies(list -> {
+				and.then(list).element(0)
+					.as("Datum source ID is mapped from DatumStream configuration")
+					.returns(datumStream.getSourceId() + "/ONE", from(Datum::getSourceId))
+					.as("Datum samples from XML response")
+					.returns(new DatumSamples(Map.of(
+								"ab", 478,
+								"bc", 479,
+								"ca", 478,
+								"voltage", new BigDecimal("478.3")
+							), null, null),
+						Datum::asSampleOperations)
+					;
+				and.then(list).element(1)
+					.as("Datum source ID is mapped from DatumStream configuration")
+					.returns(datumStream.getSourceId() + "/TWO", from(Datum::getSourceId))
+					.as("Datum samples from XML response")
+					.returns(new DatumSamples(Map.of(
+							"ab", 478,
+							"bc", 479,
+							"ca", 477,
+							"voltage", new BigDecimal("478.0")
+						), null, null),
+						Datum::asSampleOperations)
+					;
+			})
 			;
 		// @formatter:on
 	}
