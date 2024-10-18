@@ -50,6 +50,7 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
@@ -59,7 +60,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link SolarEdgeCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -87,7 +88,8 @@ public class SolarEdgeCloudIntegrationServiceTests {
 				userEventAppenderBiz, encryptor, restOps);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasename(SolarEdgeCloudIntegrationService.class.getName());
+		msg.setBasenames(SolarEdgeCloudIntegrationService.class.getName(),
+				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msg);
 	}
 

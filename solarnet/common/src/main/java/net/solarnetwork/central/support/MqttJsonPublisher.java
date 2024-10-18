@@ -30,16 +30,16 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.common.mqtt.BasicMqttMessage;
 import net.solarnetwork.common.mqtt.MqttConnection;
 import net.solarnetwork.common.mqtt.MqttQos;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Basic service to publish objects to SolarFlux.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MqttJsonPublisher<T> extends BaseMqttConnectionObserver implements Function<T, Future<?>> {
 

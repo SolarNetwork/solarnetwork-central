@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,13 +40,14 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * SolrenView implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -55,8 +57,15 @@ public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIn
 	/** The base URL to the SolrenView API. */
 	public static final URI BASE_URI = URI.create("https://solrenview.com");
 
+	/**
+	 * The relative path to the XML feed API.
+	 *
+	 * @since 1.1
+	 */
+	public static final String XML_FEED_PATH = "/xmlfeed/ss-xmlN.php";
+
 	/** The URL for the XML feed. */
-	public static final URI XML_FEED_URI = BASE_URI.resolve("/xmlfeed/ss-xmlN.php");
+	public static final URI XML_FEED_URI = BASE_URI.resolve(XML_FEED_PATH);
 
 	/** The XML feed URL parameter for the site ID. */
 	public static final String XML_FEED_SITE_ID_PARAM = "site_id";
@@ -88,7 +97,12 @@ public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIn
 	// @formatter:on
 
 	/** The service settings . */
-	public static final List<SettingSpecifier> SETTINGS = Collections.emptyList();
+	public static final List<SettingSpecifier> SETTINGS;
+	static {
+		var settings = new ArrayList<SettingSpecifier>(1);
+		settings.add(new BasicTextFieldSettingSpecifier(BASE_URL_SETTING, null));
+		SETTINGS = Collections.unmodifiableList(settings);
+	}
 
 	/** The service secure setting keys. */
 	public static final Set<String> SECURE_SETTINGS = Collections

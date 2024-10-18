@@ -26,11 +26,13 @@ import static java.time.ZoneOffset.UTC;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_END_DATE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_PATH;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_SITE_ID_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_START_DATE_PARAM;
-import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_URI;
 import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_USE_UTC_PARAM;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
@@ -45,6 +47,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -69,18 +72,16 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -108,6 +109,7 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.support.XmlSupport;
@@ -189,7 +191,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -232,36 +234,6 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		} catch ( XPathExpressionException e ) {
 			throw new IllegalStateException(e);
 		}
-	}
-
-	/**
-	 * URI components for querying the XML feed URI.
-	 *
-	 * <p>
-	 * The following template variables are included:
-	 * </p>
-	 *
-	 * <ol>
-	 * <li>{siteId}</li>
-	 * <li>{startDate}</li>
-	 * <li>{endDate}</li>
-	 * </ol>
-	 *
-	 * <p>
-	 * The date values must be ISO 8601 timestamp values.
-	 * </p>
-	 */
-	public static final UriComponents XML_FEED_URI_COMPONENTS;
-	static {
-		// @formatter:off
-		XML_FEED_URI_COMPONENTS = UriComponentsBuilder.fromUri(XML_FEED_URI)
-			.queryParam(XML_FEED_USE_UTC_PARAM)
-			.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
-			.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
-			.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
-			.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
-			.build();
-		// @formatter:on
 	}
 
 	private final Clock clock;
@@ -474,15 +446,21 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			for ( Entry<Long, Map<String, List<ValueRef>>> e : refsBySiteComponent.entrySet() ) {
 				final Long siteId = e.getKey();
 				final Map<String, List<ValueRef>> refsByComponent = e.getValue();
-				// @formatter:off
-				restOpsHelper.httpGet("Query for site", integration, String.class,
-						(req) -> XML_FEED_URI_COMPONENTS.expand(
-									siteId,
-									periodStartDate,
-									periodEndDate
-								).toUri(),
-						res -> parseDatum(datumStream, siteId, res.getBody(), periodStartDate, datum, refsByComponent));
-				// @formatter:on
+				restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
+					headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+					// @formatter:off
+					return  fromUri(resolveBaseUrl(integration,BASE_URI))
+							.path(XML_FEED_PATH)
+							.queryParam(XML_FEED_USE_UTC_PARAM)
+							.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+							.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+							.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+							.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+							.buildAndExpand(siteId, periodStartDate, periodEndDate)
+							.toUri();
+					// @formatter:on
+				}, res -> parseDatum(datumStream, siteId, res.getBody(), periodStartDate, datum,
+						refsByComponent));
 			}
 			startDate = periodEndDate;
 		}
@@ -510,15 +488,20 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		final Clock queryClock = Clock.tick(clock, granularity.getTickDuration());
 		final Instant endDate = queryEndDate(queryClock, granularity);
 		final Instant startDate = queryStartDate(endDate, granularity);
-		// @formatter:off
-		return restOpsHelper.httpGet("Query for site", integration, String.class,
-				(req) -> XML_FEED_URI_COMPONENTS.expand(
-							filters.get(SITE_ID_FILTER),
-							startDate,
-							endDate
-						).toUri(),
-				res -> parseComponents(filters.get(SITE_ID_FILTER), res.getBody()));
-		// @formatter:on
+		return restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
+			headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+			// @formatter:off
+			return  fromUri(resolveBaseUrl(integration,BASE_URI))
+					.path(XML_FEED_PATH)
+					.queryParam(XML_FEED_USE_UTC_PARAM)
+					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+					.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+					.buildAndExpand(filters.get(SITE_ID_FILTER), startDate, endDate)
+					.toUri();
+			// @formatter:on
+		}, res -> parseComponents(filters.get(SITE_ID_FILTER), res.getBody()));
 	}
 
 	private Instant queryEndDate(Clock queryClock, SolrenViewGranularity granularity) {

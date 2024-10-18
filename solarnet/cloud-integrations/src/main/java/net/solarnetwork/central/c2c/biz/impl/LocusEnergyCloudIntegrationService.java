@@ -52,7 +52,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Locus Energy implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudIntegrationService {
 
@@ -108,6 +108,7 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 		settings.add(new BasicTextFieldSettingSpecifier(USERNAME_SETTING, null));
 		settings.add(new BasicTextFieldSettingSpecifier(PASSWORD_SETTING, null, true));
 		settings.add(new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null));
+		settings.add(new BasicTextFieldSettingSpecifier(BASE_URL_SETTING, null));
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
@@ -193,8 +194,8 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 		// validate by requesting the available sites for the partner ID
 		try {
 			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(LocusEnergyCloudIntegrationService.BASE_URI)
-							.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
+					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI)).path(
+							LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 							.buildAndExpand(integration.getServiceProperties()).toUri(),
 					res -> res.getBody());
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);

@@ -36,6 +36,8 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -89,7 +91,8 @@ public class SolarEdgeConfig {
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(SolarEdgeCloudDatumStreamService.class.getName());
+		msgSource.setBasenames(SolarEdgeCloudDatumStreamService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;
@@ -103,7 +106,8 @@ public class SolarEdgeConfig {
 				encryptor, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(SolarEdgeCloudIntegrationService.class.getName());
+		msgSource.setBasenames(SolarEdgeCloudIntegrationService.class.getName(),
+				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;

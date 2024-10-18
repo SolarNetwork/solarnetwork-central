@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -31,13 +32,14 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 
 /**
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -75,6 +77,38 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
 		this.datumStreamServices = requireNonNullArgument(datumStreamServices, "datumStreamServices");
 		this.wellKnownUrls = requireNonNullArgument(wellKnownUrls, "wellKnownUrls");
+	}
+
+	/**
+	 * Resolve a base URL.
+	 *
+	 * <p>
+	 * This method will look for a
+	 * {@link CloudIntegrationService#BASE_URL_SETTING} service property and
+	 * attempt to parse that as a URI and return it, falling back to returning
+	 * {@code defaultBaseUrl} if that fails.
+	 * </p>
+	 *
+	 * @param integration
+	 *        the integration to look for the base URL service property on
+	 * @param defaultBaseUrl
+	 *        the fallback URL to use
+	 * @return the URL, or {@code null} if the
+	 *         {@link CloudIntegrationService#BASE_URL_SETTING} service property
+	 *         cannot be resolved as a URI and the given {@code defaultBaseUrl}
+	 *         is {@code null}
+	 * @since 1.1
+	 */
+	public static URI resolveBaseUrl(CloudIntegrationConfiguration integration, URI defaultBaseUrl) {
+		URI result = defaultBaseUrl;
+		if ( integration != null && integration.hasServiceProperty(BASE_URL_SETTING) ) {
+			try {
+				result = new URI(integration.serviceProperty(BASE_URL_SETTING, String.class));
+			} catch ( URISyntaxException e ) {
+				// ignore, use default
+			}
+		}
+		return result;
 	}
 
 	@Override

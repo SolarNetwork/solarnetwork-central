@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.util.Collections.unmodifiableMap;
+import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService.V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
@@ -44,6 +45,7 @@ import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -137,7 +139,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -268,7 +270,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 
 	private List<CloudDataValue> sitesForPartner(CloudIntegrationConfiguration integration) {
 		return restOpsHelper.httpGet("List sites", integration, ObjectNode.class,
-				(req) -> UriComponentsBuilder.fromUri(BASE_URI)
+				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
 				res -> parseSites(res.getBody()));
@@ -328,7 +330,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List components for site", integration, ObjectNode.class,
-				(req) -> UriComponentsBuilder.fromUri(BASE_URI)
+				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseComponents(res.getBody()));
@@ -390,7 +392,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	private List<CloudDataValue> nodesForComponent(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List fields for component", integration, ObjectNode.class,
-				(req) -> UriComponentsBuilder.fromUri(BASE_URI)
+				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(LocusEnergyCloudIntegrationService.V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE)
 						.buildAndExpand(filters).toUri(),
 				res -> parseNodes(res.getBody(), filters));
@@ -644,7 +646,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 					ObjectNode json = restOpsHelper.httpGet("Fetch data", integration, ObjectNode.class,
 							(headers) -> {
 							// @formatter:off
-								UriComponentsBuilder b = UriComponentsBuilder.fromUri(BASE_URI)
+								UriComponentsBuilder b = fromUri(resolveBaseUrl(integration, BASE_URI))
 										.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
 										.queryParam("gran", granularity.getKey())
 										.queryParam("tz", "UTC")

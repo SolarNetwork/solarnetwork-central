@@ -42,6 +42,7 @@ import org.springframework.web.client.UnknownContentTypeException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations}.
@@ -137,14 +138,16 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 					e.getMessage());
 			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("Communication error: %s", e.getMessage())));
-			throw e;
+			throw new RemoteServiceException("%s failed because of a communication error: %s"
+					.formatted(description, e.getMessage()), e);
 		} catch ( RestClientResponseException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because the HTTP status {} was returned.",
 					description, integration.getClass().getSimpleName(), integration.getId().ident(),
 					uri, e.getStatusCode());
 			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("Invalid HTTP status returned: %s", e.getStatusCode())));
-			throw e;
+			throw new RemoteServiceException("%s failed because an invalid HTTP status was returned: %s"
+					.formatted(description, e.getStatusCode()), e);
 		} catch ( UnknownContentTypeException e ) {
 			log.warn(
 					"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
@@ -153,14 +156,18 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			userEventAppenderBiz.addEvent(integration.getUserId(),
 					eventForConfiguration(integration, errorEventTags,
 							format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
-			throw e;
+			throw new RemoteServiceException(
+					"%s failed because the respones Content-Type is not supported: %s"
+							.formatted(description, e.getContentType()),
+					e);
 		} catch ( OAuth2AuthorizationException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}",
 					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
 					e.getMessage());
 			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
 					errorEventTags, format("OAuth error: %s", e.getMessage())));
-			throw e;
+			throw new RemoteServiceException("%s failed because of an authorization error: %s"
+					.formatted(description, e.getMessage()), e);
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}",
 					integration.getClass().getSimpleName(), integration.getId().ident(), uri,

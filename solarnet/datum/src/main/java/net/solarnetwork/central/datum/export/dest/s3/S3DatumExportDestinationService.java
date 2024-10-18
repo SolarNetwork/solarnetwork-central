@@ -34,7 +34,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.domain.Configuration;
@@ -42,6 +41,7 @@ import net.solarnetwork.central.datum.export.domain.DatumExportResource;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.support.BaseDatumExportDestinationService;
 import net.solarnetwork.service.ProgressListener;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.util.ClassUtils;
@@ -65,7 +65,7 @@ import software.amazon.awssdk.transfer.s3.progress.TransferProgressSnapshot;
  * AWS S3 implementation of {@link DatumExportDestinationService}.
  *
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public class S3DatumExportDestinationService extends BaseDatumExportDestinationService {
 

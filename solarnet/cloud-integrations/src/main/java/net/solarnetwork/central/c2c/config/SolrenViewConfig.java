@@ -38,6 +38,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -107,7 +108,8 @@ public class SolrenViewConfig {
 				encryptor, restOps);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(SolrenViewCloudIntegrationService.class.getName());
+		msgSource.setBasenames(SolrenViewCloudIntegrationService.class.getName(),
+				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;

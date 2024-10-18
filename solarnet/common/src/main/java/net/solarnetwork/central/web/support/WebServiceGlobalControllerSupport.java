@@ -58,13 +58,14 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.util.NumberUtils;
 
 /**
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @RestControllerAdvice
 @Order(1000)
@@ -497,6 +498,25 @@ public class WebServiceGlobalControllerSupport {
 		log.warn("IOException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.09000", e.getMessage());
+	}
+
+	/**
+	 * Handle a {@link RemoteServiceException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @return an error response object
+	 * @since 1.7
+	 */
+	@ExceptionHandler(RemoteServiceException.class)
+	@ResponseBody
+	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
+	public Result<?> handleRemoteServiceException(RemoteServiceException e, WebRequest request) {
+		log.warn("RemoteServiceException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request), e);
+		return error("RS.00001", e.getMessage());
 	}
 
 }
