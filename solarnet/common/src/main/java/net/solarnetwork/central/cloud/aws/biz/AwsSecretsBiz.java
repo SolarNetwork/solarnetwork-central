@@ -24,8 +24,8 @@ package net.solarnetwork.central.cloud.aws.biz;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import javax.cache.Cache;
-import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.biz.SecretsBiz;
+import net.solarnetwork.service.RemoteServiceException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -45,7 +45,7 @@ import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundExce
  * Implementation of {@link SecretsBiz} using AWS Secrets Manager.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AwsSecretsBiz implements SecretsBiz {
 

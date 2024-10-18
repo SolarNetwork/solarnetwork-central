@@ -25,9 +25,9 @@ package net.solarnetwork.central.user.event.dest.sqs;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.RemoteServiceException;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.service.RemoteServiceException;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -36,7 +36,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
  * An SQS client and queue configuration.
  * 
  * @author matt
- * @version 3.0
+ * @version 3.1
  */
 public final class SqsDestination {
 
