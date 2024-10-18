@@ -247,7 +247,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		CloudDatumStreamPollTaskEntity[] expected = confs.stream()
 				.filter(e -> randomConf.getUserId().equals(e.getUserId()))
 				.toArray(CloudDatumStreamPollTaskEntity[]::new);
-		then(results).as("Results for single user returned").contains(expected);
+		then(results).as("Results for single user returned").containsExactly(expected);
 	}
 
 	@Test
@@ -298,7 +298,8 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 						&& EnumSet.of(BasicClaimableJobState.Claimed, BasicClaimableJobState.Executing)
 								.contains(e.getState()))
 				.toArray(CloudDatumStreamPollTaskEntity[]::new);
-		then(results).as("Results for single user and specified states returned").contains(expected);
+		then(results).as("Results for single user and specified states returned")
+				.containsExactly(expected);
 	}
 
 	@Test

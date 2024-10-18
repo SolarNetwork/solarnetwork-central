@@ -408,7 +408,7 @@ CREATE TABLE solardin.cin_datum_stream_prop (
  * @column map_id 		the ID of the datum stream mapping associated with the datum stream
  * @column kind 		the datum stream object kind (key)
  * @column obj_id 		the datum stream object ID (node ID, location ID)
- * @column source_id 	the datum stream source ID
+ * @column source_id 	the datum stream source ID (supports placeholders)
  * @column sprops 		the cloud integration service properties
  */
 CREATE TABLE solardin.cin_datum_stream (
@@ -423,7 +423,7 @@ CREATE TABLE solardin.cin_datum_stream (
 	schedule 		CHARACTER VARYING(64),
 	kind 			CHARACTER(1) NOT NULL,
 	obj_id 			BIGINT,
-	source_id 		CHARACTER VARYING(64),
+	source_id 		CHARACTER VARYING(256),
 	sprops			jsonb,
 	CONSTRAINT cin_datum_stream_pk PRIMARY KEY (user_id, id),
 	CONSTRAINT cin_datum_stream_user_fk FOREIGN KEY (user_id)

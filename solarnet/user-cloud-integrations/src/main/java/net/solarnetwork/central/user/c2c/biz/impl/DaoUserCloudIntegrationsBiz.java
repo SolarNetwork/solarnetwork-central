@@ -308,7 +308,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Datum latestDatumStreamDatumForId(UserLongCompositePK id) {
+	public Iterable<Datum> latestDatumStreamDatumForId(UserLongCompositePK id) {
 		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
 				"datumStream");
 		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),

@@ -29,7 +29,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Cloud datum stream query results API.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 
@@ -63,6 +63,20 @@ public interface CloudDatumStreamQueryResult extends Iterable<Datum> {
 	default int getReturnedResultCount() {
 		final var results = getResults();
 		return (results != null ? results.size() : 0);
+	}
+
+	/**
+	 * Get a query filter used to return these results.
+	 *
+	 * <p>
+	 * This may return different values that provided to the query, such as a
+	 * different date range due to query constraints.
+	 * </p>
+	 *
+	 * @return a query filter, or {@literal null}
+	 */
+	default CloudDatumStreamQueryFilter getUsedQueryFilter() {
+		return null;
 	}
 
 	/**

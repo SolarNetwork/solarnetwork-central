@@ -38,6 +38,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METAD
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
@@ -91,6 +92,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -109,8 +111,33 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 /**
  * Locus Energy implementation of {@link CloudDatumStreamService}.
  *
+ * <p>
+ * When resolving
+ * {@link CloudDatumStreamPropertyConfiguration#getValueReference()} values,
+ * placeholder values will be resolved from the
+ * {@link CloudIntegrationsConfigurationEntity#PLACEHOLDERS_SERVICE_PROPERTY}
+ * service property on the associated {@link CloudDatumStreamConfiguration}
+ * entity. This allows the property mappings to be shared, if a
+ * {@code {componentId}} placeholder is provided. For example a value reference
+ * like:
+ * </p>
+ *
+ * <pre>{@code /{siteId}/{componentId}/W/W_avg}</pre>
+ *
+ * <p>
+ * can be used across many datum streams by configuring the service properties
+ * of each stream with placeholder values, like:
+ * </p>
+ *
+ * <pre>{@code {
+ *    "placeholders": {
+ *      "siteId": 123,
+ *      "componentId": 234
+ *    }
+ *  }}</pre>
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -447,12 +474,12 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	@Override
-	public Datum latestDatum(CloudDatumStreamConfiguration datumStream) {
+	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		final var data = queryForDatum(datumStream, null);
 		if ( data.isEmpty() ) {
 			return null;
 		}
-		return data.getResults().getLast();
+		return Collections.singletonList(data.getResults().getLast());
 	}
 
 	@Override
@@ -587,13 +614,17 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
 		final var fieldNamesByProperty = new LinkedHashMap<UserLongIntegerCompositePK, String>(8);
 		for ( CloudDatumStreamPropertyConfiguration config : valueProps ) {
-			Matcher m = VALUE_REF_PATTERN.matcher(config.getValueReference());
+			String ref = resolvePlaceholders(config.getValueReference(), datumStream);
+			Matcher m = VALUE_REF_PATTERN.matcher(ref);
 			if ( !m.matches() ) {
 				continue;
 			}
-			fieldNamesByComponent.computeIfAbsent(m.group(2), k -> new LinkedHashSet<String>(8))
-					.add(m.group(4));
-			fieldNamesByProperty.put(config.getId(), m.group(4));
+			// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
+			String componentId = m.group(2);
+			String fieldName = m.group(4);
+			fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<String>(8))
+					.add(fieldName);
+			fieldNamesByProperty.put(config.getId(), fieldName);
 		}
 
 		if ( fieldNamesByComponent.isEmpty() ) {
@@ -739,7 +770,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			nextQueryFilter.setEndDate(end);
 		}
 
-		return new BasicCloudDatumStreamQueryResult(nextQueryFilter, result.values().stream()
+		return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter, result.values().stream()
 				.sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 	}
 }

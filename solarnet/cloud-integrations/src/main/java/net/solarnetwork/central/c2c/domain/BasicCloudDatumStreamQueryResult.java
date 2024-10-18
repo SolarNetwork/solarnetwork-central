@@ -35,12 +35,13 @@ import net.solarnetwork.domain.datum.Datum;
  * Basic implementation of {@link CloudDatumStreamQueryResult}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "empty" })
-@JsonPropertyOrder({ "returnedResultCount", "nextQueryFilter", "results" })
+@JsonPropertyOrder({ "returnedResultCount", "usedQueryFilter", "nextQueryFilter", "results" })
 public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryResult {
 
+	private final CloudDatumStreamQueryFilter usedQueryFilter;
 	private final CloudDatumStreamQueryFilter nextQueryFilter;
 	private final SequencedCollection<Datum> results;
 
@@ -51,20 +52,23 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	 *        the results, or {@literal null}
 	 */
 	public BasicCloudDatumStreamQueryResult(SequencedCollection<Datum> results) {
-		this(null, results);
+		this(null, null, results);
 	}
 
 	/**
 	 * Constructor.
 	 *
+	 * @param usedQueryFilter
+	 *        the used query filter, or {@literal null}
 	 * @param nextQueryFilter
 	 *        the next query filter, or {@literal null}
 	 * @param results
 	 *        the results, or {@literal null}
 	 */
-	public BasicCloudDatumStreamQueryResult(CloudDatumStreamQueryFilter nextQueryFilter,
-			SequencedCollection<Datum> results) {
+	public BasicCloudDatumStreamQueryResult(CloudDatumStreamQueryFilter usedQueryFilter,
+			CloudDatumStreamQueryFilter nextQueryFilter, SequencedCollection<Datum> results) {
 		super();
+		this.usedQueryFilter = usedQueryFilter;
 		this.nextQueryFilter = nextQueryFilter;
 		this.results = (results != null ? results : Collections.emptyList());
 	}
@@ -87,6 +91,11 @@ public class BasicCloudDatumStreamQueryResult implements CloudDatumStreamQueryRe
 	@Override
 	public final SequencedCollection<Datum> getResults() {
 		return results;
+	}
+
+	@Override
+	public CloudDatumStreamQueryFilter getUsedQueryFilter() {
+		return usedQueryFilter;
 	}
 
 	@Override

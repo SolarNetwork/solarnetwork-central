@@ -225,7 +225,8 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 		for ( var datumPage : datumPages ) {
 			var filter = BasicQueryFilter.ofRange(now(), now());
 			queryFilters.add(filter);
-			datumStub = datumStub.willReturn(new BasicCloudDatumStreamQueryResult(filter, datumPage));
+			datumStub = datumStub
+					.willReturn(new BasicCloudDatumStreamQueryResult(null, filter, datumPage));
 		}
 		// return the final non-paginated end result
 		datumStub.willReturn(new BasicCloudDatumStreamQueryResult(emptyList()));

@@ -130,7 +130,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
-			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamId",
+			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
 			Object val = null;
 			try {

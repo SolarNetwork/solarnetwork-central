@@ -201,7 +201,7 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	}
 
 	@Override
-	public Datum latestDatum(CloudDatumStreamConfiguration datumStream) {
+	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		requireNonNullArgument(datumStream, "datumStream");
 		// TODO
 		return null;

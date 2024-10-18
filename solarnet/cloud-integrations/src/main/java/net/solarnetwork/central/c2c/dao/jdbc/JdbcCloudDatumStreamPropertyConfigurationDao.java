@@ -87,11 +87,12 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 	}
 
 	@Override
-	public Collection<CloudDatumStreamPropertyConfiguration> findAll(Long userId, Long datumStreamId,
-			List<SortDescriptor> sorts) {
+	public Collection<CloudDatumStreamPropertyConfiguration> findAll(Long userId,
+			Long datumStreamMappingId, List<SortDescriptor> sorts) {
 		var filter = new BasicFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
-		filter.setDatumStreamId(requireNonNullArgument(datumStreamId, "datumStreamId"));
+		filter.setDatumStreamMappingId(
+				requireNonNullArgument(datumStreamMappingId, "datumStreamMappingId"));
 		var sql = new SelectCloudDatumStreamPropertyConfiguration(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql,
 				CloudDatumStreamPropertyConfigurationRowMapper.INSTANCE);

@@ -329,7 +329,11 @@ public class DaoCloudDatumStreamPollService
 			}
 
 			// success: update task info
-			if ( lastDatumDate != null ) {
+			if ( polledDatum.getUsedQueryFilter() != null
+					&& polledDatum.getUsedQueryFilter().hasEndDate() ) {
+				// use the end date provided by the results, so the next iteration picks up from there
+				taskInfo.setStartAt(polledDatum.getUsedQueryFilter().getEndDate());
+			} else if ( lastDatumDate != null ) {
 				// set new start date to date of last datum; this might update the same datum more than once
 				// across different poll executions, but that supports cloud services that return constantly
 				// updating aggregate values at the same timestamp
