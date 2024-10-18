@@ -35,7 +35,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud integration service.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -57,6 +57,13 @@ public interface CloudIntegrationService
 
 	/** A standard password setting name. */
 	String PASSWORD_SETTING = "password";
+
+	/**
+	 * A standard base URL setting name, to support proxy servers for example.
+	 *
+	 * @since 1.1
+	 */
+	String BASE_URL_SETTING = "baseUrl";
 
 	/**
 	 * Get a mapping of "well known" service URIs.

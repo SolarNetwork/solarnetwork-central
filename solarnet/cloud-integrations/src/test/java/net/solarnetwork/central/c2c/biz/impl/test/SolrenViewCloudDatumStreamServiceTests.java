@@ -24,7 +24,13 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
-import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudDatumStreamService.XML_FEED_URI_COMPONENTS;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_END_DATE_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_PATH;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_SITE_ID_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_START_DATE_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudIntegrationService.XML_FEED_USE_UTC_PARAM;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
@@ -34,6 +40,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
@@ -58,6 +65,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudDatumStreamService;
@@ -242,11 +250,15 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		and.then(uriCaptor.getValue())
 			.as("Request URI")
-			.isEqualTo(XML_FEED_URI_COMPONENTS.expand(
-					siteId,
-					expectedStartDate,
-					expectedEndDate
-				).toUri()
+			.isEqualTo(fromUri(BASE_URI)
+					.path(XML_FEED_PATH)
+					.queryParam(XML_FEED_USE_UTC_PARAM)
+					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+					.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
+					.toUri()
 			)
 			;
 
@@ -375,11 +387,15 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 		and.then(uriCaptor.getValue())
 			.as("Request URI")
-			.isEqualTo(XML_FEED_URI_COMPONENTS.expand(
-					siteId,
-					expectedStartDate,
-					expectedEndDate
-				).toUri()
+			.isEqualTo(fromUri(BASE_URI)
+					.path(XML_FEED_PATH)
+					.queryParam(XML_FEED_USE_UTC_PARAM)
+					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+					.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
+					.toUri()
 			)
 			;
 
@@ -423,6 +439,120 @@ public class SolrenViewCloudDatumStreamServiceTests {
 						Datum::asSampleOperations)
 					;
 			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestLatest_proxyUrl() {
+		// GIVEN
+		final Long siteId = randomLong();
+		final String componentId1 = "1013811710134";
+		final String componentId2 = "1013811710042";
+
+		// configure integration
+		final String proxyBaseUrl = "http://example.com:12345/proxy";
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		integration.setServiceProps(Map.of(CloudIntegrationService.BASE_URL_SETTING, proxyBaseUrl));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		c1p1.setEnabled(true);
+		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p1.setPropertyName("watts");
+		c1p1.setValueType(CloudDatumStreamValueType.Reference);
+		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		c1p2.setEnabled(true);
+		c1p2.setPropertyType(DatumSamplesType.Accumulating);
+		c1p2.setPropertyName("wattHours");
+		c1p2.setValueType(CloudDatumStreamValueType.Reference);
+		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
+
+		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 3, now());
+		c2p1.setEnabled(true);
+		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c2p1.setPropertyName("watts");
+		c2p1.setValueType(CloudDatumStreamValueType.Reference);
+		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
+
+		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 4, now());
+		c2p2.setEnabled(true);
+		c2p2.setPropertyType(DatumSamplesType.Accumulating);
+		c2p2.setPropertyName("wattHours");
+		c2p2.setValueType(CloudDatumStreamValueType.Reference);
+		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				SolrenViewCloudDatumStreamService.GRANULARITY_SETTING, "5min",
+				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						componentId1, sourceId + "/ONE",
+						componentId2, sourceId + "/TWO"
+				)
+		));
+		// @formatter:on
+
+		// request data
+		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
+		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+
+		// WHEN
+		Iterable<Datum> result = service.latestDatum(datumStream);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+
+		// expected date range is clock-aligned
+		Instant expectedEndDate = clock.instant();
+		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI")
+			.isEqualTo(fromUri(URI.create(proxyBaseUrl))
+					.path(XML_FEED_PATH)
+					.queryParam(XML_FEED_USE_UTC_PARAM)
+					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+					.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
+					.toUri()
+			)
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(2)
 			;
 		// @formatter:on
 	}

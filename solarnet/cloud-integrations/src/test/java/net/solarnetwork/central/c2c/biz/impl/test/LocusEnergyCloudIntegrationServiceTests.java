@@ -62,6 +62,7 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
@@ -71,7 +72,7 @@ import net.solarnetwork.domain.Result.ErrorDetail;
  * Test cases for the {@link LocusEnergyCloudIntegrationService}
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -105,7 +106,8 @@ public class LocusEnergyCloudIntegrationServiceTests {
 				userEventAppenderBiz, encryptor, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasename(LocusEnergyCloudIntegrationService.class.getName());
+		msg.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
+				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msg);
 	}
 

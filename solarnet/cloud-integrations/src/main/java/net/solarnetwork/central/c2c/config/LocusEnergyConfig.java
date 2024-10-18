@@ -58,6 +58,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
@@ -193,7 +194,8 @@ public class LocusEnergyConfig {
 				encryptor, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(LocusEnergyCloudIntegrationService.class.getName());
+		msgSource.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
+				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 
 		return service;
