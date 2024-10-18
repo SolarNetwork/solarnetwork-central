@@ -69,6 +69,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -474,15 +475,12 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			for ( Entry<Long, Map<String, List<ValueRef>>> e : refsBySiteComponent.entrySet() ) {
 				final Long siteId = e.getKey();
 				final Map<String, List<ValueRef>> refsByComponent = e.getValue();
-				// @formatter:off
-				restOpsHelper.httpGet("Query for site", integration, String.class,
-						(req) -> XML_FEED_URI_COMPONENTS.expand(
-									siteId,
-									periodStartDate,
-									periodEndDate
-								).toUri(),
-						res -> parseDatum(datumStream, siteId, res.getBody(), periodStartDate, datum, refsByComponent));
-				// @formatter:on
+				restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
+					headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+					return XML_FEED_URI_COMPONENTS.expand(siteId, periodStartDate, periodEndDate)
+							.toUri();
+				}, res -> parseDatum(datumStream, siteId, res.getBody(), periodStartDate, datum,
+						refsByComponent));
 			}
 			startDate = periodEndDate;
 		}
@@ -510,15 +508,11 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		final Clock queryClock = Clock.tick(clock, granularity.getTickDuration());
 		final Instant endDate = queryEndDate(queryClock, granularity);
 		final Instant startDate = queryStartDate(endDate, granularity);
-		// @formatter:off
-		return restOpsHelper.httpGet("Query for site", integration, String.class,
-				(req) -> XML_FEED_URI_COMPONENTS.expand(
-							filters.get(SITE_ID_FILTER),
-							startDate,
-							endDate
-						).toUri(),
-				res -> parseComponents(filters.get(SITE_ID_FILTER), res.getBody()));
-		// @formatter:on
+		return restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
+			headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+			return XML_FEED_URI_COMPONENTS.expand(filters.get(SITE_ID_FILTER), startDate, endDate)
+					.toUri();
+		}, res -> parseComponents(filters.get(SITE_ID_FILTER), res.getBody()));
 	}
 
 	private Instant queryEndDate(Clock queryClock, SolrenViewGranularity granularity) {
