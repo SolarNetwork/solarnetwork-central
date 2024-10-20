@@ -75,7 +75,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -219,6 +219,7 @@ public class WebConfig implements WebMvcConfigurer {
 				"/api/v1/sec/datum/meta/*",
 				"/api/v1/pub/location/datum/*",
 				"/api/v1/sec/location/datum/*",
+				"/api/v1/sec/nodes",
 				"/api/v1/pub/range/*",
 				"/api/v1/sec/range/*"
 				);

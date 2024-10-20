@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.reg.config;
 
+import static net.solarnetwork.central.reg.config.ContentCachingServiceConfig.QUERY_CACHE;
+import static net.solarnetwork.central.reg.config.ContentCachingServiceConfig.QUERY_CACHING_SERVICE;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -55,6 +61,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
+import net.solarnetwork.central.web.support.ContentCachingFilter;
+import net.solarnetwork.central.web.support.ContentCachingService;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
@@ -73,7 +81,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -82,6 +90,13 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
+
+	@Value("${app.query-cache.filter.lock-pool-capacity:128}")
+	private int lockPoolCapacity = 128;
+
+	@Autowired(required = false)
+	@Qualifier(QUERY_CACHE)
+	private ContentCachingService contentCachingService;
 
 	@Override
 	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
@@ -169,6 +184,32 @@ public class WebConfig implements WebMvcConfigurer {
 		xml.setClassNamesAllowedForNesting(Collections.singleton("net.solarnetwork"));
 		xml.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		converters.add(xml);
+	}
+
+	@Bean(autowireCandidate = false)
+	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
+	@ConfigurationProperties(prefix = "app.query-cache.filter")
+	public ContentCachingFilter contentCachingFilter() {
+		return new ContentCachingFilter(contentCachingService, lockPoolCapacity);
+	}
+
+	@Bean
+	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
+	public PingTest contentCachingFilterPingTest() {
+		return contentCachingFilter();
+	}
+
+	@Bean
+	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
+	public FilterRegistrationBean<ContentCachingFilter> contentCachingFilterRegistration() {
+		FilterRegistrationBean<ContentCachingFilter> reg = new FilterRegistrationBean<>();
+		reg.setFilter(contentCachingFilter());
+		// @formatter:off
+		reg.addUrlPatterns(
+				"/api/v1/sec/nodes"
+		);
+		// @formatter:on
+		return reg;
 	}
 
 	@Override

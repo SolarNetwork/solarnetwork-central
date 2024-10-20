@@ -136,6 +136,18 @@ app:
       mqtt-topic: "instr/OCPP_v16"
       publish-only: true
       publish-qos-level: 1
+  query-cache:
+    enabled: false
+    cache:  
+      ttl: 60
+      heap-max-entries: 1000
+      disk-max-size-mb: 80
+      compress-minimum-length: 512
+      stat-log-access-count: 10000
+    filter:
+      lock-pool-capacity: 128
+      request-lock-timeout: 180000
+      stat-log-access-count: 10000
   secrets:
     aws:
       region: "us-west-2"
