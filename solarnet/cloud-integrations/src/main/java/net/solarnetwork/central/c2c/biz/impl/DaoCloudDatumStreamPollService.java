@@ -27,6 +27,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,6 +45,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -67,7 +70,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -205,7 +208,11 @@ public class DaoCloudDatumStreamPollService
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
-					taskInfo.setState(Completed); // stop processing job
+					if ( !((e instanceof RestClientException && !(e instanceof HttpClientErrorException))
+							|| t instanceof IOException) ) {
+						// stop processing job if not what appears to be a API IO exception
+						taskInfo.setState(Completed);
+					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
 					taskDao.updateTask(taskInfo, oldState);
