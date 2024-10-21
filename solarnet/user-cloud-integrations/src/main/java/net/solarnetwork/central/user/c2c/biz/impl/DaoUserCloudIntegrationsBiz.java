@@ -82,7 +82,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -287,13 +287,50 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	}
 
 	@Override
-	public Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK id,
-			Map<String, ?> filters) {
-		var datumStream = requireNonNullObject(datumStreamDao.get(requireNonNullArgument(id, "id")),
-				"datumStream");
-		var service = requireNonNullObject(datumStreamService(datumStream.getServiceIdentifier()),
-				"datumStreamService");
-		return service.dataValues(id, filters);
+	public Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
+			String datumStreamServiceIdentifier, Map<String, ?> filters) {
+		var integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
+		var service = requireNonNullObject(resolveDatumStreamService(integration.getServiceIdentifier(),
+				datumStreamServiceIdentifier), "datumStreamService");
+		return service.dataValues(integration.getId(), filters);
+	}
+
+	private CloudDatumStreamService resolveDatumStreamService(String integrationServiceIdentifier,
+			String datumStreamServiceIdentifier) {
+		CloudDatumStreamService result = null;
+		if ( datumStreamServiceIdentifier != null ) {
+			result = datumStreamServices.get(datumStreamServiceIdentifier);
+			if ( result != null && integrationServiceIdentifier != null ) {
+				// verify service belongs to integration
+				CloudIntegrationService integrationService = integrationServices
+						.get(integrationServiceIdentifier);
+				if ( integrationService != null ) {
+					boolean found = false;
+					for ( CloudDatumStreamService service : integrationService.datumStreamServices() ) {
+						if ( service.getId().equals(datumStreamServiceIdentifier) ) {
+							found = true;
+							break;
+						}
+					}
+					if ( !found ) {
+						throw new IllegalArgumentException(
+								"CloudDatumStreamService [%s] not supported by CloudIntegrationService [%s]"
+										.formatted(datumStreamServiceIdentifier,
+												integrationService.getId()));
+					}
+				}
+			}
+		} else if ( integrationServiceIdentifier != null ) {
+			// get first provided by integration
+			CloudIntegrationService integrationService = integrationServices
+					.get(integrationServiceIdentifier);
+			if ( integrationService != null ) {
+				result = integrationService.datumStreamServices().iterator().next();
+			}
+		}
+		return result;
 	}
 
 	@Override

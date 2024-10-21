@@ -76,7 +76,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -228,6 +228,46 @@ public class UserCloudIntegrationsController {
 			@PathVariable("integrationId") Long integrationId, Locale locale) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
 		return userCloudIntegrationsBiz.validateIntegrationConfigurationForId(id, locale);
+	}
+
+	/*-=======================
+	 * Data Values
+	 *-======================= */
+
+	/**
+	 * List the data values for a datum stream service and an optional filter.
+	 *
+	 * @param integrationId
+	 *        the integration ID
+	 * @param datumStreamServiceIdentifier
+	 *        the service identifier of the {@link CloudDatumStreamService} to
+	 *        use; if not provided then the first service available for the
+	 *        {@link CloudIntegrationService} specified in the specified
+	 *        {@link CloudIntegrationConfiguration} will be used
+	 * @param req
+	 *        the HTTP request to obtain filter parameters from
+	 * @return the values
+	 */
+	@RequestMapping(value = "/integrations/{integrationId}/data-values", method = RequestMethod.GET)
+	public Result<Iterable<CloudDataValue>> listCloudDatumStreamDataValues(
+			@PathVariable("integrationId") Long integrationId,
+			@RequestParam(value = "datumStreamServiceIdentifier", required = false) String datumStreamServiceIdentifier,
+			WebRequest req) {
+		var filter = new LinkedHashMap<String, Object>(4);
+		for ( Iterator<String> itr = req.getParameterNames(); itr.hasNext(); ) {
+			String param = itr.next();
+			if ( "datumStreamServiceIdentifier".equals(param) ) {
+				continue;
+			}
+			Object val = req.getParameter(param);
+			if ( val != null ) {
+				filter.put(param, val);
+			}
+		}
+		var result = userCloudIntegrationsBiz.listDatumStreamDataValues(
+				new UserLongCompositePK(getCurrentActorUserId(), integrationId),
+				datumStreamServiceIdentifier, filter);
+		return success(result);
 	}
 
 	/*-=======================
@@ -394,31 +434,6 @@ public class UserCloudIntegrationsController {
 	/*-=======================
 	 * Datum Stream datum
 	 *-======================= */
-
-	/**
-	 * List the data values for a datum stream service and an optional filter.
-	 *
-	 * @param datumStreamId
-	 *        the datum stream ID
-	 * @param req
-	 *        the HTTP request to obtain filter parameters from
-	 * @return the values
-	 */
-	@RequestMapping(value = "/datum-streams/{datumStreamId}/data-values", method = RequestMethod.GET)
-	public Result<Iterable<CloudDataValue>> listCloudDatumStreamDataValues(
-			@PathVariable("datumStreamId") Long datumStreamId, WebRequest req) {
-		var filter = new LinkedHashMap<String, Object>(4);
-		for ( Iterator<String> itr = req.getParameterNames(); itr.hasNext(); ) {
-			String param = itr.next();
-			Object val = req.getParameter(param);
-			if ( val != null ) {
-				filter.put(param, val);
-			}
-		}
-		var result = userCloudIntegrationsBiz.listDatumStreamDataValues(
-				new UserLongCompositePK(getCurrentActorUserId(), datumStreamId), filter);
-		return success(result);
-	}
 
 	/**
 	 * List the data values for a datum stream service and an optional filter.

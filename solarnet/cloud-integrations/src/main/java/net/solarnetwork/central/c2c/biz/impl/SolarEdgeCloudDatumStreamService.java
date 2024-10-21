@@ -124,11 +124,11 @@ public class SolarEdgeCloudDatumStreamService extends BaseRestOperationsCloudDat
 	}
 
 	@Override
-	public Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters) {
-		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
-				datumStreamDao.get(requireNonNullArgument(id, "id")), "datumStream");
-		final CloudIntegrationConfiguration integration = integrationDao.get(
-				new UserLongCompositePK(datumStream.getUserId(), datumStream.getDatumStreamMappingId()));
+	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
+			Map<String, ?> filters) {
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			// TODO
