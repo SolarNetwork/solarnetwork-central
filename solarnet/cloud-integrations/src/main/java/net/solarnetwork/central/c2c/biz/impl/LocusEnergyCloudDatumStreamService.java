@@ -105,8 +105,6 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.settings.KeyedSettingSpecifier;
-import net.solarnetwork.settings.MultiValueSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 
@@ -139,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -216,21 +214,6 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 						oauthClientManager),
 				oauthClientManager);
 		this.executor = requireNonNullArgument(executor, "executor");
-	}
-
-	@Override
-	protected void populateInfoMessages(Locale locale, SettingSpecifier spec, Map<String, String> msgs,
-			MessageSource ms) {
-		super.populateInfoMessages(locale, spec, msgs, ms);
-		if ( spec instanceof KeyedSettingSpecifier<?> k ) {
-			if ( GRANULARITY_SETTING.equals(k.getKey()) ) {
-				MultiValueSettingSpecifier mv = (MultiValueSettingSpecifier) spec;
-				for ( String valueKey : mv.getValueTitles().keySet() ) {
-					String titleKey = "granularity." + valueKey;
-					msgs.put(titleKey, ms.getMessage(titleKey, null, valueKey, locale));
-				}
-			}
-		}
 	}
 
 	@Override
