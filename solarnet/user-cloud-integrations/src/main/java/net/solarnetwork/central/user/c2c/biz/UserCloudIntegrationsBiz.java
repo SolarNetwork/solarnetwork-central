@@ -51,7 +51,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -199,9 +199,14 @@ public interface UserCloudIntegrationsBiz {
 	/**
 	 * List data values.
 	 *
-	 * @param id
-	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
+	 * @param integrationId
+	 *        the ID of the {@link CloudIntegrationConfiguration} to get the
 	 *        data values for
+	 * @param datumStreamServiceIdentifier
+	 *        the service identifier of the {@link CloudDatumStreamService} to
+	 *        use; if not provided then the first service available for the
+	 *        {@link CloudIntegrationService} specified in the specified
+	 *        {@link CloudIntegrationConfiguration} will be used
 	 * @param filters
 	 *        an optional set of search filters to limit the data value groups
 	 *        to; the available key values come from the identifiers returned by
@@ -209,7 +214,8 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK id, Map<String, ?> filters);
+	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
+			String datumStreamServiceIdentifier, Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum from a datum stream.

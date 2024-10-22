@@ -112,6 +112,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.support.XmlSupport;
 import net.solarnetwork.util.StringUtils;
 
@@ -191,7 +192,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * @author matt
- * @version 1.3
+ * @version 1.5
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -221,7 +222,9 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 						(l, r) -> r, () -> new LinkedHashMap<>(SolrenViewGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
-		SETTINGS = List.of(granularitySpec);
+		var sourceIdMapSpec = new BasicTextAreaSettingSpecifier(SOURCE_ID_MAP_SETTING, null, true);
+
+		SETTINGS = List.of(granularitySpec, sourceIdMapSpec);
 	}
 
 	private static final XmlSupport XML_SUPPORT;
@@ -290,20 +293,14 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	@Override
-	public Iterable<CloudDataValue> dataValues(UserLongCompositePK datumStreamId,
+	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			Map<String, ?> filters) {
-		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
-				datumStreamDao.get(requireNonNullArgument(datumStreamId, "datumStreamId")),
-				"datumStream");
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(new UserLongCompositePK(datumStream.getUserId(),
-						datumStream.getDatumStreamMappingId())),
-				"datumStreamMapping");
-		final CloudIntegrationConfiguration integration = integrationDao
-				.get(new UserLongCompositePK(datumStream.getUserId(), mapping.getIntegrationId()));
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
-			result = componentsForSite(integration, datumStream, filters);
+			result = componentsForSite(integration, filters);
 		}
 		Collections.sort(result);
 		return result;
@@ -492,8 +489,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
-			CloudDatumStreamConfiguration datumStream, Map<String, ?> filters) {
-		final SolrenViewGranularity granularity = resolveGranularity(datumStream, null);
+			Map<String, ?> filters) {
+		final SolrenViewGranularity granularity = resolveGranularity(null, filters);
 		final Clock queryClock = Clock.tick(clock, granularity.getTickDuration());
 		final Instant endDate = queryEndDate(queryClock, granularity);
 		final Instant startDate = queryStartDate(endDate, granularity);
@@ -539,14 +536,13 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private SolrenViewGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
-			CloudDatumStreamQueryFilter filter) {
+			Map<String, ?> parameters) {
 		SolrenViewGranularity granularity = null;
 		try {
 			String granSetting = null;
-			if ( filter != null && filter.hasParameterCriteria()
-					&& filter.getParameters().get(GRANULARITY_SETTING) instanceof String s ) {
+			if ( parameters != null && parameters.get(GRANULARITY_SETTING) instanceof String s ) {
 				granSetting = s;
-			} else {
+			} else if ( datumStream != null ) {
 				granSetting = datumStream.serviceProperty(GRANULARITY_SETTING, String.class);
 			}
 			if ( granSetting != null && !granSetting.isEmpty() ) {

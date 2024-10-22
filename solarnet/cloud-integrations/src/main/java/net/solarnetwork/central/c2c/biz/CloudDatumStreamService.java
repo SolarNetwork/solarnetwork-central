@@ -28,6 +28,7 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -39,7 +40,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -62,8 +63,8 @@ public interface CloudDatumStreamService
 	/**
 	 * List data values.
 	 *
-	 * @param datumStreamId
-	 *        the ID of the {@link CloudDatumStreamConfiguration} to get the
+	 * @param integrationId
+	 *        the ID of the {@link CloudIntegrationConfiguration} to get the
 	 *        data values for
 	 * @param filters
 	 *        an optional set of search filters to limit the data value groups
@@ -72,7 +73,7 @@ public interface CloudDatumStreamService
 	 * @return the available values, never {@literal null}
 	 *
 	 */
-	Iterable<CloudDataValue> dataValues(UserLongCompositePK datumStreamId, Map<String, ?> filters);
+	Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId, Map<String, ?> filters);
 
 	/**
 	 * Get the latest available datum for a datum stream configuration.

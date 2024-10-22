@@ -105,8 +105,6 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
-import net.solarnetwork.settings.KeyedSettingSpecifier;
-import net.solarnetwork.settings.MultiValueSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 
@@ -139,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.5
+ * @version 1.7
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -219,21 +217,6 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	@Override
-	protected void populateInfoMessages(Locale locale, SettingSpecifier spec, Map<String, String> msgs,
-			MessageSource ms) {
-		super.populateInfoMessages(locale, spec, msgs, ms);
-		if ( spec instanceof KeyedSettingSpecifier<?> k ) {
-			if ( GRANULARITY_SETTING.equals(k.getKey()) ) {
-				MultiValueSettingSpecifier mv = (MultiValueSettingSpecifier) spec;
-				for ( String valueKey : mv.getValueTitles().keySet() ) {
-					String titleKey = "granularity." + valueKey;
-					msgs.put(titleKey, ms.getMessage(titleKey, null, valueKey, locale));
-				}
-			}
-		}
-	}
-
-	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
 		MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 		List<LocalizedServiceInfo> result = new ArrayList<>(2);
@@ -246,15 +229,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	@Override
-	public Iterable<CloudDataValue> dataValues(UserLongCompositePK id, Map<String, ?> filters) {
-		final CloudDatumStreamConfiguration datumStream = requireNonNullObject(
-				datumStreamDao.get(requireNonNullArgument(id, "id")), "datumStream");
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(new UserLongCompositePK(datumStream.getUserId(),
-						datumStream.getDatumStreamMappingId())),
-				"datumStreamMapping");
-		final CloudIntegrationConfiguration integration = integrationDao
-				.get(new UserLongCompositePK(datumStream.getUserId(), mapping.getIntegrationId()));
+	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
+			Map<String, ?> filters) {
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
