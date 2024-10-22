@@ -29,6 +29,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -38,7 +39,9 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedServiceInfo;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -47,7 +50,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -109,6 +112,44 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				"datumStreamMappingDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
 				"datumStreamPropertyDao");
+	}
+
+	@Override
+	public LocalizedServiceInfo getLocalizedServiceInfo(Locale locale) {
+		return new BasicCloudDatumStreamLocalizedServiceInfo(
+				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
+				getSettingSpecifiers(), requiresPolling(), supportedPlaceholders(),
+				supportedDataValueWildcardIdentifierLevels());
+	}
+
+	/**
+	 * Get the polling requirement.
+	 *
+	 * @return {@literal true} if polling for data is required
+	 * @since 1.3
+	 */
+	protected boolean requiresPolling() {
+		return true;
+	}
+
+	/**
+	 * Get the supported placeholder keys.
+	 *
+	 * @return the supported placeholder key, or {@literal null}
+	 * @since 1.3
+	 */
+	protected Iterable<String> supportedPlaceholders() {
+		return null;
+	}
+
+	/**
+	 * Get the supported data value wildcard levels.
+	 *
+	 * @return the supported data value wildcard levels, or {@literal null}
+	 * @since 1.3
+	 */
+	protected Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
+		return null;
 	}
 
 	/**

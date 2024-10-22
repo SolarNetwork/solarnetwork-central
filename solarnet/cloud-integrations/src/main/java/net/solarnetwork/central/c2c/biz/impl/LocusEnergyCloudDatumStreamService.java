@@ -137,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -167,6 +167,14 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 
 		SETTINGS = List.of(granularitySpec);
 	}
+
+	/**
+	 * The supported placeholder keys.
+	 *
+	 * @since 1.8
+	 */
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER,
+			COMPONENT_ID_FILTER);
 
 	private AsyncTaskExecutor executor;
 
@@ -214,6 +222,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 						oauthClientManager),
 				oauthClientManager);
 		this.executor = requireNonNullArgument(executor, "executor");
+	}
+
+	@Override
+	protected Iterable<String> supportedPlaceholders() {
+		return SUPPORTED_PLACEHOLDERS;
 	}
 
 	@Override

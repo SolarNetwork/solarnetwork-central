@@ -192,7 +192,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -226,6 +226,20 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 		SETTINGS = List.of(granularitySpec, sourceIdMapSpec);
 	}
+
+	/**
+	 * The supported placeholder keys.
+	 *
+	 * @since 1.8
+	 */
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER);
+
+	/**
+	 * The supported data value wildcard levels.
+	 *
+	 * @since 1.8
+	 */
+	public static final List<Integer> SUPPORTED_DATA_VALUE_WILDCARD_LEVELS = List.of(1);
 
 	private static final XmlSupport XML_SUPPORT;
 	private static final XPathExpression M_COMPONENTS_XPATH;
@@ -278,6 +292,16 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolrenViewCloudIntegrationService.SECURE_SETTINGS));
 		this.clock = requireNonNullArgument(clock, "clock");
+	}
+
+	@Override
+	protected Iterable<String> supportedPlaceholders() {
+		return SUPPORTED_PLACEHOLDERS;
+	}
+
+	@Override
+	protected Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
+		return SUPPORTED_DATA_VALUE_WILDCARD_LEVELS;
 	}
 
 	@Override
