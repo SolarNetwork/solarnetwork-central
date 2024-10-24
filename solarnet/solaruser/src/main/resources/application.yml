@@ -10,11 +10,21 @@ app:
         ttl: 3600
   cache.persistence.path: "var/cache"
   c2c:
-    cache.expression-cache:
-      tti: 3600
-      ttl: 0
-      heap-max-entries: 5000
-      disk-max-size-mb: 0
+    cache:
+      expression-cache:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
+      solaredge-site-inventory:
+        ttl: 3600
+        heap-max-entries: 1000
+        disk-max-size-mb: 5
+      solaredge-site-tz:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
     encryptor:
       password: "Secret123"
       salt-hex: "01234567"

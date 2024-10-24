@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.domain;
 
 import net.solarnetwork.settings.ConfigurableLocalizedServiceInfo;
+import net.solarnetwork.util.IntRange;
 
 /**
  * Localized service information for cloud datum stream services.
@@ -59,5 +60,13 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 * @return the 0-based list offsets, or {@literal null}
 	 */
 	Iterable<Integer> getSupportedDataValueWildcardIdentifierLevels();
+
+	/**
+	 * Get the data value identifier levels that can uniquely identify a
+	 * SolarNetwork source ID.
+	 *
+	 * @return the 0-based range, or {@literal null}
+	 */
+	IntRange getDataValueIdentifierLevelsSourceIdRange();
 
 }

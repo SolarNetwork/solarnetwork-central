@@ -1,0 +1,60 @@
+{
+  "powerDetails": {
+    "timeUnit": "QUARTER_OF_AN_HOUR",
+    "unit": "W",
+    "meters": [
+      {
+        "type": "FeedIn",
+        "values": [
+          {
+            "date": "2024-10-23 16:15:00",
+            "value": 935.3284
+          },
+          {
+            "date": "2024-10-23 16:30:00",
+            "value": 449.77917
+          }
+        ]
+      },
+      {
+        "type": "Consumption",
+        "values": [
+          {
+            "date": "2024-10-23 16:15:00",
+            "value": 784.69867
+          },
+          {
+            "date": "2024-10-23 16:30:00",
+            "value": 911.8978
+          }
+        ]
+      },
+      {
+        "type": "Purchased",
+        "values": [
+          {
+            "date": "2024-10-23 16:15:00",
+            "value": 0.0
+          },
+          {
+            "date": "2024-10-23 16:30:00",
+            "value": 0.0
+          }
+        ]
+      },
+      {
+        "type": "Production",
+        "values": [
+          {
+            "date": "2024-10-23 16:15:00",
+            "value": 1720.0271
+          },
+          {
+            "date": "2024-10-23 16:30:00",
+            "value": 1361.677
+          }
+        ]
+      }
+    ]
+  }
+}

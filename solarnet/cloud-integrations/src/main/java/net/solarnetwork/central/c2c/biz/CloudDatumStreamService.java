@@ -46,6 +46,18 @@ public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/**
+	 * A standard setting for either a map or comma-delimited mapping list of
+	 * data value references to associated source ID values.
+	 *
+	 * <p>
+	 * This setting is intended to be used by cloud services that can provide
+	 * multiple SolarNetwork datum streams, as a way to map each cloud device to
+	 * a SolarNetwork source.
+	 * </p>
+	 */
+	String SOURCE_ID_MAP_SETTING = "sourceIdMap";
+
+	/**
 	 * Get a localized collection of the available data value filter criteria.
 	 *
 	 * <p>

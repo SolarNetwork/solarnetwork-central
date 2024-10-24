@@ -1,0 +1,39 @@
+{
+  "details": {
+    "id": 1234567,
+    "name": "Example Site",
+    "accountId": 12345,
+    "status": "Active",
+    "peakPower": 7.4,
+    "lastUpdateTime": "2024-10-22",
+    "installationDate": "2020-07-16",
+    "ptoDate": null,
+    "notes": "Very good",
+    "type": "Optimizers & Inverters",
+    "location": {
+      "country": "United States",
+      "state": "Connecticut",
+      "city": "Anytown",
+      "address": "123 Main Street",
+      "address2": "",
+      "zip": "06830",
+      "timeZone": "America/New_York",
+      "countryCode": "US",
+      "stateCode": "CT"
+    },
+    "primaryModule": {
+      "manufacturerName": "LG",
+      "modelName": "LG335",
+      "maximumPower": 335.0
+    },
+    "uris": {
+      "SITE_IMAGE": "/site/1234567/siteImage/example.PNG",
+      "DATA_PERIOD": "/site/1234567/dataPeriod",
+      "DETAILS": "/site/1234567/details",
+      "OVERVIEW": "/site/1234567/overview"
+    },
+    "publicSettings": {
+      "isPublic": false
+    }
+  }
+}

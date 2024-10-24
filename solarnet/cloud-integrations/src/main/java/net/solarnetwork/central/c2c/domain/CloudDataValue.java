@@ -39,7 +39,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.3
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -69,6 +69,13 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 
 	/** Standard metadata key for a device model name. */
 	public static final String DEVICE_MODEL_METADATA = "model";
+
+	/**
+	 * Standard metadata key for a device firmware version.
+	 *
+	 * @since 1.2
+	 */
+	public static final String DEVICE_FIRMWARE_VERSION_METADATA = "firmwareVersion";
 
 	/** Standard metadata key for a device serial number name. */
 	public static final String DEVICE_SERIAL_NUMBER_METADATA = "serial";
@@ -107,6 +114,26 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 			buf.append('/');
 		}
 		return buf.toString();
+	}
+
+	/**
+	 * Create a new data value instance.
+	 *
+	 * <p>
+	 * The {@code reference} will be set to a path-like value using the
+	 * {@code identifier} components.
+	 * </p>
+	 *
+	 * @param identifiers
+	 *        the value identifiers, unique within the overall hierarchy
+	 * @param name
+	 *        the component name
+	 * @throws IllegalArgumentException
+	 *         if {@code identifiers} or {@code name} is {@literal null}
+	 * @since 1.3
+	 */
+	public static CloudDataValue dataValue(List<String> identifiers, String name) {
+		return dataValue(identifiers, name, null);
 	}
 
 	/**

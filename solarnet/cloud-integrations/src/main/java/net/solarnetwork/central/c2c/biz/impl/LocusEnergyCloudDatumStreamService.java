@@ -41,12 +41,9 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
-import static net.solarnetwork.util.NumberUtils.narrow;
-import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -710,27 +707,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 					JsonNode val = datumValues.get(fieldName);
 					if ( val != null ) {
 						DatumSamplesType propType = property.getPropertyType();
-						Object propVal = switch (propType) {
-							case Accumulating, Instantaneous -> {
-								// convert to number
-								if ( val.isBigDecimal() ) {
-									yield val.decimalValue();
-								} else if ( val.isFloat() ) {
-									yield val.floatValue();
-								} else if ( val.isDouble() ) {
-									yield val.doubleValue();
-								} else if ( val.isBigInteger() ) {
-									yield val.bigIntegerValue();
-								} else if ( val.isLong() ) {
-									yield val.longValue();
-								} else if ( val.isFloat() ) {
-									yield val.floatValue();
-								} else {
-									yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
-								}
-							}
-							case Status, Tag -> val.asText();
-						};
+						Object propVal = parseJsonDatumPropertyValue(val, propType);
 						propVal = property.applyValueTransforms(propVal);
 						samples.putSampleValue(propType, property.getPropertyName(), propVal);
 					}

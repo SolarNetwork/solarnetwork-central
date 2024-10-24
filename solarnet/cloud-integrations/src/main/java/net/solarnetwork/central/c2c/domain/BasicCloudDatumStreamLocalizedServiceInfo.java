@@ -26,6 +26,7 @@ import java.util.List;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicConfigurableLocalizedServiceInfo;
+import net.solarnetwork.util.IntRange;
 
 /**
  * Basic implementation of {@link CloudDatumStreamLocalizedServiceInfo}.
@@ -39,6 +40,7 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	private final boolean requiresPolling;
 	private final Iterable<String> supportedPlaceholders;
 	private final Iterable<Integer> supportedDataValueWildcardIdentifierLevels;
+	private final IntRange dataValueIdentifierLevelsSourceIdRange;
 
 	/**
 	 * Copy constructor from another {@link LocalizedServiceInfo} instance.
@@ -53,15 +55,19 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	 *        the supported placeholder keys
 	 * @param supportedDataValueWildcardIdentifierLevels
 	 *        the supported data value wildcard levels
+	 * @param dataValueIdentifierLevelsSourceIdRange
+	 *        the data value identifier levels source ID range
 	 */
 	public BasicCloudDatumStreamLocalizedServiceInfo(LocalizedServiceInfo info,
 			List<SettingSpecifier> settings, boolean requiresPolling,
 			Iterable<String> supportedPlaceholders,
-			Iterable<Integer> supportedDataValueWildcardIdentifierLevels) {
+			Iterable<Integer> supportedDataValueWildcardIdentifierLevels,
+			IntRange dataValueIdentifierLevelsSourceIdRange) {
 		super(info, settings);
 		this.requiresPolling = requiresPolling;
 		this.supportedPlaceholders = supportedPlaceholders;
 		this.supportedDataValueWildcardIdentifierLevels = supportedDataValueWildcardIdentifierLevels;
+		this.dataValueIdentifierLevelsSourceIdRange = dataValueIdentifierLevelsSourceIdRange;
 	}
 
 	@Override
@@ -77,6 +83,11 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	@Override
 	public final Iterable<Integer> getSupportedDataValueWildcardIdentifierLevels() {
 		return supportedDataValueWildcardIdentifierLevels;
+	}
+
+	@Override
+	public final IntRange getDataValueIdentifierLevelsSourceIdRange() {
+		return dataValueIdentifierLevelsSourceIdRange;
 	}
 
 }

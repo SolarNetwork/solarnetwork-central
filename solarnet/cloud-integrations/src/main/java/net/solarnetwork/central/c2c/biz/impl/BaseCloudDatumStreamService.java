@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -41,16 +42,21 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedServiceInfo;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
+import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.IntRange;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -119,7 +125,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		return new BasicCloudDatumStreamLocalizedServiceInfo(
 				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
 				getSettingSpecifiers(), requiresPolling(), supportedPlaceholders(),
-				supportedDataValueWildcardIdentifierLevels());
+				supportedDataValueWildcardIdentifierLevels(), dataValueIdentifierLevelsSourceIdRange());
 	}
 
 	/**
@@ -149,6 +155,17 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @since 1.3
 	 */
 	protected Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
+		return null;
+	}
+
+	/**
+	 * Get the supported data value identifier levels source ID range.
+	 *
+	 * @return the supported data value identifier levels source ID range, or
+	 *         {@literal null}
+	 * @since 1.4
+	 */
+	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
 		return null;
 	}
 
@@ -211,6 +228,87 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				}
 			}
 		}
+	}
+
+	/**
+	 * Populate a non-empty JSON field value onto a map.
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is a non-empty string
+	 * @param map
+	 *        the map to populate with the non-empty string
+	 */
+	public static void populateNonEmptyValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map) {
+		String s = JsonUtils.parseNonEmptyStringAttribute(node, fieldName);
+		if ( s != null ) {
+			map.put(key, s);
+		}
+	}
+
+	/**
+	 * Resolve a mapping from a setting on a configuration.
+	 *
+	 * @param configuration
+	 *        the configuration to extract the mapping from
+	 * @param key
+	 *        the service property key to extract
+	 * @return the mapping, or {@literal null}
+	 * @since 1.4
+	 */
+	@SuppressWarnings("unchecked")
+	public static Map<String, String> servicePropertyStringMap(IdentifiableConfiguration configuration,
+			String key) {
+		if ( configuration == null ) {
+			return null;
+		}
+		final Object sourceIdMap = configuration.serviceProperty(SOURCE_ID_MAP_SETTING, Object.class);
+		final Map<String, String> componentSourceIdMapping;
+		if ( sourceIdMap instanceof Map<?, ?> ) {
+			componentSourceIdMapping = (Map<String, String>) sourceIdMap;
+		} else if ( sourceIdMap != null ) {
+			componentSourceIdMapping = StringUtils.commaDelimitedStringToMap(sourceIdMap.toString());
+		} else {
+			componentSourceIdMapping = null;
+		}
+		return componentSourceIdMapping;
+	}
+
+	/**
+	 * Parse a JSON datum property value.
+	 *
+	 * @param val
+	 *        the JSON value to parse as a datum property value.
+	 * @param propType
+	 *        the desired datum property type
+	 * @return the value, or {@literal null}
+	 */
+	public static Object parseJsonDatumPropertyValue(JsonNode val, DatumSamplesType propType) {
+		return switch (propType) {
+			case Accumulating, Instantaneous -> {
+				// convert to number
+				if ( val.isBigDecimal() ) {
+					yield val.decimalValue();
+				} else if ( val.isFloat() ) {
+					yield val.floatValue();
+				} else if ( val.isDouble() ) {
+					yield val.doubleValue();
+				} else if ( val.isBigInteger() ) {
+					yield val.bigIntegerValue();
+				} else if ( val.isLong() ) {
+					yield val.longValue();
+				} else if ( val.isFloat() ) {
+					yield val.floatValue();
+				} else {
+					yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+				}
+			}
+			case Status, Tag -> val.asText();
+		};
 	}
 
 }
