@@ -1,0 +1,56 @@
+{
+  "meterEnergyDetails": {
+    "timeUnit": "QUARTER_OF_AN_HOUR",
+    "unit": "Wh",
+    "meters": [
+      {
+		"meterSerialNumber": "111111111",
+        "connectedSolaredgeDeviceSN": "11111111-BA",
+        "model": "SE-RGMTR-1D-240C-A",
+        "meterType": "Production",
+        "values": [
+          {
+            "date": "2024-10-23 16:19:30",
+            "value": 3.7539808E7
+          },
+          {
+            "date": "2024-10-23 16:34:29",
+            "value": 3.7540216E7
+          }
+        ]
+      },
+      {
+		"meterSerialNumber": "222222222",
+        "connectedSolaredgeDeviceSN": "11111111-BA",
+        "model": "SE-MTR-3Y-240V-A",
+        "meterType": "FeedIn",
+        "values": [
+          {
+            "date": "2024-10-23 16:19:30",
+            "value": 2.4263696E7
+          },
+          {
+            "date": "2024-10-23 16:34:29",
+            "value": 2.4263898E7
+          }
+        ]
+      },
+      {
+		"meterSerialNumber": "333333333",
+		"connectedSolaredgeDeviceSN": "11111111-BA",
+        "model": "SE-MTR-3Y-240V-A",
+        "meterType": "Purchased",
+        "values": [
+          {
+            "date": "2024-10-23 16:19:30",
+            "value": 7375532.0
+          },
+          {
+            "date": "2024-10-23 16:34:29",
+            "value": 7375532.0
+          }
+        ]
+      }
+    ]
+  }
+}

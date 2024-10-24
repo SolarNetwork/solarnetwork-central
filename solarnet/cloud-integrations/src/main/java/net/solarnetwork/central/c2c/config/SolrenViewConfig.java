@@ -56,7 +56,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 @Profile(CLOUD_INTEGRATIONS)
 public class SolrenViewConfig {
 
-	/** A qualifier for SolrenView configuraiton. */
+	/** A qualifier for SolrenView configuration. */
 	public static final String SOLRENVIEW = "solrenview";
 
 	@Autowired

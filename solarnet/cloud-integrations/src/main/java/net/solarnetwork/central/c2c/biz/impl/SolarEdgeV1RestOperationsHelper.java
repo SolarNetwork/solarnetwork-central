@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarEdgeRestOperationsHelper.java - 7/10/2024 10:49:34 am
+ * SolarEdgeV1RestOperationsHelper.java - 7/10/2024 10:49:34 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -22,10 +22,8 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.ACCOUNT_KEY_HEADER;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.ACCOUNT_KEY_SETTING;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.API_KEY_HEADER;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.API_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_HEADER;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_SETTING;
 import java.net.URI;
 import java.util.Set;
 import java.util.function.Function;
@@ -45,7 +43,7 @@ import net.solarnetwork.central.c2c.http.RestOperationsHelper;
  * @author matt
  * @version 1.0
  */
-public class SolarEdgeRestOperationsHelper extends RestOperationsHelper {
+public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 
 	/**
 	 * Constructor.
@@ -65,7 +63,7 @@ public class SolarEdgeRestOperationsHelper extends RestOperationsHelper {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SolarEdgeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
+	public SolarEdgeV1RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
@@ -78,10 +76,6 @@ public class SolarEdgeRestOperationsHelper extends RestOperationsHelper {
 		return super.httpGet(description, integration, responseType, (headers) -> {
 			final var decrypted = integration.clone();
 			decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
-			final String accountKey = decrypted.serviceProperty(ACCOUNT_KEY_SETTING, String.class);
-			if ( accountKey != null ) {
-				headers.add(ACCOUNT_KEY_HEADER, accountKey);
-			}
 			final String apiKey = decrypted.serviceProperty(API_KEY_SETTING, String.class);
 			if ( apiKey != null ) {
 				headers.add(API_KEY_HEADER, apiKey);

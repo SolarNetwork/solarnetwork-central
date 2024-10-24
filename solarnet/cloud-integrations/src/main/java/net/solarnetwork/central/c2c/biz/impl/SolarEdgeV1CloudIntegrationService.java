@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolarEdgeCloudIntegrationService.java - 7/10/2024 6:49:06 am
+ * SolarEdgeV1CloudIntegrationService.java - 7/10/2024 6:49:06 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -52,19 +52,16 @@ import net.solarnetwork.settings.support.SettingUtils;
  * @author matt
  * @version 1.0
  */
-public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
+public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.solaredge";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.solaredge.v1";
 
 	/** The URL template for listing sites. */
-	public static final String V2_SITES_LIST_URL = "/v2/sites";
+	public static final String SITES_LIST_URL = "/sites/list";
 
 	/** The user API key authorization HTTP header name. */
 	public static final String API_KEY_HEADER = "X-API-Key";
-
-	/** The account API key authorization HTTP header name. */
-	public static final String ACCOUNT_KEY_HEADER = "X-Account-Key";
 
 	/** The JSON and {@code problem+json} accept HTTP header value. */
 	public static final String JSON_AND_PROBLEM_ACCEPT_HEADER_VALUE = "application/json, application/problem+json";
@@ -74,9 +71,6 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 
 	/** An API key setting name. */
 	public static final String API_KEY_SETTING = "apiKey";
-
-	/** An account key setting name. */
-	public static final String ACCOUNT_KEY_SETTING = "accountKey";
 
 	/**
 	 * The well-known URLs.
@@ -91,7 +85,6 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
 		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(ACCOUNT_KEY_SETTING, null, true));
 		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
@@ -114,12 +107,12 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SolarEdgeCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
+	public SolarEdgeV1CloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
 		super(SERVICE_IDENTIFIER, "SolarEdge", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
-				new SolarEdgeRestOperationsHelper(
-						LoggerFactory.getLogger(SolarEdgeCloudIntegrationService.class),
+				new SolarEdgeV1RestOperationsHelper(
+						LoggerFactory.getLogger(SolarEdgeV1CloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS));
 	}
@@ -129,12 +122,6 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 		// check that authentication settings provided
 		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
 		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		final String accountKey = integration.serviceProperty(ACCOUNT_KEY_SETTING, String.class);
-		if ( accountKey == null || accountKey.isEmpty() ) {
-			String errMsg = ms.getMessage("error.accountKey.missing", null, locale);
-			errorDetails.add(new ErrorDetail(ACCOUNT_KEY_SETTING, null, errMsg));
-		}
 
 		final String apiKey = integration.serviceProperty(API_KEY_SETTING, String.class);
 		if ( apiKey == null || apiKey.isEmpty() ) {
@@ -147,11 +134,11 @@ public class SolarEdgeCloudIntegrationService extends BaseRestOperationsCloudInt
 			return Result.error("SECI.0001", errMsg, errorDetails);
 		}
 
-		// validate by requesting the available sites for the partner ID
+		// validate by requesting the V1 available sites
 		try {
 			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(SolarEdgeCloudIntegrationService.BASE_URI)
-							.path(SolarEdgeCloudIntegrationService.V2_SITES_LIST_URL).buildAndExpand()
+					(req) -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
+							.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL).buildAndExpand()
 							.toUri(),
 					res -> res.getBody());
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);

@@ -23,8 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.ACCOUNT_KEY_SETTING;
-import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService.API_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -51,13 +50,13 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
-import net.solarnetwork.central.c2c.biz.impl.SolarEdgeCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
 /**
- * Test cases for the {@link SolarEdgeCloudIntegrationService} class.
+ * Test cases for the {@link SolarEdgeV1CloudIntegrationService} class.
  *
  * @author matt
  * @version 1.1
@@ -80,15 +79,15 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	@Mock
 	private TextEncryptor encryptor;
 
-	private SolarEdgeCloudIntegrationService service;
+	private SolarEdgeV1CloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
-		service = new SolarEdgeCloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new SolarEdgeV1CloudIntegrationService(Collections.singleton(datumStreamService),
 				userEventAppenderBiz, encryptor, restOps);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasenames(SolarEdgeCloudIntegrationService.class.getName(),
+		msg.setBasenames(SolarEdgeV1CloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msg);
 	}
@@ -118,18 +117,12 @@ public class SolarEdgeCloudIntegrationServiceTests {
 			.returns(false, from(Result::getSuccess))
 			.satisfies(r -> {
 				and.then(r.getErrors())
-					.as("Error details provided for missing account, API keys")
-					.hasSize(2)
+					.as("Error details provided for missing API keys")
+					.hasSize(1)
 					.satisfies(errors -> {
 						and.then(errors)
 							.as("Error detail")
 							.element(0)
-							.as("Account key flagged")
-							.returns(ACCOUNT_KEY_SETTING, from(ErrorDetail::getLocation))
-							;
-						and.then(errors)
-							.as("Error detail")
-							.element(1)
 							.as("API key flagged")
 							.returns(API_KEY_SETTING, from(ErrorDetail::getLocation))
 						;
@@ -143,20 +136,18 @@ public class SolarEdgeCloudIntegrationServiceTests {
 	@Test
 	public void validate_ok() {
 		// GIVEN
-		final String accountKey = randomString();
 		final String apiKey = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), now());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
-				SolarEdgeCloudIntegrationService.ACCOUNT_KEY_SETTING, accountKey,
-				SolarEdgeCloudIntegrationService.API_KEY_SETTING, apiKey
+				SolarEdgeV1CloudIntegrationService.API_KEY_SETTING, apiKey
 			));
 		// @formatter:on
 
-		final URI listSitesUri = SolarEdgeCloudIntegrationService.BASE_URI
-				.resolve(SolarEdgeCloudIntegrationService.V2_SITES_LIST_URL);
+		final URI listSitesUri = SolarEdgeV1CloudIntegrationService.BASE_URI
+				.resolve(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
 		given(restOps.exchange(eq(listSitesUri), eq(HttpMethod.GET), any(), eq(String.class)))
 				.willReturn(res);

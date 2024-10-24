@@ -114,7 +114,7 @@ import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.support.XmlSupport;
-import net.solarnetwork.util.StringUtils;
+import net.solarnetwork.util.IntRange;
 
 /**
  * SolrenView implementation of {@link CloudDatumStreamService}.
@@ -192,7 +192,7 @@ import net.solarnetwork.util.StringUtils;
  * </ul>
  *
  * @author matt
- * @version 1.5
+ * @version 1.7
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -204,12 +204,6 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	/** The setting for granularity. */
 	public static final String GRANULARITY_SETTING = "granularity";
-
-	/**
-	 * The setting for either a map or comma-delimited mapping list of component
-	 * IDs to associated source ID values.
-	 */
-	public static final String SOURCE_ID_MAP_SETTING = "sourceIdMap";
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -226,6 +220,27 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 		SETTINGS = List.of(granularitySpec, sourceIdMapSpec);
 	}
+
+	/**
+	 * The supported placeholder keys.
+	 *
+	 * @since 1.6
+	 */
+	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER);
+
+	/**
+	 * The supported data value wildcard levels.
+	 *
+	 * @since 1.6
+	 */
+	public static final List<Integer> SUPPORTED_DATA_VALUE_WILDCARD_LEVELS = List.of(1);
+
+	/**
+	 * The data value identifier levels source ID range.
+	 *
+	 * @since 1.7
+	 */
+	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(1);
 
 	private static final XmlSupport XML_SUPPORT;
 	private static final XPathExpression M_COMPONENTS_XPATH;
@@ -260,6 +275,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	 *        the datum stream property DAO
 	 * @param restOps
 	 *        the REST operations
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -278,6 +295,21 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolrenViewCloudIntegrationService.SECURE_SETTINGS));
 		this.clock = requireNonNullArgument(clock, "clock");
+	}
+
+	@Override
+	protected Iterable<String> supportedPlaceholders() {
+		return SUPPORTED_PLACEHOLDERS;
+	}
+
+	@Override
+	protected Iterable<Integer> supportedDataValueWildcardIdentifierLevels() {
+		return SUPPORTED_DATA_VALUE_WILDCARD_LEVELS;
+	}
+
+	@Override
+	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
+		return DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE;
 	}
 
 	@Override
@@ -774,18 +806,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private Map<String, String> componentSourceIdMap(CloudDatumStreamConfiguration datumStream) {
-		final Object sourceIdMap = datumStream.serviceProperty(SOURCE_ID_MAP_SETTING, Object.class);
-		final Map<String, String> componentSourceIdMapping;
-		if ( sourceIdMap instanceof Map<?, ?> ) {
-			componentSourceIdMapping = (Map<String, String>) sourceIdMap;
-		} else if ( sourceIdMap != null ) {
-			componentSourceIdMapping = StringUtils.commaDelimitedStringToMap(sourceIdMap.toString());
-		} else {
-			componentSourceIdMapping = null;
-		}
-		return componentSourceIdMapping;
+		return servicePropertyStringMap(datumStream, SOURCE_ID_MAP_SETTING);
 	}
 
 	private void parseDatumProperties(Node componentNode, Long siteId, String componentId,
