@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.domain;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * API for a claimable job state.
  * 
@@ -35,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.44
  */
 public interface ClaimableJobState {
@@ -68,7 +66,6 @@ public interface ClaimableJobState {
 	 * @return the key as a string
 	 * @since 1.1
 	 */
-	@JsonValue
 	default String keyValue() {
 		return String.valueOf(getKey());
 	}
