@@ -136,7 +136,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				new BasicTextFieldSettingSpecifier(DEVICE_ID_FILTER, null),
 				new BasicTextFieldSettingSpecifier(USERNAME_SETTING, null),
 				new BasicTextFieldSettingSpecifier(PASSWORD_SETTING, null, true),
-				new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null, true)
+				new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null)
 				);
 		// @formatter:on
 	}
