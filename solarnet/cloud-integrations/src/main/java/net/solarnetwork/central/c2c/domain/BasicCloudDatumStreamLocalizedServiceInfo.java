@@ -38,6 +38,7 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 		implements CloudDatumStreamLocalizedServiceInfo {
 
 	private final boolean requiresPolling;
+	private final boolean dataValuesRequireDatumStream;
 	private final Iterable<String> supportedPlaceholders;
 	private final Iterable<Integer> supportedDataValueWildcardIdentifierLevels;
 	private final IntRange dataValueIdentifierLevelsSourceIdRange;
@@ -51,6 +52,8 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	 *        the settings
 	 * @param requiresPolling
 	 *        the polling requirement
+	 * @param dataValuesRequireDatumStream
+	 *        the data values datum stream requirement
 	 * @param supportedPlaceholders
 	 *        the supported placeholder keys
 	 * @param supportedDataValueWildcardIdentifierLevels
@@ -60,11 +63,12 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	 */
 	public BasicCloudDatumStreamLocalizedServiceInfo(LocalizedServiceInfo info,
 			List<SettingSpecifier> settings, boolean requiresPolling,
-			Iterable<String> supportedPlaceholders,
+			boolean dataValuesRequireDatumStream, Iterable<String> supportedPlaceholders,
 			Iterable<Integer> supportedDataValueWildcardIdentifierLevels,
 			IntRange dataValueIdentifierLevelsSourceIdRange) {
 		super(info, settings);
 		this.requiresPolling = requiresPolling;
+		this.dataValuesRequireDatumStream = dataValuesRequireDatumStream;
 		this.supportedPlaceholders = supportedPlaceholders;
 		this.supportedDataValueWildcardIdentifierLevels = supportedDataValueWildcardIdentifierLevels;
 		this.dataValueIdentifierLevelsSourceIdRange = dataValueIdentifierLevelsSourceIdRange;
@@ -73,6 +77,11 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	@Override
 	public boolean isRequiresPolling() {
 		return requiresPolling;
+	}
+
+	@Override
+	public final boolean isDataValuesRequireDatumStream() {
+		return dataValuesRequireDatumStream;
 	}
 
 	@Override

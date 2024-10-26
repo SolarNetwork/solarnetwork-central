@@ -35,6 +35,8 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations} with
@@ -77,13 +79,16 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	}
 
 	@Override
-	public <R, T> T httpGet(String description, CloudIntegrationConfiguration integration,
-			Class<R> responseType, Function<HttpHeaders, URI> setup,
+	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
+			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
-		return super.httpGet(description, integration, responseType, (headers) -> {
-			final var decrypted = integration.clone();
-			decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
-			addOAuthBearerAuthorization(decrypted, headers, oauthClientManager, userEventAppenderBiz);
+		return super.httpGet(description, configuration, responseType, (headers) -> {
+			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
+				final var decrypted = integration.copyWithId(integration.getId());
+				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
+				addOAuthBearerAuthorization(decrypted, headers, oauthClientManager,
+						userEventAppenderBiz);
+			}
 			return setup.apply(headers);
 		}, handler);
 	}

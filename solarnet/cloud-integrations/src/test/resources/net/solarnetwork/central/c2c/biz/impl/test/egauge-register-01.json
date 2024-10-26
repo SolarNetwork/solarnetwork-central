@@ -1,0 +1,131 @@
+{
+    "ts": "1729828293",
+    "registers": [
+        {
+            "name": "voltage_a",
+            "type": "V",
+            "idx": 2,
+            "did": 3
+        },
+        {
+            "name": "voltage_b",
+            "type": "V",
+            "idx": 3,
+            "did": 4
+        },
+        {
+            "name": "voltage_c",
+            "type": "V",
+            "idx": 4,
+            "did": 5
+        },
+        {
+            "name": "voltage_ab",
+            "type": "V",
+            "idx": 5,
+            "did": 8
+        },
+        {
+            "name": "voltage_bc",
+            "type": "V",
+            "idx": 6,
+            "did": 11
+        },
+        {
+            "name": "voltage_ca",
+            "type": "V",
+            "idx": 7,
+            "did": 12
+        },
+        {
+            "name": "lineVoltage",
+            "type": "V",
+            "idx": 8,
+            "did": 13
+        },
+        {
+            "name": "current_a",
+            "type": "I",
+            "idx": 9,
+            "did": 14
+        },
+        {
+            "name": "current_b",
+            "type": "I",
+            "idx": 10,
+            "did": 15
+        },
+        {
+            "name": "current_c",
+            "type": "I",
+            "idx": 11,
+            "did": 16
+        },
+        {
+            "name": "powerFactor",
+            "type": "#3",
+            "idx": 12,
+            "did": 2
+        },
+        {
+            "name": "frequency_a",
+            "type": "F",
+            "idx": 13,
+            "did": 17
+        },
+        {
+            "name": "frequency_b",
+            "type": "F",
+            "idx": 14,
+            "did": 18
+        },
+        {
+            "name": "frequency_c",
+            "type": "F",
+            "idx": 15,
+            "did": 19
+        },
+        {
+            "name": "frequency",
+            "type": "F",
+            "idx": 16,
+            "did": 20
+        },
+        {
+            "name": "Grid",
+            "type": "P",
+            "idx": 17,
+            "did": 0
+        },
+        {
+            "name": "Grid-",
+            "type": "P",
+            "idx": 18,
+            "did": 1
+        },
+        {
+            "name": "Grid*",
+            "type": "S",
+            "idx": 19,
+            "did": 9
+        },
+        {
+            "name": "reactivePower",
+            "type": "PQ",
+            "idx": 20,
+            "did": 21
+        },
+        {
+            "name": "current",
+            "type": "I",
+            "idx": 21,
+            "did": 6
+        },
+        {
+            "name": "voltage",
+            "type": "V",
+            "idx": 22,
+            "did": 7
+        }
+    ]
+}

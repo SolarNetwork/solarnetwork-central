@@ -50,13 +50,14 @@ import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.util.IntRange;
+import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
 
 /**
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -124,8 +125,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	public LocalizedServiceInfo getLocalizedServiceInfo(Locale locale) {
 		return new BasicCloudDatumStreamLocalizedServiceInfo(
 				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
-				getSettingSpecifiers(), requiresPolling(), supportedPlaceholders(),
-				supportedDataValueWildcardIdentifierLevels(), dataValueIdentifierLevelsSourceIdRange());
+				getSettingSpecifiers(), requiresPolling(), dataValuesRequireDatumStream(),
+				supportedPlaceholders(), supportedDataValueWildcardIdentifierLevels(),
+				dataValueIdentifierLevelsSourceIdRange());
 	}
 
 	/**
@@ -136,6 +138,17 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	protected boolean requiresPolling() {
 		return true;
+	}
+
+	/**
+	 * Get the data values datum stream requirement.
+	 *
+	 * @return {@literal true} if a datum stream is required to work with data
+	 *         values
+	 * @since 1.5
+	 */
+	protected boolean dataValuesRequireDatumStream() {
+		return false;
 	}
 
 	/**
@@ -231,7 +244,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
-	 * Populate a non-empty JSON field value onto a map.
+	 * Populate a non-empty JSON field value onto a map as a string.
 	 *
 	 * @param node
 	 *        the JSON node to read the field from
@@ -247,6 +260,33 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		String s = JsonUtils.parseNonEmptyStringAttribute(node, fieldName);
 		if ( s != null ) {
 			map.put(key, s);
+		}
+	}
+
+	/**
+	 * Populate a number JSON field value onto a map.
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is a number
+	 * @param map
+	 *        the map to populate with the number
+	 * @since 1.5
+	 */
+	public static void populateNumberValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map) {
+		JsonNode field = node.path(fieldName);
+		Number n = null;
+		if ( field.isNumber() ) {
+			n = field.numberValue();
+		} else if ( field.isTextual() ) {
+			n = NumberUtils.narrow(StringUtils.numberValue(field.asText()), 2);
+		}
+		if ( n != null ) {
+			map.put(key, n);
 		}
 	}
 

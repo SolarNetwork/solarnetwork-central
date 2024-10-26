@@ -70,7 +70,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -211,11 +211,24 @@ public class DaoCloudDatumStreamPollService
 					if ( !((e instanceof RestClientException && !(e instanceof HttpClientErrorException))
 							|| t instanceof IOException) ) {
 						// stop processing job if not what appears to be a API IO exception
+						log.info(
+								"Stopping datum stream {} poll task by changing state from {} to {} after error: {}",
+								taskInfo.getId().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
+					} else {
+						// reset back to queued to try again
+						log.info(
+								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
+								taskInfo.getId().ident(), oldState, Queued, e.toString());
+						taskInfo.setState(Queued);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
-					taskDao.updateTask(taskInfo, oldState);
+					if ( !taskDao.updateTask(taskInfo, oldState) ) {
+						log.warn(
+								"Unable to update datum stream {} poll task info with expected state {} with details: {}",
+								taskInfo.getId().ident(), oldState, taskInfo);
+					}
 				} catch ( Exception e2 ) {
 					log.warn("Error updating datum stream {} poll task state after error",
 							taskInfo.getId().ident(), e2);

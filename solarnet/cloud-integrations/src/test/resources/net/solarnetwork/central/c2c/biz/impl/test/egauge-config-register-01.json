@@ -1,0 +1,150 @@
+{
+    "result": {
+        "physical": {
+            "voltage_a": {
+                "dev": "local",
+                "did": 3,
+                "type": "V",
+                "value": "L1"
+            },
+            "voltage_b": {
+                "dev": "local",
+                "did": 4,
+                "type": "V",
+                "value": "L2"
+            },
+            "voltage_c": {
+                "dev": "local",
+                "did": 5,
+                "type": "V",
+                "value": "L3"
+            },
+            "voltage_ab": {
+                "dev": "local",
+                "did": 8,
+                "type": "V",
+                "value": "L12"
+            },
+            "voltage_bc": {
+                "dev": "local",
+                "did": 11,
+                "type": "V",
+                "value": "L23"
+            },
+            "voltage_ca": {
+                "dev": "local",
+                "did": 12,
+                "type": "V",
+                "value": "L31"
+            },
+            "lineVoltage": {
+                "dev": "local",
+                "did": 13,
+                "type": "V",
+                "value": "=($\"voltage_ab\"+$\"voltage_bc\"+$\"voltage_ca\")/3"
+            },
+            "current_a": {
+                "dev": "local",
+                "did": 14,
+                "type": "I",
+                "value": "S1"
+            },
+            "current_b": {
+                "dev": "local",
+                "did": 15,
+                "type": "I",
+                "value": "S2"
+            },
+            "current_c": {
+                "dev": "local",
+                "did": 16,
+                "type": "I",
+                "value": "S3"
+            },
+            "powerFactor": {
+                "dev": "local",
+                "did": 2,
+                "type": "#3",
+                "value": "=abs($\"Grid\"/$\"Grid*\")"
+            },
+            "frequency_a": {
+                "dev": "local",
+                "did": 17,
+                "type": "F",
+                "value": "L1,freq"
+            },
+            "frequency_b": {
+                "dev": "local",
+                "did": 18,
+                "type": "F",
+                "value": "L2,freq"
+            },
+            "frequency_c": {
+                "dev": "local",
+                "did": 19,
+                "type": "F",
+                "value": "L3,freq"
+            },
+            "frequency": {
+                "dev": "local",
+                "did": 20,
+                "type": "F",
+                "value": "=($\"frequency_a\"+$\"frequency_b\"+$\"frequency_c\")/3"
+            },
+            "Grid": {
+                "dev": "local",
+                "did": 0,
+                "type": "P",
+                "value": "S1*L1+S2*L2+S3*L3"
+            },
+            "Grid-": {
+                "dev": "local",
+                "did": 1,
+                "type": "P",
+                "value": "Grid"
+            },
+            "Grid*": {
+                "dev": "local",
+                "did": 9,
+                "type": "S",
+                "value": "Grid"
+            },
+            "reactivePower": {
+                "dev": "local",
+                "did": 21,
+                "type": "PQ",
+                "value": "=VAr($\"Grid\",$\"Grid*\")"
+            },
+            "current": {
+                "dev": "local",
+                "did": 6,
+                "type": "I",
+                "value": "=$\"current_a\"+$\"current_b\"+$\"current_c\""
+            },
+            "voltage": {
+                "dev": "local",
+                "did": 7,
+                "type": "V",
+                "value": "=($\"voltage_a\"+$\"voltage_b\"+$\"voltage_c\")/3"
+            }
+        },
+        "virtual": {
+            "use": {
+                "value": [
+                    {
+                        "op": "+",
+                        "register": "Grid"
+                    }
+                ]
+            },
+            "gen": {
+                "value": [
+                    {
+                        "op": "+",
+                        "register": "Grid-"
+                    }
+                ]
+            }
+        }
+    }
+}

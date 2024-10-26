@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
+import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -53,7 +54,13 @@ public class CloudDatumStreamConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK>,
-		UserRelatedStdIdentifiableConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK> {
+		UserRelatedStdIdentifiableConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK>,
+		UserIdentifiableSystem {
+
+	/**
+	 * A system identifier component included in {@link #systemIdentifier()}.
+	 */
+	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-ds";
 
 	private static final long serialVersionUID = 1899493393926823115L;
 
@@ -191,6 +198,30 @@ public class CloudDatumStreamConfiguration
 		builder.append(isEnabled());
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get a unique identifier based on this configuration.
+	 *
+	 * <p>
+	 * The identifier follows this syntax:
+	 * </p>
+	 *
+	 * <pre>{@code
+	 * USER_ID:c2c-ds:CONFIG_ID
+	 * }</pre>
+	 *
+	 * <p>
+	 * Where {@code USER_ID} is {@link #getUserId()} and {@code CONFIG_ID} is
+	 * {@link #getConfigId()}.
+	 * </p>
+	 *
+	 * @return the system identifier
+	 * @see #CLOUD_INTEGRATION_SYSTEM_IDENTIFIER
+	 */
+	@Override
+	public String systemIdentifier() {
+		return systemIdentifierForComponents(CLOUD_INTEGRATION_SYSTEM_IDENTIFIER, getConfigId());
 	}
 
 	/**

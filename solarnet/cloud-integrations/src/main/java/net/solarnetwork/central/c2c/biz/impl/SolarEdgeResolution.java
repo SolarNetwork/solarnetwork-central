@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static java.time.ZoneOffset.UTC;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -82,7 +80,7 @@ public enum SolarEdgeResolution {
 	 * @return the truncated date
 	 */
 	public Instant truncateDate(Instant date) {
-		return Clock.tick(Clock.fixed(date, UTC), tickDuration).instant();
+		return CloudIntegrationsUtils.truncateDate(date, tickDuration);
 	}
 
 	/**

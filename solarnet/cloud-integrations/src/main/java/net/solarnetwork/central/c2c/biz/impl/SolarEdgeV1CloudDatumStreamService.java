@@ -206,7 +206,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	public static final List<Integer> SUPPORTED_DATA_VALUE_WILDCARD_LEVELS = List.of(2);
 
 	/** The data value identifier levels source ID range. */
-	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(1, 2);
+	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(0, 2);
 
 	/** The maximum length of time to query for data. */
 	public static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);

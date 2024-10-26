@@ -40,7 +40,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -56,6 +56,20 @@ public interface CloudDatumStreamService
 	 * </p>
 	 */
 	String SOURCE_ID_MAP_SETTING = "sourceIdMap";
+
+	/**
+	 * A standard data value filter key for a datum stream ID.
+	 *
+	 * <p>
+	 * Some service implementations require a
+	 * {@link CloudDatumStreamConfiguration} for the
+	 * {@link #dataValues(UserLongCompositePK, Map)} method to function. This
+	 * filter key can be used to provide the ID of the datum stream to use.
+	 * </p>
+	 *
+	 * @since 1.3
+	 */
+	String DATUM_STREAM_ID_FILTER = "datumStreamId";
 
 	/**
 	 * Get a localized collection of the available data value filter criteria.

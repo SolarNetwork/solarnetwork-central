@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.settings.ConfigurableLocalizedServiceInfo;
 import net.solarnetwork.util.IntRange;
 
@@ -29,7 +30,7 @@ import net.solarnetwork.util.IntRange;
  * Localized service information for cloud datum stream services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocalizedServiceInfo {
 
@@ -39,6 +40,28 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 * @return {@literal true} if this service requires polling to acquire data
 	 */
 	boolean isRequiresPolling();
+
+	/**
+	 * Tell if the service requires a {@link CloudDatumStreamConfiguration} for
+	 * the
+	 * {@link CloudDatumStreamService#dataValues(net.solarnetwork.central.domain.UserLongCompositePK, java.util.Map)
+	 * dataValues()} method to function.
+	 *
+	 * <p>
+	 * A cloud datum stream service might require service properties like
+	 * credentials that operate at the cloud datum stream level, rather than the
+	 * cloud integration level. If that is the case this method will return
+	 * {@code true} and the ID of the datum stream configuration to use can be
+	 * provided on the {@link CloudDatumStreamService#DATUM_STREAM_ID_FILTER}
+	 * filter key.
+	 * </p>
+	 *
+	 * @return {@code true} if this service requires a datum stream for the
+	 *         {@link CloudDatumStreamService#dataValues(net.solarnetwork.central.domain.UserLongCompositePK, java.util.Map)
+	 *         dataValues()} method to function
+	 * @since 1.1
+	 */
+	boolean isDataValuesRequireDatumStream();
 
 	/**
 	 * Get a collection of supported placeholder keys.
