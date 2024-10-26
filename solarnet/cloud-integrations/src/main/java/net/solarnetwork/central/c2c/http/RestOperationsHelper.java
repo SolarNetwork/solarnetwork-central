@@ -40,15 +40,16 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.UnknownContentTypeException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
@@ -105,11 +106,15 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 *
 	 * @param <R>
 	 *        the HTTP response type
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the configuration primary key type
 	 * @param <T>
 	 *        the result type
 	 * @param description
 	 *        a description of the operation, for example "List sites"
-	 * @param integration
+	 * @param configuration
 	 *        the integration making the request on behalf of
 	 * @param responseType
 	 *        the HTTP response type
@@ -122,39 +127,76 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 * @throws IllegalArgumentException
 	 *         if {@code integration} is {@literal null}
 	 */
-	public <R, T> T httpGet(String description, CloudIntegrationConfiguration integration,
-			Class<R> responseType, Function<HttpHeaders, URI> setup,
+	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
+			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
-		requireNonNullArgument(integration, "integration");
+		return http(description, HttpMethod.GET, null, configuration, responseType, setup, handler);
+	}
+
+	/**
+	 * Make an HTTP request.
+	 *
+	 * @param <B>
+	 *        the HTTP request body type
+	 * @param <R>
+	 *        the HTTP response type
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the configuration primary key type
+	 * @param <T>
+	 *        the result type
+	 * @param description
+	 *        a description of the operation, for example "List sites"
+	 * @param method
+	 *        the HTTP method
+	 * @param configuration
+	 *        the integration making the request on behalf of
+	 * @param responseType
+	 *        the HTTP response type
+	 * @param setup
+	 *        function to customize the HTTP request headers, for example to
+	 *        populate authorization values
+	 * @param handler
+	 *        function to parse the HTTP response
+	 * @return the parsed response object
+	 * @throws IllegalArgumentException
+	 *         if {@code integration} is {@literal null}
+	 * @since 1.2
+	 */
+	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
+			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
+			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+		requireNonNullArgument(configuration, "configuration");
 		final var headers = new HttpHeaders();
 		final URI uri = setup.apply(headers);
-		final var req = new HttpEntity<Void>(null, headers);
+		final var req = new HttpEntity<B>(body, headers);
 		try {
-			final ResponseEntity<R> res = restOps.exchange(uri, HttpMethod.GET, req, responseType);
+			final ResponseEntity<R> res = restOps.exchange(uri, method, req, responseType);
 			return handler.apply(res);
 		} catch ( ResourceAccessException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of a communication error: {}", description,
-					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.getMessage());
-			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
+			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
 					errorEventTags, format("Communication error: %s", e.getMessage())));
 			throw new RemoteServiceException("%s failed because of a communication error: %s"
 					.formatted(description, e.getMessage()), e);
 		} catch ( RestClientResponseException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because the HTTP status {} was returned.",
-					description, integration.getClass().getSimpleName(), integration.getId().ident(),
+					description, configuration.getClass().getSimpleName(), configuration.getId().ident(),
 					uri, e.getStatusCode());
-			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
+			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
 					errorEventTags, format("Invalid HTTP status returned: %s", e.getStatusCode())));
 			throw new RemoteServiceException("%s failed because an invalid HTTP status was returned: %s"
 					.formatted(description, e.getStatusCode()), e);
 		} catch ( UnknownContentTypeException e ) {
 			log.warn(
 					"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
-					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.getContentType());
-			userEventAppenderBiz.addEvent(integration.getUserId(),
-					eventForConfiguration(integration, errorEventTags,
+			userEventAppenderBiz.addEvent(configuration.getUserId(),
+					eventForConfiguration(configuration, errorEventTags,
 							format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
 			throw new RemoteServiceException(
 					"%s failed because the respones Content-Type is not supported: %s"
@@ -162,17 +204,17 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 					e);
 		} catch ( OAuth2AuthorizationException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}",
-					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.getMessage());
-			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
+			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
 					errorEventTags, format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(description, e.getMessage()), e);
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}",
-					integration.getClass().getSimpleName(), integration.getId().ident(), uri,
+					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.toString(), e);
-			userEventAppenderBiz.addEvent(integration.getUserId(), eventForConfiguration(integration,
+			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
 					errorEventTags, format("Unknown error: %s", e.toString())));
 			throw e;
 		}

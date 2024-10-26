@@ -22,11 +22,11 @@
 
 package net.solarnetwork.central.security.jdbc;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.getTimestampInstant;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdFromSystemIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,6 +49,10 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.util.StringUtils;
+import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.domain.UserStringStringCompositePK;
+import net.solarnetwork.central.security.ClientAccessTokenEntity;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * A JDBC implementation of an {@link OAuth2AuthorizedClientService} that uses a
@@ -76,15 +80,17 @@ import org.springframework.util.StringUtils;
  * )}</pre>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClientService {
+public class JdbcOAuth2AuthorizedClientService
+		implements OAuth2AuthorizedClientService, ClientAccessTokenDao {
 
 	/** The default SQL table name to use. */
 	public static final String DEFAULT_TABLE_NAME = "solarnet.oauth2_authorized_client";
 
 	private static final String LOAD_AUTHORIZED_CLIENT_SQL_TMPL = """
-			SELECT client_registration_id
+			SELECT user_id
+				, client_registration_id
 				, principal_name
 				, access_token_type
 				, access_token_value
@@ -93,6 +99,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 				, access_token_scopes
 				, refresh_token_value
 				, refresh_token_issued_at
+				, created_at
 			FROM %s
 			WHERE user_id = ? AND client_registration_id = ? AND principal_name = ?
 			""";
@@ -109,8 +116,9 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 				, access_token_scopes
 				, refresh_token_value
 				, refresh_token_issued_at
+				, created_at
 			)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			ON CONFLICT (user_id, client_registration_id , principal_name) DO UPDATE
 			SET access_token_type = EXCLUDED.access_token_type
 				, access_token_value = EXCLUDED.access_token_value
@@ -128,6 +136,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 	private final BytesEncryptor encryptor;
 	private final JdbcOperations jdbcOperations;
 	private final RowMapper<OAuth2AuthorizedClient> authorizedClientRowMapper;
+	private final RowMapper<ClientAccessTokenEntity> clientAccessTokenRowMapper;
 	private final String sqlSelect;
 	private final String sqlInsert;
 	private final String sqlDelete;
@@ -170,9 +179,9 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 		requireNonNullArgument(clientRegistrationRepository, "clientRegistrationRepository");
 		requireNonNullArgument(tableName, "tableName");
 
-		OAuth2AuthorizedClientRowMapper authorizedClientRowMapper = new OAuth2AuthorizedClientRowMapper(
+		this.authorizedClientRowMapper = new OAuth2AuthorizedClientRowMapper(
 				clientRegistrationRepository);
-		this.authorizedClientRowMapper = authorizedClientRowMapper;
+		this.clientAccessTokenRowMapper = new ClientAccessTokenEntityRowMapper();
 
 		this.sqlSelect = LOAD_AUTHORIZED_CLIENT_SQL_TMPL.formatted(tableName);
 		this.sqlInsert = SAVE_AUTHORIZED_CLIENT_SQL_TMPL.formatted(tableName);
@@ -195,7 +204,7 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 
 	@Override
 	public void saveAuthorizedClient(OAuth2AuthorizedClient authorizedClient, Authentication principal) {
-		final var sql = new UpsertAuthorizedClient(authorizedClient, principal);
+		final var sql = upsertForClient(authorizedClient, principal);
 		jdbcOperations.update(sql);
 	}
 
@@ -206,7 +215,45 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 			return;
 		}
 		final var sql = new DeleteAuthorizedClient(userId, clientRegistrationId, principalName);
-		this.jdbcOperations.update(sql);
+		jdbcOperations.update(sql);
+	}
+
+	@Override
+	public Class<? extends ClientAccessTokenEntity> getObjectType() {
+		return ClientAccessTokenEntity.class;
+	}
+
+	@Override
+	public UserStringStringCompositePK store(ClientAccessTokenEntity entity) {
+		byte[] refreshTokenValue = null;
+		if ( entity.getRefreshToken() != null ) {
+			refreshTokenValue = encryptor.encrypt(entity.getRefreshToken());
+			entity = entity.clone();
+			entity.setRefreshToken(refreshTokenValue);
+		}
+		final var sql = new UpsertAuthorizedClient(entity);
+		jdbcOperations.update(sql);
+		return entity.getId();
+	}
+
+	@Override
+	public ClientAccessTokenEntity get(UserStringStringCompositePK id) {
+		final var sql = new SelectAuthorizedClient(id.getUserId(), id.getGroupId(), id.getEntityId());
+		List<ClientAccessTokenEntity> result = this.jdbcOperations.query(sql,
+				this.clientAccessTokenRowMapper);
+		return !result.isEmpty() ? result.get(0) : null;
+	}
+
+	@Override
+	public List<ClientAccessTokenEntity> getAll(List<SortDescriptor> sortDescriptors) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void delete(ClientAccessTokenEntity entity) {
+		final var sql = new DeleteAuthorizedClient(entity.getUserId(), entity.getRegistrationId(),
+				entity.getPrincipalName());
+		jdbcOperations.update(sql);
 	}
 
 	private final class SelectAuthorizedClient implements PreparedStatementCreator, SqlProvider {
@@ -239,16 +286,39 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 
 	}
 
+	private UpsertAuthorizedClient upsertForClient(OAuth2AuthorizedClient authorizedClient,
+			Authentication principal) {
+		requireNonNullArgument(authorizedClient, "authorizedClient");
+		requireNonNullArgument(principal, "principal");
+		ClientRegistration clientRegistration = authorizedClient.getClientRegistration();
+		OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
+		OAuth2RefreshToken refreshToken = authorizedClient.getRefreshToken();
+		byte[] refreshTokenValue = null;
+		if ( refreshToken != null ) {
+			refreshTokenValue = encryptor.encrypt(refreshToken.getTokenValue().getBytes(UTF_8));
+		}
+		var entity = new ClientAccessTokenEntity(
+				userIdFromSystemIdentifier(clientRegistration.getRegistrationId()),
+				clientRegistration.getRegistrationId(), principal.getName(), Instant.now());
+		entity.setAccessTokenType(accessToken.getTokenType().getValue());
+		entity.setAccessToken(accessToken.getTokenValue().getBytes(UTF_8));
+		entity.setAccessTokenIssuedAt(accessToken.getIssuedAt());
+		entity.setAccessTokenExpiresAt(accessToken.getExpiresAt());
+		entity.setAccessTokenScopes(accessToken.getScopes());
+		entity.setRefreshToken(refreshTokenValue);
+		if ( refreshToken != null ) {
+			entity.setRefreshTokenIssuedAt(refreshToken.getIssuedAt());
+		}
+		return new UpsertAuthorizedClient(entity);
+	}
+
 	private final class UpsertAuthorizedClient implements PreparedStatementCreator, SqlProvider {
 
-		private final OAuth2AuthorizedClient authorizedClient;
-		private final Authentication principal;
+		private final ClientAccessTokenEntity entity;
 
-		private UpsertAuthorizedClient(OAuth2AuthorizedClient authorizedClient,
-				Authentication principal) {
+		private UpsertAuthorizedClient(ClientAccessTokenEntity entity) {
 			super();
-			this.authorizedClient = requireNonNullArgument(authorizedClient, "authorizedClient");
-			this.principal = requireNonNullArgument(principal, "principal");
+			this.entity = requireNonNullArgument(entity, "entity");
 		}
 
 		@Override
@@ -259,29 +329,21 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 		@Override
 		public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 			final PreparedStatement stmt = con.prepareStatement(getSql());
-			final ClientRegistration clientRegistration = authorizedClient.getClientRegistration();
-			final OAuth2AccessToken accessToken = authorizedClient.getAccessToken();
-			final OAuth2RefreshToken refreshToken = authorizedClient.getRefreshToken();
-			int p = 0;
-			stmt.setObject(++p, userIdFromSystemIdentifier(clientRegistration.getRegistrationId()));
-			stmt.setString(++p, clientRegistration.getRegistrationId());
-			stmt.setString(++p, principal.getName());
-			stmt.setString(++p, accessToken.getTokenType().getValue());
-			stmt.setBytes(++p, accessToken.getTokenValue().getBytes(StandardCharsets.UTF_8));
-			stmt.setTimestamp(++p, Timestamp.from(accessToken.getIssuedAt()));
-			stmt.setTimestamp(++p, Timestamp.from(accessToken.getExpiresAt()));
-			stmt.setString(++p, commaDelimitedStringFromCollection(accessToken.getScopes()));
-			byte[] refreshTokenValue = null;
-			Timestamp refreshTokenIssuedAt = null;
-			if ( refreshToken != null ) {
-				refreshTokenValue = encryptor
-						.encrypt(refreshToken.getTokenValue().getBytes(StandardCharsets.UTF_8));
-				if ( refreshToken.getIssuedAt() != null ) {
-					refreshTokenIssuedAt = Timestamp.from(refreshToken.getIssuedAt());
-				}
+			stmt.setObject(1, entity.getUserId());
+			stmt.setString(2, entity.getRegistrationId());
+			stmt.setString(3, entity.getPrincipalName());
+			stmt.setString(4, entity.getAccessTokenType());
+			stmt.setBytes(5, entity.getAccessToken());
+			stmt.setTimestamp(6, Timestamp.from(entity.getAccessTokenIssuedAt()));
+			stmt.setTimestamp(7, Timestamp.from(entity.getAccessTokenExpiresAt()));
+			stmt.setString(8, commaDelimitedStringFromCollection(entity.getAccessTokenScopes()));
+			Timestamp refreshTokenIssuedAtTs = null;
+			if ( entity.getRefreshTokenIssuedAt() != null ) {
+				refreshTokenIssuedAtTs = Timestamp.from(entity.getRefreshTokenIssuedAt());
 			}
-			stmt.setBytes(++p, refreshTokenValue);
-			stmt.setTimestamp(++p, refreshTokenIssuedAt);
+			stmt.setBytes(9, entity.getRefreshToken());
+			stmt.setTimestamp(10, refreshTokenIssuedAtTs);
+			stmt.setTimestamp(11, Timestamp.from(entity.getCreated()));
 			return stmt;
 		}
 
@@ -332,8 +394,8 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 		}
 
 		@Override
-		public OAuth2AuthorizedClient mapRow(ResultSet rs_, int rowNum) throws SQLException {
-			String clientRegistrationId = rs_.getString(1);
+		public OAuth2AuthorizedClient mapRow(ResultSet rs, int rowNum) throws SQLException {
+			String clientRegistrationId = rs.getString(2);
 			ClientRegistration clientRegistration = this.clientRegistrationRepository
 					.findByRegistrationId(clientRegistrationId);
 			if ( clientRegistration == null ) {
@@ -341,26 +403,53 @@ public class JdbcOAuth2AuthorizedClientService implements OAuth2AuthorizedClient
 						+ clientRegistrationId + "' exists in the data source, "
 						+ "however, it was not found in the ClientRegistrationRepository.");
 			}
-			String principalName = rs_.getString(2);
+			String principalName = rs.getString(3);
 			OAuth2AccessToken.TokenType tokenType = null;
-			if ( OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs_.getString(3)) ) {
+			if ( OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs.getString(4)) ) {
 				tokenType = OAuth2AccessToken.TokenType.BEARER;
 			}
-			String tokenValue = new String(rs_.getBytes(4), StandardCharsets.UTF_8);
-			Instant issuedAt = getTimestampInstant(rs_, 5);
-			Instant expiresAt = getTimestampInstant(rs_, 6);
-			Set<String> scopes = StringUtils.commaDelimitedListToSet(rs_.getString(7));
+			String tokenValue = new String(rs.getBytes(5), UTF_8);
+			Instant issuedAt = getTimestampInstant(rs, 6);
+			Instant expiresAt = getTimestampInstant(rs, 7);
+			Set<String> scopes = StringUtils.commaDelimitedListToSet(rs.getString(8));
 			OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, tokenValue, issuedAt,
 					expiresAt, scopes);
 			OAuth2RefreshToken refreshToken = null;
-			byte[] refreshTokenValue = rs_.getBytes(8);
+			byte[] refreshTokenValue = rs.getBytes(9);
 			if ( refreshTokenValue != null ) {
-				tokenValue = new String(encryptor.decrypt(refreshTokenValue), StandardCharsets.UTF_8);
-				issuedAt = getTimestampInstant(rs_, 9);
+				tokenValue = new String(encryptor.decrypt(refreshTokenValue), UTF_8);
+				issuedAt = getTimestampInstant(rs, 10);
 				refreshToken = new OAuth2RefreshToken(tokenValue, issuedAt);
 			}
 			return new OAuth2AuthorizedClient(clientRegistration, principalName, accessToken,
 					refreshToken);
+		}
+
+	}
+
+	private final class ClientAccessTokenEntityRowMapper implements RowMapper<ClientAccessTokenEntity> {
+
+		@Override
+		public ClientAccessTokenEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+			Long userId = rs.getObject(1, Long.class);
+			String clientRegistrationId = rs.getString(2);
+			String principalName = rs.getString(3);
+			Instant created = getTimestampInstant(rs, 11);
+			var result = new ClientAccessTokenEntity(userId, clientRegistrationId, principalName,
+					created);
+
+			result.setAccessTokenType(rs.getString(4));
+			result.setAccessToken(rs.getBytes(5));
+			result.setAccessTokenIssuedAt(getTimestampInstant(rs, 6));
+			result.setAccessTokenExpiresAt(getTimestampInstant(rs, 7));
+			result.setAccessTokenScopes(StringUtils.commaDelimitedListToSet(rs.getString(8)));
+			byte[] refreshTokenValue = rs.getBytes(9);
+			if ( refreshTokenValue != null ) {
+				result.setRefreshToken(encryptor.decrypt(refreshTokenValue));
+				result.setRefreshTokenIssuedAt(getTimestampInstant(rs, 10));
+			}
+
+			return result;
 		}
 
 	}

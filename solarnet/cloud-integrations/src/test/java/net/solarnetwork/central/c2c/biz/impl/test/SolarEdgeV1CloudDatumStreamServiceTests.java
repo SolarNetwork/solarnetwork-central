@@ -164,11 +164,6 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		return "/%s/%s/%s/%s".formatted(siteId, deviceType.getKey(), componentId, fieldName);
 	}
 
-	private static String placeholderComponentValueRef(SolarEdgeDeviceType deviceType,
-			String fieldName) {
-		return componentValueRef("{siteId}", deviceType, "*", fieldName);
-	}
-
 	@Test
 	public void requestLatest() throws IOException {
 		// GIVEN

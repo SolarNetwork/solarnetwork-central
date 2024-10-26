@@ -11,6 +11,10 @@ app:
   cache.persistence.path: "var/cache"
   c2c:
     cache:
+      egague-device-registers:
+        ttl: 3600
+        heap-max-entries: 1000
+        disk-max-size-mb: 5
       expression-cache:
         tti: 3600
         ttl: 0

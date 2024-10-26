@@ -28,6 +28,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -76,6 +77,7 @@ import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
@@ -94,7 +96,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final TextEncryptor textEncryptor;
 	private final Map<String, CloudIntegrationService> integrationServices;
 	private final Map<String, CloudDatumStreamService> datumStreamServices;
-	private final Map<String, Set<String>> integrationServiceSecureKeys;
+	private final Map<String, Set<String>> serviceSecureKeys;
 
 	private Validator validator;
 
@@ -140,8 +142,13 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.datumStreamServices = integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
 				.collect(toUnmodifiableMap(CloudDatumStreamService::getId, Function.identity()));
-		this.integrationServiceSecureKeys = integrationServices.stream().collect(toUnmodifiableMap(
-				CloudIntegrationService::getId, s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
+
+		// create a map of all services to their corresponding secure keys
+		// we assume here that all integration and datum stream identifiers are globally unique
+		this.serviceSecureKeys = Arrays.asList(integrationServices, datumStreamServices.values())
+				.stream().flatMap(e -> e.stream()).map(SettingSpecifierProvider.class::cast)
+				.collect(toUnmodifiableMap(SettingSpecifierProvider::getSettingUid,
+						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
 
 	}
 
@@ -204,7 +211,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		C config = input.toEntity(id);
 
 		// make sensitive properties
-		config.maskSensitiveInformation(integrationServiceSecureKeys::get, textEncryptor);
+		config.maskSensitiveInformation(serviceSecureKeys::get, textEncryptor);
 
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());

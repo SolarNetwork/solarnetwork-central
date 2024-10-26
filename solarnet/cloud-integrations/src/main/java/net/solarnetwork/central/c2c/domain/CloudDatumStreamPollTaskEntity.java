@@ -40,7 +40,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Cloud datum stream poll task runtime information.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @JsonIgnoreProperties({ "id", "enabled" })
 @JsonPropertyOrder({ "userId", "datumStreamId", "state", "executeAt", "startAt", "message",
@@ -133,29 +133,27 @@ public class CloudDatumStreamPollTaskEntity
 		builder.append("CloudDatumStreamPollTaskEntity{");
 		builder.append("userId=");
 		builder.append(getUserId());
-		builder.append(", ");
-		builder.append("datumStreamId=");
+		builder.append(", datumStreamId=");
 		builder.append(getDatumStreamId());
-		builder.append(", ");
 		if ( state != null ) {
-			builder.append("state=");
+			builder.append(", state=");
 			builder.append(state);
-			builder.append(", ");
 		}
 		if ( executeAt != null ) {
-			builder.append("executeAt=");
+			builder.append(", executeAt=");
 			builder.append(executeAt);
-			builder.append(", ");
 		}
 		if ( startAt != null ) {
-			builder.append("startAt=");
+			builder.append(", startAt=");
 			builder.append(startAt);
-			builder.append(", ");
 		}
 		if ( message != null ) {
-			builder.append("message=");
+			builder.append(", message=");
 			builder.append(message);
-			builder.append(", ");
+		}
+		if ( serviceProps != null ) {
+			builder.append(", serviceProps=");
+			builder.append(serviceProps);
 		}
 		builder.append("}");
 		return builder.toString();

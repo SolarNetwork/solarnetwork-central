@@ -33,8 +33,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
+import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
  * Extension of {@link RestOperationsHelper} with support for SolarEdge style
@@ -70,15 +72,19 @@ public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 	}
 
 	@Override
-	public <R, T> T httpGet(String description, CloudIntegrationConfiguration integration,
-			Class<R> responseType, Function<HttpHeaders, URI> setup,
+	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
+			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
 			Function<ResponseEntity<R>, T> handler) {
-		return super.httpGet(description, integration, responseType, (headers) -> {
-			final var decrypted = integration.clone();
-			decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
-			final String apiKey = decrypted.serviceProperty(API_KEY_SETTING, String.class);
-			if ( apiKey != null ) {
-				headers.add(API_KEY_HEADER, apiKey);
+		return super.httpGet(description, configuration, responseType, (headers) -> {
+			if ( configuration instanceof IdentifiableConfiguration c
+					&& c.hasServiceProperty(API_KEY_SETTING) ) {
+				final var decrypted = configuration.copyWithId(configuration.getId());
+				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
+				final String apiKey = ((IdentifiableConfiguration) decrypted)
+						.serviceProperty(API_KEY_SETTING, String.class);
+				if ( apiKey != null ) {
+					headers.add(API_KEY_HEADER, apiKey);
+				}
 			}
 			return setup.apply(headers);
 		}, handler);
