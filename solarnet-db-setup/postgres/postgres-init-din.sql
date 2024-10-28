@@ -460,7 +460,7 @@ CREATE TABLE solardin.cin_datum_stream_poll_task (
 
 -- index to speed up claim task query
 CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solardin.cin_datum_stream_poll_task
-	(exec_at) INCLUDE (status);
+	(exec_at DESC) INCLUDE (status);
 
 
 /**************************************************************************************************
@@ -510,11 +510,12 @@ BEGIN
 	WHERE status =  CASE NEW.enabled WHEN TRUE THEN 'c' ELSE 'q' END
 	AND user_id = NEW.user_id
 	AND ds_id IN (
-		SELECT id
-		FROM solardin.cin_datum_stream
-		WHERE user_id = NEW.user_id
-		AND int_id = NEW.id
-		AND enabled = TRUE
+		SELECT cds.id
+		FROM solardin.cin_datum_stream cds
+		INNER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.id = cds.map_id
+		WHERE cds.user_id = NEW.user_id
+		AND cdsm.int_id = NEW.id
+		AND cds.enabled = TRUE
 	);
 
 	RETURN NEW;
@@ -545,10 +546,11 @@ BEGIN
 	AND ds_id = NEW.id
 	AND EXISTS (
 		SELECT 1
-		FROM solardin.cin_integration
-		WHERE user_id = NEW.user_id
-		AND id = NEW.int_id
-		AND enabled = TRUE
+		FROM solardin.cin_datum_stream_map cdsm
+		INNER JOIN solardin.cin_integration ci ON ci.id = cdsm.int_id
+		WHERE ci.user_id = NEW.user_id
+		AND cdsm.id = NEW.map_id
+		AND ci.enabled = TRUE
 	);
 
 	RETURN NEW;
