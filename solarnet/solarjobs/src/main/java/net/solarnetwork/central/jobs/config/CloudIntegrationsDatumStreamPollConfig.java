@@ -43,6 +43,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 
 /**
@@ -73,6 +74,10 @@ public class CloudIntegrationsDatumStreamPollConfig implements SolarNetCloudInte
 	@Autowired
 	private DatumWriteOnlyDao datumWriteOnlyDao;
 
+	@Autowired(required = false)
+	@Qualifier("solarflux")
+	private DatumProcessor fluxPublisher;
+
 	@ConfigurationProperties(prefix = "app.c2c.ds-poll.executor")
 	@Qualifier(CLOUD_INTEGRATIONS_POLL)
 	@Bean
@@ -92,6 +97,7 @@ public class CloudIntegrationsDatumStreamPollConfig implements SolarNetCloudInte
 		var service = new DaoCloudDatumStreamPollService(Clock.systemUTC(), userEventAppenderBiz,
 				nodeOwnershipDao, taskDao, datumStreamDao, datumStreamSettingsDao, datumWriteOnlyDao,
 				taskExecutor.getThreadPoolExecutor(), dsMap::get);
+		service.setFluxPublisher(fluxPublisher);
 		return service;
 	}
 

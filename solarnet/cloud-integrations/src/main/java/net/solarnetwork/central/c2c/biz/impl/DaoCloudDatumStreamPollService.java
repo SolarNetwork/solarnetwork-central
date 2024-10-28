@@ -60,7 +60,10 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.datum.biz.DatumProcessor;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
@@ -98,6 +101,7 @@ public class DaoCloudDatumStreamPollService
 	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
 	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
+	private DatumProcessor fluxPublisher;
 
 	/**
 	 * Constructor.
@@ -351,6 +355,7 @@ public class DaoCloudDatumStreamPollService
 			if ( polledDatum != null && !polledDatum.isEmpty() ) {
 				log.debug("Polling for {} found {} datum to import", datumStreamIdent,
 						polledDatum.size());
+				final DatumProcessor fluxPublisher = getFluxPublisher();
 				for ( var datum : polledDatum ) {
 					if ( datum instanceof DatumEntity d ) {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
@@ -360,9 +365,20 @@ public class DaoCloudDatumStreamPollService
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.persist(d);
 						}
+						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
+								&& datum instanceof GeneralNodeDatum nodeDatum ) {
+							fluxPublisher.processDatum(nodeDatum);
+						}
 					} else {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.store(datum);
+						}
+						if ( fluxPublisher != null && datumStreamSettings.isPublishToSolarFlux()
+								&& datum.getKind() == ObjectDatumKind.Node ) {
+							GeneralObjectDatum<?> gd = DatumUtils.convertGeneralDatum(datum);
+							if ( gd instanceof GeneralNodeDatum nodeDatum ) {
+								fluxPublisher.processDatum(nodeDatum);
+							}
 						}
 					}
 					if ( lastDatumDate == null || lastDatumDate.isBefore(datum.getTimestamp()) ) {
@@ -480,6 +496,25 @@ public class DaoCloudDatumStreamPollService
 		this.defaultDatumStreamSettings = (defaultDatumStreamSettings != null
 				? defaultDatumStreamSettings
 				: DEFAULT_DATUM_STREAM_SETTINGS);
+	}
+
+	/**
+	 * Get the SolarFlux publisher.
+	 *
+	 * @return the publisher, or {@literal null}
+	 */
+	public DatumProcessor getFluxPublisher() {
+		return fluxPublisher;
+	}
+
+	/**
+	 * Set the SolarFlux publisher.
+	 *
+	 * @param fluxPublisher
+	 *        the publisher to set
+	 */
+	public void setFluxPublisher(DatumProcessor fluxPublisher) {
+		this.fluxPublisher = fluxPublisher;
 	}
 
 }
