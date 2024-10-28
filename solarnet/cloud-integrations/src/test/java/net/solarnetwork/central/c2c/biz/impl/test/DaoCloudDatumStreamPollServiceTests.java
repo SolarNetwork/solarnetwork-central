@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService.DEFAULT_DATUM_STREAM_SETTINGS;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
@@ -65,6 +66,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -83,7 +85,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link DaoCloudDatumStreamPollService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -105,6 +107,9 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 	@Mock
 	private CloudDatumStreamConfigurationDao datumStreamDao;
+
+	@Mock
+	private CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
 
 	@Mock
 	private DatumWriteOnlyDao datumDao;
@@ -134,7 +139,8 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		var datumStreamServices = Map.of(TEST_DATUM_STREAM_SERVICE_IDENTIFIER, datumStreamService);
 		service = new DaoCloudDatumStreamPollService(clock, userEventAppenderBiz, nodeOwnershipDao,
-				taskDao, datumStreamDao, datumDao, executor, datumStreamServices::get);
+				taskDao, datumStreamDao, datumStreamSettingsDao, datumDao, executor,
+				datumStreamServices::get);
 	}
 
 	@Test
@@ -200,6 +206,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		// look up datum stream associated with task
 		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
 
 		// verify node ownership
 		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
@@ -300,6 +310,10 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 		// look up datum stream associated with task
 		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
 
 		// verify node ownership (returning different user, so not owner)
 		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), -1L, "NZ", UTC,

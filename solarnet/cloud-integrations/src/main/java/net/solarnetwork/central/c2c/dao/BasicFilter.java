@@ -39,11 +39,11 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of cloud integration query filter.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
-		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter {
+		CloudDatumStreamPropertyFilter, CloudDatumStreamPollTaskFilter, CloudDatumStreamSettingsFilter {
 
 	private Long[] integrationIds;
 	private Long[] datumStreamIds;

@@ -35,8 +35,10 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -45,7 +47,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Helper methods for cloud integrations JDBC tests.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CinJdbcTestUtils {
 
@@ -283,7 +285,7 @@ public class CinJdbcTestUtils {
 	}
 
 	/**
-	 * List datum stream configuration rows.
+	 * List datum stream poll task rows.
 	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
@@ -294,6 +296,82 @@ public class CinJdbcTestUtils {
 		List<Map<String, Object>> data = jdbcOps.queryForList(
 				"select * from solardin.cin_datum_stream_poll_task ORDER BY user_id, ds_id");
 		log.debug("solardin.cin_datum_stream_poll_task table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new user settings instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param publishToSolarIn
+	 *        the SolarIn publish mode
+	 * @param publishToSolarFlux
+	 *        the SolarFlux publish mode
+	 * @return the entity
+	 * @since 1.2
+	 */
+	public static UserSettingsEntity newUserSettingsEntity(Long userId, boolean publishToSolarIn,
+			boolean publishToSolarFlux) {
+		UserSettingsEntity conf = new UserSettingsEntity(userId, Instant.now());
+		conf.setPublishToSolarIn(publishToSolarIn);
+		conf.setPublishToSolarFlux(publishToSolarFlux);
+		return conf;
+	}
+
+	/**
+	 * List user settings rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 * @since 1.2
+	 */
+	public static List<Map<String, Object>> allUserSettingsEntityData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.cin_user_settings ORDER BY user_id");
+		log.debug("solardin.cin_user_settings table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
+	}
+
+	/**
+	 * Create a new datum stream settings instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param datumStreamId
+	 *        the datum stream ID
+	 * @param publishToSolarIn
+	 *        the SolarIn publish mode
+	 * @param publishToSolarFlux
+	 *        the SolarFlux publish mode
+	 * @return the entity
+	 * @since 1.2
+	 */
+	public static CloudDatumStreamSettingsEntity newCloudDatumStreamSettingsEntity(Long userId,
+			Long datumStreamId, boolean publishToSolarIn, boolean publishToSolarFlux) {
+		CloudDatumStreamSettingsEntity conf = new CloudDatumStreamSettingsEntity(userId, datumStreamId,
+				Instant.now());
+		conf.setPublishToSolarIn(publishToSolarIn);
+		conf.setPublishToSolarFlux(publishToSolarFlux);
+		return conf;
+	}
+
+	/**
+	 * List datum stream settings rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 * @since 1.2
+	 */
+	public static List<Map<String, Object>> allCloudDatumStreamSettingsEntityData(
+			JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solardin.cin_datum_stream_settings ORDER BY user_id");
+		log.debug("solardin.cin_datum_stream_settings table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;
 	}

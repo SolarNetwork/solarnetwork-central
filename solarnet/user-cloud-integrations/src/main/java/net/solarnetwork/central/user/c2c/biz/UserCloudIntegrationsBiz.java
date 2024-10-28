@@ -35,14 +35,17 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
@@ -51,7 +54,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -78,6 +81,35 @@ public interface UserCloudIntegrationsBiz {
 	 * @return the datum stream service, or {@literal null} if not available
 	 */
 	CloudDatumStreamService datumStreamService(String identifier);
+
+	/**
+	 * Get the user-level settings.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @return the settings ,or {@literal null} if none exist
+	 * @since 1.3
+	 */
+	UserSettingsEntity settingsForUser(Long userId);
+
+	/**
+	 * Save user-level settings.
+	 *
+	 * @param userId
+	 *        the ID of the user to save the settings for
+	 * @param input
+	 *        the settings to save
+	 * @return the saved settings
+	 */
+	UserSettingsEntity saveSettings(Long userId, UserSettingsEntityInput input);
+
+	/**
+	 * Delete user-level settings.
+	 *
+	 * @param userId
+	 *        the ID of the user to delete the settings for
+	 */
+	void deleteSettings(Long userId);
 
 	/**
 	 * Get a list of all available cloud integration configurations for a given
@@ -298,5 +330,14 @@ public interface UserCloudIntegrationsBiz {
 	 *        the primary key of the entity to delete
 	 */
 	void deleteDatumStreamPollTask(UserLongCompositePK id);
+
+	/**
+	 * Get the default datum stream settings, if no stream-level or user-level
+	 * settings are available.
+	 *
+	 * @return the default cloud datum stream settings
+	 * @since 1.3
+	 */
+	CloudDatumStreamSettings defaultDatumStreamSettings();
 
 }

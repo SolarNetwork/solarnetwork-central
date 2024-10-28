@@ -35,14 +35,16 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
 import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
 
 /**
  * Configuration for user cloud integrations services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -64,6 +66,12 @@ public class UserCloudIntegrationsBizConfig {
 	private CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
 
 	@Autowired
+	private UserSettingsEntityDao userSettingsDao;
+
+	@Autowired
+	private CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
+
+	@Autowired
 	private Collection<CloudIntegrationService> integrationServices;
 
 	@Qualifier(CLOUD_INTEGRATIONS)
@@ -72,9 +80,9 @@ public class UserCloudIntegrationsBizConfig {
 
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
-		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao,
-				datumStreamMappingDao, datumStreamPropertyDao, datumStreamPollTaskDao, textEncryptor,
-				integrationServices);
+		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(userSettingsDao,
+				integrationDao, datumStreamDao, datumStreamSettingsDao, datumStreamMappingDao,
+				datumStreamPropertyDao, datumStreamPollTaskDao, textEncryptor, integrationServices);
 		return biz;
 	}
 

@@ -52,9 +52,12 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
@@ -70,13 +73,17 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
 
 	/** The {@code shutdownMaxWait} property default value: 1 minute. */
 	public static final Duration DEFAULT_SHUTDOWN_MAX_WAIT = Duration.ofMinutes(1);
+
+	/** The {@code defaultDatumStreamSettings} default value. */
+	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
+			true, false);
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -85,10 +92,12 @@ public class DaoCloudDatumStreamPollService
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private final CloudDatumStreamPollTaskDao taskDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
+	private final CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
 	private final DatumWriteOnlyDao datumDao;
 	private final ExecutorService executorService;
 	private final Function<String, CloudDatumStreamService> datumStreamServiceProvider;
 	private Duration shutdownMaxWait = DEFAULT_SHUTDOWN_MAX_WAIT;
+	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
 
 	/**
 	 * Constructor.
@@ -103,6 +112,8 @@ public class DaoCloudDatumStreamPollService
 	 *        the task DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamSettingsDao
+	 *        the datum stream settings DAO
 	 * @param datumDao
 	 *        the datum DAO
 	 * @param executor
@@ -116,7 +127,8 @@ public class DaoCloudDatumStreamPollService
 	 */
 	public DaoCloudDatumStreamPollService(Clock clock, UserEventAppenderBiz userEventAppenderBiz,
 			SolarNodeOwnershipDao nodeOwnershipDao, CloudDatumStreamPollTaskDao taskDao,
-			CloudDatumStreamConfigurationDao datumStreamDao, DatumWriteOnlyDao datumDao,
+			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao, DatumWriteOnlyDao datumDao,
 			ExecutorService executor,
 			Function<String, CloudDatumStreamService> datumStreamServiceProvider) {
 		super();
@@ -125,6 +137,8 @@ public class DaoCloudDatumStreamPollService
 		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumStreamSettingsDao = requireNonNullArgument(datumStreamSettingsDao,
+				"datumStreamSettingsDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.executorService = requireNonNullArgument(executor, "executor");
 		this.datumStreamServiceProvider = requireNonNullArgument(datumStreamServiceProvider,
@@ -247,6 +261,9 @@ public class DaoCloudDatumStreamPollService
 				return taskInfo;
 			}
 
+			final CloudDatumStreamSettings datumStreamSettings = datumStreamSettingsDao.resolveSettings(
+					datumStream.getUserId(), datumStream.getConfigId(), defaultDatumStreamSettings);
+
 			final String datumStreamIdent = datumStream.getId().ident();
 
 			if ( !datumStream.isFullyConfigured() ) {
@@ -336,11 +353,17 @@ public class DaoCloudDatumStreamPollService
 						polledDatum.size());
 				for ( var datum : polledDatum ) {
 					if ( datum instanceof DatumEntity d ) {
-						datumDao.store(d);
+						if ( datumStreamSettings.isPublishToSolarIn() ) {
+							datumDao.store(d);
+						}
 					} else if ( datum instanceof GeneralObjectDatum<?> d ) {
-						datumDao.persist(d);
+						if ( datumStreamSettings.isPublishToSolarIn() ) {
+							datumDao.persist(d);
+						}
 					} else {
-						datumDao.store(datum);
+						if ( datumStreamSettings.isPublishToSolarIn() ) {
+							datumDao.store(datum);
+						}
 					}
 					if ( lastDatumDate == null || lastDatumDate.isBefore(datum.getTimestamp()) ) {
 						lastDatumDate = datum.getTimestamp();
@@ -432,6 +455,31 @@ public class DaoCloudDatumStreamPollService
 	 */
 	public final void setShutdownMaxWait(Duration shutdownMaxWait) {
 		this.shutdownMaxWait = (shutdownMaxWait != null ? shutdownMaxWait : DEFAULT_SHUTDOWN_MAX_WAIT);
+	}
+
+	/**
+	 * Get the default datum stream settings.
+	 *
+	 * @return the settings, never {@literal null}
+	 * @since 1.3
+	 */
+	public final CloudDatumStreamSettings getDefaultDatumStreamSettings() {
+		return defaultDatumStreamSettings;
+	}
+
+	/**
+	 * Set the default datum stream settings.
+	 *
+	 * @param defaultDatumStreamSettings
+	 *        the settings to set; if {@code null} then
+	 *        {@link #DEFAULT_DATUM_STREAM_SETTINGS} will be used
+	 * @since 1.3
+	 */
+	public final void setDefaultDatumStreamSettings(
+			CloudDatumStreamSettings defaultDatumStreamSettings) {
+		this.defaultDatumStreamSettings = (defaultDatumStreamSettings != null
+				? defaultDatumStreamSettings
+				: DEFAULT_DATUM_STREAM_SETTINGS);
 	}
 
 }

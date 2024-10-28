@@ -62,6 +62,16 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match read methods given a user ID.
+	 *
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.*ForUser(..)) && args(userId,..)")
+	public void readForUserId(Long userId) {
+	}
+
+	/**
 	 * Match list methods given a user-related identifier.
 	 *
 	 * @param userKey
@@ -112,6 +122,16 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
+	 * Match save methods given a user ID.
+	 *
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.save*(..)) && args(userId,..)")
+	public void saveEntityForUserId(Long userId) {
+	}
+
+	/**
 	 * Match delete methods given an entity.
 	 *
 	 * @param userKey
@@ -121,9 +141,24 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	public void deleteEntityForUserKey(UserIdRelated userKey) {
 	}
 
+	/**
+	 * Match delete methods given a user ID.
+	 *
+	 * @param userId
+	 *        the user ID
+	 */
+	@Pointcut("execution(* net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz.delete*(..)) && args(userId,..)")
+	public void deleteEntityForUserId(Long userId) {
+	}
+
 	@Before("readForUserKey(userKey)")
 	public void userKeyReadAccessCheck(UserIdRelated userKey) {
 		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
+	}
+
+	@Before("readForUserId(userId)")
+	public void userIdReadAccessCheck(Long userId) {
+		requireUserReadAccess(userId);
 	}
 
 	@Before("listForUserId(userId)")
@@ -146,6 +181,11 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
+	@Before("saveEntityForUserId(userId)")
+	public void saveEntityForUserAccessCheck(Long userId) {
+		requireUserWriteAccess(userId);
+	}
+
 	@Before("updateEntityForUserKey(userKey)")
 	public void updateEntityAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
@@ -154,6 +194,11 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	@Before("deleteEntityForUserKey(userKey)")
 	public void deleteEntityAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
+	}
+
+	@Before("deleteEntityForUserId(userId)")
+	public void userIdDeleteAccessCheck(Long userId) {
+		requireUserWriteAccess(userId);
 	}
 
 }
