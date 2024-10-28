@@ -35,7 +35,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud integration service.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudIntegrationService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -64,6 +64,13 @@ public interface CloudIntegrationService
 	 * @since 1.1
 	 */
 	String BASE_URL_SETTING = "baseUrl";
+
+	/**
+	 * The audit service name for content processed (bytes).
+	 *
+	 * @since 1.2
+	 */
+	String CONTENT_PROCESSED_AUDIT_SERVICE = "ccio";
 
 	/**
 	 * Get a mapping of "well known" service URIs.

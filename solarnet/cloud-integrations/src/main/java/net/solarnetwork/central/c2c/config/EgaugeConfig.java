@@ -42,6 +42,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -61,7 +62,7 @@ import net.solarnetwork.central.support.CacheSettings;
  * Configuration for the eGauge cloud integration services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -111,6 +112,9 @@ public class EgaugeConfig {
 	@Autowired
 	private CacheManager cacheManager;
 
+	@Autowired(required = false)
+	private UserServiceAuditor userServiceAuditor;
+
 	@Bean
 	@Qualifier(EGAUGE_DEVICE_REGISTERS)
 	@ConfigurationProperties(prefix = "app.c2c.cache.egague-device-registers")
@@ -151,6 +155,7 @@ public class EgaugeConfig {
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDeviceRegistersCache(deviceRegistersCache);
 
 		return service;
@@ -167,6 +172,8 @@ public class EgaugeConfig {
 		msgSource.setBasenames(EgaugeCloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
 
 		return service;
 	}

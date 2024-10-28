@@ -34,6 +34,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -50,7 +51,7 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
  * Configuration for the SolrevView cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -84,6 +85,9 @@ public class SolrenViewConfig {
 	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
+	@Autowired(required = false)
+	private UserServiceAuditor userServiceAuditor;
+
 	@Bean
 	@Qualifier(SOLRENVIEW)
 	public CloudDatumStreamService solrenViewCloudDatumStreamService() {
@@ -96,6 +100,8 @@ public class SolrenViewConfig {
 		msgSource.setBasenames(SolrenViewCloudDatumStreamService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
 
 		return service;
 	}
@@ -111,6 +117,8 @@ public class SolrenViewConfig {
 		msgSource.setBasenames(SolrenViewCloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
 
 		return service;
 	}

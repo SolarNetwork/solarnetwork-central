@@ -43,16 +43,10 @@ import net.solarnetwork.util.StatTracker;
  * potential to drop some count values if the service is restarted.
  * </p>
  * 
- * <p>
- * The fact that this implementation extends {@link JdbcNodeServiceAuditor} is a
- * convenience only. All references to "nodes" in this implementation can be
- * thought of as "users".
- * </p>
- * 
  * @author matt
  * @version 1.0
  */
-public class JdbcUserServiceAuditor extends JdbcNodeServiceAuditor implements UserServiceAuditor {
+public class JdbcUserServiceAuditor extends BaseJdbcDatumIdServiceAuditor implements UserServiceAuditor {
 
 	/**
 	 * The default value for the {@code nodeServiceIncrementSql} property.
@@ -89,12 +83,25 @@ public class JdbcUserServiceAuditor extends JdbcNodeServiceAuditor implements Us
 			ConcurrentMap<DatumId, AtomicInteger> userServiceCounters, Clock clock,
 			StatTracker statCounter) {
 		super(dataSource, userServiceCounters, clock, statCounter);
-		setNodeServiceIncrementSql(DEFAULT_USER_SERVICE_INCREMENT_SQL);
+		setServiceIncrementSql(DEFAULT_USER_SERVICE_INCREMENT_SQL);
+	}
+
+	@Override
+	public Clock getAuditClock() {
+		return clock;
 	}
 
 	@Override
 	public void auditUserService(Long userId, String service, int count) {
-		auditNodeService(userId, service, count);
+		if ( count == 0 ) {
+			return;
+		}
+		addServiceCount(DatumId.nodeId(userId, service, clock.instant()), count);
+	}
+
+	@Override
+	public String getPingTestName() {
+		return "JDBC User Service Auditor";
 	}
 
 }

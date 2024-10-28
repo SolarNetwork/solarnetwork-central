@@ -47,7 +47,7 @@ import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
  * HTTP client configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class HttpClientConfig {

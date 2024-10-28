@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.List;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceInfoProvider;
@@ -35,7 +36,7 @@ import net.solarnetwork.settings.support.BaseSettingsSpecifierLocalizedServiceIn
  * cloud integration services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseCloudIntegrationsIdentifiableService
 		extends BaseSettingsSpecifierLocalizedServiceInfoProvider<String>
@@ -52,6 +53,9 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 
 	/** The service settings. */
 	protected final List<SettingSpecifier> settings;
+
+	/** A user service auditor. */
+	protected UserServiceAuditor userServiceAuditor;
 
 	/**
 	 * Constructor.
@@ -87,6 +91,27 @@ public abstract class BaseCloudIntegrationsIdentifiableService
 	@Override
 	public final List<SettingSpecifier> getSettingSpecifiers() {
 		return settings;
+	}
+
+	/**
+	 * Get the user service auditor.
+	 *
+	 * @return the auditor, or {@literal null}
+	 * @since 1.1
+	 */
+	public UserServiceAuditor getUserServiceAuditor() {
+		return userServiceAuditor;
+	}
+
+	/**
+	 * Set the user service auditor.
+	 *
+	 * @param userServiceAuditor
+	 *        the auditor to set, or {@literal null}
+	 * @since 1.1
+	 */
+	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
+		this.userServiceAuditor = userServiceAuditor;
 	}
 
 }

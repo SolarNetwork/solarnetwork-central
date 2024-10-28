@@ -27,6 +27,7 @@ import java.util.List;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -41,7 +42,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseRestOperationsCloudDatumStreamService extends BaseCloudDatumStreamService {
 
@@ -87,6 +88,12 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
+	}
+
+	@Override
+	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
+		super.setUserServiceAuditor(userServiceAuditor);
+		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
 	}
 
 }
