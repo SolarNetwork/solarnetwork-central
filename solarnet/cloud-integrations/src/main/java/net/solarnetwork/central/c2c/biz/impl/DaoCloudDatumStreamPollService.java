@@ -239,6 +239,11 @@ public class DaoCloudDatumStreamPollService
 								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
 								taskInfo.getId().ident(), oldState, Queued, e.toString());
 						taskInfo.setState(Queued);
+						if ( Duration.between(taskInfo.getExecuteAt(), clock.instant())
+								.getSeconds() < 60 ) {
+							// bump date into future by 1 minute so we do not immediately try to process again
+							taskInfo.setExecuteAt(clock.instant().plusSeconds(60));
+						}
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
