@@ -76,7 +76,7 @@ public class ClientAccessTokenEntity
 	 *        the user ID
 	 * @param registrationId
 	 *        the registration ID
-	 * @param principaln
+	 * @param principalName
 	 *        name the principal name
 	 * @param created
 	 *        the creation date

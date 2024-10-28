@@ -50,10 +50,8 @@ public class CloudDatumStreamSettingsEntity
 	/**
 	 * Constructor.
 	 *
-	 * @param userId
-	 *        the user ID
-	 * @param dataSourceId
-	 *        the data source ID
+	 * @param id
+	 *        the primary key
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException

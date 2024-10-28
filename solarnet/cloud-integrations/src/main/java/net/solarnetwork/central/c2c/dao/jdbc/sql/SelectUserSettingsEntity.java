@@ -50,8 +50,8 @@ public class SelectUserSettingsEntity implements PreparedStatementCreator, SqlPr
 	/**
 	 * Constructor.
 	 *
-	 * @param filter
-	 *        the filter
+	 * @param userId
+	 *        the user ID
 	 */
 	public SelectUserSettingsEntity(Long userId) {
 		super();

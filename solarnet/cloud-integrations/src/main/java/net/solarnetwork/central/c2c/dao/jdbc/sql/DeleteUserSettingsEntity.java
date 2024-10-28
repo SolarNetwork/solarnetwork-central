@@ -48,8 +48,8 @@ public class DeleteUserSettingsEntity implements PreparedStatementCreator, SqlPr
 	/**
 	 * Constructor.
 	 *
-	 * @param filter
-	 *        the filter
+	 * @param userId
+	 *        the user ID
 	 */
 	public DeleteUserSettingsEntity(Long userId) {
 		super();
