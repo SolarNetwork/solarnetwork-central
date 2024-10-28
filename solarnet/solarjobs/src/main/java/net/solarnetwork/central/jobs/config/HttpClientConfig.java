@@ -23,7 +23,8 @@
 package net.solarnetwork.central.jobs.config;
 
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -39,6 +40,7 @@ import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+import net.solarnetwork.central.web.support.ContentLengthTrackingClientHttpRequestInterceptor;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
@@ -170,7 +172,10 @@ public class HttpClientConfig {
 	@Profile("!http-trace")
 	@Bean
 	public RestTemplate restTemplate(ClientHttpRequestFactory reqFactory) {
-		return new RestTemplate(reqFactory);
+		ThreadLocal<AtomicLong> tl = ThreadLocal.withInitial(AtomicLong::new);
+		RestTemplate ops = new RestTemplate(reqFactory);
+		ops.setInterceptors(List.of(new ContentLengthTrackingClientHttpRequestInterceptor(tl)));
+		return ops;
 	}
 
 	/**
@@ -183,8 +188,10 @@ public class HttpClientConfig {
 	@Profile("http-trace")
 	@Bean
 	public RestTemplate testingRestTemplate(ClientHttpRequestFactory reqFactory) {
+		ThreadLocal<AtomicLong> tl = ThreadLocal.withInitial(AtomicLong::new);
 		RestTemplate debugTemplate = new RestTemplate(new BufferingClientHttpRequestFactory(reqFactory));
-		debugTemplate.setInterceptors(Arrays.asList(new LoggingHttpRequestInterceptor()));
+		debugTemplate.setInterceptors(List.of(new ContentLengthTrackingClientHttpRequestInterceptor(tl),
+				new LoggingHttpRequestInterceptor()));
 		return debugTemplate;
 	}
 
