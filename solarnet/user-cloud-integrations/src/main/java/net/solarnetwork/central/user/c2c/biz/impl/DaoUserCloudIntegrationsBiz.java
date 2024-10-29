@@ -30,11 +30,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
@@ -82,6 +85,7 @@ import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.settings.SettingSpecifierProvider;
@@ -159,12 +163,16 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		this.datumStreamPollTaskDao = requireNonNullArgument(datumStreamPollTaskDao,
 				"datumStreamPollTaskDao");
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
-		this.integrationServices = requireNonNullArgument(integrationServices, "integrationServices")
-				.stream()
-				.collect(toUnmodifiableMap(CloudIntegrationService::getId, Function.identity()));
-		this.datumStreamServices = integrationServices.stream()
+		this.integrationServices = Collections
+				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
+						.stream().sorted(Identity.sortByIdentity())
+						.collect(Collectors.toMap(CloudIntegrationService::getId, Function.identity(),
+								(l, r) -> l, LinkedHashMap::new)));
+		this.datumStreamServices = Collections.unmodifiableMap(integrationServices.stream()
 				.flatMap(s -> StreamSupport.stream(s.datumStreamServices().spliterator(), false))
-				.collect(toUnmodifiableMap(CloudDatumStreamService::getId, Function.identity()));
+				.sorted(Identity.sortByIdentity())
+				.collect(Collectors.toMap(CloudDatumStreamService::getId, Function.identity(),
+						(l, r) -> l, LinkedHashMap::new)));
 
 		// create a map of all services to their corresponding secure keys
 		// we assume here that all integration and datum stream identifiers are globally unique

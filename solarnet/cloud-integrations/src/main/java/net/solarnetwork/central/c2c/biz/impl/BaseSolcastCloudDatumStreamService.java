@@ -1,0 +1,176 @@
+/* ==================================================================
+ * BaseSolcastCloudDatumStreamService.java - 30/10/2024 5:25:39 am
+ *
+ * Copyright 2024 SolarNetwork.net Dev Team
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA
+ * ==================================================================
+ */
+
+package net.solarnetwork.central.c2c.biz.impl;
+
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Clock;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.web.client.RestOperations;
+import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.settings.MultiValueSettingSpecifier;
+import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
+
+/**
+ * Abstract base class for Solcast implementations of
+ * {@link CloudDatumStreamService}.
+ *
+ * @author matt
+ * @version 1.0
+ */
+public abstract class BaseSolcastCloudDatumStreamService
+		extends BaseRestOperationsCloudDatumStreamService {
+
+	/** The setting for latitude. */
+	public static final String LATITUDE_SETTING = "lat";
+
+	/** The setting for longitude. */
+	public static final String LONGITUDE_SETTING = "lon";
+
+	/** The setting for desired parameters. */
+	public static final String PARAMETERS_SETTING = "parameters";
+
+	/** The setting for azimuth. */
+	public static final String AZIMUTH_SETTING = "azimuth";
+
+	/** The setting for tilt. */
+	public static final String TILT_SETTING = "tilt";
+
+	/** The setting for array type. */
+	public static final String ARRAY_TYPE_SETTING = "arrayType";
+
+	/** The setting for resolution. */
+	public static final String RESOLUTION_SETTING = "resolution";
+
+	/** The {@code parameters} default value. */
+	public static final String DEFAULT_PARAMETERS = "air_temp,dni,ghi";
+
+	/** The {@code resolution} default value. */
+	public static final Duration DEFAULT_RESOLUTION = Duration.ofMinutes(30);
+
+	/** The Solcast supported resolutions. */
+	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
+	static {
+		SUPPORTED_RESOLUTIONS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+		// @formatter:off
+				Duration.ofMinutes(5),
+				Duration.ofMinutes(10),
+				Duration.ofMinutes(15),
+				Duration.ofMinutes(20),
+				Duration.ofMinutes(30),
+				Duration.ofMinutes(60)
+		// @formatter:on
+		)));
+	}
+
+	/** Setting specifier for the {@link #ARRAY_TYPE_SETTING} setting. */
+	public static final MultiValueSettingSpecifier ARRAY_TYPE_SETTTING_SPECIFIER;
+	static {
+		BasicMultiValueSettingSpecifier arrayTypeSpec = new BasicMultiValueSettingSpecifier(
+				ARRAY_TYPE_SETTING, "");
+		Map<String, String> arrayTypeValues = new LinkedHashMap<>(3);
+		arrayTypeValues.put("", "");
+		arrayTypeValues.put("fixed", "Fixed");
+		arrayTypeValues.put("horizontal_single_axis", "Horizontal Single Axis");
+		arrayTypeSpec.setValueTitles(arrayTypeValues);
+		ARRAY_TYPE_SETTTING_SPECIFIER = arrayTypeSpec;
+	}
+
+	/** Setting specifier for the {@link #RESOLUTION_SETTING} setting. */
+	public static final MultiValueSettingSpecifier RESOLUTION_SETTING_SPECIFIER;
+	static {
+		BasicMultiValueSettingSpecifier resolutionSpec = new BasicMultiValueSettingSpecifier(
+				RESOLUTION_SETTING, DEFAULT_RESOLUTION.toString());
+		Map<String, String> resolutionMenuValues = new LinkedHashMap<>(SUPPORTED_RESOLUTIONS.size());
+		for ( Duration d : SUPPORTED_RESOLUTIONS ) {
+			String key = d.toString();
+			resolutionMenuValues.put(key, (d.getSeconds() / 60) + " minute");
+		}
+		resolutionSpec.setValueTitles(resolutionMenuValues);
+		RESOLUTION_SETTING_SPECIFIER = resolutionSpec;
+
+	}
+
+	/** The clock. */
+	protected final Clock clock;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param serviceIdentifier
+	 *        the service identifier
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param expressionService
+	 *        the expression service
+	 * @param integrationDao
+	 *        the integration DAO
+	 * @param datumStreamDao
+	 *        the datum stream DAO
+	 * @param datumStreamMappingDao
+	 *        the datum stream mapping DAO
+	 * @param datumStreamPropertyDao
+	 *        the datum stream property DAO
+	 * @param restOps
+	 *        the REST operations
+	 * @param restOpsLogger
+	 *        the logger to use with the REST operations
+	 * @param clock
+	 *        the clock to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public BaseSolcastCloudDatumStreamService(String serviceIdentifier, String displayName,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			CloudIntegrationsExpressionService expressionService,
+			CloudIntegrationConfigurationDao integrationDao,
+			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
+			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
+			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
+		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
+				new SolcastRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
+						HTTP_ERROR_TAGS, encryptor,
+						integrationServiceIdentifier -> SolcastCloudIntegrationService.SECURE_SETTINGS));
+		this.clock = requireNonNullArgument(clock, "clock");
+	}
+
+}

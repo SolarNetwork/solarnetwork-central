@@ -34,15 +34,62 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.TextFieldSettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#BASE_URL_SETTING}.
+	 *
+	 * @since 1.2
+	 */
+	public static final TextFieldSettingSpecifier BASE_URL_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			BASE_URL_SETTING, null);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#USERNAME_SETTING}.
+	 *
+	 * @since 1.2
+	 */
+	public static final TextFieldSettingSpecifier USERNAME_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			USERNAME_SETTING, null);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#PASSWORD_SETTING}.
+	 *
+	 * @since 1.2
+	 */
+	public static final TextFieldSettingSpecifier PASSWORD_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			PASSWORD_SETTING, null, true);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#OAUTH_CLIENT_ID_SETTING}.
+	 *
+	 * @since 1.2
+	 */
+	public static final TextFieldSettingSpecifier OAUTH_CLIENT_ID_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OAUTH_CLIENT_ID_SETTING, null);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#OAUTH_CLIENT_SECRET_SETTING_SPECIFIER}.
+	 *
+	 * @since 1.2
+	 */
+	public static final TextFieldSettingSpecifier OAUTH_CLIENT_SECRET_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OAUTH_CLIENT_SECRET_SETTING, null, true);
 
 	/** The supported datum stream services. */
 	protected final Collection<CloudDatumStreamService> datumStreamServices;

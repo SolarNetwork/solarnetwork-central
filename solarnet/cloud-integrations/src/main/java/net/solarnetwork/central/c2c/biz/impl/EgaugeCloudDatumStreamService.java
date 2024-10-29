@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.SECS_PER_HOUR;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeCloudIntegrationService.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
@@ -134,8 +132,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		// @formatter:off
 		SETTINGS = List.of(
 				new BasicTextFieldSettingSpecifier(DEVICE_ID_FILTER, null),
-				new BasicTextFieldSettingSpecifier(USERNAME_SETTING, null),
-				new BasicTextFieldSettingSpecifier(PASSWORD_SETTING, null, true),
+				BaseCloudIntegrationService.USERNAME_SETTING_SPECIFIER,
+				BaseCloudIntegrationService.PASSWORD_SETTING_SPECIFIER,
 				new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null)
 				);
 		// @formatter:on

@@ -40,7 +40,6 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
@@ -100,7 +99,7 @@ public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIn
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
 		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(BASE_URL_SETTING, null));
+		settings.add(BASE_URL_SETTING_SPECIFIER);
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 
