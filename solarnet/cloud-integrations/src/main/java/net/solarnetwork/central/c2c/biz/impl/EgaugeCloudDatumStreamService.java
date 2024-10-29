@@ -113,7 +113,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -356,17 +356,12 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				deviceId, valueProps);
 		final String queryRegisters = registerQueryParam(refsByRegisterName.values());
 
-		final List<GeneralDatum> resultDatum = new ArrayList<>(16);
-
-		List<GeneralDatum> datum = restOpsHelper.httpGet("List register data", datumStream,
+		final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List register data", datumStream,
 				JsonNode.class,
 				req -> fromUriString(BASE_URI_TEMPLATE).path(REGISTER_URL_PATH).queryParam("raw")
 						.queryParam("virtual", "value").queryParam("reg", queryRegisters)
 						.queryParam("time", queryTimeRange).buildAndExpand(deviceId).toUri(),
 				res -> parseDatum(res.getBody(), datumStream, deviceId, refsByRegisterName));
-		if ( datum != null ) {
-			resultDatum.addAll(datum);
-		}
 
 		// evaluate expressions on final datum
 		if ( !exprProps.isEmpty() ) {
@@ -704,6 +699,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 							datumVal = n.subtract(n1).multiply(type.getQuantum()).divide(deltaSecs,
 									RoundingMode.DOWN);
 						}
+						datumVal = (BigDecimal) property.applyValueTransforms(datumVal);
 						samples.putSampleValue(property.getPropertyType(), property.getPropertyName(),
 								datumVal);
 					}
