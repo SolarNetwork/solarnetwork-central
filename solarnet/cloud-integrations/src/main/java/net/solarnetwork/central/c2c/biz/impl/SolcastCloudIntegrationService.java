@@ -57,11 +57,14 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.solcast";
 
+	/** An API key setting name. */
+	public static final String API_KEY_SETTING = "apiKey";
+
 	/** The base URL to the Solcast API. */
 	public static final URI BASE_URI = URI.create("https://api.solcast.com.au");
 
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
+	/** The URL path for life radiation and weather data. */
+	public static final String LIVE_RADIATION_URL_PATH = "/data/live/radiation_and_weather";
 
 	/** The latitude URL query parameter name. */
 	public static final String LATITUDE_PARAM = "latitude";
@@ -72,8 +75,20 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The hours URL query parameter name. */
 	public static final String HOURS_PARAM = "hours";
 
-	/** The URL path for life radiation and weather data. */
-	private static final String LIVE_RADIATION_URL_PATH = "/data/live/radiation_and_weather";
+	/** The azimuth URL query parameter name. */
+	public static final String AZIMUTH_PARAM = "azimuth";
+
+	/** The tilt URL query parameter name. */
+	public static final String TILT_PARAM = "tilt";
+
+	/** The array type URL query parameter name. */
+	public static final String ARRAY_TYPE_PARAM = "array_type";
+
+	/** The output parameters URL query parameter name. */
+	public static final String OUTPUT_PARAMETERS_PARAM = "output_parameters";
+
+	/** The period URL query parameter name. */
+	public static final String PERIOD_PARAM = "period";
 
 	/**
 	 * The well-known URLs.

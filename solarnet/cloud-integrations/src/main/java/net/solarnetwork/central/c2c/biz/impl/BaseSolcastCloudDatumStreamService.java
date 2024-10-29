@@ -23,8 +23,10 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -42,6 +44,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.settings.MultiValueSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
@@ -62,9 +65,6 @@ public abstract class BaseSolcastCloudDatumStreamService
 	/** The setting for longitude. */
 	public static final String LONGITUDE_SETTING = "lon";
 
-	/** The setting for desired parameters. */
-	public static final String PARAMETERS_SETTING = "parameters";
-
 	/** The setting for azimuth. */
 	public static final String AZIMUTH_SETTING = "azimuth";
 
@@ -81,7 +81,7 @@ public abstract class BaseSolcastCloudDatumStreamService
 	public static final String DEFAULT_PARAMETERS = "air_temp,dni,ghi";
 
 	/** The {@code resolution} default value. */
-	public static final Duration DEFAULT_RESOLUTION = Duration.ofMinutes(30);
+	public static final Duration DEFAULT_RESOLUTION = Duration.ofMinutes(5);
 
 	/** The Solcast supported resolutions. */
 	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
@@ -171,6 +171,36 @@ public abstract class BaseSolcastCloudDatumStreamService
 						HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolcastCloudIntegrationService.SECURE_SETTINGS));
 		this.clock = requireNonNullArgument(clock, "clock");
+	}
+
+	/**
+	 * Resolve a resolution setting value.
+	 *
+	 * <p>
+	 * The returned resolution will be limited to those in the
+	 * {@link #SUPPORTED_RESOLUTIONS} set. If no {@link #RESOLUTION_SETTING} is
+	 * available, or is not a supported resolution, then
+	 * {@link #DEFAULT_RESOLUTION} will be returned.
+	 * </p>
+	 *
+	 * @param datumStream
+	 *        the datum stream to resolve the resolution setting from
+	 * @return the resolution, never {@literal null}
+	 */
+	public static Duration resolveResolution(CloudDatumStreamConfiguration datumStream) {
+		String resoValue = nonEmptyString(datumStream.serviceProperty(RESOLUTION_SETTING, String.class));
+		Duration result = DEFAULT_RESOLUTION;
+		if ( resoValue != null ) {
+			try {
+				result = Duration.parse(resoValue);
+			} catch ( DateTimeParseException e ) {
+				// ignore and fall back to default
+			}
+		}
+		if ( !SUPPORTED_RESOLUTIONS.contains(result) ) {
+			result = DEFAULT_RESOLUTION;
+		}
+		return result;
 	}
 
 }
