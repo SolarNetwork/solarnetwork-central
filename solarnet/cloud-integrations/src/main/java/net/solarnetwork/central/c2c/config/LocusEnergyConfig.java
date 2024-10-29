@@ -54,6 +54,7 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -75,7 +76,7 @@ import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientM
  * Configuration for the Locus Energy cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -121,6 +122,9 @@ public class LocusEnergyConfig {
 
 	@Autowired
 	private AsyncTaskExecutor taskExecutor;
+
+	@Autowired(required = false)
+	private UserServiceAuditor userServiceAuditor;
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
@@ -182,6 +186,8 @@ public class LocusEnergyConfig {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setUserServiceAuditor(userServiceAuditor);
+
 		return service;
 	}
 
@@ -197,6 +203,8 @@ public class LocusEnergyConfig {
 		msgSource.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
 
 		return service;
 	}

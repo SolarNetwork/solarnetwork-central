@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcNodeServiceAuditorConfig - 23/01/2023 9:05:51 am
+ * JdbcUserServiceAuditorConfig - 29/10/2024 9:05:51 am
  * 
  * Copyright 2023 SolarNetwork.net Dev Team
  * 
@@ -30,20 +30,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import net.solarnetwork.central.common.dao.jdbc.JdbcNodeServiceAuditor;
+import net.solarnetwork.central.common.dao.jdbc.JdbcUserServiceAuditor;
 
 /**
- * Node service auditor configuration.
+ * User service auditor configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(JdbcNodeServiceAuditorConfig.NODE_SERVICE_AUDITOR)
-public class JdbcNodeServiceAuditorConfig {
+@Profile(JdbcUserServiceAuditorConfig.USER_SERVICE_AUDITOR)
+public class JdbcUserServiceAuditorConfig {
 
-	/** A qualifier for node service auditor. */
-	public static final String NODE_SERVICE_AUDITOR = "node-service-auditor";
+	/** A qualifier for user service auditor. */
+	public static final String USER_SERVICE_AUDITOR = "user-service-auditor";
 
 	@Autowired
 	private DataSource dataSource;
@@ -57,29 +57,29 @@ public class JdbcNodeServiceAuditorConfig {
 	private DataSource readWriteDataSource;
 
 	/**
-	 * Configuration settings for the node service auditor.
+	 * Configuration settings for the user service auditor.
 	 * 
 	 * @return the settings
 	 */
-	@Qualifier(NODE_SERVICE_AUDITOR)
+	@Qualifier(USER_SERVICE_AUDITOR)
 	@Bean
-	@ConfigurationProperties(prefix = "app.node-service-auditor")
-	public ServiceAuditorSettings nodeServiceAuditorSettings() {
+	@ConfigurationProperties(prefix = "app.user-service-auditor")
+	public ServiceAuditorSettings userServiceAuditorSettings() {
 		return new ServiceAuditorSettings();
 	}
 
 	/**
-	 * Auditor for node service events.
+	 * Auditor for user service events.
 	 * 
 	 * @param settings
 	 *        the settings
 	 * @return the service
 	 */
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
-	public JdbcNodeServiceAuditor nodeServiceAuditor(
-			@Qualifier(NODE_SERVICE_AUDITOR) ServiceAuditorSettings settings) {
+	public JdbcUserServiceAuditor userServiceAuditor(
+			@Qualifier(USER_SERVICE_AUDITOR) ServiceAuditorSettings settings) {
 		DataSource ds = (readWriteDataSource != null ? readWriteDataSource : dataSource);
-		JdbcNodeServiceAuditor auditor = new JdbcNodeServiceAuditor(ds);
+		JdbcUserServiceAuditor auditor = new JdbcUserServiceAuditor(ds);
 		auditor.setUpdateDelay(settings.getUpdateDelay());
 		auditor.setFlushDelay(settings.getFlushDelay());
 		auditor.setConnectionRecoveryDelay(settings.getConnectionRecoveryDelay());

@@ -38,6 +38,7 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
+import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -56,7 +57,7 @@ import net.solarnetwork.central.support.CacheSettings;
  * Configuration for the SolarEdge cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -98,6 +99,9 @@ public class SolarEdgeConfig {
 
 	@Autowired
 	private CacheManager cacheManager;
+
+	@Autowired(required = false)
+	private UserServiceAuditor userServiceAuditor;
 
 	@Bean
 	@Qualifier(SOLAREDGE_SITE_TZ)
@@ -144,6 +148,7 @@ public class SolarEdgeConfig {
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
+		service.setUserServiceAuditor(userServiceAuditor);
 		service.setSiteTimeZoneCache(solarEdgeSiteTimeZoneCache);
 		service.setSiteInventoryCache(solarEdgeSiteInventoryCache);
 
@@ -161,6 +166,8 @@ public class SolarEdgeConfig {
 		msgSource.setBasenames(SolarEdgeV1CloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
 
 		return service;
 	}

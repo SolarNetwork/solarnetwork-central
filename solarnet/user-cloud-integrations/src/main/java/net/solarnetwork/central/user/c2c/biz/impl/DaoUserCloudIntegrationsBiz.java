@@ -51,8 +51,11 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskFilter;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationsFilter;
+import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
@@ -60,8 +63,11 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -72,6 +78,7 @@ import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationsConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
@@ -84,12 +91,18 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
+	/** The {@code defaultDatumStreamSettings} default value. */
+	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
+			true, false);
+
+	private final UserSettingsEntityDao userSettingsDao;
 	private final CloudIntegrationConfigurationDao integrationDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
+	private final CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
 	private final CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
@@ -99,14 +112,19 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final Map<String, Set<String>> serviceSecureKeys;
 
 	private Validator validator;
+	private CloudDatumStreamSettings defaultDatumStreamSettings = DEFAULT_DATUM_STREAM_SETTINGS;
 
 	/**
 	 * Constructor.
 	 *
+	 * @param userSettingsDao
+	 *        the user settings DAO
 	 * @param integrationDao
 	 *        the configuration DAO
 	 * @param datumStreamDao
 	 *        the datum stream DAO
+	 * @param datumStreamSettingsDao
+	 *        the datum stream settings DAO
 	 * @param datumStreamMappingDao
 	 *        the datum stream mapping DAO
 	 * @param datumStreamPropertyDao
@@ -120,15 +138,20 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoUserCloudIntegrationsBiz(CloudIntegrationConfigurationDao integrationDao,
+	public DaoUserCloudIntegrationsBiz(UserSettingsEntityDao userSettingsDao,
+			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
+			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			CloudDatumStreamPollTaskDao datumStreamPollTaskDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
 		super();
+		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
+		this.datumStreamSettingsDao = requireNonNullArgument(datumStreamSettingsDao,
+				"datumStreamSettingsDao");
 		this.datumStreamMappingDao = requireNonNullArgument(datumStreamMappingDao,
 				"datumStreamMappingDao");
 		this.datumStreamPropertyDao = requireNonNullArgument(datumStreamPropertyDao,
@@ -165,6 +188,31 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Override
 	public CloudDatumStreamService datumStreamService(String identifier) {
 		return datumStreamServices.get(requireNonNullArgument(identifier, "identifier"));
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public UserSettingsEntity settingsForUser(Long userId) {
+		return userSettingsDao.get(requireNonNullArgument(userId, "userId"));
+	}
+
+	@Override
+	public UserSettingsEntity saveSettings(Long userId, UserSettingsEntityInput input) {
+		UserSettingsEntity entity = requireNonNullArgument(input, "input").toEntity(userId, now());
+		return userSettingsDao.get(userSettingsDao.store(entity));
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteSettings(Long userId) {
+		UserSettingsEntity key = new UserSettingsEntity(requireNonNullArgument(userId, "userId"), now());
+		userSettingsDao.delete(key);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public CloudDatumStreamSettings defaultDatumStreamSettings() {
+		return defaultDatumStreamSettings;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -462,6 +510,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			result = (GenericDao<C, K>) datumStreamMappingDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (GenericDao<C, K>) datumStreamPropertyDao;
+		} else if ( CloudDatumStreamSettingsEntity.class.isAssignableFrom(clazz) ) {
+			result = (GenericDao<C, K>) datumStreamSettingsDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -498,6 +548,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			result = (FilterableDao<C, K, F>) datumStreamMappingDao;
 		} else if ( CloudDatumStreamPropertyConfiguration.class.isAssignableFrom(clazz) ) {
 			result = (FilterableDao<C, K, F>) datumStreamPropertyDao;
+		} else if ( CloudDatumStreamSettingsEntity.class.isAssignableFrom(clazz) ) {
+			result = (FilterableDao<C, K, F>) datumStreamSettingsDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -523,4 +575,30 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	public void setValidator(Validator validator) {
 		this.validator = validator;
 	}
+
+	/**
+	 * Get the default datum stream settings.
+	 *
+	 * @return the settings, never {@literal null}
+	 * @since 1.4
+	 */
+	public final CloudDatumStreamSettings getDefaultDatumStreamSettings() {
+		return defaultDatumStreamSettings;
+	}
+
+	/**
+	 * Set the default datum stream settings.
+	 *
+	 * @param defaultDatumStreamSettings
+	 *        the settings to set; if {@code null} then
+	 *        {@link #DEFAULT_DATUM_STREAM_SETTINGS} will be used
+	 * @since 1.4
+	 */
+	public final void setDefaultDatumStreamSettings(
+			CloudDatumStreamSettings defaultDatumStreamSettings) {
+		this.defaultDatumStreamSettings = (defaultDatumStreamSettings != null
+				? defaultDatumStreamSettings
+				: DEFAULT_DATUM_STREAM_SETTINGS);
+	}
+
 }

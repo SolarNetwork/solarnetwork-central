@@ -55,7 +55,10 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -65,7 +68,9 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigura
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskStateInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamSettingsEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -76,7 +81,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Web service API for cloud integrations management.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Profile(SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS)
 @GlobalExceptionRestController
@@ -156,6 +161,28 @@ public class UserCloudIntegrationsController {
 		}
 		final var result = service.dataValueFilters(locale);
 		return success(result);
+	}
+
+	/*-=======================
+	 * User Settings
+	 *-======================= */
+
+	@RequestMapping(value = "/settings", method = RequestMethod.GET)
+	public Result<UserSettingsEntity> viewUserSettings() {
+		var result = userCloudIntegrationsBiz.settingsForUser(getCurrentActorUserId());
+		return success(result);
+	}
+
+	@RequestMapping(value = "/settings", method = RequestMethod.PUT)
+	public Result<UserSettingsEntity> saveUserSettings(
+			@Valid @RequestBody UserSettingsEntityInput input) {
+		return success(userCloudIntegrationsBiz.saveSettings(getCurrentActorUserId(), input));
+	}
+
+	@RequestMapping(value = "/settings", method = RequestMethod.DELETE)
+	public Result<UserSettingsEntity> deleteUserSettings() {
+		userCloudIntegrationsBiz.deleteSettings(getCurrentActorUserId());
+		return success();
 	}
 
 	/*-=======================
@@ -428,6 +455,47 @@ public class UserCloudIntegrationsController {
 			@PathVariable("datumStreamId") Long datumStreamId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
 		userCloudIntegrationsBiz.deleteConfiguration(id, CloudDatumStreamConfiguration.class);
+		return success();
+	}
+
+	/*-=======================
+	 * Datum Stream Settings
+	 *-======================= */
+
+	@RequestMapping(value = "/datum-streams/default-settings", method = RequestMethod.GET)
+	public Result<CloudDatumStreamSettings> getDefaultCloudDatumStreamSettings() {
+		return success(userCloudIntegrationsBiz.defaultDatumStreamSettings());
+	}
+
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/settings", method = RequestMethod.GET)
+	public Result<CloudDatumStreamSettingsEntity> getCloudDatumStreamSettings(
+			@PathVariable("datumStreamId") Long datumStreamId) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		return success(
+				userCloudIntegrationsBiz.configurationForId(id, CloudDatumStreamSettingsEntity.class));
+	}
+
+	@RequestMapping(value = "/datum-streams/settings", method = RequestMethod.GET)
+	public Result<FilterResults<CloudDatumStreamSettingsEntity, UserLongCompositePK>> listCloudDatumStreamSettings(
+			BasicFilter filter) {
+		var result = userCloudIntegrationsBiz.listConfigurationsForUser(getCurrentActorUserId(), filter,
+				CloudDatumStreamSettingsEntity.class);
+		return success(result);
+	}
+
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/settings", method = RequestMethod.PUT)
+	public Result<CloudDatumStreamSettingsEntity> saveCloudDatumStreamSettings(
+			@PathVariable("datumStreamId") Long datumStreamId,
+			@Valid @RequestBody CloudDatumStreamSettingsEntityInput input) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		return success(userCloudIntegrationsBiz.saveConfiguration(id, input));
+	}
+
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/settings", method = RequestMethod.DELETE)
+	public Result<Void> deleteCloudDatumStreamSettings(
+			@PathVariable("datumStreamId") Long datumStreamId) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamId);
+		userCloudIntegrationsBiz.deleteConfiguration(id, CloudDatumStreamSettingsEntity.class);
 		return success();
 	}
 

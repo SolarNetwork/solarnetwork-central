@@ -58,8 +58,6 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 	/**
 	 * Constructor.
 	 *
-	 * @param cache
-	 *        the cache
 	 * @param systemSupportDao
 	 *        the system support DAO
 	 * @throws IllegalArgumentException

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.c2c.biz.impl.test;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
+import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
 import static net.solarnetwork.central.test.CommonTestUtils.randomDecimal;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -61,12 +62,18 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -77,6 +84,7 @@ import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamMappingConfigura
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPropertyConfigurationInput;
 import net.solarnetwork.central.user.c2c.domain.CloudIntegrationConfigurationInput;
+import net.solarnetwork.central.user.c2c.domain.UserSettingsEntityInput;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
@@ -89,7 +97,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -115,6 +123,12 @@ public class DaoUserCloudIntegrationsBizTests {
 	@Mock
 	private CloudIntegrationService integrationService;
 
+	@Mock
+	private UserSettingsEntityDao userSettingsDao;
+
+	@Mock
+	private CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
+
 	@Captor
 	private ArgumentCaptor<Locale> localeCaptor;
 
@@ -134,6 +148,12 @@ public class DaoUserCloudIntegrationsBizTests {
 	private ArgumentCaptor<CloudDatumStreamPollTaskEntity> datumStreamPollTaskCaptor;
 
 	@Captor
+	private ArgumentCaptor<UserSettingsEntity> userSettingsCaptor;
+
+	@Captor
+	private ArgumentCaptor<CloudDatumStreamSettingsEntity> datumStreamSettingsCaptor;
+
+	@Captor
 	private ArgumentCaptor<BasicFilter> filterCaptor;
 
 	private PrefixedTextEncryptor textEncryptor = PrefixedTextEncryptor.aesTextEncryptor(randomString(),
@@ -144,15 +164,16 @@ public class DaoUserCloudIntegrationsBizTests {
 	@BeforeEach
 	public void setup() {
 		given(integrationService.getId()).willReturn(TEST_SERVICE_ID);
+		given(integrationService.getSettingUid()).willReturn(TEST_SERVICE_ID);
 
 		// provide settings to verify masking sensitive values
 		List<SettingSpecifier> settings = Arrays.asList(new BasicTextFieldSettingSpecifier("foo", null),
 				new BasicTextFieldSettingSpecifier("watchout", null, true));
 		given(integrationService.getSettingSpecifiers()).willReturn(settings);
 
-		biz = new DaoUserCloudIntegrationsBiz(integrationDao, datumStreamDao, datumStreamMappingDao,
-				datumStreamPropertyDao, datumStreamPollTaskDao, textEncryptor,
-				Collections.singleton(integrationService));
+		biz = new DaoUserCloudIntegrationsBiz(userSettingsDao, integrationDao, datumStreamDao,
+				datumStreamSettingsDao, datumStreamMappingDao, datumStreamPropertyDao,
+				datumStreamPollTaskDao, textEncryptor, Collections.singleton(integrationService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -935,6 +956,86 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(datumStreamPollTaskCaptor.getValue())
 			.as("DAO passed entity returned from entityKey()")
 			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void defaultDatumStreamSettings() {
+		// GIVEN
+		BasicCloudDatumStreamSettings defaults = new BasicCloudDatumStreamSettings(false, false);
+		biz.setDefaultDatumStreamSettings(defaults);
+
+		// WHEN
+		CloudDatumStreamSettings result = biz.defaultDatumStreamSettings();
+
+		// THEN
+		and.then(result).as("Configured defaults returned").isSameAs(defaults);
+	}
+
+	@Test
+	public void userSettings() {
+		// GIVEN
+		Long userId = randomLong();
+
+		UserSettingsEntity entity = new UserSettingsEntity(userId, now());
+		given(userSettingsDao.get(userId)).willReturn(entity);
+
+		// WHEN
+		UserSettingsEntity result = biz.settingsForUser(userId);
+
+		// THEN
+		and.then(result).as("Result from DAO returned").isSameAs(entity);
+	}
+
+	@Test
+	public void saveUserSettigns() {
+		// GIVEN
+		Long userId = randomLong();
+		given(userSettingsDao.store(any())).willReturn(userId);
+
+		UserSettingsEntity entity = new UserSettingsEntity(userId, now());
+		given(userSettingsDao.get(userId)).willReturn(entity);
+
+		// WHEN
+		UserSettingsEntityInput input = new UserSettingsEntityInput();
+		input.setPublishToSolarIn(randomBoolean());
+		input.setPublishToSolarFlux(randomBoolean());
+		UserSettingsEntity result = biz.saveSettings(userId, input);
+
+		// THEN
+		// @formatter:off
+		then(userSettingsDao).should().store(userSettingsCaptor.capture());
+		and.then(userSettingsCaptor.getValue())
+			.as("User ID as provided")
+			.returns(userId, from(UserSettingsEntity::getUserId))
+			.as("Publish SolarIn as provided")
+			.returns(input.isPublishToSolarIn(), from(UserSettingsEntity::isPublishToSolarIn))
+			.as("Publish SolarFlux as provided")
+			.returns(input.isPublishToSolarFlux(), from(UserSettingsEntity::isPublishToSolarFlux))
+			;
+
+		and.then(result)
+			.as("Result from DAO returned")
+			.isSameAs(entity)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteUserSettigns() {
+		// GIVEN
+		Long userId = randomLong();
+
+		// WHEN
+		biz.deleteSettings(userId);
+
+		// THEN
+		// @formatter:off
+		then(userSettingsDao).should().delete(userSettingsCaptor.capture());
+		and.then(userSettingsCaptor.getValue())
+			.as("User ID as provided")
+			.returns(userId, from(UserSettingsEntity::getUserId))
 			;
 		// @formatter:on
 	}

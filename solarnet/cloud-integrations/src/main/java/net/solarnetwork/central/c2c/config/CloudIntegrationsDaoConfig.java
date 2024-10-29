@@ -32,18 +32,22 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPollTaskDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamPropertyConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcUserSettingsEntityDao;
 
 /**
  * Cloud integrations DAO configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -58,7 +62,7 @@ public class CloudIntegrationsDaoConfig {
 	 * @return the DAO
 	 */
 	@Bean
-	public CloudIntegrationConfigurationDao cloudIntegrationConfigurationConfigurationDao() {
+	public CloudIntegrationConfigurationDao cloudIntegrationConfigurationDao() {
 		return new JdbcCloudIntegrationConfigurationDao(jdbcOperations);
 	}
 
@@ -68,7 +72,7 @@ public class CloudIntegrationsDaoConfig {
 	 * @return the DAO
 	 */
 	@Bean
-	public CloudDatumStreamConfigurationDao cloudDatumStreamConfigurationConfigurationDao() {
+	public CloudDatumStreamConfigurationDao cloudDatumStreamConfigurationDao() {
 		return new JdbcCloudDatumStreamConfigurationDao(jdbcOperations);
 	}
 
@@ -78,7 +82,7 @@ public class CloudIntegrationsDaoConfig {
 	 * @return the DAO
 	 */
 	@Bean
-	public CloudDatumStreamMappingConfigurationDao cloudDatumStreamMappingConfigurationConfigurationDao() {
+	public CloudDatumStreamMappingConfigurationDao cloudDatumStreamMappingConfigurationDao() {
 		return new JdbcCloudDatumStreamMappingConfigurationDao(jdbcOperations);
 	}
 
@@ -88,7 +92,7 @@ public class CloudIntegrationsDaoConfig {
 	 * @return the DAO
 	 */
 	@Bean
-	public CloudDatumStreamPropertyConfigurationDao cloudDatumStreamPropertyConfigurationConfigurationDao() {
+	public CloudDatumStreamPropertyConfigurationDao cloudDatumStreamPropertyConfigurationDao() {
 		return new JdbcCloudDatumStreamPropertyConfigurationDao(jdbcOperations);
 	}
 
@@ -100,6 +104,28 @@ public class CloudIntegrationsDaoConfig {
 	@Bean
 	public CloudDatumStreamPollTaskDao cloudDatumStreamPollTaskDaoDao() {
 		return new JdbcCloudDatumStreamPollTaskDao(jdbcOperations);
+	}
+
+	/**
+	 * The user settings DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.2
+	 */
+	@Bean
+	public UserSettingsEntityDao cloudIntegrationsUserSettingsEntityDao() {
+		return new JdbcUserSettingsEntityDao(jdbcOperations);
+	}
+
+	/**
+	 * The cloud datum stream settings DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.2
+	 */
+	@Bean
+	public CloudDatumStreamSettingsEntityDao cloudDatumStreamSettingsEntityDao() {
+		return new JdbcCloudDatumStreamSettingsEntityDao(jdbcOperations);
 	}
 
 }

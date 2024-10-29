@@ -38,4 +38,7 @@ public class SolarNetCommonConfiguration {
 	/** A qualifier to use for OAuth client registration. */
 	public static final String OAUTH_CLIENT_REGISTRATION = "oauth-client-reg";
 
+	/** A qualifier for audit JDBC access. */
+	public static final String AUDIT = "audit";
+
 }
