@@ -192,9 +192,13 @@ public abstract class BaseSolcastCloudDatumStreamService
 		Duration result = DEFAULT_RESOLUTION;
 		if ( resoValue != null ) {
 			try {
-				result = Duration.parse(resoValue);
-			} catch ( DateTimeParseException e ) {
-				// ignore and fall back to default
+				result = Duration.ofSeconds(Long.parseLong(resoValue));
+			} catch ( NumberFormatException e ) {
+				try {
+					result = Duration.parse(resoValue);
+				} catch ( DateTimeParseException e2 ) {
+					// ignore and fall back to default
+				}
 			}
 		}
 		if ( !SUPPORTED_RESOLUTIONS.contains(result) ) {
