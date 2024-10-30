@@ -232,9 +232,9 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 						eventForConfiguration(configuration, errorEventTags,
 								format("Invalid HTTP status returned: %s", e.getStatusCode())));
 				throw new RemoteServiceException(
-						"%s failed because an invalid HTTP status (with unexpected Content-Type [{}]) was returned: %s"
+						"%s failed because an invalid HTTP status (with unexpected Content-Type [%s]) was returned: %s"
 								.formatted(description, e.getContentType(), e.getStatusCode()),
-						new HttpClientErrorException(e.getMessage(), e.getStatusCode(),
+						HttpClientErrorException.create(e.getMessage(), e.getStatusCode(),
 								e.getStatusText(), e.getResponseHeaders(), e.getResponseBody(), null));
 			} else {
 				log.warn(
