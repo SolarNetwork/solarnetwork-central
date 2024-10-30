@@ -225,7 +225,7 @@ public class DaoCloudDatumStreamPollService
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
-					if ( e instanceof RestClientResponseException || t instanceof IOException ) {
+					if ( t instanceof RestClientResponseException || t instanceof IOException ) {
 						// reset back to queued to try again if HTTP client or IO error
 						log.info(
 								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
