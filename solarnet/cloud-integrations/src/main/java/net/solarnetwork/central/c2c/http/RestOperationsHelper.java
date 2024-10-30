@@ -37,6 +37,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
@@ -233,7 +234,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 				throw new RemoteServiceException(
 						"%s failed because an invalid HTTP status (with unexpected Content-Type [{}]) was returned: %s"
 								.formatted(description, e.getContentType(), e.getStatusCode()),
-						new RestClientResponseException(e.getMessage(), e.getStatusCode(),
+						new HttpClientErrorException(e.getMessage(), e.getStatusCode(),
 								e.getStatusText(), e.getResponseHeaders(), e.getResponseBody(), null));
 			} else {
 				log.warn(
