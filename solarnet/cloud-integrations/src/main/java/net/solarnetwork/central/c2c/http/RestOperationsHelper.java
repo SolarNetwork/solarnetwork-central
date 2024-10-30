@@ -37,6 +37,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestOperations;
@@ -54,7 +55,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
@@ -220,17 +221,34 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			throw new RemoteServiceException("%s failed because an invalid HTTP status was returned: %s"
 					.formatted(description, e.getStatusCode()), e);
 		} catch ( UnknownContentTypeException e ) {
-			log.warn(
-					"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
-					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
-					e.getContentType());
-			userEventAppenderBiz.addEvent(configuration.getUserId(),
-					eventForConfiguration(configuration, errorEventTags,
-							format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
-			throw new RemoteServiceException(
-					"%s failed because the respones Content-Type is not supported: %s"
-							.formatted(description, e.getContentType()),
-					e);
+			if ( e.getStatusCode().is4xxClientError() ) {
+				// we see some APIs return text/html on a 404, but our Accept might only expect something like JSON
+				// so treat this more like a RestClientResponseException
+				log.warn(
+						"[{}] for {} {} failed at [{}] because the HTTP status {} was returned (with unexpected Content-Type [{}]).",
+						description, configuration.getClass().getSimpleName(),
+						configuration.getId().ident(), uri, e.getStatusCode(), e.getContentType());
+				userEventAppenderBiz.addEvent(configuration.getUserId(),
+						eventForConfiguration(configuration, errorEventTags,
+								format("Invalid HTTP status returned: %s", e.getStatusCode())));
+				throw new RemoteServiceException(
+						"%s failed because an invalid HTTP status (with unexpected Content-Type [{}]) was returned: %s"
+								.formatted(description, e.getContentType(), e.getStatusCode()),
+						new HttpClientErrorException(e.getMessage(), e.getStatusCode(),
+								e.getStatusText(), e.getResponseHeaders(), e.getResponseBody(), null));
+			} else {
+				log.warn(
+						"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
+						configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
+						e.getContentType());
+				userEventAppenderBiz.addEvent(configuration.getUserId(),
+						eventForConfiguration(configuration, errorEventTags,
+								format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
+				throw new RemoteServiceException(
+						"%s failed because the respones Content-Type is not supported: %s"
+								.formatted(description, e.getContentType()),
+						e);
+			}
 		} catch ( OAuth2AuthorizationException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}",
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
