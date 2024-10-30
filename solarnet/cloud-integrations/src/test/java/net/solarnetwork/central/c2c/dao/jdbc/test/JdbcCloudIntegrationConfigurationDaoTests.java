@@ -22,8 +22,11 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
+import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudIntegrationConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.newCloudIntegrationConfiguration;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -34,12 +37,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamConfigurationDao;
+import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.jdbc.JdbcCloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
@@ -47,6 +55,7 @@ import net.solarnetwork.central.test.CommonDbTestUtils;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link JdbcCloudIntegrationConfigurationDao} class.
@@ -56,6 +65,8 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
+	private JdbcCloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
+	private JdbcCloudDatumStreamConfigurationDao datumStreamDao;
 	private JdbcCloudIntegrationConfigurationDao dao;
 	private Long userId;
 
@@ -65,6 +76,26 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 	public void setup() {
 		dao = new JdbcCloudIntegrationConfigurationDao(jdbcTemplate);
 		userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+		datumStreamMappingDao = new JdbcCloudDatumStreamMappingConfigurationDao(jdbcTemplate);
+		datumStreamDao = new JdbcCloudDatumStreamConfigurationDao(jdbcTemplate);
+	}
+
+	private CloudDatumStreamMappingConfiguration createDatumStreamMapping(Long userId,
+			Long integrationId) {
+		CloudDatumStreamMappingConfiguration conf = CinJdbcTestUtils
+				.newCloudDatumStreamMappingConfiguration(userId, integrationId, randomString(), null);
+		CloudDatumStreamMappingConfiguration entity = datumStreamMappingDao
+				.get(datumStreamMappingDao.save(conf));
+		return entity;
+	}
+
+	private CloudDatumStreamConfiguration createDatumStream(Long userId, Long datumStreamMappingId) {
+		CloudDatumStreamConfiguration conf = CinJdbcTestUtils.newCloudDatumStreamConfiguration(userId,
+				datumStreamMappingId, randomString(), ObjectDatumKind.Node, randomLong(), randomString(),
+				randomString(), randomString(), null);
+		conf.setEnabled(true);
+		CloudDatumStreamConfiguration entity = datumStreamDao.get(datumStreamDao.save(conf));
+		return entity;
 	}
 
 	@Test
@@ -260,6 +291,59 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		CloudIntegrationConfiguration[] expected = confs.stream()
 				.filter(e -> userId.equals(e.getUserId())).toArray(CloudIntegrationConfiguration[]::new);
 		then(results).as("Results for single user returned").containsExactly(expected);
+	}
+
+	@Test
+	public void findFiltered_forDatumStream() {
+		// GIVEN
+		final int userCount = 2;
+		final int integrationCount = 2;
+		final int datumStreamCount = 2;
+
+		final List<CloudIntegrationConfiguration> integrations = new ArrayList<>(
+				userCount * integrationCount);
+		final Map<UserLongCompositePK, List<CloudDatumStreamConfiguration>> datumStreamsByIntegrationIds = new LinkedHashMap<>(
+				userCount * integrationCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int i = 0; i < integrationCount; i++ ) {
+				CloudIntegrationConfiguration integration = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), null);
+				UserLongCompositePK integrationId = dao.create(userId, integration);
+				integration = integration.copyWithId(integrationId);
+				integrations.add(integration);
+				for ( int d = 0; d < datumStreamCount; d++ ) {
+					CloudDatumStreamMappingConfiguration mapping = createDatumStreamMapping(userId,
+							integration.getConfigId());
+					CloudDatumStreamConfiguration datumStream = createDatumStream(userId,
+							mapping.getConfigId());
+					datumStreamsByIntegrationIds.computeIfAbsent(integration.getId(),
+							id -> new ArrayList<>(datumStreamCount)).add(datumStream);
+				}
+			}
+		}
+
+		allCloudIntegrationConfigurationData(jdbcTemplate);
+		allCloudDatumStreamMappingConfigurationData(jdbcTemplate);
+		allCloudDatumStreamConfigurationData(jdbcTemplate);
+
+		// WHEN
+		var randomIntegration = integrations.get(RNG.nextInt(integrations.size()));
+		var randomDatumStream = datumStreamsByIntegrationIds.get(randomIntegration.getId())
+				.get(RNG.nextInt(datumStreamsByIntegrationIds.get(randomIntegration.getId()).size()));
+
+		log.info("Querying for datum stream {}", randomDatumStream.getConfigId());
+
+		BasicFilter filter = new BasicFilter();
+		filter.setUserId(randomDatumStream.getUserId());
+		filter.setDatumStreamId(randomDatumStream.getConfigId());
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		then(results).as("Result for integration for datum stream returned")
+				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
 	}
 
 }

@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public class CinJdbcTestUtils {
 	public static CloudIntegrationConfiguration newCloudIntegrationConfiguration(Long userId,
 			String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(
-				unassignedEntityIdKey(userId), Instant.now());
+				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);
@@ -125,7 +126,7 @@ public class CinJdbcTestUtils {
 			Long datumStreamMappingId, String schedule, ObjectDatumKind kind, Long objectId,
 			String sourceId, String name, String serviceId, Map<String, Object> serviceProps) {
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(
-				unassignedEntityIdKey(userId), Instant.now());
+				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setServiceIdentifier(serviceId);
@@ -171,7 +172,7 @@ public class CinJdbcTestUtils {
 	public static CloudDatumStreamMappingConfiguration newCloudDatumStreamMappingConfiguration(
 			Long userId, Long integrationId, String name, Map<String, Object> serviceProps) {
 		CloudDatumStreamMappingConfiguration conf = new CloudDatumStreamMappingConfiguration(
-				unassignedEntityIdKey(userId), Instant.now());
+				unassignedEntityIdKey(userId), Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		conf.setModified(conf.getCreated());
 		conf.setName(name);
 		conf.setIntegrationId(integrationId);
@@ -225,7 +226,7 @@ public class CinJdbcTestUtils {
 			String propertyName, CloudDatumStreamValueType valueType, String valueReference,
 			BigDecimal multiplier, Integer scale) {
 		CloudDatumStreamPropertyConfiguration conf = new CloudDatumStreamPropertyConfiguration(userId,
-				datumStreamMappingId, index, Instant.now());
+				datumStreamMappingId, index, Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		conf.setModified(conf.getCreated());
 		conf.setPropertyType(propertyType);
 		conf.setPropertyName(propertyName);

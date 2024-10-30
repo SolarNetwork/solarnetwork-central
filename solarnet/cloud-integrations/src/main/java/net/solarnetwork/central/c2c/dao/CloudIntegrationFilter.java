@@ -26,8 +26,9 @@ package net.solarnetwork.central.c2c.dao;
  * A filter for cloud integration entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public interface CloudIntegrationFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria {
+public interface CloudIntegrationFilter
+		extends CloudIntegrationsFilter, CloudIntegrationCriteria, CloudDatumStreamCriteria {
 
 }

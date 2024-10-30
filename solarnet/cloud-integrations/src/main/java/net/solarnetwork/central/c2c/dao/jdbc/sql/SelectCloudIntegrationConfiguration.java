@@ -89,6 +89,12 @@ public class SelectCloudIntegrationConfiguration
 					, ci.cname, ci.sident, ci.sprops
 				FROM solardin.cin_integration ci
 				""");
+		if ( filter.hasDatumStreamCriteria() ) {
+			buf.append("""
+					INNER JOIN solardin.cin_datum_stream_map cdsm ON cdsm.int_id = ci.id
+					INNER JOIN solardin.cin_datum_stream cds ON cds.map_id = cdsm.id
+					""");
+		}
 	}
 
 	private void sqlWhere(StringBuilder buf) {
@@ -99,6 +105,9 @@ public class SelectCloudIntegrationConfiguration
 		}
 		if ( filter.hasIntegrationCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getIntegrationIds(), "ci.id", where);
+		}
+		if ( filter.hasDatumStreamCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
 		}
 		if ( idx > 0 ) {
 			buf.append("WHERE").append(where.substring(4));
@@ -127,6 +136,9 @@ public class SelectCloudIntegrationConfiguration
 		}
 		if ( filter.hasIntegrationCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIntegrationIds());
+		}
+		if ( filter.hasDatumStreamCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());
 		}
 		return p;
 	}
