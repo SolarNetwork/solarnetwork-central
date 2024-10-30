@@ -259,7 +259,6 @@ public class EGaugeCloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-
 		and.then(result)
 			.as("Datum parsed from HTTP response")
 			.hasSize(1)

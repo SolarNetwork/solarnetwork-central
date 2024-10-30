@@ -45,6 +45,7 @@ import java.util.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -77,6 +78,20 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 * A system identifier component to use for access token registration IDs.
 	 */
 	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-ds-egauge";
+
+	/**
+	 * The API URL path to get an authorization nonce.
+	 *
+	 * @since 1.1
+	 */
+	public static final String AUTH_UNAUTHORIZED_PATH = "/api/auth/unauthorized";
+
+	/**
+	 * The API URL path to login.
+	 *
+	 * @since 1.1
+	 */
+	public static final String AUTH_LOGIN_PATH = "/api/auth/login";
 
 	// use hard-coded access token TTL that eGauge appears to use
 	private static final Duration ACCESS_TOKEN_TTL = Duration.ofMinutes(10);
@@ -145,7 +160,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 			// perhaps the access token has expired; let's try again with a new one if we got a 4xx response
 			if ( configuration instanceof CloudDatumStreamConfiguration datumStream
 					&& e.getCause() instanceof HttpClientErrorException ex
-					&& ex.getStatusCode().is4xxClientError() ) {
+					&& HttpStatus.UNAUTHORIZED.isSameCodeAs(ex.getStatusCode()) ) {
 				final UserStringStringCompositePK accessTokenId = accessTokenId(datumStream);
 				ClientAccessTokenEntity registration = clientAccessTokenDao.get(accessTokenId);
 				if ( registration != null ) {
@@ -153,7 +168,8 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 					JsonNode realm = ex.getResponseBodyAs(JsonNode.class);
 					return super.httpGet(description, configuration, responseType, (headers) -> {
 						if ( configuration instanceof CloudDatumStreamConfiguration c ) {
-							addEgaugeBearerAuthorization(c, headers, accessTokenId, realm);
+							var integration = integrationDao.integrationForDatumStream(c.getId());
+							addEgaugeBearerAuthorization(integration, c, headers, accessTokenId, realm);
 						}
 						return setup.apply(headers);
 					}, handler);
@@ -214,7 +230,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 		try {
 			realm = restOps.getForObject(
 					fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
-							.path("/api/auth/unauthorized").buildAndExpand(deviceId).toUri(),
+							.path(AUTH_UNAUTHORIZED_PATH).buildAndExpand(deviceId).toUri(),
 					JsonNode.class);
 		} catch ( HttpClientErrorException e ) {
 			if ( e.getStatusCode().is4xxClientError() ) {
@@ -223,10 +239,11 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 				throw e;
 			}
 		}
-		addEgaugeBearerAuthorization(config, headers, accessTokenId, realm);
+		addEgaugeBearerAuthorization(integration, config, headers, accessTokenId, realm);
 	}
 
-	private void addEgaugeBearerAuthorization(CloudDatumStreamConfiguration config, HttpHeaders headers,
+	private void addEgaugeBearerAuthorization(CloudIntegrationConfiguration integration,
+			CloudDatumStreamConfiguration config, HttpHeaders headers,
 			UserStringStringCompositePK accessTokenId, JsonNode realm) {
 		requireNonNullArgument(realm, "realm");
 		final String username = nonEmptyString(config.serviceProperty(USERNAME_SETTING, String.class));
@@ -259,8 +276,11 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 		var authBody = new HttpEntity<>(Map.of(REALM_PROPERTY, rlm, NONCE_PROPERTY, nnc,
 				CLIENT_NONCE_PROPERTY, cnnc, USERNAME_PROPERTY, username, HASH_PROPERTY, hash),
 				authHeaders);
-		final JsonNode tokenRes = restOps.postForObject(fromUriString(BASE_URI_TEMPLATE)
-				.path("/api/auth/login").buildAndExpand(deviceId).toUri(), authBody, JsonNode.class);
+		final JsonNode tokenRes = restOps
+				.postForObject(
+						fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+								.path(AUTH_LOGIN_PATH).buildAndExpand(deviceId).toUri(),
+						authBody, JsonNode.class);
 
 		final String accessTokenValue = nonEmptyString(tokenRes.path(JWT_PROPERTY).asText());
 		if ( accessTokenValue != null ) {

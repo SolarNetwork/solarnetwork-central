@@ -239,8 +239,8 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			} else {
 				log.warn(
 						"[{}] for {} {} failed at [{}] because the response Content-Type [{}] is not supported.",
-						configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
-						e.getContentType());
+						description, configuration.getClass().getSimpleName(),
+						configuration.getId().ident(), uri, e.getContentType());
 				userEventAppenderBiz.addEvent(configuration.getUserId(),
 						eventForConfiguration(configuration, errorEventTags,
 								format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
@@ -250,7 +250,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 						e);
 			}
 		} catch ( OAuth2AuthorizationException e ) {
-			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}",
+			log.warn("[{}] for {} {} failed at [{}] because of an OAuth error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.getMessage());
 			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
@@ -258,7 +258,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(description, e.getMessage()), e);
 		} catch ( RuntimeException e ) {
-			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}",
+			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.toString(), e);
 			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
