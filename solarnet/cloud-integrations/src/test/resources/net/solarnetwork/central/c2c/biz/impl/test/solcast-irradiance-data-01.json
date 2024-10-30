@@ -1,0 +1,28 @@
+{
+  "estimated_actuals": [
+    {
+      "air_temp": 17,
+      "dni": 0,
+      "ghi": 61,
+      "dhi": 61,
+      "period_end": "2024-10-29T20:00:00.0000000Z",
+      "period": "PT30M"
+    },
+    {
+      "air_temp": 16.1,
+      "dni": 0,
+      "ghi": 13,
+      "dhi": 13,
+      "period_end": "2024-10-29T19:30:00.0000000Z",
+      "period": "PT30M"
+    },
+    {
+      "air_temp": 16,
+      "dni": 0,
+      "ghi": 0,
+      "dhi": 0,
+      "period_end": "2024-10-29T19:00:00.0000000Z",
+      "period": "PT30M"
+    }
+  ]
+}

@@ -103,12 +103,12 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
 		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(OAUTH_CLIENT_ID_SETTING, null));
-		settings.add(new BasicTextFieldSettingSpecifier(OAUTH_CLIENT_SECRET_SETTING, null, true));
-		settings.add(new BasicTextFieldSettingSpecifier(USERNAME_SETTING, null));
-		settings.add(new BasicTextFieldSettingSpecifier(PASSWORD_SETTING, null, true));
+		settings.add(OAUTH_CLIENT_ID_SETTING_SPECIFIER);
+		settings.add(OAUTH_CLIENT_SECRET_SETTING_SPECIFIER);
+		settings.add(USERNAME_SETTING_SPECIFIER);
+		settings.add(PASSWORD_SETTING_SPECIFIER);
 		settings.add(new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null));
-		settings.add(new BasicTextFieldSettingSpecifier(BASE_URL_SETTING, null));
+		settings.add(BASE_URL_SETTING_SPECIFIER);
 		SETTINGS = Collections.unmodifiableList(settings);
 	}
 

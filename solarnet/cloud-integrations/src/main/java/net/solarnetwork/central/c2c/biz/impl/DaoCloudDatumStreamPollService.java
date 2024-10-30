@@ -45,8 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.scheduling.support.SimpleTriggerContext;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -226,15 +225,8 @@ public class DaoCloudDatumStreamPollService
 					var oldState = taskInfo.getState();
 					taskInfo.setMessage(errMsg);
 					taskInfo.putServiceProps(errData);
-					if ( !((e instanceof RestClientException && !(e instanceof HttpClientErrorException))
-							|| t instanceof IOException) ) {
-						// stop processing job if not what appears to be a API IO exception
-						log.info(
-								"Stopping datum stream {} poll task by changing state from {} to {} after error: {}",
-								taskInfo.getId().ident(), oldState, Completed, e.toString());
-						taskInfo.setState(Completed);
-					} else {
-						// reset back to queued to try again
+					if ( t instanceof RestClientResponseException || t instanceof IOException ) {
+						// reset back to queued to try again if HTTP client or IO error
 						log.info(
 								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
 								taskInfo.getId().ident(), oldState, Queued, e.toString());
@@ -244,6 +236,12 @@ public class DaoCloudDatumStreamPollService
 							// bump date into future by 1 minute so we do not immediately try to process again
 							taskInfo.setExecuteAt(clock.instant().plusSeconds(60));
 						}
+					} else {
+						// stop processing job if not what appears to be a API IO exception
+						log.info(
+								"Stopping datum stream {} poll task by changing state from {} to {} after error: {}",
+								taskInfo.getId().ident(), oldState, Completed, e.toString());
+						taskInfo.setState(Completed);
 					}
 					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
 							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
