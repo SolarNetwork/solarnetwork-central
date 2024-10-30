@@ -98,7 +98,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link EGaugeCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -183,6 +183,8 @@ public class EGaugeCloudDatumStreamServiceTests {
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
@@ -295,6 +297,8 @@ public class EGaugeCloudDatumStreamServiceTests {
 		// configure integration
 		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// configure datum stream mapping
 		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(

@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeCloudDatumStreamService.DEVICE_ID_FILTER;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeCloudIntegrationService.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
@@ -53,7 +54,9 @@ import org.springframework.web.client.RestOperations;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
@@ -66,7 +69,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * eGauge REST operations helper.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 
@@ -88,6 +91,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	private final InstantSource clock;
 	private final RandomGenerator rng;
 	private final ClientAccessTokenDao clientAccessTokenDao;
+	private final CloudIntegrationConfigurationDao integrationDao;
 
 	/**
 	 * Constructor.
@@ -110,17 +114,20 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 *        the random generator to use
 	 * @param clientAccessTokenDao
 	 *        the client access token DAO
+	 * @param integrationDao
+	 *        the integration DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public EgaugeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider, InstantSource clock, RandomGenerator rng,
-			ClientAccessTokenDao clientAccessTokenDao) {
+			ClientAccessTokenDao clientAccessTokenDao, CloudIntegrationConfigurationDao integrationDao) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.rng = requireNonNullArgument(rng, "rng");
 		this.clientAccessTokenDao = requireNonNullArgument(clientAccessTokenDao, "clientAccessTokenDao");
+		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 	}
 
 	@Override
@@ -198,12 +205,17 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 			return;
 		}
 
+		final CloudIntegrationConfiguration integration = integrationDao
+				.integrationForDatumStream(config.getId());
+
 		final String deviceId = nonEmptyString(config.serviceProperty(DEVICE_ID_FILTER, String.class));
 		JsonNode realm = null;
 		// get nonce data... we expect a 401 response here
 		try {
-			realm = restOps.getForObject(fromUriString(BASE_URI_TEMPLATE).path("/api/auth/unauthorized")
-					.buildAndExpand(deviceId).toUri(), JsonNode.class);
+			realm = restOps.getForObject(
+					fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+							.path("/api/auth/unauthorized").buildAndExpand(deviceId).toUri(),
+					JsonNode.class);
 		} catch ( HttpClientErrorException e ) {
 			if ( e.getStatusCode().is4xxClientError() ) {
 				realm = e.getResponseBodyAs(JsonNode.class);

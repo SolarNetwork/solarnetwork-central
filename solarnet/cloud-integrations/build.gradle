@@ -65,6 +65,7 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+	testImplementation 'com.squareup.okhttp3:mockwebserver'
 }
 
 jar.manifest {

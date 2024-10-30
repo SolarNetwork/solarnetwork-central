@@ -63,6 +63,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.DaoCloudDatumStreamPollService;
@@ -87,12 +90,13 @@ import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Test cases for the {@link DaoCloudDatumStreamPollService} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -546,6 +550,95 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.returns(datum2.getSampleData(), from(GeneralNodeDatum::getSampleData))
 					;
 			})
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_remoteException_clientHttpError() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream; but throw 404 Not Found
+		final String httpClientErrorExceptionMessage = randomString();
+		final RemoteServiceException remoteServiceException = new RemoteServiceException("Remote error",
+				HttpClientErrorException.create(httpClientErrorExceptionMessage, HttpStatus.NOT_FOUND,
+						"404 Not Found", new HttpHeaders(), new byte[0], null));
+		given(datumStreamService.datum(same(datumStream), any())).willThrow(remoteServiceException);
+
+		// update task details
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
+		task.setState(Claimed);
+		task.setExecuteAt(hour);
+		task.setStartAt(hour.minusSeconds(300));
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again after client HTTP error")
+			.returns(Queued, from(CloudDatumStreamPollTaskEntity::getState))
+			.as("Update task execute date to 1min in future")
+			.returns(clock.instant().plusSeconds(60), from(CloudDatumStreamPollTaskEntity::getExecuteAt))
+			.as("Update task start date unchanged")
+			.returns(task.getStartAt(), from(CloudDatumStreamPollTaskEntity::getStartAt))
+			.as("Error message saved")
+			.returns("Error executing poll task.", from(CloudDatumStreamPollTaskEntity::getMessage))
+			.as("Service properties saved with exception message")
+			.returns(Map.of("message", httpClientErrorExceptionMessage), from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			;
+
+		and.thenThrownBy(() -> {
+				result.get(1, TimeUnit.MINUTES);
+			}, "ExecutionException thrown")
+			.isInstanceOf(ExecutionException.class)
+			.cause()
+			.isSameAs(remoteServiceException)
 			;
 
 		// @formatter:on
