@@ -77,9 +77,6 @@ public abstract class BaseSolcastCloudDatumStreamService
 	/** The setting for resolution. */
 	public static final String RESOLUTION_SETTING = "resolution";
 
-	/** The {@code parameters} default value. */
-	public static final String DEFAULT_PARAMETERS = "air_temp,dni,ghi";
-
 	/** The {@code resolution} default value. */
 	public static final Duration DEFAULT_RESOLUTION = Duration.ofMinutes(5);
 
