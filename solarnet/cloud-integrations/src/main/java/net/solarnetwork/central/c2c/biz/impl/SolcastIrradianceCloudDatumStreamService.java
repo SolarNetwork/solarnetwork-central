@@ -272,7 +272,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		usedQueryFilter.setEndDate(endDate);
 
 		// @formatter:off
-		final UriComponentsBuilder uriBuidler = UriComponentsBuilder
+		final UriComponentsBuilder uriBuilder = UriComponentsBuilder
 				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
 				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
 				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
@@ -286,19 +286,19 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		// @formatter:on
 		String azimuth = nonEmptyString(datumStream.serviceProperty(AZIMUTH_SETTING, String.class));
 		if ( azimuth != null ) {
-			uriBuidler.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
+			uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
 		}
 		String tilt = nonEmptyString(datumStream.serviceProperty(TILT_SETTING, String.class));
 		if ( tilt != null ) {
-			uriBuidler.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
+			uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
 		}
 		String arrayType = nonEmptyString(datumStream.serviceProperty(ARRAY_TYPE_SETTING, String.class));
 		if ( tilt != null ) {
-			uriBuidler.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
+			uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
 		}
 
 		final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List irradiance data", integration,
-				JsonNode.class, req -> uriBuidler.buildAndExpand().toUri(),
+				JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
 				res -> parseDatum(res.getBody(), datumStream, valueProps, refsByFieldName, resolution,
 						usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
 
@@ -348,7 +348,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			if ( !m.matches() ) {
 				continue;
 			}
-			// groups: 1 = siteId, 2 = deviceType, 3 = componentId, 4 = field
+			// groups: 1 = field
 			String fieldName = m.group(1);
 
 			SolcastIrradianceType type;

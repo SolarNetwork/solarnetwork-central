@@ -63,7 +63,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The base URL to the Solcast API. */
 	public static final URI BASE_URI = URI.create("https://api.solcast.com.au");
 
-	/** The URL path for life radiation and weather data. */
+	/** The URL path for live radiation and weather data. */
 	public static final String LIVE_RADIATION_URL_PATH = "/data/live/radiation_and_weather";
 
 	/** The latitude URL query parameter name. */
@@ -155,7 +155,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		// validate by requesting irradiation for an unmetered site
 		try {
-			final String response = restOpsHelper.httpGet("Validation connection", integration,
+			final String response = restOpsHelper.httpGet("Validate connection", integration,
 					String.class,
 					// @formatter:off
 					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
