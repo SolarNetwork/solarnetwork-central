@@ -28,7 +28,6 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.DESCRIPTION_MET
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.UNIT_OF_MEASURE_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
-import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
@@ -47,7 +46,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -66,11 +64,9 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
-import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -193,124 +189,93 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
-		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		if ( !datumStream.isFullyConfigured() ) {
-			String msg = "Datum stream is not fully configured.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.notFullyConfigured", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final String latitude = requireNonNullArgument(
-				datumStream.serviceProperty(LATITUDE_SETTING, String.class),
-				"datumStream.serviceProperties.lat");
-		final String longitude = requireNonNullArgument(
-				datumStream.serviceProperty(LONGITUDE_SETTING, String.class),
-				"datumStream.serviceProperties.lon");
-
-		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
-				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
-
-		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
-		final CloudIntegrationConfiguration integration = requireNonNullObject(
-				integrationDao.get(integrationId), "integration");
-
-		final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
-				"filter.startDate");
-		final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(), "filter.startDate");
-
-		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
-				mapping.getConfigId(), null);
-		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
-				allProperties.size());
-		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
-		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
-			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
-				continue;
-			}
-			if ( conf.getValueType().isExpression() ) {
-				exprProps.add(conf);
-			} else {
-				valueProps.add(conf);
-			}
-		}
-		if ( valueProps.isEmpty() ) {
-			String msg = "Datum stream has no properties.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final Duration resolution = resolveResolution(datumStream);
-
-		final Map<String, ValueRef> refsByFieldName = resolveReferences(datumStream, valueProps);
-
-		BasicQueryFilter nextQueryFilter = null;
-
-		Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution);
-		Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution);
-		if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
-			Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
-			if ( nextEndDate.isAfter(endDate) ) {
-				nextEndDate = endDate;
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
 			}
 
-			endDate = startDate.plus(MAX_QUERY_DURATION);
+			final String latitude = requireNonNullArgument(
+					ds.serviceProperty(LATITUDE_SETTING, String.class),
+					"datumStream.serviceProperties.lat");
+			final String longitude = requireNonNullArgument(
+					ds.serviceProperty(LONGITUDE_SETTING, String.class),
+					"datumStream.serviceProperties.lon");
 
-			nextQueryFilter = new BasicQueryFilter();
-			nextQueryFilter.setStartDate(endDate);
-			nextQueryFilter.setEndDate(nextEndDate);
-		}
+			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
+					"filter.startDate");
+			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
+					"filter.startDate");
 
-		final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
-		usedQueryFilter.setStartDate(startDate);
-		usedQueryFilter.setEndDate(endDate);
+			final Duration resolution = resolveResolution(ds);
 
-		// @formatter:off
-		final UriComponentsBuilder uriBuilder = UriComponentsBuilder
-				.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-				.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
-				.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
-				.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
-				.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
-						resolveHours(startDate, endDate))
-				.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
-				.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
-						resolveOutputParametersValue(refsByFieldName.values()))
-				;
-		// @formatter:on
-		String azimuth = nonEmptyString(datumStream.serviceProperty(AZIMUTH_SETTING, String.class));
-		if ( azimuth != null ) {
-			uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
-		}
-		String tilt = nonEmptyString(datumStream.serviceProperty(TILT_SETTING, String.class));
-		if ( tilt != null ) {
-			uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
-		}
-		String arrayType = nonEmptyString(datumStream.serviceProperty(ARRAY_TYPE_SETTING, String.class));
-		if ( tilt != null ) {
-			uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
-		}
+			final Map<String, ValueRef> refsByFieldName = resolveReferences(ds, valueProps);
 
-		final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List irradiance data", integration,
-				JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
-				res -> parseDatum(res.getBody(), datumStream, valueProps, refsByFieldName, resolution,
-						usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
+			BasicQueryFilter nextQueryFilter = null;
 
-		// evaluate expressions on merged datum
-		if ( !exprProps.isEmpty() ) {
-			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
-					"integrationId", mapping.getIntegrationId());
-			evaulateExpressions(exprProps, resultDatum, parameters);
-		}
+			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution);
+			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution);
+			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
+				Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
+				if ( nextEndDate.isAfter(endDate) ) {
+					nextEndDate = endDate;
+				}
 
-		return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-				resultDatum.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+				endDate = startDate.plus(MAX_QUERY_DURATION);
+
+				nextQueryFilter = new BasicQueryFilter();
+				nextQueryFilter.setStartDate(endDate);
+				nextQueryFilter.setEndDate(nextEndDate);
+			}
+
+			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
+			usedQueryFilter.setStartDate(startDate);
+			usedQueryFilter.setEndDate(endDate);
+
+			// @formatter:off
+			final UriComponentsBuilder uriBuilder = UriComponentsBuilder
+					.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
+					.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+					.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
+					.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
+					.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+							resolveHours(startDate, endDate))
+					.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
+					.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
+							resolveOutputParametersValue(refsByFieldName.values()))
+					;
+			// @formatter:on
+			String azimuth = nonEmptyString(ds.serviceProperty(AZIMUTH_SETTING, String.class));
+			if ( azimuth != null ) {
+				uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
+			}
+			String tilt = nonEmptyString(ds.serviceProperty(TILT_SETTING, String.class));
+			if ( tilt != null ) {
+				uriBuilder.queryParam(SolcastCloudIntegrationService.TILT_PARAM, tilt);
+			}
+			String arrayType = nonEmptyString(ds.serviceProperty(ARRAY_TYPE_SETTING, String.class));
+			if ( tilt != null ) {
+				uriBuilder.queryParam(SolcastCloudIntegrationService.ARRAY_TYPE_PARAM, arrayType);
+			}
+
+			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List irradiance data",
+					integration, JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
+					res -> parseDatum(res.getBody(), ds, valueProps, refsByFieldName, resolution,
+							usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
+
+			// evaluate expressions on merged datum
+			if ( !exprProps.isEmpty() ) {
+				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
+						"integrationId", mapping.getIntegrationId());
+				evaulateExpressions(exprProps, resultDatum, parameters);
+			}
+
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, resultDatum
+					.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+		});
 	}
 
 	/**

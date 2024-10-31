@@ -23,18 +23,24 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
+import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
 import com.fasterxml.jackson.databind.JsonNode;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -43,7 +49,11 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedServiceInfo;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -60,7 +70,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -131,6 +141,101 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				getSettingSpecifiers(), requiresPolling(), dataValuesRequireDatumStream(),
 				supportedPlaceholders(), supportedDataValueWildcardIdentifierLevels(),
 				dataValueIdentifierLevelsSourceIdRange());
+	}
+
+	/**
+	 * API to perform an action on a full datum stream configuration model.
+	 *
+	 * @param <T>
+	 *        the result type
+	 */
+	@FunctionalInterface
+	public static interface IntegrationAction<T> {
+
+		/**
+		 * Handle a full datum stream integration configuration model.
+		 *
+		 * <p>
+		 * All arguments will be non-null.
+		 * </p>
+		 *
+		 * @param ms
+		 *        the message source
+		 * @param datumStream
+		 *        the datum stream
+		 * @param mapping
+		 *        the mapping
+		 * @param integration
+		 *        the integration
+		 * @param valueProps
+		 *        the value properties
+		 * @param exprProps
+		 *        the expression properties
+		 */
+		T doWithDatumStreamIntegration(MessageSource ms, CloudDatumStreamConfiguration datumStream,
+				CloudDatumStreamMappingConfiguration mapping, CloudIntegrationConfiguration integration,
+				List<CloudDatumStreamPropertyConfiguration> valueProps,
+				List<CloudDatumStreamPropertyConfiguration> exprProps);
+
+	}
+
+	/**
+	 * Fetch the entities related to a datum stream and perform an action with
+	 * them.
+	 *
+	 * <p>
+	 * This is a convenient method to invoke in implementations of
+	 * {@link CloudDatumStreamService#latestDatum(CloudDatumStreamConfiguration)}
+	 * and similar methods.
+	 * </p>
+	 *
+	 * @param <T>
+	 *        the result type
+	 * @param datumStream
+	 *        the datum stream to fetch the related entities of
+	 * @param handler
+	 *        callback to handle the entiies in some way
+	 */
+	protected <T> T performAction(CloudDatumStreamConfiguration datumStream,
+			IntegrationAction<T> handler) {
+		assert datumStream != null && handler != null;
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+
+		if ( !datumStream.isFullyConfigured() ) {
+			String msg = "Datum stream is not fully configured.";
+			Errors errors = new BindException(datumStream, "datumStream");
+			errors.reject("error.datumStream.notFullyConfigured", null, msg);
+			throw new ValidationException(msg, errors, ms);
+		}
+
+		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
+				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
+		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
+				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
+
+		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
+				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(integrationId), "integration");
+
+		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
+				mapping.getConfigId(), null);
+		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
+				allProperties.size());
+		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
+		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
+			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
+				continue;
+			}
+			if ( conf.getValueType().isExpression() ) {
+				exprProps.add(conf);
+			} else {
+				valueProps.add(conf);
+			}
+		}
+
+		return handler.doWithDatumStreamIntegration(ms, datumStream, mapping, integration, valueProps,
+				exprProps);
 	}
 
 	/**

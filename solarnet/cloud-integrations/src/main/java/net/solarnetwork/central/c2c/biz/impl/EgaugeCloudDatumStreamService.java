@@ -115,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -287,102 +287,72 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
-		final String deviceId = requireNonNullArgument(
-				datumStream.serviceProperty(DEVICE_ID_FILTER, String.class),
-				"datumStream.serviceProperties.deviceId");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
-		final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
-				"filter.startDate");
-		final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(), "filter.startDate");
-
-		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		if ( !datumStream.isFullyConfigured() ) {
-			String msg = "Datum stream is not fully configured.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.notFullyConfigured", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
-				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
-
-		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
-		final CloudIntegrationConfiguration integration = requireNonNullObject(
-				integrationDao.get(integrationId), "integration");
-
-		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
-				mapping.getConfigId(), null);
-		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
-				allProperties.size());
-		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
-		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
-			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
-				continue;
-			}
-			if ( conf.getValueType().isExpression() ) {
-				exprProps.add(conf);
-			} else {
-				valueProps.add(conf);
-			}
-		}
-		if ( valueProps.isEmpty() ) {
-			String msg = "Datum stream has no properties.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final Duration granularity = resolveGranularity(datumStream);
-
-		BasicQueryFilter nextQueryFilter = null;
-
-		Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, granularity);
-		Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, granularity);
-		if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
-			Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
-			if ( nextEndDate.isAfter(endDate) ) {
-				nextEndDate = endDate;
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
 			}
 
-			endDate = startDate.plus(MAX_QUERY_TIME_RANGE);
+			final String deviceId = requireNonNullArgument(
+					ds.serviceProperty(DEVICE_ID_FILTER, String.class),
+					"datumStream.serviceProperties.deviceId");
 
-			nextQueryFilter = new BasicQueryFilter();
-			nextQueryFilter.setStartDate(endDate);
-			nextQueryFilter.setEndDate(nextEndDate);
-		}
+			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
+					"filter.startDate");
+			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
+					"filter.startDate");
 
-		final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
-		usedQueryFilter.setStartDate(startDate);
-		usedQueryFilter.setEndDate(endDate);
+			final Duration granularity = resolveGranularity(ds);
 
-		final String queryTimeRange = "%d:%s:%d".formatted(startDate.getEpochSecond(),
-				granularity.getSeconds(), endDate.getEpochSecond());
+			BasicQueryFilter nextQueryFilter = null;
 
-		final Map<String, List<ValueRef>> refsByRegisterName = resolveValueReferences(integration,
-				datumStream, deviceId, valueProps);
-		final String queryRegisters = registerQueryParam(refsByRegisterName.values());
+			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, granularity);
+			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, granularity);
+			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
+				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
+				if ( nextEndDate.isAfter(endDate) ) {
+					nextEndDate = endDate;
+				}
 
-		final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List register data", datumStream,
-				JsonNode.class,
-				req -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
-						.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
-						.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
-						.buildAndExpand(deviceId).toUri(),
-				res -> parseDatum(res.getBody(), datumStream, deviceId, refsByRegisterName));
+				endDate = startDate.plus(MAX_QUERY_TIME_RANGE);
 
-		// evaluate expressions on final datum
-		if ( !exprProps.isEmpty() ) {
-			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
-					"integrationId", mapping.getIntegrationId());
-			evaulateExpressions(exprProps, resultDatum, parameters);
-		}
+				nextQueryFilter = new BasicQueryFilter();
+				nextQueryFilter.setStartDate(endDate);
+				nextQueryFilter.setEndDate(nextEndDate);
+			}
 
-		return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-				resultDatum.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
+			usedQueryFilter.setStartDate(startDate);
+			usedQueryFilter.setEndDate(endDate);
+
+			final String queryTimeRange = "%d:%s:%d".formatted(startDate.getEpochSecond(),
+					granularity.getSeconds(), endDate.getEpochSecond());
+
+			final Map<String, List<ValueRef>> refsByRegisterName = resolveValueReferences(integration,
+					ds, deviceId, valueProps);
+			final String queryRegisters = registerQueryParam(refsByRegisterName.values());
+
+			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List register data", ds,
+					JsonNode.class,
+					req -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+							.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
+							.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
+							.buildAndExpand(deviceId).toUri(),
+					res -> parseDatum(res.getBody(), ds, deviceId, refsByRegisterName));
+
+			// evaluate expressions on final datum
+			if ( !exprProps.isEmpty() ) {
+				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
+						"integrationId", mapping.getIntegrationId());
+				evaulateExpressions(exprProps, resultDatum, parameters);
+			}
+
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, resultDatum
+					.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+		});
 	}
 
 	private List<CloudDataValue> deviceRegisters(CloudIntegrationConfiguration integration,
