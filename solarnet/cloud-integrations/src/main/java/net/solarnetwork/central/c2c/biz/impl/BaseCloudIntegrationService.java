@@ -41,7 +41,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -154,6 +154,34 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 			} catch ( URISyntaxException e ) {
 				// ignore, use default
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * Resolve a base URL string value.
+	 *
+	 * <p>
+	 * This method will look for a
+	 * {@link CloudIntegrationService#BASE_URL_SETTING} service property and
+	 * return it, falling back to returning {@code defaultBaseUrl} if that
+	 * fails.
+	 * </p>
+	 *
+	 * @param integration
+	 *        the integration to look for the base URL service property on
+	 * @param defaultBaseUrl
+	 *        the fallback URL to use
+	 * @return the URL, or {@code null} if the
+	 *         {@link CloudIntegrationService#BASE_URL_SETTING} service property
+	 *         cannot be resolved
+	 * @since 1.3
+	 */
+	public static String resolveBaseUrl(CloudIntegrationConfiguration integration,
+			String defaultBaseUrl) {
+		String result = defaultBaseUrl;
+		if ( integration != null && integration.hasServiceProperty(BASE_URL_SETTING) ) {
+			result = integration.serviceProperty(BASE_URL_SETTING, String.class);
 		}
 		return result;
 	}

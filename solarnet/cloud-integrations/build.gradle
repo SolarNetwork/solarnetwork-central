@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Cloud Integrations'
-version = '1.8.0'
+version = '1.9.0'
 
 base {
 	archivesName = 'solarnet-cloud-integrations'
@@ -65,6 +65,7 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+	testImplementation 'com.squareup.okhttp3:mockwebserver'
 }
 
 jar.manifest {

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
@@ -32,11 +33,28 @@ import net.solarnetwork.dao.FilterableDao;
  * DAO API for {@link CloudIntegrationConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationConfigurationDao
 		extends GenericCompositeKey2Dao<CloudIntegrationConfiguration, UserLongCompositePK, Long, Long>,
 		FilterableDao<CloudIntegrationConfiguration, UserLongCompositePK, CloudIntegrationFilter>,
 		UserModifiableEnabledStatusDao<CloudIntegrationFilter> {
+
+	/**
+	 * Convenient method to find the integration associated with a datum stream.
+	 *
+	 * @param datumStreamId
+	 *        the datum stream ID to find the integration for
+	 * @return the integration, or {@literal null} if not found
+	 * @since 1.1
+	 */
+	default CloudIntegrationConfiguration integrationForDatumStream(UserLongCompositePK datumStreamId) {
+		var filter = new BasicFilter();
+		filter.setUserId(requireNonNullArgument(datumStreamId, "datumStreamId").getUserId());
+		filter.setDatumStreamId(datumStreamId.getEntityId());
+
+		var results = findFiltered(filter);
+		return (results.getReturnedResultCount() > 0 ? results.iterator().next() : null);
+	}
 
 }

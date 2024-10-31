@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.SECS_PER_HOUR;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeCloudIntegrationService.BASE_URI_TEMPLATE;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
@@ -71,6 +72,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
@@ -113,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -212,7 +214,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 						LoggerFactory.getLogger(EgaugeCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						datumStreamServiceIdentifier -> SECURE_SETTINGS, clock, rng,
-						clientAccessTokenDao));
+						clientAccessTokenDao, integrationDao));
 		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
@@ -242,6 +244,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			Map<String, ?> filters) {
 		requireNonNullArgument(filters, "filters");
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
 		final Long datumStreamId = requireNonNullArgument(
 				filters.get(DATUM_STREAM_ID_FILTER) instanceof Object o ? Long.valueOf(o.toString())
 						: null,
@@ -253,7 +258,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				datumStream.serviceProperty(DEVICE_ID_FILTER, String.class),
 				"datumStream.serviceProperties.deviceId");
 		List<CloudDataValue> result = Collections.emptyList();
-		result = deviceRegisters(datumStream, deviceId);
+		result = deviceRegisters(integration, datumStream, deviceId);
 		Collections.sort(result);
 		return result;
 	}
@@ -304,6 +309,11 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
 				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
 
+		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
+				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(integrationId), "integration");
+
 		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
 				mapping.getConfigId(), null);
 		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
@@ -352,15 +362,16 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		final String queryTimeRange = "%d:%s:%d".formatted(startDate.getEpochSecond(),
 				granularity.getSeconds(), endDate.getEpochSecond());
 
-		final Map<String, List<ValueRef>> refsByRegisterName = resolveValueReferences(datumStream,
-				deviceId, valueProps);
+		final Map<String, List<ValueRef>> refsByRegisterName = resolveValueReferences(integration,
+				datumStream, deviceId, valueProps);
 		final String queryRegisters = registerQueryParam(refsByRegisterName.values());
 
 		final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List register data", datumStream,
 				JsonNode.class,
-				req -> fromUriString(BASE_URI_TEMPLATE).path(REGISTER_URL_PATH).queryParam("raw")
-						.queryParam("virtual", "value").queryParam("reg", queryRegisters)
-						.queryParam("time", queryTimeRange).buildAndExpand(deviceId).toUri(),
+				req -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+						.path(REGISTER_URL_PATH).queryParam("raw").queryParam("virtual", "value")
+						.queryParam("reg", queryRegisters).queryParam("time", queryTimeRange)
+						.buildAndExpand(deviceId).toUri(),
 				res -> parseDatum(res.getBody(), datumStream, deviceId, refsByRegisterName));
 
 		// evaluate expressions on final datum
@@ -374,11 +385,11 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				resultDatum.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 	}
 
-	private List<CloudDataValue> deviceRegisters(CloudDatumStreamConfiguration datumStream,
-			String deviceId) {
+	private List<CloudDataValue> deviceRegisters(CloudIntegrationConfiguration integration,
+			CloudDatumStreamConfiguration datumStream, String deviceId) {
 		return restOpsHelper.httpGet("List registers", datumStream, JsonNode.class,
-				(req) -> fromUriString(BASE_URI_TEMPLATE).path(REGISTER_URL_PATH)
-						.buildAndExpand(deviceId).toUri(),
+				(req) -> fromUriString(resolveBaseUrl(integration, BASE_URI_TEMPLATE))
+						.path(REGISTER_URL_PATH).buildAndExpand(deviceId).toUri(),
 				res -> parseDeviceRegisters(deviceId, res.getBody()));
 	}
 
@@ -454,6 +465,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * datum properties.
 	 * </p>
 	 *
+	 * @param integration
+	 *        the integration
 	 * @param datumStream
 	 *        the datum stream
 	 * @param deviceId
@@ -462,9 +475,10 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 *        the non-expression properties configured for the stream
 	 * @return the mapping
 	 */
-	private Map<String, List<ValueRef>> resolveValueReferences(CloudDatumStreamConfiguration datumStream,
-			String deviceId, List<CloudDatumStreamPropertyConfiguration> properties) {
-		final CloudDataValue[] registers = resolveDeviceRegisters(datumStream, deviceId);
+	private Map<String, List<ValueRef>> resolveValueReferences(CloudIntegrationConfiguration integration,
+			CloudDatumStreamConfiguration datumStream, String deviceId,
+			List<CloudDatumStreamPropertyConfiguration> properties) {
+		final CloudDataValue[] registers = resolveDeviceRegisters(integration, datumStream, deviceId);
 		final Map<String, Object> placeholders = Map.of(DEVICE_ID_FILTER, deviceId);
 		final Map<String, List<ValueRef>> result = new LinkedHashMap<>(properties.size());
 
@@ -536,14 +550,16 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	 * available.
 	 * </p>
 	 *
+	 * @param integration
+	 *        the integration
 	 * @param datumStream
 	 *        the datum stream
 	 * @param deviceId
 	 *        the device ID
 	 * @return the data values
 	 */
-	private CloudDataValue[] resolveDeviceRegisters(CloudDatumStreamConfiguration datumStream,
-			String deviceId) {
+	private CloudDataValue[] resolveDeviceRegisters(CloudIntegrationConfiguration integration,
+			CloudDatumStreamConfiguration datumStream, String deviceId) {
 		assert datumStream != null && deviceId != null;
 		final var cache = getDeviceRegistersCache();
 
@@ -552,7 +568,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 			return result;
 		}
 
-		List<CloudDataValue> response = deviceRegisters(datumStream, deviceId);
+		List<CloudDataValue> response = deviceRegisters(integration, datumStream, deviceId);
 		if ( response != null ) {
 			result = response.toArray(CloudDataValue[]::new);
 			if ( cache != null ) {
