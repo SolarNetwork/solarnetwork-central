@@ -23,8 +23,14 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH;
+import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Status;
+import static net.solarnetwork.domain.datum.DayDatum.SUNRISE_KEY;
+import static net.solarnetwork.domain.datum.DayDatum.SUNSET_KEY;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +50,8 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DayDatum;
+import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -56,11 +63,10 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * @author matt
  * @version 1.0
  */
-public class OpenWeatherMapWeatherCloudDatumStreamService
-		extends BaseOpenWeatherMapCloudDatumStreamService {
+public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMapCloudDatumStreamService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.owm.weather";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.owm.day";
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -104,7 +110,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OpenWeatherMapWeatherCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
+	public OpenWeatherMapDayCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
@@ -114,7 +120,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 		super(SERVICE_IDENTIFIER, "OpenWeatherMap Weather Datum Stream Service", userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS, restOps,
-				LoggerFactory.getLogger(OpenWeatherMapWeatherCloudDatumStreamService.class), clock);
+				LoggerFactory.getLogger(OpenWeatherMapDayCloudDatumStreamService.class), clock);
 	}
 
 	@Override
@@ -125,7 +131,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 			final UriComponentsBuilder uriBuilder = locationBasedUrl(ms, ds, integration,
 					WEATHER_URL_PATH);
 
-			final GeneralDatum datum = restOpsHelper.httpGet("Get weather conditions", integration,
+			final GeneralDatum datum = restOpsHelper.httpGet("Get day conditions", integration,
 					JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
 					res -> parseDatum(res.getBody(), ds));
 
@@ -142,16 +148,28 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	}
 
 	private GeneralDatum parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
+		Integer tzOffsetSecs = parseIntegerAttribute(json, "timezone");
+		if ( tzOffsetSecs == null ) {
+			return null;
+		}
+
 		GeneralDatum d = parseWeatherData(json, datumStream.getKind(), datumStream.getObjectId(),
 				datumStream.getSourceId());
-		if ( d != null ) {
-			// remove DayDatum keys from weather
-			d.getSamples().putInstantaneousSampleValue(DayDatum.TEMPERATURE_MINIMUM_KEY, null);
-			d.getSamples().putInstantaneousSampleValue(DayDatum.TEMPERATURE_MAXIMUM_KEY, null);
-			d.getSamples().putStatusSampleValue(DayDatum.SUNRISE_KEY, null);
-			d.getSamples().putStatusSampleValue(DayDatum.SUNSET_KEY, null);
+
+		// create a day-specific datum
+		var samples = new DatumSamples();
+		samples.putSampleValue(Status, SUNRISE_KEY, d.getSampleValue(Status, SUNRISE_KEY));
+		samples.putSampleValue(Status, SUNSET_KEY, d.getSampleValue(Status, SUNSET_KEY));
+
+		if ( samples.isEmpty() ) {
+			return null;
 		}
-		return d;
+
+		return new GeneralDatum(
+				new DatumId(datumStream.getKind(), datumStream.getObjectId(), datumStream.getSourceId(),
+						d.getTimestamp().atZone(ZoneOffset.ofTotalSeconds(tzOffsetSecs))
+								.truncatedTo(ChronoUnit.DAYS).toInstant()),
+				samples);
 	}
 
 }

@@ -30,13 +30,13 @@
 	},
 	"dt": 1537138800,
 	"sys": {
-		"type": 1,
-		"id": 8295,
-		"message": 0.0039,
-		"country": "NZ",
-		"sunrise": 1537035592,
-		"sunset": 1537078319
+      "type": 2,
+      "id": 2017837,
+      "country": "US",
+      "sunrise": 1730385275,
+      "sunset": 1730423515
 	},
+	"timezone": -25200,
 	"id": 2179537,
 	"name": "Wellington",
 	"cod": 200

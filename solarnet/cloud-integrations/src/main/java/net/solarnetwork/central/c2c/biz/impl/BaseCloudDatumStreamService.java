@@ -194,7 +194,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @param datumStream
 	 *        the datum stream to fetch the related entities of
 	 * @param handler
-	 *        callback to handle the entiies in some way
+	 *        callback to handle the entities in some way
+	 * @since 1.6
 	 */
 	protected <T> T performAction(CloudDatumStreamConfiguration datumStream,
 			IntegrationAction<T> handler) {
@@ -297,10 +298,34 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the property configurations
 	 * @param datum
 	 *        the datum to evaluate expressions on
+	 * @param mappingId
+	 *        the {@link CloudDatumStreamMappingConfiguration} ID to provide as
+	 *        a {@code datumStreamMappingId} parameter
+	 * @param integrationId
+	 *        the {@link CloudIntegrationConfiguration} ID to provide as a
+	 *        {@code integrationId} parameter
+	 * @since 1.6
+	 */
+	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
+			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId) {
+		assert mappingId != null && integrationId != null;
+		if ( datum != null && !datum.isEmpty() && configurations != null && !configurations.isEmpty() ) {
+			var parameters = Map.of("datumStreamMappingId", mappingId, "integrationId", integrationId);
+			evaluateExpressions(configurations, datum, parameters);
+		}
+	}
+
+	/**
+	 * Evaluate a set of property expressions on a set of datum.
+	 *
+	 * @param configurations
+	 *        the property configurations
+	 * @param datum
+	 *        the datum to evaluate expressions on
 	 * @param parameters
 	 *        parameters to pass to the expressions
 	 */
-	public void evaulateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
+	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
 			Collection<? extends MutableDatum> datum, Map<String, ?> parameters) {
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return;

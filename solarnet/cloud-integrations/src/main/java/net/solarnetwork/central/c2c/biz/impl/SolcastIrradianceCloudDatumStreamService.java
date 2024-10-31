@@ -267,11 +267,8 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 							usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
 
 			// evaluate expressions on merged datum
-			if ( !exprProps.isEmpty() ) {
-				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
-						"integrationId", mapping.getIntegrationId());
-				evaulateExpressions(exprProps, resultDatum, parameters);
-			}
+			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, resultDatum
 					.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());

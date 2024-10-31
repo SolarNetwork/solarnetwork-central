@@ -684,11 +684,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			}
 
 			// evaluate expressions on merged datum
-			if ( !exprProps.isEmpty() ) {
-				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
-						"integrationId", mapping.getIntegrationId());
-				evaulateExpressions(exprProps, result.values(), parameters);
-			}
+			evaluateExpressions(exprProps, result.values(), mapping.getConfigId(),
+					integration.getConfigId());
 
 			BasicQueryFilter nextQueryFilter = null;
 			if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {

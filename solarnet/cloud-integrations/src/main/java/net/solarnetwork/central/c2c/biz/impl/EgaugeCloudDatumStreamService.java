@@ -344,11 +344,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					res -> parseDatum(res.getBody(), ds, deviceId, refsByRegisterName));
 
 			// evaluate expressions on final datum
-			if ( !exprProps.isEmpty() ) {
-				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
-						"integrationId", mapping.getIntegrationId());
-				evaulateExpressions(exprProps, resultDatum, parameters);
-			}
+			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, resultDatum
 					.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());

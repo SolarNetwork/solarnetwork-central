@@ -1,5 +1,5 @@
 /* ==================================================================
- * OpenWeatherMapWeatherCloudDatumStreamServiceTests.java - 31/10/2024 4:24:04 pm
+ * OpenWeatherMapForecastCloudDatumStreamServiceTests.java - 31/10/2024 4:24:04 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -66,7 +66,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseOpenWeatherMapCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService;
-import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapWeatherCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapForecastCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -82,7 +82,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Test cases for the {@link OpenWeatherMapWeatherCloudDatumStreamService}
+ * Test cases for the {@link OpenWeatherMapForecastCloudDatumStreamService}
  * class.
  *
  * @author matt
@@ -90,7 +90,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
+public class OpenWeatherMapForecastCloudDatumStreamServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
 
@@ -134,7 +134,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
-	private OpenWeatherMapWeatherCloudDatumStreamService service;
+	private OpenWeatherMapForecastCloudDatumStreamService service;
 
 	private ObjectMapper objectMapper;
 
@@ -143,12 +143,12 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 		objectMapper = JsonUtils.newObjectMapper();
 
 		expressionService = new SpelCloudIntegrationsExpressionService();
-		service = new OpenWeatherMapWeatherCloudDatumStreamService(userEventAppenderBiz, encryptor,
+		service = new OpenWeatherMapForecastCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, restOps, clock);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasenames(OpenWeatherMapWeatherCloudDatumStreamService.class.getName(),
+		msg.setBasenames(OpenWeatherMapForecastCloudDatumStreamService.class.getName(),
 				BaseOpenWeatherMapCloudDatumStreamService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msg);
@@ -200,14 +200,14 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 		// request data
 		final URI dataUri = UriComponentsBuilder
 				.fromUri(resolveBaseUrl(integration, OpenWeatherMapCloudIntegrationService.BASE_URI))
-				.path(OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH)
+				.path(OpenWeatherMapForecastCloudDatumStreamService.FORECAST_URL_PATH)
 				.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
 				.queryParam(OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM, lat.toPlainString())
 				.queryParam(OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM, lon.toPlainString())
 				.queryParam(OpenWeatherMapCloudIntegrationService.APPID_PARAM, apiKey).buildAndExpand()
 				.toUri();
 		final JsonNode dataJson = objectMapper
-				.readTree(utf8StringResource("openweathermap-weather-01.json", getClass()));
+				.readTree(utf8StringResource("openweathermap-forecast-01.json", getClass()));
 		final var dataRes = new ResponseEntity<JsonNode>(dataJson, HttpStatus.OK);
 		given(restOps.exchange(eq(dataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
 				.willReturn(dataRes);
@@ -220,7 +220,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 		and.then(result)
 			.as("Latest datum parsed from HTTP response ")
-			.hasSize(1)
+			.hasSize(40)
 			.allSatisfy(d -> {
 				and.then(d)
 					.as("Datum kind is from DatumStream configuration")
@@ -234,20 +234,43 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 			.satisfies(list -> {
 				and.then(list).element(0)
 					.as("Timestamp from data")
-					.returns(Instant.ofEpochSecond(1537138800L), from(Datum::getTimestamp))
+					.returns(Instant.ofEpochSecond(1730419200L), from(Datum::getTimestamp))
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
-								"temp", 14,
-								"atm", 101600,
-								"humidity", 87,
+								"temp", new BigDecimal("16.06"),
+								"tempMin", new BigDecimal("14.33"),
+								"tempMax", new BigDecimal("16.06"),
+								"atm", 102000,
+								"humidity", 68,
 								"visibility", 10000,
-								"wdir", 350,
-								"wspeed", new BigDecimal("9.8"),
-								"wgust", new BigDecimal("14.9"),
-								"cloudiness", 44
+								"wdir", 281,
+								"wspeed", new BigDecimal("5.49"),
+								"wgust", new BigDecimal("7.26"),
+								"cloudiness", 41
 							), null , Map.of(
-								"sky", "Rain",
-								"iconId", "10n"
+								"sky", "Clouds",
+								"iconId", "03d"
+							)),
+						Datum::asSampleOperations)
+					;
+				and.then(list).element(2)
+					.as("Timestamp from data")
+					.returns(Instant.ofEpochSecond(1730440800L), from(Datum::getTimestamp))
+					.as("Datum samples from register data")
+					.returns(new DatumSamples(Map.of(
+								"temp", new BigDecimal("12.47"),
+								"tempMin", new BigDecimal("12.47"),
+								"tempMax", new BigDecimal("12.47"),
+								"atm", 101900,
+								"humidity", 80,
+								"visibility", 10000,
+								"wdir", 304,
+								"wspeed", new BigDecimal("3.59"),
+								"wgust", new BigDecimal("6.33"),
+								"cloudiness", 94
+							), null , Map.of(
+								"sky", "Clouds",
+								"iconId", "04n"
 							)),
 						Datum::asSampleOperations)
 					;

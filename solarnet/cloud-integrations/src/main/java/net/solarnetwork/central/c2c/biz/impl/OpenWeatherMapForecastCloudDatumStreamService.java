@@ -22,9 +22,9 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.WEATHER_URL_PATH;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -44,23 +44,22 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
-import net.solarnetwork.domain.datum.DayDatum;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
  * OpenWeatherMap implementation of {@link CloudDatumStreamService} using the
- * weather API.
+ * weather forecast API.
  *
  * @author matt
  * @version 1.0
  */
-public class OpenWeatherMapWeatherCloudDatumStreamService
+public class OpenWeatherMapForecastCloudDatumStreamService
 		extends BaseOpenWeatherMapCloudDatumStreamService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.owm.weather";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.owm.forecast";
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -79,6 +78,9 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 
 	/** The supported placeholder keys. */
 	public static final List<String> SUPPORTED_PLACEHOLDERS = Collections.emptyList();
+
+	/** The URL path for forecast data. */
+	public static final String FORECAST_URL_PATH = "/data/2.5/forecast";
 
 	/**
 	 * Constructor.
@@ -104,17 +106,17 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public OpenWeatherMapWeatherCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
+	public OpenWeatherMapForecastCloudDatumStreamService(UserEventAppenderBiz userEventAppenderBiz,
 			TextEncryptor encryptor, CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			Clock clock) {
-		super(SERVICE_IDENTIFIER, "OpenWeatherMap Weather Datum Stream Service", userEventAppenderBiz,
+		super(SERVICE_IDENTIFIER, "OpenWeatherMap Forecast Datum Stream Service", userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS, restOps,
-				LoggerFactory.getLogger(OpenWeatherMapWeatherCloudDatumStreamService.class), clock);
+				LoggerFactory.getLogger(OpenWeatherMapForecastCloudDatumStreamService.class), clock);
 	}
 
 	@Override
@@ -123,14 +125,11 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
 			final UriComponentsBuilder uriBuilder = locationBasedUrl(ms, ds, integration,
-					WEATHER_URL_PATH);
+					FORECAST_URL_PATH);
 
-			final GeneralDatum datum = restOpsHelper.httpGet("Get weather conditions", integration,
+			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("Get forecast", integration,
 					JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
 					res -> parseDatum(res.getBody(), ds));
-
-			final List<GeneralDatum> resultDatum = (datum != null ? List.of(datum)
-					: Collections.emptyList());
 
 			// evaluate expressions on merged datum
 			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
@@ -141,17 +140,16 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 		});
 	}
 
-	private GeneralDatum parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
-		GeneralDatum d = parseWeatherData(json, datumStream.getKind(), datumStream.getObjectId(),
-				datumStream.getSourceId());
-		if ( d != null ) {
-			// remove DayDatum keys from weather
-			d.getSamples().putInstantaneousSampleValue(DayDatum.TEMPERATURE_MINIMUM_KEY, null);
-			d.getSamples().putInstantaneousSampleValue(DayDatum.TEMPERATURE_MAXIMUM_KEY, null);
-			d.getSamples().putStatusSampleValue(DayDatum.SUNRISE_KEY, null);
-			d.getSamples().putStatusSampleValue(DayDatum.SUNSET_KEY, null);
+	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
+		List<GeneralDatum> result = new ArrayList<>(40);
+		for ( JsonNode forecastNode : json.path("list") ) {
+			GeneralDatum d = parseWeatherData(forecastNode, datumStream.getKind(),
+					datumStream.getObjectId(), datumStream.getSourceId());
+			if ( d != null ) {
+				result.add(d);
+			}
 		}
-		return d;
+		return result;
 	}
 
 }

@@ -1,5 +1,5 @@
 /* ==================================================================
- * OpenWeatherMapWeatherCloudDatumStreamServiceTests.java - 31/10/2024 4:24:04 pm
+ * OpenWeatherMapDayCloudDatumStreamServiceTests.java - 31/10/2024 4:24:04 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -38,6 +38,7 @@ import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Map;
@@ -66,7 +67,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseOpenWeatherMapCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService;
-import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapWeatherCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapDayCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -82,15 +83,14 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
- * Test cases for the {@link OpenWeatherMapWeatherCloudDatumStreamService}
- * class.
+ * Test cases for the {@link OpenWeatherMapDayCloudDatumStreamService} class.
  *
  * @author matt
  * @version 1.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
+public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
 
@@ -134,7 +134,7 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
-	private OpenWeatherMapWeatherCloudDatumStreamService service;
+	private OpenWeatherMapDayCloudDatumStreamService service;
 
 	private ObjectMapper objectMapper;
 
@@ -143,12 +143,12 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 		objectMapper = JsonUtils.newObjectMapper();
 
 		expressionService = new SpelCloudIntegrationsExpressionService();
-		service = new OpenWeatherMapWeatherCloudDatumStreamService(userEventAppenderBiz, encryptor,
+		service = new OpenWeatherMapDayCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, restOps, clock);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasenames(OpenWeatherMapWeatherCloudDatumStreamService.class.getName(),
+		msg.setBasenames(OpenWeatherMapDayCloudDatumStreamService.class.getName(),
 				BaseOpenWeatherMapCloudDatumStreamService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msg);
@@ -216,8 +216,10 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
-		// @formatter:off
+		Instant dayStart = Instant.ofEpochSecond(1537138800L).atZone(ZoneOffset.ofTotalSeconds(-25200))
+				.truncatedTo(ChronoUnit.DAYS).toInstant();
 
+		// @formatter:off
 		and.then(result)
 			.as("Latest datum parsed from HTTP response ")
 			.hasSize(1)
@@ -233,21 +235,12 @@ public class OpenWeatherMapWeatherCloudDatumStreamServiceTests {
 			})
 			.satisfies(list -> {
 				and.then(list).element(0)
-					.as("Timestamp from data")
-					.returns(Instant.ofEpochSecond(1537138800L), from(Datum::getTimestamp))
+					.as("Timestamp is truncated day-start from data")
+					.returns(dayStart, from(Datum::getTimestamp))
 					.as("Datum samples from register data")
-					.returns(new DatumSamples(Map.of(
-								"temp", 14,
-								"atm", 101600,
-								"humidity", 87,
-								"visibility", 10000,
-								"wdir", 350,
-								"wspeed", new BigDecimal("9.8"),
-								"wgust", new BigDecimal("14.9"),
-								"cloudiness", 44
-							), null , Map.of(
-								"sky", "Rain",
-								"iconId", "10n"
+					.returns(new DatumSamples(null, null , Map.of(
+								"sunrise", "07:34",
+								"sunset", "18:11"
 							)),
 						Datum::asSampleOperations)
 					;

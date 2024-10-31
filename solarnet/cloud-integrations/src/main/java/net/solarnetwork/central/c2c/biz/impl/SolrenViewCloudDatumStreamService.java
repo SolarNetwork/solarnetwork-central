@@ -467,7 +467,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
 						"integrationId", mapping.getIntegrationId());
 				for ( Map<String, GeneralDatum> e : datum.values() ) {
-					evaulateExpressions(exprProps, e.values(), parameters);
+					evaluateExpressions(exprProps, e.values(), parameters);
 				}
 			}
 

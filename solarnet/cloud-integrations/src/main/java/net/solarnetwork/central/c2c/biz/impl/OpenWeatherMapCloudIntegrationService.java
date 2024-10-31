@@ -70,13 +70,10 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	public static final String APPID_PARAM = "appid";
 
 	/** The latitude URL query parameter name. */
-	public static final String LATITUDE_PARAM = "latitude";
+	public static final String LATITUDE_PARAM = "lat";
 
 	/** The longitude URL query parameter name. */
-	public static final String LONGITUDE_PARAM = "longitude";
-
-	/** The location (city) ID URL query parameter name. */
-	public static final String LOCATION_ID_PARAM = "id";
+	public static final String LONGITUDE_PARAM = "lon";
 
 	private static final String VALIDATION_LAT = "37.773972";
 	private static final String VALIDATION_LON = "-122.431297";

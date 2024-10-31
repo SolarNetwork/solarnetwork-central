@@ -22,19 +22,35 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
+import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.LATITUDE_PARAM;
+import static net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService.LONGITUDE_PARAM;
 import static net.solarnetwork.codec.JsonUtils.parseBigDecimalAttribute;
+import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.codec.JsonUtils.parseLongAttribute;
 import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import org.slf4j.Logger;
+import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.validation.BindException;
+import org.springframework.validation.Errors;
 import org.springframework.web.client.RestOperations;
+import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.databind.JsonNode;
+import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -42,6 +58,14 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.AtmosphericDatum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -50,6 +74,7 @@ import net.solarnetwork.domain.datum.DayDatum;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.DateUtils;
 
 /**
  * Abstract base class for OpenWeatherMap implementations of
@@ -69,6 +94,18 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 	/** The setting for location identifier. */
 	public static final String LOCATION_ID_SETTING = "locId";
+
+	/** The location (city) ID URL query parameter name. */
+	public static final String LOCATION_ID_PARAM = "id";
+
+	/** The count URL query parameter name. */
+	public static final String COUNT_PARAM = "cnt";
+
+	/** The units URL query parameter name. */
+	public static final String UNITS_PARAM = "units";
+
+	/** The units URL query parameter value for metric units. */
+	public static final String UNITS_METRIC_VALUE = "metric";
 
 	/** The clock. */
 	protected final Clock clock;
@@ -117,6 +154,77 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
+	@Override
+	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
+			Map<String, ?> filters) {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter) {
+		CloudDatumStreamQueryResult result = (CloudDatumStreamQueryResult) latestDatum(datumStream);
+		return new BasicCloudDatumStreamQueryResult(
+				result != null ? result.getResults() : Collections.emptyList());
+	}
+
+	/**
+	 * Create an OpenWeatherMap location-based API URL builder.
+	 *
+	 * <p>
+	 * This method will look for a {@link #LOCATION_ID_SETTING} service property
+	 * on the given {@code datumStream} and include that in the returned URI
+	 * builder. Otherwise it will look for {@link #LATITUDE_SETTING} and
+	 * {@link #LONGITUDE_SETTING} service properties and include those.
+	 * Otherwise a {@link ValidationException} will be thrown with a
+	 * {@code error.datumStream.missingLocation} message key.
+	 * </p>
+	 *
+	 * @param ms
+	 *        the message source
+	 * @param ds
+	 *        the datum stream
+	 * @param integration
+	 *        the integration
+	 * @param path
+	 *        the URL path
+	 * @return the builder, with location query parameters configured
+	 */
+	public static UriComponentsBuilder locationBasedUrl(MessageSource ms,
+			CloudDatumStreamConfiguration ds, CloudIntegrationConfiguration integration, String path) {
+		assert ms != null && ds != null && integration != null && path != null;
+		final String latitude = nonEmptyString(ds.serviceProperty(LATITUDE_SETTING, String.class));
+		final String longitude = nonEmptyString(ds.serviceProperty(LONGITUDE_SETTING, String.class));
+		final String locationId = nonEmptyString(ds.serviceProperty(LOCATION_ID_SETTING, String.class));
+
+		if ( latitude == null && longitude == null && locationId == null ) {
+			String msg = "Datum stream is not fully configured: requires location.";
+			Errors errors = new BindException(ds, "datumStream");
+			errors.reject("error.datumStream.missingLocation", null, msg);
+			throw new ValidationException(msg, errors, ms);
+		}
+
+		// @formatter:off
+		final UriComponentsBuilder result = UriComponentsBuilder
+				.fromUri(resolveBaseUrl(integration, BASE_URI))
+				.path(path)
+				.queryParam(UNITS_PARAM, UNITS_METRIC_VALUE)
+				;
+		// @formatter:on
+		if ( locationId != null ) {
+			result.queryParam(LOCATION_ID_PARAM, locationId);
+		} else {
+			result.queryParam(LATITUDE_PARAM, latitude);
+			result.queryParam(LONGITUDE_PARAM, longitude);
+		}
+		return result;
+	}
+
 	/**
 	 * Parse a weather data response object.
 	 *
@@ -125,7 +233,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 * but slightly different.
 	 * </p>
 	 *
-	 * @param node
+	 * @param json
 	 *        the JSON
 	 * @param kind
 	 *        the datum stream kind
@@ -135,7 +243,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 *        the datum stream source ID
 	 * @return the datum, or {@literal null}
 	 */
-	public static GeneralDatum parseWeatherData(JsonNode node, ObjectDatumKind kind, Long objectId,
+	public static GeneralDatum parseWeatherData(JsonNode json, ObjectDatumKind kind, Long objectId,
 			String sourceId) {
 		/*- EXAMPLE WEATHER JSON:
 		{
@@ -188,15 +296,15 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		   "cod": 200
 		}
 		 */
-		if ( node == null || !node.isObject() ) {
+		if ( json == null || !json.isObject() ) {
 			return null;
 		}
 		final DatumSamples samples = new DatumSamples();
 
-		populateJsonDatumPropertyValue(node, "visibility", DatumSamplesType.Instantaneous,
+		populateJsonDatumPropertyValue(json, "visibility", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.VISIBILITY_KEY, samples);
 
-		JsonNode main = node.path("main");
+		JsonNode main = json.path("main");
 		populateJsonDatumPropertyValue(main, "temp", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.TEMPERATURE_KEY, samples);
 		populateJsonDatumPropertyValue(main, "temp_min", DatumSamplesType.Instantaneous,
@@ -211,7 +319,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		populateJsonDatumPropertyValue(main, "humidity", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.HUMIDITY_KEY, samples);
 
-		JsonNode weather = node.path("weather");
+		JsonNode weather = json.path("weather");
 		if ( weather.isArray() && weather.size() > 0 ) {
 			weather = weather.iterator().next();
 			populateJsonDatumPropertyValue(weather, "main", DatumSamplesType.Status,
@@ -220,7 +328,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			populateJsonDatumPropertyValue(weather, "icon", DatumSamplesType.Status, "iconId", samples);
 		}
 
-		JsonNode wind = node.path("wind");
+		JsonNode wind = json.path("wind");
 		populateJsonDatumPropertyValue(wind, "deg", DatumSamplesType.Instantaneous,
 				AtmosphericDatum.WIND_DIRECTION_KEY, samples,
 				(val) -> bigDecimalForNumber((Number) val).setScale(0, RoundingMode.HALF_UP).intValue());
@@ -230,11 +338,11 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 		populateJsonDatumPropertyValue(wind, "gust", DatumSamplesType.Instantaneous, "wgust", samples);
 
-		JsonNode clouds = node.path("clouds");
+		JsonNode clouds = json.path("clouds");
 		populateJsonDatumPropertyValue(clouds, "all", DatumSamplesType.Instantaneous, "cloudiness",
 				samples);
 
-		JsonNode rain = node.path("rain");
+		JsonNode rain = json.path("rain");
 		BigDecimal oneHourRain = parseBigDecimalAttribute(rain, "1h");
 		if ( oneHourRain != null ) {
 			samples.putInstantaneousSampleValue(AtmosphericDatum.RAIN_KEY,
@@ -247,10 +355,26 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			}
 		}
 
+		JsonNode sys = json.path("sys");
+		Integer tzOffsetSecs = parseIntegerAttribute(json, "timezone");
+		if ( tzOffsetSecs != null ) {
+			ZoneId zone = ZoneOffset.ofTotalSeconds(tzOffsetSecs);
+			JsonNode sunrise = sys.path("sunrise");
+			if ( sunrise.isNumber() ) {
+				samples.putStatusSampleValue(DayDatum.SUNRISE_KEY, DateUtils
+						.format(Instant.ofEpochSecond(sunrise.longValue()).atZone(zone).toLocalTime()));
+			}
+			JsonNode sunset = sys.path("sunset");
+			if ( sunset.isNumber() ) {
+				samples.putStatusSampleValue(DayDatum.SUNSET_KEY, DateUtils
+						.format(Instant.ofEpochSecond(sunset.longValue()).atZone(zone).toLocalTime()));
+			}
+		}
+
 		if ( samples.isEmpty() ) {
 			return null;
 		}
-		Instant ts = parseTimestampNode(node, "dt");
+		Instant ts = parseTimestampNode(json, "dt");
 		return new GeneralDatum(new DatumId(kind, objectId, sourceId, ts), samples);
 	}
 

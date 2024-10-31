@@ -42,6 +42,8 @@ import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseOpenWeatherMapCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapDayCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapForecastCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapWeatherCloudDatumStreamService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -99,6 +101,44 @@ public class OpenWeatherMapConfig {
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(OpenWeatherMapWeatherCloudDatumStreamService.class.getName(),
+				BaseOpenWeatherMapCloudDatumStreamService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
+		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
+
+		return service;
+	}
+
+	@Bean
+	@Qualifier(OPEN_WEATHER_MAP)
+	public CloudDatumStreamService openWeatherMapForecastCloudDatumStreamService() {
+		var service = new OpenWeatherMapForecastCloudDatumStreamService(userEventAppender, encryptor,
+				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
+				Clock.systemUTC());
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(OpenWeatherMapForecastCloudDatumStreamService.class.getName(),
+				BaseOpenWeatherMapCloudDatumStreamService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
+		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
+
+		return service;
+	}
+
+	@Bean
+	@Qualifier(OPEN_WEATHER_MAP)
+	public CloudDatumStreamService openWeatherMapDayCloudDatumStreamService() {
+		var service = new OpenWeatherMapDayCloudDatumStreamService(userEventAppender, encryptor,
+				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
+				Clock.systemUTC());
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(OpenWeatherMapDayCloudDatumStreamService.class.getName(),
 				BaseOpenWeatherMapCloudDatumStreamService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
