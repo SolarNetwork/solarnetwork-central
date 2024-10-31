@@ -94,7 +94,6 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
@@ -192,7 +191,7 @@ import net.solarnetwork.util.IntRange;
  * </ul>
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -381,130 +380,100 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
-		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		if ( !datumStream.isFullyConfigured() ) {
-			String msg = "Datum stream is not fully configured.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.notFullyConfigured", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
-				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
-
-		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
-		final CloudIntegrationConfiguration integration = requireNonNullObject(
-				integrationDao.get(integrationId), "integration");
-
-		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
-				mapping.getConfigId(), null);
-		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
-				allProperties.size());
-		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
-		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
-			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
-				continue;
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
 			}
-			if ( conf.getValueType().isExpression() ) {
-				exprProps.add(conf);
-			} else {
-				valueProps.add(conf);
+
+			final SolrenViewGranularity granularity = resolveGranularity(ds, null);
+
+			Instant startDate = Clock
+					.tick(Clock.fixed(filter.getStartDate(), UTC), granularity.getTickDuration())
+					.instant();
+			Instant endDate = Clock
+					.tick(Clock.fixed(filter.getEndDate(), UTC), granularity.getTickDuration())
+					.instant();
+
+			if ( granularity == SolrenViewGranularity.Month ) {
+				startDate = startDate.with(TemporalAdjusters.firstDayOfMonth());
+				endDate = endDate.with(TemporalAdjusters.firstDayOfMonth());
+			} else if ( granularity == SolrenViewGranularity.Year ) {
+				startDate = startDate.with(TemporalAdjusters.firstDayOfYear());
+				endDate = endDate.with(TemporalAdjusters.firstDayOfYear());
 			}
-		}
-		if ( valueProps.isEmpty() ) {
-			String msg = "Datum stream has no properties.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
 
-		final SolrenViewGranularity granularity = resolveGranularity(datumStream, null);
+			// group requests by site
+			final var refsBySiteComponent = new LinkedHashMap<Long, Map<String, List<ValueRef>>>(2);
 
-		Instant startDate = Clock
-				.tick(Clock.fixed(filter.getStartDate(), UTC), granularity.getTickDuration()).instant();
-		Instant endDate = Clock
-				.tick(Clock.fixed(filter.getEndDate(), UTC), granularity.getTickDuration()).instant();
-
-		if ( granularity == SolrenViewGranularity.Month ) {
-			startDate = startDate.with(TemporalAdjusters.firstDayOfMonth());
-			endDate = endDate.with(TemporalAdjusters.firstDayOfMonth());
-		} else if ( granularity == SolrenViewGranularity.Year ) {
-			startDate = startDate.with(TemporalAdjusters.firstDayOfYear());
-			endDate = endDate.with(TemporalAdjusters.firstDayOfYear());
-		}
-
-		// group requests by site
-		final var refsBySiteComponent = new LinkedHashMap<Long, Map<String, List<ValueRef>>>(2);
-
-		for ( CloudDatumStreamPropertyConfiguration config : valueProps ) {
-			String ref = resolvePlaceholders(config.getValueReference(), datumStream);
-			Matcher m = VALUE_REF_PATTERN.matcher(ref);
-			if ( !m.matches() ) {
-				continue;
+			for ( CloudDatumStreamPropertyConfiguration config : valueProps ) {
+				String ref = resolvePlaceholders(config.getValueReference(), ds);
+				Matcher m = VALUE_REF_PATTERN.matcher(ref);
+				if ( !m.matches() ) {
+					continue;
+				}
+				// groups: 1 = siteId, 2 = componentId, 3 = field
+				Long siteId = Long.valueOf(m.group(1));
+				String componentId = m.group(2);
+				String fieldName = m.group(3);
+				refsBySiteComponent
+						.computeIfAbsent(siteId, k -> new LinkedHashMap<String, List<ValueRef>>(8))
+						.computeIfAbsent(componentId, k -> new ArrayList<ValueRef>(8))
+						.add(new ValueRef(siteId, componentId, fieldName, config));
 			}
-			// groups: 1 = siteId, 2 = componentId, 3 = field
-			Long siteId = Long.valueOf(m.group(1));
-			String componentId = m.group(2);
-			String fieldName = m.group(3);
-			refsBySiteComponent
-					.computeIfAbsent(siteId, k -> new LinkedHashMap<String, List<ValueRef>>(8))
-					.computeIfAbsent(componentId, k -> new ArrayList<ValueRef>(8))
-					.add(new ValueRef(siteId, componentId, fieldName, config));
-		}
 
-		if ( refsBySiteComponent.isEmpty() ) {
-			String msg = "Datum stream has no valid property references.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final Map<Instant, Map<String, GeneralDatum>> datum = new TreeMap<>();
-		final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
-		usedQueryFilter.setStartDate(startDate);
-
-		while ( startDate.isBefore(endDate) ) {
-			final var periodStartDate = startDate;
-			final var periodEndDate = nextDate(periodStartDate, granularity);
-			usedQueryFilter.setEndDate(periodEndDate);
-			for ( Entry<Long, Map<String, List<ValueRef>>> e : refsBySiteComponent.entrySet() ) {
-				final Long siteId = e.getKey();
-				final Map<String, List<ValueRef>> refsByComponent = e.getValue();
-				restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
-					headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
-					// @formatter:off
-					return  fromUri(resolveBaseUrl(integration,BASE_URI))
-							.path(XML_FEED_PATH)
-							.queryParam(XML_FEED_USE_UTC_PARAM)
-							.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
-							.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
-							.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
-							.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
-							.buildAndExpand(siteId, periodStartDate, periodEndDate)
-							.toUri();
-					// @formatter:on
-				}, res -> parseDatum(datumStream, siteId, res.getBody(), periodStartDate, datum,
-						refsByComponent));
+			if ( refsBySiteComponent.isEmpty() ) {
+				String msg = "Datum stream has no valid property references.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
 			}
-			startDate = periodEndDate;
-		}
 
-		// evaluate expressions on merged datum
-		if ( !exprProps.isEmpty() ) {
-			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
-					"integrationId", mapping.getIntegrationId());
-			for ( Map<String, GeneralDatum> e : datum.values() ) {
-				evaulateExpressions(exprProps, e.values(), parameters);
+			final Map<Instant, Map<String, GeneralDatum>> datum = new TreeMap<>();
+			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
+			usedQueryFilter.setStartDate(startDate);
+
+			while ( startDate.isBefore(endDate) ) {
+				final var periodStartDate = startDate;
+				final var periodEndDate = nextDate(periodStartDate, granularity);
+				usedQueryFilter.setEndDate(periodEndDate);
+				for ( Entry<Long, Map<String, List<ValueRef>>> e : refsBySiteComponent.entrySet() ) {
+					final Long siteId = e.getKey();
+					final Map<String, List<ValueRef>> refsByComponent = e.getValue();
+					restOpsHelper.httpGet("Query for site", integration, String.class, (headers) -> {
+						headers.setAccept(Collections.singletonList(MediaType.TEXT_XML));
+						// @formatter:off
+						return  fromUri(resolveBaseUrl(integration,BASE_URI))
+								.path(XML_FEED_PATH)
+								.queryParam(XML_FEED_USE_UTC_PARAM)
+								.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+								.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+								.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+								.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+								.buildAndExpand(siteId, periodStartDate, periodEndDate)
+								.toUri();
+						// @formatter:on
+					}, res -> parseDatum(ds, siteId, res.getBody(), periodStartDate, datum,
+							refsByComponent));
+				}
+				startDate = periodEndDate;
 			}
-		}
 
-		return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null, datum.values().stream()
-				.flatMap(m -> m.values().stream()).map(Datum.class::cast).toList());
+			// evaluate expressions on merged datum
+			if ( !exprProps.isEmpty() ) {
+				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
+						"integrationId", mapping.getIntegrationId());
+				for ( Map<String, GeneralDatum> e : datum.values() ) {
+					evaluateExpressions(exprProps, e.values(), parameters);
+				}
+			}
+
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null, datum.values().stream()
+					.flatMap(m -> m.values().stream()).map(Datum.class::cast).toList());
+		});
 	}
 
 	private Instant nextDate(Instant date, SolrenViewGranularity granularity) {

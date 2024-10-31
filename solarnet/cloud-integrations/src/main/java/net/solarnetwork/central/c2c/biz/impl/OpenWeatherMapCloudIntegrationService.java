@@ -1,5 +1,5 @@
 /* ==================================================================
- * SolcastCloudIntegrationService.java - 30/10/2024 5:25:19 am
+ * OpenWeatherMapCloudIntegrationService.java - 31/10/2024 2:51:30 pm
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -47,48 +47,36 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
- * Solcast API implementation of {@link CloudIntegrationService}.
+ * OpenWeatherMap API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
  * @version 1.0
  */
-public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
+public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.solcast";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.owm";
 
 	/** An API key setting name. */
 	public static final String API_KEY_SETTING = "apiKey";
 
-	/** The base URL to the Solcast API. */
-	public static final URI BASE_URI = URI.create("https://api.solcast.com.au");
+	/** The base URL to the OpenWeatherMap API. */
+	public static final URI BASE_URI = URI.create("https://api.openweathermap.org");
 
-	/** The URL path for live radiation and weather data. */
-	public static final String LIVE_RADIATION_URL_PATH = "/data/live/radiation_and_weather";
+	/** The URL path for weather data. */
+	public static final String WEATHER_URL_PATH = "/data/2.5/weather";
+
+	/** The API key URL query parameter name. */
+	public static final String APPID_PARAM = "appid";
 
 	/** The latitude URL query parameter name. */
-	public static final String LATITUDE_PARAM = "latitude";
+	public static final String LATITUDE_PARAM = "lat";
 
 	/** The longitude URL query parameter name. */
-	public static final String LONGITUDE_PARAM = "longitude";
+	public static final String LONGITUDE_PARAM = "lon";
 
-	/** The hours URL query parameter name. */
-	public static final String HOURS_PARAM = "hours";
-
-	/** The azimuth URL query parameter name. */
-	public static final String AZIMUTH_PARAM = "azimuth";
-
-	/** The tilt URL query parameter name. */
-	public static final String TILT_PARAM = "tilt";
-
-	/** The array type URL query parameter name. */
-	public static final String ARRAY_TYPE_PARAM = "array_type";
-
-	/** The output parameters URL query parameter name. */
-	public static final String OUTPUT_PARAMETERS_PARAM = "output_parameters";
-
-	/** The period URL query parameter name. */
-	public static final String PERIOD_PARAM = "period";
+	private static final String VALIDATION_LAT = "37.773972";
+	private static final String VALIDATION_LON = "-122.431297";
 
 	/**
 	 * The well-known URLs.
@@ -126,12 +114,12 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SolcastCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
+	public OpenWeatherMapCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
 		super(SERVICE_IDENTIFIER, "Solcast", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
-				new SolcastRestOperationsHelper(
-						LoggerFactory.getLogger(SolcastCloudIntegrationService.class),
+				new OpenWeatherMapRestOperationsHelper(
+						LoggerFactory.getLogger(OpenWeatherMapCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS));
 	}
@@ -150,19 +138,18 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		if ( !errorDetails.isEmpty() ) {
 			String errMsg = ms.getMessage("error.settings.missing", null, locale);
-			return Result.error("SCCI.0001", errMsg, errorDetails);
+			return Result.error("OWCI.0001", errMsg, errorDetails);
 		}
 
-		// validate by requesting irradiation for an unmetered site
+		// validate by requesting weather for a fixed GPS coordinate
 		try {
 			final String response = restOpsHelper.httpGet("Validate connection", integration,
 					String.class,
 					// @formatter:off
 					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
-							.path(LIVE_RADIATION_URL_PATH)
-							.queryParam(LATITUDE_PARAM, "-33.856784")
-							.queryParam(LONGITUDE_PARAM, "151.215297")
-							.queryParam(HOURS_PARAM, 1)
+							.path(WEATHER_URL_PATH)
+							.queryParam(LATITUDE_PARAM, VALIDATION_LAT)
+							.queryParam(LONGITUDE_PARAM, VALIDATION_LON)
 							.build()
 							.toUri(),
 					// @formatter:on
@@ -170,7 +157,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {
-			return Result.error("SCCI.0002", "Validation failed: " + e.getMessage());
+			return Result.error("OWCI.0002", "Validation failed: " + e.getMessage());
 		}
 	}
 
