@@ -26,11 +26,13 @@ import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.ev
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -44,6 +46,7 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedService
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.MutableDatum;
@@ -328,6 +331,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @return the value, or {@literal null}
 	 */
 	public static Object parseJsonDatumPropertyValue(JsonNode val, DatumSamplesType propType) {
+		if ( val.isMissingNode() || val.isNull() ) {
+			return null;
+		}
 		return switch (propType) {
 			case Accumulating, Instantaneous -> {
 				// convert to number
@@ -347,8 +353,46 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
 				}
 			}
-			case Status, Tag -> val.asText();
+			case Status, Tag -> nonEmptyString(val.asText());
 		};
+	}
+
+	/**
+	 * Populate a samples property value.
+	 *
+	 * @param json
+	 *        the JSON object
+	 * @param key
+	 *        the JSON field name
+	 * @param propType
+	 *        the datum property type
+	 * @param propName
+	 *        the datum property name
+	 * @param samples
+	 *        the samples to populate
+	 * @param xforms
+	 *        optional transformations to apply
+	 */
+	@SuppressWarnings("unchecked")
+	public static void populateJsonDatumPropertyValue(JsonNode json, String key,
+			DatumSamplesType propType, String propName, DatumSamples samples, Function<?, ?>... xforms) {
+		if ( json == null ) {
+			return;
+		}
+		Object val = parseJsonDatumPropertyValue(json.path(key), propType);
+		if ( val == null ) {
+			return;
+		}
+		if ( xforms != null ) {
+			for ( @SuppressWarnings("rawtypes")
+			Function xform : xforms ) {
+				val = xform.apply(val);
+				if ( val == null ) {
+					return;
+				}
+			}
+		}
+		samples.putSampleValue(propType, propName, val);
 	}
 
 }
