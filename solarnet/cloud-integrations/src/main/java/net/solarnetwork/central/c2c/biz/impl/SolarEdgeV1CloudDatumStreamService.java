@@ -88,7 +88,6 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
@@ -110,7 +109,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -743,167 +742,134 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
 		requireNonNullArgument(filter, "filter");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
-		final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
-				"filter.startDate");
-		final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(), "filter.startDate");
-
-		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		if ( !datumStream.isFullyConfigured() ) {
-			String msg = "Datum stream is not fully configured.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.notFullyConfigured", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
-				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
-
-		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
-		final CloudIntegrationConfiguration integration = requireNonNullObject(
-				integrationDao.get(integrationId), "integration");
-
-		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
-				mapping.getConfigId(), null);
-		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
-				allProperties.size());
-		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
-		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
-			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
-				continue;
-			}
-			if ( conf.getValueType().isExpression() ) {
-				exprProps.add(conf);
-			} else {
-				valueProps.add(conf);
-			}
-		}
-		if ( valueProps.isEmpty() ) {
-			String msg = "Datum stream has no properties.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final SolarEdgeResolution resolution = resolveResolution(datumStream, null);
-
-		final Map<String, String> sourceIdMap = servicePropertyStringMap(datumStream,
-				SOURCE_ID_MAP_SETTING);
-
-		final List<GeneralDatum> resultDatum = new ArrayList<>(16);
-		final Map<Long, SiteQueryPlan> queryPlans = resolveSiteQueryPlans(integration, datumStream,
-				valueProps);
-
-		BasicQueryFilter nextQueryFilter = null;
-
-		Instant startDate = resolution.truncateDate(filterStartDate);
-		Instant endDate = resolution.truncateDate(filterEndDate);
-		if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
-			Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
-			if ( nextEndDate.isAfter(endDate) ) {
-				nextEndDate = endDate;
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
 			}
 
-			endDate = startDate.plus(MAX_QUERY_TIME_RANGE);
+			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
+					"filter.startDate");
+			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
+					"filter.startDate");
 
-			nextQueryFilter = new BasicQueryFilter();
-			nextQueryFilter.setStartDate(endDate);
-			nextQueryFilter.setEndDate(nextEndDate);
-		}
+			final SolarEdgeResolution resolution = resolveResolution(ds, null);
 
-		final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
-		usedQueryFilter.setStartDate(startDate);
-		usedQueryFilter.setEndDate(endDate);
-		for ( SiteQueryPlan queryPlan : queryPlans.values() ) {
-			ZonedDateTime siteStartDate = startDate.atZone(queryPlan.zone);
-			ZonedDateTime siteEndDate = endDate.atZone(queryPlan.zone);
+			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
-			DateTimeFormatter timestampFmt = DateUtils.ISO_DATE_OPT_TIME_ALT.withZone(queryPlan.zone);
+			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
+			final Map<Long, SiteQueryPlan> queryPlans = resolveSiteQueryPlans(integration, ds,
+					valueProps);
 
-			String startDateParam = timestampFmt.format(siteStartDate.toLocalDateTime());
-			String endDateParam = timestampFmt.format(siteEndDate.toLocalDateTime());
+			BasicQueryFilter nextQueryFilter = null;
 
-			// inverter data
-			if ( queryPlan.inverterIds != null && !queryPlan.inverterIds.isEmpty() ) {
-				for ( String inverterId : queryPlan.inverterIds ) {
-					List<GeneralDatum> datum = restOpsHelper.httpGet("List inverter data", integration,
+			Instant startDate = resolution.truncateDate(filterStartDate);
+			Instant endDate = resolution.truncateDate(filterEndDate);
+			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
+				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
+				if ( nextEndDate.isAfter(endDate) ) {
+					nextEndDate = endDate;
+				}
+
+				endDate = startDate.plus(MAX_QUERY_TIME_RANGE);
+
+				nextQueryFilter = new BasicQueryFilter();
+				nextQueryFilter.setStartDate(endDate);
+				nextQueryFilter.setEndDate(nextEndDate);
+			}
+
+			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
+			usedQueryFilter.setStartDate(startDate);
+			usedQueryFilter.setEndDate(endDate);
+			for ( SiteQueryPlan queryPlan : queryPlans.values() ) {
+				ZonedDateTime siteStartDate = startDate.atZone(queryPlan.zone);
+				ZonedDateTime siteEndDate = endDate.atZone(queryPlan.zone);
+
+				DateTimeFormatter timestampFmt = DateUtils.ISO_DATE_OPT_TIME_ALT
+						.withZone(queryPlan.zone);
+
+				String startDateParam = timestampFmt.format(siteStartDate.toLocalDateTime());
+				String endDateParam = timestampFmt.format(siteEndDate.toLocalDateTime());
+
+				// inverter data
+				if ( queryPlan.inverterIds != null && !queryPlan.inverterIds.isEmpty() ) {
+					for ( String inverterId : queryPlan.inverterIds ) {
+						List<GeneralDatum> datum = restOpsHelper.httpGet("List inverter data",
+								integration, JsonNode.class,
+								req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+										.path(EQUIPMENT_DATA_URL_TEMPLATE)
+										.queryParam("startTime", startDateParam)
+										.queryParam("endTime", endDateParam)
+										.buildAndExpand(queryPlan.siteId, inverterId).toUri(),
+								res -> parseInverterDatum(res.getBody(), queryPlan.siteId, inverterId,
+										ds, sourceIdMap, queryPlan.inverterRefs, timestampFmt));
+						if ( datum != null ) {
+							resultDatum.addAll(datum);
+						}
+					}
+				}
+
+				// meter data
+				if ( queryPlan.includeMeters ) {
+					// have to request two URLs for this
+					// @formatter:off
+					JsonNode meterPower = restOpsHelper.httpGet("List meter power data", integration,
 							JsonNode.class,
 							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
-									.path(EQUIPMENT_DATA_URL_TEMPLATE)
+									.path(POWER_DETAILS_URL_TEMPLATE)
 									.queryParam("startTime", startDateParam)
 									.queryParam("endTime", endDateParam)
-									.buildAndExpand(queryPlan.siteId, inverterId).toUri(),
-							res -> parseInverterDatum(res.getBody(), queryPlan.siteId, inverterId,
-									datumStream, sourceIdMap, queryPlan.inverterRefs, timestampFmt));
+									.queryParam("timeUnit", resolution.getKey())
+									.buildAndExpand(queryPlan.siteId)
+									.toUri(),
+							res -> res.getBody());
+					JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
+							JsonNode.class,
+							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+									.path(METERS_URL_TEMPLATE)
+									.queryParam("startTime", startDateParam)
+									.queryParam("endTime", endDateParam)
+									.queryParam("timeUnit", resolution.getKey())
+									.buildAndExpand(queryPlan.siteId)
+									.toUri(),
+							res -> res.getBody());
+					// @formatter:on
+					Collection<GeneralDatum> datum = parseMeterDatum(meterPower, meterEnergy,
+							queryPlan.siteId, ds, sourceIdMap, queryPlan.meterRefs, timestampFmt,
+							resolution);
 					if ( datum != null ) {
 						resultDatum.addAll(datum);
 					}
 				}
-			}
 
-			// meter data
-			if ( queryPlan.includeMeters ) {
-				// have to request two URLs for this
-				// @formatter:off
-				JsonNode meterPower = restOpsHelper.httpGet("List meter power data", integration,
-						JsonNode.class,
-						req -> fromUri(resolveBaseUrl(integration, BASE_URI))
-								.path(POWER_DETAILS_URL_TEMPLATE)
-								.queryParam("startTime", startDateParam)
-								.queryParam("endTime", endDateParam)
-								.queryParam("timeUnit", resolution.getKey())
-								.buildAndExpand(queryPlan.siteId)
-								.toUri(),
-						res -> res.getBody());
-				JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
-						JsonNode.class,
-						req -> fromUri(resolveBaseUrl(integration, BASE_URI))
-								.path(METERS_URL_TEMPLATE)
-								.queryParam("startTime", startDateParam)
-								.queryParam("endTime", endDateParam)
-								.queryParam("timeUnit", resolution.getKey())
-								.buildAndExpand(queryPlan.siteId)
-								.toUri(),
-						res -> res.getBody());
-				// @formatter:on
-				Collection<GeneralDatum> datum = parseMeterDatum(meterPower, meterEnergy,
-						queryPlan.siteId, datumStream, sourceIdMap, queryPlan.meterRefs, timestampFmt,
-						resolution);
-				if ( datum != null ) {
-					resultDatum.addAll(datum);
+				// battery data
+				if ( queryPlan.includeBatteries ) {
+					List<GeneralDatum> datum = restOpsHelper.httpGet("List battery data", integration,
+							JsonNode.class,
+							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+									.path(STORAGE_DATA_URL_TEMPLATE)
+									.queryParam("startTime", startDateParam)
+									.queryParam("endTime", endDateParam).buildAndExpand(queryPlan.siteId)
+									.toUri(),
+							res -> parseBatteryDatum(res.getBody(), queryPlan.siteId, ds, sourceIdMap,
+									queryPlan.batteryRefs, timestampFmt));
+					if ( datum != null ) {
+						resultDatum.addAll(datum);
+					}
 				}
+
 			}
 
-			// battery data
-			if ( queryPlan.includeBatteries ) {
-				List<GeneralDatum> datum = restOpsHelper.httpGet("List battery data", integration,
-						JsonNode.class,
-						req -> fromUri(resolveBaseUrl(integration, BASE_URI))
-								.path(STORAGE_DATA_URL_TEMPLATE).queryParam("startTime", startDateParam)
-								.queryParam("endTime", endDateParam).buildAndExpand(queryPlan.siteId)
-								.toUri(),
-						res -> parseBatteryDatum(res.getBody(), queryPlan.siteId, datumStream,
-								sourceIdMap, queryPlan.batteryRefs, timestampFmt));
-				if ( datum != null ) {
-					resultDatum.addAll(datum);
-				}
-			}
+			// evaluate expressions on merged datum
+			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
 
-		}
-
-		// evaluate expressions on merged datum
-		if ( !exprProps.isEmpty() ) {
-			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
-					"integrationId", mapping.getIntegrationId());
-			evaulateExpressions(exprProps, resultDatum, parameters);
-		}
-
-		return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-				resultDatum.stream().map(Datum.class::cast).toList());
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
+					resultDatum.stream().map(Datum.class::cast).toList());
+		});
 	}
 
 	private static List<GeneralDatum> parseInverterDatum(JsonNode json, Long siteId, String inverterId,

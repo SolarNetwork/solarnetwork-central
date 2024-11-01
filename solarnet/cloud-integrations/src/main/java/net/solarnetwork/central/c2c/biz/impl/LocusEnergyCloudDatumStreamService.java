@@ -86,7 +86,6 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
-import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
@@ -134,7 +133,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -523,7 +522,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	/**
 	 * Query for datum.
 	 *
-	 * @param datumStream
+	 * @param ds
 	 *        the stream to query
 	 * @param filter
 	 *        an optional filter; if not provided then query for the latest
@@ -535,211 +534,178 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	private CloudDatumStreamQueryResult queryForDatum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
 		requireNonNullArgument(datumStream, "datumStream");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
 
-		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		if ( !datumStream.isFullyConfigured() ) {
-			String msg = "Datum stream is not fully configured.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.notFullyConfigured", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		final var mappingId = new UserLongCompositePK(datumStream.getUserId(), requireNonNullArgument(
-				datumStream.getDatumStreamMappingId(), "datumStream.datumStreamMappingId"));
-		final CloudDatumStreamMappingConfiguration mapping = requireNonNullObject(
-				datumStreamMappingDao.get(mappingId), "datumStreamMapping");
-
-		final var integrationId = new UserLongCompositePK(datumStream.getUserId(),
-				requireNonNullArgument(mapping.getIntegrationId(), "datumStreamMapping.integrationId"));
-		final CloudIntegrationConfiguration integration = requireNonNullObject(
-				integrationDao.get(integrationId), "integration");
-
-		final var allProperties = datumStreamPropertyDao.findAll(datumStream.getUserId(),
-				mapping.getConfigId(), null);
-		final var valueProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(
-				allProperties.size());
-		final var exprProps = new ArrayList<CloudDatumStreamPropertyConfiguration>(allProperties.size());
-		for ( CloudDatumStreamPropertyConfiguration conf : allProperties ) {
-			if ( !(conf.isEnabled() && conf.isFullyConfigured()) ) {
-				continue;
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
 			}
-			if ( conf.getValueType().isExpression() ) {
-				exprProps.add(conf);
-			} else {
-				valueProps.add(conf);
-			}
-		}
-		if ( valueProps.isEmpty() ) {
-			String msg = "Datum stream has no properties.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
 
-		final LocusEnergyGranularity granularity = resolveGranularity(datumStream, filter);
-		final Instant filterEndDate = (granularity != LocusEnergyGranularity.Latest
-				? filter.getEndDate().truncatedTo(ChronoUnit.SECONDS)
-				: null);
-		final Instant startDate;
-		final Instant endDate;
-		if ( granularity != LocusEnergyGranularity.Latest ) {
-			// add date range
-			startDate = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
+			final LocusEnergyGranularity granularity = resolveGranularity(ds, filter);
+			final Instant filterEndDate = (granularity != LocusEnergyGranularity.Latest
+					? filter.getEndDate().truncatedTo(ChronoUnit.SECONDS)
+					: null);
+			final Instant startDate;
+			final Instant endDate;
+			if ( granularity != LocusEnergyGranularity.Latest ) {
+				// add date range
+				startDate = filter.getStartDate().truncatedTo(ChronoUnit.SECONDS);
 
-			var end = filterEndDate;
-			if ( granularity.getConstraint() != null ) {
-				// enforce max time constraint
-				var maxEnd = startDate.plus(granularity.getConstraint());
-				if ( end.isAfter(maxEnd) ) {
-					end = maxEnd;
-				}
-			}
-			endDate = end;
-		} else {
-			startDate = null;
-			endDate = null;
-		}
-
-		// group requests by component, field names
-		final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
-		final var fieldNamesByProperty = new LinkedHashMap<UserLongIntegerCompositePK, String>(8);
-		for ( CloudDatumStreamPropertyConfiguration config : valueProps ) {
-			String ref = resolvePlaceholders(config.getValueReference(), datumStream);
-			Matcher m = VALUE_REF_PATTERN.matcher(ref);
-			if ( !m.matches() ) {
-				continue;
-			}
-			// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
-			String componentId = m.group(2);
-			String fieldName = m.group(4);
-			fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<String>(8))
-					.add(fieldName);
-			fieldNamesByProperty.put(config.getId(), fieldName);
-		}
-
-		if ( fieldNamesByComponent.isEmpty() ) {
-			String msg = "Datum stream has no valid property references.";
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.datumStream.noProperties", null, msg);
-			throw new ValidationException(msg, errors, ms);
-		}
-
-		List<List<Map<String, JsonNode>>> data = new ArrayList<>(fieldNamesByComponent.size());
-		try {
-			List<Future<List<Map<String, JsonNode>>>> futures = new ArrayList<>(
-					fieldNamesByComponent.size());
-			for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
-				Set<String> fieldNames = reqEntry.getValue();
-				futures.add(executor.submit(() -> {
-					ObjectNode json = restOpsHelper.httpGet("Fetch data", integration, ObjectNode.class,
-							(headers) -> {
-							// @formatter:off
-								UriComponentsBuilder b = fromUri(resolveBaseUrl(integration, BASE_URI))
-										.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
-										.queryParam("gran", granularity.getKey())
-										.queryParam("tz", "UTC")
-										.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
-										;
-								// @formatter:on
-								if ( granularity != LocusEnergyGranularity.Latest ) {
-									// add date range
-									b.queryParam("start",
-											ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
-									b.queryParam("end",
-											ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC)));
-								}
-								return b.buildAndExpand(Map.of(COMPONENT_ID_FILTER, reqEntry.getKey()))
-										.toUri();
-
-							}, (res) -> res.getBody());
-					List<Map<String, JsonNode>> datumValuesList = new ArrayList<>();
-					for ( JsonNode dataNode : json.path("data") ) {
-						if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
-							Map<String, JsonNode> datumValues = new LinkedHashMap<>(fieldNames.size());
-							for ( Iterator<Entry<String, JsonNode>> itr = o.fields(); itr.hasNext(); ) {
-								Entry<String, JsonNode> e = itr.next();
-								if ( "ts".equals(e.getKey()) || fieldNames.contains(e.getKey()) ) {
-									datumValues.put(e.getKey(), e.getValue());
-								}
-							}
-							// if did not find ts + at least one property, ignore
-							if ( datumValues.size() > 1 ) {
-								datumValuesList.add(datumValues);
-							}
-						}
+				var end = filterEndDate;
+				if ( granularity.getConstraint() != null ) {
+					// enforce max time constraint
+					var maxEnd = startDate.plus(granularity.getConstraint());
+					if ( end.isAfter(maxEnd) ) {
+						end = maxEnd;
 					}
-					return datumValuesList;
-				}));
+				}
+				endDate = end;
+			} else {
+				startDate = null;
+				endDate = null;
 			}
-			for ( var f : futures ) {
-				data.add(f.get());
-			}
-		} catch ( Exception e ) {
-			String msg = "Error requesting data.";
-			Throwable t = e;
-			while ( t.getCause() != null ) {
-				t = t.getCause();
-			}
-			Errors errors = new BindException(datumStream, "datumStream");
-			errors.reject("error.dataRequest", new Object[] { t.getMessage() }, msg);
-			throw new ValidationException(msg, errors, ms, t);
-		}
 
-		// merge multiple streams based on timestamp
-		final Map<Instant, GeneralDatum> result = new HashMap<>(data.size());
-		for ( List<Map<String, JsonNode>> datumValuesList : data ) {
-			for ( Map<String, JsonNode> datumValues : datumValuesList ) {
-				final Instant ts;
-				try {
-					ts = Instant.parse(datumValues.get("ts").asText());
-				} catch ( DateTimeParseException dtpe ) {
-					// ignore and continue
+			// group requests by component, field names
+			final var fieldNamesByComponent = new LinkedHashMap<String, Set<String>>(8);
+			final var fieldNamesByProperty = new LinkedHashMap<UserLongIntegerCompositePK, String>(8);
+			for ( CloudDatumStreamPropertyConfiguration config : valueProps ) {
+				String ref = resolvePlaceholders(config.getValueReference(), ds);
+				Matcher m = VALUE_REF_PATTERN.matcher(ref);
+				if ( !m.matches() ) {
 					continue;
 				}
+				// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
+				String componentId = m.group(2);
+				String fieldName = m.group(4);
+				fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<String>(8))
+						.add(fieldName);
+				fieldNamesByProperty.put(config.getId(), fieldName);
+			}
 
-				final GeneralDatum datum = result.computeIfAbsent(ts,
-						k -> new GeneralDatum(datumStream.datumId(k), new DatumSamples()));
-				final DatumSamples samples = datum.getSamples();
+			if ( fieldNamesByComponent.isEmpty() ) {
+				String msg = "Datum stream has no valid property references.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
+			}
 
-				for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
-					String fieldName = fieldNamesByProperty.get(property.getId());
-					JsonNode val = datumValues.get(fieldName);
-					if ( val != null ) {
-						DatumSamplesType propType = property.getPropertyType();
-						Object propVal = parseJsonDatumPropertyValue(val, propType);
-						propVal = property.applyValueTransforms(propVal);
-						samples.putSampleValue(propType, property.getPropertyName(), propVal);
+			List<List<Map<String, JsonNode>>> data = new ArrayList<>(fieldNamesByComponent.size());
+			try {
+				List<Future<List<Map<String, JsonNode>>>> futures = new ArrayList<>(
+						fieldNamesByComponent.size());
+				for ( Entry<String, Set<String>> reqEntry : fieldNamesByComponent.entrySet() ) {
+					Set<String> fieldNames = reqEntry.getValue();
+					futures.add(executor.submit(() -> {
+						ObjectNode json = restOpsHelper.httpGet("Fetch data", integration,
+								ObjectNode.class, (headers) -> {
+								// @formatter:off
+									UriComponentsBuilder b = fromUri(resolveBaseUrl(integration, BASE_URI))
+											.path(V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE)
+											.queryParam("gran", granularity.getKey())
+											.queryParam("tz", "UTC")
+											.queryParam("fields", collectionToCommaDelimitedString(fieldNames))
+											;
+									// @formatter:on
+									if ( granularity != LocusEnergyGranularity.Latest ) {
+										// add date range
+										b.queryParam("start",
+												ISO_LOCAL_DATE_TIME.format(startDate.atOffset(UTC)));
+										b.queryParam("end",
+												ISO_LOCAL_DATE_TIME.format(endDate.atOffset(UTC)));
+									}
+									return b.buildAndExpand(
+											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
+
+								}, (res) -> res.getBody());
+						List<Map<String, JsonNode>> datumValuesList = new ArrayList<>();
+						for ( JsonNode dataNode : json.path("data") ) {
+							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
+								Map<String, JsonNode> datumValues = new LinkedHashMap<>(
+										fieldNames.size());
+								for ( Iterator<Entry<String, JsonNode>> itr = o.fields(); itr
+										.hasNext(); ) {
+									Entry<String, JsonNode> e = itr.next();
+									if ( "ts".equals(e.getKey()) || fieldNames.contains(e.getKey()) ) {
+										datumValues.put(e.getKey(), e.getValue());
+									}
+								}
+								// if did not find ts + at least one property, ignore
+								if ( datumValues.size() > 1 ) {
+									datumValuesList.add(datumValues);
+								}
+							}
+						}
+						return datumValuesList;
+					}));
+				}
+				for ( var f : futures ) {
+					data.add(f.get());
+				}
+			} catch ( Exception e ) {
+				String msg = "Error requesting data.";
+				Throwable t = e;
+				while ( t.getCause() != null ) {
+					t = t.getCause();
+				}
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.dataRequest", new Object[] { t.getMessage() }, msg);
+				throw new ValidationException(msg, errors, ms, t);
+			}
+
+			// merge multiple streams based on timestamp
+			final Map<Instant, GeneralDatum> result = new HashMap<>(data.size());
+			for ( List<Map<String, JsonNode>> datumValuesList : data ) {
+				for ( Map<String, JsonNode> datumValues : datumValuesList ) {
+					final Instant ts;
+					try {
+						ts = Instant.parse(datumValues.get("ts").asText());
+					} catch ( DateTimeParseException dtpe ) {
+						// ignore and continue
+						continue;
+					}
+
+					final GeneralDatum datum = result.computeIfAbsent(ts,
+							k -> new GeneralDatum(ds.datumId(k), new DatumSamples()));
+					final DatumSamples samples = datum.getSamples();
+
+					for ( CloudDatumStreamPropertyConfiguration property : valueProps ) {
+						String fieldName = fieldNamesByProperty.get(property.getId());
+						JsonNode val = datumValues.get(fieldName);
+						if ( val != null ) {
+							DatumSamplesType propType = property.getPropertyType();
+							Object propVal = parseJsonDatumPropertyValue(val, propType);
+							propVal = property.applyValueTransforms(propVal);
+							samples.putSampleValue(propType, property.getPropertyName(), propVal);
+						}
 					}
 				}
 			}
-		}
 
-		// evaluate expressions on merged datum
-		if ( !exprProps.isEmpty() ) {
-			var parameters = Map.of("datumStreamMappingId", datumStream.getDatumStreamMappingId(),
-					"integrationId", mapping.getIntegrationId());
-			evaulateExpressions(exprProps, result.values(), parameters);
-		}
+			// evaluate expressions on merged datum
+			evaluateExpressions(exprProps, result.values(), mapping.getConfigId(),
+					integration.getConfigId());
 
-		BasicQueryFilter nextQueryFilter = null;
-		if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {
-			// provide next date range to try
-			nextQueryFilter = BasicQueryFilter.copyOf(filter);
-			nextQueryFilter.setStartDate(endDate);
+			BasicQueryFilter nextQueryFilter = null;
+			if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {
+				// provide next date range to try
+				nextQueryFilter = BasicQueryFilter.copyOf(filter);
+				nextQueryFilter.setStartDate(endDate);
 
-			var end = filterEndDate;
-			if ( granularity.getConstraint() != null ) {
-				// enforce max time constraint
-				end = endDate.plus(granularity.getConstraint());
-				if ( end.isAfter(filterEndDate) ) {
-					end = filterEndDate;
+				var end = filterEndDate;
+				if ( granularity.getConstraint() != null ) {
+					// enforce max time constraint
+					end = endDate.plus(granularity.getConstraint());
+					if ( end.isAfter(filterEndDate) ) {
+						end = filterEndDate;
+					}
 				}
+				nextQueryFilter.setEndDate(end);
 			}
-			nextQueryFilter.setEndDate(end);
-		}
 
-		return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter, result.values().stream()
-				.sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+			return new BasicCloudDatumStreamQueryResult(null, nextQueryFilter, result.values().stream()
+					.sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+		});
 	}
 }
