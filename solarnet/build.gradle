@@ -119,6 +119,13 @@ subprojects {
 				libraries.easymock
 	}
 
+	configurations.all {
+		resolutionStrategy {
+			// the following are to pick up security fixes in transitive dependencies
+			force "commons-io:commons-io:${commonsIoVersion}"
+	  	}
+	}
+
 	// Disable JavaDoc doclint on Java 8. It's annoying.
 	// For jdk10+ we must explicitly choose between html4 and html5, otherwise we get a warning
 	allprojects {
