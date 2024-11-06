@@ -34,6 +34,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("deprecation")
 public class MaxUploadSizeInputStream extends BoundedInputStream {
 
 	/**

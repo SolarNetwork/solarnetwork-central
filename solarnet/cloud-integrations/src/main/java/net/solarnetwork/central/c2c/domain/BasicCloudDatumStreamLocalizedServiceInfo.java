@@ -32,13 +32,14 @@ import net.solarnetwork.util.IntRange;
  * Basic implementation of {@link CloudDatumStreamLocalizedServiceInfo}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurableLocalizedServiceInfo
 		implements CloudDatumStreamLocalizedServiceInfo {
 
 	private final boolean requiresPolling;
 	private final boolean dataValuesRequireDatumStream;
+	private final boolean arbitraryDateRangesSupported;
 	private final Iterable<String> supportedPlaceholders;
 	private final Iterable<Integer> supportedDataValueWildcardIdentifierLevels;
 	private final IntRange dataValueIdentifierLevelsSourceIdRange;
@@ -54,6 +55,8 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	 *        the polling requirement
 	 * @param dataValuesRequireDatumStream
 	 *        the data values datum stream requirement
+	 * @param arbitraryDateRangesSupported
+	 *        the arbitrary date range supported mode
 	 * @param supportedPlaceholders
 	 *        the supported placeholder keys
 	 * @param supportedDataValueWildcardIdentifierLevels
@@ -63,12 +66,14 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	 */
 	public BasicCloudDatumStreamLocalizedServiceInfo(LocalizedServiceInfo info,
 			List<SettingSpecifier> settings, boolean requiresPolling,
-			boolean dataValuesRequireDatumStream, Iterable<String> supportedPlaceholders,
+			boolean dataValuesRequireDatumStream, boolean arbitraryDateRangesSupported,
+			Iterable<String> supportedPlaceholders,
 			Iterable<Integer> supportedDataValueWildcardIdentifierLevels,
 			IntRange dataValueIdentifierLevelsSourceIdRange) {
 		super(info, settings);
 		this.requiresPolling = requiresPolling;
 		this.dataValuesRequireDatumStream = dataValuesRequireDatumStream;
+		this.arbitraryDateRangesSupported = arbitraryDateRangesSupported;
 		this.supportedPlaceholders = supportedPlaceholders;
 		this.supportedDataValueWildcardIdentifierLevels = supportedDataValueWildcardIdentifierLevels;
 		this.dataValueIdentifierLevelsSourceIdRange = dataValueIdentifierLevelsSourceIdRange;
@@ -82,6 +87,11 @@ public class BasicCloudDatumStreamLocalizedServiceInfo extends BasicConfigurable
 	@Override
 	public final boolean isDataValuesRequireDatumStream() {
 		return dataValuesRequireDatumStream;
+	}
+
+	@Override
+	public boolean isArbitraryDateRangesSupported() {
+		return arbitraryDateRangesSupported;
 	}
 
 	@Override

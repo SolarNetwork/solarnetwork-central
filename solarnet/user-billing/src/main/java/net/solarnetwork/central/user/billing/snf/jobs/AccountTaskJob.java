@@ -1,21 +1,21 @@
 /* ==================================================================
  * AccountTaskJob.java - 21/07/2020 10:57:46 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,9 +35,9 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 
 /**
  * Job to process {@link AccountTaskType} tasks.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AccountTaskJob extends JobSupport {
 
@@ -48,7 +48,7 @@ public class AccountTaskJob extends JobSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param transactionTemplate
 	 *        the transaction template to use, or {@literal null}
 	 * @param taskDao
@@ -98,7 +98,7 @@ public class AccountTaskJob extends JobSupport {
 				}
 			} catch ( RepeatableTaskException e ) {
 				log.debug(e.getMessage(), e);
-				log.info("Error processing user node event task; will re-try later: {}", e.getMessage());
+				log.info("Error processing account task; will re-try later: {}", e.getMessage());
 				processed = true;
 			}
 			if ( processed ) {
@@ -115,31 +115,22 @@ public class AccountTaskJob extends JobSupport {
 			return false;
 		}
 		boolean retry = false;
-		try {
-			final AccountTaskType taskType = task.getTaskType();
-			switch (taskType) {
-				case Unknown:
-					// do nothing, but delete
-					break;
+		final AccountTaskType taskType = task.getTaskType();
+		switch (taskType) {
+			case GenerateInvoice:
+				retry = !generateInvoiceTaskHandler.handleTask(task);
+				break;
 
-				case GenerateInvoice:
-					generateInvoiceTaskHandler.handleTask(task);
-					break;
+			case DeliverInvoice:
+				retry = !deliverInvoiceTaskHandler.handleTask(task);
+				break;
 
-				case DeliverInvoice:
-					deliverInvoiceTaskHandler.handleTask(task);
-					break;
-
-				default:
-					throw new IllegalArgumentException("Task type " + taskType + " not supported.");
-			}
-		} catch ( RepeatableTaskException e ) {
-			retry = true;
-			throw e;
-		} finally {
-			if ( !retry ) {
-				taskDao.delete(task);
-			}
+			default:
+				// do nothing, but delete
+				break;
+		}
+		if ( !retry ) {
+			taskDao.delete(task);
 		}
 		return true;
 	}

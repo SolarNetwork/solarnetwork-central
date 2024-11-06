@@ -1,27 +1,28 @@
 /* ==================================================================
  * DatumImportProgressInputStream.java - 8/11/2018 6:28:27 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.imp.support;
 
+import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.io.input.CountingInputStream;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
@@ -29,10 +30,11 @@ import net.solarnetwork.service.ProgressListener;
 
 /**
  * {@link InputStream} that tracks the overall progress of reading the stream.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
+@SuppressWarnings("deprecation")
 public class DatumImportProgressInputStream extends CountingInputStream {
 
 	private final long expectedLength;
@@ -41,7 +43,7 @@ public class DatumImportProgressInputStream extends CountingInputStream {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param in
 	 *        the stream to track the progress reading
 	 * @param expectedLength
@@ -60,7 +62,7 @@ public class DatumImportProgressInputStream extends CountingInputStream {
 	}
 
 	@Override
-	protected synchronized void afterRead(int n) {
+	protected synchronized void afterRead(int n) throws IOException {
 		super.afterRead(n);
 		if ( n > 0 && progressListener != null ) {
 			progressListener.progressChanged(this.progressContext,

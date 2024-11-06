@@ -72,9 +72,9 @@ subprojects {
 
 	ext {
 		awsSdk2Version = '2.26.31'
-		batikVersion = '1.16'
+		batikVersion = '1.18'
 		checkstyleVersion = '8.34'
-		commonsIoVersion = '2.15.1'
+		commonsIoVersion = '2.17.0'
 		jsonSchemaValidatorVersion = '1.3.2'
 		myBatisStarterVersion = '3.0.3'
 		saxonVersion = '12.4'
@@ -95,7 +95,7 @@ subprojects {
 
 		libraries = [
 			batik: [
-				'org.jsoup:jsoup:1.16.1',
+				'org.jsoup:jsoup:1.18.1',
 				"org.apache.xmlgraphics:batik-transcoder:${batikVersion}",
 				"org.apache.xmlgraphics:batik-codec:${batikVersion}",
 				"org.apache.xmlgraphics:batik-ext:${batikVersion}"
@@ -117,6 +117,13 @@ subprojects {
 				libraries.mockito,
 				libraries.mockitoJupiter,
 				libraries.easymock
+	}
+
+	configurations.all {
+		resolutionStrategy {
+			// the following are to pick up security fixes in transitive dependencies
+			force "commons-io:commons-io:${commonsIoVersion}"
+	  	}
 	}
 
 	// Disable JavaDoc doclint on Java 8. It's annoying.
