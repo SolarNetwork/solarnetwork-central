@@ -43,7 +43,7 @@ dependencies {
 	// Utilities
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'commons-net:commons-net:3.10.0'
-	implementation 'com.amazonaws:aws-java-sdk-s3:1.11.1034'
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.777'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
