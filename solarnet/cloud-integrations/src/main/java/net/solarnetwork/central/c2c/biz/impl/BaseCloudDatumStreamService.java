@@ -70,7 +70,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -139,8 +139,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		return new BasicCloudDatumStreamLocalizedServiceInfo(
 				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
 				getSettingSpecifiers(), requiresPolling(), dataValuesRequireDatumStream(),
-				supportedPlaceholders(), supportedDataValueWildcardIdentifierLevels(),
-				dataValueIdentifierLevelsSourceIdRange());
+				arbitraryDateRangesSupported(), supportedPlaceholders(),
+				supportedDataValueWildcardIdentifierLevels(), dataValueIdentifierLevelsSourceIdRange());
 	}
 
 	/**
@@ -258,6 +258,18 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	protected boolean dataValuesRequireDatumStream() {
 		return false;
+	}
+
+	/**
+	 * Tell if the service supports returning datum for arbitrary date ranges.
+	 *
+	 * @return {@code true} if this service supports querying datum with
+	 *         arbitrary date ranges, {@code false} if date ranges are not
+	 *         supported or limited in some way
+	 * @since 1.7
+	 */
+	protected boolean arbitraryDateRangesSupported() {
+		return true;
 	}
 
 	/**

@@ -30,7 +30,7 @@ import net.solarnetwork.util.IntRange;
  * Localized service information for cloud datum stream services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocalizedServiceInfo {
 
@@ -62,6 +62,25 @@ public interface CloudDatumStreamLocalizedServiceInfo extends ConfigurableLocali
 	 * @since 1.1
 	 */
 	boolean isDataValuesRequireDatumStream();
+
+	/**
+	 * Tell if the service supports returning datum for arbitrary date ranges.
+	 *
+	 * <p>
+	 * Some
+	 * {@link CloudDatumStreamService#datum(CloudDatumStreamConfiguration, CloudDatumStreamQueryFilter)}
+	 * implementations may not support arbitrary date ranges in the filter
+	 * argument, or may ignore any provided date range completely. In those
+	 * cases this method will return {@code false}, and the datum returned when
+	 * a date range is included in the filter will be implementation-specific.
+	 * </p>
+	 *
+	 * @return {@code true} if this service supports querying datum with
+	 *         arbitrary date ranges, {@code false} if date ranges are not
+	 *         supported or limited in some way
+	 * @since 1.2
+	 */
+	boolean isArbitraryDateRangesSupported();
 
 	/**
 	 * Get a collection of supported placeholder keys.

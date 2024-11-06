@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -67,6 +68,7 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.AtmosphericDatum;
+import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -81,7 +83,7 @@ import net.solarnetwork.util.DateUtils;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -155,6 +157,11 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	}
 
 	@Override
+	protected boolean arbitraryDateRangesSupported() {
+		return false;
+	}
+
+	@Override
 	public Iterable<LocalizedServiceInfo> dataValueFilters(Locale locale) {
 		return Collections.emptyList();
 	}
@@ -168,9 +175,10 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	@Override
 	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {
-		CloudDatumStreamQueryResult result = (CloudDatumStreamQueryResult) latestDatum(datumStream);
-		return new BasicCloudDatumStreamQueryResult(
-				result != null ? result.getResults() : Collections.emptyList());
+		Iterable<Datum> result = latestDatum(datumStream);
+		List<Datum> list = (result != null ? StreamSupport.stream(result.spliterator(), false).toList()
+				: Collections.emptyList());
+		return new BasicCloudDatumStreamQueryResult(list);
 	}
 
 	/**
