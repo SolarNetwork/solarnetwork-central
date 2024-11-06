@@ -25,7 +25,7 @@ package net.solarnetwork.central.web.support;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicLong;
-import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -41,7 +41,7 @@ import net.solarnetwork.util.ObjectUtils;
  * response.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ContentLengthTrackingClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
 
@@ -68,7 +68,7 @@ public class ContentLengthTrackingClientHttpRequestInterceptor implements Client
 	private class ResponseBodyLengthTrackingClientHttpResponse implements ClientHttpResponse {
 
 		private final ClientHttpResponse delegate;
-		private CountingInputStream countingBody;
+		private BoundedInputStream countingBody;
 
 		private ResponseBodyLengthTrackingClientHttpResponse(ClientHttpResponse delegate) {
 			super();
@@ -82,7 +82,8 @@ public class ContentLengthTrackingClientHttpRequestInterceptor implements Client
 
 		@Override
 		public InputStream getBody() throws IOException {
-			CountingInputStream is = new CountingInputStream(delegate.getBody());
+			BoundedInputStream is = BoundedInputStream.builder().setInputStream(delegate.getBody())
+					.get();
 			countingBody = is;
 			return is;
 		}
@@ -106,12 +107,12 @@ public class ContentLengthTrackingClientHttpRequestInterceptor implements Client
 		@Override
 		public void close() {
 			delegate.close();
-			final CountingInputStream is = this.countingBody;
+			final BoundedInputStream is = this.countingBody;
 			if ( is != null ) {
-				long count = is.getByteCount();
+				long count = is.getCount();
 				if ( count > 0 ) {
 					log.trace("Adding {} to response input stream body length", count);
-					countThreadLocal.get().addAndGet(is.getByteCount());
+					countThreadLocal.get().addAndGet(count);
 				}
 			}
 		}

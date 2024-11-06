@@ -74,7 +74,7 @@ subprojects {
 		awsSdk2Version = '2.26.31'
 		batikVersion = '1.16'
 		checkstyleVersion = '8.34'
-		commonsIoVersion = '2.15.1'
+		commonsIoVersion = '2.17.0'
 		jsonSchemaValidatorVersion = '1.3.2'
 		myBatisStarterVersion = '3.0.3'
 		saxonVersion = '12.4'

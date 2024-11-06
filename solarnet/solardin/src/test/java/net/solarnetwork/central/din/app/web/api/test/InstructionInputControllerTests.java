@@ -153,7 +153,7 @@ public class InstructionInputControllerTests {
 		and.then(requestInputStreamCaptor.getValue())
 			.as("Is size-limited input stream")
 			.asInstanceOf(type(MaxUploadSizeInputStream.class))
-			.returns(MAX_INPUT_LENGTH, from(BoundedInputStream::getMaxLength))
+			.returns(MAX_INPUT_LENGTH, from(BoundedInputStream::getMaxCount))
 			;
 
 		then(inputBiz).should().generateResponse(eq(userId), eq(endpointId), eq(instrs),
@@ -232,7 +232,7 @@ public class InstructionInputControllerTests {
 		and.then(requestInputStreamCaptor.getValue())
 			.as("Is size-limited input stream")
 			.asInstanceOf(type(MaxUploadSizeInputStream.class))
-			.returns(MAX_INPUT_LENGTH, from(BoundedInputStream::getMaxLength))
+			.returns(MAX_INPUT_LENGTH, from(BoundedInputStream::getMaxCount))
 			;
 
 		then(inputBiz).should().generateResponse(eq(userId), eq(endpointId), eq(instrs),
