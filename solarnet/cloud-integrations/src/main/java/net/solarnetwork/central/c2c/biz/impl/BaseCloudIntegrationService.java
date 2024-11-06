@@ -84,7 +84,7 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 
 	/**
 	 * A setting specifier for the
-	 * {@link CloudIntegrationService#OAUTH_CLIENT_SECRET_SETTING_SPECIFIER}.
+	 * {@link CloudIntegrationService#OAUTH_CLIENT_SECRET_SETTING}.
 	 *
 	 * @since 1.2
 	 */
