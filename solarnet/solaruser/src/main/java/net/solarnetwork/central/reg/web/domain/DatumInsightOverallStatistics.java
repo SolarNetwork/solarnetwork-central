@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumInsightOverallStatistics.java - 13/07/2018 11:36:43 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,9 +33,9 @@ import net.solarnetwork.central.datum.v2.domain.AuditDatumRollup;
 
 /**
  * DTO for datum insight overall statistics.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.30
  */
 public class DatumInsightOverallStatistics {
@@ -56,7 +56,7 @@ public class DatumInsightOverallStatistics {
 
 	/**
 	 * Construct from a list of counts.
-	 * 
+	 *
 	 * <p>
 	 * The {@link #populateStatsFromCounts(Iterable)} method will be invoked
 	 * with the provided {@code counts} value, and {@link #setCounts(List)} will
@@ -65,7 +65,7 @@ public class DatumInsightOverallStatistics {
 	 * from {@code accumulative} and
 	 * {@link #populateStatsFromAccumulativeCounts(Iterable)} will be invoked.
 	 * </p>
-	 * 
+	 *
 	 * @param counts
 	 *        the counts
 	 * @param accumulative
@@ -86,6 +86,13 @@ public class DatumInsightOverallStatistics {
 			AuditDatumRecordCounts c = new AuditDatumRecordCounts(e.getNodeId(), e.getSourceId(),
 					e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
 					e.getDatumMonthlyCount());
+			if ( e.getDatumPropertyCount() != null ) {
+				c.setDatumPropertyPostedCount(
+						e.getDatumPropertyCount().longValue() + (e.getDatumPropertyUpdateCount() != null
+								? e.getDatumPropertyUpdateCount().longValue()
+								: 0));
+			}
+			c.setDatumQueryCount(e.getDatumQueryCount());
 			if ( e.getTimestamp() != null ) {
 				c.setCreated(e.getTimestamp());
 			}
@@ -95,12 +102,12 @@ public class DatumInsightOverallStatistics {
 
 	/**
 	 * Extract statistics from a list of counts and set them on this object.
-	 * 
+	 *
 	 * <p>
 	 * This will set the {@code activeNodeCount} and {@code activeSourceCount}
 	 * properties.
 	 * </p>
-	 * 
+	 *
 	 * @param counts
 	 *        the counts to extract statistics from
 	 */
@@ -118,11 +125,11 @@ public class DatumInsightOverallStatistics {
 	/**
 	 * Extract statistics from a list of accumulative counts and set them on
 	 * this object.
-	 * 
+	 *
 	 * <p>
 	 * This will set the {@code nodeCount} and {@code sourceCount} properties.
 	 * </p>
-	 * 
+	 *
 	 * @param counts
 	 *        the counts to extract statistics from
 	 */
