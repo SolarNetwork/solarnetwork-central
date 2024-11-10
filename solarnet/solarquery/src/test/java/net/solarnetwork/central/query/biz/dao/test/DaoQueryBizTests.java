@@ -28,6 +28,7 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId.idForMetadata;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
@@ -341,7 +342,8 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
 		ObjectDatumStreamMetadata meta = emptyMeta(UUID.randomUUID(), "UTC", ObjectDatumKind.Node,
 				TEST_NODE_ID, TEST_SOURCE_ID);
-		expect(metaDao.findDatumStreamMetadata(capture(filterCaptor))).andReturn(singleton(meta));
+		expect(metaDao.findDatumStreamMetadataIds(capture(filterCaptor)))
+				.andReturn(singleton(idForMetadata(meta)));
 
 		// WHEN
 		replayAll();

@@ -74,6 +74,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
@@ -177,7 +178,7 @@ public class DaoQueryBiz implements QueryBiz {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
 		validateDatumCriteria(c);
-		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
+		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
 		return stream(results.spliterator(), false)
 				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
@@ -200,7 +201,7 @@ public class DaoQueryBiz implements QueryBiz {
 		} else {
 			return Collections.emptySet();
 		}
-		Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(c);
+		Iterable<ObjectDatumStreamMetadataId> results = metaDao.findDatumStreamMetadataIds(c);
 		return stream(results.spliterator(), false)
 				.map(e -> new NodeSourcePK(e.getObjectId(), e.getSourceId()))
 				.collect(toCollection(LinkedHashSet::new));
