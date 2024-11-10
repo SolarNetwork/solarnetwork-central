@@ -1,5 +1,5 @@
 /* ==================================================================
- * SecurityTokenAuthenticationFilterTest.java - Dec 13, 2012 6:08:36 AM
+ * SecurityTokenAuthenticationFilterTests.java - Dec 13, 2012 6:08:36 AM
  * 
  * Copyright 2007-2012 SolarNetwork.net Dev Team
  * 
@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,10 +46,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,6 +59,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.AntPathMatcher;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenType;
@@ -74,9 +75,9 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-public class SecurityTokenAuthenticationFilterTest {
+public class SecurityTokenAuthenticationFilterTests {
 
 	private static final String HTTP_HEADER_AUTH = "Authorization";
 	private static final String TEST_AUTH_TOKEN = "12345678901234567890";
@@ -795,6 +796,33 @@ public class SecurityTokenAuthenticationFilterTest {
 		// then
 		verify(filterChain, userDetailsService);
 		validateUnauthorizedResponse(AuthenticationScheme.V2, "Access denied");
+	}
+
+	@Test
+	public void multipartFormDataRequestTooLargeV2() throws ServletException, IOException {
+		// GIVEN
+		final Date now = new Date();
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(StandardCharsets.UTF_8));
+		request.addHeader("Date", now);
+		setupAuthorizationHeader(request,
+				createAuthorizationHeaderV2Value(TEST_AUTH_TOKEN, TEST_PASSWORD, request, now));
+
+		// create new request as we read the input stream above
+		request = new MockHttpServletRequest("POST", "/mock/path/here");
+		request.setContentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+		request.setContent("foo=bar".getBytes(StandardCharsets.UTF_8));
+		request.addHeader("Date", now);
+
+		// WHEN
+		filter.setMaxRequestBodySize(1);
+		replay(filterChain, userDetailsService);
+		filter.doFilter(request, response, filterChain);
+
+		// THEN
+		verify(filterChain, userDetailsService);
+		assertThat("Status code", response.getStatus(), is(403));
 	}
 
 }

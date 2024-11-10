@@ -332,7 +332,7 @@ public class WebServiceGlobalControllerSupport {
 	@ExceptionHandler(AccessDeniedException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Result<?> handleAuthenticationException(AccessDeniedException e, WebRequest request) {
+	public Result<?> handleAccessDeniedException(AccessDeniedException e, WebRequest request) {
 		log.info("AccessDeniedException in request {}: {}", requestDescription(request), e.getMessage());
 		return error(null, e.getMessage());
 	}

@@ -161,15 +161,15 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 				(int) settings.getMinimumSpoolLength().toBytes(), settings.getSpoolDirectory());
 		HttpServletResponse response = res;
 
-		// for multipart requests, force the InputStream to be resolved now so the parameters
-		// are not parsed by the servlet container
-		if ( req.getContentType() != null && MediaType.MULTIPART_FORM_DATA
-				.isCompatibleWith(MimeType.valueOf(req.getContentType())) ) {
-			request.getContentSHA256();
-		}
-
 		AuthenticationData data;
 		try {
+			// for multipart requests, force the InputStream to be resolved now so the parameters
+			// are not parsed by the servlet container
+			if ( req.getContentType() != null && MediaType.MULTIPART_FORM_DATA
+					.isCompatibleWith(MimeType.valueOf(req.getContentType())) ) {
+				request.getContentSHA256();
+			}
+
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
 		} catch ( net.solarnetwork.web.jakarta.security.SecurityException e ) {
 			deny(request, response, new MaxUploadSizeExceededException(
