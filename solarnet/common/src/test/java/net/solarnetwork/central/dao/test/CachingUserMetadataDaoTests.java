@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.dao.mybatis.test;
+package net.solarnetwork.central.dao.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;

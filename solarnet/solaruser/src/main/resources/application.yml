@@ -130,10 +130,14 @@ app:
       keystore-resource: "classpath:dogtag-client.jks"
       keystore-password: "changeit"
       expire-warning-days: 5
+  node-metadata-cache:
+    ttl: 300
+    heap-max-entries: 10000
+    disk-max-size-mb: 10
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
-    disk-max-size-mb: 100
+    disk-max-size-mb: 10
   node-service-auditor:
     update-delay: 100
     flush-delay: 10000
