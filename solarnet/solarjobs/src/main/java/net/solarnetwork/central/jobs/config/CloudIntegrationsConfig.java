@@ -36,12 +36,14 @@ import org.springframework.expression.Expression;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.domain.tariff.TariffSchedule;
 
 /**
  * Cloud integrations general configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -63,6 +65,21 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 			@Qualifier(CLOUD_INTEGRATIONS_EXPRESSIONS) CacheSettings settings) {
 		return settings.createCache(cacheManager, String.class, Expression.class,
 				CLOUD_INTEGRATIONS_EXPRESSIONS + "-cache");
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_TARIFF)
+	@ConfigurationProperties(prefix = "app.c2c.cache.tariff-cache")
+	public CacheSettings cloudIntegrationsTariffCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_TARIFF)
+	public Cache<ObjectDatumStreamMetadataId, TariffSchedule> cloudIntegrationsTariffCache(
+			@Qualifier(CLOUD_INTEGRATIONS_TARIFF) CacheSettings settings) {
+		return settings.createCache(cacheManager, ObjectDatumStreamMetadataId.class,
+				TariffSchedule.class, CLOUD_INTEGRATIONS_TARIFF + "-cache");
 	}
 
 	@Bean

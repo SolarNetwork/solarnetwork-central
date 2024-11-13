@@ -24,14 +24,31 @@ package net.solarnetwork.central.c2c.biz;
 
 import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumMetadataOperations;
 
 /**
  * API for a service that can evaluate expressions.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationsExpressionService {
+
+	/**
+	 * Create a standard datum expression root instance.
+	 *
+	 * @param datum
+	 *        the datum
+	 * @param parameters
+	 *        the parameters
+	 * @param metadata
+	 *        the metadata
+	 * @return the root
+	 */
+	DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
+			DatumMetadataOperations metadata);
 
 	/**
 	 * Evaluate a property expression.

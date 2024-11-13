@@ -37,6 +37,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.CachingSolarNodeMetadataDao;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataDao;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
@@ -73,7 +74,8 @@ public class CachingSolarNodeMetadataDaoTests {
 		given(entityCache.get(nodeId)).willReturn(null);
 
 		final var metadata = new SolarNodeMetadata(nodeId);
-		given(delegate.get(nodeId)).willReturn(metadata);
+		SolarNodeMetadataReadOnlyDao rod = delegate; // work-around for javac "reference to get is ambiguous"
+		given(rod.get(nodeId)).willReturn(metadata);
 
 		// WHEN
 		SolarNodeMetadata result = dao.get(nodeId);
@@ -106,7 +108,8 @@ public class CachingSolarNodeMetadataDaoTests {
 		given(entityCache.get(nodeId)).willReturn(null);
 
 		final var delegateResult = new SolarNodeMetadata(nodeId);
-		given(delegate.get(nodeId)).willReturn(delegateResult);
+		SolarNodeMetadataReadOnlyDao rod = delegate; // work-around for javac "reference to get is ambiguous"
+		given(rod.get(nodeId)).willReturn(delegateResult);
 
 		// WHEN
 		final var filter = new BasicCoreCriteria();

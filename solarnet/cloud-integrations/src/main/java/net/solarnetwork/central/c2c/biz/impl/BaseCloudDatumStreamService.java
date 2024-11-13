@@ -70,7 +70,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -349,8 +349,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
 			for ( MutableDatum d : datum ) {
-				DatumSamplesExpressionRoot root = new DatumSamplesExpressionRoot(d,
-						d.asSampleOperations(), parameters);
+				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(d,
+						parameters, null);
 				Object val = null;
 				try {
 					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,

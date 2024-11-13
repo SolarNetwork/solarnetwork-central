@@ -67,7 +67,7 @@ import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseOpenWeatherMapCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapForecastCloudDatumStreamService;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -142,7 +142,7 @@ public class OpenWeatherMapForecastCloudDatumStreamServiceTests {
 	public void setup() {
 		objectMapper = JsonUtils.newObjectMapper();
 
-		expressionService = new SpelCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService();
 		service = new OpenWeatherMapForecastCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, restOps, clock);

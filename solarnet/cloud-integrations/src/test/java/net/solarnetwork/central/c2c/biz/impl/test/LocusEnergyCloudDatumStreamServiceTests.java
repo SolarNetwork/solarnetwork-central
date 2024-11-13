@@ -75,7 +75,7 @@ import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyGranularity;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -146,7 +146,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	@BeforeEach
 	public void setup() {
 		ExecutorService executor = new CallingThreadExecutorService();
-		expressionService = new SpelCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService();
 		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
 				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager);

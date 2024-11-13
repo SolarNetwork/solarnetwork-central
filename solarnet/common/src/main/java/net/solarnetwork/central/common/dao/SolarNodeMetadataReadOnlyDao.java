@@ -34,4 +34,13 @@ import net.solarnetwork.dao.FilterableDao;
 public interface SolarNodeMetadataReadOnlyDao
 		extends FilterableDao<SolarNodeMetadata, Long, SolarNodeMetadataFilter> {
 
+	/**
+	 * Get the metadata for a specific node ID.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to get the metadata for
+	 * @return the metadata, or {@code null} if none available
+	 */
+	SolarNodeMetadata get(Long nodeId);
+
 }

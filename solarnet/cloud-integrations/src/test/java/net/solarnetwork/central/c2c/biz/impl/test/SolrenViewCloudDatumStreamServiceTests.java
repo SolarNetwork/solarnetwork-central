@@ -70,7 +70,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolrenViewCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolrenViewGranularity;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -139,7 +139,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 
 	@BeforeEach
 	public void setup() {
-		expressionService = new SpelCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService();
 		service = new SolrenViewCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, restOps, clock);
