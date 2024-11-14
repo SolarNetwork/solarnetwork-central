@@ -102,7 +102,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
 		// WHEN
-		DatumExpressionRoot result = service.createDatumExpressionRoot(datum, parameters, null);
+		DatumExpressionRoot result = service.createDatumExpressionRoot(datum, parameters, null, null);
 
 		// THEN
 		// @formatter:off
@@ -149,7 +149,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
+				null);
 		final Double result = service.evaluateDatumPropertyExpression(config, root, null, Double.class);
 
 		// THEN
@@ -195,7 +196,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
+				null);
 		final BigDecimal result = service.evaluateDatumPropertyExpression(config, root, null,
 				BigDecimal.class);
 
@@ -245,7 +247,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
+				null);
 		final BigDecimal result = service.evaluateDatumPropertyExpression(config, root, null,
 				BigDecimal.class);
 

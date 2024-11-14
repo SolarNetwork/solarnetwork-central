@@ -23,7 +23,9 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.util.Map;
+import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -37,6 +39,14 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
 public interface CloudIntegrationsExpressionService {
 
 	/**
+	 * Get a {@link PathMatcher} that can be used for source ID matching.
+	 *
+	 * @return the matcher, never {@literal null}
+	 * @since 1.1
+	 */
+	PathMatcher sourceIdPathMatcher();
+
+	/**
 	 * Create a standard datum expression root instance.
 	 *
 	 * @param datum
@@ -45,10 +55,13 @@ public interface CloudIntegrationsExpressionService {
 	 *        the parameters
 	 * @param metadata
 	 *        the metadata
+	 * @param datumStreamsAccessor
+	 *        the datum streams accessor
 	 * @return the root
+	 * @since 1.1
 	 */
 	DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata);
+			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor);
 
 	/**
 	 * Evaluate a property expression.

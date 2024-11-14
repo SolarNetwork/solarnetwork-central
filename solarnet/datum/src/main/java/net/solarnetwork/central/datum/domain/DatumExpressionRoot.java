@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static java.util.Collections.emptyList;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
@@ -54,6 +57,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	// a function to parse a metadata tariff schedule associated with an object ID
 	private final BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider;
 
+	private final DatumStreamsAccessor datumStreamsAccessor;
+
 	/**
 	 * Constructor.
 	 *
@@ -65,6 +70,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 *        the parameters
 	 * @param metadata
 	 *        the metadata
+	 * @param datumStreamsAccessor
+	 *        the datum streams accessor
 	 * @param metadataProvider
 	 *        function that resolves metadata based on an ID; the
 	 *        {@code sourceId} component may be {@code null} to represent node
@@ -75,13 +82,47 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 *        {@link ObjectDatumStreamMetadataId#getSourceId()}
 	 */
 	public DatumExpressionRoot(Datum datum, DatumSamplesOperations sample, Map<String, ?> parameters,
-			DatumMetadataOperations metadata,
+			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor,
 			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
 			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider) {
 		super(datum, sample, parameters);
 		this.metadata = metadata;
+		this.datumStreamsAccessor = datumStreamsAccessor;
 		this.metadataProvider = metadataProvider;
 		this.tariffScheduleProvider = tariffScheduleProvider;
+	}
+
+	/**
+	 * Create a copy with a given datum value.
+	 *
+	 * <p>
+	 * The samples and parameters values will be set to {@literal null}.
+	 * </p>
+	 *
+	 * @param datum
+	 *        the datum
+	 * @return a new instance using {@code datum}
+	 */
+	public DatumExpressionRoot copyWith(Datum datum) {
+		return copyWith(datum, null, null);
+	}
+
+	/**
+	 * Create a copy with a given datum, samples, and parameters values.
+	 *
+	 * @param datum
+	 *        the datum
+	 * @param samples
+	 *        the samples
+	 * @param parameters
+	 *        the parameters
+	 * @return the new instance using {@code datum}, {@code samples}, and
+	 *         {@code parameters}
+	 */
+	public DatumExpressionRoot copyWith(Datum datum, DatumSamplesOperations samples,
+			Map<String, ?> parameters) {
+		return new DatumExpressionRoot(datum, samples, parameters, metadata, datumStreamsAccessor,
+				metadataProvider, tariffScheduleProvider);
 	}
 
 	/**
@@ -208,6 +249,192 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 			}
 		}
 		return result;
+	}
+
+	/*- =============================
+	 *  DatumStreamsAccessor
+	 *  ============================= */
+
+	/**
+	 * Get an earlier offset from the latest available datum per source ID.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @return the matching datum, never {@code null}
+	 */
+	public Collection<DatumExpressionRoot> offsetMatching(String sourceIdPattern, int offset) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
+			return emptyList();
+		}
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern, offset);
+		if ( found == null || found.isEmpty() ) {
+			return emptyList();
+		}
+		return found.stream().map(d -> copyWith(d)).toList();
+	}
+
+	/**
+	 * Test if earlier datum exist offset from the latest available per source
+	 * ID.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @return {@code true} if at least one matching datum is available
+	 */
+	public boolean hasOffsetMatching(String sourceIdPattern, int offset) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
+			return false;
+		}
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern, offset);
+		return (found != null && !found.isEmpty());
+	}
+
+	/**
+	 * Get the latest available datum per source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code offsetMatching(sourceIdPattern, 0)}.
+	 * </p>
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @return the matching datum, never {@literal null}
+	 * @see #offsetMatching(String, int)
+	 */
+	public Collection<DatumExpressionRoot> latestMatching(String sourceIdPattern) {
+		return offsetMatching(sourceIdPattern, 0);
+	}
+
+	/**
+	 * Test if datum exist.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code hasOffsetMatching(sourceIdPattern, 0)}.
+	 * </p>
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @return {@code true} if at least one matching datum is available
+	 * @see #hasOffsetMatching(String, int)
+	 */
+	public boolean hasLatestMatching(String sourceIdPattern) {
+		return hasOffsetMatching(sourceIdPattern, 0);
+	}
+
+	/**
+	 * Get an offset from the latest available datum matching a specific source
+	 * ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @return the matching datum, or {@literal null} if not available
+	 */
+	public DatumExpressionRoot offset(String sourceId, int offset) {
+		if ( datumStreamsAccessor == null || sourceId == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.offset(sourceId, offset);
+		return (d != null ? copyWith(d) : null);
+	}
+
+	/**
+	 * Test if an offset from the latest available datum matching a specific
+	 * source ID exists.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @return {@code true} if a matching datum exists
+	 */
+	public boolean hasOffset(String sourceId, int offset) {
+		if ( datumStreamsAccessor == null || sourceId == null ) {
+			return false;
+		}
+		Datum d = datumStreamsAccessor.offset(sourceId, offset);
+		return (d != null);
+	}
+
+	/**
+	 * Get an offset from the latest available datum matching the source ID of
+	 * this expression root.
+	 *
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @return the matching datum, or {@literal null} if not available
+	 */
+	public DatumExpressionRoot offset(int offset) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return null;
+		}
+		return offset(me.getSourceId(), offset);
+	}
+
+	/**
+	 * Test if an offset from the latest available datum matching the source ID
+	 * of this expression root.
+	 *
+	 * @param offset
+	 *        the offset from the latest, {@code 0} being the latest and
+	 *        {@code 1} the next later, and so on
+	 * @return {@code true} if a matching datum exists
+	 */
+	public boolean hasOffset(int offset) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return false;
+		}
+		return hasOffset(me.getSourceId(), offset);
+
+	}
+
+	/**
+	 * Get the latest available datum matching a specific source IDs.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code offset(sourceId, 0)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @return the matching datum, or {@literal null} if not available
+	 * @see #offset(String, int)
+	 */
+	public DatumExpressionRoot latest(String sourceId) {
+		return offset(sourceId, 0);
+	}
+
+	/**
+	 * Test if a datum matching a specific source ID exists.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code hasOffset(sourceId, 0)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @return the matching datum, or {@literal null} if not available
+	 * @return {@code true} if a matching datum exists
+	 * @see #hasOffset(String, int)
+	 */
+	public boolean hasLatest(String sourceId) {
+		return hasOffset(sourceId, 0);
 	}
 
 }

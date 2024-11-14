@@ -22,16 +22,20 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.Map;
 import javax.cache.Cache;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.expression.Expression;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 import org.springframework.util.StringUtils;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
@@ -42,7 +46,6 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 import net.solarnetwork.domain.tariff.TariffUtils;
 import net.solarnetwork.service.ExpressionService;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
@@ -52,42 +55,71 @@ import net.solarnetwork.util.ObjectUtils;
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
+	private final PathMatcher sourceIdPathMatcher;
 	private final ExpressionService expressionService;
 
 	private Cache<String, Expression> expressionCache;
 	private SolarNodeMetadataReadOnlyDao metadataDao;
 	private Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache;
 
-	/**
-	 * Constructor.
-	 *
-	 * <p>
-	 * This uses the {@link SpelExpressionService}.
-	 * </p>
-	 */
-	public BasicCloudIntegrationsExpressionService() {
-		this(new net.solarnetwork.common.expr.spel.SpelExpressionService());
+	private static PathMatcher defaultSourceIdPathMatcher() {
+		var pm = new AntPathMatcher();
+		pm.setCachePatterns(false);
+		pm.setCaseSensitive(false);
+		return pm;
 	}
 
 	/**
 	 * Constructor.
 	 *
+	 * <p>
+	 * This uses a default {@link AntPathMatcher} and the
+	 * {@link SpelExpressionService}.
+	 * </p>
+	 */
+	public BasicCloudIntegrationsExpressionService() {
+		this(defaultSourceIdPathMatcher(),
+				new net.solarnetwork.common.expr.spel.SpelExpressionService());
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * This uses a default {@link AntPathMatcher}.
+	 * </p>
+	 */
+	public BasicCloudIntegrationsExpressionService(ExpressionService expressionService) {
+		this(defaultSourceIdPathMatcher(), expressionService);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param sourceIdPathMatcher
+	 *        the source ID path matcher to use
 	 * @param expressionService
 	 *        the expression service to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public BasicCloudIntegrationsExpressionService(ExpressionService expressionService) {
+	public BasicCloudIntegrationsExpressionService(PathMatcher sourceIdPathMatcher,
+			ExpressionService expressionService) {
 		super();
-		this.expressionService = ObjectUtils.requireNonNullArgument(expressionService,
-				"expressionService");
+		this.sourceIdPathMatcher = requireNonNullArgument(sourceIdPathMatcher, "sourceIdPathMatcher");
+		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
+	}
+
+	@Override
+	public PathMatcher sourceIdPathMatcher() {
+		return sourceIdPathMatcher;
 	}
 
 	@Override
 	public DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata) {
+			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor) {
 		return new DatumExpressionRoot(datum, datum.asSampleOperations(), parameters, metadata,
-				this::nodeMetadata, this::tariffSchedule);
+				datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule);
 	}
 
 	private DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {

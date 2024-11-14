@@ -22,18 +22,26 @@
 
 package net.solarnetwork.central.datum.domain.test;
 
+import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -50,7 +58,11 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * @author matt
  * @version 1.0
  */
+@ExtendWith(MockitoExtension.class)
 public class DatumExpressionRootTests {
+
+	@Mock
+	private DatumStreamsAccessor datumStreamsAccessor;
 
 	private SpelExpressionService expressionService;
 
@@ -59,7 +71,11 @@ public class DatumExpressionRootTests {
 		expressionService = new SpelExpressionService();
 	}
 
-	private static DatumExpressionRoot createTestRoot(Long nodeId, String sourceId,
+	private DatumExpressionRoot createTestRoot(Long nodeId, String sourceId) {
+		return createTestRoot(nodeId, sourceId, null, null, null);
+	}
+
+	private DatumExpressionRoot createTestRoot(Long nodeId, String sourceId,
 			DatumMetadataOperations metadata,
 			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
 			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider) {
@@ -82,7 +98,8 @@ public class DatumExpressionRootTests {
 		p.put("f", 35);
 		p.put("g", 35);
 
-		return new DatumExpressionRoot(d, s, p, metadata, metadataProvider, tariffScheduleProvider);
+		return new DatumExpressionRoot(d, s, p, metadata, datumStreamsAccessor, metadataProvider,
+				tariffScheduleProvider);
 	}
 
 	@Test
@@ -152,6 +169,118 @@ public class DatumExpressionRootTests {
 		then(result2).as("Node metadata info path traversal").isEqualTo("two");
 		then(result3).as("Node metadata property info traversal").isEqualTo(3000);
 		then(result4).as("Node metadata property info path traversal").isEqualTo(3000);
+	}
+
+	@Test
+	public void latestDatum() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final GeneralDatum latestDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offset(sourceId, 0)).willReturn(latestDatum);
+
+		// WHEN
+		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+
+		Boolean hasResult = expressionService.evaluateExpression("hasLatest('%s')".formatted(sourceId),
+				null, root, null, Boolean.class);
+
+		Integer result = expressionService.evaluateExpression("latest('%s')?.foo".formatted(sourceId),
+				null, root, null, Integer.class);
+
+		// THEN
+		then(hasResult).as("Does have result").isTrue();
+
+		then(result).as("Latest datum evaluated")
+				.isEqualTo(latestDatum.getSampleInteger(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void offsetDatum() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final int offset = randomInt();
+		final GeneralDatum offsetDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offset(sourceId, offset)).willReturn(offsetDatum);
+
+		// WHEN
+		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+
+		Boolean hasResult = expressionService.evaluateExpression(
+				"hasOffset('%s', %d)".formatted(sourceId, offset), null, root, null, Boolean.class);
+
+		Integer result = expressionService.evaluateExpression(
+				"offset('%s', %d)?.foo".formatted(sourceId, offset), null, root, null, Integer.class);
+
+		// THEN
+		then(hasResult).as("Does have result").isTrue();
+
+		then(result).as("Latest datum evaluated")
+				.isEqualTo(offsetDatum.getSampleInteger(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void latestMatching() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, randomString(), now,
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		given(datumStreamsAccessor.offsetMatching("*", 0)).willReturn(List.of(d1, d2));
+
+		// WHEN
+		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+
+		Boolean hasResult = expressionService.evaluateExpression("hasLatestMatching('*')", null, root,
+				null, Boolean.class);
+
+		Long result = expressionService.evaluateExpression("sum(latestMatching('*').![foo])", null, root,
+				null, Long.class);
+
+		// THEN
+		then(hasResult).as("Does have result").isTrue();
+
+		then(result).as("Latest datum matching evaluated").isEqualTo(
+				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void offsetMatching() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+
+		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, randomString(), now,
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
+				new DatumSamples(Map.of("foo", randomInt()), null, null));
+		final int offset = randomInt();
+		given(datumStreamsAccessor.offsetMatching("*", offset)).willReturn(List.of(d1, d2));
+
+		// WHEN
+		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+
+		Boolean hasResult = expressionService.evaluateExpression(
+				"hasOffsetMatching('*', %d)".formatted(offset), null, root, null, Boolean.class);
+
+		Long result = expressionService.evaluateExpression(
+				"sum(offsetMatching('*', %d).![foo])".formatted(offset), null, root, null, Long.class);
+
+		// THEN
+		then(hasResult).as("Does have result").isTrue();
+
+		then(result).as("Latest datum matching evaluated").isEqualTo(
+				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
 	}
 
 }
