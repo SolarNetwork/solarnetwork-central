@@ -32,6 +32,7 @@ import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,9 @@ import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionSer
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
+import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.central.test.CommonTestUtils;
@@ -66,6 +69,9 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
 public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 	@Mock
+	SolarNodeOwnershipDao nodeOwnershipDao;
+
+	@Mock
 	private SolarNodeMetadataReadOnlyDao metadataDao;
 
 	private SimpleCache<String, Expression> expressionCache;
@@ -77,7 +83,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		expressionCache = new SimpleCache<>("expression-cache");
 		tariffScheduleCache = new SimpleCache<>("tariff-schedule-cache");
 
-		service = new BasicCloudIntegrationsExpressionService(new SpelExpressionService());
+		service = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao,
+				new SpelExpressionService());
 		service.setExpressionCache(expressionCache);
 		service.setTariffScheduleCache(tariffScheduleCache);
 		service.setMetadataDao(metadataDao);
@@ -269,6 +276,36 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 			.isEqualTo(expectedResult)
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void nodeTz() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
+
+		final BasicSolarNodeOwnership nodeOwnership = BasicSolarNodeOwnership.privateOwnershipFor(nodeId,
+				randomLong(), "NZ", "Pacific/Auckland");
+		given(nodeOwnershipDao.ownershipForNodeId(nodeId)).willReturn(nodeOwnership);
+
+		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
+				Instant.now());
+		config.setValueType(CloudDatumStreamValueType.SpelExpression);
+		config.setValueReference("now(node.zone)");
+
+		final Map<String, Object> parameters = Map.of("foo", "bar");
+
+		// WHEN
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
+				null);
+
+		final LocalDateTime start = LocalDateTime.now(nodeOwnership.getZone());
+		final LocalDateTime result = service.evaluateDatumPropertyExpression(config, root, null,
+				LocalDateTime.class);
+
+		// THEN
+		then(ChronoUnit.SECONDS.between(start, result)).isLessThanOrEqualTo(2);
 	}
 
 }

@@ -24,6 +24,8 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import javax.cache.Cache;
@@ -35,9 +37,11 @@ import org.springframework.util.StringUtils;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -57,6 +61,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 
 	private final PathMatcher sourceIdPathMatcher;
 	private final ExpressionService expressionService;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 
 	private Cache<String, Expression> expressionCache;
 	private SolarNodeMetadataReadOnlyDao metadataDao;
@@ -76,9 +81,14 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * This uses a default {@link AntPathMatcher} and the
 	 * {@link SpelExpressionService}.
 	 * </p>
+	 *
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public BasicCloudIntegrationsExpressionService() {
-		this(defaultSourceIdPathMatcher(),
+	public BasicCloudIntegrationsExpressionService(SolarNodeOwnershipDao nodeOwnershipDao) {
+		this(nodeOwnershipDao, defaultSourceIdPathMatcher(),
 				new net.solarnetwork.common.expr.spel.SpelExpressionService());
 	}
 
@@ -88,14 +98,24 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * <p>
 	 * This uses a default {@link AntPathMatcher}.
 	 * </p>
+	 *
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO to use
+	 * @param expressionService
+	 *        the expression service to use
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
 	 */
-	public BasicCloudIntegrationsExpressionService(ExpressionService expressionService) {
-		this(defaultSourceIdPathMatcher(), expressionService);
+	public BasicCloudIntegrationsExpressionService(SolarNodeOwnershipDao nodeOwnershipDao,
+			ExpressionService expressionService) {
+		this(nodeOwnershipDao, defaultSourceIdPathMatcher(), expressionService);
 	}
 
 	/**
 	 * Constructor.
 	 *
+	 * @param nodeOwnershipDao
+	 *        the node ownership DAO to use
 	 * @param sourceIdPathMatcher
 	 *        the source ID path matcher to use
 	 * @param expressionService
@@ -103,9 +123,10 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public BasicCloudIntegrationsExpressionService(PathMatcher sourceIdPathMatcher,
-			ExpressionService expressionService) {
+	public BasicCloudIntegrationsExpressionService(SolarNodeOwnershipDao nodeOwnershipDao,
+			PathMatcher sourceIdPathMatcher, ExpressionService expressionService) {
 		super();
+		this.nodeOwnershipDao = requireNonNullArgument(nodeOwnershipDao, "nodeOwnershipDao");
 		this.sourceIdPathMatcher = requireNonNullArgument(sourceIdPathMatcher, "sourceIdPathMatcher");
 		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
 	}
@@ -118,7 +139,20 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	@Override
 	public DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
 			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor) {
-		return new DatumExpressionRoot(datum, datum.asSampleOperations(), parameters, metadata,
+		Map<String, ?> p = parameters;
+
+		// for node datum, lookup ownership so we have access to the node's time zone
+		if ( datum != null && datum.getKind() == ObjectDatumKind.Node && datum.getObjectId() != null ) {
+			SolarNodeOwnership node = nodeOwnershipDao.ownershipForNodeId(datum.getObjectId());
+			if ( node != null ) {
+				Map<String, Object> params = new LinkedHashMap<>(
+						parameters != null ? parameters : Collections.emptyMap());
+				params.put("node", node);
+				p = params;
+			}
+		}
+
+		return new DatumExpressionRoot(datum, datum.asSampleOperations(), p, metadata,
 				datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule);
 	}
 

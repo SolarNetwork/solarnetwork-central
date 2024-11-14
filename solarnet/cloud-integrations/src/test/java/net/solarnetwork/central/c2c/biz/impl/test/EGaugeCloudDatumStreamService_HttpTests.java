@@ -75,9 +75,9 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.EgaugeCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudDatumStreamService;
-import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -89,6 +89,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.central.support.SimpleCache;
 import net.solarnetwork.domain.datum.Datum;
@@ -112,6 +113,9 @@ import okhttp3.mockwebserver.RecordedRequest;
 public class EGaugeCloudDatumStreamService_HttpTests {
 
 	private static final Long TEST_USER_ID = randomLong();
+
+	@Mock
+	SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -162,7 +166,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 	public void setup() {
 		server = new MockWebServer();
 
-		expressionService = new BasicCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new EgaugeCloudDatumStreamService(userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao,
 				new RestTemplate(), clock, new SecureRandom(), clientAccessTokenDao);
