@@ -37,11 +37,12 @@ import net.solarnetwork.domain.SortDescriptor;
  * Basic implementation of some core criteria APIs.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
-public class BasicCoreCriteria extends SimplePagination implements UserModifiableFilter,
-		PaginationCriteria, LocationCriteria, NodeCriteria, SourceCriteria, UserCriteria,
-		SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria, NodeOwnershipCriteria {
+public class BasicCoreCriteria extends SimplePagination
+		implements UserModifiableFilter, PaginationCriteria, LocationCriteria, NodeCriteria,
+		SourceCriteria, UserCriteria, SecurityTokenCriteria, SearchFilterCriteria, EnabledCriteria,
+		NodeOwnershipCriteria, SolarNodeMetadataFilter {
 
 	private Long[] locationIds;
 	private Long[] nodeIds;

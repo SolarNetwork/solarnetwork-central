@@ -72,10 +72,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.LocusEnergyGranularity;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -88,6 +88,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
@@ -105,6 +106,9 @@ import net.solarnetwork.test.CallingThreadExecutorService;
 public class LocusEnergyCloudDatumStreamServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
+
+	@Mock
+	SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -146,7 +150,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 	@BeforeEach
 	public void setup() {
 		ExecutorService executor = new CallingThreadExecutorService();
-		expressionService = new SpelCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
 				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager);

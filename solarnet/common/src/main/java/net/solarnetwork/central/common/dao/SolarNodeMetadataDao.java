@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNetCommonConfiguration.java - 4/10/2021 4:20:43 PM
+ * SolarNodeMetadataDao.java - 13/11/2024 7:40:59 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,18 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.config;
+package net.solarnetwork.central.common.dao;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.dao.GenericDao;
 
 /**
- * Marker interface for the common application configuration package.
+ * DAO API for {@link SolarNodeMetadata} entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class SolarNetCommonConfiguration {
-
-	/** A qualifier to use for OAuth client registration. */
-	public static final String OAUTH_CLIENT_REGISTRATION = "oauth-client-reg";
-
-	/** A qualifier for audit JDBC access. */
-	public static final String AUDIT = "audit";
-
-	/** A qualifier for caching support. */
-	public static final String CACHING = "caching";
+public interface SolarNodeMetadataDao
+		extends SolarNodeMetadataReadOnlyDao, GenericDao<SolarNodeMetadata, Long> {
 
 }

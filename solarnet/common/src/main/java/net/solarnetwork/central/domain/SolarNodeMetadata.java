@@ -41,7 +41,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * to manage the JSON value passed to {@link #setMetaJson(String)}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.32
  */
 @JsonIgnoreProperties("id")
@@ -52,7 +52,25 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 
 	private Instant updated;
 	private GeneralDatumMetadata meta;
-	private String metaJson;
+
+	/**
+	 * Constructor.
+	 */
+	public SolarNodeMetadata() {
+		super();
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the node ID
+	 * @since 2.1
+	 */
+	public SolarNodeMetadata(Long id) {
+		super();
+		setId(id);
+	}
 
 	/**
 	 * Convenience getter for {@link #getId()}.
@@ -91,32 +109,28 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	@JsonIgnore
 	@SerializeIgnore
 	public GeneralDatumMetadata getMeta() {
-		if ( meta == null && metaJson != null ) {
-			meta = JsonUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
-			metaJson = null; // clear this out, because we might mutate meta and invalidate our cached JSON value
-		}
 		return meta;
 	}
 
 	@JsonProperty
 	public void setMeta(GeneralDatumMetadata meta) {
 		this.meta = meta;
-		this.metaJson = null;
 	}
 
 	@JsonIgnore
 	@SerializeIgnore
 	public String getMetaJson() {
-		if ( metaJson == null ) {
-			metaJson = JsonUtils.getJSONString(meta, "{}");
-			meta = null; // clear this out, because we might otherwise mutate it and invalidate our cached JSON value
-		}
-		return metaJson;
+		return JsonUtils.getJSONString(meta, "{}");
 	}
 
-	public void setMetaJson(String infoJson) {
-		this.metaJson = infoJson;
-		this.meta = null;
+	/**
+	 * Set the metadata as JSON.
+	 * 
+	 * @param metaJson
+	 *        the JSON metadata to set
+	 */
+	public void setMetaJson(String metaJson) {
+		this.meta = JsonUtils.getObjectFromJSON(metaJson, GeneralDatumMetadata.class);
 	}
 
 	@Override
@@ -124,6 +138,12 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 		return updated;
 	}
 
+	/**
+	 * Set the updated date.
+	 * 
+	 * @param updated
+	 *        the date to set
+	 */
 	public void setUpdated(Instant updated) {
 		this.updated = updated;
 	}

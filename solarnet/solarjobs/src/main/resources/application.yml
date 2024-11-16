@@ -29,6 +29,10 @@ app:
         ttl: 0
         heap-max-entries: 5000
         disk-max-size-mb: 0
+      tariff-cache:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
     encryptor:
       password: "Secret123"
       salt-hex: "01234567"
@@ -280,10 +284,14 @@ app:
       keystore-resource: "classpath:dogtag-client.jks"
       keystore-password: "changeit"
       expire-warning-days: 5
+  node-metadata-cache:
+    ttl: 300
+    heap-max-entries: 10000
+    disk-max-size-mb: 10
   node-ownership-cache:
     ttl: 60
     heap-max-entries: 10000
-    disk-max-size-mb: 100
+    disk-max-size-mb: 10
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000

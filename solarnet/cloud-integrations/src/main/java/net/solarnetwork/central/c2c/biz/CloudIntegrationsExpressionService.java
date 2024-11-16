@@ -23,15 +23,45 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.util.Map;
+import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
+import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumMetadataOperations;
 
 /**
  * API for a service that can evaluate expressions.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationsExpressionService {
+
+	/**
+	 * Get a {@link PathMatcher} that can be used for source ID matching.
+	 *
+	 * @return the matcher, never {@literal null}
+	 * @since 1.1
+	 */
+	PathMatcher sourceIdPathMatcher();
+
+	/**
+	 * Create a standard datum expression root instance.
+	 *
+	 * @param datum
+	 *        the datum
+	 * @param parameters
+	 *        the parameters
+	 * @param metadata
+	 *        the metadata
+	 * @param datumStreamsAccessor
+	 *        the datum streams accessor
+	 * @return the root
+	 * @since 1.1
+	 */
+	DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
+			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor);
 
 	/**
 	 * Evaluate a property expression.

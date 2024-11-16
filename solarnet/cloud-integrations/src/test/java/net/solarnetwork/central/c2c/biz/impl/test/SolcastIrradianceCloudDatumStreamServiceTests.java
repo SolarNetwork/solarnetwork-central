@@ -67,10 +67,10 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseSolcastCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.SolcastCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.SolcastIrradianceCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.SolcastIrradianceType;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -82,6 +82,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamValueType;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -99,6 +100,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 public class SolcastIrradianceCloudDatumStreamServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
+
+	@Mock
+	SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -148,7 +152,7 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 	public void setup() {
 		objectMapper = JsonUtils.newObjectMapper();
 
-		expressionService = new SpelCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new SolcastIrradianceCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, restOps, clock);

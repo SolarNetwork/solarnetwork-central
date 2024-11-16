@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNetCommonConfiguration.java - 4/10/2021 4:20:43 PM
+ * SolarNodeMetadataFilter.java - 12/11/2024 6:36:12 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,16 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.config;
+package net.solarnetwork.central.common.dao;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
- * Marker interface for the common application configuration package.
+ * Filter criteria for node metadata.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class SolarNetCommonConfiguration {
-
-	/** A qualifier to use for OAuth client registration. */
-	public static final String OAUTH_CLIENT_REGISTRATION = "oauth-client-reg";
-
-	/** A qualifier for audit JDBC access. */
-	public static final String AUDIT = "audit";
-
-	/** A qualifier for caching support. */
-	public static final String CACHING = "caching";
+public interface SolarNodeMetadataFilter extends NodeCriteria, PaginationCriteria {
 
 }

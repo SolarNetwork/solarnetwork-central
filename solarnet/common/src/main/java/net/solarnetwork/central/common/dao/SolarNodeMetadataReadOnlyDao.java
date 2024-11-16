@@ -1,7 +1,7 @@
 /* ==================================================================
- * SolarNetCommonConfiguration.java - 4/10/2021 4:20:43 PM
+ * SolarNodeMetadataReadOnlyDao.java - 12/11/2024 6:32:33 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2024 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,28 +20,27 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.config;
+package net.solarnetwork.central.common.dao;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
- * Marker interface for the common application configuration package.
+ * Read-only DAO API for {@link SolarNodeMetadata} entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-@Configuration
-@ComponentScan
-public class SolarNetCommonConfiguration {
+public interface SolarNodeMetadataReadOnlyDao
+		extends FilterableDao<SolarNodeMetadata, Long, SolarNodeMetadataFilter> {
 
-	/** A qualifier to use for OAuth client registration. */
-	public static final String OAUTH_CLIENT_REGISTRATION = "oauth-client-reg";
-
-	/** A qualifier for audit JDBC access. */
-	public static final String AUDIT = "audit";
-
-	/** A qualifier for caching support. */
-	public static final String CACHING = "caching";
+	/**
+	 * Get the metadata for a specific node ID.
+	 * 
+	 * @param nodeId
+	 *        the ID of the node to get the metadata for
+	 * @return the metadata, or {@code null} if none available
+	 */
+	SolarNodeMetadata get(Long nodeId);
 
 }

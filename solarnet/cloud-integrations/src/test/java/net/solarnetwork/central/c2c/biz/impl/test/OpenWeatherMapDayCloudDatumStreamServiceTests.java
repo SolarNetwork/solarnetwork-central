@@ -66,9 +66,9 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseOpenWeatherMapCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.OpenWeatherMapDayCloudDatumStreamService;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -77,6 +77,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -93,6 +94,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
+
+	@Mock
+	SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -142,7 +146,7 @@ public class OpenWeatherMapDayCloudDatumStreamServiceTests {
 	public void setup() {
 		objectMapper = JsonUtils.newObjectMapper();
 
-		expressionService = new SpelCloudIntegrationsExpressionService();
+		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new OpenWeatherMapDayCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, restOps, clock);

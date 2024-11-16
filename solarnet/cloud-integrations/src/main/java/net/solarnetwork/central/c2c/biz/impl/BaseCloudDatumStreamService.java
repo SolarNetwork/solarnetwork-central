@@ -53,6 +53,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -70,7 +71,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -342,6 +343,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return;
 		}
+		final var datumStreamsAccessor = new BasicDatumStreamsAccessor(
+				expressionService.sourceIdPathMatcher(), datum);
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
@@ -349,8 +352,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
 			for ( MutableDatum d : datum ) {
-				DatumSamplesExpressionRoot root = new DatumSamplesExpressionRoot(d,
-						d.asSampleOperations(), parameters);
+				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(d,
+						parameters, null, datumStreamsAccessor);
 				Object val = null;
 				try {
 					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.CACHING;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,13 +32,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.expression.Expression;
-import net.solarnetwork.central.c2c.biz.impl.SpelCloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
+import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
+import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.common.expr.spel.SpelExpressionService;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
+import net.solarnetwork.domain.tariff.TariffSchedule;
 
 /**
  * Cloud integrations expression configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -45,15 +51,28 @@ public class CloudIntegrationsExpressionConfig implements SolarNetCloudIntegrati
 
 	@Primary
 	@Bean
-	public SpelCloudIntegrationsExpressionService spelCloudIntegrationsExpressionService(
+	public BasicCloudIntegrationsExpressionService spelCloudIntegrationsExpressionService(
 	// @formatter:off
+			SolarNodeOwnershipDao nodeOwnershipDao,
+
+			@Qualifier(CACHING)
+			@Autowired
+			SolarNodeMetadataReadOnlyDao nodeMetadataDao,
+
 			@Qualifier(CLOUD_INTEGRATIONS_EXPRESSIONS)
 			@Autowired(required = false)
-			Cache<String, Expression> expressionCache
+			Cache<String, Expression> expressionCache,
+
+			@Qualifier(CLOUD_INTEGRATIONS_TARIFF)
+			@Autowired(required = false)
+			Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache
 			// @formatter:on
 	) {
-		var service = new SpelCloudIntegrationsExpressionService();
+		var service = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao,
+				new SpelExpressionService());
+		service.setMetadataDao(nodeMetadataDao);
 		service.setExpressionCache(expressionCache);
+		service.setTariffScheduleCache(tariffScheduleCache);
 		return service;
 	}
 
