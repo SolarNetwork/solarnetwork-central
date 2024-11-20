@@ -109,7 +109,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -1170,7 +1170,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			String key = "/%s/%s/%s".formatted(siteId, deviceType.getKey(), componentId);
 			return sourceIdMap.get(key);
 		}
-		return "%s/%s/%s".formatted(datumStream.getSourceId(), deviceType, componentId);
+		return "%s/%s/%s".formatted(datumStream.getSourceId(), deviceType.getKey(), componentId);
 	}
 
 	private SolarEdgeResolution resolveResolution(CloudDatumStreamConfiguration datumStream,
