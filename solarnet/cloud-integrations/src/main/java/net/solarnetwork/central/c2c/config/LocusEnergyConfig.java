@@ -82,7 +82,7 @@ import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientM
 @Profile(CLOUD_INTEGRATIONS)
 public class LocusEnergyConfig {
 
-	/** A qualifier for Locus Energy configuraiton. */
+	/** A qualifier for Locus Energy configuration. */
 	public static final String LOCUS_ENERGY = "locus-energy";
 
 	@Autowired
@@ -128,7 +128,7 @@ public class LocusEnergyConfig {
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
-	public OAuth2AuthorizedClientManager oauthAuthorizedClientManager(
+	public OAuth2AuthorizedClientManager locusEnergyOauthAuthorizedClientManager(
 			@Autowired(required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, LocusEnergyCloudIntegrationService.TOKEN_URI,
