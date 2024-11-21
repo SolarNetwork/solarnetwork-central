@@ -23,12 +23,15 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -71,6 +74,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 	/** The data value filter key for a site ID. */
 	public static final String SITE_ID_FILTER = "siteId";
+
+	/**
+	 * The URI path to list the hardware for a given site.
+	 *
+	 * <p>
+	 * Accepts a single {@code {siteId}} parameter.
+	 * </p>
+	 */
+	public static final String SITE_HARDWARE_URL_TEMPLATE = "/sites/{siteId}/hardware";
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -156,6 +168,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		List<CloudDataValue> result = Collections.emptyList();
 		if ( false ) {
 			// TODO
+		} else if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
+			result = siteHardware(integration, filters);
 		} else {
 			// list available sites
 			result = sites(integration);
@@ -185,6 +199,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 				res -> parseSites(res.getBody()));
 	}
 
+	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
+			Map<String, ?> filters) {
+		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
+				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
+						.path(SITE_HARDWARE_URL_TEMPLATE).queryParam("includeArchivedFields", true)
+						.buildAndExpand(filters).toUri(),
+				res -> parseSiteHardware(res.getBody(), filters));
+	}
+
 	private static List<CloudDataValue> parseSites(JsonNode json) {
 		assert json != null;
 		/*- EXAMPLE JSON:
@@ -204,6 +227,94 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			final String id = siteNode.path("siteId").asText();
 			final String name = siteNode.path("siteName").asText().trim();
 			result.add(intermediateDataValue(List.of(id), name, null));
+		}
+		return result;
+	}
+
+	private static List<CloudDataValue> parseSiteHardware(JsonNode json, Map<String, ?> filters) {
+		assert json != null;
+		/*- EXAMPLE JSON:
+		{
+		  "hardware": [
+		    {
+		      "id": 12345,
+		      "stringId": "C12345_S12345_PM0",
+		      "functionCode": "PM",
+		      "flags": [
+		        "IsEnabled"
+		      ],
+		      "fieldsArchived": [
+		        "KWHnet",
+		        "KW",
+		        "KVAR",
+		        "PowerFactor",
+		        "KWHrec",
+		        "KWHdel",
+		        "Frequency",
+		        "VacA",
+		        "VacB",
+		        "VacC",
+		        "VacAB",
+		        "VacBC",
+		        "VacCA",
+		        "IacA",
+		        "IacB",
+		        "IacC"
+		      ],
+		      "name": "Elkor Production Meter - A",
+		      "lastUpdate": "2024-11-21T17:19:02.4069164-05:00",
+		      "lastUpload": "2024-11-21T17:17:00-05:00",
+		      "iconUrl": "https://alsoenergy.com/Pub/Images/device/7855.png",
+		      "config": {
+		        "deviceType": "ProductionPowerMeter",
+		        "hardwareStrId": "C12345_S12345_PM0",
+		        "hardwareId": 12345,
+		        "address": 1,
+		        "portNumber": 1,
+		        "baudRate": 9600,
+		        "comType": "Rs485_2Wire",
+		        "serialNumber": "12345",
+		        "name": "Elkor Production Meter - A",
+		        "outputHardwareId": 0,
+		        "weatherStationId": 0,
+		        "meterConfig": {
+		          "scaleFactor": 0.0,
+		          "isReversed": false,
+		          "grossEnergy": "None",
+		          "maxPowerKw": 58444.96,
+		          "maxVoltage": 480.0,
+		          "maxAmperage": 12200.0,
+		          "acPhase": "Wye"
+		        }
+		      }
+		    },
+		*/
+		final String siteId = filters.get(SITE_ID_FILTER).toString();
+		final var result = new ArrayList<CloudDataValue>(4);
+		for ( JsonNode meterNode : json.path("hardware") ) {
+			final JsonNode fieldsNode = meterNode.path("fieldsArchived");
+			if ( !(fieldsNode.isArray() && fieldsNode.size() > 0) ) {
+				continue;
+			}
+			final String id = meterNode.path("id").asText().trim();
+			if ( id.isEmpty() ) {
+				continue;
+			}
+			final String name = meterNode.path("name").asText().trim();
+			final var meta = new LinkedHashMap<String, Object>(4);
+			populateNonEmptyValue(meterNode, "functionCode", "functionCode", meta);
+			for ( JsonNode configNode : meterNode.path("config") ) {
+				populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
+				populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
+			}
+
+			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
+			for ( JsonNode fieldNode : fieldsNode ) {
+				final String fieldName = fieldNode.asText();
+				fields.add(dataValue(List.of(siteId, id, fieldName), fieldName));
+			}
+
+			result.add(intermediateDataValue(List.of(siteId, id), name, meta, fields));
 		}
 		return result;
 	}
