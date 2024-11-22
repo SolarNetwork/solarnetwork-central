@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -79,10 +80,10 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	}
 
 	@Override
-	public <R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T httpGet(
-			String description, C configuration, Class<R> responseType, Function<HttpHeaders, URI> setup,
-			Function<ResponseEntity<R>, T> handler) {
-		return super.httpGet(description, configuration, responseType, (headers) -> {
+	public <B, R, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>, T> T http(
+			String description, HttpMethod method, B body, C configuration, Class<R> responseType,
+			Function<HttpHeaders, URI> setup, Function<ResponseEntity<R>, T> handler) {
+		return super.http(description, method, body, configuration, responseType, (headers) -> {
 			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
 				final var decrypted = integration.copyWithId(integration.getId());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);

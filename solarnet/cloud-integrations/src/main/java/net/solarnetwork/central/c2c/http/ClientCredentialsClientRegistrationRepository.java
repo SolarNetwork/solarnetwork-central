@@ -28,6 +28,7 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.systemIdentifierLongComponents;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
@@ -107,11 +108,13 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 		conf.clone();
 		conf.unmaskSensitiveInformation(sensitiveKeysProvider, textEncryptor);
 
-		final String clientId = conf.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class);
-		final String clientSecret = conf.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class);
+		final String clientId = nonEmptyString(
+				conf.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
+		final String clientSecret = nonEmptyString(
+				conf.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class));
 
-		final String username = conf.serviceProperty(USERNAME_SETTING, String.class);
-		final String password = conf.serviceProperty(PASSWORD_SETTING, String.class);
+		final String username = nonEmptyString(conf.serviceProperty(USERNAME_SETTING, String.class));
+		final String password = nonEmptyString(conf.serviceProperty(PASSWORD_SETTING, String.class));
 
 		// @formatter:off
 		ClientRegistration.Builder builder = ClientRegistration.withRegistrationId(registrationId)
@@ -120,13 +123,14 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 				;
 		// @formatter:on
 
-		if ( clientId != null && !clientId.isEmpty() && clientSecret != null
-				&& !clientSecret.isEmpty() ) {
-			builder.clientId(clientId).clientSecret(clientSecret);
+		if ( clientId != null ) {
+			builder.clientId(clientId);
+		}
+		if ( clientSecret != null ) {
+			builder.clientSecret(clientSecret);
 		}
 
-		if ( username != null && !username.isEmpty() && password != null
-				&& !password.toString().isEmpty() ) {
+		if ( username != null && password != null ) {
 			builder.authorizationGrantType(AuthorizationGrantType.PASSWORD);
 		} else {
 			builder.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS);

@@ -1,5 +1,5 @@
 /* ==================================================================
- * LocusEnergyConfig.java - 30/09/2024 12:03:52 pm
+ * AlsoEnergyConfig.java - 22/11/2024 9:43:55 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.cache.Cache;
@@ -34,7 +35,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -51,6 +51,7 @@ import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorH
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.endpoint.DefaultMapOAuth2AccessTokenResponseConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -58,10 +59,10 @@ import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamService;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
-import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudDatumStreamService;
-import net.solarnetwork.central.c2c.biz.impl.LocusEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
@@ -70,20 +71,21 @@ import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepo
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
+import net.solarnetwork.central.security.service.JwtOAuth2AccessTokenResponseConverter;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
 
 /**
- * Configuration for the Locus Energy cloud integration services.
+ * Configuration for the AlsoEnergy cloud integration services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class LocusEnergyConfig {
+public class AlsoEnergyConfig {
 
-	/** A qualifier for Locus Energy configuration. */
-	public static final String LOCUS_ENERGY = "locus-energy";
+	/** A qualifier for AlsoEnergy configuration. */
+	public static final String ALSO_ENERGY = "also-energy";
 
 	@Autowired
 	private UserEventAppenderBiz userEventAppender;
@@ -120,32 +122,34 @@ public class LocusEnergyConfig {
 	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
-	@Autowired
-	private AsyncTaskExecutor taskExecutor;
-
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
 	@Bean
-	@Qualifier(LOCUS_ENERGY)
-	public OAuth2AuthorizedClientManager locusEnergyOauthAuthorizedClientManager(
+	@Qualifier(ALSO_ENERGY)
+	public OAuth2AuthorizedClientManager alsoEnergyOauthAuthorizedClientManager(
 			@Autowired(required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
-				integrationConfigurationDao, LocusEnergyCloudIntegrationService.TOKEN_URI,
+				integrationConfigurationDao, AlsoEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
-				integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS);
+				integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS);
 		if ( cache != null ) {
 			repo = new CachingOAuth2ClientRegistrationRepository(cache, repo);
 		}
 
 		var clientService = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations, repo);
 
+		// AlsoEnergy not providing expires_in in token response, so extract from JWT exp claim
+		var tokenResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+		tokenResponseConverter.setAccessTokenResponseConverter(new JwtOAuth2AccessTokenResponseConverter(
+				Clock.systemUTC(), new DefaultMapOAuth2AccessTokenResponseConverter()));
+
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()
 				.requestFactory(t -> reqFactory)
 				.messageConverters(Arrays.asList(
 						new FormHttpMessageConverter(),
-						new OAuth2AccessTokenResponseHttpMessageConverter()))
+						tokenResponseConverter))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())
 				.build();
 		// @formatter:on
@@ -173,16 +177,16 @@ public class LocusEnergyConfig {
 	}
 
 	@Bean
-	@Qualifier(LOCUS_ENERGY)
-	public CloudDatumStreamService locusEnergyCloudDatumStreamService(
-			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new LocusEnergyCloudDatumStreamService(taskExecutor, userEventAppender, encryptor,
+	@Qualifier(ALSO_ENERGY)
+	public CloudDatumStreamService alsoEnergyCloudDatumStreamService(
+			@Qualifier(ALSO_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
+		var service = new AlsoEnergyCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
 				oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName(),
+		msgSource.setBasenames(AlsoEnergyCloudDatumStreamService.class.getName(),
 				BaseCloudDatumStreamService.class.getName());
 		service.setMessageSource(msgSource);
 
@@ -192,15 +196,15 @@ public class LocusEnergyConfig {
 	}
 
 	@Bean
-	@Qualifier(LOCUS_ENERGY)
-	public CloudIntegrationService locusEnergyCloudIntegrationService(
-			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
-			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
-		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
+	@Qualifier(ALSO_ENERGY)
+	public CloudIntegrationService alsoEnergyCloudIntegrationService(
+			@Qualifier(ALSO_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
+			@Qualifier(ALSO_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
+		var service = new AlsoEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
 				encryptor, restOps, oauthClientManager);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
-		msgSource.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
+		msgSource.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msgSource);
 

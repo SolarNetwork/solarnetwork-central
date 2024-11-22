@@ -27,6 +27,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,51 @@ public class CloudDatumStreamPropertyConfigurationTests {
 					))
 			;
 		// @formatter:on
+	}
+
+	@Test
+	public void applyXform_mult() {
+		// GIVEN
+		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+		entity.setMultiplier(new BigDecimal("1.5"));
+
+		// WHEN
+		BigDecimal input = new BigDecimal("2.5");
+		Object result = entity.applyValueTransforms(input);
+
+		then(result).as("Multiplication applied").isEqualTo(input.multiply(entity.getMultiplier()));
+	}
+
+	@Test
+	public void applyXform_scale() {
+		// GIVEN
+		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+		entity.setScale(1);
+
+		// WHEN
+		BigDecimal input = new BigDecimal("1.234567");
+		Object result = entity.applyValueTransforms(input);
+
+		then(result).as("Scale applied")
+				.isEqualTo(input.setScale(entity.getScale(), RoundingMode.HALF_UP));
+	}
+
+	@Test
+	public void applyXform_multAndScale() {
+		// GIVEN
+		CloudDatumStreamPropertyConfiguration entity = new CloudDatumStreamPropertyConfiguration(
+				randomLong(), randomLong(), randomInt(), Instant.now().truncatedTo(ChronoUnit.SECONDS));
+		entity.setMultiplier(new BigDecimal("1.5"));
+		entity.setScale(1);
+
+		// WHEN
+		BigDecimal input = new BigDecimal("1.234567");
+		Object result = entity.applyValueTransforms(input);
+
+		then(result).as("Multiplication then scale applied").isEqualTo(input
+				.multiply(entity.getMultiplier()).setScale(entity.getScale(), RoundingMode.HALF_UP));
 	}
 
 }

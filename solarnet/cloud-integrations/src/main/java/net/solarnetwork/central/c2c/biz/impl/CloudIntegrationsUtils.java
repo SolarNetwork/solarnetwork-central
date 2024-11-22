@@ -26,8 +26,16 @@ import static java.time.ZoneOffset.UTC;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjuster;
+import java.time.temporal.TemporalAdjusters;
+import java.time.temporal.TemporalAmount;
 
 /**
  * Helper methods for cloud integrations.
@@ -58,6 +66,73 @@ public final class CloudIntegrationsUtils {
 	 */
 	public static Instant truncateDate(Instant date, Duration period) {
 		return Clock.tick(Clock.fixed(date, UTC), period).instant();
+	}
+
+	/**
+	 * Truncate a date based on a period.
+	 *
+	 * @param date
+	 *        the date to truncate
+	 * @param period
+	 *        the period to truncate to; only week, month, and year are
+	 *        supported
+	 * @param zone
+	 *        the zone
+	 * @return the truncated date
+	 */
+	public static Instant truncateDate(Instant date, Period period, ZoneId zone) {
+		TemporalAdjuster adj = period.getYears() > 0 ? TemporalAdjusters.firstDayOfYear()
+				: period.getMonths() > 0 ? TemporalAdjusters.firstDayOfMonth()
+						: TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY);
+		return date.atZone(zone).with(adj).toInstant().truncatedTo(ChronoUnit.DAYS);
+	}
+
+	/**
+	 * Get the previous starting tick boundary.
+	 *
+	 * @param tick
+	 *        the tick amount; a valid time- or date-based unit is assumed; see
+	 *        {@link java.time.temporal.TemporalUnit#isTimeBased()} and
+	 *        {@link java.time.temporal.TemporalUnit#isDateBased()}
+	 * @param tickStart
+	 *        a starting tick boundary instant
+	 * @param zone
+	 *        the time zone, for ticks larger than 1 day
+	 * @return the previous boundary start
+	 */
+	public static Instant prevTickStart(TemporalAmount tick, Instant tickStart, ZoneId zone) {
+		if ( tick == null ) {
+			return tickStart;
+		}
+		if ( tick.getUnits().get(0).isTimeBased() ) {
+			return tickStart.minus(tick);
+		}
+		ZonedDateTime zdt = tickStart.atZone(zone);
+		return zdt.minus(tick).toInstant();
+	}
+
+	/**
+	 * Get the next starting tick boundary.
+	 *
+	 * @param tick
+	 *        the tick amount; a valid time- or date-based unit is assumed; see
+	 *        {@link java.time.temporal.TemporalUnit#isTimeBased()} and
+	 *        {@link java.time.temporal.TemporalUnit#isDateBased()}
+	 * @param tickStart
+	 *        a starting tick boundary instant
+	 * @param zone
+	 *        the time zone, for ticks larger than 1 day
+	 * @return the next boundary start
+	 */
+	public static Instant nextTickStart(TemporalAmount tick, Instant tickStart, ZoneId zone) {
+		if ( tick == null ) {
+			return tickStart;
+		}
+		if ( tick.getUnits().get(0).isTimeBased() ) {
+			return tickStart.plus(tick);
+		}
+		ZonedDateTime zdt = tickStart.atZone(zone);
+		return zdt.plus(tick).toInstant();
 	}
 
 }
