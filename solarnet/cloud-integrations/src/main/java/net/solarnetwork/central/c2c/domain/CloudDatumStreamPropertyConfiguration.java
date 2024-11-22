@@ -145,11 +145,15 @@ public class CloudDatumStreamPropertyConfiguration extends
 	public Object applyValueTransforms(Object propVal) {
 		if ( propVal instanceof Number n ) {
 			if ( multiplier != null ) {
-				propVal = applyUnitMultiplier(n, multiplier);
+				n = applyUnitMultiplier(n, multiplier);
 			}
 			if ( scale != null ) {
-				propVal = applyDecimalScale(n, scale);
+				n = applyDecimalScale(n, scale);
 			}
+			if ( n instanceof BigDecimal d ) {
+				n = d.stripTrailingZeros();
+			}
+			propVal = n;
 		}
 		return propVal;
 	}
