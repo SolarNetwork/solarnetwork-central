@@ -34,7 +34,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -120,9 +119,6 @@ public class AlsoEnergyConfig {
 	@Autowired
 	private CloudIntegrationsExpressionService expressionService;
 
-	@Autowired
-	private AsyncTaskExecutor taskExecutor;
-
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
@@ -176,7 +172,7 @@ public class AlsoEnergyConfig {
 	@Qualifier(ALSO_ENERGY)
 	public CloudDatumStreamService alsoEnergyCloudDatumStreamService(
 			@Qualifier(ALSO_ENERGY) OAuth2AuthorizedClientManager oauthClientManager) {
-		var service = new AlsoEnergyCloudDatumStreamService(taskExecutor, userEventAppender, encryptor,
+		var service = new AlsoEnergyCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
 				oauthClientManager);
