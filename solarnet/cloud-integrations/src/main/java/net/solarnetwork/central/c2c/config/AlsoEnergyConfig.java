@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.cache.Cache;
@@ -50,6 +51,7 @@ import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorH
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.endpoint.DefaultMapOAuth2AccessTokenResponseConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -69,6 +71,7 @@ import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepo
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
+import net.solarnetwork.central.security.service.JwtOAuth2AccessTokenResponseConverter;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
 
 /**
@@ -136,12 +139,17 @@ public class AlsoEnergyConfig {
 
 		var clientService = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations, repo);
 
+		// AlsoEnergy not providing expires_in in token response, so extract from JWT exp claim
+		var tokenResponseConverter = new OAuth2AccessTokenResponseHttpMessageConverter();
+		tokenResponseConverter.setAccessTokenResponseConverter(new JwtOAuth2AccessTokenResponseConverter(
+				Clock.systemUTC(), new DefaultMapOAuth2AccessTokenResponseConverter()));
+
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()
 				.requestFactory(t -> reqFactory)
 				.messageConverters(Arrays.asList(
 						new FormHttpMessageConverter(),
-						new OAuth2AccessTokenResponseHttpMessageConverter()))
+						tokenResponseConverter))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())
 				.build();
 		// @formatter:on
