@@ -545,8 +545,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 		public ValueRef(Long siteId, Long hardwareId, String fieldName, AlsoEnergyFieldFunction fn,
 				CloudDatumStreamPropertyConfiguration property) {
-			this(siteId, hardwareId, fieldName, fn, "/%s/%s/%s".formatted(siteId, hardwareId, fieldName),
-					property);
+			this(siteId, hardwareId, fieldName, fn, "/%s/%s".formatted(siteId, hardwareId), property);
 		}
 	}
 
