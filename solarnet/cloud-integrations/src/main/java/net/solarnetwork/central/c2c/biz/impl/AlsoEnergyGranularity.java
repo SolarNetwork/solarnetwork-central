@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 public enum AlsoEnergyGranularity {
 
 	/** Raw data. */
-	Raw("Raw", null),
+	Raw("Raw", Duration.ofMinutes(1)),
 
 	/** Five minutes. */
 	FiveMinute("5Min", Duration.ofMinutes(5)),
