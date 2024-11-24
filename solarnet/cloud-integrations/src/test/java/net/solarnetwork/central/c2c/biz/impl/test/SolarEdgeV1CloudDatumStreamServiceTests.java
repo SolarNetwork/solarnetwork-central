@@ -40,7 +40,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -352,9 +351,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.returns(timestampFmt.parse("2024-10-23 16:19:30", Instant::from), from(Datum::getTimestamp))
 					.as("Datum samples from inverter data")
 					.returns(new DatumSamples(Map.of(
-								"watts", new BigDecimal(2011)
+								"watts", 2011
 							), Map.of(
-								"wattHours", new BigDecimal("3.77792E+7")
+								"wattHours", 37779200
 							), null),
 						Datum::asSampleOperations)
 					;
@@ -366,9 +365,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.returns(timestampFmt.parse("2024-10-23 16:15:00", Instant::from), from(Datum::getTimestamp))
 					.as("Datum samples from merged meter power and energy data")
 					.returns(new DatumSamples(Map.of(
-								"watts", new BigDecimal("1720.0271")
+								"watts", 1720.0271f
 							), Map.of(
-								"wattHours", new BigDecimal("3.7539808E+7")
+								"wattHours", 37539808
 							), null),
 						Datum::asSampleOperations)
 					;
@@ -380,7 +379,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.returns(timestampFmt.parse("2024-10-23 16:19:30", Instant::from), from(Datum::getTimestamp))
 					.as("Datum samples from battery data")
 					.returns(new DatumSamples(Map.of(
-								"watts", new BigDecimal("0")
+								"watts", 0
 							), Map.of(
 								"wattHours", 5510545
 							), null),

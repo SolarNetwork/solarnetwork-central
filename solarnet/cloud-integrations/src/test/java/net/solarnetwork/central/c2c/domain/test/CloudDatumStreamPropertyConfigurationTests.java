@@ -105,7 +105,8 @@ public class CloudDatumStreamPropertyConfigurationTests {
 		BigDecimal input = new BigDecimal("2.5");
 		Object result = entity.applyValueTransforms(input);
 
-		then(result).as("Multiplication applied").isEqualTo(input.multiply(entity.getMultiplier()));
+		then(result).as("Multiplication applied")
+				.isEqualTo(input.multiply(entity.getMultiplier()).floatValue());
 	}
 
 	@Test
@@ -120,7 +121,7 @@ public class CloudDatumStreamPropertyConfigurationTests {
 		Object result = entity.applyValueTransforms(input);
 
 		then(result).as("Scale applied")
-				.isEqualTo(input.setScale(entity.getScale(), RoundingMode.HALF_UP));
+				.isEqualTo(input.setScale(entity.getScale(), RoundingMode.HALF_UP).floatValue());
 	}
 
 	@Test
@@ -135,8 +136,9 @@ public class CloudDatumStreamPropertyConfigurationTests {
 		BigDecimal input = new BigDecimal("1.234567");
 		Object result = entity.applyValueTransforms(input);
 
-		then(result).as("Multiplication then scale applied").isEqualTo(input
-				.multiply(entity.getMultiplier()).setScale(entity.getScale(), RoundingMode.HALF_UP));
+		then(result).as("Multiplication then scale applied")
+				.isEqualTo(input.multiply(entity.getMultiplier())
+						.setScale(entity.getScale(), RoundingMode.HALF_UP).floatValue());
 	}
 
 }

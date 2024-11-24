@@ -682,9 +682,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 							datumVal = n.subtract(n1).multiply(type.getQuantum()).divide(deltaSecs,
 									RoundingMode.DOWN);
 						}
-						datumVal = (BigDecimal) property.applyValueTransforms(datumVal);
 						samples.putSampleValue(property.getPropertyType(), property.getPropertyName(),
-								datumVal);
+								property.applyValueTransforms(datumVal));
 					}
 				}
 				if ( !samples.isEmpty() ) {

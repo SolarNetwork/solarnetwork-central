@@ -283,7 +283,7 @@ public class EGaugeCloudDatumStreamServiceTests {
 					.returns(Instant.ofEpochSecond(1678391100L), from(Datum::getTimestamp))
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
-								"temp", new BigDecimal("5.335")
+								"temp", 5.335f
 							),null , null),
 						Datum::asSampleOperations)
 					;
@@ -408,10 +408,10 @@ public class EGaugeCloudDatumStreamServiceTests {
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
 								"watts", new BigDecimal(10044744826787L - 10044736304528L)
-											.divide(new BigDecimal(60), RoundingMode.DOWN)
+											.divide(new BigDecimal(60), RoundingMode.DOWN).intValue()
 							), Map.of(
 								"wattHours", new BigDecimal("10044736304528")
-											.divide(SECS_PER_HOUR, RoundingMode.DOWN)
+											.divide(SECS_PER_HOUR, RoundingMode.DOWN).longValue()
 							), null),
 						Datum::asSampleOperations)
 					;

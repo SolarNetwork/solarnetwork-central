@@ -44,7 +44,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.TEXT_HTML_VALUE;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -421,7 +420,7 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 					.returns(Instant.ofEpochSecond(1678391100L), from(Datum::getTimestamp))
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
-								"temp", new BigDecimal("5.335")
+								"temp", 5.335f
 							),null , null),
 						Datum::asSampleOperations)
 					;
