@@ -252,8 +252,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		filter.setEndDate(endDate);
 
 		final var result = datum(datumStream, filter);
-		if ( result == null || result.isEmpty() ) {
-			return null;
+		if ( result == null ) {
+			return Collections.emptyList();
 		}
 		return result.getResults();
 	}
@@ -614,6 +614,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		      ]
 		    },
 		 */
+		if ( body == null ) {
+			// API might return 204 NoContent, and then we get here
+			return null;
+		}
 		final JsonNode items = body.path("items");
 		final int refCount = refs.size();
 		for ( JsonNode item : items ) {

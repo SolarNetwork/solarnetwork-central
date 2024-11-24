@@ -447,4 +447,127 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void requestLatest_204NoContentResponse() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId = randomLong();
+		final Long hardwareId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setMultiplier(new BigDecimal("1000"));
+		prop1.setScale(0);
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Accumulating);
+		prop2.setPropertyName("wattHours");
+		prop2.setMultiplier(new BigDecimal("1000"));
+		prop2.setScale(0);
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		@SuppressWarnings("deprecation")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final var res = new ResponseEntity<JsonNode>(HttpStatus.NO_CONTENT);
+		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		Iterable<Datum> result = service.latestDatum(datumStream);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.POST), httpEntityCaptor.capture(), eq(JsonNode.class));
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI")
+			.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+					+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
+							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
+							)))
+			;
+
+		and.then(httpEntityCaptor.getValue().getHeaders())
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
+		and.then(httpEntityCaptor.getValue())
+			.as("HTTP request body contains criteria")
+			.returns(List.of(
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
+				), from(HttpEntity::getBody))
+			;
+
+		and.then(result)
+			.as("Empty result from HTTP 204 response")
+			.isEmpty()
+			;
+		// @formatter:on
+	}
+
 }
