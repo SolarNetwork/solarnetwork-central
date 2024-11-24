@@ -132,9 +132,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	static {
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
-				AlsoEnergyGranularity.Raw.getKey());
+				AlsoEnergyGranularity.Raw.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(AlsoEnergyGranularity.values())
-				.collect(Collectors.toMap(AlsoEnergyGranularity::getKey, AlsoEnergyGranularity::getKey,
+				.collect(Collectors.toMap(AlsoEnergyGranularity::name, AlsoEnergyGranularity::name,
 						(l, r) -> r,
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
