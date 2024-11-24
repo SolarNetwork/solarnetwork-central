@@ -133,7 +133,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -154,9 +154,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	static {
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
-				LocusEnergyGranularity.Latest.getKey());
+				LocusEnergyGranularity.Latest.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(LocusEnergyGranularity.values())
-				.collect(Collectors.toMap(LocusEnergyGranularity::getKey, LocusEnergyGranularity::getKey,
+				.collect(Collectors.toMap(LocusEnergyGranularity::name, LocusEnergyGranularity::name,
 						(l, r) -> r,
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
@@ -466,8 +466,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		final var data = queryForDatum(datumStream, null);
-		if ( data.isEmpty() ) {
-			return null;
+		if ( data == null || data.isEmpty() ) {
+			return Collections.emptyList();
 		}
 		return Collections.singletonList(data.getResults().getLast());
 	}

@@ -39,7 +39,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -279,7 +278,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
-		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+		expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
 		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from HTTP response")
@@ -410,7 +409,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
-		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+		expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
 		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from HTTP response")
@@ -545,7 +544,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
-		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+		expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
 		expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 		and.then(result)
 			.as("Datum parsed from multiple HTTP responses are merged based on timestamps")
@@ -680,7 +679,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			;
 
 		DatumSamples expectedSamples = new DatumSamples();
-		expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+		expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
 		and.then(result)
 			.as("Datum parsed from multiple HTTP responses with different timestamps returns datum with highest timestamp")
 			.hasSize(1)
@@ -835,7 +834,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			})
 			.satisfies(list -> {
 				final DatumSamples expectedSamples = new DatumSamples();
-				expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+				expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
 				expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 				and.then(list)
 					.element(0)
@@ -845,7 +844,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 					.returns(expectedSamples, Datum::asSampleOperations)
 					;
 
-				expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("24.717"));
+				expectedSamples.putInstantaneousSampleValue("watts", 24.717f);
 				expectedSamples.putAccumulatingSampleValue("wattHours", 5937);
 				and.then(list)
 					.element(1)
@@ -1255,7 +1254,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 			})
 			.satisfies(list -> {
 				final DatumSamples expectedSamples = new DatumSamples();
-				expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("23.717"));
+				expectedSamples.putInstantaneousSampleValue("watts", 23.717f);
 				expectedSamples.putAccumulatingSampleValue("wattHours", 5936);
 				and.then(list)
 					.element(0)
@@ -1265,7 +1264,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 					.returns(expectedSamples, Datum::asSampleOperations)
 					;
 
-				expectedSamples.putInstantaneousSampleValue("watts", new BigDecimal("24.717"));
+				expectedSamples.putInstantaneousSampleValue("watts", 24.717f);
 				expectedSamples.putAccumulatingSampleValue("wattHours", 5937);
 				and.then(list)
 					.element(1)

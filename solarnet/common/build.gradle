@@ -74,7 +74,7 @@ dependencies {
 	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
 	implementation 'com.cronutils:cron-utils:9.1.5'
 	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
-	implementation 'com.nimbusds:nimbus-jose-jwt'
+	implementation 'com.nimbusds:nimbus-jose-jwt:[9.37,10)'
 	implementation 'commons-codec:commons-codec'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'jakarta.validation:jakarta.validation-api'

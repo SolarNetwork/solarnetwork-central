@@ -41,7 +41,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -673,7 +672,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 								"ab", 478,
 								"bc", 479,
 								"ca", 478,
-								"voltage", new BigDecimal("478.3")
+								"voltage", 478.3f
 							), null, null),
 						Datum::asSampleOperations)
 					;
@@ -685,7 +684,7 @@ public class SolrenViewCloudDatumStreamServiceTests {
 							"ab", 478,
 							"bc", 479,
 							"ca", 477,
-							"voltage", new BigDecimal("478.0")
+							"voltage", 478
 						), null, null),
 						Datum::asSampleOperations)
 					;

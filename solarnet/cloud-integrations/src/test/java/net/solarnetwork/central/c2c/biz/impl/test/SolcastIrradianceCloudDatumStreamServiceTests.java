@@ -279,7 +279,7 @@ public class SolcastIrradianceCloudDatumStreamServiceTests {
 					.as("Datum samples from register data")
 					.returns(new DatumSamples(Map.of(
 								  "irradiance", 13
-								, "temp", new BigDecimal("16.1")
+								, "temp", 16.1f
 							),null , null),
 						Datum::asSampleOperations)
 					;

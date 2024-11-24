@@ -153,7 +153,7 @@ public class CloudDatumStreamPropertyConfiguration extends
 			if ( n instanceof BigDecimal d ) {
 				n = d.stripTrailingZeros();
 			}
-			propVal = n;
+			propVal = NumberUtils.narrow(n, 2);
 		}
 		return propVal;
 	}

@@ -1,0 +1,81 @@
+{
+  "hardware": [
+    {
+      "id": 12345,
+      "stringId": "C11111_S55555_PM1",
+      "functionCode": "PM",
+      "flags": [
+        "IsEnabled"
+      ],
+      "fieldsArchived": [
+        "KW",
+        "Frequency"
+      ],
+      "name": "Elkor Production Meter",
+      "lastUpdate": "2024-11-21T17:20:22.9045092-05:00",
+      "lastUpload": "2024-11-21T17:17:00-05:00",
+      "iconUrl": "https://alsoenergy.com/Pub/Images/device/7855.png",
+      "config": {
+        "deviceType": "ProductionPowerMeter",
+        "hardwareStrId": "C11111_S55555_PM1",
+        "hardwareId": 12345,
+        "address": 3557664960,
+        "portNumber": 0,
+        "baudRate": 0,
+        "comType": "Unknown",
+        "serialNumber": "20647",
+        "name": "Elkor Production Meter",
+        "outputHardwareId": 0,
+        "weatherStationId": 0,
+        "meterConfig": {
+          "scaleFactor": 0.0,
+          "isReversed": false,
+          "grossEnergy": "None",
+          "maxPowerKw": 58444.96,
+          "maxVoltage": 480.0,
+          "maxAmperage": 12200.0,
+          "acPhase": "Wye"
+        }
+      }
+    },
+    {
+      "id": 23456,
+      "stringId": "C22222_S66666_PV0",
+      "functionCode": "PV",
+      "flags": [
+        "IsEnabled"
+      ],
+      "fieldsArchived": [
+        "KwAC",
+        "KwhAC"
+      ],
+      "name": "SolarEdge SE100K Inverter",
+      "lastUpdate": "2024-11-21T17:19:03.951886-05:00",
+      "lastUpload": "2024-11-21T17:17:00-05:00",
+      "iconUrl": "https://alsoenergy.com/Pub/Images/device/pvpowered.png",
+      "config": {
+        "deviceType": "Inverter",
+        "hardwareStrId": "C22222_S66666_PV0",
+        "hardwareId": 23456,
+        "address": 1,
+        "portNumber": 1,
+        "baudRate": 9600,
+        "comType": "Rs485_2Wire",
+        "name": "SolarEdge SE100K Inverter",
+        "outputHardwareId": 315520,
+        "weatherStationId": 315586,
+        "inverterConfig": [
+          {
+            "ratedAcPower": 100.0,
+            "stringCount": 9,
+            "modulesPerString": 42,
+            "wattsPerModule": 395.0,
+            "azimuth": 45.0,
+            "tilt": 10.0,
+            "trackingMode": "Fixed"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -36,6 +36,7 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -89,6 +90,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
@@ -130,9 +132,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	static {
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
-				AlsoEnergyGranularity.Raw.getKey());
+				AlsoEnergyGranularity.Raw.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(AlsoEnergyGranularity.values())
-				.collect(Collectors.toMap(AlsoEnergyGranularity::getKey, AlsoEnergyGranularity::getKey,
+				.collect(Collectors.toMap(AlsoEnergyGranularity::name, AlsoEnergyGranularity::name,
 						(l, r) -> r,
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
@@ -147,6 +149,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 	/** The maximum period of time to request data for in one request. */
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
+
+	private final InstantSource clock;
 
 	/**
 	 * Constructor.
@@ -169,6 +173,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	 *        the REST operations
 	 * @param oauthClientManager
 	 *        the OAuth client manager
+	 * @param clock
+	 *        the instant source to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -178,7 +184,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager) {
+			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
@@ -188,6 +194,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager),
 				oauthClientManager);
+		this.clock = ObjectUtils.requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
@@ -233,10 +240,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		final Instant endDate;
 		final Instant startDate;
 		if ( granularity == AlsoEnergyGranularity.Raw ) {
-			endDate = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+			endDate = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 			startDate = endDate.minus(Duration.ofMinutes(10));
 		} else {
-			endDate = granularity.tickStart(Instant.now().truncatedTo(ChronoUnit.SECONDS), zone);
+			endDate = granularity.tickStart(clock.instant().truncatedTo(ChronoUnit.SECONDS), zone);
 			startDate = granularity.prevTickStart(endDate, zone);
 		}
 
@@ -245,8 +252,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		filter.setEndDate(endDate);
 
 		final var result = datum(datumStream, filter);
-		if ( result == null || result.isEmpty() ) {
-			return null;
+		if ( result == null ) {
+			return Collections.emptyList();
 		}
 		return result.getResults();
 	}
@@ -361,9 +368,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
+		// @formatter:off
 				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
-						.path(SITE_HARDWARE_URL_TEMPLATE).queryParam("includeArchivedFields", true)
+						.path(SITE_HARDWARE_URL_TEMPLATE)
+						.queryParam("includeArchivedFields", true)
+						.queryParam("includeDeviceConfig", true)
 						.buildAndExpand(filters).toUri(),
+						// @formatter:on
 				res -> parseSiteHardware(res.getBody(), filters));
 	}
 
@@ -450,22 +461,21 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		*/
 		final String siteId = filters.get(SITE_ID_FILTER).toString();
 		final var result = new ArrayList<CloudDataValue>(4);
-		for ( JsonNode meterNode : json.path("hardware") ) {
-			final JsonNode fieldsNode = meterNode.path("fieldsArchived");
+		for ( JsonNode deviceNode : json.path("hardware") ) {
+			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
 			if ( !(fieldsNode.isArray() && fieldsNode.size() > 0) ) {
 				continue;
 			}
-			final String id = meterNode.path("id").asText().trim();
+			final String id = deviceNode.path("id").asText().trim();
 			if ( id.isEmpty() ) {
 				continue;
 			}
-			final String name = meterNode.path("name").asText().trim();
+			final String name = deviceNode.path("name").asText().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
-			populateNonEmptyValue(meterNode, "functionCode", "functionCode", meta);
-			for ( JsonNode configNode : meterNode.path("config") ) {
-				populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
-				populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
-			}
+			populateNonEmptyValue(deviceNode, "functionCode", "functionCode", meta);
+			JsonNode configNode = deviceNode.path("config");
+			populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
+			populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
 
 			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
 			for ( JsonNode fieldNode : fieldsNode ) {
@@ -604,6 +614,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		      ]
 		    },
 		 */
+		if ( body == null ) {
+			// API might return 204 NoContent, and then we get here
+			return null;
+		}
 		final JsonNode items = body.path("items");
 		final int refCount = refs.size();
 		for ( JsonNode item : items ) {
