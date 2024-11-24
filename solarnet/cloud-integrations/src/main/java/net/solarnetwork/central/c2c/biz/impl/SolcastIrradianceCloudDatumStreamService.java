@@ -178,8 +178,8 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		filter.setEndDate(endDate);
 
 		final var result = datum(datumStream, filter);
-		if ( result == null || result.isEmpty() ) {
-			return null;
+		if ( result == null ) {
+			return Collections.emptyList();
 		}
 		return result.getResults();
 	}

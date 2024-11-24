@@ -132,9 +132,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	static {
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
-				AlsoEnergyGranularity.Raw.getKey());
+				AlsoEnergyGranularity.Raw.name());
 		var granularityTitles = unmodifiableMap(Arrays.stream(AlsoEnergyGranularity.values())
-				.collect(Collectors.toMap(AlsoEnergyGranularity::getKey, AlsoEnergyGranularity::getKey,
+				.collect(Collectors.toMap(AlsoEnergyGranularity::name, AlsoEnergyGranularity::name,
 						(l, r) -> r,
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
@@ -252,8 +252,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		filter.setEndDate(endDate);
 
 		final var result = datum(datumStream, filter);
-		if ( result == null || result.isEmpty() ) {
-			return null;
+		if ( result == null ) {
+			return Collections.emptyList();
 		}
 		return result.getResults();
 	}
@@ -614,6 +614,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		      ]
 		    },
 		 */
+		if ( body == null ) {
+			// API might return 204 NoContent, and then we get here
+			return null;
+		}
 		final JsonNode items = body.path("items");
 		final int refCount = refs.size();
 		for ( JsonNode item : items ) {
