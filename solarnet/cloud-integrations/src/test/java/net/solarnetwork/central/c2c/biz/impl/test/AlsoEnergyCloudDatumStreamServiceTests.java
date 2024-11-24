@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.MINUTES;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamService.BIN_DATA_URL;
+import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamService.SITE_HARDWARE_URL_TEMPLATE;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService.BASE_URI;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Avg;
 import static net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction.Last;
@@ -36,6 +37,7 @@ import static net.solarnetwork.codec.JsonUtils.getObjectFromJSON;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -75,12 +77,14 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyFieldFunction;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
@@ -161,6 +165,125 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 
 	private static String componentValueRef(Long siteId, Long hardwareId, String fieldName, String fn) {
 		return "/%d/%d/%s/%s".formatted(siteId, hardwareId, fieldName, fn);
+	}
+
+	@Test
+	public void dataValues_site() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// @formatter:off
+		@SuppressWarnings("deprecation")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("alsoenergy-hardware-01.json", getClass()), ObjectNode.class);
+		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
+				Map.of("siteId", siteId));
+
+		// THEN
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), any(),
+				eq(JsonNode.class));
+
+		and.then(uriCaptor.getValue()).as("Request URI").isEqualTo(
+				BASE_URI.resolve(SITE_HARDWARE_URL_TEMPLATE.replace("{siteId}", siteId.toString())
+						+ "?includeArchivedFields=true&includeDeviceConfig=true"));
+
+		// @formatter:off
+		and.then(results)
+			.as("Results provided")
+			.hasSize(2)
+			.satisfies(devices -> {
+				and.then(devices)
+					.element(0)
+					.as("Identifiers from response")
+					.returns(List.of(siteId.toString(), "12345"), from(CloudDataValue::getIdentifiers))
+					.as("Device name from response")
+					.returns("Elkor Production Meter", from(CloudDataValue::getName))
+					.as("No reference for device object")
+					.returns(null, from(CloudDataValue::getReference))
+					.as("Metadata from response")
+					.returns(Map.of("functionCode", "PM"
+							, "serial", "20647"
+							, "deviceType", "ProductionPowerMeter"
+							), from(CloudDataValue::getMetadata))
+					.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+					.as("Has 2 field children")
+					.hasSize(2)
+					.satisfies(fields -> {
+						and.then(fields)
+							.element(0)
+							.as("Identifiers from response")
+							.returns(List.of(siteId.toString(), "12345", "KW"), from(CloudDataValue::getIdentifiers))
+							.as("Field name from response")
+							.returns("KW", from(CloudDataValue::getName))
+							.as("No reference for field object")
+							.returns(null, from(CloudDataValue::getReference))
+							.as("No metadata for field object")
+							.returns(null, from(CloudDataValue::getMetadata))
+							.extracting(CloudDataValue::getChildren, list(CloudDataValue.class))
+							.as("Has field function children")
+							.hasSize(AlsoEnergyFieldFunction.values().length)
+							.satisfies(functions -> {
+								for ( int i =0, len = AlsoEnergyFieldFunction.values().length; i < len; i++ ) {
+									var fn = AlsoEnergyFieldFunction.values()[i];
+									and.then(functions).element(i)
+										.as("Identifiers from response")
+										.returns(List.of(siteId.toString(), "12345", "KW", fn.name()),
+												from(CloudDataValue::getIdentifiers))
+										.as("Function name is field + function")
+										.returns("KW %s".formatted(fn.name()), from(CloudDataValue::getName))
+										.as("Feference for function object")
+										.returns("/%s/12345/KW/%s".formatted(siteId, fn.name()),
+												from(CloudDataValue::getReference))
+										.as("No metadata for function")
+										.returns(null, CloudDataValue::getMetadata)
+										.as("No children for function")
+										.returns(null, CloudDataValue::getChildren)
+										;
+								}
+							})
+							;
+					})
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test

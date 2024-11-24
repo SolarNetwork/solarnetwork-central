@@ -368,9 +368,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
 		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
+		// @formatter:off
 				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
-						.path(SITE_HARDWARE_URL_TEMPLATE).queryParam("includeArchivedFields", true)
+						.path(SITE_HARDWARE_URL_TEMPLATE)
+						.queryParam("includeArchivedFields", true)
+						.queryParam("includeDeviceConfig", true)
 						.buildAndExpand(filters).toUri(),
+						// @formatter:on
 				res -> parseSiteHardware(res.getBody(), filters));
 	}
 
@@ -457,22 +461,21 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		*/
 		final String siteId = filters.get(SITE_ID_FILTER).toString();
 		final var result = new ArrayList<CloudDataValue>(4);
-		for ( JsonNode meterNode : json.path("hardware") ) {
-			final JsonNode fieldsNode = meterNode.path("fieldsArchived");
+		for ( JsonNode deviceNode : json.path("hardware") ) {
+			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
 			if ( !(fieldsNode.isArray() && fieldsNode.size() > 0) ) {
 				continue;
 			}
-			final String id = meterNode.path("id").asText().trim();
+			final String id = deviceNode.path("id").asText().trim();
 			if ( id.isEmpty() ) {
 				continue;
 			}
-			final String name = meterNode.path("name").asText().trim();
+			final String name = deviceNode.path("name").asText().trim();
 			final var meta = new LinkedHashMap<String, Object>(4);
-			populateNonEmptyValue(meterNode, "functionCode", "functionCode", meta);
-			for ( JsonNode configNode : meterNode.path("config") ) {
-				populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
-				populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
-			}
+			populateNonEmptyValue(deviceNode, "functionCode", "functionCode", meta);
+			JsonNode configNode = deviceNode.path("config");
+			populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
+			populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
 
 			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
 			for ( JsonNode fieldNode : fieldsNode ) {
