@@ -36,6 +36,7 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -89,6 +90,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
@@ -148,6 +150,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	/** The maximum period of time to request data for in one request. */
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
+	private final InstantSource clock;
+
 	/**
 	 * Constructor.
 	 *
@@ -169,6 +173,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	 *        the REST operations
 	 * @param oauthClientManager
 	 *        the OAuth client manager
+	 * @param clock
+	 *        the instant source to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -178,7 +184,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager) {
+			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
@@ -188,6 +194,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager),
 				oauthClientManager);
+		this.clock = ObjectUtils.requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
@@ -233,10 +240,10 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		final Instant endDate;
 		final Instant startDate;
 		if ( granularity == AlsoEnergyGranularity.Raw ) {
-			endDate = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+			endDate = clock.instant().truncatedTo(ChronoUnit.SECONDS);
 			startDate = endDate.minus(Duration.ofMinutes(10));
 		} else {
-			endDate = granularity.tickStart(Instant.now().truncatedTo(ChronoUnit.SECONDS), zone);
+			endDate = granularity.tickStart(clock.instant().truncatedTo(ChronoUnit.SECONDS), zone);
 			startDate = granularity.prevTickStart(endDate, zone);
 		}
 

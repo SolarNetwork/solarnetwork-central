@@ -183,7 +183,7 @@ public class AlsoEnergyConfig {
 		var service = new AlsoEnergyCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
-				oauthClientManager);
+				oauthClientManager, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(AlsoEnergyCloudDatumStreamService.class.getName(),
