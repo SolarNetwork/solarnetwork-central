@@ -466,8 +466,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	@Override
 	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
 		final var data = queryForDatum(datumStream, null);
-		if ( data.isEmpty() ) {
-			return null;
+		if ( data == null || data.isEmpty() ) {
+			return Collections.emptyList();
 		}
 		return Collections.singletonList(data.getResults().getLast());
 	}
