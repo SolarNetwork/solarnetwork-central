@@ -142,7 +142,7 @@ public class LocusEnergyConfig {
 
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()
-				.requestFactory(t -> reqFactory)
+				.requestFactory(() -> reqFactory)
 				.messageConverters(Arrays.asList(
 						new FormHttpMessageConverter(),
 						new OAuth2AccessTokenResponseHttpMessageConverter()))

@@ -146,7 +146,7 @@ public class AlsoEnergyConfig {
 
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()
-				.requestFactory(t -> reqFactory)
+				.requestFactory(() -> reqFactory)
 				.messageConverters(Arrays.asList(
 						new FormHttpMessageConverter(),
 						tokenResponseConverter))

@@ -37,11 +37,12 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.oscp.dao.ExternalSystemSupportDao;
@@ -92,8 +93,8 @@ public class OAuthClientConfig {
 									.errorHandler(new OAuth2ErrorResponseErrorHandler())
 									.build();
 					// @formatter:on
-					var client = new DefaultClientCredentialsTokenResponseClient();
-					client.setRestOperations(restOps);
+					var client = new RestClientClientCredentialsTokenResponseClient();
+					client.setRestClient(RestClient.create(restOps));
 					b.accessTokenResponseClient(client);
 				}).build();
 

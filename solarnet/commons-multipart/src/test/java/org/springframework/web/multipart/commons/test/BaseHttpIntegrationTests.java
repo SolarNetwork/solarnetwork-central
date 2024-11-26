@@ -56,7 +56,7 @@ public abstract class BaseHttpIntegrationTests {
 	 * @return the builder
 	 */
 	protected UriComponentsBuilder serverUri(String path) {
-		return UriComponentsBuilder.fromHttpUrl("http://localhost:%d%s".formatted(port, path));
+		return UriComponentsBuilder.fromUriString("http://localhost:%d%s".formatted(port, path));
 	}
 
 }

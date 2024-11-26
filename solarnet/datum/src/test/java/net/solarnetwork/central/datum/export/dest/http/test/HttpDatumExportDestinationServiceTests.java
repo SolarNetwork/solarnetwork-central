@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ContentType;
@@ -56,6 +55,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.IO;
+import org.eclipse.jetty.util.Promise;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -142,7 +142,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 					;
 				// @formatter:on
 
-				CompletableFuture<String> f = Content.Source.asStringAsync(request, UTF_8);
+				var f = new Promise.Completable<String>();
+				Content.Source.asString(request, UTF_8, f);
 				f.whenComplete((content, failure) -> {
 					if ( failure == null ) {
 						// @formatter:off
@@ -233,7 +234,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 				// @formatter:on
 
-				CompletableFuture<String> f = Content.Source.asStringAsync(request, UTF_8);
+				var f = new Promise.Completable<String>();
+				Content.Source.asString(request, UTF_8, f);
 				f.whenComplete((content, failure) -> {
 					if ( failure == null ) {
 						// @formatter:off
@@ -326,7 +328,10 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 				formData.setFilesDirectory(tmpDir);
 
 				try {
-					process(formData.parse(request).join());
+					var f = new Promise.Completable<MultiPartFormData.Parts>();
+					var inv = Promise.from(InvocationType.NON_BLOCKING, f);
+					formData.parse(request, f, inv);
+					process(f.join());
 					callback.succeeded();
 				} catch ( Exception x ) {
 					Response.writeError(request, response, callback, x);
@@ -431,7 +436,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 					;
 				// @formatter:on
 
-				CompletableFuture<String> f = Content.Source.asStringAsync(request, UTF_8);
+				var f = new Promise.Completable<String>();
+				Content.Source.asString(request, UTF_8, f);
 				f.whenComplete((content, failure) -> {
 					if ( failure == null ) {
 						// @formatter:off
