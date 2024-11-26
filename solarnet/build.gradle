@@ -110,7 +110,7 @@ subprojects {
 		]
 	}
 	
-	ext['netty.version'] = '4.1.112.Final'
+	ext['netty.version'] = '4.1.115.Final'
 	
 	dependencies {
 		testImplementation libraries.junit4,
