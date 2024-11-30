@@ -75,7 +75,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -391,7 +391,11 @@ public class DaoCloudDatumStreamPollService
 			}
 
 			// success: update task info
-			if ( polledDatum.getUsedQueryFilter() != null
+			if ( polledDatum.getNextQueryFilter() != null
+					&& polledDatum.getNextQueryFilter().hasStartDate() ) {
+				// use the start date provided by the results, so the next iteration picks up from there
+				taskInfo.setStartAt(polledDatum.getNextQueryFilter().getStartDate());
+			} else if ( polledDatum.getUsedQueryFilter() != null
 					&& polledDatum.getUsedQueryFilter().hasEndDate() ) {
 				// use the end date provided by the results, so the next iteration picks up from there
 				taskInfo.setStartAt(polledDatum.getUsedQueryFilter().getEndDate());

@@ -348,6 +348,20 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 					.filter(e -> !e.getValue().isEmpty())
 					.map(e -> new GeneralDatum(e.getKey(), e.getValue())).toList();
 
+			// latest datum might not have been reported yet; check latest datum date, and if
+			// less than expected date make that the next query start date
+			if ( !resultDatum.isEmpty() ) {
+				Instant lastTimestamp = resultDatum.getLast().getTimestamp();
+				Instant expectedLastTimestamp = resolution.prevTickStart(endDate, zone);
+				if ( lastTimestamp.isBefore(expectedLastTimestamp) ) {
+					if ( nextQueryFilter == null ) {
+						nextQueryFilter = new BasicQueryFilter();
+						nextQueryFilter.setEndDate(resolution.tickStart(filterEndDate, zone));
+					}
+					nextQueryFilter.setStartDate(resolution.nextTickStart(lastTimestamp, zone));
+				}
+			}
+
 			// evaluate expressions on merged datum
 			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
