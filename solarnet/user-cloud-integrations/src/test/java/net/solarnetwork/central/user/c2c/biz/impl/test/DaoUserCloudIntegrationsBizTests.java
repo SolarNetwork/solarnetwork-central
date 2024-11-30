@@ -820,8 +820,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		// WHEN
 		for ( BasicClaimableJobState state : EnumSet.complementOf(EnumSet.of(Queued, Completed)) ) {
 			input.setState(state);
-			ValidationException ex = catchThrowableOfType(() -> biz.saveDatumStreamPollTask(pk, input),
-					ValidationException.class);
+			ValidationException ex = catchThrowableOfType(ValidationException.class,
+					() -> biz.saveDatumStreamPollTask(pk, input));
 
 			// THEN
 			// @formatter:off

@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.3.5' apply false
+	id 'org.springframework.boot' version '3.4.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Cloud Integrations'
-version = '1.13.1'
+version = '1.13.2'
 
 base {
 	archivesName = 'solarnet-cloud-integrations'
@@ -64,7 +64,7 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-	testImplementation 'com.squareup.okhttp3:mockwebserver'
+	testImplementation "com.squareup.okhttp3:mockwebserver:${okhttp3Mockwebserver}"
 }
 
 jar.manifest {

@@ -40,8 +40,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
 import net.solarnetwork.central.din.app.security.DatumEndpointAuthenticationProvider;
+import net.solarnetwork.central.din.app.security.EndpointAuthenticationDetails;
 import net.solarnetwork.central.din.security.AuthenticatedEndpointCredentials;
 import net.solarnetwork.central.din.security.CredentialAuthorizationDao;
 
@@ -156,8 +156,8 @@ public class EndpointAuthenticationProviderTests {
 		given(authDao.credentialsForEndpoint(endpointId, username)).willReturn(details);
 
 		// WHEN
-		BadCredentialsException result = catchThrowableOfType(() -> provider.authenticate(auth),
-				BadCredentialsException.class);
+		BadCredentialsException result = catchThrowableOfType(BadCredentialsException.class,
+				() -> provider.authenticate(auth));
 
 		// THEN
 		// @formatter:off
@@ -182,8 +182,8 @@ public class EndpointAuthenticationProviderTests {
 		given(authDao.credentialsForEndpoint(endpointId, username)).willReturn(null);
 
 		// WHEN
-		BadCredentialsException result = catchThrowableOfType(() -> provider.authenticate(auth),
-				BadCredentialsException.class);
+		BadCredentialsException result = catchThrowableOfType(BadCredentialsException.class,
+				() -> provider.authenticate(auth));
 
 		// THEN
 		// @formatter:off

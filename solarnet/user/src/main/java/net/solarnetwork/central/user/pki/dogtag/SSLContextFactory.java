@@ -37,13 +37,11 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
-import org.apache.hc.client5.http.socket.ConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.core5.http.config.Registry;
-import org.apache.hc.core5.http.config.RegistryBuilder;
+import org.apache.hc.core5.reactor.ssl.SSLBufferMode;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,12 +109,13 @@ public class SSLContextFactory implements PingTest {
 				enabledProtocols, disabledProtocols);
 		String[] ciphers = filterByEnabledDisabled(ctx.getSupportedSSLParameters().getCipherSuites(),
 				enabledCipherSuites, disabledCipherSuites);
-		SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(createContext(), protocols,
-				ciphers, new DefaultHostnameVerifier());
-		Registry<ConnectionSocketFactory> r = RegistryBuilder.<ConnectionSocketFactory> create()
-				.register("https", sslsf).build();
 
-		HttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(r);
+		DefaultClientTlsStrategy sslstg = new DefaultClientTlsStrategy(createContext(), protocols,
+				ciphers, SSLBufferMode.STATIC, new DefaultHostnameVerifier());
+
+		HttpClientConnectionManager connManager = PoolingHttpClientConnectionManagerBuilder.create()
+				.setTlsSocketStrategy(sslstg).build();
+
 		HttpClient httpClient = HttpClients.custom().setConnectionManager(connManager).build();
 
 		ClientHttpRequestFactory reqFactory = LoggingHttpRequestInterceptor

@@ -444,9 +444,9 @@ public class DaoDatumInputEndpointBizTests implements CentralDinUserEvents {
 		// WHEN
 		var parameters = Map.of(DatumInputEndpointBiz.PARAM_NODE_ID, nodeId.toString(),
 				DatumInputEndpointBiz.PARAM_SOURCE_ID, sourceId);
-		AuthorizationException error = catchThrowableOfType(() -> {
+		AuthorizationException error = catchThrowableOfType(AuthorizationException.class, () -> {
 			service.importDatum(userId, endpoint.getEndpointId(), type, in, parameters);
-		}, AuthorizationException.class);
+		});
 
 		// THEN
 		// @formatter:off
