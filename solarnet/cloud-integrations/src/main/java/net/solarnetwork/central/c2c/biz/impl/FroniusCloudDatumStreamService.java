@@ -22,9 +22,22 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
+import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.BASE_URI;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.COUNTRY_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.LOCALITY_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.POSTAL_CODE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.STATE_PROVINCE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.STREET_ADDRESS_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.TIME_ZONE_METADATA;
+import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.time.InstantSource;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -32,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
@@ -43,6 +57,7 @@ import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -152,8 +167,81 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			Map<String, ?> filters) {
-		// TODO Auto-generated method stub
-		return null;
+		final CloudIntegrationConfiguration integration = requireNonNullObject(
+				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
+				"integration");
+		List<CloudDataValue> result = Collections.emptyList();
+		if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null ) {
+			// TODO
+		} else {
+			// list available systems
+			result = systems(integration);
+		}
+		Collections.sort(result);
+		return result;
+	}
+
+	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
+		return restOpsHelper.httpGet("List systems", integration, JsonNode.class,
+				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+						.path(FroniusCloudIntegrationService.LIST_PVSYSTEMS_URL)
+						.buildAndExpand(integration.getServiceProperties()).toUri(),
+				res -> parseSystems(res.getBody()));
+	}
+
+	private static List<CloudDataValue> parseSystems(JsonNode json) {
+		assert json != null;
+		/*- EXAMPLE JSON:
+		{
+		  "pvSystems": [
+		    {
+		      "pvSystemId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+		      "name": "string",
+		      "address": {
+		        "country": "string",
+		        "zipCode": "string",
+		        "street": "string",
+		        "city": "string",
+		        "state": "string"
+		      },
+		      "pictureURL": "string",
+		      "peakPower": 0,
+		      "installationDate": "string",
+		      "lastImport": "string",
+		      "meteoData": "string",
+		      "timeZone": "string"
+		    }
+		  ],
+		  "links": {
+		    "first": "string",
+		    "prev": "string",
+		    "self": "string",
+		    "next": "string",
+		    "last": "string",
+		    "totalItemsCount": 0
+		  }
+		}
+		*/
+		final var result = new ArrayList<CloudDataValue>(4);
+		for ( JsonNode sysNode : json.path("pvSystems") ) {
+			final String id = sysNode.path("pvSystemId").asText();
+			final String name = sysNode.path("name").asText().trim();
+			final var meta = new LinkedHashMap<String, Object>(4);
+			final JsonNode addrNode = sysNode.path("address");
+			if ( addrNode.isObject() ) {
+				populateNonEmptyValue(addrNode, "street", STREET_ADDRESS_METADATA, meta);
+				populateNonEmptyValue(addrNode, "city", LOCALITY_METADATA, meta);
+				populateNonEmptyValue(addrNode, "state", STATE_PROVINCE_METADATA, meta);
+				populateNonEmptyValue(addrNode, "zipCode", POSTAL_CODE_METADATA, meta);
+				populateNonEmptyValue(addrNode, "country", COUNTRY_METADATA, meta);
+			}
+			populateNonEmptyValue(sysNode, "timeZone", TIME_ZONE_METADATA, meta);
+			populateNonEmptyValue(sysNode, "installationDate", "installationDate", meta);
+			populateNumberValue(sysNode, "peakPower", "peakPower", meta);
+
+			result.add(intermediateDataValue(List.of(id), name, meta.isEmpty() ? null : meta));
+		}
+		return result;
 	}
 
 	@Override
