@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.web.api;
 
+import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,7 +44,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.inin.biz.InstructionInputEndpointBiz;
 import net.solarnetwork.central.inin.security.SecurityEndpointCredential;
 import net.solarnetwork.central.inin.security.SecurityUtils;
-import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.io.ProvidedOutputStream;
 import net.solarnetwork.util.ObjectUtils;
 
@@ -51,7 +51,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Instruction input controller.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestController("v1InstructionInputController")
 @RequestMapping("/api/v1/instr/endpoint/{endpointId}")
@@ -138,12 +138,11 @@ public class InstructionInputController {
 			} catch ( IOException e ) {
 				throw new IllegalStateException("IOException generating output", e);
 			}
-		})) {
+		}); InputStream maxSizeIn = maxUploadSizeExceededInputStream(input, maxInputLength)) {
 
 			// limit input size
-			input = new MaxUploadSizeInputStream(input, maxInputLength);
 			var instructions = inputBiz.importInstructions(actor.getUserId(), endpointId, inputType,
-					input, params);
+					maxSizeIn, params);
 
 			inputBiz.generateResponse(actor.getUserId(), endpointId, instructions, outputType, out,
 					params);
