@@ -71,7 +71,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -454,7 +454,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( configuration == null ) {
 			return null;
 		}
-		final Object sourceIdMap = configuration.serviceProperty(SOURCE_ID_MAP_SETTING, Object.class);
+		final Object sourceIdMap = configuration.serviceProperty(key, Object.class);
 		final Map<String, String> componentSourceIdMapping;
 		if ( sourceIdMap instanceof Map<?, ?> ) {
 			componentSourceIdMapping = (Map<String, String>) sourceIdMap;
