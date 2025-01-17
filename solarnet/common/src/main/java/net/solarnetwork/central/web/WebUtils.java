@@ -24,6 +24,7 @@ package net.solarnetwork.central.web;
 
 import static java.lang.String.format;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -31,12 +32,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,7 +53,7 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
  * Helper utilities for web APIs.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public final class WebUtils {
 
@@ -286,6 +289,27 @@ public final class WebUtils {
 				handleTransientDataAccessExceptionRetry(req, e, --tries, retryDelay, log);
 			}
 		}
+	}
+
+	/**
+	 * Create an input stream that throws a
+	 * {@link MaxUploadSizeExceededException} when the given length is exceeded
+	 * while reading.
+	 * 
+	 * @param in
+	 *        the input stream
+	 * @param maxLength
+	 *        the maximum length to allow reading before a
+	 *        {@link MaxUploadSizeExceededException} is thrown
+	 * @return the new input stream
+	 * @since 1.4
+	 */
+	public static InputStream maxUploadSizeExceededInputStream(InputStream in, long maxLength)
+			throws IOException {
+		return BoundedInputStream.builder().setInputStream(in).setMaxCount(maxLength)
+				.setOnMaxCount((m, c) -> {
+					throw new MaxUploadSizeExceededException(maxLength);
+				}).get();
 	}
 
 }

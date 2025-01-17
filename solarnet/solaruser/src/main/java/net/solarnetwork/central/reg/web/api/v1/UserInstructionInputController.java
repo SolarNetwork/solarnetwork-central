@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -74,7 +75,6 @@ import net.solarnetwork.central.user.inin.domain.TransformConfigurationInput.Res
 import net.solarnetwork.central.user.inin.domain.TransformInstructionResults;
 import net.solarnetwork.central.user.inin.domain.TransformOutput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -83,7 +83,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for Instruction Input (ININ) management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT)
 @GlobalExceptionRestController
@@ -365,7 +365,7 @@ public class UserInstructionInputController {
 		MediaType mediaType = MediaType.parseMediaType(previewInput.contentType());
 		Charset encoding = (mediaType.getCharset() != null ? mediaType.getCharset()
 				: StandardCharsets.UTF_8);
-		InputStream input = new MaxUploadSizeInputStream(
+		InputStream input = maxUploadSizeExceededInputStream(
 				new ByteArrayInputStream(previewInput.data().getBytes(encoding)),
 				maxInstructionInputLength);
 

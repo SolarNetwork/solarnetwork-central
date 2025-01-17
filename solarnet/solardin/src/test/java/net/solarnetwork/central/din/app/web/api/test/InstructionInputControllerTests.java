@@ -66,14 +66,13 @@ import net.solarnetwork.central.inin.security.AuthenticatedEndpointCredentials;
 import net.solarnetwork.central.inin.security.SecurityUtils;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.test.CommonTestUtils;
-import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.io.ProvidedOutputStream;
 
 /**
  * Test cases for the {@link InstructionInputController}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -152,7 +151,7 @@ public class InstructionInputControllerTests {
 				eq(emptyMap()));
 		and.then(requestInputStreamCaptor.getValue())
 			.as("Is size-limited input stream")
-			.asInstanceOf(type(MaxUploadSizeInputStream.class))
+			.asInstanceOf(type(BoundedInputStream.class))
 			.returns(MAX_INPUT_LENGTH, from(BoundedInputStream::getMaxCount))
 			;
 
@@ -231,7 +230,7 @@ public class InstructionInputControllerTests {
 				eq(emptyMap()));
 		and.then(requestInputStreamCaptor.getValue())
 			.as("Is size-limited input stream")
-			.asInstanceOf(type(MaxUploadSizeInputStream.class))
+			.asInstanceOf(type(BoundedInputStream.class))
 			.returns(MAX_INPUT_LENGTH, from(BoundedInputStream::getMaxCount))
 			;
 
