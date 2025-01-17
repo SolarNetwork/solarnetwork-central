@@ -75,7 +75,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -382,7 +382,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 							if ( val instanceof Number ) {
 								yield val;
 							} else {
-								yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+								try {
+									yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+								} catch ( IllegalArgumentException e ) {
+									yield null;
+								}
 							}
 						}
 						case Status, Tag -> val.toString();
@@ -499,7 +503,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				} else if ( val.isFloat() ) {
 					yield val.floatValue();
 				} else {
-					yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+					try {
+						yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+					} catch ( IllegalArgumentException e ) {
+						yield null;
+					}
 				}
 			}
 			case Status, Tag -> nonEmptyString(val.asText());
