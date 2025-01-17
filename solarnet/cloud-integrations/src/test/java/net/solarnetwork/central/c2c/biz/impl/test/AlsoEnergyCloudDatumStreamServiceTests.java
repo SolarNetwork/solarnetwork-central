@@ -84,6 +84,7 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
@@ -566,6 +567,182 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		and.then(result)
 			.as("Empty result from HTTP 204 response")
 			.isEmpty()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void requestList_NaN() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId = randomLong();
+		final Long hardwareId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setMultiplier(new BigDecimal("1000"));
+		prop1.setScale(0);
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Accumulating);
+		prop2.setPropertyName("wattHours");
+		prop2.setMultiplier(new BigDecimal("1000"));
+		prop2.setScale(0);
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		@SuppressWarnings("deprecation")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-02.json", getClass()), ObjectNode.class);
+		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		var filter = new BasicQueryFilter();
+		filter.setStartDate(clock.instant().minus(10, MINUTES));
+		filter.setEndDate(clock.instant());
+		Iterable<Datum> result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.POST), httpEntityCaptor.capture(), eq(JsonNode.class));
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI")
+			.isEqualTo(BASE_URI.resolve(BIN_DATA_URL
+					+ "?from=%s&to=%s&binSizes=BinRaw&tz=Z".formatted(
+							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().minus(10, MINUTES).atZone(UTC).toLocalDateTime()),
+							ISO_DATE_OPT_TIME_OPT_MILLIS_UTC.format(clock.instant().atZone(UTC).toLocalDateTime())
+							)))
+			;
+
+		and.then(httpEntityCaptor.getValue().getHeaders())
+			.as("HTTP request includes OAuth Authorization header")
+			.containsEntry(HttpHeaders.AUTHORIZATION, List.of("Bearer %s".formatted(oauthAccessToken.getTokenValue())))
+			;
+
+		and.then(httpEntityCaptor.getValue())
+			.as("HTTP request body contains criteria")
+			.returns(List.of(
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName1, "function", Avg.name()),
+				Map.of("siteId", siteId, "hardwareId", hardwareId, "fieldName", fieldName2, "function", Last.name())
+				), from(HttpEntity::getBody))
+			;
+
+		String expectedSourceId = datumStream.getSourceId() + "/%s/%s".formatted(siteId, hardwareId);
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(3)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), from(Datum::getKind))
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), from(Datum::getObjectId))
+					.as("Datum source ID is from DatumStream configuration")
+					.returns(expectedSourceId, from(Datum::getSourceId))
+					;
+			})
+			.satisfies(list -> {
+				DatumSamples expectedSamples1 = new DatumSamples();
+				expectedSamples1.putInstantaneousSampleValue("watts", -964);
+				expectedSamples1.putAccumulatingSampleValue("wattHours", 103684305);
+
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:51:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples1, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples2 = new DatumSamples();
+				expectedSamples2.putInstantaneousSampleValue("watts", -698);
+				// NOTE: NaN wattHours ignored
+
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:52:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples2, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples3 = new DatumSamples();
+				expectedSamples3.putInstantaneousSampleValue("watts", -740);
+				expectedSamples3.putAccumulatingSampleValue("wattHours", 103684430);
+
+				and.then(list)
+					.element(2)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:53:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples3, from(Datum::asSampleOperations))
+					;
+			})
 			;
 		// @formatter:on
 	}

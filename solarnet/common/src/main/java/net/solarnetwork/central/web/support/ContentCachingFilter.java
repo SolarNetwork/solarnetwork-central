@@ -68,7 +68,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, PingTest {
@@ -324,18 +324,24 @@ public class ContentCachingFilter implements Filter, PingTest {
 		// acquire lock for key
 		try {
 			if ( !lock.tryLock(requestLockTimeout, TimeUnit.MILLISECONDS) ) {
-				origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
-						"Timeout acquiring cache lock");
-				stats.increment(ContentCachingFilterStats.RequestLockFailures);
-				returnLock(key, lock, requestId, requestUri);
+				try {
+					origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
+							"Timeout acquiring cache lock");
+				} finally {
+					stats.increment(ContentCachingFilterStats.RequestLockFailures);
+					returnLock(key, lock, requestId, requestUri);
+				}
 				return;
 			}
 		} catch ( InterruptedException e ) {
 			// TODO: handle JSON response explicitly
-			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
-					"Interrupted acquiring cache lock");
-			stats.increment(ContentCachingFilterStats.RequestLockFailures);
-			returnLock(key, lock, requestId, requestUri);
+			try {
+				origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
+						"Interrupted acquiring cache lock");
+			} finally {
+				stats.increment(ContentCachingFilterStats.RequestLockFailures);
+				returnLock(key, lock, requestId, requestUri);
+			}
 			return;
 		}
 
