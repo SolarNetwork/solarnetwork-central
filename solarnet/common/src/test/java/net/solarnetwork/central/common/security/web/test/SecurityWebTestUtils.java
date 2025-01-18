@@ -31,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.List;
@@ -38,7 +39,6 @@ import java.util.Set;
 import java.util.TimeZone;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ import net.solarnetwork.web.jakarta.security.WebConstants;
  * Utilities for unit tests.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class SecurityWebTestUtils {
 
@@ -178,7 +178,7 @@ public final class SecurityWebTestUtils {
 		final StringBuilder buf = new StringBuilder(AuthenticationScheme.V1.getSchemeName());
 		buf.append(' ');
 		buf.append(token).append(':')
-				.append(Base64.encodeBase64String(computeHMACSHA1(secret, msg)).trim());
+				.append(Base64.getEncoder().encodeToString(computeHMACSHA1(secret, msg)).trim());
 		return buf.toString();
 	}
 
