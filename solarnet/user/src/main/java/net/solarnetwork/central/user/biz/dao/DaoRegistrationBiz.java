@@ -43,6 +43,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Set;
 import java.util.SortedSet;
@@ -56,8 +57,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 import javax.cache.Cache;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,7 +116,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  * 
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 
@@ -340,7 +339,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 	private String encodeNetworkAssociationDetails(NetworkAssociationDetails details) {
 		ByteArrayOutputStream byos = new ByteArrayOutputStream();
-		Base64OutputStream b64 = new Base64OutputStream(byos, true);
+		OutputStream b64 = Base64.getMimeEncoder().wrap(byos);
 		GZIPOutputStream zip = null;
 		try {
 			zip = new GZIPOutputStream(b64);
@@ -530,7 +529,8 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			// if the certificate has been signed by a CA, then include the entire .p12 in the response (Base 64 encoded)
 			if ( certificate.getIssuerX500Principal()
 					.equals(certificate.getSubjectX500Principal()) == false ) {
-				details.setNetworkCertificate(Base64.encodeBase64String(cert.getKeystoreData()));
+				details.setNetworkCertificate(
+						Base64.getEncoder().encodeToString(cert.getKeystoreData()));
 			}
 		}
 
@@ -994,7 +994,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 	}
 
 	private String getCertificateAsString(byte[] data) {
-		return Base64.encodeBase64String(data);
+		return Base64.getEncoder().encodeToString(data);
 	}
 
 	private Future<UserNodeCertificate> approveCSR(final String certSubjectDN,
