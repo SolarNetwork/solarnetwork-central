@@ -32,13 +32,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -226,7 +226,8 @@ public final class SecurityWebTestUtils {
 	private static void appendContentSHA256(SecurityHttpServletRequestWrapper request, StringBuilder buf)
 			throws IOException {
 		byte[] digest = request.getContentSHA256();
-		buf.append(digest == null ? WebConstants.EMPTY_STRING_SHA256_HEX : Hex.encodeHexString(digest));
+		buf.append(digest == null ? WebConstants.EMPTY_STRING_SHA256_HEX
+				: HexFormat.of().formatHex(digest));
 	}
 
 	private static String computeCanonicalRequestData(SecurityHttpServletRequestWrapper request,
@@ -277,7 +278,7 @@ public final class SecurityWebTestUtils {
 		 	Hex(SHA256(canonicalRequestData))
 		*/
 		String result = "SNWS2-HMAC-SHA256\n" + iso8601Date(date) + "\n"
-				+ Hex.encodeHexString(DigestUtils.sha256(canonicalRequestData));
+				+ HexFormat.of().formatHex(DigestUtils.sha256(canonicalRequestData));
 		log.debug("Signature data: \n{}", result);
 		return result;
 	}
@@ -377,7 +378,7 @@ public final class SecurityWebTestUtils {
 		final byte[] signingKey = computeSigningKey(authTokenSecret, signDate != null ? signDate : date);
 		final String signatureData = computeSignatureData(computeCanonicalRequestData(secRequest,
 				headerNames.toArray(new String[headerNames.size()])), date);
-		final String signature = Hex.encodeHexString(computeHMACSHA256(signingKey, signatureData));
+		final String signature = HexFormat.of().formatHex(computeHMACSHA256(signingKey, signatureData));
 		final StringBuilder buf = new StringBuilder(AuthenticationScheme.V2.getSchemeName());
 		buf.append(' ');
 		buf.append("Credential=").append(authTokenId);
