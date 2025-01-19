@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.dao.jdbc.test;
 import static java.util.Arrays.asList;
 import static net.solarnetwork.security.AuthorizationUtils.AUTHORIZATION_TIMESTAMP_FORMATTER;
 import static net.solarnetwork.security.AuthorizationUtils.computeHmacSha256;
-import static org.apache.commons.codec.binary.Hex.encodeHexString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasKey;
@@ -43,10 +42,10 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matchers;
@@ -57,8 +56,8 @@ import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.SqlReturnResultSet;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
@@ -67,7 +66,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for authentication related database stored procedures.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 
@@ -134,7 +133,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 
 	private static String signatureData(Instant date, String canonicalRequestData) {
 		return "SNWS2-HMAC-SHA256\n" + AUTHORIZATION_TIMESTAMP_FORMATTER.format(date) + "\n"
-				+ Hex.encodeHexString(DigestUtils.sha256(canonicalRequestData));
+				+ HexFormat.of().formatHex(DigestUtils.sha256(canonicalRequestData));
 
 	}
 
@@ -210,7 +209,7 @@ public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
 
 		// then
 		assertThat("Signature", result,
-				hasEntry("data", (Object) encodeHexString(computeHmacSha256(key, "foobar"))));
+				hasEntry("data", (Object) HexFormat.of().formatHex(computeHmacSha256(key, "foobar"))));
 	}
 
 	@Test

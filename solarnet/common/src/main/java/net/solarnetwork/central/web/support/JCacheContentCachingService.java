@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +53,6 @@ import javax.cache.event.CacheEntryListener;
 import javax.cache.event.CacheEntryListenerException;
 import javax.cache.event.CacheEntryRemovedListener;
 import javax.cache.event.CacheEntryUpdatedListener;
-import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -73,7 +73,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -334,7 +334,7 @@ public class JCacheContentCachingService
 		digest.update(request.getRequestURI().getBytes());
 		addNormalizedQueryParameters(request, digest);
 		addNormalizedAccept(request, digest);
-		return Hex.encodeHexString(digest.digest());
+		return HexFormat.of().formatHex(digest.digest());
 	}
 
 	@Override

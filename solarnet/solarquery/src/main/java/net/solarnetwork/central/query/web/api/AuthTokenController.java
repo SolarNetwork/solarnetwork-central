@@ -26,9 +26,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,7 +46,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * REST controller for authorization token API.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1AuthTokenController")
 @RequestMapping(value = "/api/v1/sec/auth-tokens")
@@ -87,7 +87,7 @@ public class AuthTokenController {
 		byte[] key = tokenService.computeAuthenticationTokenSigningKey(AuthenticationScheme.V2, actor,
 				Collections.singletonMap(AuthenticationTokenService.SIGN_DATE_PROP, date));
 		Map<String, Object> data = new LinkedHashMap<>(3);
-		data.put("key", Hex.encodeHexString(key));
+		data.put("key", HexFormat.of().formatHex(key));
 		return Response.response(data);
 	}
 
