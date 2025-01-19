@@ -68,7 +68,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, PingTest {
@@ -300,7 +300,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 					stats.increment(ContentCachingFilterStats.LockPoolBorrows, true);
 					lockPoolMinize.accumulate(lockPool.size());
 					if ( log.isTraceEnabled() ) {
-						log.trace("{} [{}] Borrowed lock {} from pool", requestId, requestUri,
+						log.trace("{} {} [{}] Borrowed lock {} from pool", requestId, key, requestUri,
 								l.getId());
 					}
 				}
@@ -316,7 +316,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 			return;
 		}
 
-		log.trace("{} [{}] Using lock {} for key {}", requestId, requestUri, lock.getId(), key);
+		log.trace("{} {} [{}] Using lock {} for key {}", requestId, key, requestUri, lock.getId(), key);
 
 		// increment concurrent count for key
 		lock.incrementCount();
@@ -348,7 +348,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		// process request
 		try {
 			if ( contentCachingService.sendCachedResponse(key, origRequest, origResponse) != null ) {
-				log.debug("{} [{}] Sent cached response", requestId, requestUri);
+				log.debug("{} {} [{}] Sent cached response", requestId, key, requestUri);
 				return;
 			}
 
@@ -356,13 +356,13 @@ public class ContentCachingFilter implements Filter, PingTest {
 			origResponse.setHeader(CONTENT_CACHE_HEADER, CONTENT_CACHE_HEADER_MISS);
 			final ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(
 					origResponse, true);
-			log.debug("{} [{}] Cache miss, passing on for processing", requestId, requestUri);
+			log.debug("{} {} [{}] Cache miss, passing on for processing", requestId, key, requestUri);
 			chain.doFilter(origRequest, wrappedResponse);
 
 			// cache the response, if OK range
 			HttpStatus status = HttpStatus.valueOf(origResponse.getStatus());
 			if ( status.is2xxSuccessful() ) {
-				log.debug("{} [{}] Caching response", requestId, requestUri);
+				log.debug("{} {} [{}] Caching response", requestId, key, requestUri);
 				HttpHeaders headers = wrappedResponse.getHttpHeaders();
 				if ( origResponse.getContentType() != null ) {
 					headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
@@ -374,9 +374,9 @@ public class ContentCachingFilter implements Filter, PingTest {
 			// send the response body
 			if ( log.isDebugEnabled() ) {
 				if ( status.is2xxSuccessful() ) {
-					log.debug("{} [{}] Response cached and sent", requestId, requestUri);
+					log.debug("{} {} [{}] Response cached and sent", requestId, key, requestUri);
 				} else {
-					log.debug("{} [{}] Response sent without caching", requestId, requestUri);
+					log.debug("{} {} [{}] Response sent without caching", requestId, key, requestUri);
 				}
 			}
 		} finally {
@@ -389,16 +389,16 @@ public class ContentCachingFilter implements Filter, PingTest {
 		final int count = lock.decrementCount();
 		if ( count < 1 ) {
 			if ( requestLocks.remove(key, lock) ) {
-				log.trace("{} [{}] Removed lock for key {}", requestId, requestUri, key);
-				returnLockToPool(lock, requestId, requestUri);
+				log.trace("{} {} [{}] Removed lock for key", requestId, key, requestUri);
+				returnLockToPool(key, lock, requestId, requestUri);
 			}
 		}
 	}
 
-	private void returnLockToPool(LockAndCount lock, Long requestId, String requestUri) {
+	private void returnLockToPool(String key, LockAndCount lock, Long requestId, String requestUri) {
 		if ( lockPool.offer(lock) ) {
 			stats.increment(ContentCachingFilterStats.LockPoolReturns, true);
-			log.trace("{} [{}] Lock {} returned to pool", requestId, requestUri, lock.getId());
+			log.trace("{} {} [{}] Lock {} returned to pool", requestId, key, requestUri, lock.getId());
 		}
 	}
 
