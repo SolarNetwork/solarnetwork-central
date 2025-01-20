@@ -68,7 +68,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 3.3
+ * @version 3.4
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, PingTest {
@@ -316,7 +316,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 			return;
 		}
 
-		log.trace("{} {} [{}] Using lock {} for key {}", requestId, key, requestUri, lock.getId(), key);
+		log.trace("{} {} [{}] Using lock {} for key", requestId, key, requestUri, lock.getId());
 
 		// increment concurrent count for key
 		lock.incrementCount();
@@ -357,7 +357,13 @@ public class ContentCachingFilter implements Filter, PingTest {
 			final ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(
 					origResponse, true);
 			log.debug("{} {} [{}] Cache miss, passing on for processing", requestId, key, requestUri);
-			chain.doFilter(origRequest, wrappedResponse);
+			try {
+				chain.doFilter(origRequest, wrappedResponse);
+			} catch ( IOException e ) {
+				log.warn("{} {} [{}] IOException during processing, not caching", requestId, key,
+						requestUri, e);
+				return;
+			}
 
 			// cache the response, if OK range
 			HttpStatus status = HttpStatus.valueOf(origResponse.getStatus());
