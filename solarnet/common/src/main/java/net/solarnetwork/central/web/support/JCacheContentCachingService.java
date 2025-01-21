@@ -73,7 +73,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * Caching service backed by a {@link javax.cache.Cache}.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class JCacheContentCachingService
 		implements ContentCachingService, PingTest, CacheEntryCreatedListener<String, CachedContent>,
@@ -153,7 +153,7 @@ public class JCacheContentCachingService
 		for ( CacheEntryEvent<? extends String, ? extends CachedContent> event : events ) {
 			CachedContent old = event.getOldValue();
 			if ( old != null ) {
-				stats.add(ContentCacheStats.EntryCount, -1L);
+				stats.increment(ContentCacheStats.EntryCount, -1L);
 				stats.add(ContentCacheStats.ByteSize, -old.getContentLength(), true);
 			}
 			CachedContent curr = event.getValue();
@@ -190,7 +190,7 @@ public class JCacheContentCachingService
 
 	@Override
 	public void onCacheEviction(String key, CachedContent value) {
-		stats.add(ContentCacheStats.EntryCount, -1L);
+		stats.increment(ContentCacheStats.EntryCount, -1L);
 		if ( value != null ) {
 			stats.add(ContentCacheStats.ByteSize, -value.getContentLength(), true);
 		}
