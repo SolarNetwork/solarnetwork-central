@@ -53,6 +53,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -63,8 +64,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Base64InputStream;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -114,7 +113,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoRegistrationBizTests {
 
@@ -686,7 +685,8 @@ public class DaoRegistrationBizTests {
 		InputStream in = null;
 		Map<String, Object> associationData = null;
 		try {
-			in = new GZIPInputStream(new Base64InputStream(new ByteArrayInputStream(code.getBytes())));
+			in = new GZIPInputStream(
+					Base64.getMimeDecoder().wrap(new ByteArrayInputStream(code.getBytes())));
 			associationData = xmlHelper.parseXml(in);
 		} finally {
 			if ( in != null ) {
@@ -1042,7 +1042,7 @@ public class DaoRegistrationBizTests {
 				cert.getNetworkCertificateSubjectDN());
 		assertEquals(UserNodeCertificateStatus.v.getValue(), cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertEquals(Base64.encodeBase64String(renewedCertificate.getKeystoreData()),
+		assertEquals(Base64.getEncoder().encodeToString(renewedCertificate.getKeystoreData()),
 				cert.getNetworkCertificate());
 
 		Instruction instr = instrCap.getValue();

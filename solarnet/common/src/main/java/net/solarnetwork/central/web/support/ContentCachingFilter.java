@@ -68,7 +68,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  * 
  * @author matt
- * @version 3.3
+ * @version 3.4
  * @since 1.16
  */
 public class ContentCachingFilter implements Filter, PingTest {
@@ -301,7 +301,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 					lockPoolMinize.accumulate(lockPool.size());
 					if ( log.isTraceEnabled() ) {
 						log.trace("{} {} [{}] Borrowed lock {} from pool", requestId, key, requestUri,
-								l.getId());
+								l.id);
 					}
 				}
 				return l;
@@ -311,12 +311,13 @@ public class ContentCachingFilter implements Filter, PingTest {
 		});
 		if ( lock == null ) {
 			// TODO: handle JSON response explicitly
+			log.trace("{} {} [{}] Timeout obtaining lock", requestId, key, requestUri);
 			origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 					"Timeout waiting for cache lock");
 			return;
 		}
 
-		log.trace("{} {} [{}] Using lock {} for key {}", requestId, key, requestUri, lock.getId(), key);
+		log.trace("{} {} [{}] Using lock {}", requestId, key, requestUri, lock.id);
 
 		// increment concurrent count for key
 		lock.incrementCount();
@@ -325,6 +326,8 @@ public class ContentCachingFilter implements Filter, PingTest {
 		try {
 			if ( !lock.tryLock(requestLockTimeout, TimeUnit.MILLISECONDS) ) {
 				try {
+					log.trace("{} {} [{}] Timeout acquiring lock {}", requestId, key, requestUri,
+							lock.id);
 					origResponse.sendError(HttpStatus.TOO_MANY_REQUESTS.value(),
 							"Timeout acquiring cache lock");
 				} finally {
@@ -367,8 +370,15 @@ public class ContentCachingFilter implements Filter, PingTest {
 				if ( origResponse.getContentType() != null ) {
 					headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
 				}
-				contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
-						headers, wrappedResponse.getContentInputStream(), CompressionType.GZIP);
+				try {
+					contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
+							headers, wrappedResponse.getContentInputStream(), CompressionType.GZIP);
+				} catch ( IOException e ) {
+					log.warn("{} {} [{}] {} during response processing, not caching: {}", requestId, key,
+							requestUri, e.getClass().getName(), e.getMessage());
+					return;
+				}
+
 			}
 
 			// send the response body
@@ -389,7 +399,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		final int count = lock.decrementCount();
 		if ( count < 1 ) {
 			if ( requestLocks.remove(key, lock) ) {
-				log.trace("{} {} [{}] Removed lock for key", requestId, key, requestUri);
+				log.trace("{} {} [{}] Removed request lock {}", requestId, key, requestUri, lock.id);
 				returnLockToPool(key, lock, requestId, requestUri);
 			}
 		}
@@ -398,7 +408,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	private void returnLockToPool(String key, LockAndCount lock, Long requestId, String requestUri) {
 		if ( lockPool.offer(lock) ) {
 			stats.increment(ContentCachingFilterStats.LockPoolReturns, true);
-			log.trace("{} {} [{}] Lock {} returned to pool", requestId, key, requestUri, lock.getId());
+			log.trace("{} {} [{}] Lock {} returned to pool", requestId, key, requestUri, lock.id);
 		}
 	}
 

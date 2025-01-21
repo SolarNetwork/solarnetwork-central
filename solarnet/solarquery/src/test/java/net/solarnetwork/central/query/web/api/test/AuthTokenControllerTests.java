@@ -33,8 +33,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Base64;
+import java.util.HexFormat;
 import java.util.UUID;
-import org.apache.commons.codec.binary.Hex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +57,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * Test cases for the {@link AuthTokenController}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -95,7 +95,7 @@ public class AuthTokenControllerTests extends AbstractJUnit5CentralTransactional
 				.queryParams(queryParams.toSingleValueMap())
 				.saveSigningKey(TEST_TOKEN_SECRET);
 		String authHeader = auth.build();
-		String expectedKey = Hex.encodeHexString(auth.computeSigningKey(
+		String expectedKey = HexFormat.of().formatHex(auth.computeSigningKey(
 				reqDate.atStartOfDay(ZoneOffset.UTC).toInstant(), TEST_TOKEN_SECRET));
 		
 		// WHEN

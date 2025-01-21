@@ -25,7 +25,7 @@ package net.solarnetwork.central.in.web.api;
 import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import org.apache.commons.codec.binary.Base64;
+import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +112,7 @@ public class NodeCertificateController {
 	@ResponseBody
 	public Response<Object> renewActiveCert(@RequestParam("password") String keystorePassword,
 			@RequestParam("keystore") String base64Keystore) {
-		byte[] data = Base64.decodeBase64(base64Keystore);
+		byte[] data = Base64.getMimeDecoder().decode(base64Keystore);
 		try {
 			registrationBiz.renewNodeCertificate(new ByteArrayInputStream(data), keystorePassword);
 			return response(null);

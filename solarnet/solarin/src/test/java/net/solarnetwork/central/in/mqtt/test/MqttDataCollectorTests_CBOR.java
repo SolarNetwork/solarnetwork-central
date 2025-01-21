@@ -32,10 +32,10 @@ import static org.hamcrest.Matchers.nullValue;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.apache.commons.codec.binary.Hex;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -63,7 +63,7 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link MqttDataCollector} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MqttDataCollectorTests_CBOR {
 
@@ -117,7 +117,8 @@ public class MqttDataCollectorTests_CBOR {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce, Hex.decodeHex(data));
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				HexFormat.of().parseHex(data));
 		service.onMqttMessage(msg);
 
 		// then
@@ -158,7 +159,8 @@ public class MqttDataCollectorTests_CBOR {
 
 		// when
 		String topic = datumTopic(TEST_NODE_ID);
-		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce, Hex.decodeHex(data));
+		MqttMessage msg = new BasicMqttMessage(topic, false, MqttQos.AtLeastOnce,
+				HexFormat.of().parseHex(data));
 		service.onMqttMessage(msg);
 
 		// then

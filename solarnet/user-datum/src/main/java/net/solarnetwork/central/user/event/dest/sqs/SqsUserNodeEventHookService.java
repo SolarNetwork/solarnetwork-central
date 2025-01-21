@@ -26,12 +26,12 @@ import static net.solarnetwork.central.user.event.dest.sqs.SqsStats.BasicCount.N
 import static net.solarnetwork.central.user.event.dest.sqs.SqsStats.BasicCount.NodeEventsPublished;
 import static net.solarnetwork.central.user.event.dest.sqs.SqsStats.BasicCount.NodeEventsReceived;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.cache.Cache;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.user.event.biz.UserNodeEventHookService;
@@ -52,7 +52,7 @@ import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
  * SQS implementation of {@link UserNodeEventHookService}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SqsUserNodeEventHookService extends
 		BaseSettingsSpecifierLocalizedServiceInfoProvider<String> implements UserNodeEventHookService {
@@ -174,7 +174,7 @@ public class SqsUserNodeEventHookService extends
 			buf.append(accessKey);
 			buf.append(secretKey);
 		}
-		return Base64.encodeBase64String(DigestUtils.sha1(buf.toString()));
+		return Base64.getEncoder().encodeToString(DigestUtils.sha1(buf.toString()));
 	}
 
 	private SqsClient createClient(SqsDestinationProperties props) {
