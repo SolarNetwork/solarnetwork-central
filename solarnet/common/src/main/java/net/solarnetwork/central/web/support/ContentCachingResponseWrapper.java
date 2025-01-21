@@ -238,7 +238,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		@Override
 		public void write(int b) throws IOException {
 			try {
-				if ( outputStreamException == null ) {
+				if ( !cacheStreamFinished && outputStreamException == null ) {
 					cacheStream.write(b);
 				}
 				this.os.write(b);
@@ -253,7 +253,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
 			try {
-				if ( outputStreamException == null ) {
+				if ( !cacheStreamFinished && outputStreamException == null ) {
 					cacheStream.write(b, off, len);
 				}
 				this.os.write(b, off, len);
@@ -278,7 +278,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		@Override
 		public void flush() throws IOException {
 			try {
-				if ( outputStreamException == null ) {
+				if ( !cacheStreamFinished && outputStreamException == null ) {
 					cacheStream.flush();
 				}
 				super.flush();
