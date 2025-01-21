@@ -360,13 +360,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 			final ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(
 					origResponse, true);
 			log.debug("{} {} [{}] Cache miss, passing on for processing", requestId, key, requestUri);
-			try {
-				chain.doFilter(origRequest, wrappedResponse);
-			} catch ( IOException e ) {
-				log.warn("{} {} [{}] IOException during processing, not caching", requestId, key,
-						requestUri, e);
-				return;
-			}
+			chain.doFilter(origRequest, wrappedResponse);
 
 			// cache the response, if OK range
 			HttpStatus status = HttpStatus.valueOf(origResponse.getStatus());
@@ -376,8 +370,15 @@ public class ContentCachingFilter implements Filter, PingTest {
 				if ( origResponse.getContentType() != null ) {
 					headers.setContentType(MediaType.parseMediaType(origResponse.getContentType()));
 				}
-				contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
-						headers, wrappedResponse.getContentInputStream(), CompressionType.GZIP);
+				try {
+					contentCachingService.cacheResponse(key, origRequest, wrappedResponse.getStatus(),
+							headers, wrappedResponse.getContentInputStream(), CompressionType.GZIP);
+				} catch ( IOException e ) {
+					log.warn("{} {} [{}] {} during response processing, not caching: {}", requestId, key,
+							requestUri, e.getClass().getName(), e.getMessage());
+					return;
+				}
+
 			}
 
 			// send the response body

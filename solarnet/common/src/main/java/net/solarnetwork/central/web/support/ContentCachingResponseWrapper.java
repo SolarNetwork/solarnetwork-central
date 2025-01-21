@@ -55,7 +55,7 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.2
  */
 public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
@@ -66,6 +66,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	private ServletOutputStream outputStream;
 	private PrintWriter outputWriter;
 	private boolean cacheStreamFinished;
+	private IOException outputStreamException;
 
 	/**
 	 * Create a new ContentCachingResponseWrapper for the given servlet
@@ -148,20 +149,37 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	@Override
 	public void resetBuffer() {
-		this.content.reset();
+		super.resetBuffer();
+		resetContent();
 	}
 
 	@Override
 	public void reset() {
 		super.reset();
+		resetContent();
+	}
+
+	private void resetContent() {
+		try {
+			finishContentStream();
+		} catch ( IOException e ) {
+			// ignore
+		}
 		this.content.reset();
 	}
 
 	private void finishContentStream() throws IOException {
 		if ( !cacheStreamFinished && this.cacheStream != this.content ) {
-			this.cacheStream.flush();
-			this.cacheStream.close();
+			try {
+				this.cacheStream.flush();
+				this.cacheStream.close();
+			} catch ( IOException e ) {
+				// ignore
+			}
 			cacheStreamFinished = true;
+		}
+		if ( outputStreamException != null ) {
+			throw outputStreamException;
 		}
 	}
 
@@ -217,14 +235,24 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 		@Override
 		public void write(int b) throws IOException {
-			cacheStream.write(b);
-			this.os.write(b);
+			try {
+				cacheStream.write(b);
+				this.os.write(b);
+			} catch ( IOException e ) {
+				outputStreamException = e;
+				throw e;
+			}
 		}
 
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
-			cacheStream.write(b, off, len);
-			this.os.write(b, off, len);
+			try {
+				cacheStream.write(b, off, len);
+				this.os.write(b, off, len);
+			} catch ( IOException e ) {
+				outputStreamException = e;
+				throw e;
+			}
 		}
 
 		@Override
@@ -239,14 +267,24 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 		@Override
 		public void flush() throws IOException {
-			cacheStream.flush();
-			super.flush();
+			try {
+				cacheStream.flush();
+				super.flush();
+			} catch ( IOException e ) {
+				outputStreamException = e;
+				throw e;
+			}
 		}
 
 		@Override
 		public void close() throws IOException {
-			finishContentStream();
-			super.close();
+			try {
+				finishContentStream();
+				super.close();
+			} catch ( IOException e ) {
+				outputStreamException = e;
+				throw e;
+			}
 		}
 
 	}
