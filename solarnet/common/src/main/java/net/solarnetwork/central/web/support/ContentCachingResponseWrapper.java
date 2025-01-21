@@ -55,7 +55,7 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
  * </p>
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.2
  */
 public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
@@ -149,14 +149,14 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	@Override
 	public void resetBuffer() {
-		super.resetBuffer();
 		resetContent();
+		super.resetBuffer();
 	}
 
 	@Override
 	public void reset() {
-		super.reset();
 		resetContent();
+		super.reset();
 	}
 
 	private void resetContent() {
@@ -169,10 +169,10 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	}
 
 	private void finishContentStream() throws IOException {
-		if ( !cacheStreamFinished && this.cacheStream != this.content ) {
+		if ( !cacheStreamFinished && cacheStream != content && outputStreamException == null ) {
 			try {
-				this.cacheStream.flush();
-				this.cacheStream.close();
+				cacheStream.flush();
+				cacheStream.close();
 			} catch ( IOException e ) {
 				// ignore
 			}
@@ -203,8 +203,10 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	 * Return the current size of the cached content.
 	 */
 	public int getContentSize() throws IOException {
-		this.cacheStream.flush();
-		return this.content.size();
+		if ( outputStreamException == null ) {
+			cacheStream.flush();
+		}
+		return content.size();
 	}
 
 	/**
@@ -236,10 +238,14 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		@Override
 		public void write(int b) throws IOException {
 			try {
-				cacheStream.write(b);
+				if ( !cacheStreamFinished && outputStreamException == null ) {
+					cacheStream.write(b);
+				}
 				this.os.write(b);
 			} catch ( IOException e ) {
-				outputStreamException = e;
+				if ( outputStreamException == null ) {
+					outputStreamException = e;
+				}
 				throw e;
 			}
 		}
@@ -247,10 +253,14 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		@Override
 		public void write(byte[] b, int off, int len) throws IOException {
 			try {
-				cacheStream.write(b, off, len);
+				if ( !cacheStreamFinished && outputStreamException == null ) {
+					cacheStream.write(b, off, len);
+				}
 				this.os.write(b, off, len);
 			} catch ( IOException e ) {
-				outputStreamException = e;
+				if ( outputStreamException == null ) {
+					outputStreamException = e;
+				}
 				throw e;
 			}
 		}
@@ -268,10 +278,14 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		@Override
 		public void flush() throws IOException {
 			try {
-				cacheStream.flush();
+				if ( !cacheStreamFinished && outputStreamException == null ) {
+					cacheStream.flush();
+				}
 				super.flush();
 			} catch ( IOException e ) {
-				outputStreamException = e;
+				if ( outputStreamException == null ) {
+					outputStreamException = e;
+				}
 				throw e;
 			}
 		}
@@ -282,7 +296,9 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 				finishContentStream();
 				super.close();
 			} catch ( IOException e ) {
-				outputStreamException = e;
+				if ( outputStreamException == null ) {
+					outputStreamException = e;
+				}
 				throw e;
 			}
 		}
