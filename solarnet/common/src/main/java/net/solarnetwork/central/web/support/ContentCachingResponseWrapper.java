@@ -149,14 +149,14 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	@Override
 	public void resetBuffer() {
-		super.resetBuffer();
 		resetContent();
+		super.resetBuffer();
 	}
 
 	@Override
 	public void reset() {
-		super.reset();
 		resetContent();
+		super.reset();
 	}
 
 	private void resetContent() {
