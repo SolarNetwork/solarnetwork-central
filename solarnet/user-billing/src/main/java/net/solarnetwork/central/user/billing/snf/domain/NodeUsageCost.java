@@ -397,7 +397,8 @@ public class NodeUsageCost implements Serializable {
 	@Override
 	public int hashCode() {
 		return Objects.hash(datumDaysStoredCost, datumOutCost, datumPropertiesInCost, ocppChargersCost,
-				oscpCapacityGroupsCost, oscpCapacityCost, dnp3DataPointsCost, cloudIntegrationsDataCost);
+				oscpCapacityGroupsCost, oscpCapacityCost, dnp3DataPointsCost, oauthClientCredentialsCost,
+				cloudIntegrationsDataCost);
 	}
 
 	@Override
@@ -416,6 +417,7 @@ public class NodeUsageCost implements Serializable {
 				&& Objects.equals(oscpCapacityGroupsCost, other.oscpCapacityGroupsCost)
 				&& Objects.equals(oscpCapacityCost, other.oscpCapacityCost)
 				&& Objects.equals(dnp3DataPointsCost, other.dnp3DataPointsCost)
+				&& Objects.equals(oauthClientCredentialsCost, other.oauthClientCredentialsCost)
 				&& Objects.equals(cloudIntegrationsDataCost, other.cloudIntegrationsDataCost);
 	}
 
@@ -437,6 +439,8 @@ public class NodeUsageCost implements Serializable {
 		builder.append(oscpCapacityCost);
 		builder.append(", dnp3DataPointsCost=");
 		builder.append(dnp3DataPointsCost);
+		builder.append(", oauthClientCredentialsCost=");
+		builder.append(oauthClientCredentialsCost);
 		builder.append(", cloudIntegrationsDataCost=");
 		builder.append(cloudIntegrationsDataCost);
 		builder.append("}");
