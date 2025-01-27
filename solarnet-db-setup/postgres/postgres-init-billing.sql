@@ -416,6 +416,7 @@ $$
 		, '2024-02-01'::DATE
 		, '2024-10-01'::DATE
 		, '2024-11-01'::DATE
+		, '2025-02-01'::DATE
 	]);
 $$;
 
@@ -636,7 +637,7 @@ BEGIN
 			, ('oauth-client-creds', 	100::BIGINT, 			5::NUMERIC)
 			, ('oauth-client-creds', 	500::BIGINT, 			2.5::NUMERIC)
 		) AS t(min, meter_key, cost);
-	ELSE
+	ELSEIF ts < '2025-02-01'::DATE THEN
 		RETURN QUERY SELECT *, '2024-11-01'::DATE FROM ( VALUES
 			  ('datum-props-in', 		0::BIGINT, 				0.00000575::NUMERIC)
 			, ('datum-props-in', 		500000::BIGINT, 		0.00000345::NUMERIC)
@@ -691,6 +692,67 @@ BEGIN
 			, ('oauth-client-creds', 	0::BIGINT, 				10::NUMERIC)
 			, ('oauth-client-creds', 	100::BIGINT, 			5::NUMERIC)
 			, ('oauth-client-creds', 	500::BIGINT, 			2.5::NUMERIC)
+		) AS t(min, meter_key, cost);
+	ELSE
+		RETURN QUERY SELECT *, '2025-02-01'::DATE FROM ( VALUES
+			  ('datum-props-in', 		0::BIGINT, 				0.00000575::NUMERIC)
+			, ('datum-props-in', 		500000::BIGINT, 		0.00000345::NUMERIC)
+			, ('datum-props-in', 		10000000::BIGINT, 		0.00000092::NUMERIC)
+			, ('datum-props-in', 		500000000::BIGINT, 		0.00000023::NUMERIC)
+
+			, ('datum-out',				0::BIGINT, 				0.000000115::NUMERIC)
+			, ('datum-out',				10000000::BIGINT, 		0.000000046::NUMERIC)
+			, ('datum-out',				1000000000::BIGINT, 	0.000000005::NUMERIC)
+			, ('datum-out',				100000000000::BIGINT, 	0.000000002::NUMERIC)
+
+			, ('datum-days-stored', 	0::BIGINT, 				0.0000000575::NUMERIC)
+			, ('datum-days-stored', 	10000000::BIGINT, 		0.0000000115::NUMERIC)
+			, ('datum-days-stored', 	1000000000::BIGINT, 	0.00000000345::NUMERIC)
+			, ('datum-days-stored', 	100000000000::BIGINT,	0.0000000023::NUMERIC)
+
+			, ('instr-issued', 			0::BIGINT, 				0.0001::NUMERIC)
+			, ('instr-issued', 			10000::BIGINT, 			0.00005::NUMERIC)
+			, ('instr-issued', 			100000::BIGINT, 		0.00002::NUMERIC)
+			, ('instr-issued', 			1000000::BIGINT,		0.00001::NUMERIC)
+
+			, ('flux-data-in', 			0::BIGINT, 				0.00000001::NUMERIC)
+			, ('flux-data-in', 			1000000000::BIGINT, 	0.000000006::NUMERIC)
+			, ('flux-data-in', 			10000000000::BIGINT, 	0.000000003::NUMERIC)
+			, ('flux-data-in', 			100000000000::BIGINT,	0.0000000015::NUMERIC)
+
+			, ('flux-data-out', 		0::BIGINT, 				0.000000009::NUMERIC)
+			, ('flux-data-out', 		1000000000::BIGINT, 	0.0000000055::NUMERIC)
+			, ('flux-data-out', 		10000000000::BIGINT, 	0.0000000025::NUMERIC)
+			, ('flux-data-out', 		100000000000::BIGINT,	0.0000000012::NUMERIC)
+
+			, ('ocpp-chargers', 		0::BIGINT, 				2::NUMERIC)
+			, ('ocpp-chargers', 		250::BIGINT, 			1::NUMERIC)
+			, ('ocpp-chargers', 		12500::BIGINT, 			0.5::NUMERIC)
+			, ('ocpp-chargers', 		500000::BIGINT, 		0.3::NUMERIC)
+
+			, ('dnp3-data-points', 		0::BIGINT, 				1::NUMERIC)
+			, ('dnp3-data-points', 		20::BIGINT, 			0.6::NUMERIC)
+			, ('dnp3-data-points', 		100::BIGINT, 			0.4::NUMERIC)
+			, ('dnp3-data-points', 		500::BIGINT, 			0.2::NUMERIC)
+
+			, ('oscp-cap-groups', 		0::BIGINT, 				2::NUMERIC)
+			, ('oscp-cap-groups', 		100::BIGINT, 			1.5::NUMERIC)
+			, ('oscp-cap-groups', 		500::BIGINT, 			1.25::NUMERIC)
+			, ('oscp-cap-groups', 		1250::BIGINT, 			1::NUMERIC)
+
+			, ('oscp-cap', 				0::BIGINT, 				0.00003::NUMERIC)
+			, ('oscp-cap', 				6000000::BIGINT, 		0.000025::NUMERIC)
+			, ('oscp-cap', 				40000000::BIGINT, 		0.0000175::NUMERIC)
+			, ('oscp-cap', 				100000000::BIGINT, 		0.00001::NUMERIC)
+
+			, ('oauth-client-creds', 	0::BIGINT, 				10::NUMERIC)
+			, ('oauth-client-creds', 	100::BIGINT, 			5::NUMERIC)
+			, ('oauth-client-creds', 	500::BIGINT, 			2.5::NUMERIC)
+
+			, ('c2c-data', 				0::BIGINT, 				0.00000020::NUMERIC)
+			, ('c2c-data', 				1000000000::BIGINT, 	0.00000009::NUMERIC)
+			, ('c2c-data', 				10000000000::BIGINT, 	0.00000003::NUMERIC)
+			, ('c2c-data', 				100000000000::BIGINT,	0.000000015::NUMERIC)
 		) AS t(min, meter_key, cost);
 	END IF;
 END
@@ -977,7 +1039,8 @@ $$
 			WHERE u.id = userid
 		)
 		SELECT
-			(SUM(a.cnt) FILTER (WHERE a.service = 'flxo'))::BIGINT AS flux_data_out
+			  (SUM(a.cnt) FILTER (WHERE a.service = 'flxo'))::BIGINT AS flux_data_out
+			, (SUM(a.cnt) FILTER (WHERE a.service = 'ccio'))::BIGINT AS c2c_data
 		FROM solardatm.aud_user_daily a, tz
 		WHERE a.user_id = userid
 			AND a.ts_start >= ts_min AT TIME ZONE tz.time_zone
@@ -1015,6 +1078,7 @@ $$
 			WHEN 'dnp3-data-points' THEN dnp3.dnp3_data_point_count
 			WHEN 'oscp-cap' THEN oscp_cap.oscp_cap
 			WHEN 'oauth-client-creds' THEN oauth.oauth_client_creds_count
+			WHEN 'c2c-data' THEN usvc.c2c_data
 			ELSE NULL END - tiers.min, 0), COALESCE(LEAD(tiers.min) OVER win - tiers.min, GREATEST(CASE meter_key
 			WHEN 'datum-props-in' THEN n.prop_in
 			WHEN 'datum-days-stored' THEN n.datum_stored
@@ -1027,6 +1091,7 @@ $$
 			WHEN 'dnp3-data-points' THEN dnp3.dnp3_data_point_count
 			WHEN 'oscp-cap' THEN oscp_cap.oscp_cap
 			WHEN 'oauth-client-creds' THEN oauth.oauth_client_creds_count
+			WHEN 'c2c-data' THEN usvc.c2c_data
 			ELSE NULL END - tiers.min, 0))) AS tier_count
 		, tiers.cost AS tier_rate
 		, LEAST(GREATEST(CASE meter_key
@@ -1041,6 +1106,7 @@ $$
 			WHEN 'dnp3-data-points' THEN dnp3.dnp3_data_point_count
 			WHEN 'oscp-cap' THEN oscp_cap.oscp_cap
 			WHEN 'oauth-client-creds' THEN oauth.oauth_client_creds_count
+			WHEN 'c2c-data' THEN usvc.c2c_data
 			ELSE NULL END - tiers.min, 0), COALESCE(LEAD(tiers.min) OVER win - tiers.min, GREATEST(CASE meter_key
 			WHEN 'datum-props-in' THEN n.prop_in
 			WHEN 'datum-days-stored' THEN n.datum_stored
@@ -1053,6 +1119,7 @@ $$
 			WHEN 'dnp3-data-points' THEN dnp3.dnp3_data_point_count
 			WHEN 'oscp-cap' THEN oscp_cap.oscp_cap
 			WHEN 'oauth-client-creds' THEN oauth.oauth_client_creds_count
+			WHEN 'c2c-data' THEN usvc.c2c_data
 			ELSE NULL END - tiers.min, 0))) * tiers.cost AS tier_cost
 	FROM usage n, ocpp, oscp, dnp3, oscp_cap, usvc, oauth
 	CROSS JOIN tiers
@@ -1117,7 +1184,11 @@ CREATE OR REPLACE FUNCTION solarbill.billing_usage_details(userid BIGINT, ts_min
 		oauth_client_creds				BIGINT,
 		oauth_client_creds_cost			NUMERIC,
 		oauth_client_creds_tiers		NUMERIC[],
-		oauth_client_creds_tiers_cost	NUMERIC[]
+		oauth_client_creds_tiers_cost	NUMERIC[],
+		c2c_data						BIGINT,
+		c2c_data_cost					NUMERIC,
+		c2c_data_tiers					NUMERIC[],
+		c2c_data_tiers_cost				NUMERIC[]
 	) LANGUAGE sql STABLE AS
 $$
 	WITH tier_costs AS (
@@ -1145,66 +1216,71 @@ $$
 		, SUM(CASE meter_key WHEN 'datum-days-stored' THEN total_count ELSE NULL END)::BIGINT AS datum_stored
 		, SUM(CASE meter_key WHEN 'datum-days-stored' THEN total_cost ELSE NULL END) AS datum_stored_cost
 		, solarcommon.first(CASE meter_key WHEN 'datum-days-stored' THEN tier_counts ELSE NULL END) AS datum_stored_tiers
-		, solarcommon.first(CASE meter_key WHEN 'datum-days-stored' THEN tier_costs ELSE NULL END) AS datum_stored_cost
+		, solarcommon.first(CASE meter_key WHEN 'datum-days-stored' THEN tier_costs ELSE NULL END) AS datum_stored_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'datum-out' THEN total_count ELSE NULL END)::BIGINT AS datum_out
 		, SUM(CASE meter_key WHEN 'datum-out' THEN total_cost ELSE NULL END) AS datum_out_cost
 		, solarcommon.first(CASE meter_key WHEN 'datum-out' THEN tier_counts ELSE NULL END) AS datum_out_tiers
-		, solarcommon.first(CASE meter_key WHEN 'datum-out' THEN tier_costs ELSE NULL END) AS datum_out_cost
+		, solarcommon.first(CASE meter_key WHEN 'datum-out' THEN tier_costs ELSE NULL END) AS datum_out_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'instr-issued' THEN total_count ELSE NULL END)::BIGINT AS instr_issued
 		, SUM(CASE meter_key WHEN 'instr-issued' THEN total_cost ELSE NULL END) AS instr_issued_cost
 		, solarcommon.first(CASE meter_key WHEN 'instr-issued' THEN tier_counts ELSE NULL END) AS instr_issued_tiers
-		, solarcommon.first(CASE meter_key WHEN 'instr-issued' THEN tier_costs ELSE NULL END) AS instr_issued_cost
+		, solarcommon.first(CASE meter_key WHEN 'instr-issued' THEN tier_costs ELSE NULL END) AS instr_issued_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'flux-data-in' THEN total_count ELSE NULL END)::BIGINT AS flux_data_in
 		, SUM(CASE meter_key WHEN 'flux-data-in' THEN total_cost ELSE NULL END) AS flux_data_in_cost
 		, solarcommon.first(CASE meter_key WHEN 'flux-data-in' THEN tier_counts ELSE NULL END) AS flux_data_in_tiers
-		, solarcommon.first(CASE meter_key WHEN 'flux-data-in' THEN tier_costs ELSE NULL END) AS flux_data_in_cost
+		, solarcommon.first(CASE meter_key WHEN 'flux-data-in' THEN tier_costs ELSE NULL END) AS flux_data_in_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'flux-data-out' THEN total_count ELSE NULL END)::BIGINT AS flux_data_out
 		, SUM(CASE meter_key WHEN 'flux-data-out' THEN total_cost ELSE NULL END) AS flux_data_out_cost
 		, solarcommon.first(CASE meter_key WHEN 'flux-data-out' THEN tier_counts ELSE NULL END) AS flux_data_out_tiers
-		, solarcommon.first(CASE meter_key WHEN 'flux-data-out' THEN tier_costs ELSE NULL END) AS flux_data_out_cost
+		, solarcommon.first(CASE meter_key WHEN 'flux-data-out' THEN tier_costs ELSE NULL END) AS flux_data_out_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'ocpp-chargers' THEN total_count ELSE NULL END)::BIGINT AS ocpp_chargers
 		, SUM(CASE meter_key WHEN 'ocpp-chargers' THEN total_cost ELSE NULL END) AS ocpp_chargers_cost
 		, solarcommon.first(CASE meter_key WHEN 'ocpp-chargers' THEN tier_counts ELSE NULL END) AS ocpp_chargers_tiers
-		, solarcommon.first(CASE meter_key WHEN 'ocpp-chargers' THEN tier_costs ELSE NULL END) AS ocpp_chargers_cost
+		, solarcommon.first(CASE meter_key WHEN 'ocpp-chargers' THEN tier_costs ELSE NULL END) AS ocpp_chargers_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'oscp-cap-groups' THEN total_count ELSE NULL END)::BIGINT AS oscp_cap_groups
 		, SUM(CASE meter_key WHEN 'oscp-cap-groups' THEN total_cost ELSE NULL END) AS oscp_cap_groups_cost
 		, solarcommon.first(CASE meter_key WHEN 'oscp-cap-groups' THEN tier_counts ELSE NULL END) AS oscp_cap_groups_tiers
-		, solarcommon.first(CASE meter_key WHEN 'oscp-cap-groups' THEN tier_costs ELSE NULL END) AS oscp_cap_groups_cost
+		, solarcommon.first(CASE meter_key WHEN 'oscp-cap-groups' THEN tier_costs ELSE NULL END) AS oscp_cap_groups_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'dnp3-data-points' THEN total_count ELSE NULL END)::BIGINT AS dnp3_data_points
 		, SUM(CASE meter_key WHEN 'dnp3-data-points' THEN total_cost ELSE NULL END) AS dnp3_data_points_cost
 		, solarcommon.first(CASE meter_key WHEN 'dnp3-data-points' THEN tier_counts ELSE NULL END) AS dnp3_data_points_tiers
-		, solarcommon.first(CASE meter_key WHEN 'dnp3-data-points' THEN tier_costs ELSE NULL END) AS dnp3_data_points_cost
+		, solarcommon.first(CASE meter_key WHEN 'dnp3-data-points' THEN tier_costs ELSE NULL END) AS dnp3_data_points_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'oscp-cap' THEN total_count ELSE NULL END)::BIGINT AS oscp_cap
 		, SUM(CASE meter_key WHEN 'oscp-cap' THEN total_cost ELSE NULL END) AS oscp_cap_cost
 		, solarcommon.first(CASE meter_key WHEN 'oscp-cap' THEN tier_counts ELSE NULL END) AS oscp_cap_tiers
-		, solarcommon.first(CASE meter_key WHEN 'oscp-cap' THEN tier_costs ELSE NULL END) AS oscp_cap_cost
+		, solarcommon.first(CASE meter_key WHEN 'oscp-cap' THEN tier_costs ELSE NULL END) AS oscp_cap_tiers_cost
 
 		, SUM(CASE meter_key WHEN 'oauth-client-creds' THEN total_count ELSE NULL END)::BIGINT AS oauth_client_creds
 		, SUM(CASE meter_key WHEN 'oauth-client-creds' THEN total_cost ELSE NULL END) AS oauth_client_creds_cost
 		, solarcommon.first(CASE meter_key WHEN 'oauth-client-creds' THEN tier_counts ELSE NULL END) AS oauth_client_creds_tiers
-		, solarcommon.first(CASE meter_key WHEN 'oauth-client-creds' THEN tier_costs ELSE NULL END) AS oauth_client_creds_cost
+		, solarcommon.first(CASE meter_key WHEN 'oauth-client-creds' THEN tier_costs ELSE NULL END) AS oauth_client_creds_tiers_cost
 
+		, SUM(CASE meter_key WHEN 'c2c-data' THEN total_count ELSE NULL END)::BIGINT AS c2c_data
+		, SUM(CASE meter_key WHEN 'c2c-data' THEN total_cost ELSE NULL END) AS c2c_data_cost
+		, solarcommon.first(CASE meter_key WHEN 'c2c-data' THEN tier_counts ELSE NULL END) AS c2c_data_tiers
+		, solarcommon.first(CASE meter_key WHEN 'c2c-data' THEN tier_costs ELSE NULL END) AS c2c_data_tiers_cost
 	FROM costs
 	HAVING
-		SUM(CASE meter_key WHEN 'datum-props-in' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'datum-days-stored' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'datum-out' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'instr-issued' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'flux-data-in' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'flux-data-out' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'ocpp-chargers' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'oscp-cap-groups' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'dnp3-data-points' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'oscp-cap' THEN total_count ELSE NULL END)::BIGINT > 0 OR
-		SUM(CASE meter_key WHEN 'oauth-client-creds' THEN total_count ELSE NULL END)::BIGINT > 0
+		   SUM(CASE meter_key WHEN 'datum-props-in' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'datum-days-stored' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'datum-out' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'instr-issued' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'flux-data-in' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'flux-data-out' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'ocpp-chargers' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'oscp-cap-groups' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'dnp3-data-points' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'oscp-cap' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'oauth-client-creds' THEN total_count ELSE NULL END)::BIGINT > 0
+		OR SUM(CASE meter_key WHEN 'c2c-data' THEN total_count ELSE NULL END)::BIGINT > 0
 $$;
 
 /**
