@@ -65,7 +65,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Web service API for billing management.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/sec/user/billing" })
@@ -99,7 +99,7 @@ public class BillingController {
 	 *        the Locale of the request
 	 * @return the billing system info
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo")
+	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo", params = "!key")
 	public Response<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		BillingBiz biz = billingBiz();

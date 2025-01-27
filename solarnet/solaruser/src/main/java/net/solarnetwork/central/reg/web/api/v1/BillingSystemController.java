@@ -41,7 +41,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for public billing system information.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @RestController("v1BillingSystemController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/pub/user/billing", "/api/v1/sec/user/billing" })
@@ -75,7 +75,7 @@ public class BillingSystemController {
 	 *        the Locale of the request
 	 * @return the billing system info
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo")
+	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo", params = "key")
 	public Result<BillingSystemInfo> billingSystemInfoForKey(@RequestParam("key") String key,
 			Locale locale) {
 		BillingBiz biz = billingBiz();
