@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.invoiceForSnfInvoice;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.usageMetadata;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.CLOUD_INTEGRATIONS_DATA_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_DAYS_STORED_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
@@ -107,7 +108,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -153,6 +154,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String oscpCapacityKey = OSCP_CAPACITY_KEY;
 	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
 	private String oauthClientCredentialsKey = OAUTH_CLIENT_CREDENTIALS_KEY;
+	private String cloudIntegrationsDataKey = CLOUD_INTEGRATIONS_DATA_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
@@ -361,6 +363,16 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						new BigDecimal(usage.getOauthClientCredentials()),
 						usage.getOauthClientCredentialsCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, OAUTH_CLIENT_CREDENTIALS_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getCloudIntegrationsData().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, cloudIntegrationsDataKey,
+						new BigDecimal(usage.getCloudIntegrationsData()),
+						usage.getCloudIntegrationsDataCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, CLOUD_INTEGRATIONS_DATA_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -665,7 +677,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for datum properties input usage.
 	 *
-	 * @return the key; defaults to {@link NodeUsage#DATUM_PROPS_IN_KEY}
+	 * @return the key; defaults to {@link NodeUsages#DATUM_PROPS_IN_KEY}
 	 */
 	public String getDatumPropertiesInKey() {
 		return datumPropertiesInKey;
@@ -689,7 +701,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for datum output usage.
 	 *
-	 * @return the key; defaults to {@link NodeUsage#DATUM_OUT_KEY}
+	 * @return the key; defaults to {@link NodeUsages#DATUM_OUT_KEY}
 	 */
 	public String getDatumOutKey() {
 		return datumOutKey;
@@ -713,7 +725,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	/**
 	 * Get the item key for datum days stored usage.
 	 *
-	 * @return the key; defaults to {@link NodeUsage#DATUM_DAYS_STORED_KEY}
+	 * @return the key; defaults to {@link NodeUsages#DATUM_DAYS_STORED_KEY}
 	 */
 	public String getDatumDaysStoredKey() {
 		return datumDaysStoredKey;
@@ -762,7 +774,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * Get the item key for SolarFlux data in.
 	 *
 	 * @return the the key, never {@literal null}; defaults to
-	 *         {@link NodeUsage#FLUX_DATA_IN_KEY}
+	 *         {@link NodeUsages#FLUX_DATA_IN_KEY}
 	 * @since 1.5
 	 */
 	public final String getFluxDataInKey() {
@@ -786,7 +798,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * Get the item key for SolarFlux data out.
 	 *
 	 * @return the key, never {@literal null}; defaults to
-	 *         {@link NodeUsage#FLUX_DATA_OUT_KEY}
+	 *         {@link NodeUsages#FLUX_DATA_OUT_KEY}
 	 * @since 1.5
 	 */
 	public final String getFluxDataOutKey() {
@@ -810,7 +822,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * Get the item key for OCPP chargers.
 	 *
 	 * @return the key, never {@literal null}; defaults to
-	 *         {@link NodeUsage#OCPP_CHARGERS_KEY}
+	 *         {@link NodeUsages#OCPP_CHARGERS_KEY}
 	 * @since 1.1
 	 */
 	public String getOcppChargersKey() {
@@ -883,7 +895,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * Get the item key for DNP3 Data Points.
 	 *
 	 * @return the key, never {@literal null}; defaults to
-	 *         {@link NodeUsage#DNP3_DATA_POINTS_KEY}
+	 *         {@link NodeUsages#DNP3_DATA_POINTS_KEY}
 	 * @since 1.2
 	 */
 	public String getDnp3DataPointsKey() {
@@ -907,7 +919,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	 * Get the item key for OAuth client credentials.
 	 *
 	 * @return the key, never {@literal null}; defaults to
-	 *         {@link NodeUsage#OAUTH_CLIENT_CREDENTIALS_KEY}
+	 *         {@link NodeUsages#OAUTH_CLIENT_CREDENTIALS_KEY}
 	 * @since 1.5
 	 */
 	public final String getOauthClientCredentialsKey() {
@@ -926,6 +938,31 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public final void setOauthClientCredentialsKey(String oauthClientCredentialsKey) {
 		this.oauthClientCredentialsKey = requireNonNullArgument(oauthClientCredentialsKey,
 				"oauthClientCredentialsKey");
+	}
+
+	/**
+	 * Get the item key for Cloud Integrations data.
+	 *
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsages#CLOUD_INTEGRATIONS_DATA_KEY}
+	 * @since 1.6
+	 */
+	public final String getCloudIntegrationsDataKey() {
+		return cloudIntegrationsDataKey;
+	}
+
+	/**
+	 * Set the item key for Cloud Integrations data.
+	 *
+	 * @param cloudIntegrationsDataKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.6
+	 */
+	public final void setCloudIntegrationsDataKey(String cloudIntegrationsDataKey) {
+		this.cloudIntegrationsDataKey = requireNonNullArgument(cloudIntegrationsDataKey,
+				"cloudIntegrationsDataKey");
 	}
 
 	/**
