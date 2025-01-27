@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.domain;
 
 import static java.util.Collections.emptyList;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
@@ -44,7 +45,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 
@@ -298,6 +299,58 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	}
 
 	/**
+	 * Get a set of datum offset from a given timestamp, optionally matching a
+	 * source ID pattern.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, never {@code null}
+	 * @since 1.1
+	 */
+	public Collection<DatumExpressionRoot> offsetMatching(String sourceIdPattern, int offset,
+			Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+			return emptyList();
+		}
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern,
+				timestamp, offset);
+		if ( found == null || found.isEmpty() ) {
+			return emptyList();
+		}
+		return found.stream().map(d -> copyWith(d)).toList();
+	}
+
+	/**
+	 * Test if datum exist offset from a given timestamp, optionally matching a
+	 * source ID pattern.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return {@code true} if at least one matching datum is available
+	 * @since 1.1
+	 */
+	public boolean hasOffsetMatching(String sourceIdPattern, int offset, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
+			return false;
+		}
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern,
+				timestamp, offset);
+		return (found != null && !found.isEmpty());
+	}
+
+	/**
 	 * Get the latest available datum per source ID.
 	 *
 	 * <p>
@@ -329,6 +382,47 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 */
 	public boolean hasLatestMatching(String sourceIdPattern) {
 		return hasOffsetMatching(sourceIdPattern, 0);
+	}
+
+	/**
+	 * Get the latest available datum per source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code offsetMatching(sourceIdPattern, timestamp, 0)}.
+	 * </p>
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, never {@literal null}
+	 * @see #offsetMatching(String, Instant, int)
+	 * @since 1.1
+	 */
+	public Collection<DatumExpressionRoot> latestMatching(String sourceIdPattern, Instant timestamp) {
+		return offsetMatching(sourceIdPattern, 0, timestamp);
+	}
+
+	/**
+	 * Test if datum exist.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code hasOffsetMatching(sourceIdPattern, timestamp, 0)}.
+	 * </p>
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return {@code true} if at least one matching datum is available
+	 * @see #hasOffsetMatching(String, Instant, int)
+	 * @since 1.1
+	 */
+	public boolean hasLatestMatching(String sourceIdPattern, Instant timestamp) {
+		return hasOffsetMatching(sourceIdPattern, 0, timestamp);
 	}
 
 	/**
@@ -370,6 +464,50 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	}
 
 	/**
+	 * Get an offset from the latest available datum matching a specific source
+	 * ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	public DatumExpressionRoot offset(String sourceId, int offset, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return null;
+		}
+		Datum d = datumStreamsAccessor.offset(sourceId, timestamp, offset);
+		return (d != null ? copyWith(d) : null);
+	}
+
+	/**
+	 * Test if an offset from the latest available datum matching a specific
+	 * source ID exists.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return {@code true} if a matching datum exists
+	 * @since 1.1
+	 */
+	public boolean hasOffset(String sourceId, int offset, Instant timestamp) {
+		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
+			return false;
+		}
+		Datum d = datumStreamsAccessor.offset(sourceId, timestamp, offset);
+		return (d != null);
+	}
+
+	/**
 	 * Get an offset from the latest available datum matching the source ID of
 	 * this expression root.
 	 *
@@ -405,7 +543,48 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	}
 
 	/**
-	 * Get the latest available datum matching a specific source IDs.
+	 * Get datum offset from a given timestamp matching the source ID of this
+	 * expression root.
+	 *
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	public DatumExpressionRoot offset(int offset, Instant timestamp) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return null;
+		}
+		return offset(me.getSourceId(), offset, timestamp);
+	}
+
+	/**
+	 * Test if datum offset from a given datum matching the source ID of this
+	 * expression root exist.
+	 *
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return {@code true} if a matching datum exists
+	 * @since 1.1
+	 */
+	public boolean hasOffset(int offset, Instant timestamp) {
+		Datum me = getDatum();
+		if ( me == null ) {
+			return false;
+		}
+		return hasOffset(me.getSourceId(), offset, timestamp);
+
+	}
+
+	/**
+	 * Get the latest available datum matching a specific source ID.
 	 *
 	 * <p>
 	 * This is equivalent to calling {@code offset(sourceId, 0)}.
@@ -435,6 +614,46 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 */
 	public boolean hasLatest(String sourceId) {
 		return hasOffset(sourceId, 0);
+	}
+
+	/**
+	 * Get datum latest to a reference timestamp matching a specific source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code offset(sourceId, 0, timestamp)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 * @see #offset(String, int, Instant)
+	 * @since 1.1
+	 */
+	public DatumExpressionRoot latest(String sourceId, Instant timestamp) {
+		return offset(sourceId, 0, timestamp);
+	}
+
+	/**
+	 * Test if a datum latest to a reference timestamp matching a specific
+	 * source ID exists.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code hasOffset(sourceId, 0, timestamp)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 * @return {@code true} if a matching datum exists
+	 * @see #hasOffset(String, int, Instant)
+	 * @since 1.1
+	 */
+	public boolean hasLatest(String sourceId, Instant timestamp) {
+		return hasOffset(sourceId, 0, timestamp);
 	}
 
 }

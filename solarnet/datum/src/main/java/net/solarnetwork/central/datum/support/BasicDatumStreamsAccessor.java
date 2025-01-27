@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +43,7 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
@@ -67,6 +68,12 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 		this.datum = (datum != null ? datum : Collections.emptyList());
 	}
 
+	/**
+	 * Get all datum grouped by source ID, sorted by timestamp in reverse
+	 * (newest to oldest).
+	 *
+	 * @return the sorted datum, never {@code null}
+	 */
 	private Map<String, List<Datum>> sortedDatumStreams() {
 		if ( timeSortedDatumBySource == null ) {
 			Map<String, List<Datum>> map = new HashMap<>(8);
@@ -75,7 +82,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			}
 			for ( List<Datum> list : map.values() ) {
 				Collections.sort(list, (l, r) -> {
-					return l.getTimestamp().compareTo(r.getTimestamp());
+					return r.getTimestamp().compareTo(l.getTimestamp());
 				});
 			}
 			timeSortedDatumBySource = map;
@@ -91,9 +98,8 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
 					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
 				List<Datum> list = e.getValue();
-				int idx = list.size() - offset - 1;
-				if ( idx >= 0 ) {
-					result.add(list.get(idx));
+				if ( offset < list.size() ) {
+					result.add(list.get(offset));
 				}
 			}
 		}
@@ -107,8 +113,48 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 		if ( list == null ) {
 			return null;
 		}
-		int idx = list.size() - offset - 1;
-		return (idx >= 0 ? list.get(idx) : null);
+		return (offset < list.size() ? list.get(offset) : null);
+	}
+
+	@Override
+	public Collection<Datum> offsetMatching(String sourceIdPattern, Instant timestamp, int offset) {
+		final var map = sortedDatumStreams();
+		final var result = new ArrayList<Datum>(map.size());
+		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
+			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
+					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
+				List<Datum> list = e.getValue();
+				Datum d = offset(list, timestamp, offset);
+				if ( d != null ) {
+					result.add(d);
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Datum offset(String sourceId, Instant timestamp, int offset) {
+		final var map = sortedDatumStreams();
+		final List<Datum> list = map.get(sourceId);
+		if ( list == null ) {
+			return null;
+		}
+		return offset(list, timestamp, offset);
+	}
+
+	private Datum offset(List<Datum> list, Instant timestamp, int offset) {
+		for ( int idx = 0, len = list.size(); idx < len; idx++ ) {
+			Datum d = list.get(idx);
+			if ( !d.getTimestamp().isAfter(timestamp) ) {
+				if ( offset == 0 ) {
+					return d;
+				}
+				idx += offset;
+				return idx < list.size() ? list.get(idx) : null;
+			}
+		}
+		return null;
 	}
 
 }
