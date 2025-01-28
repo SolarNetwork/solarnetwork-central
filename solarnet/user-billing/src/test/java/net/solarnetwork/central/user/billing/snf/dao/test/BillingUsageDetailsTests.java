@@ -477,4 +477,85 @@ public class BillingUsageDetailsTests extends AbstractJUnit5JdbcDaoTestSupport {
 		// @formatter:on
 	}
 
+	@Test
+	public void usage_cloudIntegrationsData() {
+		// GIVEN
+		final int dayCount = 10;
+		final ZonedDateTime month = ZonedDateTime.of(2025, 2, 1, 0, 0, 0, 0, TEST_ZONE);
+
+		// create test user
+		final Long locId = CommonTestUtils.randomLong();
+		setupTestLocation(locId, TEST_ZONE.getId());
+
+		final Long userId = CommonTestUtils.randomLong();
+		setupTestUser(userId, locId);
+
+		// populate user-level audit data
+		final var auditUserServiceDaily = new ArrayList<AuditUserServiceValue>(dayCount);
+
+		for ( int i = 0; i < dayCount; i++ ) {
+			final Instant day = month.plusDays(i).toInstant();
+
+			// populate Cloud Integrations data audit records
+			auditUserServiceDaily.add(dailyAuditUserService(userId, "ccio", day, 655_250_000L));
+		}
+		DatumDbUtils.insertAuditUserServiceValueDaily(log, jdbcTemplate, auditUserServiceDaily);
+
+		allTableData(log, jdbcTemplate, "solardatm.aud_user_daily", "user_id,service,ts_start");
+
+		// WHEN
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
+				select * from solarbill.billing_usage_details(?, ?, ?, ?)
+				""", userId, Timestamp.valueOf(month.toLocalDateTime()),
+				Timestamp.valueOf(month.plusMonths(1).toLocalDateTime()),
+				Timestamp.valueOf(month.plusMonths(1).toLocalDateTime()));
+
+		// THEN
+		log.debug("Got billing_usage_details: [{}]",
+				rows.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		then(rows).as("Single row returned for billing usage").hasSize(1);
+
+		// @formatter:off
+		then(rows.get(0))
+			.as("No properties in")
+			.containsEntry("prop_in", null)
+
+			.as("No datum out")
+			.containsEntry("datum_out", null)
+
+			.as("No flux data in")
+			.containsEntry("flux_data_in", null)
+
+			.as("No datum stored")
+			.containsEntry("datum_stored", null)
+
+			.as("No instructions")
+			.containsEntry("instr_issued", null)
+
+			.as("No flex data out")
+			.containsEntry("flux_data_out",null)
+
+			.as("No OCPP chargers")
+			.containsEntry("ocpp_chargers", null)
+
+			.as("No OSCP capacity groups")
+			.containsEntry("oscp_cap_groups", null)
+
+			.as("No OSCP capacity")
+			.containsEntry("oscp_cap", null)
+
+			.as("No DNP3 data points")
+			.containsEntry("dnp3_data_points", null)
+
+			.as("No OAuth client credentials")
+			.containsEntry("oauth_client_creds", null)
+
+			.as("Cloud Integrations data summed from audit user service 'ccio' daily data")
+			.containsEntry("c2c_data", auditUserServiceDaily.stream().filter(a -> "ccio".equals(a.getService()))
+					.mapToLong(AuditUserServiceValue::getCount).sum())
+
+			;
+		// @formatter:on
+	}
+
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.biz;
 
+import java.time.Instant;
 import java.util.Collection;
 import net.solarnetwork.domain.datum.Datum;
 
@@ -35,7 +36,7 @@ import net.solarnetwork.domain.datum.Datum;
  * </p>
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumStreamsAccessor {
 
@@ -95,6 +96,78 @@ public interface DatumStreamsAccessor {
 	 */
 	default Datum latest(String sourceId) {
 		return offset(sourceId, 0);
+	}
+
+	/**
+	 * Get a set of datum offset from a given timestamp, optionally matching a
+	 * source ID pattern.
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by; use
+	 *        {@code null} to return all available sources
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @return the matching datum, never {@code null}
+	 * @since 1.1
+	 */
+	Collection<Datum> offsetMatching(String sourceIdPattern, Instant timestamp, int offset);
+
+	/**
+	 * Get the latest available datum offset from a given timestamp, optionally
+	 * matching a source ID pattern.
+	 *
+	 * <p>
+	 * This is equivalent to calling
+	 * {@code offsetMatching(sourceIdFilter, timestamp, 0)}.
+	 * </p>
+	 *
+	 * @param sourceIdPattern
+	 *        an optional Ant-style source ID pattern to filter by
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, never {@literal null}
+	 * @see #offsetMatching(String, int)
+	 * @since 1.1
+	 */
+	default Collection<Datum> latestMatching(String sourceIdPattern, Instant timestamp) {
+		return offsetMatching(sourceIdPattern, timestamp, 0);
+	}
+
+	/**
+	 * Get a datum offset from a given timestamp matching a specific source ID.
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @param offset
+	 *        the offset from the reference timestamp, {@code 0} being the
+	 *        latest and {@code 1} the next later, and so on
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	Datum offset(String sourceId, Instant timestamp, int offset);
+
+	/**
+	 * Get the latest available datum up to a given timestamp, matching a
+	 * specific source ID.
+	 *
+	 * <p>
+	 * This is equivalent to calling {@code offset(sourceId, timestamp, 0)}.
+	 * </p>
+	 *
+	 * @param sourceId
+	 *        the source ID to find the offset datum for
+	 * @param timestamp
+	 *        the timestamp to reference the offset from
+	 * @return the matching datum, or {@literal null} if not available
+	 * @since 1.1
+	 */
+	default Datum latest(String sourceId, Instant timestamp) {
+		return offset(sourceId, timestamp, 0);
 	}
 
 }

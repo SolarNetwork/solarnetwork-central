@@ -35,11 +35,11 @@ import java.util.Objects;
  * </p>
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class NodeUsageCost implements Serializable {
 
-	private static final long serialVersionUID = -4561428148237236228L;
+	private static final long serialVersionUID = -1787655430294334300L;
 
 	private BigDecimal datumPropertiesInCost;
 	private BigDecimal datumDaysStoredCost;
@@ -52,6 +52,7 @@ public class NodeUsageCost implements Serializable {
 	private BigDecimal oscpCapacityCost;
 	private BigDecimal dnp3DataPointsCost;
 	private BigDecimal oauthClientCredentialsCost;
+	private BigDecimal cloudIntegrationsDataCost;
 
 	/**
 	 * Constructor.
@@ -345,6 +346,39 @@ public class NodeUsageCost implements Serializable {
 			BigDecimal fluxDataOutCost, BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost,
 			BigDecimal oscpCapacityCost, BigDecimal dnp3DataPointsCost,
 			BigDecimal oauthClientCredentialsCost) {
+		this(datumPropertiesInCost, datumOutCost, datumDaysStoredCost, instructionsIssuedCost,
+				fluxDataInCost, fluxDataOutCost, ocppChargersCost, oscpCapacityGroupsCost,
+				oscpCapacityCost, dnp3DataPointsCost, oauthClientCredentialsCost, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param instructionsIssuedCost
+	 *        the instructions issued cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param oscpCapacityCost
+	 *        the OSCP capacity cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @param cloudIntegrationsDataCost
+	 *        the Cloud Integrations data cost
+	 * @since 1.6
+	 */
+	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
+			BigDecimal datumDaysStoredCost, BigDecimal instructionsIssuedCost, BigDecimal fluxDataInCost,
+			BigDecimal fluxDataOutCost, BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost,
+			BigDecimal oscpCapacityCost, BigDecimal dnp3DataPointsCost,
+			BigDecimal oauthClientCredentialsCost, BigDecimal cloudIntegrationsDataCost) {
 		super();
 		setDatumPropertiesInCost(datumPropertiesInCost);
 		setDatumOutCost(datumOutCost);
@@ -357,12 +391,14 @@ public class NodeUsageCost implements Serializable {
 		setOscpCapacityCost(oscpCapacityCost);
 		setDnp3DataPointsCost(dnp3DataPointsCost);
 		setOauthClientCredentialsCost(oauthClientCredentialsCost);
+		setCloudIntegrationsDataCost(cloudIntegrationsDataCost);
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hash(datumDaysStoredCost, datumOutCost, datumPropertiesInCost, ocppChargersCost,
-				oscpCapacityGroupsCost, oscpCapacityCost, dnp3DataPointsCost);
+				oscpCapacityGroupsCost, oscpCapacityCost, dnp3DataPointsCost, oauthClientCredentialsCost,
+				cloudIntegrationsDataCost);
 	}
 
 	@Override
@@ -380,7 +416,9 @@ public class NodeUsageCost implements Serializable {
 				&& Objects.equals(ocppChargersCost, other.ocppChargersCost)
 				&& Objects.equals(oscpCapacityGroupsCost, other.oscpCapacityGroupsCost)
 				&& Objects.equals(oscpCapacityCost, other.oscpCapacityCost)
-				&& Objects.equals(dnp3DataPointsCost, other.dnp3DataPointsCost);
+				&& Objects.equals(dnp3DataPointsCost, other.dnp3DataPointsCost)
+				&& Objects.equals(oauthClientCredentialsCost, other.oauthClientCredentialsCost)
+				&& Objects.equals(cloudIntegrationsDataCost, other.cloudIntegrationsDataCost);
 	}
 
 	@Override
@@ -401,6 +439,10 @@ public class NodeUsageCost implements Serializable {
 		builder.append(oscpCapacityCost);
 		builder.append(", dnp3DataPointsCost=");
 		builder.append(dnp3DataPointsCost);
+		builder.append(", oauthClientCredentialsCost=");
+		builder.append(oauthClientCredentialsCost);
+		builder.append(", cloudIntegrationsDataCost=");
+		builder.append(cloudIntegrationsDataCost);
 		builder.append("}");
 		return builder.toString();
 	}
@@ -652,6 +694,30 @@ public class NodeUsageCost implements Serializable {
 			oauthClientCredentialsCost = BigDecimal.ZERO;
 		}
 		this.oauthClientCredentialsCost = oauthClientCredentialsCost;
+	}
+
+	/**
+	 * Get the Cloud Integrations data cost.
+	 *
+	 * @return the cost, never {@literal null}
+	 * @since 1.6
+	 */
+	public final BigDecimal getCloudIntegrationsDataCost() {
+		return cloudIntegrationsDataCost;
+	}
+
+	/**
+	 * Set the Cloud Integrations data cost.
+	 *
+	 * @param cloudIntegrationsDataCost
+	 *        the cost to set
+	 * @since 1.6
+	 */
+	public final void setCloudIntegrationsDataCost(BigDecimal cloudIntegrationsDataCost) {
+		if ( cloudIntegrationsDataCost == null ) {
+			cloudIntegrationsDataCost = BigDecimal.ZERO;
+		}
+		this.cloudIntegrationsDataCost = cloudIntegrationsDataCost;
 	}
 
 }
