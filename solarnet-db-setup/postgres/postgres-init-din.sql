@@ -507,7 +507,7 @@ CREATE TABLE solardin.cin_datum_stream_poll_task (
 
 -- index to speed up claim task query
 CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solardin.cin_datum_stream_poll_task
-	(exec_at DESC) INCLUDE (status);
+	(exec_at) WHERE (status = 'q');
 
 
 /**************************************************************************************************
@@ -515,7 +515,7 @@ CREATE INDEX cin_datum_stream_poll_task_exec_idx ON solardin.cin_datum_stream_po
  *
  * "Claim" an export task from the solarnet.sn_datum_export_task table that has a status of 'q'
  * and change the status to 'p' and return it. The tasks will be claimed from oldest to newest
- * based on the created column.
+ * based on the exec_at column.
  *
  * @return the claimed row, if one was able to be claimed
  */
@@ -524,9 +524,12 @@ CREATE OR REPLACE FUNCTION solardin.claim_datum_stream_poll_task()
 $$
 DECLARE
 	rec solardin.cin_datum_stream_poll_task;
+
+	-- include ORDER BY here to encourage cin_datum_stream_poll_task_exec_idx to be used
 	curs CURSOR FOR SELECT * FROM solardin.cin_datum_stream_poll_task
 			WHERE status = 'q'
 			AND exec_at <= CURRENT_TIMESTAMP
+			ORDER BY exec_at
 			LIMIT 1
 			FOR UPDATE SKIP LOCKED;
 BEGIN
