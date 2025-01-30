@@ -60,7 +60,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Configuration
 @EnableWebSecurity
@@ -238,6 +238,8 @@ public class WebSecurityConfig {
 											"/error",
 											"/*.html",
 											"/ping",
+											"/api-docs/**",
+											"/api-docs.yaml",
 											"/api/v1/pub/**"
 											).permitAll()
 

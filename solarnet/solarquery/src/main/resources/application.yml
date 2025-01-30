@@ -2,6 +2,7 @@ app:
   meta:
     name: SolarQuery
     key: query
+    api-version: "1.0.0"
   cache.persistence.path: "var/cache"
   datasource:
     hikari:
@@ -124,6 +125,9 @@ spring:
     date: iso
     date-time: iso
     time: iso
+
+springdoc:
+  api-docs.path: "/api-docs"
 
 server:
   compression:

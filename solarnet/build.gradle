@@ -91,7 +91,9 @@ subprojects {
 		snCommonWebJakartaVersion = '2.0.2'
 		snExternalOcpp16JakartaVersion = '1.0.1'
 		snExternalOcpp201Version = '1.0.0'
+		springdocStarterVersion = '2.8.4'
 		superCsvVersion = '2.4.0'
+		swaggerVersion = '2.2.28'
 		xzVersion = '1.9'
 
 		libraries = [

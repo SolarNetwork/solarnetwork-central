@@ -85,6 +85,10 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	
+	// Swagger support
+	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"
+	implementation "io.swagger.core.v3:swagger-models-jakarta:${swaggerVersion}"
+	
 	// Not pushed to extending projects by default
 	compileOnly "net.sf.saxon:Saxon-HE:${saxonVersion}"
 	
