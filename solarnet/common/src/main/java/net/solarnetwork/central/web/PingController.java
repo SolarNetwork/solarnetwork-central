@@ -41,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.Hidden;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.PingTestResultDisplay;
@@ -53,6 +54,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * @author matt
  * @version 3.1
  */
+@Hidden
 public class PingController {
 
 	private static final ExecutorService EXECUTOR = Executors
