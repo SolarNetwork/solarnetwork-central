@@ -397,7 +397,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
 	 * @return the matching datum, never {@literal null}
-	 * @see #offsetMatching(String, Instant, int)
+	 * @see #offsetMatching(String, int, Instant)
 	 * @since 1.1
 	 */
 	public Collection<DatumExpressionRoot> latestMatching(String sourceIdPattern, Instant timestamp) {
@@ -418,7 +418,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
 	 * @return {@code true} if at least one matching datum is available
-	 * @see #hasOffsetMatching(String, Instant, int)
+	 * @see #hasOffsetMatching(String, int , Instant)
 	 * @since 1.1
 	 */
 	public boolean hasLatestMatching(String sourceIdPattern, Instant timestamp) {
