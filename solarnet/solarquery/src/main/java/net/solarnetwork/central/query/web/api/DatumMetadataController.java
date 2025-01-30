@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
@@ -47,6 +48,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  */
 @Controller("v1DatumMetadataController")
 @RequestMapping({ "/api/v1/pub/datum/meta/{nodeId}", "/api/v1/sec/datum/meta/{nodeId}" })
+@Tag(name = "datum-meta", description = "Methods to query datum stream metadata.")
 @GlobalExceptionRestController
 public class DatumMetadataController {
 

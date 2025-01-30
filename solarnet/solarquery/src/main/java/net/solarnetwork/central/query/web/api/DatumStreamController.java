@@ -51,6 +51,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -72,6 +73,7 @@ import net.solarnetwork.io.ProvidedOutputStream;
  */
 @Controller("v1DatumStreamController")
 @RequestMapping({ "/api/v1/pub/datum/stream", "/api/v1/sec/datum/stream" })
+@Tag(name = "datum-stream", description = "Methods to query datum streams with streaming result.")
 @GlobalExceptionRestController
 public class DatumStreamController {
 

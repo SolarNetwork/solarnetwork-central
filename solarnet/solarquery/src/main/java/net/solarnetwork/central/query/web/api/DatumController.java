@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -57,6 +58,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })
+@Tag(name = "datum", description = "Methods to query datum streams.")
 @GlobalExceptionRestController
 public class DatumController extends BaseTransientDataAccessRetryController {
 
