@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import net.solarnetwork.central.web.SwaggerUtils;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Configuration for Springdoc OpenAPI v3 generation.
@@ -58,4 +59,18 @@ public class SpringdocConfig {
 			}
 		};
 	}
+
+	/**
+	 * Customize OpenAPI {@link FilterResults} component {@code results}
+	 * properties into array schemas of the appropriate item type.
+	 * 
+	 * @return the customizer
+	 */
+	@Bean
+	public OpenApiCustomizer filterResultsComponentCustomizer() {
+		return (api) -> {
+			SwaggerUtils.fixupFilterResultsSchemas(api);
+		};
+	}
+
 }

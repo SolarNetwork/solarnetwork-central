@@ -77,6 +77,7 @@ dependencies {
 	implementation 'com.nimbusds:nimbus-jose-jwt:[9.37,10)'
 	implementation 'commons-codec:commons-codec'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
+	implementation 'io.github.classgraph:classgraph:4.8.179'
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
@@ -85,8 +86,10 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	
+	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"
+	implementation "io.swagger.core.v3:swagger-core-jakarta:${swaggerVersion}"
 	implementation "io.swagger.core.v3:swagger-models-jakarta:${swaggerVersion}"
 	
 	// Not pushed to extending projects by default
