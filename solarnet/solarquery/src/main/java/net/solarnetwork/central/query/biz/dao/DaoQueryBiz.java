@@ -58,7 +58,6 @@ import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
@@ -464,14 +463,14 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
+	public FilterResults<ReportingGeneralLocationDatumMatch> findGeneralLocationDatum(
 			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> daoResults = datumDao.findFiltered(c);
-		List<GeneralLocationDatumFilterMatch> data = stream(daoResults.spliterator(), false)
+		List<ReportingGeneralLocationDatumMatch> data = stream(daoResults.spliterator(), false)
 				.map(e -> toGeneralLocationDatum(e, daoResults.metadataForStreamId(e.getStreamId())))
 				.collect(toList());
 		return new BasicFilterResults<>(data, daoResults.getTotalResults(),

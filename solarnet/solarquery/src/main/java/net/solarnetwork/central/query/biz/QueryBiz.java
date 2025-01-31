@@ -311,7 +311,7 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 1.5
 	 */
-	FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
+	FilterResults<ReportingGeneralLocationDatumMatch> findGeneralLocationDatum(
 			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max);
 

@@ -63,9 +63,7 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
-import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
@@ -407,7 +405,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 
-		GeneralNodeDatumFilterMatch match = results.iterator().next();
+		ReportingGeneralNodeDatumMatch match = results.iterator().next();
 		assertThat("Match node from meta", match.getId(),
 				equalTo(new GeneralNodeDatumPK(TEST_NODE_ID, d.getTimestamp(), TEST_SOURCE_ID)));
 		assertThat("Match local date from meta", match.getLocalDate(),
@@ -547,7 +545,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<GeneralLocationDatumFilterMatch> results = biz.findGeneralLocationDatum(filter,
+		FilterResults<ReportingGeneralLocationDatumMatch> results = biz.findGeneralLocationDatum(filter,
 				sortDescriptors, 1, 2);
 
 		// THEN
@@ -566,19 +564,18 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 
-		GeneralLocationDatumFilterMatch match = results.iterator().next();
+		ReportingGeneralLocationDatumMatch match = results.iterator().next();
 		assertThat("Match loc from meta", match.getId(),
 				equalTo(new GeneralLocationDatumPK(TEST_LOC_ID, d.getTimestamp(), TEST_SOURCE_ID)));
 		assertThat("Match actually implements reporting", match,
 				instanceOf(ReportingGeneralLocationDatumMatch.class));
-		assertThat("Converted datum props", ((ReportingGeneralLocationDatumMatch) match).getSampleData(),
-				allOf(
-				// @formatter:off
+		assertThat("Converted datum props", match.getSampleData(), allOf(
+		// @formatter:off
 				hasEntry("i1", props.getInstantaneous()[0]),
 				hasEntry("i2", props.getInstantaneous()[1]),
 				hasEntry("a1", props.getAccumulating()[0])
 				// @formatter:on
-				));
+		));
 	}
 
 	@Test
