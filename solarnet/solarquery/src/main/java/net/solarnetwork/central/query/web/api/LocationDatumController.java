@@ -32,7 +32,14 @@ import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -51,6 +58,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
+@Tag(name = "location-datum", description = "Methods to query location datum streams.")
 @GlobalExceptionRestController
 public class LocationDatumController extends BaseTransientDataAccessRetryController {
 
@@ -197,32 +205,49 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 		}
 	}
 
+	@Operation(operationId = "locationDatumList",
+			summary = "List location datum matching filter criteria",
+			description = "Query for location datum that match criteria like location ID, source ID, and date range.",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralLocationDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd) {
+			final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			// support filtering based on sourceId path pattern, by simply finding the sources that match first
-			resolveSourceIdPattern(cmd);
+			resolveSourceIdPattern(criteria);
 
 			FilterResults<?> results;
-			if ( cmd.getAggregation() != null ) {
-				results = queryBiz.findAggregateGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
+			if ( criteria.getAggregation() != null ) {
+				results = queryBiz.findAggregateGeneralLocationDatum(criteria,
+						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 			} else {
-				results = queryBiz.findGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
+				results = queryBiz.findGeneralLocationDatum(criteria, criteria.getSortDescriptors(),
+						criteria.getOffset(), criteria.getMax());
 			}
 			return new Response<FilterResults<?>>(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
+	@Operation(operationId = "locationDatumListMostRecent",
+			summary = "List the most recently posted location datum matching filter criteria",
+			description = """
+					Query for location datum that match criteria like location ID, source ID, and date range.
+					The most recently posted datum for each matching source will be returned.
+					""",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralLocationDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd) {
-		cmd.setMostRecent(true);
-		return filterGeneralDatumData(req, cmd);
+	public Response<FilterResults<?>> getMostRecentGeneralLocationDatum(final HttpServletRequest req,
+			final DatumFilterCommand criteria) {
+		criteria.setMostRecent(true);
+		return filterGeneralDatumData(req, criteria);
 	}
 
 }

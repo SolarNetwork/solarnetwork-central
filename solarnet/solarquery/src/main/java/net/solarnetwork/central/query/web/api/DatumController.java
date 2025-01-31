@@ -36,12 +36,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
@@ -90,42 +97,58 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 		}
 	}
 
+	@Operation(operationId = "datumList", summary = "List node datum matching filter criteria",
+			description = "Query for node datum that match criteria like node ID, source ID, and date range.",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralNodeDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
 	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd, BindingResult validationResult) {
+			final DatumFilterCommand criteria, BindingResult validationResult) {
 		if ( filterValidator != null ) {
-			filterValidator.validate(cmd, validationResult);
+			filterValidator.validate(criteria, validationResult);
 			if ( validationResult.hasErrors() ) {
 				throw new ValidationException(validationResult);
 			}
 		}
-		populateMostRecentImplicitStartDate(cmd);
+		populateMostRecentImplicitStartDate(criteria);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			FilterResults<?> results;
-			if ( cmd.getAggregation() != null ) {
-				results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
+			if ( criteria.getAggregation() != null ) {
+				results = queryBiz.findFilteredAggregateGeneralNodeDatum(criteria,
+						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 			} else {
-				results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
+				results = queryBiz.findFilteredGeneralNodeDatum(criteria, criteria.getSortDescriptors(),
+						criteria.getOffset(), criteria.getMax());
 			}
 			return new Response<FilterResults<?>>(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
+	@Operation(operationId = "datumListMostRecent",
+			summary = "List the most recently posted node datum matching filter criteria",
+			description = """
+					Query for node datum that match criteria like node ID, source ID, and date range.
+					The most recently posted datum for each matching source will be returned.
+					""",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralNodeDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd, BindingResult validationResult) {
-		cmd.setMostRecent(true);
-		return filterGeneralDatumData(req, cmd, validationResult);
+	public Response<FilterResults<?>> getMostRecentGeneralNodeDatum(final HttpServletRequest req,
+			final DatumFilterCommand criteria, BindingResult validationResult) {
+		criteria.setMostRecent(true);
+		return filterGeneralDatumData(req, criteria, validationResult);
 	}
 
 	/**
 	 * Query for reading datum.
 	 * 
-	 * @param cmd
+	 * @param criteria
 	 *        the filter
 	 * @param readingType
 	 *        the reading type
@@ -136,27 +159,43 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 	 * @return the results
 	 * @since 2.3
 	 */
+	@Operation(operationId = "readingDatumList",
+			summary = "List node reading style datum matching filter criteria",
+			description = """
+					Query for node datum that match criteria like node ID, source ID, and date range, returning
+					reading style results.
+					""",
+			parameters = { @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralNodeDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE),
+					@Parameter(name = "readingType", description = """
+							The desired reading type.
+							"""), @Parameter(name = "tolerance", description = """
+							The reading tolerance, used by some reading types.
+							"""), })
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
-	public Response<FilterResults<?>> datumReading(final HttpServletRequest req,
-			final DatumFilterCommand cmd, @RequestParam("readingType") DatumReadingType readingType,
+	public Response<FilterResults<ReportingGeneralNodeDatumMatch>> datumReading(
+			final HttpServletRequest req, final DatumFilterCommand criteria,
+			@RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
 			BindingResult validationResult) {
 		if ( filterValidator != null ) {
-			filterValidator.validate(cmd, validationResult, readingType, tolerance);
+			filterValidator.validate(criteria, validationResult, readingType, tolerance);
 			if ( validationResult.hasErrors() ) {
 				throw new ValidationException(validationResult);
 			}
 		}
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<?> results;
-			if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
-				results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
-						cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+			FilterResults<ReportingGeneralNodeDatumMatch> results;
+			if ( criteria.getAggregation() != null && criteria.getAggregation() != Aggregation.None ) {
+				results = queryBiz.findFilteredAggregateReading(criteria, readingType, tolerance,
+						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 			} else {
-				results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
+				results = queryBiz.findFilteredReading(criteria, readingType, tolerance);
 			}
-			return new Response<FilterResults<?>>(results);
+			return new Response<FilterResults<ReportingGeneralNodeDatumMatch>>(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
