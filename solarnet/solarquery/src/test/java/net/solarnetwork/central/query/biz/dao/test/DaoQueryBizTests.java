@@ -388,7 +388,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<GeneralNodeDatumFilterMatch> results = biz.findFilteredGeneralNodeDatum(filter,
+		FilterResults<ReportingGeneralNodeDatumMatch> results = biz.findFilteredGeneralNodeDatum(filter,
 				sortDescriptors, 1, 2);
 
 		// THEN

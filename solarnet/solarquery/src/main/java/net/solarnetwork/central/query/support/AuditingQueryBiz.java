@@ -30,13 +30,12 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * {@link QueryBiz} implementation that audits query events using a
@@ -65,12 +64,12 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	}
 
 	@Override
-	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
+	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredGeneralNodeDatum(
 			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
 			Integer max) {
 		auditor.resetCurrentAuditResults();
-		FilterResults<GeneralNodeDatumFilterMatch> results = super.findFilteredGeneralNodeDatum(filter,
-				sortDescriptors, offset, max);
+		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredGeneralNodeDatum(
+				filter, sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
