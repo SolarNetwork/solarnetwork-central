@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
+import static net.solarnetwork.domain.Result.success;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,6 +43,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
@@ -48,7 +51,7 @@ import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalComman
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for location-based data.
@@ -119,22 +122,24 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 * }
 	 * </pre>
 	 * 
-	 * @param cmd
+	 * @param criteria
 	 *        the input command
 	 * @return the available sources
 	 */
+	@Operation(operationId = "locationDatumSources", summary = "List location datum available sources",
+			description = "Get the source IDs available for location datum matching a single location ID and an optional source ID.")
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
-	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+	public Result<Set<String>> getAvailableSources(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(),
-					cmd.getStartDate(), cmd.getEndDate());
+			Set<String> data = queryBiz.getLocationAvailableSources(criteria.getLocationId(),
+					criteria.getStartDate(), criteria.getEndDate());
 
 			// support filtering based on sourceId path pattern
-			data = filterSources(data, this.pathMatcher, cmd.getSourceId());
+			data = filterSources(data, this.pathMatcher, criteria.getSourceId());
 
-			return new Response<Set<String>>(data);
+			return success(data);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -169,18 +174,25 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 * }
 	 * </pre>
 	 * 
-	 * @param cmd
-	 *        the input command
+	 * @param req
+	 *        the HTTP request
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the optional source ID
 	 * @return the {@link ReportableInterval}
 	 */
+	@Operation(operationId = "locationDatumReportableInterval",
+			summary = "List location datum available date range",
+			description = "Get a date range of available location datum for a single location and an optional source ID.")
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET)
-	public Response<ReportableInterval> getReportableInterval(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
+			@RequestParam(name = "locationId") Long locationId,
+			@RequestParam(name = "sourceId", required = false) String sourceId) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			ReportableInterval data = queryBiz.getLocationReportableInterval(cmd.getLocationId(),
-					cmd.getSourceId());
-			return new Response<ReportableInterval>(data);
+			ReportableInterval data = queryBiz.getLocationReportableInterval(locationId, sourceId);
+			return success(data);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -214,13 +226,13 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
-			final DatumFilterCommand criteria) {
+	public Result<FilterResults<ReportingGeneralLocationDatumMatch>> filterGeneralDatumData(
+			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			// support filtering based on sourceId path pattern, by simply finding the sources that match first
 			resolveSourceIdPattern(criteria);
 
-			FilterResults<?> results;
+			FilterResults<ReportingGeneralLocationDatumMatch> results;
 			if ( criteria.getAggregation() != null ) {
 				results = queryBiz.findAggregateGeneralLocationDatum(criteria,
 						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
@@ -228,7 +240,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 				results = queryBiz.findGeneralLocationDatum(criteria, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 			}
-			return new Response<FilterResults<?>>(results);
+			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -244,8 +256,8 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
-	public Response<FilterResults<?>> getMostRecentGeneralLocationDatum(final HttpServletRequest req,
-			final DatumFilterCommand criteria) {
+	public Result<FilterResults<ReportingGeneralLocationDatumMatch>> getMostRecentGeneralLocationDatum(
+			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		criteria.setMostRecent(true);
 		return filterGeneralDatumData(req, criteria);
 	}
