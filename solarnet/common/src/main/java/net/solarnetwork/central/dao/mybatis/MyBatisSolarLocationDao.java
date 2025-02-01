@@ -66,7 +66,7 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	public Long store(SolarLocation datum) {
+	public Long save(SolarLocation datum) {
 		if ( log.isTraceEnabled() ) {
 			// this added to help troubleshoot excess location storing
 			try {
@@ -75,7 +75,7 @@ public class MyBatisSolarLocationDao
 				log.trace("Storing solar location {} with data {}", datum, datum.getFilter(), e);
 			}
 		}
-		return super.store(datum);
+		return super.save(datum);
 	}
 
 	@Override

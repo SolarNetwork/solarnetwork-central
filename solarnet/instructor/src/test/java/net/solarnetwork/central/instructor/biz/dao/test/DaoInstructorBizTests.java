@@ -86,7 +86,7 @@ public class DaoInstructorBizTests {
 		instr.addParameter("foo", "bar");
 
 		Capture<NodeInstruction> nodeInstructionCaptor = new Capture<>();
-		expect(nodeInstructionDao.store(capture(nodeInstructionCaptor))).andReturn(instrId);
+		expect(nodeInstructionDao.save(capture(nodeInstructionCaptor))).andReturn(instrId);
 
 		NodeInstruction dbInstr = new NodeInstruction(instr.getTopic(), instr.getCreated(), nodeId);
 		dbInstr.setState(InstructionState.Queued);
@@ -125,7 +125,7 @@ public class DaoInstructorBizTests {
 		instr.addParameter("foo", buf.toString());
 
 		Capture<NodeInstruction> nodeInstructionCaptor = new Capture<>();
-		expect(nodeInstructionDao.store(capture(nodeInstructionCaptor))).andReturn(instrId);
+		expect(nodeInstructionDao.save(capture(nodeInstructionCaptor))).andReturn(instrId);
 
 		NodeInstruction dbInstr = new NodeInstruction(instr.getTopic(), instr.getCreated(), nodeId);
 		dbInstr.setState(InstructionState.Queued);

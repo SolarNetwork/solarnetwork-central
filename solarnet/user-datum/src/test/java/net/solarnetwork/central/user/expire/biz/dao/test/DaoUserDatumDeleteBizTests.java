@@ -206,7 +206,7 @@ public class DaoUserDatumDeleteBizTests {
 		expect(jobInfoDao.get(id)).andReturn(jobInfo).anyTimes();
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(jobInfo)).andReturn(id).anyTimes();
+		expect(jobInfoDao.save(jobInfo)).andReturn(id).anyTimes();
 
 		// delete in week-based batches
 		Capture<ObjectStreamCriteria> filterCaptor = new Capture<>();
@@ -263,7 +263,7 @@ public class DaoUserDatumDeleteBizTests {
 				captureLong(resultCountsCapture))).andReturn(true).times(5);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(jobInfo)).andReturn(id).anyTimes();
+		expect(jobInfoDao.save(jobInfo)).andReturn(id).anyTimes();
 
 		// delete in week-based batches
 		Capture<ObjectStreamCriteria> filterCaptor = new FilterCapture(CaptureType.ALL);
@@ -328,7 +328,7 @@ public class DaoUserDatumDeleteBizTests {
 				.andReturn(new LinkedHashSet<>(Arrays.asList(userNodeIds)));
 
 		Capture<DatumDeleteJobInfo> jobInfoCaptor = new Capture<>();
-		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+		expect(jobInfoDao.save(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
 
 			@Override
 			public UserUuidPK answer() throws Throwable {

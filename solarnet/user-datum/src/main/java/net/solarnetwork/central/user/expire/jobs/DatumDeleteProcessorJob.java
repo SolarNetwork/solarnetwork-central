@@ -78,7 +78,7 @@ public class DatumDeleteProcessorJob extends JobSupport {
 				info.setMessage(e.getMessage());
 				info.setJobSuccess(Boolean.FALSE);
 				info.setJobState(DatumDeleteJobState.Completed);
-				jobInfoDao.store(info);
+				jobInfoDao.save(info);
 			}
 		}
 	}

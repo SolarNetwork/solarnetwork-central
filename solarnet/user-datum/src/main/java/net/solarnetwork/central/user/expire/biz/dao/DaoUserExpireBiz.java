@@ -123,7 +123,7 @@ public class DaoUserExpireBiz implements UserExpireBiz {
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof ExpireUserDataConfiguration ) {
-			return dataConfigDao.store((ExpireUserDataConfiguration) configuration);
+			return dataConfigDao.save((ExpireUserDataConfiguration) configuration);
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}

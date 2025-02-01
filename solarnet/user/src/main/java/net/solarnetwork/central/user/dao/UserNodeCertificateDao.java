@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.dao;
 
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodePK;
 

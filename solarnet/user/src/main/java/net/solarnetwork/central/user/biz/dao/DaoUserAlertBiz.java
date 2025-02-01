@@ -23,13 +23,13 @@
 package net.solarnetwork.central.user.biz.dao;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.user.biz.UserAlertBiz;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * DAO-based implementation of {@link UserAlertBiz}.
@@ -57,7 +57,7 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 	@Override
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	public Long saveAlert(UserAlert alert) {
-		return userAlertDao.store(alert);
+		return userAlertDao.save(alert);
 	}
 
 	@Override
@@ -79,7 +79,7 @@ public class DaoUserAlertBiz implements UserAlertBiz {
 		if ( alert != null && alert.getSituation() != null
 				&& !alert.getSituation().getStatus().equals(status) ) {
 			alert.getSituation().setStatus(status);
-			userAlertSituationDao.store(alert.getSituation());
+			userAlertSituationDao.save(alert.getSituation());
 		}
 		return alert;
 	}

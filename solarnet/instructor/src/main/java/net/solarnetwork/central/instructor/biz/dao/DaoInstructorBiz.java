@@ -254,7 +254,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 				return null;
 			}
 		}
-		Long id = nodeInstructionDao.store(instr);
+		Long id = nodeInstructionDao.save(instr);
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
 			hook.didQueueNodeInstruction(instr, id);
 		}
@@ -282,7 +282,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		if ( instr != null ) {
 			if ( !state.equals(instr.getState()) ) {
 				instr.setState(state);
-				nodeInstructionDao.store(instr);
+				nodeInstructionDao.save(instr);
 			}
 		}
 	}
@@ -311,7 +311,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 					params.putAll(resultParameters);
 					instr.setResultParameters(params);
 				}
-				nodeInstructionDao.store(instr);
+				nodeInstructionDao.save(instr);
 			}
 		}
 	}

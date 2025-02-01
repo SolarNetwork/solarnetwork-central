@@ -86,7 +86,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 	@Test
 	public void storeNew() {
 		SolarNodeMetadata datum = getTestInstance();
-		Long id = dao.store(datum);
+		Long id = dao.save(datum);
 		assertNotNull(id);
 		lastDatum = datum;
 	}
@@ -96,7 +96,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		storeNew();
 		SolarNodeMetadata datum = lastDatum;
 		datum.getMeta().putInfoValue("bim", "bam");
-		Long id = dao.store(datum);
+		Long id = dao.save(datum);
 		assertEquals(lastDatum.getId(), id);
 	}
 
@@ -122,7 +122,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		datum.getMeta().getInfo().put("watts", 498475890235787897L);
 		datum.getMeta().getInfo().put("floating",
 				new BigDecimal("293487590845639845728947589237.49087"));
-		dao.store(datum);
+		dao.save(datum);
 
 		SolarNodeMetadata entity = dao.get(datum.getId());
 		validate(datum, entity);
@@ -162,7 +162,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 			msgs.put("foo", i);
 			samples.setInfo(msgs);
 
-			dao.store(datum);
+			dao.save(datum);
 
 		}
 

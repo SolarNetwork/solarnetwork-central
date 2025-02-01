@@ -25,6 +25,7 @@ package net.solarnetwork.central.dao;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for Location.

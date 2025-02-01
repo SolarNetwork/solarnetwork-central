@@ -35,8 +35,8 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
-import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -265,7 +265,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	@Override
-	public PK store(T datum) {
+	public PK save(T datum) {
 		if ( datum.getId() != null ) {
 			return handleUpdate(datum);
 		}

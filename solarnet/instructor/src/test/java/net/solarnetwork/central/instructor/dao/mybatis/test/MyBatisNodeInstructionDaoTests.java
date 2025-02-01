@@ -46,11 +46,11 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -98,7 +98,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.addParameter("Test param 1", "Test value 1");
 		datum.addParameter("Test param 2", "Test value 2");
 
-		Long id = dao.store(datum);
+		Long id = dao.save(datum);
 		assertNotNull(id);
 		datum.setId(id);
 		addedInstructions.add(datum);
@@ -147,7 +147,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.setState(InstructionState.Declined);
 		datum.setStatusDate(Instant.now());
-		Long newId = dao.store(datum);
+		Long newId = dao.save(datum);
 		assertEquals(datum.getId(), newId);
 		NodeInstruction datum2 = dao.get(datum.getId());
 		validate(datum, datum2);
@@ -160,7 +160,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setState(InstructionState.Completed);
 		datum.setStatusDate(Instant.now());
 		datum.setResultParameters(Collections.singletonMap("foo", (Object) "bar"));
-		Long newId = dao.store(datum);
+		Long newId = dao.save(datum);
 		assertEquals(datum.getId(), newId);
 		NodeInstruction datum2 = dao.get(datum.getId());
 		validate(datum, datum2);
@@ -181,7 +181,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setNodeId(node2Id);
 		datum.setState(InstructionState.Queued);
 		datum.setTopic("Test Topic");
-		final Long instr2Id = dao.store(datum);
+		final Long instr2Id = dao.save(datum);
 		assertNotNull(instr2Id);
 		datum.setId(instr2Id);
 
@@ -393,7 +393,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setState(InstructionState.Executing);
 		datum.setTopic("Test Topic");
-		final Long instr2Id = dao.store(datum);
+		final Long instr2Id = dao.save(datum);
 		assertNotNull(instr2Id);
 		datum.setId(instr2Id);
 
@@ -427,7 +427,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setState(InstructionState.Executing);
 		datum.setTopic("Test Topic");
 
-		final Long instr2Id = dao.store(datum);
+		final Long instr2Id = dao.save(datum);
 		assertNotNull(instr2Id);
 		datum.setId(instr2Id);
 
@@ -464,7 +464,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setNodeId(TEST_NODE_ID);
 		datum.setState(InstructionState.Executing);
 		datum.setTopic("Test Topic");
-		final Long instr2Id = dao.store(datum);
+		final Long instr2Id = dao.save(datum);
 		assertNotNull(instr2Id);
 		datum.setId(instr2Id);
 
@@ -501,7 +501,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	public void purgeCompletedInstructionsMatch() {
 		storeNew();
 		lastDatum.setState(InstructionState.Completed);
-		dao.store(lastDatum);
+		dao.save(lastDatum);
 		long result = dao
 				.purgeCompletedInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
 		assertEquals(1, result);
@@ -513,11 +513,11 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	public void purgeCompletedInstructionsMatchMultiple() {
 		storeNew();
 		lastDatum.setState(InstructionState.Completed);
-		dao.store(lastDatum);
+		dao.save(lastDatum);
 		storeNew(); // Queued state, should NOT be deleted
 		storeNew();
 		lastDatum.setState(InstructionState.Declined);
-		dao.store(lastDatum);
+		dao.save(lastDatum);
 		long result = dao
 				.purgeCompletedInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
 		assertEquals(2, result);
@@ -544,7 +544,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	public void purgeIncompleteInstructionsMatch() {
 		storeNew();
 		lastDatum.setState(InstructionState.Received);
-		dao.store(lastDatum);
+		dao.save(lastDatum);
 		long result = dao
 				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
 		assertEquals(1, result);
@@ -556,11 +556,11 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	public void purgeIncompleteInstructionsMatchMultiple() {
 		storeNew();
 		lastDatum.setState(InstructionState.Received);
-		dao.store(lastDatum);
+		dao.save(lastDatum);
 		storeNew(); // Queued state, should also be deleted
 		storeNew();
 		lastDatum.setState(InstructionState.Executing);
-		dao.store(lastDatum);
+		dao.save(lastDatum);
 		long result = dao
 				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
 		assertEquals(3, result);

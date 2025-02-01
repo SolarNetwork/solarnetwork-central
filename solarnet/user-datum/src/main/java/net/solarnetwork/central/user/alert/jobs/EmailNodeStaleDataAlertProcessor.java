@@ -257,7 +257,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 					if ( sit.getNotified().equals(now) || sit.getInfo() == null
 							|| !staleInfo.equals(sit.getInfo()) ) {
 						sit.setInfo(staleInfo);
-						userAlertSituationDao.store(sit);
+						userAlertSituationDao.save(sit);
 					}
 				} else {
 					// not stale, so mark valid for age span
@@ -276,7 +276,7 @@ public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor
 						// make Resolved
 						sit.setStatus(UserAlertSituationStatus.Resolved);
 						sit.setNotified(now);
-						userAlertSituationDao.store(sit);
+						userAlertSituationDao.save(sit);
 
 						NodeDatumStreamPK nonStale = getFirstNonStaleDatum(alert, now, age,
 								sourceIdMatcher, sourceIdPatterns);

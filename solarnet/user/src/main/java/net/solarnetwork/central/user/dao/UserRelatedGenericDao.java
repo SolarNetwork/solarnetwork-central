@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.io.Serializable;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 
 /**

@@ -102,7 +102,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 
 		alert.setOptions(options);
 
-		Long id = userAlertDao.store(alert);
+		Long id = userAlertDao.save(alert);
 		assertNotNull(id);
 		alert.setId(id);
 		this.userAlert = alert;
@@ -128,7 +128,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 
 		sit.setInfo(info);
 
-		Long id = userAlertSituationDao.store(sit);
+		Long id = userAlertSituationDao.save(sit);
 		sit.setId(id);
 		return sit;
 	}
@@ -164,7 +164,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		Instant created = userAlertSituation.getCreated();
 		sit.setStatus(UserAlertSituationStatus.Resolved);
 		sit.setNotified(created.plus(1, ChronoUnit.HOURS));
-		Long id = userAlertSituationDao.store(sit);
+		Long id = userAlertSituationDao.save(sit);
 		assertNotNull(id);
 		assertEquals(this.userAlertSituation.getId(), id);
 		UserAlertSituation updatedSit = userAlertSituationDao.get(id);
@@ -204,7 +204,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	public void getByActiveAlertAlertResolved() {
 		storeNew();
 		this.userAlertSituation.setStatus(UserAlertSituationStatus.Resolved);
-		userAlertSituationDao.store(this.userAlertSituation);
+		userAlertSituationDao.save(this.userAlertSituation);
 		UserAlertSituation sit = userAlertSituationDao
 				.getActiveAlertSituationForAlert(this.userAlert.getId());
 		Assert.assertNull(sit);
@@ -214,7 +214,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	public void getByActiveAlertAlertAndResolved() {
 		storeNew();
 		this.userAlertSituation.setStatus(UserAlertSituationStatus.Resolved);
-		userAlertSituationDao.store(this.userAlertSituation);
+		userAlertSituationDao.save(this.userAlertSituation);
 
 		// store another now, as Active
 		storeNew();

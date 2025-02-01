@@ -276,7 +276,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			}
 		}
 
-		jobInfoDao.store(info);
+		jobInfoDao.save(info);
 
 		DatumImportTask task = taskForId(id);
 
@@ -352,7 +352,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	@Override
 	public UserUuidPK saveJobInfo(DatumImportJobInfo jobInfo) {
-		return jobInfoDao.store(jobInfo);
+		return jobInfoDao.save(jobInfo);
 	}
 
 	@Override
@@ -985,7 +985,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public void run() {
-			jobInfoDao.store(info);
+			jobInfoDao.save(info);
 		}
 
 	}

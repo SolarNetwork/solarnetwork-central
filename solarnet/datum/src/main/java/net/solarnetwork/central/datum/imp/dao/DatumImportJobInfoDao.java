@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import net.solarnetwork.central.dao.ClaimableJobDao;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.imp.domain.Configuration;
 import net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo;

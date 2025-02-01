@@ -65,7 +65,7 @@ public class MyBatisSolarNodeDao
 	}
 
 	@Override
-	public Long store(SolarNode datum) {
+	public Long save(SolarNode datum) {
 		// because we allow the node ID to be pre-assigned (i.e. from a
 		// previous call to getUnusedNodeId() we have to test if the node
 		// ID exists in the database yet, and if so perform an update, 

@@ -75,7 +75,7 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 		if ( newMeta != null && newMeta.equals(snm.getMeta()) == false ) {
 			// have changes, so persist
 			snm.setMeta(newMeta);
-			solarNodeMetadataDao.store(snm);
+			solarNodeMetadataDao.save(snm);
 		}
 	}
 
@@ -93,7 +93,7 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 		} else {
 			snm.setMeta(meta);
 		}
-		solarNodeMetadataDao.store(snm);
+		solarNodeMetadataDao.save(snm);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

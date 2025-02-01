@@ -369,7 +369,7 @@ public class DaoDataCollectorBizTests {
 		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
 
 		Capture<SolarLocation> locCaptor = new Capture<>();
-		expect(locationDao.store(capture(locCaptor))).andReturn(curr.getId());
+		expect(locationDao.save(capture(locCaptor))).andReturn(curr.getId());
 
 		// WHEN
 		replayAll();
@@ -403,7 +403,7 @@ public class DaoDataCollectorBizTests {
 		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
 
 		Capture<SolarLocation> locCaptor = new Capture<>();
-		expect(locationDao.store(capture(locCaptor))).andReturn(curr.getId());
+		expect(locationDao.save(capture(locCaptor))).andReturn(curr.getId());
 
 		// WHEN
 		replayAll();
@@ -443,13 +443,13 @@ public class DaoDataCollectorBizTests {
 		// save new non-shared instance
 		final Long newLocId = 234L;
 		Capture<SolarLocation> locCaptor = new Capture<>(CaptureType.ALL);
-		expect(locationDao.store(capture(locCaptor))).andReturn(newLocId);
+		expect(locationDao.save(capture(locCaptor))).andReturn(newLocId);
 
 		// re-assign node to new location
 		SolarNode node = new SolarNode(nodeId, curr.getId());
 		expect(nodeDao.get(nodeId)).andReturn(node);
 
-		expect(nodeDao.store(assertWith(new Assertion<SolarNode>() {
+		expect(nodeDao.save(assertWith(new Assertion<SolarNode>() {
 
 			@Override
 			public void check(SolarNode argument) throws Throwable {

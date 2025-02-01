@@ -100,7 +100,7 @@ public class JdbcOAuth2AuthorizedClientService_ClientAccessTokenDaoTests
 		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));
 
 		// WHEN
-		var result = service.store(entity);
+		var result = service.save(entity);
 
 		// THEN
 		// @formatter:off
@@ -231,7 +231,7 @@ public class JdbcOAuth2AuthorizedClientService_ClientAccessTokenDaoTests
 		entity.setRefreshToken("REFRESH2".getBytes(UTF_8));
 		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));
 
-		service.store(entity);
+		service.save(entity);
 
 		// THEN
 		List<Map<String, Object>> rows2 = allAuthClientServiceRows();

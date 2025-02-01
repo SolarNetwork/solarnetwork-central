@@ -216,7 +216,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			configuration.setMinimumExportDate(ts.toInstant());
 		}
 		configuration.setTokenId(SecurityUtils.currentTokenId());
-		return datumExportConfigDao.store(configuration);
+		return datumExportConfigDao.save(configuration);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -333,13 +333,13 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
-			return dataConfigDao.store(mergeServiceProperties((UserDataConfiguration) configuration));
+			return dataConfigDao.save(mergeServiceProperties((UserDataConfiguration) configuration));
 		} else if ( configuration instanceof UserDestinationConfiguration ) {
 			return destinationConfigDao
-					.store(mergeServiceProperties((UserDestinationConfiguration) configuration));
+					.save(mergeServiceProperties((UserDestinationConfiguration) configuration));
 		} else if ( configuration instanceof UserOutputConfiguration ) {
 			return outputConfigDao
-					.store(mergeServiceProperties((UserOutputConfiguration) configuration));
+					.save(mergeServiceProperties((UserOutputConfiguration) configuration));
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}
