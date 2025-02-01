@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;

@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.solarnetwork.central.dao.FilterableDao;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.dao.BasicFilterResults;
