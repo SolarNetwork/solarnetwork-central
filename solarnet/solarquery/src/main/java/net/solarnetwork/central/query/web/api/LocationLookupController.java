@@ -30,11 +30,11 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
@@ -77,15 +77,14 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<LocationMatch>> findLocations(SourceLocationFilter cmd) {
+	public Response<FilterResults<LocationMatch, Long>> findLocations(SourceLocationFilter cmd) {
 		if ( cmd == null ) {
-			return new Response<FilterResults<LocationMatch>>(false, null, "Search filter is required.",
-					null);
+			return new Response<>(false, null, "Search filter is required.", null);
 		}
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 
-		FilterResults<LocationMatch> results = queryBiz.findFilteredLocations(cmd.getLocation(),
+		FilterResults<LocationMatch, Long> results = queryBiz.findFilteredLocations(cmd.getLocation(),
 				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 		return response(results);
 	}

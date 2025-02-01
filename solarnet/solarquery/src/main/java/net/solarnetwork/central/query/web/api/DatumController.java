@@ -41,11 +41,14 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.web.jakarta.domain.Response;
 
@@ -90,8 +93,8 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd, BindingResult validationResult) {
+	public Response<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> filterGeneralDatumData(
+			final HttpServletRequest req, final DatumFilterCommand cmd, BindingResult validationResult) {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
 			if ( validationResult.hasErrors() ) {
@@ -100,7 +103,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 		}
 		populateMostRecentImplicitStartDate(cmd);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<?> results;
+			FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results;
 			if ( cmd.getAggregation() != null ) {
 				results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
 						cmd.getOffset(), cmd.getMax());
@@ -108,14 +111,14 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 				results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
 						cmd.getOffset(), cmd.getMax());
 			}
-			return new Response<FilterResults<?>>(results);
+			return new Response<>(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd, BindingResult validationResult) {
+	public Response<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> getMostRecentGeneralNodeDatumData(
+			final HttpServletRequest req, final DatumFilterCommand cmd, BindingResult validationResult) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(req, cmd, validationResult);
 	}
@@ -136,8 +139,9 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
-	public Response<FilterResults<?>> datumReading(final HttpServletRequest req,
-			final DatumFilterCommand cmd, @RequestParam("readingType") DatumReadingType readingType,
+	public Response<FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK>> datumReading(
+			final HttpServletRequest req, final DatumFilterCommand cmd,
+			@RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
 			BindingResult validationResult) {
 		if ( filterValidator != null ) {
@@ -147,14 +151,14 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 			}
 		}
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<?> results;
+			FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results;
 			if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
 				results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
 						cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
 			} else {
 				results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
 			}
-			return new Response<FilterResults<?>>(results);
+			return new Response<>(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 

@@ -46,7 +46,7 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
@@ -57,7 +57,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -187,10 +187,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(TEST_NODE_ID);
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(1), matches.getReturnedResultCount());
+		assertEquals(1, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 		int count = 0;
 		EntityMatch m = null;
@@ -220,10 +220,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(new Long[] { node2Id, node3Id });
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertEquals(2, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 		int count = 0;
 		for ( EntityMatch one : matches.getResults() ) {
@@ -250,10 +250,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setInstructionIds(instructionIds);
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertEquals(2, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 		int count = 0;
 		for ( EntityMatch one : matches.getResults() ) {
@@ -270,10 +270,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(1), matches.getReturnedResultCount());
+		assertEquals(1, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 		int count = 0;
 		EntityMatch m = null;
@@ -299,10 +299,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(new Long[] { node2Id, node3Id });
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertEquals(2, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 		int count = 0;
 		for ( EntityMatch one : matches.getResults() ) {
@@ -401,10 +401,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
 				InstructionState.Executing));
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(2), matches.getReturnedResultCount());
+		assertEquals(2, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 
 		Set<Long> expectedIds = new HashSet<Long>(Arrays.asList(lastDatum.getId(), datum.getId()));
@@ -470,10 +470,10 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(TEST_NODE_ID);
-		FilterResults<EntityMatch> matches = dao.findFiltered(filter, null, null, null);
+		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
 		assertNotNull(matches);
 		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(Integer.valueOf(1), matches.getReturnedResultCount());
+		assertEquals(1, matches.getReturnedResultCount());
 		assertNotNull(matches.getResults());
 
 		EntityMatch match = matches.getResults().iterator().next();

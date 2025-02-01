@@ -41,12 +41,12 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
@@ -135,11 +135,11 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		FilterSupport criteria = new FilterSupport();
 		criteria.setNodeId(TEST_NODE_ID);
 
-		FilterResults<SolarNodeMetadataFilterMatch> results = dao.findFiltered(criteria, null, null,
-				null);
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dao.findFiltered(criteria, null,
+				null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
+		assertEquals(1, results.getReturnedResultCount());
 		SolarNodeMetadataFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Match ID", TEST_NODE_ID, match.getId());
 	}
@@ -171,8 +171,8 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		criteria.setMetadataFilter("(&(/m/foo>100)(/m/foo<102))");
 
 		List<SortDescriptor> sorts = asList(new SimpleSortDescriptor("node", false));
-		FilterResults<SolarNodeMetadataFilterMatch> results = dao.findFiltered(criteria, sorts, null,
-				null);
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dao.findFiltered(criteria, sorts,
+				null, null);
 		assertThat("Result available", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 		assertThat("Result node IDs", stream(results.getResults().spliterator(), false)

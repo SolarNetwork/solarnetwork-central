@@ -39,7 +39,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Criteria for location data tied to a source.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
@@ -49,7 +49,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 	private String source;
 	private SolarLocation location;
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset;
+	private Long offset;
 	private Integer max;
 
 	/**
@@ -173,11 +173,11 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		this.sorts = sorts;
 	}
 
-	public Integer getOffset() {
+	public Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Integer offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 

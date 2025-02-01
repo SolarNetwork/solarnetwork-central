@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link AggregateNodeDatumFilter}, and {@link GeneralNodeDatumFilter}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @JsonPropertyOrder({ "locationIds", "nodeIds", "sourceIds", "userIds", "aggregation", "aggregationKey",
 		"partialAggregation", "partialAggregationKey", "readingType", "combiningType",
@@ -78,7 +78,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	private boolean mostRecent = false;
 	private String type; // e.g. Power, Consumption, etc.
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset;
+	private Long offset;
 	private Integer max;
 	private String dataPath; // bean path expression to a data value, e.g. "i.watts"
 
@@ -456,11 +456,11 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		return new ArrayList<SortDescriptor>(sorts);
 	}
 
-	public Integer getOffset() {
+	public Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Integer offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 
@@ -471,7 +471,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	public void setMax(Integer max) {
 		this.max = max;
 		if ( this.offset == null ) {
-			this.offset = 0;
+			this.offset = 0L;
 		}
 	}
 

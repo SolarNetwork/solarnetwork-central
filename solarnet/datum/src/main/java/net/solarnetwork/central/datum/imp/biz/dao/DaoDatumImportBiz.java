@@ -67,6 +67,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportException;
@@ -93,7 +94,6 @@ import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -101,11 +101,12 @@ import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -115,7 +116,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -303,7 +304,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	}
 
 	@Override
-	public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+	public Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> previewStagedImportRequest(
 			DatumImportPreviewRequest request) {
 		UserUuidPK id = new UserUuidPK(request.getUserId(), UUID.fromString(request.getJobId()));
 		DatumImportTask task = taskForId(id);
@@ -320,7 +321,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			return previewExecutor.submit(preview);
 		}
 
-		CompletableFuture<FilterResults<GeneralNodeDatumComponents>> result = new CompletableFuture<>();
+		CompletableFuture<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> result = new CompletableFuture<>();
 		try {
 			result.complete(preview.call());
 		} catch ( Exception e ) {
@@ -527,7 +528,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 	}
 
-	private class DatumImportPreview implements Callable<FilterResults<GeneralNodeDatumComponents>>,
+	private class DatumImportPreview
+			implements Callable<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>,
 			ProgressListener<DatumImportService> {
 
 		private final DatumImportJobInfo info;
@@ -552,7 +554,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 
 		@Override
-		public FilterResults<GeneralNodeDatumComponents> call() throws Exception {
+		public FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> call() throws Exception {
 			final Configuration config = info.getConfiguration();
 			if ( config == null || config.getInputConfiguration() == null ) {
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
@@ -602,7 +604,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			if ( percentComplete > 0 ) {
 				totalCountEstimate = Math.round(results.size() / percentComplete);
 			}
-			return new BasicFilterResults<>(results, totalCountEstimate, 0, results.size());
+			return new BasicFilterResults<>(results, totalCountEstimate, 0L, results.size());
 		}
 
 		@Override

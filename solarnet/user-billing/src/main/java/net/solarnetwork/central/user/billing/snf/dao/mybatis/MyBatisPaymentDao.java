@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisPaymentDao.java - 29/07/2020 7:32:18 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,9 +34,9 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link PaymentDao}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, UserUuidPK>
 		implements PaymentDao {
@@ -54,7 +54,7 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 
 		/**
 		 * Get the query name.
-		 * 
+		 *
 		 * @return the query name
 		 */
 		public String getQueryName() {
@@ -71,14 +71,14 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 
 	@Override
 	public FilterResults<Payment, UserUuidPK> findFiltered(PaymentFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		if ( offset != null || max != null || sorts != null ) {
 			filter = filter.clone();
 			filter.setSorts(sorts);
 			filter.setMax(max);
 			if ( offset == null ) {
 				// force offset to 0 if implied
-				filter.setOffset(0);
+				filter.setOffset(0L);
 			} else {
 				filter.setOffset(offset);
 			}

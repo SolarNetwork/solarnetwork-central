@@ -29,16 +29,16 @@ import java.util.Map;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Base MyBatis {@link FilterableDao} implementation.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends FilterMatch<PK>, F extends Filter, PK extends Serializable>
 		extends BaseMyBatisGenericDao<T, PK> implements FilterableDao<M, PK, F> {
@@ -79,7 +79,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 
 	/**
 	 * Callback to alter the default SQL properties set up by
-	 * {@link #findFiltered(Filter, List, Integer, Integer)}.
+	 * {@link #findFiltered(Filter, List, Long, Integer)}.
 	 * 
 	 * @param filter
 	 *        the current filter
@@ -91,7 +91,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	}
 
 	@Override
-	public FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<M, PK> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		final String filterDomain = getMemberDomainKey(filterResultClass);
 		final String query = getFilteredQuery(filterDomain, filter);
@@ -113,8 +113,9 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 
 		List<M> rows = selectList(query, sqlProps, offset, max);
 
-		BasicFilterResults<M> results = new BasicFilterResults<M>(rows,
-				(totalCount != null ? totalCount : Long.valueOf(rows.size())), offset, rows.size());
+		BasicFilterResults<M, PK> results = new BasicFilterResults<>(rows,
+				(totalCount != null ? totalCount : Long.valueOf(rows.size())),
+				offset != null ? offset.longValue() : 0L, rows.size());
 
 		return results;
 	}

@@ -59,8 +59,10 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
@@ -79,7 +81,6 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.AggregationFilter;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -90,7 +91,8 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -100,7 +102,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Implementation of {@link QueryBiz}.
  * 
  * @author matt
- * @version 4.4
+ * @version 4.5
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -226,8 +228,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
-			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
@@ -243,8 +245,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
@@ -369,9 +371,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateReading(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		if ( readingType != DatumReadingType.Difference ) {
 			throw new IllegalArgumentException("The DatumReadingType [" + readingType
 					+ "] is not supported for aggregate level [" + filter.getAggregation() + "]");
@@ -391,7 +393,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
@@ -425,7 +427,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public void findFilteredStreamDatum(StreamDatumFilter filter,
 			StreamDatumFilteredResultsProcessor processor,
-			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Integer offset, Integer max)
+			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Long offset, Integer max)
 			throws IOException {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), max);
@@ -437,7 +439,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
 			Period tolerance, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
@@ -454,8 +456,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<LocationMatch, Long> findFilteredLocations(Location filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		if ( filter == null || filter.getFilter() == null || filter.getFilter().isEmpty() ) {
 			throw new IllegalArgumentException("Filter is required.");
 		}
@@ -465,8 +467,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
-			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> findGeneralLocationDatum(
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
@@ -481,9 +483,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
+	public FilterResults<ReportingGeneralLocationDatumMatch, GeneralLocationDatumPK> findAggregateGeneralLocationDatum(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			Long offset, Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
@@ -542,9 +544,9 @@ public class DaoQueryBiz implements QueryBiz {
 		return requestedMaximum;
 	}
 
-	private Integer limitFilterOffset(Integer requestedOffset) {
-		if ( requestedOffset == null || requestedOffset.intValue() < 0 ) {
-			return 0;
+	private Long limitFilterOffset(Long requestedOffset) {
+		if ( requestedOffset == null || requestedOffset.longValue() < 0 ) {
+			return 0L;
 		}
 		return requestedOffset;
 	}

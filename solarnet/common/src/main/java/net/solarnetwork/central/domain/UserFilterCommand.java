@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Filter support for user actions.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.23
  */
 public class UserFilterCommand extends FilterSupport implements UserFilter {
@@ -44,7 +44,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 	private static final long serialVersionUID = 915646548230356302L;
 
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset = 0;
+	private Long offset = 0L;
 	private Integer max;
 	private String email;
 	private Map<String, Object> internalData;
@@ -81,11 +81,11 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 		return new ArrayList<>(sorts);
 	}
 
-	public Integer getOffset() {
+	public Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Integer offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 

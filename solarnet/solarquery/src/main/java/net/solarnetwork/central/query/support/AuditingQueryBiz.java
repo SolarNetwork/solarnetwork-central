@@ -31,19 +31,20 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * {@link QueryBiz} implementation that audits query events using a
  * {@link QueryAuditor}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class AuditingQueryBiz extends DelegatingQueryBiz {
 
@@ -65,43 +66,43 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	}
 
 	@Override
-	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
-			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		auditor.resetCurrentAuditResults();
-		FilterResults<GeneralNodeDatumFilterMatch> results = super.findFilteredGeneralNodeDatum(filter,
-				sortDescriptors, offset, max);
-		auditor.auditNodeDatumFilterResults(filter, results);
-		return results;
-	}
-
-	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
-			Integer max) {
-		auditor.resetCurrentAuditResults();
-		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateGeneralNodeDatum(
+		FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = super.findFilteredGeneralNodeDatum(
 				filter, sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
 
 	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
-			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max) {
 		auditor.resetCurrentAuditResults();
-		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredReading(filter,
-				readingType, tolerance);
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = super.findFilteredAggregateGeneralNodeDatum(
+				filter, sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
 	}
 
 	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
-			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredReading(
+			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
 		auditor.resetCurrentAuditResults();
-		FilterResults<ReportingGeneralNodeDatumMatch> results = super.findFilteredAggregateReading(
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = super.findFilteredReading(
+				filter, readingType, tolerance);
+		auditor.auditNodeDatumFilterResults(filter, results);
+		return results;
+	}
+
+	@Override
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateReading(
+			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+		auditor.resetCurrentAuditResults();
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = super.findFilteredAggregateReading(
 				filter, readingType, tolerance, sortDescriptors, offset, max);
 		auditor.auditNodeDatumFilterResults(filter, results);
 		return results;
@@ -110,7 +111,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 	@Override
 	public void findFilteredStreamDatum(StreamDatumFilter filter,
 			StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		auditor.resetCurrentAuditResults();
 		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilterdResultsProcessor(
 				processor, auditor);

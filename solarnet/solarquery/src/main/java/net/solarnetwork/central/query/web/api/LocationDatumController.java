@@ -34,13 +34,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
@@ -199,13 +201,13 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public Response<FilterResults<?>> filterGeneralDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd) {
+	public Response<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> filterGeneralDatumData(
+			final HttpServletRequest req, final DatumFilterCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			// support filtering based on sourceId path pattern, by simply finding the sources that match first
 			resolveSourceIdPattern(cmd);
 
-			FilterResults<?> results;
+			FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> results;
 			if ( cmd.getAggregation() != null ) {
 				results = queryBiz.findAggregateGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
 						cmd.getOffset(), cmd.getMax());
@@ -213,14 +215,14 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 				results = queryBiz.findGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
 						cmd.getOffset(), cmd.getMax());
 			}
-			return new Response<FilterResults<?>>(results);
+			return new Response<>(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
-	public Response<FilterResults<?>> getMostRecentGeneralNodeDatumData(final HttpServletRequest req,
-			final DatumFilterCommand cmd) {
+	public Response<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> getMostRecentGeneralNodeDatumData(
+			final HttpServletRequest req, final DatumFilterCommand cmd) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(req, cmd);
 	}

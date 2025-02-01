@@ -55,7 +55,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <C>
  *        the transform configuration type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract sealed class JdbcTransformConfigurationDao<C extends TransformConfiguration<C>>
 		implements TransformConfigurationDao<C> {
@@ -221,7 +221,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 	@Override
 	public FilterResults<C, UserLongCompositePK> findFiltered(TransformFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(phase, filter);
 		return executeFilterQuery(jdbcOps, filter, sql, rowMapper());

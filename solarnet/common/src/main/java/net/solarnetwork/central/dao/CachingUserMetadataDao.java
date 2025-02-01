@@ -37,7 +37,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Caching implementation of {@link UserMetadataDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity, Long, UserMetadataDao>
 		implements UserMetadataDao {
@@ -65,7 +65,7 @@ public class CachingUserMetadataDao extends CachingGenericDao<UserMetadataEntity
 
 	@Override
 	public FilterResults<UserMetadataEntity, Long> findFiltered(UserMetadataFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 

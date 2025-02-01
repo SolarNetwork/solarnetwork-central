@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoDatumMaintenanceBizTests.java - 26/11/2020 10:55:19 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -43,6 +43,7 @@ import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
@@ -50,16 +51,16 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.dao.StaleAggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
-import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.dao.BasicFilterResults;
 
 /**
  * Test cases for the {@link DaoDatumMaintenanceBiz} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -114,8 +115,8 @@ public class DaoDatumMaintenanceBizTests {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(1L);
 		criteria.setSourceId("a");
-		FilterResults<StaleAggregateDatum> results = biz.findStaleAggregateDatum(criteria, null, null,
-				null);
+		FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> results = biz
+				.findStaleAggregateDatum(criteria, null, null, null);
 
 		// THEN
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
@@ -160,8 +161,8 @@ public class DaoDatumMaintenanceBizTests {
 		criteria.setNodeId(1L);
 		criteria.setSourceId("a");
 		criteria.setType("m");
-		FilterResults<StaleAggregateDatum> results = biz.findStaleAggregateDatum(criteria, null, null,
-				null);
+		FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> results = biz
+				.findStaleAggregateDatum(criteria, null, null, null);
 
 		// THEN
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));

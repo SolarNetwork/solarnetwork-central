@@ -42,7 +42,6 @@ import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
-import net.solarnetwork.central.datum.dao.GeneralLocationDatumDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilter;
@@ -50,12 +49,13 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterM
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -67,6 +67,7 @@ import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -75,8 +76,8 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
- * Implementation of {@link DataCollectorBiz} using {@link DatumEntityDao} and
- * {@link GeneralLocationDatumDao} APIs to persist the data.
+ * Implementation of {@link DataCollectorBiz} using {@link DatumEntityDao} to
+ * persist the data.
  * 
  * <p>
  * This service expects all calls into {@link #postGeneralNodeDatum(Iterable)}
@@ -90,7 +91,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 4.2
+ * @version 4.3
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -115,9 +116,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return requestedMaximum;
 	}
 
-	private Integer limitFilterOffset(Integer requestedOffset) {
+	private Long limitFilterOffset(Long requestedOffset) {
 		if ( requestedOffset == null || requestedOffset.intValue() < 0 ) {
-			return 0;
+			return 0L;
 		}
 		return requestedOffset;
 	}
@@ -423,9 +424,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	}
 
 	@Override
-	public FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(
+	public FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
 			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
-			final Integer offset, final Integer max) {
+			final Long offset, final Integer max) {
 		return solarNodeMetadataBiz.findSolarNodeMetadata(
 				solarNodeMetadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset,
 				max);
@@ -451,27 +452,27 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
+	public FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
 			final GeneralNodeDatumMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
-			final Integer offset, final Integer max) {
+			final Long offset, final Integer max) {
 		return datumMetadataBiz.findGeneralNodeDatumMetadata(
 				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
 			final GeneralLocationDatumMetadataFilter criteria,
-			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max) {
 		return datumMetadataBiz.findGeneralLocationDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public List<LocationMatch> findLocations(Location criteria) {
-		FilterResults<LocationMatch> matches = solarLocationDao.findFiltered(criteria, null,
+		FilterResults<LocationMatch, Long> matches = solarLocationDao.findFiltered(criteria, null,
 				limitFilterOffset(null), limitFilterMaximum(null));
-		List<LocationMatch> resultList = new ArrayList<LocationMatch>(matches.getReturnedResultCount());
+		List<LocationMatch> resultList = new ArrayList<>(matches.getReturnedResultCount());
 		for ( LocationMatch m : matches.getResults() ) {
 			resultList.add(m);
 		}

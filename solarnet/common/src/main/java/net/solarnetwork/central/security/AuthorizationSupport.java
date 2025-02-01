@@ -33,9 +33,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Helper class for authorization needs, e.g. aspect implementations.
@@ -440,13 +440,12 @@ public class AuthorizationSupport {
 
 		final Object principal = (authentication != null ? authentication.getPrincipal() : null);
 
-		if ( domainObject instanceof FilterResults<?> filterResults ) {
-			Collection<Object> filteredObjects = policyEnforcedCollection(filterResults, policy,
-					principal, metadataType);
-			@SuppressWarnings("unchecked")
-			T result = (T) new BasicFilterResults<Object>(filteredObjects,
-					filterResults.getTotalResults(), filterResults.getStartingOffset(),
-					filterResults.getReturnedResultCount());
+		if ( domainObject instanceof FilterResults<?, ?> filterResults ) {
+			Collection<?> filteredObjects = policyEnforcedCollection(filterResults, policy, principal,
+					metadataType);
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			T result = (T) new BasicFilterResults(filteredObjects, filterResults.getTotalResults(),
+					filterResults.getStartingOffset(), filterResults.getReturnedResultCount());
 			return result;
 		} else if ( domainObject instanceof List<?> collectionResults ) {
 			@SuppressWarnings("unchecked")
@@ -462,7 +461,7 @@ public class AuthorizationSupport {
 		return SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 	}
 
-	private Collection<Object> policyEnforcedCollection(Iterable<?> input, SecurityPolicy policy,
+	private Collection<?> policyEnforcedCollection(Iterable<?> input, SecurityPolicy policy,
 			Object principal, SecurityPolicyMetadataType metadataType) {
 		if ( input == null ) {
 			return null;

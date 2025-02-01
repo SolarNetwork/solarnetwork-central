@@ -66,7 +66,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -79,7 +79,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class DaoDataCollectorBizTests {
 
@@ -128,9 +128,9 @@ public class DaoDataCollectorBizTests {
 		filter.setPostalCode("6011");
 
 		SolarLocation l = new SolarLocation();
-		BasicFilterResults<LocationMatch> filterResults = new BasicFilterResults<>(singleton(l), 1L, 0,
-				1);
-		expect(locationDao.findFiltered(eq(filter), isNull(), eq(0), anyObject()))
+		BasicFilterResults<LocationMatch, Long> filterResults = new BasicFilterResults<>(singleton(l),
+				1L, 0L, 1);
+		expect(locationDao.findFiltered(eq(filter), isNull(), eq(0L), anyObject()))
 				.andReturn(filterResults);
 
 		// WHEN

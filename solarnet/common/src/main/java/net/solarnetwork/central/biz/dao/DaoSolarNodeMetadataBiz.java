@@ -28,10 +28,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -39,7 +39,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * DAO-based implementation of {@link SolarNodeMetadataBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
@@ -107,8 +107,8 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
+			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		return solarNodeMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}

@@ -51,7 +51,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link UserEventDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 
@@ -78,7 +78,7 @@ public class JdbcUserEventDao implements UserEventDao, UserEventMaintenanceDao {
 
 	@Override
 	public FilterResults<UserEvent, UserUuidPK> findFiltered(UserEventFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		SelectUserEvent sql = new SelectUserEvent(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, UserEventRowMapper.INSTANCE);
 	}

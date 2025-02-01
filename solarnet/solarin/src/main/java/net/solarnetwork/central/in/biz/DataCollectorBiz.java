@@ -31,11 +31,13 @@ import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterM
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.StreamDatum;
@@ -48,7 +50,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public interface DataCollectorBiz {
 
@@ -151,8 +153,9 @@ public interface DataCollectorBiz {
 	 * @return the results, never <em>null</em>
 	 * @since 1.5
 	 */
-	FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
-			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max);
+	FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
+			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
+			final Long offset, final Integer max);
 
 	/**
 	 * Search for datum metadata.
@@ -167,9 +170,9 @@ public interface DataCollectorBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
+			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max);
 
 	/**
 	 * Search for location datum metadata based on a location criteria. The
@@ -187,9 +190,9 @@ public interface DataCollectorBiz {
 	 * @return the results, never <em>null</em>
 	 * @since 1.3
 	 */
-	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Look up location objects based on a location search filter.

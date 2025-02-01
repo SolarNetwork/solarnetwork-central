@@ -49,7 +49,7 @@ import net.solarnetwork.util.StatTracker;
  * Asynchronous implementation of {@link ChargePointStatusDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AsyncChargePointStatusDao
 		extends DelayedOcassionalProcessor<AsyncChargePointStatusDao.StatusUpdate>
@@ -92,14 +92,14 @@ public class AsyncChargePointStatusDao
 
 	@Override
 	public FilterResults<ChargePointStatus, UserLongCompositePK> findFiltered(
-			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
 	@Override
 	public void findFilteredStream(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		delegate.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
 
