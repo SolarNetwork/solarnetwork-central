@@ -49,23 +49,15 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-<<<<<<< HEAD
-import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.domain.FilterResults;
-=======
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
->>>>>>> develop
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
-<<<<<<< HEAD
-import net.solarnetwork.domain.Result;
-=======
 import net.solarnetwork.dao.FilterResults;
->>>>>>> develop
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Aggregation;
 
 /**
@@ -116,12 +108,11 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
+	public Result<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> filterGeneralDatumData(
 <<<<<<< HEAD
-	public Result<FilterResults<ReportingGeneralNodeDatumMatch>> filterGeneralDatumData(
 			final HttpServletRequest req, final DatumFilterCommand criteria,
 			BindingResult validationResult) {
 =======
-	public Response<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> filterGeneralDatumData(
 			final HttpServletRequest req, final DatumFilterCommand cmd, BindingResult validationResult) {
 >>>>>>> develop
 		if ( filterValidator != null ) {
@@ -132,26 +123,15 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 		}
 		populateMostRecentImplicitStartDate(criteria);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-<<<<<<< HEAD
-			FilterResults<ReportingGeneralNodeDatumMatch> results;
+			FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results;
 			if ( criteria.getAggregation() != null ) {
 				results = queryBiz.findFilteredAggregateGeneralNodeDatum(criteria,
 						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
-=======
-			FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results;
-			if ( cmd.getAggregation() != null ) {
-				results = queryBiz.findFilteredAggregateGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
->>>>>>> develop
 			} else {
 				results = queryBiz.findFilteredGeneralNodeDatum(criteria, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 			}
-<<<<<<< HEAD
 			return success(results);
-=======
-			return new Response<>(results);
->>>>>>> develop
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -167,14 +147,13 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
+	public Result<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> getMostRecentGeneralNodeDatumData(
 <<<<<<< HEAD
-	public Result<FilterResults<ReportingGeneralNodeDatumMatch>> getMostRecentGeneralNodeDatum(
 			final HttpServletRequest req, final DatumFilterCommand criteria,
 			BindingResult validationResult) {
 		criteria.setMostRecent(true);
 		return filterGeneralDatumData(req, criteria, validationResult);
 =======
-	public Response<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> getMostRecentGeneralNodeDatumData(
 			final HttpServletRequest req, final DatumFilterCommand cmd, BindingResult validationResult) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(req, cmd, validationResult);
@@ -212,11 +191,10 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 							"""), })
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
+	public Result<FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK>> datumReading(
 <<<<<<< HEAD
-	public Result<FilterResults<ReportingGeneralNodeDatumMatch>> datumReading(
 			final HttpServletRequest req, final DatumFilterCommand criteria,
 =======
-	public Response<FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK>> datumReading(
 			final HttpServletRequest req, final DatumFilterCommand cmd,
 >>>>>>> develop
 			@RequestParam("readingType") DatumReadingType readingType,
@@ -229,25 +207,14 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 			}
 		}
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-<<<<<<< HEAD
-			FilterResults<ReportingGeneralNodeDatumMatch> results;
+			FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results;
 			if ( criteria.getAggregation() != null && criteria.getAggregation() != Aggregation.None ) {
 				results = queryBiz.findFilteredAggregateReading(criteria, readingType, tolerance,
 						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
-=======
-			FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results;
-			if ( cmd.getAggregation() != null && cmd.getAggregation() != Aggregation.None ) {
-				results = queryBiz.findFilteredAggregateReading(cmd, readingType, tolerance,
-						cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
->>>>>>> develop
 			} else {
 				results = queryBiz.findFilteredReading(criteria, readingType, tolerance);
 			}
-<<<<<<< HEAD
 			return success(results);
-=======
-			return new Response<>(results);
->>>>>>> develop
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 

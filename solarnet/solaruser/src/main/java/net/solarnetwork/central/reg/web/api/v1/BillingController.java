@@ -25,7 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.YEAR;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.time.YearMonth;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
@@ -59,7 +59,7 @@ import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatchFilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for billing management.
@@ -100,12 +100,12 @@ public class BillingController {
 	 * @return the billing system info
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo", params = "!key")
-	public Response<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
+	public Result<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		BillingBiz biz = billingBiz();
 		BillingSystem system = biz.billingSystemForUser(userId);
 		BillingSystemInfo info = (system != null ? system.getInfo(locale) : null);
-		return response(info);
+		return success(info);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/{invoiceId}", method = RequestMethod.GET)
-	public Response<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
+	public Result<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( userId == null ) {
@@ -138,7 +138,7 @@ public class BillingController {
 			result = new LocalizedInvoice(result, locale);
 		}
 
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -212,7 +212,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
-	public Response<FilterResults<InvoiceMatch, String>> findFilteredInvoices(
+	public Result<FilterResults<InvoiceMatch, String>> findFilteredInvoices(
 			InvoiceFilterCommand filter, Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( filter.getUserId() == null ) {
@@ -229,7 +229,7 @@ public class BillingController {
 			results = new LocalizedInvoiceMatchFilterResults(results, locale);
 		}
 
-		return response(results);
+		return success(results);
 	}
 
 	/** A YYYY-MM date format to use for parsing a billing month. */
@@ -264,7 +264,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/preview", method = RequestMethod.GET)
-	public Response<Invoice> previewInvoice(
+	public Result<Invoice> previewInvoice(
 			@RequestParam(value = "userId", required = false) Long userId,
 			@RequestParam(value = "month", required = false) String month,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
@@ -288,7 +288,7 @@ public class BillingController {
 			result = new LocalizedInvoice(result, locale);
 		}
 
-		return response(result);
+		return success(result);
 	}
 
 	/**

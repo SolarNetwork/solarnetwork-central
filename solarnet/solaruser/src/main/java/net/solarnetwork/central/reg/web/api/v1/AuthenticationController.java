@@ -33,7 +33,7 @@ import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUser;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Remote authentication for nodes.
@@ -56,7 +56,7 @@ public class AuthenticationController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/api/v1/sec/whoami", method = RequestMethod.GET)
-	public Response<Map<String, ?>> validate() {
+	public Result<Map<String, ?>> validate() {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
 		if ( actor instanceof SecurityUser ) {
@@ -69,7 +69,7 @@ public class AuthenticationController {
 			data.put("token", token.getToken().trim());
 			data.put("tokenType", token.getTokenType());
 		}
-		return Response.response(data);
+		return Result.success(data);
 	}
 
 }

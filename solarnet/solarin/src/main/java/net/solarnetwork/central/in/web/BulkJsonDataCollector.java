@@ -51,9 +51,9 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.StreamDatum;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * JSON implementation of bulk upload service.
@@ -62,8 +62,8 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * @version 3.3
  */
 @Controller
-@RequestMapping(value = { "/solarin/bulkCollector.do",
-		"/solarin/u/bulkCollector.do" }, consumes = "application/json")
+@RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },
+		consumes = "application/json")
 public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	/** The JSON field name for an "object type". */
@@ -119,9 +119,9 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	 */
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseBody
-	public Response<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
+	public Result<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
 		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
-		return new Response<Object>(Boolean.FALSE, null, "Internal error", null);
+		return new Result<Object>(Boolean.FALSE, null, "Internal error", null);
 	}
 
 	/**
@@ -145,7 +145,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	 */
 	@ResponseBody
 	@RequestMapping(method = RequestMethod.POST)
-	public Response<BulkUploadResult> postData(
+	public Result<BulkUploadResult> postData(
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in,
 			Model model) throws IOException {
 		AuthenticatedNode authNode = getAuthenticatedNode(true);
@@ -234,7 +234,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 			}
 		}
 
-		return new Response<BulkUploadResult>(result);
+		return new Result<BulkUploadResult>(result);
 	}
 
 	private Object handleNode(JsonNode node) {

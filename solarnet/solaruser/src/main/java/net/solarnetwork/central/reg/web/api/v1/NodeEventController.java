@@ -22,10 +22,11 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfiguration;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,8 +44,8 @@ import net.solarnetwork.central.user.event.biz.UserEventHookBiz;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for node event hook management.
@@ -77,27 +78,27 @@ public class NodeEventController {
 
 	@ResponseBody
 	@RequestMapping(value = "/node/topics", method = RequestMethod.GET)
-	public Response<Iterable<LocalizedServiceInfo>> availableDatumEventHookTopics(Locale locale) {
+	public Result<Iterable<LocalizedServiceInfo>> availableDatumEventHookTopics(Locale locale) {
 		Iterable<LocalizedServiceInfo> result = null;
 		if ( eventHookBiz != null ) {
 			result = eventHookBiz.availableDatumEventTopics(locale);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hook/services", method = RequestMethod.GET)
-	public Response<List<LocalizedServiceInfo>> availableNodeEventHookServices(Locale locale) {
+	public Result<List<LocalizedServiceInfo>> availableNodeEventHookServices(Locale locale) {
 		List<LocalizedServiceInfo> result = null;
 		if ( eventHookBiz != null ) {
 			result = localizedServiceSettings(eventHookBiz.availableNodeEventHookServices(), locale);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks", method = RequestMethod.GET)
-	public Response<List<UserNodeEventHookConfiguration>> nodeHookConfigurations() {
+	public Result<List<UserNodeEventHookConfiguration>> nodeHookConfigurations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		List<UserNodeEventHookConfiguration> configs = null;
 		if ( eventHookBiz != null ) {
@@ -107,12 +108,12 @@ public class NodeEventController {
 						return eventHookBiz.availableNodeEventHookServices();
 					});
 		}
-		return response(configs);
+		return success(configs);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks", method = RequestMethod.POST)
-	public Response<UserNodeEventHookConfiguration> saveNodeHookConfiguration(
+	public Result<UserNodeEventHookConfiguration> saveNodeHookConfiguration(
 			@RequestBody UserNodeEventHookConfiguration config) {
 		if ( eventHookBiz != null ) {
 			if ( config.getUserId() == null ) {
@@ -122,17 +123,17 @@ public class NodeEventController {
 			if ( id != null ) {
 				config = eventHookBiz.configurationForUser(id.keyComponent1(),
 						UserNodeEventHookConfiguration.class, id.keyComponent2());
-				return response(maskConfiguration(config, serviceSettings, (Void) -> {
+				return success(maskConfiguration(config, serviceSettings, (Void) -> {
 					return eventHookBiz.availableNodeEventHookServices();
 				}));
 			}
 		}
-		return new Response<>(false, null, null, null);
+		return error();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.GET)
-	public Response<UserNodeEventHookConfiguration> viewNodeHookConfiguration(
+	public Result<UserNodeEventHookConfiguration> viewNodeHookConfiguration(
 			@PathVariable("id") Long id) {
 		UserNodeEventHookConfiguration result = null;
 		if ( eventHookBiz != null ) {
@@ -144,12 +145,12 @@ public class NodeEventController {
 				});
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/node/hooks/{id}", method = RequestMethod.DELETE)
-	public Response<Void> deleteNodeHookConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteNodeHookConfiguration(@PathVariable("id") Long id) {
 		if ( eventHookBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserNodeEventHookConfiguration config = eventHookBiz.configurationForUser(userId,
@@ -158,7 +159,7 @@ public class NodeEventController {
 				eventHookBiz.deleteConfiguration(config);
 			}
 		}
-		return response(null);
+		return success();
 	}
 
 }

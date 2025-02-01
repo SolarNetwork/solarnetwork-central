@@ -42,10 +42,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.Hidden;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.PingTestResultDisplay;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * A web controller for running a set of {@link PingTest} tests and returning
@@ -118,8 +118,8 @@ public class PingController {
 
 	@RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public Response<PingResults> executePingTest() {
-		return Response.response(executeTests());
+	public Result<PingResults> executePingTest() {
+		return Result.success(executeTests());
 	}
 
 	@RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)

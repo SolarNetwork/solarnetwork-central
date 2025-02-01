@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.reg.web.domain.DatumAuxiliaryMove;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web controller for datum auxiliary record management.
@@ -86,12 +86,12 @@ public class DatumAuxiliaryController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{type}/{node}/{date}/{source}", method = RequestMethod.GET)
-	public Response<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliary(
+	public Result<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliary(
 			@PathVariable("type") DatumAuxiliaryType type, @PathVariable("node") Long nodeId,
 			@PathVariable("date") Instant date, @PathVariable("source") String sourceId) {
 		GeneralNodeDatumAuxiliary aux = datumAuxiliaryBiz.getGeneralNodeDatumAuxiliary(
 				new GeneralNodeDatumAuxiliaryPK(nodeId, date, sourceId, type));
-		return response(aux);
+		return success(aux);
 	}
 
 	/**
@@ -109,7 +109,7 @@ public class DatumAuxiliaryController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = "date")
-	public Response<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliaryFormPost(
+	public Result<GeneralNodeDatumAuxiliary> viewNodeDatumAuxiliaryFormPost(
 			@RequestParam(value = "type", required = false,
 					defaultValue = "Reset") DatumAuxiliaryType type,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("date") Instant date,
@@ -126,14 +126,14 @@ public class DatumAuxiliaryController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "," }, method = RequestMethod.GET, params = "!date")
-	public Response<FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK>> findNodeDatumAuxiliary(
+	public Result<FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK>> findNodeDatumAuxiliary(
 			DatumFilterCommand criteria) {
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		criteria.setUserId(userId);
 		FilterResults<GeneralNodeDatumAuxiliaryFilterMatch, GeneralNodeDatumAuxiliaryPK> results = datumAuxiliaryBiz
 				.findGeneralNodeDatumAuxiliary(criteria, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -146,9 +146,9 @@ public class DatumAuxiliaryController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST,
 			consumes = "!" + MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-	public Response<Void> storeNodeDatumAuxiliary(@RequestBody GeneralNodeDatumAuxiliary auxiliary) {
+	public Result<Void> storeNodeDatumAuxiliary(@RequestBody GeneralNodeDatumAuxiliary auxiliary) {
 		datumAuxiliaryBiz.storeGeneralNodeDatumAuxiliary(auxiliary);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class DatumAuxiliaryController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-	public Response<Void> storeNodeDatumAuxiliaryFormPost(GeneralNodeDatumAuxiliary auxiliary) {
+	public Result<Void> storeNodeDatumAuxiliaryFormPost(GeneralNodeDatumAuxiliary auxiliary) {
 		return storeNodeDatumAuxiliary(auxiliary);
 	}
 
@@ -175,9 +175,9 @@ public class DatumAuxiliaryController {
 	@ResponseBody
 	@RequestMapping(value = "/move", method = RequestMethod.POST,
 			consumes = "!" + MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-	public Response<Boolean> moveNodeDatumAuxiliary(@RequestBody DatumAuxiliaryMove move) {
+	public Result<Boolean> moveNodeDatumAuxiliary(@RequestBody DatumAuxiliaryMove move) {
 		boolean moved = datumAuxiliaryBiz.moveGeneralNodeDatumAuxiliary(move.getFrom(), move.getTo());
-		return response(moved);
+		return success(moved);
 	}
 
 	/**
@@ -190,7 +190,7 @@ public class DatumAuxiliaryController {
 	@ResponseBody
 	@RequestMapping(value = "/move", method = RequestMethod.POST,
 			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-	public Response<Boolean> moveNodeDatumAuxiliaryFormPost(DatumAuxiliaryMove move) {
+	public Result<Boolean> moveNodeDatumAuxiliaryFormPost(DatumAuxiliaryMove move) {
 		return moveNodeDatumAuxiliary(move);
 	}
 
@@ -209,12 +209,12 @@ public class DatumAuxiliaryController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{type}/{node}/{date}/{source}", method = RequestMethod.DELETE)
-	public Response<Void> removeNodeDatumAuxiliary(@PathVariable("type") DatumAuxiliaryType type,
+	public Result<Void> removeNodeDatumAuxiliary(@PathVariable("type") DatumAuxiliaryType type,
 			@PathVariable("node") Long nodeId, @PathVariable("date") Instant date,
 			@PathVariable("source") String sourceId) {
 		datumAuxiliaryBiz.removeGeneralNodeDatumAuxiliary(
 				new GeneralNodeDatumAuxiliaryPK(nodeId, date, sourceId, type));
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -227,9 +227,9 @@ public class DatumAuxiliaryController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE,
 			params = { "!nodeId", "!date", "!sourceId" })
-	public Response<Void> removeNodeDatumAuxiliary(@RequestBody GeneralNodeDatumAuxiliaryPK id) {
+	public Result<Void> removeNodeDatumAuxiliary(@RequestBody GeneralNodeDatumAuxiliaryPK id) {
 		datumAuxiliaryBiz.removeGeneralNodeDatumAuxiliary(id);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -248,7 +248,7 @@ public class DatumAuxiliaryController {
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.DELETE,
 			params = { "nodeId", "date", "sourceId" })
-	public Response<Void> removeNodeDatumAuxiliaryFormPost(
+	public Result<Void> removeNodeDatumAuxiliaryFormPost(
 			@RequestParam(value = "type", required = false,
 					defaultValue = "Reset") DatumAuxiliaryType type,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("date") Instant date,

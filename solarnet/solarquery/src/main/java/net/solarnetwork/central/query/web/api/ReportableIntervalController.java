@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
+import static net.solarnetwork.domain.Result.success;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for querying for reportable interval values.
@@ -145,11 +146,11 @@ public class ReportableIntervalController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = "!types")
-	public Response<ReportableInterval> getReportableInterval(final HttpServletRequest req,
+	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), cmd.getSourceId());
-			return new Response<ReportableInterval>(data);
+			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
@@ -188,7 +189,7 @@ public class ReportableIntervalController {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET,
 			params = { "!types", "!metadataFilter", "!withNodeIds" })
-	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
+	public Result<Set<String>> getAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			DatumFilterCommand f = new DatumFilterCommand();
@@ -200,7 +201,7 @@ public class ReportableIntervalController {
 			// support filtering based on sourceId path pattern
 			data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
 
-			return new Response<Set<String>>(data);
+			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
@@ -244,7 +245,7 @@ public class ReportableIntervalController {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET,
 			params = { "!types", "!metadataFilter", "withNodeIds" })
-	public Response<Set<?>> findAvailableSources(final HttpServletRequest req,
+	public Result<Set<?>> findAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			DatumFilterCommand f = new DatumFilterCommand();
@@ -261,10 +262,10 @@ public class ReportableIntervalController {
 				for ( NodeSourcePK pk : data ) {
 					sourceIds.add(pk.getSourceId());
 				}
-				return new Response<Set<?>>(sourceIds);
+				return success(sourceIds);
 			}
 
-			return new Response<Set<?>>(data);
+			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
@@ -311,7 +312,7 @@ public class ReportableIntervalController {
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET,
 			params = { "!types", "metadataFilter" })
-	public Response<Set<?>> getMetadataFilteredAvailableSources(final HttpServletRequest req,
+	public Result<Set<?>> getMetadataFilteredAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			Set<NodeSourcePK> data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(
@@ -326,9 +327,9 @@ public class ReportableIntervalController {
 				for ( NodeSourcePK pk : data ) {
 					sourceIds.add(pk.getSourceId());
 				}
-				return new Response<Set<?>>(sourceIds);
+				return success(sourceIds);
 			}
-			return new Response<Set<?>>(data);
+			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 

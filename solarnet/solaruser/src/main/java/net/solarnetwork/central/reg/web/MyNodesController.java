@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,7 +61,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
 import net.solarnetwork.service.CertificateException;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for "my nodes".
@@ -241,9 +241,9 @@ public class MyNodesController extends ControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/node", method = RequestMethod.GET)
-	public Response<UserNode> getUserNode(@RequestParam("userId") Long userId,
+	public Result<UserNode> getUserNode(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId) {
-		return response(userBiz.getUserNode(userId, nodeId));
+		return success(userBiz.getUserNode(userId, nodeId));
 	}
 
 	@ResponseBody
@@ -269,7 +269,7 @@ public class MyNodesController extends ControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/requestNodeTransfer", method = RequestMethod.POST)
-	public Response<Boolean> requestNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+	public Result<Boolean> requestNodeOwnershipTransfer(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email, Locale locale,
 			UriComponentsBuilder uriBuilder) {
 		nodeOwnershipBiz.requestNodeOwnershipTransfer(userId, nodeId, email);
@@ -296,12 +296,12 @@ public class MyNodesController extends ControllerSupport {
 						e.getMessage(), e);
 			}
 		}
-		return response(Boolean.TRUE);
+		return success(Boolean.TRUE);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/cancelNodeTransferRequest", method = RequestMethod.POST)
-	public Response<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+	public Result<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId, Locale locale) {
 		UserNodeTransfer xfer = nodeOwnershipBiz.getNodeOwnershipTransfer(userId, nodeId);
 		if ( xfer != null ) {
@@ -329,12 +329,12 @@ public class MyNodesController extends ControllerSupport {
 				}
 			}
 		}
-		return response(Boolean.TRUE);
+		return success(Boolean.TRUE);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/confirmNodeTransferRequest", method = RequestMethod.POST)
-	public Response<Boolean> confirmNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+	public Result<Boolean> confirmNodeOwnershipTransfer(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("accept") boolean accept, Locale locale) {
 		UserNodeTransfer xfer = nodeOwnershipBiz.confirmNodeOwnershipTransfer(userId, nodeId, accept);
 		if ( xfer != null ) {
@@ -364,7 +364,7 @@ public class MyNodesController extends ControllerSupport {
 				}
 			}
 		}
-		return response(Boolean.TRUE);
+		return success(Boolean.TRUE);
 	}
 
 }

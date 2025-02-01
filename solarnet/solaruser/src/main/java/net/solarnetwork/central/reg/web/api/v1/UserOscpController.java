@@ -25,7 +25,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.oscp.config.SolarNetOscpConfiguration.OSCP_V20;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -60,7 +59,6 @@ import net.solarnetwork.central.user.oscp.domain.CapacityProviderConfigurationIn
 import net.solarnetwork.central.user.oscp.domain.UserSettingsInput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for OSCP management.
@@ -121,9 +119,9 @@ public class UserOscpController {
 	 * @return the settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/settings")
-	public Response<UserSettings> viewUserSettings() {
+	public Result<UserSettings> viewUserSettings() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOscpBiz().settingsForUser(userId));
+		return success(userOscpBiz().settingsForUser(userId));
 	}
 
 	/**
@@ -132,10 +130,10 @@ public class UserOscpController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/settings")
-	public Response<Void> deleteUserSettings() {
+	public Result<Void> deleteUserSettings() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOscpBiz().deleteUserSettings(userId);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -183,7 +181,8 @@ public class UserOscpController {
 	 *
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/capacity-providers/{providerId}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = PUT, value = "/capacity-providers/{providerId}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<CapacityProviderConfiguration> updateCapacityProvider(
 			@PathVariable("providerId") Long providerId,
 			@Valid @RequestBody CapacityProviderConfigurationInput input) {
@@ -252,7 +251,8 @@ public class UserOscpController {
 	 *
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/capacity-optimizers/{optimizerId}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = PUT, value = "/capacity-optimizers/{optimizerId}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<CapacityOptimizerConfiguration> updateCapacityOptimizer(
 			@PathVariable("optimizerId") Long optimizerId,
 			@Valid @RequestBody CapacityOptimizerConfigurationInput input) {
@@ -318,7 +318,8 @@ public class UserOscpController {
 	 *
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/capacity-groups/{groupId}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = PUT, value = "/capacity-groups/{groupId}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<CapacityGroupConfiguration> updateCapacityGroup(@PathVariable("groupId") Long groupId,
 			@Valid @RequestBody CapacityGroupConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -344,10 +345,10 @@ public class UserOscpController {
 	 * @return the capacity group settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/capacity-groups/settings")
-	public Response<Collection<CapacityGroupSettings>> availableCapacityGroupSettings() {
+	public Result<Collection<CapacityGroupSettings>> availableCapacityGroupSettings() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CapacityGroupSettings> list = userOscpBiz().capacityGroupSettingsForUser(userId);
-		return response(list);
+		return success(list);
 	}
 
 	/**
@@ -359,7 +360,8 @@ public class UserOscpController {
 	 *        the input
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/capacity-groups/{groupId}/settings", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = PUT, value = "/capacity-groups/{groupId}/settings",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<CapacityGroupSettings> updateCapacityGroupSettings(@PathVariable("groupId") Long id,
 			@Valid @RequestBody CapacityGroupSettingsInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -375,9 +377,9 @@ public class UserOscpController {
 	 * @return the settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/capacity-groups/{groupId}/settings")
-	public Response<CapacityGroupSettings> viewCapacityGroupSettings(@PathVariable("groupId") Long id) {
+	public Result<CapacityGroupSettings> viewCapacityGroupSettings(@PathVariable("groupId") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOscpBiz().capacityGroupSettingsForUser(userId, id));
+		return success(userOscpBiz().capacityGroupSettingsForUser(userId, id));
 	}
 
 	/**
@@ -388,10 +390,10 @@ public class UserOscpController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/capacity-groups/{groupId}/settings")
-	public Response<Void> deleteCapacityGroupSettings(@PathVariable("groupId") Long id) {
+	public Result<Void> deleteCapacityGroupSettings(@PathVariable("groupId") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOscpBiz().deleteCapacityGroupSettings(userId, id);
-		return response(null);
+		return success();
 	}
 
 	/**

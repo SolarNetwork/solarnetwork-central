@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -35,7 +36,7 @@ import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for querying location data.
@@ -77,16 +78,16 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<LocationMatch, Long>> findLocations(SourceLocationFilter cmd) {
+	public Result<FilterResults<LocationMatch, Long>> findLocations(SourceLocationFilter cmd) {
 		if ( cmd == null ) {
-			return new Response<>(false, null, "Search filter is required.", null);
+			return error("422", "Search filter is required.");
 		}
 		// convert empty strings to null
 		cmd.removeEmptyValues();
 
 		FilterResults<LocationMatch, Long> results = queryBiz.findFilteredLocations(cmd.getLocation(),
 				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
-		return response(results);
+		return success(results);
 	}
 
 }

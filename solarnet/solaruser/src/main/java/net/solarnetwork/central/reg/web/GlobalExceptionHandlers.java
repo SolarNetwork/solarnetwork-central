@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * App-wide global exception handlers.
@@ -55,12 +55,12 @@ public class GlobalExceptionHandlers {
 	@ExceptionHandler(MaxUploadSizeExceededException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handle(MaxUploadSizeExceededException e) {
+	public Result<?> handle(MaxUploadSizeExceededException e) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
 		}
-		return new Response<Object>(Boolean.FALSE, "DI.00401", cause.getMessage(), null);
+		return new Result<Object>(Boolean.FALSE, "DI.00401", cause.getMessage(), null);
 	}
 
 }
