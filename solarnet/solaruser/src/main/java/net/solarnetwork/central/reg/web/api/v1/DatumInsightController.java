@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -45,7 +45,7 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for datum insight.
@@ -79,7 +79,7 @@ public class DatumInsightController {
 
 	@ResponseBody
 	@RequestMapping(value = "/overall", method = RequestMethod.GET)
-	public Response<DatumInsightOverallStatistics> overallStatistics() {
+	public Result<DatumInsightOverallStatistics> overallStatistics() {
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		User user = userBiz.getUser(userId);
 		TimeZone userTimeZone = user.getTimeZone() != null ? user.getTimeZone()
@@ -112,6 +112,6 @@ public class DatumInsightController {
 		DatumInsightOverallStatistics result = new DatumInsightOverallStatistics(last30days,
 				accumulative);
 
-		return response(result);
+		return success(result);
 	}
 }

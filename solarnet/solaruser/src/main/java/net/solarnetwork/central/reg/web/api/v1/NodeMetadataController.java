@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
@@ -44,7 +44,7 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for node metadata.
@@ -90,7 +90,7 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
+	public Result<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
 			DatumFilterCommand criteria) {
 		if ( criteria.getNodeId() == null ) {
 			// default to all nodes for actor
@@ -106,7 +106,7 @@ public class NodeMetadataController {
 		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
 				.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
 						criteria.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Response<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable("nodeId") Long nodeId) {
+	public Result<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable("nodeId") Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
@@ -131,7 +131,7 @@ public class NodeMetadataController {
 				// ignore
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -146,10 +146,10 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> addMetadata(@PathVariable("nodeId") Long nodeId,
 			@RequestBody GeneralDatumMetadata meta) {
 		solarNodeMetadataBiz.addSolarNodeMetadata(nodeId, meta);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -164,10 +164,10 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.PUT)
-	public Response<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
+	public Result<Object> replaceMetadata(@PathVariable("nodeId") Long nodeId,
 			@RequestBody GeneralDatumMetadata meta) {
 		solarNodeMetadataBiz.storeSolarNodeMetadata(nodeId, meta);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -179,9 +179,9 @@ public class NodeMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.DELETE)
-	public Response<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId) {
+	public Result<Object> deleteMetadata(@PathVariable("nodeId") Long nodeId) {
 		solarNodeMetadataBiz.removeSolarNodeMetadata(nodeId);
-		return response(null);
+		return success();
 	}
 
 }

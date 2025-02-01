@@ -24,7 +24,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
@@ -50,7 +50,7 @@ import net.solarnetwork.central.reg.web.domain.LocationRequestInfoValidator;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for location metadata actions.
@@ -99,7 +99,7 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocations(
+	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocations(
 			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
 		SolarLocation loc;
 		if ( command != null ) {
@@ -125,7 +125,7 @@ public class LocationMetadataController {
 		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
 				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
 						command.getOffset(), command.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -139,7 +139,7 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET)
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
+	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
 			@PathVariable("locationId") Long locationId, DatumFilterCommand criteria) {
 		return findMetadata(locationId, null, criteria);
 	}
@@ -157,7 +157,7 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
+	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
 			@PathVariable("locationId") Long locationId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
@@ -166,12 +166,12 @@ public class LocationMetadataController {
 		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
 				.findGeneralLocationDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET, params = { "sourceId" })
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadataAlt(
+	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadataAlt(
 			@PathVariable("locationId") Long locationId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(locationId, sourceId, criteria);
@@ -191,15 +191,15 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@PathVariable("locationId") Long locationId,
+	public Result<Object> addMetadata(@PathVariable("locationId") Long locationId,
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.addGeneralLocationDatumMetadata(locationId, sourceId, meta);
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.POST, params = { "sourceId" })
-	public Response<Object> addMetadataAlt(@PathVariable("locationId") Long locationId,
+	public Result<Object> addMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return addMetadata(locationId, sourceId, meta);
 	}
@@ -218,15 +218,15 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.PUT)
-	public Response<Object> replaceMetadata(@PathVariable("locationId") Long locationId,
+	public Result<Object> replaceMetadata(@PathVariable("locationId") Long locationId,
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		datumMetadataBiz.storeGeneralLocationDatumMetadata(locationId, sourceId, meta);
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.PUT, params = { "sourceId" })
-	public Response<Object> replaceMetadataAlt(@PathVariable("locationId") Long locationId,
+	public Result<Object> replaceMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return replaceMetadata(locationId, sourceId, meta);
 	}
@@ -242,15 +242,15 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}/{sourceId}", method = RequestMethod.DELETE)
-	public Response<Object> deleteMetadata(@PathVariable("locationId") Long locationId,
+	public Result<Object> deleteMetadata(@PathVariable("locationId") Long locationId,
 			@PathVariable("sourceId") String sourceId) {
 		datumMetadataBiz.removeGeneralLocationDatumMetadata(locationId, sourceId);
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.DELETE, params = { "sourceId" })
-	public Response<Object> deleteMetadataAlt(@PathVariable("locationId") Long locationId,
+	public Result<Object> deleteMetadataAlt(@PathVariable("locationId") Long locationId,
 			@RequestParam("sourceId") String sourceId) {
 		return deleteMetadata(locationId, sourceId);
 	}
@@ -264,9 +264,9 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/request", method = RequestMethod.GET)
-	public Response<net.solarnetwork.dao.FilterResults<LocationRequest, Long>> findLocationRequests(
+	public Result<net.solarnetwork.dao.FilterResults<LocationRequest, Long>> findLocationRequests(
 			BasicLocationRequestCriteria filter) {
-		return response(datumMetadataBiz.findLocationRequests(getCurrentActorUserId(), filter, null,
+		return success(datumMetadataBiz.findLocationRequests(getCurrentActorUserId(), filter, null,
 				null, null));
 	}
 
@@ -284,9 +284,9 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/request", method = RequestMethod.POST)
-	public Response<LocationRequest> submitLocationRequest(
+	public Result<LocationRequest> submitLocationRequest(
 			@RequestBody @Valid LocationRequestInfo locationRequestInfo) {
-		return response(
+		return success(
 				datumMetadataBiz.submitLocationRequest(getCurrentActorUserId(), locationRequestInfo));
 	}
 
@@ -299,8 +299,8 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/request/{id}", method = RequestMethod.GET)
-	public Response<LocationRequest> getLocationRequest(@PathVariable("id") Long id) {
-		return response(datumMetadataBiz.getLocationRequest(getCurrentActorUserId(), id));
+	public Result<LocationRequest> getLocationRequest(@PathVariable("id") Long id) {
+		return success(datumMetadataBiz.getLocationRequest(getCurrentActorUserId(), id));
 	}
 
 	/**
@@ -312,9 +312,9 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/request/{id}", method = RequestMethod.POST)
-	public Response<LocationRequest> updateLocationRequest(@PathVariable("id") Long id,
+	public Result<LocationRequest> updateLocationRequest(@PathVariable("id") Long id,
 			@RequestBody @Valid LocationRequestInfo locationRequestInfo) {
-		return response(datumMetadataBiz.updateLocationRequest(getCurrentActorUserId(), id,
+		return success(datumMetadataBiz.updateLocationRequest(getCurrentActorUserId(), id,
 				locationRequestInfo));
 	}
 
@@ -327,9 +327,9 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/request/{id}", method = RequestMethod.DELETE)
-	public Response<LocationRequest> deleteLocationRequest(@PathVariable("id") Long id) {
+	public Result<LocationRequest> deleteLocationRequest(@PathVariable("id") Long id) {
 		datumMetadataBiz.removeLocationRequest(getCurrentActorUserId(), id);
-		return response(null);
+		return success();
 	}
 
 }

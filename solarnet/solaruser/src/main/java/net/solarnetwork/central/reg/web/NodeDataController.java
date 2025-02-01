@@ -23,7 +23,7 @@
 package net.solarnetwork.central.reg.web;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +37,7 @@ import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * REST controller to support data queries.
@@ -68,13 +68,13 @@ public class NodeDataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{nodeId}/sources", method = RequestMethod.GET)
-	public Response<Set<String>> getAvailableSources(@PathVariable("nodeId") Long nodeId) {
+	public Result<Set<String>> getAvailableSources(@PathVariable("nodeId") Long nodeId) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setNodeId(nodeId);
 		Set<ObjectDatumStreamMetadataId> data = datumMetadataBiz.findDatumStreamMetadataIds(filter);
 		Set<String> sourceIds = data.stream().map(ObjectDatumStreamMetadataId::getSourceId)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
-		return response(sourceIds);
+		return success(sourceIds);
 	}
 
 }

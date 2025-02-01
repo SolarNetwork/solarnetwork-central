@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.in.web;
 
+import static net.solarnetwork.domain.Result.error;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,6 @@ import jakarta.validation.Valid;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.support.SourceLocationFilter;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web access to PriceLocation data.
@@ -135,8 +135,7 @@ public class LocationLookupController {
 	@ExceptionHandler({ BindException.class, RuntimeException.class })
 	public ModelAndView handleRuntimeException(Exception e) {
 		log.error("BindException in {} controller", getClass().getSimpleName(), e);
-		ModelAndView mv = new ModelAndView(getViewName(), MODEL_KEY_RESULT,
-				new Response<Object>(false, null, e.getMessage(), null));
+		ModelAndView mv = new ModelAndView(getViewName(), MODEL_KEY_RESULT, error(null, e.getMessage()));
 		return mv;
 	}
 
@@ -149,8 +148,8 @@ public class LocationLookupController {
 	 *        the model
 	 * @return the result view name
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = { "/solarin/locationSearch.*",
-			"/solarin/u/locationSearch.*" })
+	@RequestMapping(method = RequestMethod.GET,
+			value = { "/solarin/locationSearch.*", "/solarin/u/locationSearch.*" })
 	public String searchForLocations(@Valid GenericSourceLocationFilter criteria, Model model) {
 		List<? extends EntityMatch> matches = getDataCollectorBiz()
 				.findLocations(criteria.getLocation());

@@ -28,7 +28,6 @@ import static net.solarnetwork.central.dnp3.config.SolarNetDnp3Configuration.DNP
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
@@ -88,7 +87,6 @@ import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for DNP3 management.
@@ -233,7 +231,8 @@ public class UserDnp3Controller {
 	 *        for the active user
 	 * @return the result
 	 */
-	@RequestMapping(method = POST, value = "/trusted-issuer-certs/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/trusted-issuer-certs/enabled/{enabled}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<Void> updateTrustedIssuerCertificateEnabledStatus(
 			@PathVariable("enabled") boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
@@ -284,7 +283,8 @@ public class UserDnp3Controller {
 	 *        for the active user
 	 * @return the result
 	 */
-	@RequestMapping(method = POST, value = "/servers/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/enabled/{enabled}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<Void> updateServerEnabledStatus(@PathVariable("enabled") boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -384,7 +384,8 @@ public class UserDnp3Controller {
 	 *        the input
 	 * @return the configuration
 	 */
-	@RequestMapping(method = POST, value = "/servers/{serverId}/auths", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/{serverId}/auths",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<ServerAuthConfiguration> saveServerAuth(@PathVariable("serverId") Long serverId,
 			@Valid @RequestBody ServerAuthConfigurationInput input) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -420,7 +421,8 @@ public class UserDnp3Controller {
 	 *        for the active user
 	 * @return the result
 	 */
-	@RequestMapping(method = POST, value = "/servers/auths/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/auths/enabled/{enabled}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<Void> updateServerAuthEnabledStatus(@PathVariable("enabled") boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -476,7 +478,8 @@ public class UserDnp3Controller {
 	 *        the input
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/servers/{serverId}/measurements/{index}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = PUT, value = "/servers/{serverId}/measurements/{index}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<ServerMeasurementConfiguration> saveServerMeasurement(
 			@PathVariable("serverId") Long serverId, @PathVariable("index") Integer index,
 			@Valid @RequestBody ServerMeasurementConfigurationInput input) {
@@ -513,7 +516,8 @@ public class UserDnp3Controller {
 	 *        for the active user
 	 * @return the result
 	 */
-	@RequestMapping(method = POST, value = "/servers/measurements/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/measurements/enabled/{enabled}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<Void> updateServerMeasurementEnabledStatus(@PathVariable("enabled") boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -569,7 +573,8 @@ public class UserDnp3Controller {
 	 *        the input
 	 * @return the configuration
 	 */
-	@RequestMapping(method = PUT, value = "/servers/{serverId}/controls/{index}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = PUT, value = "/servers/{serverId}/controls/{index}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<ServerControlConfiguration> saveServerControl(@PathVariable("serverId") Long serverId,
 			@PathVariable("index") Integer index,
 			@Valid @RequestBody ServerControlConfigurationInput input) {
@@ -606,7 +611,8 @@ public class UserDnp3Controller {
 	 *        for the active user
 	 * @return the result
 	 */
-	@RequestMapping(method = POST, value = "/servers/controls/enabled/{enabled}", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = POST, value = "/servers/controls/enabled/{enabled}",
+			consumes = APPLICATION_JSON_VALUE)
 	public Result<Void> updateServerControlEnabledStatus(@PathVariable("enabled") boolean enabled,
 			@RequestBody(required = false) final BasicFilter criteria) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
@@ -622,8 +628,8 @@ public class UserDnp3Controller {
 	 *        the desired type: can be CSV or XLSX
 	 * @return the result
 	 */
-	@RequestMapping(value = "/servers/csv-example", method = RequestMethod.GET, produces = {
-			WebUtils.TEXT_CSV_MEDIA_TYPE_VALUE, WebUtils.XLSX_MEDIA_TYPE_VALUE })
+	@RequestMapping(value = "/servers/csv-example", method = RequestMethod.GET,
+			produces = { WebUtils.TEXT_CSV_MEDIA_TYPE_VALUE, WebUtils.XLSX_MEDIA_TYPE_VALUE })
 	public ResponseEntity<Resource> getServerConfigurationCsvExample(
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept) {
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
@@ -667,14 +673,15 @@ public class UserDnp3Controller {
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public Response<ServerConfigurations> importServerConfigurationCsv(
+	@RequestMapping(value = "/servers/{serverId}/csv", method = RequestMethod.POST,
+			consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public Result<ServerConfigurations> importServerConfigurationCsv(
 			@PathVariable("serverId") Long serverId, @RequestPart("file") MultipartFile data,
 			Locale locale) throws IOException {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		final ServerConfigurations result = userDnp3Biz().importServerConfigurationsCsv(userId, serverId,
 				data, locale);
-		return response(result);
+		return success(result);
 	}
 
 	/**

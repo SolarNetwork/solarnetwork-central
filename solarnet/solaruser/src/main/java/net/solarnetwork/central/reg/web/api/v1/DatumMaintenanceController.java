@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,7 +34,7 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web controller for datum maintenance functions.
@@ -83,12 +83,12 @@ public class DatumMaintenanceController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/agg/stale", method = RequestMethod.GET)
-	public Response<FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK>> findStaleAggregatesDatum(
+	public Result<FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK>> findStaleAggregatesDatum(
 			DatumFilterCommand criteria) {
 		FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> results = datumMaintenanceBiz
 				.findStaleAggregateDatum(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
 						criteria.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -111,8 +111,8 @@ public class DatumMaintenanceController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/agg/stale", "/agg/mark-stale" }, method = RequestMethod.POST)
-	public Response<Void> markDatumAggregatesStale(DatumFilterCommand criteria) {
+	public Result<Void> markDatumAggregatesStale(DatumFilterCommand criteria) {
 		datumMaintenanceBiz.markDatumAggregatesStale(criteria);
-		return response(null);
+		return success();
 	}
 }

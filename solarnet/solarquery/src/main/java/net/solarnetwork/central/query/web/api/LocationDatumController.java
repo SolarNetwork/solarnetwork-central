@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.datum.support.DatumUtils.filterSources;
+import static net.solarnetwork.domain.Result.success;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +44,7 @@ import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for location-based data.
@@ -119,7 +120,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
-	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
+	public Result<Set<String>> getAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(),
@@ -128,7 +129,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 			// support filtering based on sourceId path pattern
 			data = filterSources(data, this.pathMatcher, cmd.getSourceId());
 
-			return new Response<Set<String>>(data);
+			return success(data);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -169,12 +170,12 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET)
-	public Response<ReportableInterval> getReportableInterval(final HttpServletRequest req,
+	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			ReportableInterval data = queryBiz.getLocationReportableInterval(cmd.getLocationId(),
 					cmd.getSourceId());
-			return new Response<ReportableInterval>(data);
+			return success(data);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -201,7 +202,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public Response<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> filterGeneralDatumData(
+	public Result<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> filterGeneralDatumData(
 			final HttpServletRequest req, final DatumFilterCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			// support filtering based on sourceId path pattern, by simply finding the sources that match first
@@ -215,13 +216,13 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 				results = queryBiz.findGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
 						cmd.getOffset(), cmd.getMax());
 			}
-			return new Response<>(results);
+			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
-	public Response<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> getMostRecentGeneralNodeDatumData(
+	public Result<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> getMostRecentGeneralNodeDatumData(
 			final HttpServletRequest req, final DatumFilterCommand cmd) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(req, cmd);

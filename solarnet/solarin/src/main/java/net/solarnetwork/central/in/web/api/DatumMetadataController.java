@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.in.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -46,10 +46,10 @@ import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for datum metadata actions.
@@ -88,14 +88,14 @@ public class DatumMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
+	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
 		return findMetadata(requestNodeId, null, criteria);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
+	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long requestNodeId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
@@ -108,12 +108,12 @@ public class DatumMetadataController {
 		FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> results = dataCollectorBiz
 				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
+	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
 			@PathVariable("nodeId") Long requestNodeId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(requestNodeId, sourceId, criteria);
@@ -121,19 +121,19 @@ public class DatumMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@PathVariable("nodeId") Long requestNodeId,
+	public Result<Object> addMetadata(@PathVariable("nodeId") Long requestNodeId,
 			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);
 		}
 		dataCollectorBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST, params = { "sourceId" })
-	public Response<Object> addMetadataAlt(@PathVariable("nodeId") Long requestNodeId,
+	public Result<Object> addMetadataAlt(@PathVariable("nodeId") Long requestNodeId,
 			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
 		return addMetadata(requestNodeId, sourceId, meta);
 	}
@@ -153,10 +153,9 @@ public class DatumMetadataController {
 	@ResponseBody
 	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.GET,
 			params = { "!sourceId" })
-	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadata(
-			@PathVariable("nodeId") Long objectId, @PathVariable("sourceId") String sourceId,
-			@RequestParam(name = "kind", required = false,
-					defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
+	public Result<ObjectDatumStreamMetadata> findStreamMetadata(@PathVariable("nodeId") Long objectId,
+			@PathVariable("sourceId") String sourceId,
+			@RequestParam(name = "kind", required = false, defaultValue = "Node") ObjectDatumKind kind) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
 		if ( kind == net.solarnetwork.domain.datum.ObjectDatumKind.Location ) {
 			criteria.setObjectKind(ObjectDatumKind.Location);
@@ -173,7 +172,7 @@ public class DatumMetadataController {
 		Iterable<ObjectDatumStreamMetadata> result = datumMetadataBiz.findDatumStreamMetadata(criteria);
 		ObjectDatumStreamMetadata meta = StreamSupport.stream(result.spliterator(), false).findFirst()
 				.orElse(null);
-		return response(DatumUtils.toCommonObjectDatumStreamMetadata(meta));
+		return success(DatumUtils.toCommonObjectDatumStreamMetadata(meta));
 	}
 
 	/**
@@ -191,10 +190,9 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/stream" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadataAlt(
-			@PathVariable("nodeId") Long objectId, @RequestParam("sourceId") String sourceId,
-			@RequestParam(name = "kind", required = false,
-					defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
+	public Result<ObjectDatumStreamMetadata> findStreamMetadataAlt(@PathVariable("nodeId") Long objectId,
+			@RequestParam("sourceId") String sourceId,
+			@RequestParam(name = "kind", required = false, defaultValue = "Node") ObjectDatumKind kind) {
 		return findStreamMetadata(objectId, sourceId, kind);
 	}
 

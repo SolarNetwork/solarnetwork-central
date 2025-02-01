@@ -23,10 +23,11 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfiguration;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -67,8 +68,8 @@ import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for datum export management.
@@ -100,7 +101,7 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/services/output", method = RequestMethod.GET)
-	public Response<List<LocalizedServiceInfo>> availableOutputFormatServices(Locale locale) {
+	public Result<List<LocalizedServiceInfo>> availableOutputFormatServices(Locale locale) {
 		List<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = localizedServiceSettings(exportBiz.availableOutputFormatServices(), locale);
@@ -108,12 +109,12 @@ public class DatumExportController {
 				result.sort(LocalizedServiceInfo.SORT_BY_NAME);
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/services/destination", method = RequestMethod.GET)
-	public Response<List<LocalizedServiceInfo>> availableDestinationServices(Locale locale) {
+	public Result<List<LocalizedServiceInfo>> availableDestinationServices(Locale locale) {
 		List<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = localizedServiceSettings(exportBiz.availableDestinationServices(), locale);
@@ -121,12 +122,12 @@ public class DatumExportController {
 				result.sort(LocalizedServiceInfo.SORT_BY_NAME);
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/services/compression", method = RequestMethod.GET)
-	public Response<Iterable<LocalizedServiceInfo>> availableCompressionServices(Locale locale) {
+	public Result<Iterable<LocalizedServiceInfo>> availableCompressionServices(Locale locale) {
 		Iterable<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = exportBiz.availableOutputCompressionTypes(locale);
@@ -135,32 +136,32 @@ public class DatumExportController {
 						.toList();
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/services/schedule", method = RequestMethod.GET)
-	public Response<Iterable<LocalizedServiceInfo>> availableScheduleServices(Locale locale) {
+	public Result<Iterable<LocalizedServiceInfo>> availableScheduleServices(Locale locale) {
 		Iterable<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = exportBiz.availableScheduleTypes(locale);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/services/aggregation", method = RequestMethod.GET)
-	public Response<Iterable<LocalizedServiceInfo>> availableAggregationServices(Locale locale) {
+	public Result<Iterable<LocalizedServiceInfo>> availableAggregationServices(Locale locale) {
 		Iterable<LocalizedServiceInfo> result = null;
 		if ( exportBiz != null ) {
 			result = exportBiz.availableAggregationTypes(locale);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
-	public Response<DatumExportFullConfigurations> fullConfiguration() {
+	public Result<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		List<UserDatumExportConfiguration> configs = null;
 		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
@@ -181,13 +182,13 @@ public class DatumExportController {
 						return exportBiz.availableOutputFormatServices();
 					});
 		}
-		return response(
+		return success(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.POST)
-	public Response<UserDatumExportConfiguration> saveExportConfiguration(
+	public Result<UserDatumExportConfiguration> saveExportConfiguration(
 			@RequestBody DatumExportProperties config) {
 		if ( exportBiz != null ) {
 			if ( config.getUserId() == null ) {
@@ -211,15 +212,15 @@ public class DatumExportController {
 			Long id = exportBiz.saveDatumExportConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(config);
+				return success(config);
 			}
 		}
-		return new Response<UserDatumExportConfiguration>(false, null, null, null);
+		return error();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/{id}", method = RequestMethod.DELETE)
-	public Response<Void> deleteExportConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteExportConfiguration(@PathVariable("id") Long id) {
 		if ( exportBiz != null ) {
 			UserDatumExportConfiguration config = exportBiz
 					.datumExportConfigurationForUser(SecurityUtils.getCurrentActorUserId(), id);
@@ -227,12 +228,12 @@ public class DatumExportController {
 				exportBiz.deleteDatumExportConfiguration(config);
 			}
 		}
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/{id}/date", method = RequestMethod.POST)
-	public Response<LocalDateTime> updateExportConfigurationDate(@PathVariable("id") Long id,
+	public Result<LocalDateTime> updateExportConfigurationDate(@PathVariable("id") Long id,
 			@RequestBody Map<String, Object> body) {
 		LocalDateTime result = null;
 		if ( exportBiz != null ) {
@@ -271,12 +272,12 @@ public class DatumExportController {
 				}
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data", method = RequestMethod.POST)
-	public Response<DataConfiguration> saveDataConfiguration(@RequestBody UserDataConfiguration config) {
+	public Result<DataConfiguration> saveDataConfiguration(@RequestBody UserDataConfiguration config) {
 		if ( exportBiz != null ) {
 			if ( config.getUserId() == null ) {
 				config.setUserId(SecurityUtils.getCurrentActorUserId());
@@ -287,15 +288,15 @@ public class DatumExportController {
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(config);
+				return success(config);
 			}
 		}
-		return new Response<DataConfiguration>(false, null, null, null);
+		return error();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data/{id}", method = RequestMethod.DELETE)
-	public Response<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteDataConfiguration(@PathVariable("id") Long id) {
 		if ( exportBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserDataConfiguration config = exportBiz.configurationForUser(userId,
@@ -304,12 +305,12 @@ public class DatumExportController {
 				exportBiz.deleteConfiguration(config);
 			}
 		}
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/output", method = RequestMethod.POST)
-	public Response<OutputConfiguration> saveOutputConfiguration(
+	public Result<OutputConfiguration> saveOutputConfiguration(
 			@RequestBody UserOutputConfiguration config) {
 		if ( exportBiz != null ) {
 			if ( config.getUserId() == null ) {
@@ -321,17 +322,17 @@ public class DatumExportController {
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(maskConfiguration(config, serviceSettings, (Void) -> {
+				return success(maskConfiguration(config, serviceSettings, (Void) -> {
 					return exportBiz.availableOutputFormatServices();
 				}));
 			}
 		}
-		return new Response<OutputConfiguration>(false, null, null, null);
+		return error();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/output/{id}", method = RequestMethod.DELETE)
-	public Response<Void> deleteOutputConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteOutputConfiguration(@PathVariable("id") Long id) {
 		if ( exportBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserOutputConfiguration config = exportBiz.configurationForUser(userId,
@@ -340,12 +341,12 @@ public class DatumExportController {
 				exportBiz.deleteConfiguration(config);
 			}
 		}
-		return response(null);
+		return success();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/destination", method = RequestMethod.POST)
-	public Response<DestinationConfiguration> saveDestinationConfiguration(
+	public Result<DestinationConfiguration> saveDestinationConfiguration(
 			@RequestBody UserDestinationConfiguration config) {
 		if ( exportBiz != null ) {
 			if ( config.getUserId() == null ) {
@@ -357,17 +358,17 @@ public class DatumExportController {
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return response(maskConfiguration(config, serviceSettings, (Void) -> {
+				return success(maskConfiguration(config, serviceSettings, (Void) -> {
 					return exportBiz.availableDestinationServices();
 				}));
 			}
 		}
-		return new Response<DestinationConfiguration>(false, null, null, null);
+		return error();
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/destination/{id}", method = RequestMethod.DELETE)
-	public Response<Void> deleteDestinationConfiguration(@PathVariable("id") Long id) {
+	public Result<Void> deleteDestinationConfiguration(@PathVariable("id") Long id) {
 		if ( exportBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			UserDestinationConfiguration config = exportBiz.configurationForUser(userId,
@@ -376,7 +377,7 @@ public class DatumExportController {
 				exportBiz.deleteConfiguration(config);
 			}
 		}
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -389,7 +390,7 @@ public class DatumExportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/adhoc", method = RequestMethod.POST)
-	public Response<UserAdhocDatumExportTaskInfo> submitAdhocExportJobRequest(
+	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportJobRequest(
 			@RequestBody UserDatumExportConfiguration config) {
 		if ( exportBiz != null ) {
 			if ( config.getUserId() == null ) {
@@ -402,10 +403,10 @@ public class DatumExportController {
 					.saveAdhocDatumExportTaskForConfiguration(config);
 			if ( info != null ) {
 				info.setConfig(maskExportConfiguration(info.getConfig(), exportBiz));
-				return response(info);
+				return success(info);
 			}
 		}
-		return new Response<UserAdhocDatumExportTaskInfo>(false, null, null, null);
+		return error();
 	}
 
 	/**
@@ -420,7 +421,7 @@ public class DatumExportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/adhocRef", method = RequestMethod.POST)
-	public Response<UserAdhocDatumExportTaskInfo> submitAdhocExportReferenceJobRequest(
+	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportReferenceJobRequest(
 			@RequestBody UserDatumExportConfiguration config) {
 		if ( exportBiz != null ) {
 			if ( config.getUserId() == null ) {
@@ -441,10 +442,10 @@ public class DatumExportController {
 					.saveAdhocDatumExportTaskForConfiguration(config);
 			if ( info != null ) {
 				info.setConfig(maskExportConfiguration(info.getConfig(), exportBiz));
-				return response(info);
+				return success(info);
 			}
 		}
-		return new Response<UserAdhocDatumExportTaskInfo>(false, null, null, null);
+		return error();
 	}
 
 	/**
@@ -461,7 +462,7 @@ public class DatumExportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/adhoc", method = RequestMethod.GET)
-	public Response<List<UserAdhocDatumExportTaskInfo>> allAdhocTasks(
+	public Result<List<UserAdhocDatumExportTaskInfo>> allAdhocTasks(
 			@RequestParam(value = "states", required = false) String[] stateKeys,
 			@RequestParam(value = "success", required = false) Boolean success) {
 		if ( exportBiz != null ) {
@@ -493,9 +494,9 @@ public class DatumExportController {
 			for ( UserAdhocDatumExportTaskInfo task : tasks ) {
 				task.setConfig(maskExportConfiguration(task.getConfig(), exportBiz));
 			}
-			return response(tasks);
+			return success(tasks);
 		}
-		return new Response<List<UserAdhocDatumExportTaskInfo>>(false, null, null, null);
+		return error();
 	}
 
 	private Configuration maskExportConfiguration(Configuration config, UserExportBiz exportBiz) {

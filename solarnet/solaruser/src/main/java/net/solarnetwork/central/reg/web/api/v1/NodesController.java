@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -61,9 +62,9 @@ import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.NetworkCertificate;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for user nodes web service API.
@@ -107,11 +108,11 @@ public class NodesController {
 	 */
 	@RequestMapping(value = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/" }, method = RequestMethod.GET)
 	@ResponseBody
-	public Response<FilterResults<UserNode, Long>> getMyNodes() {
+	public Result<FilterResults<UserNode, Long>> getMyNodes() {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
 		FilterResults<UserNode, Long> result = new BasicFilterResults<>(nodes, (long) nodes.size(), 0L,
 				nodes.size());
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -122,12 +123,12 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/pending", "/api/v1/sec/nodes/pending" },
 			method = RequestMethod.GET)
 	@ResponseBody
-	public Response<FilterResults<UserNodeConfirmation, Long>> getPendingNodes() {
+	public Result<FilterResults<UserNodeConfirmation, Long>> getPendingNodes() {
 		List<UserNodeConfirmation> pending = userBiz
 				.getPendingUserNodeConfirmations(SecurityUtils.getCurrentActorUserId());
 		FilterResults<UserNodeConfirmation, Long> result = new BasicFilterResults<>(pending,
 				(long) pending.size(), 0L, pending.size());
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -139,9 +140,9 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/archived", "/api/v1/sec/nodes/archived" },
 			method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<UserNode>> getArchivedNodes() {
+	public Result<List<UserNode>> getArchivedNodes() {
 		List<UserNode> nodes = userBiz.getArchivedUserNodes(SecurityUtils.getCurrentActorUserId());
-		return response(nodes);
+		return success(nodes);
 	}
 
 	/**
@@ -157,10 +158,10 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/archived", "/api/v1/sec/nodes/archived" },
 			method = RequestMethod.POST)
 	@ResponseBody
-	public Response<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
+	public Result<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
 			@RequestParam("archived") boolean archived) {
 		userBiz.updateUserNodeArchivedStatus(SecurityUtils.getCurrentActorUserId(), nodeIds, archived);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -179,7 +180,7 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/create-cert", "/api/v1/sec/nodes/create-cert" },
 			method = RequestMethod.POST)
 	@ResponseBody
-	public Response<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
+	public Result<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
 			@RequestParam("country") String countryCode,
 			@RequestParam("keystorePassword") String keystorePassword) {
 		String lang = "en";
@@ -192,7 +193,7 @@ public class NodesController {
 		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
 		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), keystorePassword,
 				timeZone, locale);
-		return response(registrationBiz.createNodeManually(req));
+		return success(registrationBiz.createNodeManually(req));
 	}
 
 	/**
@@ -205,10 +206,10 @@ public class NodesController {
 	@ExceptionHandler(CertificateException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthorizationException(CertificateException e) {
+	public Result<Void> handleAuthorizationException(CertificateException e) {
 		log.debug("CertificateException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**

@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.query.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.biz.AppConfigurationBiz;
 import net.solarnetwork.central.domain.AppConfiguration;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * REST controller for configuration API.
@@ -65,8 +65,8 @@ public class ConfigurationController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "", method = RequestMethod.GET)
-	public Response<AppConfiguration> getAppConfiguration() {
-		return response(appConfigurationBiz.getAppConfiguration());
+	public Result<AppConfiguration> getAppConfiguration() {
+		return success(appConfigurationBiz.getAppConfiguration());
 	}
 
 }

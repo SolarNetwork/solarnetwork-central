@@ -23,6 +23,7 @@
 package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.query.config.DatumQueryBizConfig.DATUM_FILTER;
+import static net.solarnetwork.domain.Result.success;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
@@ -49,8 +50,8 @@ import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Aggregation;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for querying datum related data.
@@ -93,7 +94,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> filterGeneralDatumData(
+	public Result<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> filterGeneralDatumData(
 			final HttpServletRequest req, final DatumFilterCommand cmd, BindingResult validationResult) {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
@@ -111,13 +112,13 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 				results = queryBiz.findFilteredGeneralNodeDatum(cmd, cmd.getSortDescriptors(),
 						cmd.getOffset(), cmd.getMax());
 			}
-			return new Response<>(results);
+			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> getMostRecentGeneralNodeDatumData(
+	public Result<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> getMostRecentGeneralNodeDatumData(
 			final HttpServletRequest req, final DatumFilterCommand cmd, BindingResult validationResult) {
 		cmd.setMostRecent(true);
 		return filterGeneralDatumData(req, cmd, validationResult);
@@ -139,7 +140,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
-	public Response<FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK>> datumReading(
+	public Result<FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK>> datumReading(
 			final HttpServletRequest req, final DatumFilterCommand cmd,
 			@RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
@@ -158,7 +159,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 			} else {
 				results = queryBiz.findFilteredReading(cmd, readingType, tolerance);
 			}
-			return new Response<>(results);
+			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 

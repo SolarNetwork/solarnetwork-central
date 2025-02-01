@@ -24,7 +24,7 @@ package net.solarnetwork.central.query.web.api;
 
 import static net.solarnetwork.central.security.SecurityUtils.authorizedNodeIdsForCurrentActor;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.util.NoSuchElementException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for read-only node metadata access.
@@ -89,7 +89,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
+	public Result<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
 			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			if ( criteria.getNodeId() == null ) {
@@ -99,7 +99,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 			FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
 					.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
 							criteria.getMax());
-			return response(results);
+			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
@@ -112,7 +112,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Response<SolarNodeMetadataFilterMatch> getMetadata(final HttpServletRequest req,
+	public Result<SolarNodeMetadataFilterMatch> getMetadata(final HttpServletRequest req,
 			@PathVariable("nodeId") final Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
@@ -127,7 +127,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 					// ignore
 				}
 			}
-			return response(result);
+			return success(result);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
