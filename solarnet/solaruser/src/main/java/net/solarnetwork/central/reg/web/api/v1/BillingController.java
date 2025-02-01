@@ -65,7 +65,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Web service API for billing management.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/sec/user/billing" })
@@ -222,7 +222,7 @@ public class BillingController {
 				filter.getSortDescriptors(), filter.getOffset(), filter.getMax());
 
 		// localize the response
-		if ( results.getReturnedResultCount() != null && results.getReturnedResultCount() > 0 ) {
+		if ( results.getReturnedResultCount() > 0 ) {
 			if ( locale == null ) {
 				locale = Locale.getDefault();
 			}

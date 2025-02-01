@@ -45,8 +45,8 @@ public class DatumImportPreview extends BasicFilterResults<GeneralNodeDatum> {
 	 * @param returnedResultCount
 	 *        the number of items in {@code results}
 	 */
-	public DatumImportPreview(Iterable<GeneralNodeDatum> results, Long totalResults, Long startingOffset,
-			Integer returnedResultCount) {
+	public DatumImportPreview(Iterable<GeneralNodeDatum> results, Long totalResults, long startingOffset,
+			int returnedResultCount) {
 		super(results, totalResults, startingOffset, returnedResultCount);
 	}
 

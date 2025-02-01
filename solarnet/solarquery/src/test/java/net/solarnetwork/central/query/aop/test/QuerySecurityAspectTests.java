@@ -604,8 +604,7 @@ public class QuerySecurityAspectTests {
 		// findFilteredGeneralNodeDatum should be redirected to findFilteredAggregateGeneralNodeDatum()
 		final Capture<AggregateGeneralNodeDatumFilter> filterCapture = new Capture<AggregateGeneralNodeDatumFilter>();
 		final FilterResults<ReportingGeneralNodeDatumMatch> filterResults = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
-				Collections.<ReportingGeneralNodeDatumMatch> emptyList(), Long.valueOf(0L),
-				Long.valueOf(0L), Integer.valueOf(0));
+				Collections.<ReportingGeneralNodeDatumMatch> emptyList(), Long.valueOf(0L), 0L, 0);
 		expect(queryBiz.findFilteredAggregateGeneralNodeDatum(EasyMock.capture(filterCapture),
 				EasyMock.isNull(List.class), EasyMock.isNull(Long.class),
 				EasyMock.isNull(Integer.class))).andReturn(filterResults);
@@ -660,8 +659,7 @@ public class QuerySecurityAspectTests {
 		// join point should proceed with custom arguments list
 		final Capture<Object[]> proceedArgsCapture = new Capture<Object[]>();
 		final FilterResults<GeneralNodeDatumFilterMatch> filterResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
-				Collections.<GeneralNodeDatumFilterMatch> emptyList(), Long.valueOf(0L),
-				Long.valueOf(0L), Integer.valueOf(0));
+				Collections.<GeneralNodeDatumFilterMatch> emptyList(), Long.valueOf(0L), 0L, 0);
 		expect(pjp.proceed(EasyMock.capture(proceedArgsCapture))).andReturn(filterResults);
 
 		// WHEN

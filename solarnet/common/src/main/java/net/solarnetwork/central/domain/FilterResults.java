@@ -59,13 +59,13 @@ public interface FilterResults<T> extends Iterable<T> {
 	 * 
 	 * @return the starting offset, never <em>null</em>
 	 */
-	Long getStartingOffset();
+	long getStartingOffset();
 
 	/**
 	 * Get the number of results that matched the query.
 	 * 
 	 * @return the number of returned results, never <em>null</em>
 	 */
-	Integer getReturnedResultCount();
+	int getReturnedResultCount();
 
 }

@@ -41,11 +41,11 @@ public class BasicFilterResults<T> implements FilterResults<T> {
 
 	private Iterable<T> results;
 	private Long totalResults;
-	private Long startingOffset;
-	private Integer returnedResultCount;
+	private long startingOffset;
+	private int returnedResultCount;
 
-	public BasicFilterResults(Iterable<T> results, Long totalResults, Long startingOffset,
-			Integer returnedResultCount) {
+	public BasicFilterResults(Iterable<T> results, Long totalResults, long startingOffset,
+			int returnedResultCount) {
 		super();
 		this.results = results;
 		this.totalResults = totalResults;
@@ -54,7 +54,7 @@ public class BasicFilterResults<T> implements FilterResults<T> {
 	}
 
 	public BasicFilterResults(Iterable<T> results) {
-		this(results, null, null, null);
+		this(results, null, 0L, 0);
 	}
 
 	@Override
@@ -77,12 +77,12 @@ public class BasicFilterResults<T> implements FilterResults<T> {
 	}
 
 	@Override
-	public Long getStartingOffset() {
+	public long getStartingOffset() {
 		return startingOffset;
 	}
 
 	@Override
-	public Integer getReturnedResultCount() {
+	public int getReturnedResultCount() {
 		return returnedResultCount;
 	}
 

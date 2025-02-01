@@ -141,7 +141,7 @@ public class LocalizedInvoiceMatchFilterResults
 	}
 
 	@Override
-	public Long getStartingOffset() {
+	public long getStartingOffset() {
 		return delegate.getStartingOffset();
 	}
 
@@ -151,7 +151,7 @@ public class LocalizedInvoiceMatchFilterResults
 	}
 
 	@Override
-	public Integer getReturnedResultCount() {
+	public int getReturnedResultCount() {
 		return delegate.getReturnedResultCount();
 	}
 

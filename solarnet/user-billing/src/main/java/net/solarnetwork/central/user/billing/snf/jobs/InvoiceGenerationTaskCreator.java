@@ -49,7 +49,7 @@ import net.solarnetwork.central.user.domain.UserFilterMatch;
  * generated.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class InvoiceGenerationTaskCreator {
 
@@ -100,7 +100,6 @@ public class InvoiceGenerationTaskCreator {
 	 *        the end date
 	 */
 	public void createTasks(final LocalDate endDate) {
-
 		// iterate over users configured to use SNF Billing
 		Map<String, Object> billingDataFilter = new HashMap<>();
 		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
@@ -121,9 +120,8 @@ public class InvoiceGenerationTaskCreator {
 				}
 			}
 			offset += max;
-		} while ( userResults.getStartingOffset() != null && userResults.getReturnedResultCount() != null
-				&& userResults.getTotalResults() != null && (userResults.getStartingOffset()
-						+ userResults.getReturnedResultCount() < userResults.getTotalResults()) );
+		} while ( userResults.getTotalResults() != null && (userResults.getStartingOffset()
+				+ userResults.getReturnedResultCount() < userResults.getTotalResults()) );
 	}
 
 	private void processOneAccount(final UserFilterMatch user, final LocalDate endDate) {
