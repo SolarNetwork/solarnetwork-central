@@ -32,6 +32,7 @@ import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.CredentialConfigurationDao;
 import net.solarnetwork.central.inin.dao.CredentialFilter;
@@ -39,7 +40,6 @@ import net.solarnetwork.central.inin.dao.jdbc.sql.InsertCredentialConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectCredentialConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.UpdateCredentialConfiguration;
 import net.solarnetwork.central.inin.domain.CredentialConfiguration;
-import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CredentialConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCredentialConfigurationDao implements CredentialConfigurationDao {
 
@@ -98,7 +98,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public FilterResults<CredentialConfiguration, UserLongCompositePK> findFiltered(
-			CredentialFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			CredentialFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCredentialConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, CredentialConfigurationRowMapper.INSTANCE);

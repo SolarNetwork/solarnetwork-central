@@ -48,7 +48,7 @@ import net.solarnetwork.web.jakarta.domain.Response;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/solarin/api/v1/pub/location", "/solarin/api/v1/sec/location" })
@@ -139,7 +139,7 @@ public class LocationLookupController {
 		criteria.setLocationId(locationId);
 		criteria.setSourceId(sourceId);
 		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dataCollectorBiz
-				.findGeneralLocationDatumMetadata(criteria, null, 0, 1);
+				.findGeneralLocationDatumMetadata(criteria, null, 0L, 1);
 		if ( results.getReturnedResultCount() < 1 ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, sourceId);
 		}

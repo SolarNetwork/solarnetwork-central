@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumAuxiliaryEntityDao.java - 28/11/2020 8:54:23 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,9 +47,9 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * {@link JdbcOperations} based implementation of
  * {@link DatumAuxiliaryEntityDao}.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
@@ -58,7 +58,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @throws IllegalArgumentException
@@ -133,7 +133,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	@Override
 	public FilterResults<DatumAuxiliary, DatumAuxiliaryPK> findFiltered(DatumAuxiliaryCriteria filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
 	}

@@ -58,7 +58,7 @@ import net.solarnetwork.util.StatTracker;
  * Test cases for the {@link JdbcQueryAuditor} class.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class JdbcQueryAuditorTests {
 
@@ -145,7 +145,7 @@ public class JdbcQueryAuditorTests {
 
 		List<GeneralNodeDatumFilterMatch> matches = new ArrayList<>();
 		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<>(matches, 0L,
-				0, 0);
+				0L, 0);
 		auditor.auditNodeDatumFilterResults(filter, results);
 
 		auditor.enableWriting();
@@ -193,7 +193,7 @@ public class JdbcQueryAuditorTests {
 
 		List<GeneralNodeDatumFilterMatch> matches = new ArrayList<>();
 		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<>(matches, 5L,
-				0, 3);
+				0L, 3);
 		auditor.auditNodeDatumFilterResults(filter, results);
 
 		auditor.enableWriting();

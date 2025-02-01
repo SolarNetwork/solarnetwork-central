@@ -101,7 +101,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Unit test for the {@link DaoQueryBiz} class.
  * 
  * @author matt
- * @version 4.0
+ * @version 4.1
  */
 public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 
@@ -389,7 +389,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
 		FilterResults<GeneralNodeDatumFilterMatch> results = biz.findFilteredGeneralNodeDatum(filter,
-				sortDescriptors, 1, 2);
+				sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
@@ -401,7 +401,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
 		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 
 		assertThat("Results returned", results, notNullValue());
@@ -444,7 +444,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setSourceId(TEST_SOURCE_ID);
 		filter.setAggregate(Aggregation.HourOfDay);
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		biz.findFilteredGeneralNodeDatum(filter, sortDescriptors, 1, 2);
+		biz.findFilteredGeneralNodeDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
@@ -457,7 +457,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				equalTo(filter.getAggregation()));
 		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 	}
 
@@ -486,7 +486,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
 		FilterResults<ReportingGeneralNodeDatumMatch> results = biz
-				.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, 1, 2);
+				.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
@@ -500,7 +500,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
 		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 
 		assertThat("Results returned", results, notNullValue());
@@ -548,7 +548,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
 		FilterResults<GeneralLocationDatumFilterMatch> results = biz.findGeneralLocationDatum(filter,
-				sortDescriptors, 1, 2);
+				sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is location", filterCaptor.getValue().getObjectKind(),
@@ -560,7 +560,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
 		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 
 		assertThat("Results returned", results, notNullValue());
@@ -606,7 +606,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
 		FilterResults<ReportingGeneralLocationDatumMatch> results = biz
-				.findAggregateGeneralLocationDatum(filter, sortDescriptors, 1, 2);
+				.findAggregateGeneralLocationDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is location", filterCaptor.getValue().getObjectKind(),
@@ -620,7 +620,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
 		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 
 		assertThat("Results returned", results, notNullValue());
@@ -683,7 +683,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
 		FilterResults<ReportingGeneralNodeDatumMatch> results = biz.findFilteredAggregateReading(filter,
-				DatumReadingType.Difference, Period.ofMonths(1), sortDescriptors, 1, 2);
+				DatumReadingType.Difference, Period.ofMonths(1), sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),
@@ -699,7 +699,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		assertThat("Query end date", filterCaptor.getValue().getEndDate(), equalTo(filter.getEndDate()));
 		assertThat("Query sorts", filterCaptor.getValue().getSorts(),
 				contains(new net.solarnetwork.domain.SimpleSortDescriptor("created", true)));
-		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1));
+		assertThat("Query offset", filterCaptor.getValue().getOffset(), equalTo(1L));
 		assertThat("Query max", filterCaptor.getValue().getMax(), equalTo(2));
 
 		assertThat("Results returned", results, notNullValue());

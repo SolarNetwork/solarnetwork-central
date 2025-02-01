@@ -69,7 +69,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SnfBillingSystem implements BillingSystem {
 
@@ -202,7 +202,7 @@ public class SnfBillingSystem implements BillingSystem {
 
 	@Override
 	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		// get account
 		Account account = accountDao.getForUser(filter.getUserId());
 		if ( account == null ) {

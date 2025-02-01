@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface BillingBiz {
 
@@ -89,7 +89,7 @@ public interface BillingBiz {
 	 * @return the results, never {@literal null}
 	 */
 	FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 	/**
 	 * Render an invoice.

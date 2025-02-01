@@ -79,7 +79,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class DaoDataCollectorBizTests {
 
@@ -128,9 +128,9 @@ public class DaoDataCollectorBizTests {
 		filter.setPostalCode("6011");
 
 		SolarLocation l = new SolarLocation();
-		BasicFilterResults<LocationMatch> filterResults = new BasicFilterResults<>(singleton(l), 1L, 0,
+		BasicFilterResults<LocationMatch> filterResults = new BasicFilterResults<>(singleton(l), 1L, 0L,
 				1);
-		expect(locationDao.findFiltered(eq(filter), isNull(), eq(0), anyObject()))
+		expect(locationDao.findFiltered(eq(filter), isNull(), eq(0L), anyObject()))
 				.andReturn(filterResults);
 
 		// WHEN

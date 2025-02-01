@@ -56,7 +56,7 @@ import net.solarnetwork.domain.Identity;
  * Common JDBC utilities.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public final class CommonJdbcUtils {
 
@@ -194,7 +194,7 @@ public final class CommonJdbcUtils {
 			totalCount = (long) results.size();
 		}
 
-		int offset = (filter.getOffset() != null ? filter.getOffset() : 0);
+		long offset = (filter.getOffset() != null ? filter.getOffset() : 0L);
 		return new BasicFilterResults<>(results, totalCount, offset, results.size());
 	}
 

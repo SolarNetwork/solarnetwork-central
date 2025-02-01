@@ -32,7 +32,7 @@ package net.solarnetwork.central.domain;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface FilterResults<T> extends Iterable<T> {
 
@@ -59,7 +59,7 @@ public interface FilterResults<T> extends Iterable<T> {
 	 * 
 	 * @return the starting offset, never <em>null</em>
 	 */
-	Integer getStartingOffset();
+	Long getStartingOffset();
 
 	/**
 	 * Get the number of results that matched the query.

@@ -46,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link EndpointAuthConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurationDao {
 
@@ -98,7 +98,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 
 	@Override
 	public FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> findFiltered(
-			EndpointAuthFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			EndpointAuthFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectEndpointAuthConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, EndpointAuthConfigurationRowMapper.INSTANCE);

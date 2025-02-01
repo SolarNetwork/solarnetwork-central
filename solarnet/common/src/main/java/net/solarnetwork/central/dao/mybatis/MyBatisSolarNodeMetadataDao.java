@@ -42,7 +42,7 @@ import net.solarnetwork.util.SearchFilter;
  * MyBatis implementation of {@link SolarNodeMetadataDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNodeMetadata, Long>
 		implements SolarNodeMetadataDao {
@@ -63,7 +63,7 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 
 	@Override
 	public FilterResults<SolarNodeMetadataFilterMatch> findFiltered(SolarNodeMetadataFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		final String query = getQueryForFilter(filter);
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
 		sqlProps.put(PARAM_FILTER, filter);
@@ -82,7 +82,6 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 			}).collect(toList());
 		}
 
-		return new BasicFilterResults<SolarNodeMetadataFilterMatch>(rows, Long.valueOf(rows.size()),
-				offset, rows.size());
+		return new BasicFilterResults<>(rows, Long.valueOf(rows.size()), offset, rows.size());
 	}
 }

@@ -75,6 +75,6 @@ public interface ReadingDatumDao {
 	 * @since 1.1
 	 */
 	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 }

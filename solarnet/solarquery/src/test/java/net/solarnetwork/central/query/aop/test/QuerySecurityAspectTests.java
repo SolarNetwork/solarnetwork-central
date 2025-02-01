@@ -88,7 +88,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Unit tests for the {@link QuerySecurityAspect} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class QuerySecurityAspectTests {
 
@@ -605,9 +605,9 @@ public class QuerySecurityAspectTests {
 		final Capture<AggregateGeneralNodeDatumFilter> filterCapture = new Capture<AggregateGeneralNodeDatumFilter>();
 		final FilterResults<ReportingGeneralNodeDatumMatch> filterResults = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
 				Collections.<ReportingGeneralNodeDatumMatch> emptyList(), Long.valueOf(0L),
-				Integer.valueOf(0), Integer.valueOf(0));
+				Long.valueOf(0L), Integer.valueOf(0));
 		expect(queryBiz.findFilteredAggregateGeneralNodeDatum(EasyMock.capture(filterCapture),
-				EasyMock.isNull(List.class), EasyMock.isNull(Integer.class),
+				EasyMock.isNull(List.class), EasyMock.isNull(Long.class),
 				EasyMock.isNull(Integer.class))).andReturn(filterResults);
 
 		// WHEN
@@ -661,7 +661,7 @@ public class QuerySecurityAspectTests {
 		final Capture<Object[]> proceedArgsCapture = new Capture<Object[]>();
 		final FilterResults<GeneralNodeDatumFilterMatch> filterResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
 				Collections.<GeneralNodeDatumFilterMatch> emptyList(), Long.valueOf(0L),
-				Integer.valueOf(0), Integer.valueOf(0));
+				Long.valueOf(0L), Integer.valueOf(0));
 		expect(pjp.proceed(EasyMock.capture(proceedArgsCapture))).andReturn(filterResults);
 
 		// WHEN

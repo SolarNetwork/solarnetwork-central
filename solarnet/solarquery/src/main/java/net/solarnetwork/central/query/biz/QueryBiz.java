@@ -57,7 +57,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for querying business logic.
  * 
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public interface QueryBiz {
 
@@ -168,7 +168,7 @@ public interface QueryBiz {
 	 * @since 1.4
 	 */
 	FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
-			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**
@@ -187,7 +187,7 @@ public interface QueryBiz {
 	 * @since 1.4
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**
@@ -209,7 +209,7 @@ public interface QueryBiz {
 	 * @since 4.1
 	 */
 	void findFilteredStreamDatum(StreamDatumFilter filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of reading stream datum, streaming
@@ -237,7 +237,7 @@ public interface QueryBiz {
 	 */
 	void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
 			Period tolerance, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of "readings".
@@ -294,7 +294,7 @@ public interface QueryBiz {
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 	/**
 	 * API for querying for a filtered set of
@@ -313,7 +313,7 @@ public interface QueryBiz {
 	 * @since 1.5
 	 */
 	FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
-			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**
@@ -334,7 +334,7 @@ public interface QueryBiz {
 	 */
 	FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Get the available source IDs for a given location, optionally limited to
@@ -393,5 +393,5 @@ public interface QueryBiz {
 	 * @since 1.4
 	 */
 	FilterResults<LocationMatch> findFilteredLocations(Location filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 }

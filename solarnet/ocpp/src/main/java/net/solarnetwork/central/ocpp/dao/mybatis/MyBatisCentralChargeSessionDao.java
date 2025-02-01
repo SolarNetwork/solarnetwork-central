@@ -48,7 +48,7 @@ import net.solarnetwork.util.ObjectUtils;
  * MyBatis implementation of {@link CentralChargeSessionDao}.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport<ChargeSession, UUID>
 		implements CentralChargeSessionDao {
@@ -195,7 +195,7 @@ public class MyBatisCentralChargeSessionDao extends BaseMyBatisGenericDaoSupport
 
 	@Override
 	public FilterResults<ChargeSession, UUID> findFiltered(ChargeSessionFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		List<ChargeSession> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null,
 				null);
 		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,

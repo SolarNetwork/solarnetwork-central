@@ -90,7 +90,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 4.2
+ * @version 4.3
  */
 public class DaoDataCollectorBiz implements DataCollectorBiz {
 
@@ -115,9 +115,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		return requestedMaximum;
 	}
 
-	private Integer limitFilterOffset(Integer requestedOffset) {
+	private Long limitFilterOffset(Long requestedOffset) {
 		if ( requestedOffset == null || requestedOffset.intValue() < 0 ) {
-			return 0;
+			return 0L;
 		}
 		return requestedOffset;
 	}
@@ -425,7 +425,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(
 			SolarNodeMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
-			final Integer offset, final Integer max) {
+			final Long offset, final Integer max) {
 		return solarNodeMetadataBiz.findSolarNodeMetadata(
 				solarNodeMetadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset,
 				max);
@@ -453,7 +453,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
 			final GeneralNodeDatumMetadataFilter criteria, final List<SortDescriptor> sortDescriptors,
-			final Integer offset, final Integer max) {
+			final Long offset, final Integer max) {
 		return datumMetadataBiz.findGeneralNodeDatumMetadata(
 				metadataCriteriaForcedToAuthenticatedNode(criteria), sortDescriptors, offset, max);
 	}
@@ -462,7 +462,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	@Override
 	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
 			final GeneralLocationDatumMetadataFilter criteria,
-			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max) {
 		return datumMetadataBiz.findGeneralLocationDatumMetadata(criteria, sortDescriptors, offset, max);
 	}
 

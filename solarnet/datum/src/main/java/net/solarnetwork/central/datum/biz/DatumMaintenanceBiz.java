@@ -32,7 +32,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for datum maintenance tasks.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.38
  */
 public interface DatumMaintenanceBiz {
@@ -65,5 +65,5 @@ public interface DatumMaintenanceBiz {
 	 * @since 1.1
 	 */
 	FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 }

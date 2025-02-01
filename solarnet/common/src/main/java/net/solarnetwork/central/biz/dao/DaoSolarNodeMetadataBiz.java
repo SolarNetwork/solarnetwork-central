@@ -39,7 +39,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * DAO-based implementation of {@link SolarNodeMetadataBiz}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
@@ -108,7 +108,7 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Integer offset,
+			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		return solarNodeMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}

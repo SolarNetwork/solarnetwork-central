@@ -115,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -602,7 +602,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			if ( percentComplete > 0 ) {
 				totalCountEstimate = Math.round(results.size() / percentComplete);
 			}
-			return new BasicFilterResults<>(results, totalCountEstimate, 0, results.size());
+			return new BasicFilterResults<>(results, totalCountEstimate, 0L, results.size());
 		}
 
 		@Override

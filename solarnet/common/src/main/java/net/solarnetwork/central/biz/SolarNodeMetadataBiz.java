@@ -33,7 +33,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * API for manipulating node metadata.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.32
  */
 public interface SolarNodeMetadataBiz {
@@ -83,6 +83,6 @@ public interface SolarNodeMetadataBiz {
 	 * @return the results, never <em>null</em>
 	 */
 	FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 }

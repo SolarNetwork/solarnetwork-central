@@ -144,7 +144,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -363,7 +363,7 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must be provided.");
 		}
@@ -402,7 +402,7 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
 		validateFilter(filter);

@@ -32,13 +32,13 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
+import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.EndpointAuthConfigurationDao;
 import net.solarnetwork.central.inin.dao.EndpointAuthFilter;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectEndpointAuthConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.UpsertEndpointAuthConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointAuthConfiguration;
-import net.solarnetwork.central.domain.UserUuidLongCompositePK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -46,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link EndpointAuthConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurationDao {
 
@@ -98,7 +98,7 @@ public class JdbcEndpointAuthConfigurationDao implements EndpointAuthConfigurati
 
 	@Override
 	public FilterResults<EndpointAuthConfiguration, UserUuidLongCompositePK> findFiltered(
-			EndpointAuthFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			EndpointAuthFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectEndpointAuthConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, EndpointAuthConfigurationRowMapper.INSTANCE);

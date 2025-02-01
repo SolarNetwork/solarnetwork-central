@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoDatumAuxiliaryBiz.java - 4/02/2019 12:24:16 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -46,21 +46,21 @@ import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliary;
 import net.solarnetwork.central.datum.v2.domain.DatumAuxiliaryPK;
-import net.solarnetwork.domain.datum.DatumStreamMetadata;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.domain.SortDescriptor;
+import net.solarnetwork.domain.datum.DatumStreamMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * DAO based implementation of {@link DatumAuxiliaryBiz}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.4
  */
 public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
@@ -70,7 +70,7 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumAuxiliaryDao
 	 *        the DAO to use
 	 * @param metaDao
@@ -155,7 +155,7 @@ public class DaoDatumAuxiliaryBiz implements DatumAuxiliaryBiz {
 	@Override
 	public FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findGeneralNodeDatumAuxiliary(
 			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			Long offset, Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
 

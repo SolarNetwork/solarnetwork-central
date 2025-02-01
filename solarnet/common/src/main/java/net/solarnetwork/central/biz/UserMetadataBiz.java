@@ -33,7 +33,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * API for manipulating user metadata.
  * 
  * @author matt
- * @version 2.`
+ * @version 2.1
  * @since 1.23
  */
 public interface UserMetadataBiz {
@@ -83,6 +83,6 @@ public interface UserMetadataBiz {
 	 * @return the results, never <em>null</em>
 	 */
 	FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 }

@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  *        the filter type
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface AggregationFilterableDao<M, F extends AggregationFilter> {
 
@@ -54,7 +54,7 @@ public interface AggregationFilterableDao<M, F extends AggregationFilter> {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<M> findAggregationFiltered(F filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+	FilterResults<M> findAggregationFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max);
 
 }

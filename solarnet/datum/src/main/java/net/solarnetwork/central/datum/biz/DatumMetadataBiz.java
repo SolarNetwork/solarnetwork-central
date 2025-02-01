@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * API for manipulating general datum metadata.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DatumMetadataBiz {
 
@@ -102,7 +102,7 @@ public interface DatumMetadataBiz {
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Add metadata to a specific location and source. If metadata already
@@ -160,7 +160,7 @@ public interface DatumMetadataBiz {
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Find available datum source IDs that match a datum metadata filter.
@@ -248,7 +248,7 @@ public interface DatumMetadataBiz {
 	 * @since 2.1
 	 */
 	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
-			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**

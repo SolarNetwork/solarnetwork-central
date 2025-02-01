@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcServerConfigurationDao.java - 6/08/2023 7:14:13 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -44,9 +44,9 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * JDBC implementation of {@link ServerConfigurationDao}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 
@@ -54,7 +54,7 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
@@ -128,7 +128,7 @@ public class JdbcServerConfigurationDao implements ServerConfigurationDao {
 
 	@Override
 	public FilterResults<ServerConfiguration, UserLongCompositePK> findFiltered(ServerFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectServerConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, ServerConfigurationRowMapper.INSTANCE);

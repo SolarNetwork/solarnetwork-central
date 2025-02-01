@@ -102,6 +102,6 @@ public interface DatumAuxiliaryBiz {
 	 */
 	FilterResults<GeneralNodeDatumAuxiliaryFilterMatch> findGeneralNodeDatumAuxiliary(
 			GeneralNodeDatumAuxiliaryFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 }

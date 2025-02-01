@@ -65,7 +65,7 @@ import net.solarnetwork.ocpp.domain.UnitOfMeasure;
  * Test cases for the {@link MyBatisCentralChargeSessionDao} class.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -607,7 +607,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 		filter.setUserId(userId);
 		filter.setMax(2);
 		FilterResults<ChargeSession, UUID> results1 = dao.findFiltered(filter);
-		filter.setOffset(2);
+		filter.setOffset(2L);
 		FilterResults<ChargeSession, UUID> results2 = dao.findFiltered(filter);
 
 		// THEN

@@ -50,7 +50,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * DAO API for {@link GeneralNodeDatum}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, GeneralNodeDatumPK>,
 		FilterableDao<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK, GeneralNodeDatumFilter>,
@@ -437,7 +437,7 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 */
 	FilterResults<ReportingGeneralNodeDatumMatch> findAggregationFilteredReadings(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType type, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 	/**
 	 * Get a count of datum records that match a search criteria.
@@ -516,6 +516,6 @@ public interface GeneralNodeDatumDao extends GenericDao<GeneralNodeDatum, Genera
 	 * @since 1.14
 	 */
 	FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 }

@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
  * Localized version of {@link InvoiceMatchFilterResults}.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class LocalizedInvoiceMatchFilterResults
 		implements InvoiceMatchFilterResults, LocalizedInvoiceMatchFilterResultsInfo {
@@ -141,7 +141,7 @@ public class LocalizedInvoiceMatchFilterResults
 	}
 
 	@Override
-	public Integer getStartingOffset() {
+	public Long getStartingOffset() {
 		return delegate.getStartingOffset();
 	}
 

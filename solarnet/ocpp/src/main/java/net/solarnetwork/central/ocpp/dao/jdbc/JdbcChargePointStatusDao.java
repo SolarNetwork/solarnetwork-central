@@ -51,7 +51,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC based implementation of {@link ChargePointStatusDao}.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 
@@ -72,7 +72,7 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 
 	@Override
 	public FilterResults<ChargePointStatus, UserLongCompositePK> findFiltered(
-			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(filter, "filter");
 		final PreparedStatementCreator sql = new SelectChargePointStatus(filter);
 		List<ChargePointStatus> list = jdbcOps.query(sql, ChargePointStatusRowMapper.INSTANCE);
@@ -92,7 +92,7 @@ public class JdbcChargePointStatusDao implements ChargePointStatusDao {
 	@Override
 	public void findFilteredStream(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
 		final PreparedStatementCreator sql = new SelectChargePointStatus(filter);

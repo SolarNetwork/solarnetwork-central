@@ -1,21 +1,21 @@
 /* ==================================================================
  * InvoiceGenerationTaskCreator.java - 21/07/2020 10:06:05 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,9 +47,9 @@ import net.solarnetwork.central.user.domain.UserFilterMatch;
 /**
  * Create {@link AccountTask} entities for accounts that need to have invoices
  * generated.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class InvoiceGenerationTaskCreator {
 
@@ -66,7 +66,7 @@ public class InvoiceGenerationTaskCreator {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userDao
 	 *        the user DAO to use
 	 * @param invoicingSystem
@@ -95,7 +95,7 @@ public class InvoiceGenerationTaskCreator {
 
 	/**
 	 * Generate account tasks for all accounts, up to the given end date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the end date
 	 */
@@ -108,7 +108,7 @@ public class InvoiceGenerationTaskCreator {
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setInternalData(billingDataFilter);
 		final int max = this.batchSize;
-		int offset = 0;
+		long offset = 0L;
 		FilterResults<UserFilterMatch> userResults;
 		do {
 			userResults = userDao.findFiltered(criteria, null, offset, max);
@@ -189,13 +189,13 @@ public class InvoiceGenerationTaskCreator {
 
 	/**
 	 * Set the batch size to process users with.
-	 * 
+	 *
 	 * <p>
 	 * This is the maximum number of user records to fetch from the database and
 	 * process at a time, e.g. a result page size. The service will iterate over
 	 * all result pages to process all users.
 	 * </p>
-	 * 
+	 *
 	 * @param batchSize
 	 *        the user record batch size to set
 	 */

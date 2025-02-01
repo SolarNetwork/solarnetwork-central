@@ -52,7 +52,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Delegating implementation of {@link QueryBiz}, mostly to help with AOP.
  * 
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public class DelegatingQueryBiz implements QueryBiz {
 
@@ -91,27 +91,27 @@ public class DelegatingQueryBiz implements QueryBiz {
 
 	@Override
 	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
-			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		return delegate.findFilteredGeneralNodeDatum(filter, sortDescriptors, offset, max);
 	}
 
 	@Override
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		return delegate.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, offset, max);
 	}
 
 	@Override
 	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		return delegate.findFilteredLocations(filter, sortDescriptors, offset, max);
 	}
 
 	@Override
 	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
-			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		return delegate.findGeneralLocationDatum(filter, sortDescriptors, offset, max);
 	}
@@ -119,7 +119,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			Long offset, Integer max) {
 		return delegate.findAggregateGeneralLocationDatum(filter, sortDescriptors, offset, max);
 	}
 
@@ -147,7 +147,7 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		return delegate.findFilteredAggregateReading(filter, readingType, tolerance, sortDescriptors,
 				offset, max);
 	}
@@ -155,14 +155,14 @@ public class DelegatingQueryBiz implements QueryBiz {
 	@Override
 	public void findFilteredStreamDatum(StreamDatumFilter filter,
 			StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		delegate.findFilteredStreamDatum(filter, processor, sortDescriptors, offset, max);
 	}
 
 	@Override
 	public void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
 			Period tolerance, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		delegate.findFilteredStreamReadings(filter, readingType, tolerance, processor, sortDescriptors,
 				offset, max);
 	}

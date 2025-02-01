@@ -45,7 +45,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Base DAO support for MyBatis implementations
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 
@@ -85,7 +85,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *        any parameters to pass to the statement
 	 * @param <E>
 	 *        the result type
-	 * @return the first result, or <em>null</em> if none matched the query
+	 * @return the first result, or {@code null} if none matched the query
 	 */
 	protected final <E> E selectFirst(String statement, Object parameters) {
 		List<E> results = getSqlSession().selectList(statement, parameters, FIRST_ROW);
@@ -103,14 +103,14 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * @param parameters
 	 *        any parameters to pass to the statement
 	 * @param offset
-	 *        a result offset, or <em>null</em> for no offset
+	 *        a result offset, or {@code null} for no offset
 	 * @param max
-	 *        the maximum number of results, or <em>null</em> for no maximum
+	 *        the maximum number of results, or {@code null} for no maximum
 	 * @param <E>
 	 *        the result type
-	 * @return the first result, or <em>null</em> if none matched the query
+	 * @return the first result, or {@code null} if none matched the query
 	 */
-	protected final <E> List<E> selectList(final String statement, Object parameters, Integer offset,
+	protected final <E> List<E> selectList(final String statement, Object parameters, Long offset,
 			Integer max) {
 		List<E> rows = null;
 		if ( max != null && max > 0 ) {
@@ -220,7 +220,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *      FilterResultsFactory)
 	 */
 	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(String query, F filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return selectFiltered(query, filter, sorts, offset, max, null, null);
 	}
 
@@ -251,7 +251,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *      FilterResultsFactory)
 	 */
 	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(String query, F filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max,
+			List<SortDescriptor> sorts, Long offset, Integer max,
 			BiConsumer<F, Map<String, Object>> propertyProcessor) {
 		return selectFiltered(query, filter, sorts, offset, max, propertyProcessor, null);
 	}
@@ -281,7 +281,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * <li>Call {@link #selectList(String, Object, Integer, Integer)}</li>
 	 * <li>Create a result object, or if {@code resultsFactory} provided then
 	 * call
-	 * {@link FilterResultsFactory#createFilterResults(Object, Map, Iterable, Long, Integer, Integer)}
+	 * {@link FilterResultsFactory#createFilterResults(Object, Map, Iterable, Long, Long, Integer)}
 	 * and return the result.</li>
 	 * </ol>
 	 * 
@@ -309,7 +309,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 * @since 1.3
 	 */
 	protected <M extends Identity<K>, K, F> FilterResults<M, K> selectFiltered(final String query,
-			F filter, List<SortDescriptor> sorts, Integer offset, Integer max,
+			F filter, List<SortDescriptor> sorts, Long offset, Integer max,
 			BiConsumer<F, Map<String, Object>> propertyProcessor,
 			FilterResultsFactory<M, K, F> resultsFactory) {
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);
@@ -329,7 +329,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 
 		// if filter provides pagination values, don't use MyBatis pagination
 		Integer m = max;
-		Integer o = offset;
+		Long o = offset;
 		if ( filter instanceof PaginationCriteria ) {
 			final PaginationCriteria pagination = (PaginationCriteria) filter;
 			if ( pagination.getMax() != null && pagination.getMax().intValue() > 0

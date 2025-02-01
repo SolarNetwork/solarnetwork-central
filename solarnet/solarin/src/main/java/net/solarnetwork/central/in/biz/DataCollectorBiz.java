@@ -48,7 +48,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * </p>
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public interface DataCollectorBiz {
 
@@ -152,7 +152,7 @@ public interface DataCollectorBiz {
 	 * @since 1.5
 	 */
 	FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
-			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max);
+			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max);
 
 	/**
 	 * Search for datum metadata.
@@ -169,7 +169,7 @@ public interface DataCollectorBiz {
 	 */
 	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Search for location datum metadata based on a location criteria. The
@@ -189,7 +189,7 @@ public interface DataCollectorBiz {
 	 */
 	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Look up location objects based on a location search filter.

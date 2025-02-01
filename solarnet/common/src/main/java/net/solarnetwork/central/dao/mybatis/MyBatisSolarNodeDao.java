@@ -43,7 +43,7 @@ import net.solarnetwork.util.SearchFilter;
  * MyBatis implementation of {@link SolarNodeDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisSolarNodeDao
 		extends BaseMyBatisFilterableDao<SolarNode, SolarNodeFilterMatch, SolarNodeFilter, Long>
@@ -94,7 +94,7 @@ public class MyBatisSolarNodeDao
 
 	@Override
 	public FilterResults<SolarNodeFilterMatch> findFiltered(SolarNodeFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		// manually implemented to support metadataFilter
 		final String filterDomain = getMemberDomainKey(SolarNodeMatch.class);
 		final String query = getFilteredQuery(filterDomain, filter);

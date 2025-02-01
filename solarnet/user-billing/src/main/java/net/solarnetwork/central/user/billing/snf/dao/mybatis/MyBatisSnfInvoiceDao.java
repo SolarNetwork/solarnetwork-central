@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisSnfInvoiceDao.java - 20/07/2020 9:47:42 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,9 +34,9 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link SnfInvoiceDao}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoice, UserLongPK>
 		implements SnfInvoiceDao {
@@ -54,7 +54,7 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 
 		/**
 		 * Get the query name.
-		 * 
+		 *
 		 * @return the query name
 		 */
 		public String getQueryName() {
@@ -63,7 +63,7 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 
 		/**
 		 * Get the query name to use for a count-only result.
-		 * 
+		 *
 		 * @return the count query name
 		 */
 		public String getCountQueryName() {
@@ -80,14 +80,14 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 
 	@Override
 	public FilterResults<SnfInvoice, UserLongPK> findFiltered(SnfInvoiceFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		if ( offset != null || max != null || sorts != null ) {
 			filter = filter.clone();
 			filter.setSorts(sorts);
 			filter.setMax(max);
 			if ( offset == null ) {
 				// force offset to 0 if implied
-				filter.setOffset(0);
+				filter.setOffset(0L);
 			} else {
 				filter.setOffset(offset);
 			}

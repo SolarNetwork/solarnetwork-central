@@ -39,7 +39,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <F>
  *        the filter type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface FilterableDao<M extends FilterMatch<PK>, PK extends Serializable, F extends Filter> {
 
@@ -56,7 +56,7 @@ public interface FilterableDao<M extends FilterMatch<PK>, PK extends Serializabl
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 }

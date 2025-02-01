@@ -47,7 +47,7 @@ import net.solarnetwork.util.ObjectUtils;
  * JDBC implementation of {@link UserFluxAggregatePublishConfigurationDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcUserFluxAggregatePublishConfigurationDao
 		implements UserFluxAggregatePublishConfigurationDao {
@@ -134,8 +134,8 @@ public class JdbcUserFluxAggregatePublishConfigurationDao
 
 	@Override
 	public FilterResults<UserFluxAggregatePublishConfiguration, UserLongCompositePK> findFiltered(
-			UserFluxAggregatePublishConfigurationFilter filter, List<SortDescriptor> sorts,
-			Integer offset, Integer max) {
+			UserFluxAggregatePublishConfigurationFilter filter, List<SortDescriptor> sorts, Long offset,
+			Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectUserFluxAggregatePublishConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql,

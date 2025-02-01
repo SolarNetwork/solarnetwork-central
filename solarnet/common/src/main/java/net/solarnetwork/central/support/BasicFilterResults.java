@@ -34,17 +34,17 @@ import net.solarnetwork.central.domain.FilterResults;
  * @param <T>
  *        the result type
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonPropertyOrder({ "totalResults", "startingOffset", "returnedResultCount", "results" })
 public class BasicFilterResults<T> implements FilterResults<T> {
 
 	private Iterable<T> results;
 	private Long totalResults;
-	private Integer startingOffset;
+	private Long startingOffset;
 	private Integer returnedResultCount;
 
-	public BasicFilterResults(Iterable<T> results, Long totalResults, Integer startingOffset,
+	public BasicFilterResults(Iterable<T> results, Long totalResults, Long startingOffset,
 			Integer returnedResultCount) {
 		super();
 		this.results = results;
@@ -77,7 +77,7 @@ public class BasicFilterResults<T> implements FilterResults<T> {
 	}
 
 	@Override
-	public Integer getStartingOffset() {
+	public Long getStartingOffset() {
 		return startingOffset;
 	}
 

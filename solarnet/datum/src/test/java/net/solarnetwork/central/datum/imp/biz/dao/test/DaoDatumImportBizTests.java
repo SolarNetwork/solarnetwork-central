@@ -558,7 +558,7 @@ public class DaoDatumImportBizTests {
 		// then
 		assertThat("Preview future available", preview, notNullValue());
 		assertThat("Preview result available", result, notNullValue());
-		assertThat("Preview starting offset", result.getStartingOffset(), equalTo(0));
+		assertThat("Preview starting offset", result.getStartingOffset(), equalTo(0L));
 		assertThat("Preview returned result count", result.getReturnedResultCount(), equalTo(10));
 		assertThat("Preview returned total count", result.getTotalResults(), equalTo(100L));
 		assertThat("Preview result data", result.getResults(), notNullValue());
