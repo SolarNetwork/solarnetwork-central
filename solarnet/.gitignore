@@ -1,5 +1,6 @@
 .DS_Store
 *.log
+*.orig
 *.swp
 .gradle/
 bin/
