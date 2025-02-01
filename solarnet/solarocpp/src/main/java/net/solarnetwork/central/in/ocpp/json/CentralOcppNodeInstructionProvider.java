@@ -47,7 +47,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
@@ -174,7 +174,7 @@ public class CentralOcppNodeInstructionProvider extends
 			SimpleInstructionFilter filter = new SimpleInstructionFilter();
 			filter.setNodeId(cp.getNodeId());
 			filter.setStateSet(EnumSet.of(InstructionState.Received));
-			FilterResults<EntityMatch> matches = instructionDao.findFiltered(filter, null, null, null);
+			FilterResults<EntityMatch, Long> matches = instructionDao.findFiltered(filter, null, null, null);
 			for ( EntityMatch match : matches ) {
 				Instruction instruction;
 				if ( match instanceof Instruction ) {

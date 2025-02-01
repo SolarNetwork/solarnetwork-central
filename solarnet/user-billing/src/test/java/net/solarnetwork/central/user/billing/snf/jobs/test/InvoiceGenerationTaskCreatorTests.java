@@ -44,9 +44,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.UserFilter;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
@@ -60,6 +58,8 @@ import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerationTaskCreat
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
 import net.solarnetwork.central.user.domain.UserMatch;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link InvoiceGenerationTaskCreator} class.
@@ -116,7 +116,7 @@ public class InvoiceGenerationTaskCreatorTests {
 		final LocalDate endDate = LocalDate.of(2020, 1, 1);
 		final Capture<UserFilter> userFilterCaptor = new Capture<>();
 		final UserMatch user = new UserMatch(TEST_USER_ID, TEST_EMAIL);
-		final FilterResults<UserFilterMatch> userMatches = new BasicFilterResults<>(asList(user));
+		final FilterResults<UserFilterMatch, Long> userMatches = new BasicFilterResults<>(asList(user));
 
 		// find users configured with SNF billing
 		expect(userDao.findFiltered(capture(userFilterCaptor), isNull(), eq(0L),
@@ -158,7 +158,7 @@ public class InvoiceGenerationTaskCreatorTests {
 		final LocalDate endDate = LocalDate.of(2020, 1, 1);
 		final Capture<UserFilter> userFilterCaptor = new Capture<>();
 		final UserMatch user = new UserMatch(TEST_USER_ID, TEST_EMAIL);
-		final FilterResults<UserFilterMatch> userMatches = new BasicFilterResults<>(asList(user));
+		final FilterResults<UserFilterMatch, Long> userMatches = new BasicFilterResults<>(asList(user));
 
 		// find users configured with SNF billing
 		expect(userDao.findFiltered(capture(userFilterCaptor), isNull(), eq(0L),
@@ -200,7 +200,7 @@ public class InvoiceGenerationTaskCreatorTests {
 		final LocalDate endDate = LocalDate.of(2020, 1, 1);
 		final Capture<UserFilter> userFilterCaptor = new Capture<>();
 		final UserMatch user = new UserMatch(TEST_USER_ID, TEST_EMAIL);
-		final FilterResults<UserFilterMatch> userMatches = new BasicFilterResults<>(asList(user));
+		final FilterResults<UserFilterMatch, Long> userMatches = new BasicFilterResults<>(asList(user));
 
 		// find users configured with SNF billing
 		expect(userDao.findFiltered(capture(userFilterCaptor), isNull(), eq(0L),

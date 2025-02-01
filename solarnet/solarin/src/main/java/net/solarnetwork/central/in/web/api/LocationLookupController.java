@@ -35,12 +35,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.web.jakarta.domain.Response;
 
@@ -87,7 +88,7 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findGeneralLocationMetadata(
+	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocationMetadata(
 			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
 		SolarLocation loc;
 		if ( command != null ) {
@@ -114,7 +115,7 @@ public class LocationLookupController {
 				criteria.setTags(command.getTags());
 			}
 		}
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dataCollectorBiz
+		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = dataCollectorBiz
 				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
 						command.getOffset(), command.getMax());
 		return response(results);
@@ -138,7 +139,7 @@ public class LocationLookupController {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setLocationId(locationId);
 		criteria.setSourceId(sourceId);
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dataCollectorBiz
+		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = dataCollectorBiz
 				.findGeneralLocationDatumMetadata(criteria, null, 0L, 1);
 		if ( results.getReturnedResultCount() < 1 ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, sourceId);

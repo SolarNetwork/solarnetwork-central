@@ -85,10 +85,10 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.dao.DaoQueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityToken;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
@@ -388,8 +388,8 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<GeneralNodeDatumFilterMatch> results = biz.findFilteredGeneralNodeDatum(filter,
-				sortDescriptors, 1L, 2);
+		FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = biz
+				.findFilteredGeneralNodeDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is node", filterCaptor.getValue().getObjectKind(),
@@ -485,7 +485,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<ReportingGeneralNodeDatumMatch> results = biz
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
 				.findFilteredAggregateGeneralNodeDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
@@ -547,8 +547,8 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<GeneralLocationDatumFilterMatch> results = biz.findGeneralLocationDatum(filter,
-				sortDescriptors, 1L, 2);
+		FilterResults<GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> results = biz
+				.findGeneralLocationDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query kind is location", filterCaptor.getValue().getObjectKind(),
@@ -605,7 +605,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<ReportingGeneralLocationDatumMatch> results = biz
+		FilterResults<ReportingGeneralLocationDatumMatch, GeneralLocationDatumPK> results = biz
 				.findAggregateGeneralLocationDatum(filter, sortDescriptors, 1L, 2);
 
 		// THEN
@@ -682,8 +682,9 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		List<SortDescriptor> sortDescriptors = Arrays.asList(new SimpleSortDescriptor("created", true));
-		FilterResults<ReportingGeneralNodeDatumMatch> results = biz.findFilteredAggregateReading(filter,
-				DatumReadingType.Difference, Period.ofMonths(1), sortDescriptors, 1L, 2);
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
+				.findFilteredAggregateReading(filter, DatumReadingType.Difference, Period.ofMonths(1),
+						sortDescriptors, 1L, 2);
 
 		// THEN
 		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),
@@ -750,8 +751,8 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
-		FilterResults<ReportingGeneralNodeDatumMatch> results = biz.findFilteredReading(filter,
-				DatumReadingType.DifferenceWithin, Period.ofMonths(1));
+		FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results = biz
+				.findFilteredReading(filter, DatumReadingType.DifferenceWithin, Period.ofMonths(1));
 
 		// THEN
 		assertThat("Query reading type", filterCaptor.getValue().getReadingType(),

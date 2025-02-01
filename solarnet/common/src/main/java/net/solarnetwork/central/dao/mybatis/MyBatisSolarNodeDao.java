@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilter;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMatch;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.MapPathMatcher;
 import net.solarnetwork.util.SearchFilter;
@@ -93,7 +93,7 @@ public class MyBatisSolarNodeDao
 	}
 
 	@Override
-	public FilterResults<SolarNodeFilterMatch> findFiltered(SolarNodeFilter filter,
+	public FilterResults<SolarNodeFilterMatch, Long> findFiltered(SolarNodeFilter filter,
 			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		// manually implemented to support metadataFilter
 		final String filterDomain = getMemberDomainKey(SolarNodeMatch.class);

@@ -61,13 +61,13 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.domain.Filter;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.query.aop.QuerySecurityAspect;
@@ -80,7 +80,8 @@ import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -603,7 +604,7 @@ public class QuerySecurityAspectTests {
 
 		// findFilteredGeneralNodeDatum should be redirected to findFilteredAggregateGeneralNodeDatum()
 		final Capture<AggregateGeneralNodeDatumFilter> filterCapture = new Capture<AggregateGeneralNodeDatumFilter>();
-		final FilterResults<ReportingGeneralNodeDatumMatch> filterResults = new BasicFilterResults<ReportingGeneralNodeDatumMatch>(
+		final FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> filterResults = new BasicFilterResults<>(
 				Collections.<ReportingGeneralNodeDatumMatch> emptyList(), Long.valueOf(0L), 0L, 0);
 		expect(queryBiz.findFilteredAggregateGeneralNodeDatum(EasyMock.capture(filterCapture),
 				EasyMock.isNull(List.class), EasyMock.isNull(Long.class),
@@ -658,7 +659,7 @@ public class QuerySecurityAspectTests {
 
 		// join point should proceed with custom arguments list
 		final Capture<Object[]> proceedArgsCapture = new Capture<Object[]>();
-		final FilterResults<GeneralNodeDatumFilterMatch> filterResults = new BasicFilterResults<GeneralNodeDatumFilterMatch>(
+		final FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> filterResults = new BasicFilterResults<>(
 				Collections.<GeneralNodeDatumFilterMatch> emptyList(), Long.valueOf(0L), 0L, 0);
 		expect(pjp.proceed(EasyMock.capture(proceedArgsCapture))).andReturn(filterResults);
 

@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.billing.domain;
 
 import java.math.BigDecimal;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * API for a set of invoices returned from a filter query.
@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.FilterResults;
  * @author matt
  * @version 1.0
  */
-public interface InvoiceMatchFilterResults extends FilterResults<InvoiceMatch> {
+public interface InvoiceMatchFilterResults extends FilterResults<InvoiceMatch, String> {
 
 	/**
 	 * Get the total amount charged across all invoices.

@@ -30,9 +30,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
@@ -82,10 +83,11 @@ public class DatumMaintenanceController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/agg/stale", method = RequestMethod.GET)
-	public Response<FilterResults<StaleAggregateDatum>> findStaleAggregatesDatum(
+	public Response<FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK>> findStaleAggregatesDatum(
 			DatumFilterCommand criteria) {
-		FilterResults<StaleAggregateDatum> results = datumMaintenanceBiz.findStaleAggregateDatum(
-				criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
+		FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> results = datumMaintenanceBiz
+				.findStaleAggregateDatum(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
+						criteria.getMax());
 		return response(results);
 	}
 

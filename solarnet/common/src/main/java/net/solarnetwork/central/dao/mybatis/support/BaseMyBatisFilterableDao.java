@@ -29,9 +29,9 @@ import java.util.Map;
 import net.solarnetwork.central.dao.FilterableDao;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -91,7 +91,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 	}
 
 	@Override
-	public FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
+	public FilterResults<M, PK> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		final String filterDomain = getMemberDomainKey(filterResultClass);
 		final String query = getFilteredQuery(filterDomain, filter);
@@ -113,7 +113,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 
 		List<M> rows = selectList(query, sqlProps, offset, max);
 
-		BasicFilterResults<M> results = new BasicFilterResults<M>(rows,
+		BasicFilterResults<M, PK> results = new BasicFilterResults<>(rows,
 				(totalCount != null ? totalCount : Long.valueOf(rows.size())),
 				offset != null ? offset.longValue() : 0L, rows.size());
 

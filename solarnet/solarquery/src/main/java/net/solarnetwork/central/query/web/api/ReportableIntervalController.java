@@ -186,8 +186,8 @@ public class ReportableIntervalController {
 	 * @return the available sources
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"!metadataFilter", "!withNodeIds" })
+	@RequestMapping(value = "/sources", method = RequestMethod.GET,
+			params = { "!types", "!metadataFilter", "!withNodeIds" })
 	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
@@ -242,8 +242,8 @@ public class ReportableIntervalController {
 	 * @return the found source IDs
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"!metadataFilter", "withNodeIds" })
+	@RequestMapping(value = "/sources", method = RequestMethod.GET,
+			params = { "!types", "!metadataFilter", "withNodeIds" })
 	public Response<Set<?>> findAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
@@ -309,8 +309,8 @@ public class ReportableIntervalController {
 	 * @return the sources
 	 */
 	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"metadataFilter" })
+	@RequestMapping(value = "/sources", method = RequestMethod.GET,
+			params = { "!types", "metadataFilter" })
 	public Response<Set<?>> getMetadataFilteredAvailableSources(final HttpServletRequest req,
 			final GeneralReportableIntervalCommand cmd) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {

@@ -41,10 +41,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -63,6 +61,8 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -201,7 +201,7 @@ public class SnfBillingSystem implements BillingSystem {
 	}
 
 	@Override
-	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
+	public FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		// get account
 		Account account = accountDao.getForUser(filter.getUserId());

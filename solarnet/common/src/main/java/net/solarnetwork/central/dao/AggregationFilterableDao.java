@@ -24,7 +24,8 @@ package net.solarnetwork.central.dao;
 
 import java.util.List;
 import net.solarnetwork.central.domain.AggregationFilter;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -32,13 +33,15 @@ import net.solarnetwork.domain.SortDescriptor;
  * 
  * @param <M>
  *        the result match type
+ * @param <K>
+ *        the result key type
  * @param <F>
  *        the filter type
  * 
  * @author matt
  * @version 1.1
  */
-public interface AggregationFilterableDao<M, F extends AggregationFilter> {
+public interface AggregationFilterableDao<M extends Identity<K>, K, F extends AggregationFilter> {
 
 	/**
 	 * API for querying for a filtered set of aggregated results from all
@@ -54,7 +57,7 @@ public interface AggregationFilterableDao<M, F extends AggregationFilter> {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<M> findAggregationFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
-			Integer max);
+	FilterResults<M, K> findAggregationFiltered(F filter, List<SortDescriptor> sortDescriptors,
+			Long offset, Integer max);
 
 }

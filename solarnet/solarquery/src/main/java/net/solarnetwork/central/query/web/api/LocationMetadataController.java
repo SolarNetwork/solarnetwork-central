@@ -36,9 +36,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.jakarta.domain.Response;
 
@@ -85,7 +86,7 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET)
-	public Response<?> findGeneralLocations(
+	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocations(
 			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
 		SolarLocation loc;
 		if ( command != null ) {
@@ -108,7 +109,7 @@ public class LocationMetadataController {
 				criteria.setTags(command.getTags());
 			}
 		}
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = datumMetadataBiz
+		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
 				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
 						command.getOffset(), command.getMax());
 		return response(results);
@@ -125,7 +126,7 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET)
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
 			@PathVariable("locationId") Long locationId, DatumFilterCommand criteria) {
 		return findMetadata(locationId, null, criteria);
 	}
@@ -143,13 +144,13 @@ public class LocationMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
 			@PathVariable("locationId") Long locationId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setLocationId(locationId);
 		filter.setSourceId(sourceId);
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = datumMetadataBiz
+		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
 				.findGeneralLocationDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 		return response(results);
@@ -157,7 +158,7 @@ public class LocationMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET, params = { "sourceId" })
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findMetadataAlt(
+	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadataAlt(
 			@PathVariable("locationId") Long locationId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(locationId, sourceId, criteria);

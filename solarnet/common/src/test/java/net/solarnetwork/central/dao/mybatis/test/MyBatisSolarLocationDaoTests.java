@@ -35,9 +35,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisSolarLocationDao} class.
@@ -154,7 +154,8 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 	public void findFilteredNoMatch() {
 		SolarLocation filter = new SolarLocation();
 		filter.setName("does-not-exist");
-		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
+				null);
 		assertNotNull(results);
 		assertEquals(0, results.getReturnedResultCount());
 		assertEquals(Long.valueOf(0L), results.getTotalResults());
@@ -165,7 +166,8 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		setupTestLocation();
 		SolarLocation filter = new SolarLocation();
 		filter.setRegion(TEST_LOC_REGION);
-		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
+				null);
 		assertNotNull(results);
 		assertEquals(1, results.getReturnedResultCount());
 		assertEquals(Long.valueOf(1L), results.getTotalResults());
@@ -198,7 +200,8 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		filter.setRegion(TEST_LOC_REGION);
 		filter.setPostalCode(TEST_LOC_POSTAL_CODE);
 		filter.setTimeZoneId(TEST_TZ);
-		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
+				null);
 		assertNotNull(results);
 		assertEquals(3, results.getReturnedResultCount());
 		assertEquals(Long.valueOf(3L), results.getTotalResults());

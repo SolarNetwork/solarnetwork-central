@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportException;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -66,10 +67,10 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.web.jakarta.domain.Response;
 import net.solarnetwork.web.jakarta.support.MultipartFileResource;
@@ -188,8 +189,8 @@ public class DatumImportController {
 	 * @return a status entity
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/jobs",
-			"/jobs/" }, method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@RequestMapping(value = { "/jobs", "/jobs/" }, method = RequestMethod.POST,
+			consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public Response<DatumImportReceipt> createJob(@RequestPart("config") BasicConfiguration config,
 			@RequestPart("data") MultipartFile data) {
 		DatumImportReceipt result = null;
@@ -221,10 +222,10 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/preview", method = RequestMethod.GET)
-	public Callable<Response<FilterResults<GeneralNodeDatumComponents>>> previewStagedImport(
+	public Callable<Response<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>> previewStagedImport(
 			@PathVariable("id") String jobId,
 			@RequestParam(value = "count", required = false, defaultValue = "100") int count) {
-		final Future<FilterResults<GeneralNodeDatumComponents>> future;
+		final Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> future;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			BasicDatumImportPreviewRequest req = new BasicDatumImportPreviewRequest(userId, jobId,
@@ -234,16 +235,16 @@ public class DatumImportController {
 			future = null;
 		}
 		// we have to wrap our FilterResults response with a Response; hence the Callable result here
-		return new Callable<Response<FilterResults<GeneralNodeDatumComponents>>>() {
+		return new Callable<Response<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>>() {
 
 			@Override
-			public Response<FilterResults<GeneralNodeDatumComponents>> call() throws Exception {
+			public Response<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> call()
+					throws Exception {
 				if ( future == null ) {
-					return new Response<FilterResults<GeneralNodeDatumComponents>>(false, null,
-							"Import service not available", null);
+					return new Response<>(false, null, "Import service not available", null);
 				}
 				try {
-					FilterResults<GeneralNodeDatumComponents> result = future.get();
+					FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> result = future.get();
 					return response(result);
 				} catch ( ExecutionException e ) {
 					Throwable t = e.getCause();

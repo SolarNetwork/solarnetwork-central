@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
@@ -43,6 +42,7 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Create {@link AccountTask} entities for accounts that need to have invoices
@@ -108,7 +108,7 @@ public class InvoiceGenerationTaskCreator {
 		criteria.setInternalData(billingDataFilter);
 		final int max = this.batchSize;
 		long offset = 0L;
-		FilterResults<UserFilterMatch> userResults;
+		FilterResults<UserFilterMatch, Long> userResults;
 		do {
 			userResults = userDao.findFiltered(criteria, null, offset, max);
 			for ( UserFilterMatch match : userResults ) {

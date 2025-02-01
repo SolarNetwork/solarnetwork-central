@@ -37,14 +37,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -87,14 +88,14 @@ public class DatumMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
 		return findMetadata(requestNodeId, null, criteria);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long requestNodeId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
@@ -104,7 +105,7 @@ public class DatumMetadataController {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = dataCollectorBiz
+		FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> results = dataCollectorBiz
 				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 		return response(results);
@@ -112,7 +113,7 @@ public class DatumMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadataAlt(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
 			@PathVariable("nodeId") Long requestNodeId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(requestNodeId, sourceId, criteria);
@@ -150,11 +151,12 @@ public class DatumMetadataController {
 	 * @since 1.1
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.GET, params = {
-			"!sourceId" })
+	@RequestMapping(value = { "/stream/{sourceId}" }, method = RequestMethod.GET,
+			params = { "!sourceId" })
 	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadata(
 			@PathVariable("nodeId") Long objectId, @PathVariable("sourceId") String sourceId,
-			@RequestParam(name = "kind", required = false, defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
+			@RequestParam(name = "kind", required = false,
+					defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
 		if ( kind == net.solarnetwork.domain.datum.ObjectDatumKind.Location ) {
 			criteria.setObjectKind(ObjectDatumKind.Location);
@@ -191,7 +193,8 @@ public class DatumMetadataController {
 	@RequestMapping(value = { "/stream" }, method = RequestMethod.GET, params = { "sourceId" })
 	public Response<net.solarnetwork.domain.datum.ObjectDatumStreamMetadata> findStreamMetadataAlt(
 			@PathVariable("nodeId") Long objectId, @RequestParam("sourceId") String sourceId,
-			@RequestParam(name = "kind", required = false, defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
+			@RequestParam(name = "kind", required = false,
+					defaultValue = "Node") net.solarnetwork.domain.datum.ObjectDatumKind kind) {
 		return findStreamMetadata(objectId, sourceId, kind);
 	}
 

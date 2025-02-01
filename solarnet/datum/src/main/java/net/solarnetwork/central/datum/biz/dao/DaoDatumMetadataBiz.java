@@ -59,15 +59,15 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -178,7 +178,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
+	public FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
 			GeneralNodeDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
@@ -219,7 +219,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,

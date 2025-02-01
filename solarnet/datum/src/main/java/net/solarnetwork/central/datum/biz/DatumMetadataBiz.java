@@ -33,10 +33,10 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -100,9 +100,9 @@ public interface DatumMetadataBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Long offset, Integer max);
+	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
+			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max);
 
 	/**
 	 * Add metadata to a specific location and source. If metadata already
@@ -158,7 +158,7 @@ public interface DatumMetadataBiz {
 	 * @return the results, never <em>null</em>
 	 * @since 1.1
 	 */
-	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
 			Long offset, Integer max);
 

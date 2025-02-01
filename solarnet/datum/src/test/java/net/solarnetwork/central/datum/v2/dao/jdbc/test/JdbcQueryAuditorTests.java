@@ -51,7 +51,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.util.StatTracker;
 
 /**
@@ -144,8 +144,8 @@ public class JdbcQueryAuditorTests {
 		filter.setSourceId(TEST_SOURCE_1);
 
 		List<GeneralNodeDatumFilterMatch> matches = new ArrayList<>();
-		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<>(matches, 0L,
-				0L, 0);
+		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
+				matches, 0L, 0L, 0);
 		auditor.auditNodeDatumFilterResults(filter, results);
 
 		auditor.enableWriting();
@@ -192,8 +192,8 @@ public class JdbcQueryAuditorTests {
 		filter.setSourceId(TEST_SOURCE_1);
 
 		List<GeneralNodeDatumFilterMatch> matches = new ArrayList<>();
-		BasicFilterResults<GeneralNodeDatumFilterMatch> results = new BasicFilterResults<>(matches, 5L,
-				0L, 3);
+		BasicFilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results = new BasicFilterResults<>(
+				matches, 5L, 0L, 3);
 		auditor.auditNodeDatumFilterResults(filter, results);
 
 		auditor.enableWriting();

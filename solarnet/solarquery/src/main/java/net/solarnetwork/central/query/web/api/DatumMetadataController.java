@@ -35,8 +35,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
@@ -80,7 +81,7 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long nodeId, DatumFilterCommand criteria) {
 		return findMetadata(nodeId, null, criteria);
 	}
@@ -98,13 +99,13 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = datumMetadataBiz
+		FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> results = datumMetadataBiz
 				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 		return response(results);
@@ -112,7 +113,7 @@ public class DatumMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadataAlt(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
 			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(nodeId, sourceId, criteria);

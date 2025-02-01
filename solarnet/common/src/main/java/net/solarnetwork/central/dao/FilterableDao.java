@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.List;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.domain.FilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -56,7 +56,7 @@ public interface FilterableDao<M extends FilterMatch<PK>, PK extends Serializabl
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<M> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
+	FilterResults<M, PK> findFiltered(F filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 }

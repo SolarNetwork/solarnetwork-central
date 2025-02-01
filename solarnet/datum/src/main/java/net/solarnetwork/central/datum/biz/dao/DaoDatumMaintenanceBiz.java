@@ -36,13 +36,14 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -89,8 +90,9 @@ public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<StaleAggregateDatum> findStaleAggregateDatum(GeneralNodeDatumFilter criteria,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
+	public FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> findStaleAggregateDatum(
+			GeneralNodeDatumFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(criteria, sortDescriptors, offset, max);
 		c.setObjectKind(ObjectDatumKind.Node);
 		DatumUtils.populateAggregationType(criteria, c);

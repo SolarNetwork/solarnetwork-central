@@ -23,9 +23,9 @@
 package net.solarnetwork.central.biz;
 
 import java.util.List;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
@@ -82,7 +82,8 @@ public interface SolarNodeMetadataBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(SolarNodeMetadataFilter criteria,
-			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
+	FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
+			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max);
 
 }

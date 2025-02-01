@@ -48,7 +48,7 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -194,7 +194,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	@Override
 	public <T extends FilterMatch<GeneralNodeDatumPK>> void auditNodeDatumFilterResults(
-			GeneralNodeDatumFilter filter, FilterResults<T> results) {
+			GeneralNodeDatumFilter filter, FilterResults<T, GeneralNodeDatumPK> results) {
 		final int returnedCount = (results != null ? results.getReturnedResultCount() : 0);
 		// if no results, no count
 		if ( returnedCount < 1 ) {

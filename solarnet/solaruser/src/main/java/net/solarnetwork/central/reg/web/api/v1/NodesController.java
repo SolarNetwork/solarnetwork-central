@@ -47,10 +47,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import net.solarnetwork.central.RepeatableTaskException;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
@@ -60,6 +58,8 @@ import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatu
 import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.NetworkCertificate;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
@@ -107,9 +107,9 @@ public class NodesController {
 	 */
 	@RequestMapping(value = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/" }, method = RequestMethod.GET)
 	@ResponseBody
-	public Response<FilterResults<UserNode>> getMyNodes() {
+	public Response<FilterResults<UserNode, Long>> getMyNodes() {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
-		FilterResults<UserNode> result = new BasicFilterResults<UserNode>(nodes, (long) nodes.size(), 0L,
+		FilterResults<UserNode, Long> result = new BasicFilterResults<>(nodes, (long) nodes.size(), 0L,
 				nodes.size());
 		return response(result);
 	}
@@ -122,11 +122,11 @@ public class NodesController {
 	@RequestMapping(value = { "/u/sec/my-nodes/pending", "/api/v1/sec/nodes/pending" },
 			method = RequestMethod.GET)
 	@ResponseBody
-	public Response<FilterResults<UserNodeConfirmation>> getPendingNodes() {
+	public Response<FilterResults<UserNodeConfirmation, Long>> getPendingNodes() {
 		List<UserNodeConfirmation> pending = userBiz
 				.getPendingUserNodeConfirmations(SecurityUtils.getCurrentActorUserId());
-		FilterResults<UserNodeConfirmation> result = new BasicFilterResults<UserNodeConfirmation>(
-				pending, (long) pending.size(), 0L, pending.size());
+		FilterResults<UserNodeConfirmation, Long> result = new BasicFilterResults<>(pending,
+				(long) pending.size(), 0L, pending.size());
 		return response(result);
 	}
 

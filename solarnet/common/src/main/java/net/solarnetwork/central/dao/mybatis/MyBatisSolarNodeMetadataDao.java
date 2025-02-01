@@ -28,12 +28,12 @@ import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.util.MapPathMatcher;
 import net.solarnetwork.util.SearchFilter;
@@ -62,7 +62,7 @@ public class MyBatisSolarNodeMetadataDao extends BaseMyBatisGenericDao<SolarNode
 	}
 
 	@Override
-	public FilterResults<SolarNodeMetadataFilterMatch> findFiltered(SolarNodeMetadataFilter filter,
+	public FilterResults<SolarNodeMetadataFilterMatch, Long> findFiltered(SolarNodeMetadataFilter filter,
 			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		final String query = getQueryForFilter(filter);
 		Map<String, Object> sqlProps = new HashMap<String, Object>(1);

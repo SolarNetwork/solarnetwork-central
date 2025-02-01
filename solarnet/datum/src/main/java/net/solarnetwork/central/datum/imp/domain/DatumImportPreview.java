@@ -23,7 +23,8 @@
 package net.solarnetwork.central.datum.imp.domain;
 
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
+import net.solarnetwork.dao.BasicFilterResults;
 
 /**
  * Preview of datum import result datum.
@@ -31,7 +32,7 @@ import net.solarnetwork.central.support.BasicFilterResults;
  * @author matt
  * @version 1.1
  */
-public class DatumImportPreview extends BasicFilterResults<GeneralNodeDatum> {
+public class DatumImportPreview extends BasicFilterResults<GeneralNodeDatum, GeneralNodeDatumPK> {
 
 	/**
 	 * Constructor.

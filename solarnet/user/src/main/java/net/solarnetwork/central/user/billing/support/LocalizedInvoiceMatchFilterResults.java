@@ -32,12 +32,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatchFilterResults;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchFilterResultsInfo;
 import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Localized version of {@link InvoiceMatchFilterResults}.
@@ -48,7 +48,7 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceMatchInfo;
 public class LocalizedInvoiceMatchFilterResults
 		implements InvoiceMatchFilterResults, LocalizedInvoiceMatchFilterResultsInfo {
 
-	private final FilterResults<InvoiceMatch> delegate;
+	private final FilterResults<InvoiceMatch, String> delegate;
 	private final Locale locale;
 	private final String currencyCode;
 
@@ -65,7 +65,8 @@ public class LocalizedInvoiceMatchFilterResults
 	 * @param locale
 	 *        the desired locale
 	 */
-	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch> delegate, Locale locale) {
+	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch, String> delegate,
+			Locale locale) {
 		this(delegate, locale, currencyCodeFromInvoices(delegate));
 	}
 
@@ -80,8 +81,8 @@ public class LocalizedInvoiceMatchFilterResults
 	 *        the currency code to use; will default to {@literal NZD} if
 	 *        {@literal null}
 	 */
-	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch> delegate, Locale locale,
-			String currencyCode) {
+	public LocalizedInvoiceMatchFilterResults(FilterResults<InvoiceMatch, String> delegate,
+			Locale locale, String currencyCode) {
 		super();
 		assert delegate != null;
 		this.delegate = localizedInvoices(delegate, locale);
@@ -95,7 +96,7 @@ public class LocalizedInvoiceMatchFilterResults
 		this.currencyCode = currencyCode;
 	}
 
-	private static String currencyCodeFromInvoices(FilterResults<InvoiceMatch> delegate) {
+	private static String currencyCodeFromInvoices(FilterResults<InvoiceMatch, String> delegate) {
 		// take currency code from first invoice
 		assert delegate != null;
 		Iterator<InvoiceMatch> itr = delegate.iterator();
@@ -105,8 +106,8 @@ public class LocalizedInvoiceMatchFilterResults
 		return null;
 	}
 
-	private static FilterResults<InvoiceMatch> localizedInvoices(FilterResults<InvoiceMatch> delegate,
-			Locale locale) {
+	private static FilterResults<InvoiceMatch, String> localizedInvoices(
+			FilterResults<InvoiceMatch, String> delegate, Locale locale) {
 		if ( delegate == null ) {
 			return null;
 		}

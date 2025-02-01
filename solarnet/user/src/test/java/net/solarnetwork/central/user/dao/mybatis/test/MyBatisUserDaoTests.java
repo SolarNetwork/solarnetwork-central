@@ -34,11 +34,11 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisUserDao} class.
@@ -233,10 +233,10 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setEmail(TEST_EMAIL);
 
-		FilterResults<UserFilterMatch> results = userDao.findFiltered(criteria, null, null, null);
+		FilterResults<UserFilterMatch, Long> results = userDao.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
+		assertEquals(1, results.getReturnedResultCount());
 		UserFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Match ID", userId, match.getId());
 	}
@@ -258,10 +258,10 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setInternalData(billingData1);
 
-		FilterResults<UserFilterMatch> results = userDao.findFiltered(criteria, null, null, null);
+		FilterResults<UserFilterMatch, Long> results = userDao.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
+		assertEquals(1, results.getReturnedResultCount());
 		UserFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Match ID", userId, match.getId());
 
@@ -269,7 +269,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		results = userDao.findFiltered(criteria, null, null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
+		assertEquals(1, results.getReturnedResultCount());
 		match = results.getResults().iterator().next();
 		assertEquals("Match ID", userId2, match.getId());
 	}
