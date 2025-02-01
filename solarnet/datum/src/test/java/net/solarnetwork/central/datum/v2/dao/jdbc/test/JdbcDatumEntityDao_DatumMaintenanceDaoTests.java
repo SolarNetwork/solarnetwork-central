@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_DatumStreamMetadataDaoTests.java - 19/11/2020 4:41:41 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -64,22 +64,22 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link DatumMaintenanceDao}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -125,7 +125,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -164,7 +164,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -203,7 +203,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -244,7 +244,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -283,7 +283,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(5));
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -330,7 +330,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
 		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -365,7 +365,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setStartDate(start.toInstant());
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
-		criteria.setOffset(0);
+		criteria.setOffset(0L);
 		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
@@ -378,7 +378,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -413,7 +413,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setStartDate(start.toInstant());
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
-		criteria.setOffset(2);
+		criteria.setOffset(2L);
 		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
@@ -426,7 +426,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(2L));
 		int i = 2;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -461,7 +461,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setStartDate(start.toInstant());
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
-		criteria.setOffset(4);
+		criteria.setOffset(4L);
 		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
@@ -474,7 +474,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(4));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(4L));
 		int i = 4;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(

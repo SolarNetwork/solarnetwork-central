@@ -305,7 +305,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 				if ( completionDate != null ) {
 					info.setCompleted(completionDate);
 				}
-				taskDao.store(info);
+				taskDao.save(info);
 				return null;
 			});
 			postJobStatusChangedEvent(this);

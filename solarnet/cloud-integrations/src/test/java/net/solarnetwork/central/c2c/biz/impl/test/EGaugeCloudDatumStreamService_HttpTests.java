@@ -385,14 +385,14 @@ public class EGaugeCloudDatumStreamService_HttpTests {
 				.setBody(utf8StringResource("egauge-register-data-02.json", getClass())));
 
 		// then save the new token
-		given(clientAccessTokenDao.store(any())).willReturn(accessToken.getId());
+		given(clientAccessTokenDao.save(any())).willReturn(accessToken.getId());
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
 
 		// THEN
 		// @formatter:off
-		then(clientAccessTokenDao).should().store(clientAccessTokenCaptor.capture());
+		then(clientAccessTokenDao).should().save(clientAccessTokenCaptor.capture());
 		and.then(clientAccessTokenCaptor.getValue())
 			.as("Access token saved for client")
 			.isEqualTo(accessToken)

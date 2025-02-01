@@ -38,11 +38,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
@@ -89,14 +89,14 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<SolarNodeMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
 			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			if ( criteria.getNodeId() == null ) {
 				// default to all nodes for actor
 				criteria.setNodeIds(authorizedNodeIdsForCurrentActor(nodeOwnershipDao));
 			}
-			FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
+			FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
 					.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
 							criteria.getMax());
 			return response(results);
@@ -117,7 +117,7 @@ public class NodeMetadataController extends BaseTransientDataAccessRetryControll
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
+			FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
 					.findSolarNodeMetadata(criteria, null, null, null);
 			SolarNodeMetadataFilterMatch result = null;
 			if ( results != null ) {

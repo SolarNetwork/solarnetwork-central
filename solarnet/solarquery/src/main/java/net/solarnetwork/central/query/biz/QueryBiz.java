@@ -38,25 +38,28 @@ import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for querying business logic.
  * 
  * @author matt
- * @version 4.1
+ * @version 4.2
  */
 public interface QueryBiz {
 
@@ -166,8 +169,8 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
-	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredGeneralNodeDatum(
-			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**
@@ -185,8 +188,8 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
-	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**
@@ -208,7 +211,7 @@ public interface QueryBiz {
 	 * @since 4.1
 	 */
 	void findFilteredStreamDatum(StreamDatumFilter filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of reading stream datum, streaming
@@ -236,7 +239,7 @@ public interface QueryBiz {
 	 */
 	void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
 			Period tolerance, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of "readings".
@@ -260,8 +263,8 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 2.4
 	 */
-	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(GeneralNodeDatumFilter filter,
-			DatumReadingType readingType, Period tolerance);
+	FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredReading(
+			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance);
 
 	/**
 	 * API for querying for a filtered set of aggregate "readings".
@@ -291,9 +294,9 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 2.7
 	 */
-	FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
+	FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateReading(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 	/**
 	 * API for querying for a filtered set of
@@ -311,8 +314,8 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 1.5
 	 */
-	FilterResults<ReportingGeneralLocationDatumMatch> findGeneralLocationDatum(
-			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	FilterResults<GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> findGeneralLocationDatum(
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**
@@ -331,9 +334,9 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 1.5
 	 */
-	FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
+	FilterResults<ReportingGeneralLocationDatumMatch, GeneralLocationDatumPK> findAggregateGeneralLocationDatum(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Get the available source IDs for a given location, optionally limited to
@@ -391,6 +394,6 @@ public interface QueryBiz {
 	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
-	FilterResults<LocationMatch> findFilteredLocations(Location filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+	FilterResults<LocationMatch, Long> findFilteredLocations(Location filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 }

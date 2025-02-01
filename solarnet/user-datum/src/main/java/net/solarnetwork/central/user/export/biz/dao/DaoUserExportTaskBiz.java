@@ -195,7 +195,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		task.setScheduleType(scheduleType);
 		task.setConfig(taskConfig);
 		task.setTokenId(SecurityUtils.currentTokenId());
-		UUID pk = adhocTaskDao.store(task);
+		UUID pk = adhocTaskDao.save(task);
 		task.setId(pk);
 		return task;
 	}
@@ -271,7 +271,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		task.setScheduleType(scheduleType);
 		task.setUserDatumExportConfigurationId(config.getId());
 		task.setConfig(taskConfig);
-		UserDatumExportTaskPK pk = taskDao.store(task);
+		UserDatumExportTaskPK pk = taskDao.save(task);
 		task.setId(pk);
 		return task;
 	}

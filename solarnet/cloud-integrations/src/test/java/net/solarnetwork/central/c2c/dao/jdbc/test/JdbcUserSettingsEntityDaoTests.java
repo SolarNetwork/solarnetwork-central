@@ -64,7 +64,7 @@ public class JdbcUserSettingsEntityDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		UserSettingsEntity conf = newUserSettingsEntity(userId, randomBoolean(), randomBoolean());
 
 		// WHEN
-		Long result = dao.store(conf);
+		Long result = dao.save(conf);
 
 		// THEN
 
@@ -115,7 +115,7 @@ public class JdbcUserSettingsEntityDaoTests extends AbstractJUnit5JdbcDaoTestSup
 		conf.setPublishToSolarIn(!conf.isPublishToSolarIn());
 		conf.setPublishToSolarFlux(!conf.isPublishToSolarFlux());
 
-		Long result = dao.store(conf);
+		Long result = dao.save(conf);
 		UserSettingsEntity updated = dao.get(result);
 
 		// THEN

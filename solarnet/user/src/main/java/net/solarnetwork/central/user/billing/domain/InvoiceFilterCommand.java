@@ -25,22 +25,22 @@ package net.solarnetwork.central.user.billing.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
 import net.solarnetwork.domain.MutableSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Filter support for invoice actions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter {
 
-	private static final long serialVersionUID = -6127206654609364990L;
+	private static final long serialVersionUID = -1664006438848339711L;
 
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset = 0;
+	private Long offset = 0L;
 	private Integer max;
 	private Boolean unpaid;
 
@@ -139,7 +139,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * 
 	 * @return the starting offset, or {@literal null} for no offset
 	 */
-	public Integer getOffset() {
+	public Long getOffset() {
 		return offset;
 	}
 
@@ -149,7 +149,7 @@ public class InvoiceFilterCommand extends FilterSupport implements InvoiceFilter
 	 * @param offset
 	 *        the offset to set
 	 */
-	public void setOffset(Integer offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 

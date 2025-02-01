@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@link SqlSessionDaoSupport}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.7
  */
 public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F extends PaginationCriteria>
@@ -115,7 +115,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * @see BaseMyBatisDao#selectFiltered(String, Object, List, Integer,
 	 *      Integer, java.util.function.BiConsumer)
 	 */
-	protected FilterResults<M, K> doFindFiltered(F filter, List<SortDescriptor> sorts, Integer offset,
+	protected FilterResults<M, K> doFindFiltered(F filter, List<SortDescriptor> sorts, Long offset,
 			Integer max) {
 		final String filterDomain = matchType.getSimpleName();
 		final String query = getFilteredQuery(filterDomain, filter);
@@ -125,7 +125,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	@Override
 	public FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps,
-			Iterable<M> rows, Long totalCount, Integer offset, Integer returnedCount) {
+			Iterable<M> rows, Long totalCount, Long offset, Integer returnedCount) {
 		return BasicFilterResults.filterResults(rows, filter, totalCount,
 				(returnedCount != null ? returnedCount : 0));
 	}

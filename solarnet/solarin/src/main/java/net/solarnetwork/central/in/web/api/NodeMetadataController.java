@@ -33,13 +33,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.jakarta.domain.Response;
 
@@ -91,7 +91,7 @@ public class NodeMetadataController {
 		}
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
-		FilterResults<SolarNodeMetadataFilterMatch> results = dataCollectorBiz
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dataCollectorBiz
 				.findSolarNodeMetadata(filter, null, null, null);
 		SolarNodeMetadataFilterMatch result = null;
 		for ( SolarNodeMetadataFilterMatch m : results ) {

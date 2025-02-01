@@ -48,7 +48,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudDatumStreamPollTaskDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTaskDao {
 
@@ -105,7 +105,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> findFiltered(
-			CloudDatumStreamPollTaskFilter filter, List<SortDescriptor> sorts, Integer offset,
+			CloudDatumStreamPollTaskFilter filter, List<SortDescriptor> sorts, Long offset,
 			Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);

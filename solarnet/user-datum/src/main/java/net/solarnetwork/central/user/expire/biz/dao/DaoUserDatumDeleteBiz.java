@@ -222,7 +222,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		info.setConfiguration(f);
 		info.setJobState(DatumDeleteJobState.Queued);
 
-		jobInfoDao.store(info);
+		jobInfoDao.save(info);
 
 		DatumDeleteTask task = taskForId(id);
 
@@ -367,7 +367,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			if ( completionDate != null ) {
 				info.setCompleted(completionDate);
 			}
-			jobInfoDao.store(info);
+			jobInfoDao.save(info);
 
 			postJobStatusChangedEvent(this, info);
 		}

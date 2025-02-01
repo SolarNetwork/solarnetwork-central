@@ -34,7 +34,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * DAO API for {@link ChargePointActionStatus} entities.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface ChargePointActionStatusDao extends
 		FilterableDao<ChargePointActionStatus, ChargePointActionStatusKey, ChargePointActionStatusFilter> {
@@ -57,6 +57,6 @@ public interface ChargePointActionStatusDao extends
 	 */
 	void findFilteredStream(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 }

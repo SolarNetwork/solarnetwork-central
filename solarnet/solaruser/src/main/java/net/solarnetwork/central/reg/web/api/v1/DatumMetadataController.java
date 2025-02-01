@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumMetadataController.java - Oct 3, 2014 2:13:51 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,14 +36,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for datum metadata actions.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -56,7 +57,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumMetadataBiz
 	 *        the DatumMetadataBiz to use
 	 */
@@ -73,7 +74,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Find all metadata for a node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param criteria
@@ -82,14 +83,14 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long nodeId, DatumFilterCommand criteria) {
 		return findMetadata(nodeId, null, criteria);
 	}
 
 	/**
 	 * Get metadata for a single node ID and source ID combination.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -100,13 +101,13 @@ public class DatumMetadataController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
 			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch> results = datumMetadataBiz
+		FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> results = datumMetadataBiz
 				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
 						criteria.getOffset(), criteria.getMax());
 		return response(results);
@@ -114,7 +115,7 @@ public class DatumMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch>> findMetadataAlt(
+	public Response<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
 			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
 		return findMetadata(nodeId, sourceId, criteria);
@@ -123,7 +124,7 @@ public class DatumMetadataController {
 	/**
 	 * Add metadata to a source. The metadata is merged only, and will not
 	 * replace existing values.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -150,7 +151,7 @@ public class DatumMetadataController {
 	/**
 	 * Completely replace the metadata for a given source ID, or create it if it
 	 * doesn't already exist.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -176,7 +177,7 @@ public class DatumMetadataController {
 
 	/**
 	 * Completely remove the metadata for a given source ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId

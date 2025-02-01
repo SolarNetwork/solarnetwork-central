@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 

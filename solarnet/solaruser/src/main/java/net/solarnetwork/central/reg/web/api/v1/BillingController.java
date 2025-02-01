@@ -46,7 +46,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
@@ -59,13 +58,14 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatchFilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for billing management.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/sec/user/billing" })
@@ -212,17 +212,17 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
-	public Response<FilterResults<InvoiceMatch>> findFilteredInvoices(InvoiceFilterCommand filter,
-			Locale locale) {
+	public Response<FilterResults<InvoiceMatch, String>> findFilteredInvoices(
+			InvoiceFilterCommand filter, Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( filter.getUserId() == null ) {
 			filter.setUserId(SecurityUtils.getCurrentActorUserId());
 		}
-		FilterResults<InvoiceMatch> results = biz.findFilteredInvoices(filter,
+		FilterResults<InvoiceMatch, String> results = biz.findFilteredInvoices(filter,
 				filter.getSortDescriptors(), filter.getOffset(), filter.getMax());
 
 		// localize the response
-		if ( results.getReturnedResultCount() != null && results.getReturnedResultCount() > 0 ) {
+		if ( results.getReturnedResultCount() > 0 ) {
 			if ( locale == null ) {
 				locale = Locale.getDefault();
 			}

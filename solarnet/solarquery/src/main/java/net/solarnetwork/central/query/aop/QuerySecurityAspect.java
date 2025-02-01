@@ -65,7 +65,7 @@ import net.solarnetwork.util.ArrayUtils;
  * Security enforcing AOP aspect for {@link QueryBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -160,7 +160,7 @@ public class QuerySecurityAspect extends AuthorizationSupport {
 			@SuppressWarnings("unchecked")
 			List<SortDescriptor> sorts = (List<SortDescriptor>) args[1];
 			return target.findFilteredAggregateGeneralNodeDatum((AggregateGeneralNodeDatumFilter) f,
-					sorts, (Integer) args[2], (Integer) args[3]);
+					sorts, (Long) args[2], (Integer) args[3]);
 		}
 		Object[] args = pjp.getArgs();
 		args[0] = f;

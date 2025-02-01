@@ -86,7 +86,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		newUserNodeConf.setSecurityPhrase("test phrase");
 		newUserNodeConf.setCountry("NZ");
 		newUserNodeConf.setTimeZoneId("Pacific/Auckland");
-		Long id = userNodeConfirmationDao.store(newUserNodeConf);
+		Long id = userNodeConfirmationDao.save(newUserNodeConf);
 		assertNotNull(id);
 		this.userNodeConf = userNodeConfirmationDao.get(id);
 	}
@@ -118,7 +118,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
 		assertNull(conf.getNodeId());
 		conf.setNodeId(testNodeId);
-		Long id = userNodeConfirmationDao.store(conf);
+		Long id = userNodeConfirmationDao.save(conf);
 		assertNotNull(id);
 		assertEquals(userNodeConf.getId(), id);
 		UserNodeConfirmation updated = userNodeConfirmationDao.get(userNodeConf.getId());
@@ -173,7 +173,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		// make the confirmation no longer pending
 		UserNodeConfirmation conf0 = this.userNodeConf;
 		conf0.setConfirmationDate(Instant.now());
-		userNodeConfirmationDao.store(conf0);
+		userNodeConfirmationDao.save(conf0);
 
 		// now add a 2nd confirmation that is still pending
 		testNodeId = TEST_ID_2;

@@ -116,7 +116,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUserNode.setName(TEST_NAME);
 		newUserNode.setNode(this.node);
 		newUserNode.setUser(this.user);
-		Long id = userNodeDao.store(newUserNode);
+		Long id = userNodeDao.save(newUserNode);
 		assertNotNull(id);
 		this.userNodeId = id;
 	}
@@ -148,7 +148,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		userNode.setDescription("New description");
 		userNode.setName("New name");
 		userNode.setUser(userDao.get(user2Id));
-		Long id = userNodeDao.store(userNode);
+		Long id = userNodeDao.save(userNode);
 		assertNotNull(id);
 		assertEquals(this.userNodeId, id);
 		UserNode updated = userNodeDao.get(this.userNodeId);
@@ -170,7 +170,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// transfer UserNode to other user
 		UserNode un = userNodeDao.get(this.node.getId());
 		un.setUser(user2);
-		Long updatedNodeId = userNodeDao.store(un);
+		Long updatedNodeId = userNodeDao.save(un);
 
 		userNodeDao.getSqlSession().clearCache();
 
@@ -207,7 +207,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUserNode.setName(TEST_NAME);
 		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
 		newUserNode.setUser(this.user);
-		Long userNode2 = userNodeDao.store(newUserNode);
+		Long userNode2 = userNodeDao.save(newUserNode);
 		assertNotNull(userNode2);
 
 		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
@@ -247,7 +247,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUserNode.setName(TEST_NAME);
 		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
 		newUserNode.setUser(this.user);
-		Long userNode2 = userNodeDao.store(newUserNode);
+		Long userNode2 = userNodeDao.save(newUserNode);
 		assertNotNull(userNode2);
 
 		List<UserNode> results = userNodeDao.findArchivedUserNodesForUser(this.user.getId());
@@ -274,7 +274,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUserNode.setName(TEST_NAME);
 		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
 		newUserNode.setUser(this.user);
-		Long userNode2 = userNodeDao.store(newUserNode);
+		Long userNode2 = userNodeDao.save(newUserNode);
 		assertNotNull(userNode2);
 
 		List<UserNode> results = userNodeDao.findUserNodesForUser(this.user);
@@ -322,7 +322,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUserNodeCert.setKeystoreData(TEST_CERT);
 		newUserNodeCert.setStatus(status);
 		newUserNodeCert.setRequestId("test req ID");
-		UserNodePK id = userNodeCertificateDao.store(newUserNodeCert);
+		UserNodePK id = userNodeCertificateDao.save(newUserNodeCert);
 		assertNotNull(id);
 		return userNodeCertificateDao.get(id);
 	}
@@ -410,7 +410,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		setupTestNode(TEST_NODE_2);
 		SolarNode node2 = solarNodeDao.get(TEST_NODE_2);
 		UserNode userNode2 = new UserNode(user, node2);
-		userNode2 = userNodeDao.get(userNodeDao.store(userNode2));
+		userNode2 = userNodeDao.get(userNodeDao.save(userNode2));
 
 		// set up a 2nd node transfer request
 		storeNewTransfer(node2.getId());
@@ -456,7 +456,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUserNode.setName(TEST_NAME);
 		newUserNode.setNode(solarNodeDao.get(TEST_ID_2));
 		newUserNode.setUser(this.user);
-		Long userNode2 = userNodeDao.store(newUserNode);
+		Long userNode2 = userNodeDao.save(newUserNode);
 		assertThat("UserNode created", userNode2, notNullValue());
 
 		Set<Long> results = userNodeDao.findNodeIdsForUser(this.user.getId());
@@ -476,7 +476,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
-		String id = userAuthTokenDao.store(authToken);
+		String id = userAuthTokenDao.save(authToken);
 		assertNotNull(id);
 		this.userAuthToken = authToken;
 	}*/
@@ -505,7 +505,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		// create a new user without any nodes
 		this.user = createNewUser(TEST_EMAIL_2);
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.User);
-		userAuthTokenDao.store(authToken);
+		userAuthTokenDao.save(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("No nodes returned", nodeIds, hasSize(0));
@@ -515,7 +515,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	public void findNodeIdsForUserTokenSingleNode() {
 		storeNewUserNode();
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.User);
-		userAuthTokenDao.store(authToken);
+		userAuthTokenDao.save(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat(nodeIds, contains(this.node.getId()));
@@ -526,7 +526,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeNewUserNode();
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.User);
 		authToken.setStatus(SecurityTokenStatus.Disabled);
-		userAuthTokenDao.store(authToken);
+		userAuthTokenDao.save(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("No nodes returned", nodeIds, hasSize(0));
@@ -544,12 +544,12 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			newUserNode.setName(TEST_NAME);
 			newUserNode.setNode(solarNodeDao.get(nodeId));
 			newUserNode.setUser(this.user);
-			userNodeDao.store(newUserNode);
+			userNodeDao.save(newUserNode);
 			expectedNodeIds.add(nodeId);
 		}
 
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.User);
-		userAuthTokenDao.store(authToken);
+		userAuthTokenDao.save(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("User nodes", nodeIds, equalTo(expectedNodeIds));
@@ -566,13 +566,13 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			newUserNode.setName(TEST_NAME);
 			newUserNode.setNode(solarNodeDao.get(nodeId));
 			newUserNode.setUser(this.user);
-			userNodeDao.store(newUserNode);
+			userNodeDao.save(newUserNode);
 		}
 
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.User);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_ID_2, TEST_ID_2 - 1))).build());
-		userAuthTokenDao.store(authToken);
+		userAuthTokenDao.save(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));
@@ -589,13 +589,13 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 			newUserNode.setName(TEST_NAME);
 			newUserNode.setNode(solarNodeDao.get(nodeId));
 			newUserNode.setUser(this.user);
-			userNodeDao.store(newUserNode);
+			userNodeDao.save(newUserNode);
 		}
 
 		final UserAuthToken authToken = tokenForUser(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(TEST_ID_2, TEST_ID_2 - 1))).build());
-		userAuthTokenDao.store(authToken);
+		userAuthTokenDao.save(authToken);
 
 		Set<Long> nodeIds = userNodeDao.findNodeIdsForToken(authToken.getId());
 		assertThat("Policy filtered user nodes", nodeIds, contains(TEST_ID_2 - 1, TEST_ID_2));

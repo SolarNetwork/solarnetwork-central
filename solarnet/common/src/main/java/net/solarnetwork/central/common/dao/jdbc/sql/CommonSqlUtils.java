@@ -43,7 +43,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Common SQL utilities for SolarNetwork.
  * 
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 public final class CommonSqlUtils {
 
@@ -624,7 +624,7 @@ public final class CommonSqlUtils {
 			}
 		}
 		if ( filter != null && filter.getOffset() != null ) {
-			int offset = filter.getOffset();
+			long offset = filter.getOffset();
 			if ( offset > 0 ) {
 				if ( result < 1 ) {
 					buf.append('\n');
@@ -664,9 +664,9 @@ public final class CommonSqlUtils {
 			}
 		}
 		if ( filter != null && filter.getOffset() != null ) {
-			int offset = filter.getOffset();
+			long offset = filter.getOffset();
 			if ( offset > 0 ) {
-				stmt.setInt(++parameterOffset, offset);
+				stmt.setLong(++parameterOffset, offset);
 			}
 		}
 		return parameterOffset;
@@ -703,7 +703,7 @@ public final class CommonSqlUtils {
 			if ( max > 0 ) {
 				buf.append("\nLIMIT ").append(max);
 			}
-			Integer offset = filter.getOffset();
+			Long offset = filter.getOffset();
 			if ( offset != null ) {
 				buf.append(" OFFSET ").append(offset);
 			}

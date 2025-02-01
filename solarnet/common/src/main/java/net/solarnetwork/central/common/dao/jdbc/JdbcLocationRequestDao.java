@@ -44,7 +44,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link LocationRequestDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.3
  */
 public class JdbcLocationRequestDao implements LocationRequestDao {
@@ -66,7 +66,7 @@ public class JdbcLocationRequestDao implements LocationRequestDao {
 
 	@Override
 	public FilterResults<LocationRequest, Long> findFiltered(LocationRequestCriteria filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		SelectLocationRequest sql = new SelectLocationRequest(filter); // TODO: support sorts, offset, max
 		List<LocationRequest> list = jdbcOps.query(sql, LocationRequestRowMapper.INSTANCE);
 		return BasicFilterResults.filterResults(list, null, (long) list.size(), list.size());

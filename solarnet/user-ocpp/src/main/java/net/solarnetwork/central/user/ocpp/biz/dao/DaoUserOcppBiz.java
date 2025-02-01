@@ -71,7 +71,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link UserOcppBiz}.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoUserOcppBiz implements UserOcppBiz {
 
@@ -405,7 +405,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void findFilteredChargePointStatus(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		validateInput(filter, "filter", getChargePointStatusFilterValidator());
 		chargePointStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
@@ -414,7 +414,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		validateInput(filter, "filter", getChargePointActionStatusFilterValidator());
 		chargePointActionStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}

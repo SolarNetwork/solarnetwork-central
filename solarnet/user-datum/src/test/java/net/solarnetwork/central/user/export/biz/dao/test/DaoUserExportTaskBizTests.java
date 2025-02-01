@@ -130,7 +130,7 @@ public class DaoUserExportTaskBizTests {
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
 		ZonedDateTime exportDate = ScheduleType.Hourly.exportDate(now);
-		expect(taskDao.store(capture(taskCaptor))).andReturn(
+		expect(taskDao.save(capture(taskCaptor))).andReturn(
 				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate.toInstant()));
 
 		// when
@@ -180,7 +180,7 @@ public class DaoUserExportTaskBizTests {
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
-		expect(taskDao.store(capture(taskCaptor))).andReturn(
+		expect(taskDao.save(capture(taskCaptor))).andReturn(
 				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate.toInstant()));
 
 		// when
@@ -262,7 +262,7 @@ public class DaoUserExportTaskBizTests {
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
-		expect(taskDao.store(capture(taskCaptor))).andReturn(
+		expect(taskDao.save(capture(taskCaptor))).andReturn(
 				new UserDatumExportTaskPK(TEST_USER_ID, ScheduleType.Hourly, exportDate.toInstant()));
 
 		// when
@@ -300,7 +300,7 @@ public class DaoUserExportTaskBizTests {
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
 		UUID pk = UUID.randomUUID();
-		expect(adhocTaskDao.store(capture(taskCaptor))).andReturn(pk);
+		expect(adhocTaskDao.save(capture(taskCaptor))).andReturn(pk);
 
 		// WHEN
 		replayAll();
@@ -339,7 +339,7 @@ public class DaoUserExportTaskBizTests {
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
 		UUID pk = UUID.randomUUID();
-		expect(adhocTaskDao.store(capture(taskCaptor))).andReturn(pk);
+		expect(adhocTaskDao.save(capture(taskCaptor))).andReturn(pk);
 
 		// WHEN
 		replayAll();

@@ -66,7 +66,7 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	}
 
 	@Override
-	public String store(final UserAuthToken datum) {
+	public String save(final UserAuthToken datum) {
 		final String pk = handleAssignedPrimaryKeyStore(datum);
 		return pk;
 	}

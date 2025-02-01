@@ -26,18 +26,18 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for billing business logic.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface BillingBiz {
 
@@ -88,8 +88,8 @@ public interface BillingBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never {@literal null}
 	 */
-	FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+	FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 	/**
 	 * Render an invoice.

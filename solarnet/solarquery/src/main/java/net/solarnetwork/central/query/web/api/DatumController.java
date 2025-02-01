@@ -49,12 +49,14 @@ import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Aggregation;
 
@@ -106,7 +108,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET, params = "!type")
-	public Result<FilterResults<ReportingGeneralNodeDatumMatch>> filterGeneralDatumData(
+	public Result<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> filterGeneralDatumData(
 			final HttpServletRequest req, final DatumFilterCommand criteria,
 			BindingResult validationResult) {
 		if ( filterValidator != null ) {
@@ -117,7 +119,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 		}
 		populateMostRecentImplicitStartDate(criteria);
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<ReportingGeneralNodeDatumMatch> results;
+			FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> results;
 			if ( criteria.getAggregation() != null ) {
 				results = queryBiz.findFilteredAggregateGeneralNodeDatum(criteria,
 						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
@@ -141,7 +143,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET, params = "!type")
-	public Result<FilterResults<ReportingGeneralNodeDatumMatch>> getMostRecentGeneralNodeDatum(
+	public Result<FilterResults<? extends GeneralNodeDatumFilterMatch, GeneralNodeDatumPK>> getMostRecentGeneralNodeDatumData(
 			final HttpServletRequest req, final DatumFilterCommand criteria,
 			BindingResult validationResult) {
 		criteria.setMostRecent(true);
@@ -179,7 +181,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 							"""), })
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
-	public Result<FilterResults<ReportingGeneralNodeDatumMatch>> datumReading(
+	public Result<FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK>> datumReading(
 			final HttpServletRequest req, final DatumFilterCommand criteria,
 			@RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") Period tolerance,
@@ -191,7 +193,7 @@ public class DatumController extends BaseTransientDataAccessRetryController {
 			}
 		}
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			FilterResults<ReportingGeneralNodeDatumMatch> results;
+			FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> results;
 			if ( criteria.getAggregation() != null && criteria.getAggregation() != Aggregation.None ) {
 				results = queryBiz.findFilteredAggregateReading(criteria, readingType, tolerance,
 						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());

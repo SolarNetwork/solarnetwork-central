@@ -25,6 +25,8 @@ package net.solarnetwork.central.dao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link SolarNodeMetadata}.

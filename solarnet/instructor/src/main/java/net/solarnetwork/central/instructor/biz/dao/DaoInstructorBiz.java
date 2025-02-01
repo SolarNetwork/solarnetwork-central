@@ -37,7 +37,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.NodeServiceAuditor;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
@@ -47,6 +46,7 @@ import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -121,7 +121,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		this.nodeServiceAuditor = nodeServiceAuditor;
 	}
 
-	private List<Instruction> asResultList(FilterResults<EntityMatch> matches) {
+	private List<Instruction> asResultList(FilterResults<EntityMatch, Long> matches) {
 		List<Instruction> results = new ArrayList<Instruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
 			if ( match instanceof Instruction ) {
@@ -133,7 +133,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		return results;
 	}
 
-	private List<NodeInstruction> asNodeInstructionList(FilterResults<EntityMatch> matches) {
+	private List<NodeInstruction> asNodeInstructionList(FilterResults<EntityMatch, Long> matches) {
 		List<NodeInstruction> results = new ArrayList<NodeInstruction>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
 			if ( match instanceof NodeInstruction ) {
@@ -157,7 +157,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		Long[] ids = instructionIds.toArray(new Long[instructionIds.size()]);
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setInstructionIds(ids);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
 				MAX_FILTER_RESULTS);
 		return asNodeInstructionList(matches);
 	}
@@ -168,7 +168,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(nodeId);
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
 				MAX_FILTER_RESULTS);
 		return asResultList(matches);
 	}
@@ -180,7 +180,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(ids);
 		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
 				MAX_FILTER_RESULTS);
 		return asNodeInstructionList(matches);
 	}
@@ -192,7 +192,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		filter.setNodeId(nodeId);
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
 				InstructionState.Executing));
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
 				MAX_FILTER_RESULTS);
 		return asResultList(matches);
 	}
@@ -205,7 +205,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		filter.setNodeIds(ids);
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
 				InstructionState.Executing));
-		FilterResults<EntityMatch> matches = nodeInstructionDao.findFiltered(filter, null, null,
+		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
 				MAX_FILTER_RESULTS);
 		return asNodeInstructionList(matches);
 	}
@@ -254,7 +254,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 				return null;
 			}
 		}
-		Long id = nodeInstructionDao.store(instr);
+		Long id = nodeInstructionDao.save(instr);
 		for ( NodeInstructionQueueHook hook : queueHooks ) {
 			hook.didQueueNodeInstruction(instr, id);
 		}
@@ -282,7 +282,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 		if ( instr != null ) {
 			if ( !state.equals(instr.getState()) ) {
 				instr.setState(state);
-				nodeInstructionDao.store(instr);
+				nodeInstructionDao.save(instr);
 			}
 		}
 	}
@@ -311,7 +311,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 					params.putAll(resultParameters);
 					instr.setResultParameters(params);
 				}
-				nodeInstructionDao.store(instr);
+				nodeInstructionDao.save(instr);
 			}
 		}
 	}

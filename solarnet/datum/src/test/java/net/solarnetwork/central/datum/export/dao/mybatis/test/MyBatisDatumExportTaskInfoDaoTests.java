@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisDatumExportTaskInfoDaoTests.java - 19/04/2018 11:01:19 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -56,7 +56,7 @@ import net.solarnetwork.central.datum.export.domain.ScheduleType;
 
 /**
  * Test cases for the {@link MyBatisDatumExportTaskInfoDao} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -87,7 +87,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		info.setExportDate(TEST_EXPORT_DATE);
 		info.setId(UUID.randomUUID());
 		info.setStatus(DatumExportState.Queued);
-		UUID id = dao.store(info);
+		UUID id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -112,7 +112,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		this.lastTokenId = tokenId;
 
 		// WHEN
-		UUID id = dao.store(info);
+		UUID id = dao.save(info);
 
 		// add user task association (adhoc)
 		jdbcTemplate.update("""
@@ -141,7 +141,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		info.setStatus(DatumExportState.Queued);
 
 		// WHEN
-		UUID id = dao.store(info);
+		UUID id = dao.save(info);
 
 		// add user task association
 		KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -191,7 +191,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		this.lastTokenId = tokenId;
 
 		// WHEN
-		UUID id = dao.store(info);
+		UUID id = dao.save(info);
 
 		// add user task association
 		KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -266,7 +266,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 				.as("User ID found")
 				.returns(this.lastUserId, from(DatumExportTaskInfo::getUserId))
 				;
-		
+
 		then(info.getConfig())
 				.as("Config populated")
 				.isNotNull()
@@ -287,7 +287,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		info.setTaskSuccess(Boolean.TRUE);
 		info.setMessage("Yee haw!");
 		info.setCompleted(Instant.now().truncatedTo(ChronoUnit.MICROS));
-		UUID uuid = dao.store(info);
+		UUID uuid = dao.save(info);
 		assertThat("UUID unchanged", uuid, equalTo(info.getId()));
 
 		DatumExportTaskInfo updated = dao.get(info.getId());
@@ -403,7 +403,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		storeNew();
 		this.info.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
 		this.info.setStatus(DatumExportState.Completed);
-		dao.store(this.info);
+		dao.save(this.info);
 		long result = dao.purgeCompletedTasks(this.info.getCompleted());
 		assertThat("Delete count", result, equalTo(0L));
 	}
@@ -413,12 +413,12 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 		storeNew();
 		this.info.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
 		this.info.setStatus(DatumExportState.Completed);
-		dao.store(this.info);
+		dao.save(this.info);
 
 		storeNew();
 		this.info.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		this.info.setStatus(DatumExportState.Completed);
-		dao.store(this.info);
+		dao.save(this.info);
 
 		long result = dao.purgeCompletedTasks(
 				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));

@@ -107,7 +107,7 @@ import net.solarnetwork.util.SearchFilter.LogicOperator;
  * General datum utility methods.
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  * @since 2.8
  */
 public final class DatumUtils {
@@ -143,14 +143,14 @@ public final class DatumUtils {
 	 *         {@literal null}
 	 */
 	public static BasicDatumCriteria criteriaFromFilter(Filter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		if ( filter == null ) {
 			return null;
 		}
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		List<? extends SortDescriptor> s = null;
 		Integer m = max;
-		Integer o = offset;
+		Long o = offset;
 		String[] tags = null;
 
 		if ( filter instanceof DatumFilterCommand f ) {

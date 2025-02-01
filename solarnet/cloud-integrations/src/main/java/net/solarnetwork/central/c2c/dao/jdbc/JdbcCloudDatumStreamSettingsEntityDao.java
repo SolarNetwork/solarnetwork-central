@@ -45,7 +45,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudDatumStreamSettingsEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSettingsEntityDao {
 
@@ -93,7 +93,7 @@ public class JdbcCloudDatumStreamSettingsEntityDao implements CloudDatumStreamSe
 
 	@Override
 	public FilterResults<CloudDatumStreamSettingsEntity, UserLongCompositePK> findFiltered(
-			CloudDatumStreamSettingsFilter filter, List<SortDescriptor> sorts, Integer offset,
+			CloudDatumStreamSettingsFilter filter, List<SortDescriptor> sorts, Long offset,
 			Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamSettingsEntity(filter);

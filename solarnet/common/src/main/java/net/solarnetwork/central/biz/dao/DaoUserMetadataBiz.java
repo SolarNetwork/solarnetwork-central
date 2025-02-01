@@ -38,7 +38,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * DAO-based implementation of {@link UserMetadataBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoUserMetadataBiz implements UserMetadataBiz {
 
@@ -103,7 +103,7 @@ public class DaoUserMetadataBiz implements UserMetadataBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public FilterResults<UserMetadataEntity, Long> findUserMetadata(UserMetadataFilter criteria,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		return userMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}
 

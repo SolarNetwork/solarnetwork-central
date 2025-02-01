@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodeMetadataController.java - 11/11/2016 7:40:39 PM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,18 +37,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for node metadata.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 1.18
@@ -63,7 +63,7 @@ public class NodeMetadataController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userBiz
 	 *        the UserBiz to use
 	 * @param solarNodeMetadataBiz
@@ -83,14 +83,14 @@ public class NodeMetadataController {
 
 	/**
 	 * Find all metadata for any number of node IDs.
-	 * 
+	 *
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<FilterResults<SolarNodeMetadataFilterMatch>> findMetadata(
+	public Response<FilterResults<SolarNodeMetadataFilterMatch, Long>> findMetadata(
 			DatumFilterCommand criteria) {
 		if ( criteria.getNodeId() == null ) {
 			// default to all nodes for actor
@@ -103,14 +103,15 @@ public class NodeMetadataController {
 				criteria.setNodeIds(nodeIds);
 			}
 		}
-		FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz.findSolarNodeMetadata(
-				criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
+				.findSolarNodeMetadata(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
+						criteria.getMax());
 		return response(results);
 	}
 
 	/**
 	 * Find all metadata for a specific node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @return the results
@@ -120,7 +121,7 @@ public class NodeMetadataController {
 	public Response<SolarNodeMetadataFilterMatch> getMetadata(@PathVariable("nodeId") Long nodeId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setNodeId(nodeId);
-		FilterResults<SolarNodeMetadataFilterMatch> results = solarNodeMetadataBiz
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = solarNodeMetadataBiz
 				.findSolarNodeMetadata(criteria, null, null, null);
 		SolarNodeMetadataFilterMatch result = null;
 		if ( results != null ) {
@@ -136,7 +137,7 @@ public class NodeMetadataController {
 	/**
 	 * Add metadata to a node. The metadata is merged only, and will not replace
 	 * existing values.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param meta
@@ -154,7 +155,7 @@ public class NodeMetadataController {
 	/**
 	 * Completely replace the metadata for a given node ID, or create it if it
 	 * doesn't already exist.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param meta
@@ -171,7 +172,7 @@ public class NodeMetadataController {
 
 	/**
 	 * Completely remove the metadata for a given node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @return the results

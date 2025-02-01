@@ -289,7 +289,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 			registration.setAccessTokenType("Bearer");
 			registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
 			registration.setAccessTokenExpiresAt(authReqTime.plus(ACCESS_TOKEN_TTL));
-			clientAccessTokenDao.store(registration);
+			clientAccessTokenDao.save(registration);
 		}
 
 		headers.setBearerAuth(accessTokenValue);

@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * MyBatis implementation of {@link UserMetadataDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.8
  */
 public class MyBatisUserMetadataDao extends
@@ -66,7 +66,7 @@ public class MyBatisUserMetadataDao extends
 
 	@Override
 	public FilterResults<UserMetadataEntity, Long> findFiltered(UserMetadataFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return doFindFiltered(filter, sorts, offset, max);
 	}
 

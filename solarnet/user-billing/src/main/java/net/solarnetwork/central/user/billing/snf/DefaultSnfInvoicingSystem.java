@@ -108,7 +108,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -203,7 +203,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(accountId.getId());
 		filter.setIgnoreCreditOnly(true);
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
-				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 		Iterator<SnfInvoice> itr = (results != null ? results.iterator() : null);
 		return (itr != null && itr.hasNext() ? itr.next() : null);
 	}

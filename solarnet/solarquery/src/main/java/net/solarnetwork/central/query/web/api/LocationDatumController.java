@@ -43,14 +43,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
 import net.solarnetwork.central.web.BaseTransientDataAccessRetryController;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
 
 /**
@@ -226,13 +227,13 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
-	public Result<FilterResults<ReportingGeneralLocationDatumMatch>> filterGeneralDatumData(
+	public Result<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> filterGeneralDatumData(
 			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			// support filtering based on sourceId path pattern, by simply finding the sources that match first
 			resolveSourceIdPattern(criteria);
 
-			FilterResults<ReportingGeneralLocationDatumMatch> results;
+			FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> results;
 			if ( criteria.getAggregation() != null ) {
 				results = queryBiz.findAggregateGeneralLocationDatum(criteria,
 						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
@@ -256,7 +257,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
-	public Result<FilterResults<ReportingGeneralLocationDatumMatch>> getMostRecentGeneralLocationDatum(
+	public Result<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> getMostRecentGeneralNodeDatumData(
 			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		criteria.setMostRecent(true);
 		return filterGeneralDatumData(req, criteria);

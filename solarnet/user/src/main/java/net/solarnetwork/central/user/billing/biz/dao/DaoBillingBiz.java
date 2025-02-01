@@ -29,8 +29,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
@@ -40,6 +38,8 @@ import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.User;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * to the {@link BillingSystem} configured for each user.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoBillingBiz implements BillingBiz {
 
@@ -109,11 +109,11 @@ public class DaoBillingBiz implements BillingBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		BillingSystem system = billingSystemForUser(filter.getUserId());
 		if ( system == null ) {
-			return new BasicFilterResults<>(null, 0L, 0, 0);
+			return new BasicFilterResults<>(null, 0L, 0L, 0);
 		}
 		return system.findFilteredInvoices(filter, sortDescriptors, offset, max);
 	}

@@ -41,7 +41,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link SolarNodeMetadata} DAO.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 
@@ -95,7 +95,7 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 
 	@Override
 	public FilterResults<SolarNodeMetadata, Long> findFiltered(SolarNodeMetadataFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		var sql = new SelectSolarNodeMetadata(filter);
 		List<SolarNodeMetadata> list = jdbcOps.query(sql, SolarNodeMetadataRowMapper.INSTANCE);
 		return BasicFilterResults.filterResults(list, null, (long) list.size(), list.size());
