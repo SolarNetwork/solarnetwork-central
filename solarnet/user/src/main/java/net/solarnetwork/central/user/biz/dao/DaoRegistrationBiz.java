@@ -234,7 +234,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 
 		User entity;
 		try {
-			entity = userDao.get(userDao.store(clone));
+			entity = userDao.get(userDao.save(clone));
 		} catch ( DataIntegrityViolationException e ) {
 			if ( log.isWarnEnabled() ) {
 				log.warn("Duplicate user registration: " + clone.getEmail());
@@ -288,7 +288,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		entity.setEmail(confirmedEmail);
 
 		// update confirmed user
-		entity = userDao.get(userDao.store(entity));
+		entity = userDao.get(userDao.save(entity));
 
 		// store initial user roles
 		userDao.storeUserRoles(entity, confirmedUserRoles);
@@ -409,7 +409,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		conf.setSecurityPhrase(request.getSecurityPhrase());
 		conf.setCountry(request.getLocale().getCountry());
 		conf.setTimeZoneId(request.getTimeZone().getID());
-		userNodeConfirmationDao.store(conf);
+		userNodeConfirmationDao.save(conf);
 
 		return details;
 	}
@@ -626,7 +626,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 						cert.setStatus(renewedCert.getStatus());
 						cert.setCreated(renewedCert.getCreated());
 						cert.setKeystoreData(renewedCert.getKeystoreData());
-						userNodeCertificateDao.store(cert);
+						userNodeCertificateDao.save(cert);
 						queueRenewedNodeCertificateInstruction(renewedCert, keystorePassword);
 					} catch ( Exception e ) {
 						log.error("Error approving cert {}", certSubjectDN, e);
@@ -647,7 +647,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			cert.setRequestId(installInstruction.getId().toString());
 		}
 
-		userNodeCertificateDao.store(cert);
+		userNodeCertificateDao.save(cert);
 
 		BasicUserNodeCertificateRenewal details = new BasicUserNodeCertificateRenewal();
 		details.setNetworkId(nodeId);
@@ -880,7 +880,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				: conf.getNodeId());
 		conf.setConfirmationDate(Instant.now());
 		conf.setNodeId(nodeId);
-		userNodeConfirmationDao.store(conf);
+		userNodeConfirmationDao.save(conf);
 
 		UserNode userNode = createNewNode(conf.getCountry(), conf.getTimeZoneId(), user, nodeId,
 				association.getKeystorePassword());
@@ -911,7 +911,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			loc.setName(countryCode + " - " + timeZoneId);
 			loc.setCountry(countryCode);
 			loc.setTimeZoneId(timeZoneId);
-			loc = solarLocationDao.get(solarLocationDao.store(loc));
+			loc = solarLocationDao.get(solarLocationDao.save(loc));
 		}
 		assert loc != null;
 
@@ -920,7 +920,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			node = new SolarNode();
 			node.setId(nodeId);
 			node.setLocation(loc);
-			solarNodeDao.store(node);
+			solarNodeDao.save(node);
 		}
 
 		// create UserNode now if it doesn't already exist
@@ -929,12 +929,12 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			userNode = new UserNode();
 			userNode.setNode(node);
 			userNode.setUser(user);
-			userNodeDao.store(userNode);
+			userNodeDao.save(userNode);
 		}
 
 		//		conf.setConfirmationDate(Instant.now());
 		//		conf.setNodeId(nodeId);
-		//		userNodeConfirmationDao.store(conf);
+		//		userNodeConfirmationDao.save(conf);
 
 		final String certSubjectDN = String.format(networkCertificateSubjectFormat, nodeId.toString());
 
@@ -971,7 +971,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 					public void run() {
 						try {
 							UserNodeCertificate approvedCert = approval.get();
-							userNodeCertificateDao.store(approvedCert);
+							userNodeCertificateDao.save(approvedCert);
 						} catch ( Exception e ) {
 							log.error("Error approving cert {}", certSubjectDN, e);
 						}
@@ -985,7 +985,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 				throw new CertificateException("Error approving CSR", e);
 			}
 
-			userNodeCertificateDao.store(cert);
+			userNodeCertificateDao.save(cert);
 
 			userNode.setCertificate(cert);
 		}
@@ -1156,7 +1156,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		prepareUserForStorage(entity);
 
 		try {
-			entity = userDao.get(userDao.store(entity));
+			entity = userDao.get(userDao.save(entity));
 		} catch ( DataIntegrityViolationException e ) {
 			if ( log.isWarnEnabled() ) {
 				log.warn("Duplicate user registration: " + entity.getEmail());
@@ -1237,7 +1237,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 		// ok, the conf code matches, let's reset the password
 		final String encryptedPass = passwordEncoder.encode(password.getPassword());
 		entity.setPassword(encryptedPass);
-		userDao.store(entity);
+		userDao.save(entity);
 	}
 
 	public Set<String> getConfirmedUserRoles() {

@@ -79,7 +79,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
-		Long id = userDao.store(newUser);
+		Long id = userDao.save(newUser);
 		logger.debug("Got new user PK: " + id);
 		assertNotNull(id);
 		userId = id;
@@ -114,7 +114,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		user.setPassword("New Password");
 		user.setEmail("New Email");
 		user.setEnabled(Boolean.FALSE);
-		Long id = userDao.store(user);
+		Long id = userDao.save(user);
 		assertNotNull(id);
 		assertEquals(this.userId, id);
 		User updatedUser = userDao.get(id);
@@ -132,7 +132,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		storeInternalPropertyNullColumn();
 		User user = userDao.get(this.userId);
 		user.putInternalDataValue("bim", "bam");
-		Long userId = userDao.store(user);
+		Long userId = userDao.save(user);
 		assertEquals(user.getId(), userId);
 		User updated = userDao.get(user.getId());
 		assertEquals("Intenral data not changed by update", Collections.singletonMap("foo", "bar"),
@@ -197,7 +197,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		setupTestLocation();
 		User user = userDao.get(this.userId);
 		user.setLocationId(TEST_LOC_ID);
-		Long id = userDao.store(user);
+		Long id = userDao.save(user);
 		assertEquals(this.userId, id);
 
 		Map<String, Object> data = Collections.singletonMap("bim", (Object) "bam");
@@ -222,7 +222,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
-		return userDao.store(newUser);
+		return userDao.save(newUser);
 	}
 
 	@Test

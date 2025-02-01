@@ -97,7 +97,7 @@ public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractCentralT
 		newUser.setName(TEST_NAME);
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
-		Long id = userDao.store(newUser);
+		Long id = userDao.save(newUser);
 		logger.debug("Got new user PK: " + id);
 		assertNotNull(id);
 		return id;

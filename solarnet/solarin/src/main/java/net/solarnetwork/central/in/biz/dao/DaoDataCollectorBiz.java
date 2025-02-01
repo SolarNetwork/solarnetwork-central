@@ -339,15 +339,15 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 		if ( isSharedLocation(norm) ) {
 			// switch node to new non-shared location based on loc updates
-			Long locId = solarLocationDao.store(SolarLocation.normalizedLocation(loc));
+			Long locId = solarLocationDao.save(SolarLocation.normalizedLocation(loc));
 			SolarNode node = solarNodeDao.get(nodeId);
 			log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
 					locId);
 			node.setLocationId(locId);
-			solarNodeDao.store(node);
+			solarNodeDao.save(node);
 		} else {
 			// update current location
-			solarLocationDao.store(loc);
+			solarLocationDao.save(loc);
 		}
 	}
 

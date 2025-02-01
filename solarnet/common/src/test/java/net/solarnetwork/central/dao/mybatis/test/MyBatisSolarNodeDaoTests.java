@@ -99,7 +99,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		SolarNode node = new SolarNode();
 		node.setLocationId(TEST_LOC_ID);
 
-		Long id = dao.store(node);
+		Long id = dao.save(node);
 		assertNotNull(id);
 	}
 
@@ -108,12 +108,12 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		SolarNode node = new SolarNode();
 		node.setLocationId(TEST_LOC_ID);
 
-		Long id = dao.store(node);
+		Long id = dao.save(node);
 		assertNotNull(id);
 		node = dao.get(id);
 		assertEquals(id, node.getId());
 		node.setName("myname");
-		Long id2 = dao.store(node);
+		Long id2 = dao.save(node);
 		assertEquals(id, id2);
 		node = dao.get(id);
 		assertEquals("myname", node.getName());
@@ -156,7 +156,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 			msgs.put("foo", i);
 			samples.setInfo(msgs);
 
-			metadataDao.store(datum);
+			metadataDao.save(datum);
 
 		}
 

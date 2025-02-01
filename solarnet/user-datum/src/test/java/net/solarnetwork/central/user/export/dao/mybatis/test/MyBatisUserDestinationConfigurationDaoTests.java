@@ -88,7 +88,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 
 		conf.setServiceProps(sprops);
 
-		Long id = confDao.store(conf);
+		Long id = confDao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
 		// stash results for other tests to use
@@ -128,7 +128,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 		options.put("string", "updated");
 		options.put("added-string", "added");
 
-		Long id = confDao.store(conf);
+		Long id = confDao.save(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
 		UserDestinationConfiguration updatedConf = confDao.get(id, this.user.getId());

@@ -224,7 +224,7 @@ public class JdbcOAuth2AuthorizedClientService
 	}
 
 	@Override
-	public UserStringStringCompositePK store(ClientAccessTokenEntity entity) {
+	public UserStringStringCompositePK save(ClientAccessTokenEntity entity) {
 		byte[] refreshTokenValue = null;
 		if ( entity.getRefreshToken() != null ) {
 			refreshTokenValue = encryptor.encrypt(entity.getRefreshToken());

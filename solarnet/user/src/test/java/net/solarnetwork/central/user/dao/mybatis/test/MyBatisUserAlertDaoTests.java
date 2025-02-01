@@ -101,7 +101,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		alert.setOptions(options);
 
-		Long id = userAlertDao.store(alert);
+		Long id = userAlertDao.save(alert);
 		assertNotNull(id);
 		alert.setId(id);
 		this.userAlert = alert;
@@ -139,7 +139,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		options.put("updated-string", "updated");
 		alert.setOptions(options);
 
-		Long id = userAlertDao.store(alert);
+		Long id = userAlertDao.save(alert);
 		assertNotNull(id);
 		assertEquals(this.userAlert.getId(), id);
 		UserAlert updatedUserAlert = userAlertDao.get(id);
@@ -224,7 +224,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		alert.setNodeId(-2L);
 		alert.setType(UserAlertType.NodeStaleData);
 		alert.setStatus(UserAlertStatus.Active);
-		Long secondAlertId = userAlertDao.store(alert);
+		Long secondAlertId = userAlertDao.save(alert);
 
 		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
 		assertEquals("Only 1 deleted", 1, deleted);
@@ -301,7 +301,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 			storeNew();
 			if ( (i % 2) == 0 ) {
 				this.userAlert.setStatus(UserAlertStatus.Disabled);
-				userAlertDao.store(this.userAlert);
+				userAlertDao.save(this.userAlert);
 			} else {
 				alerts.add(this.userAlert);
 			}
@@ -363,7 +363,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setAlert(userAlert);
 		resolved.setCreated(Instant.now());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
-		resolved.setId(userAlertSituationDao.store(resolved));
+		resolved.setId(userAlertSituationDao.save(resolved));
 
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
 		assertNotNull("Results should never be null", results);
@@ -382,7 +382,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		sit.setAlert(userAlert);
 		sit.setCreated(Instant.now());
 		sit.setStatus(UserAlertSituationStatus.Active);
-		sit.setId(userAlertSituationDao.store(sit));
+		sit.setId(userAlertSituationDao.save(sit));
 
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
 		assertNotNull("Results should never be null", results);
@@ -403,14 +403,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setAlert(userAlert);
 		resolved.setCreated(Instant.now());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
-		resolved.setId(userAlertSituationDao.store(resolved));
+		resolved.setId(userAlertSituationDao.save(resolved));
 
 		// create an Active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(userAlert);
 		sit.setCreated(Instant.now());
 		sit.setStatus(UserAlertSituationStatus.Active);
-		sit.setId(userAlertSituationDao.store(sit));
+		sit.setId(userAlertSituationDao.save(sit));
 
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
 		assertNotNull("Results should never be null", results);
@@ -440,7 +440,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setAlert(userAlert);
 		resolved.setCreated(Instant.now());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
-		resolved.setId(userAlertSituationDao.store(resolved));
+		resolved.setId(userAlertSituationDao.save(resolved));
 
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
 		assertNotNull("Alert available", found);
@@ -457,7 +457,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		sit.setAlert(userAlert);
 		sit.setCreated(Instant.now());
 		sit.setStatus(UserAlertSituationStatus.Active);
-		sit.setId(userAlertSituationDao.store(sit));
+		sit.setId(userAlertSituationDao.save(sit));
 
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
 		assertNotNull("Alert available", found);
@@ -476,14 +476,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setAlert(userAlert);
 		resolved.setCreated(Instant.now());
 		resolved.setStatus(UserAlertSituationStatus.Resolved);
-		resolved.setId(userAlertSituationDao.store(resolved));
+		resolved.setId(userAlertSituationDao.save(resolved));
 
 		// create an Active situation
 		UserAlertSituation sit = new UserAlertSituation();
 		sit.setAlert(userAlert);
 		sit.setCreated(Instant.now());
 		sit.setStatus(UserAlertSituationStatus.Active);
-		sit.setId(userAlertSituationDao.store(sit));
+		sit.setId(userAlertSituationDao.save(sit));
 
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
 		assertNotNull("Alert available", found);
@@ -547,14 +547,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		otherNodeAlert.setStatus(UserAlertStatus.Active);
 		otherNodeAlert.setType(UserAlertType.NodeStaleData);
 		otherNodeAlert.setValidTo(Instant.now());
-		otherNodeAlert.setId(userAlertDao.store(otherNodeAlert));
+		otherNodeAlert.setId(userAlertDao.save(otherNodeAlert));
 
 		// create an Active situation, but for other node ID
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(otherNodeAlert);
 		resolved.setCreated(Instant.now());
 		resolved.setStatus(UserAlertSituationStatus.Active);
-		resolved.setId(userAlertSituationDao.store(resolved));
+		resolved.setId(userAlertSituationDao.save(resolved));
 
 		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForNode(node.getId());
 		assertNotNull("Results never null", results);
@@ -576,14 +576,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		otherNodeAlert.setStatus(UserAlertStatus.Active);
 		otherNodeAlert.setType(UserAlertType.NodeStaleData);
 		otherNodeAlert.setValidTo(Instant.now());
-		otherNodeAlert.setId(userAlertDao.store(otherNodeAlert));
+		otherNodeAlert.setId(userAlertDao.save(otherNodeAlert));
 
 		// create an Active situation, but for other node ID
 		UserAlertSituation resolved = new UserAlertSituation();
 		resolved.setAlert(otherNodeAlert);
 		resolved.setCreated(Instant.now());
 		resolved.setStatus(UserAlertSituationStatus.Active);
-		resolved.setId(userAlertSituationDao.store(resolved));
+		resolved.setId(userAlertSituationDao.save(resolved));
 
 		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForNode(node.getId());
 		assertNotNull("Results never null", results);

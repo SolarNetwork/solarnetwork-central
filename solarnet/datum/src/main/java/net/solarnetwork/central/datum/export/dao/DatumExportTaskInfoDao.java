@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.export.dao;
 
 import java.time.Instant;
 import java.util.UUID;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 
 /**

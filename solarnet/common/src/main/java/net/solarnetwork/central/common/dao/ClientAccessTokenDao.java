@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.common.dao;
 
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.security.ClientAccessToken;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;

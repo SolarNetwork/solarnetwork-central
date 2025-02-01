@@ -81,7 +81,7 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 		this.user = createNewUser(TEST_EMAIL);
 		assertNotNull(this.user);
 		UserNode un = new UserNode(this.user, this.node);
-		userNodeDao.store(un);
+		userNodeDao.save(un);
 
 		userNodeCert = null;
 	}
@@ -95,7 +95,7 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 		newUserNodeCert.setRequestId(TEST_REQ_KEY);
 		newUserNodeCert.setKeystoreData(TEST_CERT);
 		newUserNodeCert.setStatus(UserNodeCertificateStatus.v);
-		UserNodePK id = userNodeCertificateDao.store(newUserNodeCert);
+		UserNodePK id = userNodeCertificateDao.save(newUserNodeCert);
 		assertNotNull(id);
 		this.userNodeCert = userNodeCertificateDao.get(id);
 	}

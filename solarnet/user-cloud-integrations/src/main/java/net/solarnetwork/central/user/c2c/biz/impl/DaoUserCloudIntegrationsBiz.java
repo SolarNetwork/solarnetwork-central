@@ -207,7 +207,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Override
 	public UserSettingsEntity saveSettings(Long userId, UserSettingsEntityInput input) {
 		UserSettingsEntity entity = requireNonNullArgument(input, "input").toEntity(userId, now());
-		return userSettingsDao.get(userSettingsDao.store(entity));
+		return userSettingsDao.get(userSettingsDao.save(entity));
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

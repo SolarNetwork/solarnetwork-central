@@ -83,7 +83,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setId(new UserUuidPK(this.user.getId(), UUID.randomUUID()));
 		info.setConfiguration(createNewConfig());
 
-		UserUuidPK id = dao.store(info);
+		UserUuidPK id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -121,7 +121,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setResult(1234L);
 		info.setPercentComplete(50.0);
 
-		UserUuidPK id = dao.store(info);
+		UserUuidPK id = dao.save(info);
 		assertThat("PK unchanged", id, equalTo(this.info.getId()));
 
 		DatumDeleteJobInfo updated = dao.get(id);
@@ -162,7 +162,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Completed);
 		info.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		long result = dao
 				.purgeOldJobs(Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
@@ -234,7 +234,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		int count = dao.deleteForUser(this.user.getId(), singleton(this.info.getId().getId()),
 				EnumSet.of(DatumDeleteJobState.Unknown));
@@ -325,7 +325,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(), null);
 		assertThat("Results returned", results, hasSize(1));
@@ -343,7 +343,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(),
 				singleton(DatumDeleteJobState.Queued));
@@ -361,7 +361,7 @@ public class MyBatisUserDatumDeleteJobInfoDaoTests extends AbstractMyBatisUserDa
 		info.setConfiguration(new DatumFilterCommand());
 		info.setJobState(DatumDeleteJobState.Queued);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumDeleteJobInfo> results = dao.findForUser(user.getId(),
 				EnumSet.of(DatumDeleteJobState.Queued, DatumDeleteJobState.Unknown));

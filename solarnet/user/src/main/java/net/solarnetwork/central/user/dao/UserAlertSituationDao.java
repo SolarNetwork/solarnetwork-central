@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.dao;
 
 import java.time.Instant;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
 

@@ -138,17 +138,17 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
 			if ( locEntity == null ) {
 				log.debug("Saving new SolarLocation {}", locEntity);
-				locEntity = solarLocationDao.get(solarLocationDao.store(norm));
+				locEntity = solarLocationDao.get(solarLocationDao.save(norm));
 			}
 			if ( locEntity.getId().equals(node.getLocationId()) == false ) {
 				log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
 						locEntity.getId());
 				node.setLocationId(locEntity.getId());
-				solarNodeDao.store(node);
+				solarNodeDao.save(node);
 			}
 		}
 
-		userNodeDao.store(entity);
+		userNodeDao.save(entity);
 
 		return entity;
 	}
@@ -228,7 +228,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 					authToken.setPolicy(policyBuilder.build());
 				}
 
-				userAuthTokenDao.store(authToken);
+				userAuthTokenDao.save(authToken);
 				return authToken;
 			}
 		}
@@ -271,7 +271,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		}
 		if ( token.getStatus() != newStatus ) {
 			token.setStatus(newStatus);
-			userAuthTokenDao.store(token);
+			userAuthTokenDao.save(token);
 		}
 		return token;
 	}
@@ -297,7 +297,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		BasicSecurityPolicy newBasicPolicy = policyBuilder.build();
 		if ( !newBasicPolicy.equals(token.getPolicy()) ) {
 			token.setPolicy(newBasicPolicy);
-			userAuthTokenDao.store(token);
+			userAuthTokenDao.save(token);
 		}
 		return token;
 	}
@@ -316,7 +316,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		if ( token.isInfoDifferent(info) ) {
 			token.setName(info.getName());
 			token.setDescription(info.getDescription());
-			userAuthTokenDao.store(token);
+			userAuthTokenDao.save(token);
 		}
 		return token;
 	}
@@ -400,7 +400,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 								.withPolicy(token.getPolicy()).withNodeIds(nodeIds);
 						token.setPolicy(secPolicyBuilder.build());
 
-						userAuthTokenDao.store(token);
+						userAuthTokenDao.save(token);
 					}
 				}
 			}
@@ -408,7 +408,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			// and now, transfer ownership
 			if ( recipient.getId().equals(userNode.getUser().getId()) == false ) {
 				userNode.setUser(recipient);
-				userNodeDao.store(userNode);
+				userNodeDao.save(userNode);
 			}
 		} else {
 			// rejecting

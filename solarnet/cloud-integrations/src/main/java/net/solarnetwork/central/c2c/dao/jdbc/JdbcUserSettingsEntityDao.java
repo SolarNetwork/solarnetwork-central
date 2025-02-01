@@ -61,7 +61,7 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 	}
 
 	@Override
-	public Long store(UserSettingsEntity entity) {
+	public Long save(UserSettingsEntity entity) {
 		Long userId = requireNonNullArgument(requireNonNullArgument(entity, "entity").getUserId(),
 				"entity.userId");
 		final var sql = new UpsertUserSettingsEntity(userId, entity);
