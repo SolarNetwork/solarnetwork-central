@@ -42,7 +42,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * @author matt
  * @version 1.0
  */
-public class SelectCloudDatumStreamMappingConfiguration
+public final class SelectCloudDatumStreamMappingConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
