@@ -50,7 +50,7 @@ import net.solarnetwork.central.domain.AppSetting;
  * @version 1.0
  * @since 2.0
  */
-public class SelectAppSetting implements PreparedStatementCreator, SqlProvider {
+public final class SelectAppSetting implements PreparedStatementCreator, SqlProvider {
 
 	private final String[] keys;
 	private final String[] types;

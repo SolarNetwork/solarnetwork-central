@@ -36,7 +36,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadata;
  * @author matt
  * @version 1.0
  */
-public class DeleteSolarNodeMetadata implements PreparedStatementCreator, SqlProvider {
+public final class DeleteSolarNodeMetadata implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			DELETE FROM solarnet.sn_node_meta

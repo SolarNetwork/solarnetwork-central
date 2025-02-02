@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.CompositeKey;
  * @author matt
  * @version 1.0
  */
-public class DeleteForCompositeKey implements PreparedStatementCreator, SqlProvider {
+public final class DeleteForCompositeKey implements PreparedStatementCreator, SqlProvider {
 
 	private final CompositeKey pk;
 	private final String tableName;

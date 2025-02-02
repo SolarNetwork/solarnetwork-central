@@ -51,7 +51,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 1.0
  */
-public class SelectSolarNodeMetadata implements PreparedStatementCreator, SqlProvider {
+public final class SelectSolarNodeMetadata implements PreparedStatementCreator, SqlProvider {
 
 	private final SolarNodeMetadataFilter filter;
 

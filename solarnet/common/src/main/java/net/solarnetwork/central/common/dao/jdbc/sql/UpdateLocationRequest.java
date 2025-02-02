@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.LocationRequest;
  * @version 1.0
  * @since 1.3
  */
-public class UpdateLocationRequest implements PreparedStatementCreator, SqlProvider {
+public final class UpdateLocationRequest implements PreparedStatementCreator, SqlProvider {
 
 	private final LocationRequest request;
 	private final Long id;

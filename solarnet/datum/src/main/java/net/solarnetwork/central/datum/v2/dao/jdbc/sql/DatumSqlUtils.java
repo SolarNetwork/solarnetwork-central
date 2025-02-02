@@ -1624,12 +1624,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#prepareLimitOffset(PaginationCriteria, Connection,
-	 *      PreparedStatement, int)
+	 * @see CommonSqlUtils#prepareLimitOffset(PaginationCriteria, PreparedStatement,
+	 *      int)
 	 */
 	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		return CommonSqlUtils.prepareLimitOffset(filter, con, stmt, parameterOffset);
+		return CommonSqlUtils.prepareLimitOffset(filter, stmt, parameterOffset);
 	}
 
 	/**

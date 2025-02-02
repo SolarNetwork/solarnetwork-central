@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.CompositeKey;
  * @author matt
  * @version 1.0
  */
-public class UpdateEnabledIdFilter implements PreparedStatementCreator, SqlProvider {
+public final class UpdateEnabledIdFilter implements PreparedStatementCreator, SqlProvider {
 
 	private String tableName;
 	private String[] idColumnNames;

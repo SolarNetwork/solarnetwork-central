@@ -164,7 +164,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		prepareLimitOffset(filter, con, stmt, p);
+		prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}

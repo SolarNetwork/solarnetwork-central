@@ -1,21 +1,21 @@
 /* ==================================================================
  * CommonJdbcUtils.java - 3/08/2022 11:12:21 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,7 +24,6 @@ package net.solarnetwork.central.common.dao.jdbc.sql;
 
 import java.io.IOException;
 import java.sql.Array;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -35,11 +34,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -54,7 +51,7 @@ import net.solarnetwork.domain.Identity;
 
 /**
  * Common JDBC utilities.
- * 
+ *
  * @author matt
  * @version 1.4
  */
@@ -66,7 +63,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get an array result column value.
-	 * 
+	 *
 	 * @param <T>
 	 *        the expected array type
 	 * @param rs
@@ -90,13 +87,13 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get an array value from a SQL array instance.
-	 * 
+	 *
 	 * @param <T>
 	 *        the expected array type, e.g. {@code Long[].class}
 	 * @param o
-	 *        the {@link java.sql.Array} instance
+	 *        the {@link Array} instance
 	 * @return the array value, or {@literal null} if {@code o} is
-	 *         {@literal null} or not a {@link java.sql.Array}
+	 *         {@literal null} or not a {@link Array}
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
@@ -114,14 +111,14 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Get a UUID column value.
-	 * 
+	 *
 	 * <p>
 	 * This method can be more efficient than calling
 	 * {@link ResultSet#getString(int)} if the JDBC driver returns a UUID
-	 * instance natively. Otherwise this method will call {@code toString()} on
+	 * instance natively. Otherwise, this method will call {@code toString()} on
 	 * the column value and parse that as a UUID.
 	 * </p>
-	 * 
+	 *
 	 * @param rs
 	 *        the result set to read from
 	 * @param column
@@ -140,7 +137,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Execute a query for a count result.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
 	 * @param creator
@@ -151,18 +148,12 @@ public final class CommonJdbcUtils {
 	 * @return the result, or {@literal null} if no result count is available
 	 */
 	public static Long executeCountQuery(JdbcOperations jdbcTemplate, PreparedStatementCreator creator) {
-		return jdbcTemplate.query(creator, new ResultSetExtractor<Long>() {
-
-			@Override
-			public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
-				return rs.next() ? rs.getLong(1) : null;
-			}
-		});
+		return jdbcTemplate.query(creator, rs -> rs.next() ? rs.getLong(1) : null);
 	}
 
 	/**
 	 * Standardized utility to execute a filter based query.
-	 * 
+	 *
 	 * @param <M>
 	 *        the filter result type
 	 * @param <K>
@@ -200,7 +191,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Execute a streaming query.
-	 * 
+	 *
 	 * @param <T>
 	 *        the entity type
 	 * @param jdbcOps
@@ -223,7 +214,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Execute a streaming query.
-	 * 
+	 *
 	 * @param <T>
 	 *        the entity type
 	 * @param jdbcOps
@@ -252,22 +243,17 @@ public final class CommonJdbcUtils {
 			Map<String, ?> attributes) throws IOException {
 		processor.start(totalResultCount, startingOffset, expectedResultCount, attributes);
 		try {
-			jdbcOps.execute(sql, new PreparedStatementCallback<Void>() {
-
-				@Override
-				public Void doInPreparedStatement(PreparedStatement ps)
-						throws SQLException, DataAccessException {
-					try (ResultSet rs = ps.executeQuery()) {
-						int row = 0;
-						while ( rs.next() ) {
-							T entity = mapper.mapRow(rs, ++row);
-							processor.handleResultItem(entity);
-						}
-					} catch ( IOException e ) {
-						throw new RuntimeException(e);
+			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+				try (ResultSet rs = ps.executeQuery()) {
+					int row = 0;
+					while ( rs.next() ) {
+						T entity = mapper.mapRow(rs, ++row);
+						processor.handleResultItem(entity);
 					}
-					return null;
+				} catch ( IOException e ) {
+					throw new RuntimeException(e);
 				}
+				return null;
 			});
 		} catch ( RuntimeException e ) {
 			if ( e.getCause() instanceof IOException ) {
@@ -280,7 +266,7 @@ public final class CommonJdbcUtils {
 
 	/**
 	 * Perform an update operation and extract a generated {@code Long} key.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template to use
 	 * @param sql
@@ -296,13 +282,13 @@ public final class CommonJdbcUtils {
 		KeyHolder keyHolder = new GeneratedKeyHolder();
 		jdbcTemplate.update(sql, keyHolder);
 		Map<String, Object> keys = keyHolder.getKeys();
-		Object id = keys.get(keyColumnName);
+		Object id = keys != null ? keys.get(keyColumnName) : null;
 		return (id instanceof Long ? (Long) id : null);
 	}
 
 	/**
 	 * Get a set of enumerated coded values from a JDBC array.
-	 * 
+	 *
 	 * @param <T>
 	 *        the coded value type
 	 * @param rs
@@ -335,8 +321,8 @@ public final class CommonJdbcUtils {
 	}
 
 	/**
-	 * Get an Timestamp column value as an Instant.
-	 * 
+	 * Get a Timestamp column value as an Instant.
+	 *
 	 * @param rs
 	 *        the result set to read from
 	 * @param column

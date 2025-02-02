@@ -91,7 +91,7 @@ public class SelectExternalSystemForHeartbeat implements PreparedStatementCreato
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
-		CommonSqlUtils.prepareLimitOffset(filter, con, stmt, 0);
+		CommonSqlUtils.prepareLimitOffset(filter, stmt, 0);
 		return stmt;
 	}
 
