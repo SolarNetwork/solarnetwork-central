@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
@@ -102,14 +103,10 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(OAUTH_CLIENT_ID_SETTING_SPECIFIER);
-		settings.add(OAUTH_CLIENT_SECRET_SETTING_SPECIFIER);
-		settings.add(USERNAME_SETTING_SPECIFIER);
-		settings.add(PASSWORD_SETTING_SPECIFIER);
-		settings.add(new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null));
-		settings.add(BASE_URL_SETTING_SPECIFIER);
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(OAUTH_CLIENT_ID_SETTING_SPECIFIER, OAUTH_CLIENT_SECRET_SETTING_SPECIFIER,
+				USERNAME_SETTING_SPECIFIER, PASSWORD_SETTING_SPECIFIER,
+				new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null),
+				BASE_URL_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */
@@ -197,7 +194,7 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI)).path(
 							LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
 							.buildAndExpand(integration.getServiceProperties()).toUri(),
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

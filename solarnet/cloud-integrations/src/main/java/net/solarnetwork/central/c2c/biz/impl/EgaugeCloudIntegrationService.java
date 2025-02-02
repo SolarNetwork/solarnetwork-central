@@ -23,7 +23,6 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -64,10 +63,9 @@ public class EgaugeCloudIntegrationService extends BaseRestOperationsCloudIntegr
 
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(BASE_URL_SETTING, null));
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(new BasicTextFieldSettingSpecifier(BASE_URL_SETTING, null));
 	}
 
 	/** The service secure setting keys. */

@@ -222,7 +222,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			result = siteHardware(integration, filters);
 		} else {
@@ -279,15 +279,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
 					"filter.startDate");
 
-			final ZoneId zone = resolveTimeZone(datumStream, null);
+			final ZoneId zone = resolveTimeZone(datumStream, filter.getParameters());
 
-			final AlsoEnergyGranularity resolution = resolveGranularity(ds, null);
+			final AlsoEnergyGranularity resolution = resolveGranularity(ds, filter.getParameters());
 
 			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
-			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(
-					integration, ds, sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
+			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(ds,
+					sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
 
 			BasicQueryFilter nextQueryFilter = null;
 
@@ -395,7 +395,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	}
 
 	private static List<CloudDataValue> parseSites(JsonNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "items": [
@@ -418,7 +420,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	}
 
 	private static List<CloudDataValue> parseSiteHardware(JsonNode json, Map<String, ?> filters) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "hardware": [
@@ -479,7 +483,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode deviceNode : json.path("hardware") ) {
 			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
-			if ( !(fieldsNode.isArray() && fieldsNode.size() > 0) ) {
+			if ( !fieldsNode.isArray() || fieldsNode.isEmpty() ) {
 				continue;
 			}
 			final String id = deviceNode.path("id").asText().trim();
@@ -576,8 +580,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	}
 
 	private Map<UserLongCompositePK, List<ValueRef>> resolveHardwareGroups(
-			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
-			Collection<String> sourceValueRefs,
+			CloudDatumStreamConfiguration datumStream, Collection<String> sourceValueRefs,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(

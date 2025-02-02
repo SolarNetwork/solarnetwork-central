@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -102,10 +103,12 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
-		settings.add(BASE_URL_SETTING_SPECIFIER);
-		SETTINGS = Collections.unmodifiableList(settings);
+		// @formatter:off
+		SETTINGS = List.of(
+				new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true),
+				BASE_URL_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/** The service secure setting keys. */
@@ -166,7 +169,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 							.build()
 							.toUri(),
 					// @formatter:on
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

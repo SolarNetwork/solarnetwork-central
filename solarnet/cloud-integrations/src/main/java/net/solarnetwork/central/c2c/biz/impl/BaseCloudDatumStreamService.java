@@ -614,7 +614,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				: supportedPlaceholdersIterable != null
 						? stream(supportedPlaceholdersIterable.spliterator(), false).toList()
 						: null);
-		List<Map<String, ?>> placeholderSets = null;
+		List<Map<String, ?>> placeholderSets;
 		if ( sourceValueRefs != null && !sourceValueRefs.isEmpty() && supportedPlaceholders != null
 				&& !supportedPlaceholders.isEmpty() ) {
 			// sourceIdMap provided: generate set of placeholders

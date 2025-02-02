@@ -167,10 +167,9 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 					clientAccessTokenDao.delete(registration);
 					JsonNode realm = ex.getResponseBodyAs(JsonNode.class);
 					return super.httpGet(description, configuration, responseType, (headers) -> {
-						if ( configuration instanceof CloudDatumStreamConfiguration c ) {
-							var integration = integrationDao.integrationForDatumStream(c.getId());
-							addEgaugeBearerAuthorization(integration, c, headers, accessTokenId, realm);
-						}
+						var integration = integrationDao.integrationForDatumStream(datumStream.getId());
+						addEgaugeBearerAuthorization(integration, datumStream, headers, accessTokenId,
+								realm);
 						return setup.apply(headers);
 					}, handler);
 				}
@@ -200,9 +199,9 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 * If the {@link CloudIntegrationService#USERNAME_SETTING} and
 	 * {@link CloudIntegrationService#PASSWORD_SETTING} service properties are
 	 * available, they will be used to create a
-	 * {@link UsernamePasswordAuthenticationToken} principal. Otherwise a string
-	 * will be created like {@code "I N"} where {@code I} is the configuration's
-	 * ID's identifier and {@code N} is the configuration name.
+	 * {@link UsernamePasswordAuthenticationToken} principal. Otherwise, a
+	 * string will be created like {@code "I N"} where {@code I} is the
+	 * configuration's ID's identifier and {@code N} is the configuration name.
 	 * </p>
 	 *
 	 * @param config
@@ -225,7 +224,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 				.integrationForDatumStream(config.getId());
 
 		final String deviceId = nonEmptyString(config.serviceProperty(DEVICE_ID_FILTER, String.class));
-		JsonNode realm = null;
+		JsonNode realm;
 		// get nonce data... we expect a 401 response here
 		try {
 			realm = restOps.getForObject(
@@ -282,7 +281,8 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 								.path(AUTH_LOGIN_PATH).buildAndExpand(deviceId).toUri(),
 						authBody, JsonNode.class);
 
-		final String accessTokenValue = nonEmptyString(tokenRes.path(JWT_PROPERTY).asText());
+		final String accessTokenValue = nonEmptyString(
+				tokenRes != null ? tokenRes.path(JWT_PROPERTY).asText() : null);
 		if ( accessTokenValue != null ) {
 			var registration = new ClientAccessTokenEntity(accessTokenId, clock.instant());
 			registration.setAccessTokenIssuedAt(authReqTime);
@@ -290,9 +290,8 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 			registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
 			registration.setAccessTokenExpiresAt(authReqTime.plus(ACCESS_TOKEN_TTL));
 			clientAccessTokenDao.save(registration);
+			headers.setBearerAuth(accessTokenValue);
 		}
-
-		headers.setBearerAuth(accessTokenValue);
 	}
 
 }

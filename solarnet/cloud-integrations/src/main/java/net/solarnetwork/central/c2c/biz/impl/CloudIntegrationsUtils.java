@@ -104,7 +104,7 @@ public final class CloudIntegrationsUtils {
 		if ( tick == null ) {
 			return tickStart;
 		}
-		if ( tick.getUnits().get(0).isTimeBased() ) {
+		if ( tick.getUnits().getFirst().isTimeBased() ) {
 			return tickStart.minus(tick);
 		}
 		ZonedDateTime zdt = tickStart.atZone(zone);
@@ -128,7 +128,7 @@ public final class CloudIntegrationsUtils {
 		if ( tick == null ) {
 			return tickStart;
 		}
-		if ( tick.getUnits().get(0).isTimeBased() ) {
+		if ( tick.getUnits().getFirst().isTimeBased() ) {
 			return tickStart.plus(tick);
 		}
 		ZonedDateTime zdt = tickStart.atZone(zone);
