@@ -162,7 +162,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 			if ( cs.execute() ) {
 				try (var rs = cs.getResultSet()) {
 					if ( rs != null ) {
-						while ( rs.next() ) {
+						if ( rs.next() ) {
 							return CloudDatumStreamPollTaskEntityRowMapper.INSTANCE.mapRow(rs, 1);
 						}
 					}

@@ -73,7 +73,7 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 	public UserSettingsEntity get(Long id) {
 		var sql = new SelectUserSettingsEntity(id);
 		List<UserSettingsEntity> results = jdbcOps.query(sql, UserSettingsEntityRowMapper.INSTANCE);
-		return (results != null && !results.isEmpty() ? results.getFirst() : null);
+		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 	@Override
