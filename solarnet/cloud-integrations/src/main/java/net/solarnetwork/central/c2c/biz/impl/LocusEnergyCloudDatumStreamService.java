@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
@@ -172,7 +173,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER,
 			COMPONENT_ID_FILTER);
 
-	private AsyncTaskExecutor executor;
+	private final AsyncTaskExecutor executor;
 
 	/**
 	 * Constructor.
@@ -243,7 +244,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
 			result = nodesForComponent(integration, filters);
@@ -265,7 +266,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	private static List<CloudDataValue> parseSites(ObjectNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "statusCode": 200,
@@ -325,7 +328,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	private static List<CloudDataValue> parseComponents(ObjectNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "statusCode": 200,
@@ -387,9 +392,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	private static List<CloudDataValue> parseNodes(ObjectNode json, Map<String, ?> filters) {
-		assert json != null;
 		assert filters != null && filters.containsKey(SITE_ID_FILTER)
 				&& filters.containsKey(COMPONENT_ID_FILTER);
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "statusCode": 200,
@@ -453,8 +460,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 					}
 					final String aggName = name + ' ' + agg;
 					final var aggMeta = Map.of("aggregation", agg);
-					children.add(dataValue(List.of(siteId, compId, id, aggId), aggName,
-							aggMeta.isEmpty() ? null : aggMeta));
+					children.add(dataValue(List.of(siteId, compId, id, aggId), aggName, aggMeta));
 				}
 			}
 			result.add(dataValue(List.of(siteId, compId, id), name, meta.isEmpty() ? null : meta,
@@ -503,7 +509,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 		LocusEnergyGranularity granularity = null;
 		try {
-			String granSetting = null;
+			String granSetting;
 			if ( filter.hasParameterCriteria()
 					&& filter.getParameters().get(GRANULARITY_SETTING) instanceof String s ) {
 				granSetting = s;
@@ -522,13 +528,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	/**
 	 * Query for datum.
 	 *
-	 * @param ds
+	 * @param datumStream
 	 *        the stream to query
 	 * @param filter
 	 *        an optional filter; if not provided then query for the latest
 	 *        datum only
-	 * @param locale
-	 *        the locale for messages
 	 * @return the results
 	 */
 	private CloudDatumStreamQueryResult queryForDatum(CloudDatumStreamConfiguration datumStream,
@@ -579,7 +583,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 				// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
 				String componentId = m.group(2);
 				String fieldName = m.group(4);
-				fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<String>(8))
+				fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<>(8))
 						.add(fieldName);
 				fieldNamesByProperty.put(config.getId(), fieldName);
 			}
@@ -618,7 +622,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 									return b.buildAndExpand(
 											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
 
-								}, (res) -> res.getBody());
+								}, HttpEntity::getBody);
 						List<Map<String, JsonNode>> datumValuesList = new ArrayList<>();
 						for ( JsonNode dataNode : json.path("data") ) {
 							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {

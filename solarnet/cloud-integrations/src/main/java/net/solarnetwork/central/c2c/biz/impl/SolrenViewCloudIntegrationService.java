@@ -23,7 +23,6 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -98,9 +97,7 @@ public class SolrenViewCloudIntegrationService extends BaseRestOperationsCloudIn
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(BASE_URL_SETTING_SPECIFIER);
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(BASE_URL_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */

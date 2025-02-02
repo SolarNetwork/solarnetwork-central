@@ -52,7 +52,6 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -206,6 +205,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
+
 	static {
 		// menu for granularity
 		var granularitySpec = new BasicMultiValueSettingSpecifier(GRANULARITY_SETTING,
@@ -243,6 +243,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	private static final XmlSupport XML_SUPPORT;
 	private static final XPathExpression M_COMPONENTS_XPATH;
+
 	static {
 		XML_SUPPORT = new XmlSupport();
 		XML_SUPPORT.getDocBuilderFactory();
@@ -419,9 +420,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				Long siteId = Long.valueOf(m.group(1));
 				String componentId = m.group(2);
 				String fieldName = m.group(3);
-				refsBySiteComponent
-						.computeIfAbsent(siteId, k -> new LinkedHashMap<String, List<ValueRef>>(8))
-						.computeIfAbsent(componentId, k -> new ArrayList<ValueRef>(8))
+				refsBySiteComponent.computeIfAbsent(siteId, k -> new LinkedHashMap<>(8))
+						.computeIfAbsent(componentId, k -> new ArrayList<>(8))
 						.add(new ValueRef(siteId, componentId, fieldName, config));
 			}
 
@@ -456,8 +456,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 								.buildAndExpand(siteId, periodStartDate, periodEndDate)
 								.toUri();
 						// @formatter:on
-					}, res -> parseDatum(ds, siteId, res.getBody(), periodStartDate, datum,
-							refsByComponent));
+					}, res -> parseDatum(ds, res.getBody(), periodStartDate, datum, refsByComponent));
 				}
 				startDate = periodEndDate;
 			}
@@ -477,16 +476,11 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 	}
 
 	private Instant nextDate(Instant date, SolrenViewGranularity granularity) {
-		switch (granularity) {
-			case Year:
-				return date.with(TemporalAdjusters.firstDayOfNextYear());
-
-			case Month:
-				return date.with(TemporalAdjusters.firstDayOfNextMonth());
-
-			default:
-				return date.plus(granularity.getTickDuration());
-		}
+		return switch (granularity) {
+			case Year -> date.with(TemporalAdjusters.firstDayOfNextYear());
+			case Month -> date.with(TemporalAdjusters.firstDayOfNextMonth());
+			default -> date.plus(granularity.getTickDuration());
+		};
 	}
 
 	private List<CloudDataValue> componentsForSite(CloudIntegrationConfiguration integration,
@@ -530,10 +524,10 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			return endDate.minus(granularity.getTickDuration());
 		}
 		if ( granularity == SolrenViewGranularity.Month ) {
-			return endDate.atZone(UTC).minus(1, ChronoUnit.MONTHS).toInstant();
+			return endDate.atZone(UTC).minusMonths(1).toInstant();
 		}
 		// year
-		return endDate.atZone(UTC).minus(1, ChronoUnit.YEARS).toInstant();
+		return endDate.atZone(UTC).minusYears(1).toInstant();
 	}
 
 	private SolrenViewGranularity resolveGranularity(CloudDatumStreamConfiguration datumStream,
@@ -628,7 +622,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			for ( int i = 0, len = elements.getLength(); i < len; i++ ) {
 				n = elements.item(i);
 				if ( "m".equals(n.getLocalName()) && n.hasAttributes() && n.hasChildNodes() ) {
-					var component = componentValue(n, siteId, components);
+					var component = componentValue(n, siteId);
 					if ( component != null ) {
 						components.add(component);
 					}
@@ -690,7 +684,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		}
 	}
 
-	private CloudDataValue componentValue(Node n, Object siteId, List<CloudDataValue> components) {
+	private CloudDataValue componentValue(Node n, Object siteId) {
 		/*- example XML:
 		      <m id="103" sn="123123123">
 		        <p id="WH">1000</p>
@@ -723,8 +717,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return intermediateDataValue(List.of(siteId.toString(), id), id, null, propCollection);
 	}
 
-	private Void parseDatum(CloudDatumStreamConfiguration datumStream, Long siteId, String body,
-			Instant ts, Map<Instant, Map<String, GeneralDatum>> datumByTimeSource,
+	private Void parseDatum(CloudDatumStreamConfiguration datumStream, String body, Instant ts,
+			Map<Instant, Map<String, GeneralDatum>> datumByTimeSource,
 			Map<String, List<ValueRef>> refsByComponent) {
 		final Document dom;
 		try {
@@ -755,12 +749,11 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			String sourceId = componentSourceIdMapping != null
 					? componentSourceIdMapping.get(componentId)
-					: datumStream.getSourceId() + '/' + String.valueOf(i + 1);
+					: datumStream.getSourceId() + '/' + (i + 1);
 			if ( sourceId == null ) {
 				continue;
 			}
-			GeneralDatum datum = datumByTimeSource
-					.computeIfAbsent(ts, k -> new LinkedHashMap<String, GeneralDatum>(8))
+			GeneralDatum datum = datumByTimeSource.computeIfAbsent(ts, k -> new LinkedHashMap<>(8))
 					.compute(sourceId, (s, d) -> {
 						if ( d == null ) {
 							d = new GeneralDatum(new DatumId(datumStream.getKind(),
@@ -769,7 +762,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 						return d;
 					});
-			parseDatumProperties(n, siteId, componentId, datum, refsByComponent);
+			parseDatumProperties(n, componentId, datum, refsByComponent);
 		}
 
 		return null;
@@ -779,8 +772,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return servicePropertyStringMap(datumStream, SOURCE_ID_MAP_SETTING);
 	}
 
-	private void parseDatumProperties(Node componentNode, Long siteId, String componentId,
-			GeneralDatum datum, Map<String, List<ValueRef>> refsByComponent) {
+	private void parseDatumProperties(Node componentNode, String componentId, GeneralDatum datum,
+			Map<String, List<ValueRef>> refsByComponent) {
 		assert refsByComponent != null;
 
 		final List<ValueRef> refs = refsByComponent.containsKey(componentId)

@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -84,9 +85,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
 	}
 
 	/** The service secure setting keys. */
@@ -140,7 +139,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 					(req) -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
 							.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL).buildAndExpand()
 							.toUri(),
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

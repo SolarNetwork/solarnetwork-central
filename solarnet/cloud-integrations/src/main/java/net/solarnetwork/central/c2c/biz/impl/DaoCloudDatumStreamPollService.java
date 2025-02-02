@@ -237,7 +237,7 @@ public class DaoCloudDatumStreamPollService
 							taskInfo.setExecuteAt(clock.instant().plusSeconds(60));
 						}
 					} else {
-						// stop processing job if not what appears to be a API IO exception
+						// stop processing job if not what appears to be an API IO exception
 						log.info(
 								"Stopping datum stream {} poll task by changing state from {} to {} after error: {}",
 								taskInfo.getId().ident(), oldState, Completed, e.toString());
@@ -308,7 +308,7 @@ public class DaoCloudDatumStreamPollService
 			if ( !taskDao.updateTaskState(taskInfo.getId(), Executing, startState) ) {
 				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
-				var errMsg = "Failed to udpate task state from Claimed to Executing.";
+				var errMsg = "Failed to update task state from Claimed to Executing.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
@@ -391,11 +391,11 @@ public class DaoCloudDatumStreamPollService
 			}
 
 			// success: update task info
-			if ( polledDatum.getNextQueryFilter() != null
+			if ( polledDatum != null && polledDatum.getNextQueryFilter() != null
 					&& polledDatum.getNextQueryFilter().hasStartDate() ) {
 				// use the start date provided by the results, so the next iteration picks up from there
 				taskInfo.setStartAt(polledDatum.getNextQueryFilter().getStartDate());
-			} else if ( polledDatum.getUsedQueryFilter() != null
+			} else if ( polledDatum != null && polledDatum.getUsedQueryFilter() != null
 					&& polledDatum.getUsedQueryFilter().hasEndDate() ) {
 				// use the end date provided by the results, so the next iteration picks up from there
 				taskInfo.setStartAt(polledDatum.getUsedQueryFilter().getEndDate());
@@ -414,7 +414,11 @@ public class DaoCloudDatumStreamPollService
 				// skip any missed execution times between last actual execution and now...
 				ctx.update(nextExecTime,
 						(ctx.lastScheduledExecution() == null ? execTime : nextExecTime), now);
-				nextExecTime = schedule.nextExecution(ctx).truncatedTo(ChronoUnit.SECONDS);
+				Instant net = schedule.nextExecution(ctx);
+				if ( net == null ) {
+					break;
+				}
+				nextExecTime = net.truncatedTo(ChronoUnit.SECONDS);
 			}
 			taskInfo.setExecuteAt(nextExecTime);
 

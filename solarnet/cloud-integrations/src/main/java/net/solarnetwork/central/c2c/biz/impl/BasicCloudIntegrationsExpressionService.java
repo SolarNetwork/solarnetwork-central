@@ -88,8 +88,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	 *         if any argument is {@code null}
 	 */
 	public BasicCloudIntegrationsExpressionService(SolarNodeOwnershipDao nodeOwnershipDao) {
-		this(nodeOwnershipDao, defaultSourceIdPathMatcher(),
-				new net.solarnetwork.common.expr.spel.SpelExpressionService());
+		this(nodeOwnershipDao, defaultSourceIdPathMatcher(), new SpelExpressionService());
 	}
 
 	/**
@@ -152,8 +151,8 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 			}
 		}
 
-		return new DatumExpressionRoot(datum, datum.asSampleOperations(), p, metadata,
-				datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule);
+		return new DatumExpressionRoot(datum, datum != null ? datum.asSampleOperations() : null, p,
+				metadata, datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule);
 	}
 
 	private DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {
