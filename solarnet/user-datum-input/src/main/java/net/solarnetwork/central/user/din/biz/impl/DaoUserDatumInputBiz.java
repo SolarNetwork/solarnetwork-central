@@ -74,7 +74,7 @@ import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
- * DAO based implementation of {@Link UserDatumInputBiz}.
+ * DAO based implementation of {@link UserDatumInputBiz}.
  *
  * @author matt
  * @version 1.0
@@ -221,7 +221,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	}
 
 	private static Long nodeId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
-		Long nodeId = endpoint.getNodeId();
+		Long nodeId = (endpoint != null ? endpoint.getNodeId() : null);
 		if ( parameters != null && parameters.containsKey(PARAM_NODE_ID) ) {
 			try {
 				nodeId = Long.valueOf(parameters.get(PARAM_NODE_ID).toString());
@@ -233,7 +233,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	}
 
 	private static String sourceId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
-		String sourceId = endpoint.getSourceId();
+		String sourceId = (endpoint != null ? endpoint.getSourceId() : null);
 		if ( parameters != null && parameters.containsKey(PARAM_SOURCE_ID) ) {
 			sourceId = parameters.get(PARAM_SOURCE_ID).toString();
 		}
