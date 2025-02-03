@@ -1,21 +1,21 @@
 /* ==================================================================
  * NettyDynamicProxyServerSettings.java - 4/08/2023 6:20:35 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Configuration settings for the dynamic proxy server.
- * 
+ *
  * @param bindAddresses
  *        array of socket addresses to bind the server to, for example 127.0.0.1
  *        or 0.0.0.0
@@ -50,7 +50,7 @@ public record DynamicProxyServerSettings(String[] bindAddresses, Integer port,
 
 	/**
 	 * Get the bind socket addresses.
-	 * 
+	 *
 	 * @return the socket addresses
 	 */
 	public SocketAddress[] bindSocketAddresses() {
@@ -60,7 +60,7 @@ public record DynamicProxyServerSettings(String[] bindAddresses, Integer port,
 		SocketAddress[] result = new SocketAddress[bindAddresses.length];
 		for ( int i = 0; i < result.length; i++ ) {
 			String name = bindAddresses[i];
-			int port = (this.port != null ? this.port.intValue() : DEFAULT_PORT);
+			int port = (this.port != null ? this.port : DEFAULT_PORT);
 			result[i] = new InetSocketAddress(name, port);
 		}
 		return result;
@@ -68,17 +68,17 @@ public record DynamicProxyServerSettings(String[] bindAddresses, Integer port,
 
 	/**
 	 * Get the wire-logging enabled flag.
-	 * 
+	 *
 	 * @return the wire-logging enabled flag, defaulting to {@literal false} if
 	 *         not defined
 	 */
 	public boolean isWireLoggingEnabled() {
-		return wireLoggingEnabled() != null ? wireLoggingEnabled().booleanValue() : false;
+		return wireLoggingEnabled() != null ? wireLoggingEnabled() : false;
 	}
 
 	/**
 	 * Test if TLS settings are available.
-	 * 
+	 *
 	 * @return {@literal true} if TLS settings are available
 	 */
 	public boolean hasTlsSettings() {
