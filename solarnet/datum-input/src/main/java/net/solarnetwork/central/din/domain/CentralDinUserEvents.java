@@ -45,10 +45,10 @@ public interface CentralDinUserEvents {
 	/** User event data key for a content MIME type. */
 	String CONTENT_TYPE_DATA_KEY = "contentType";
 
-	/** User event data key for an transform ID. */
+	/** User event data key for a transform ID. */
 	String TRANSFORM_ID_DATA_KEY = "transformId";
 
-	/** User event data key for an transform service ID. */
+	/** User event data key for a transform service ID. */
 	String TRANSFORM_SERVICE_ID_DATA_KEY = "transformServiceId";
 
 	/** User event tags for datum events. */
@@ -66,7 +66,7 @@ public interface CentralDinUserEvents {
 	 * User event data key for a request content value.
 	 *
 	 * <p>
-	 * If the content is textual, the content will be included as-is. Otherwise
+	 * If the content is textual, the content will be included as-is. Otherwise,
 	 * it will be Base64 encoded.
 	 * </p>
 	 *
@@ -78,7 +78,7 @@ public interface CentralDinUserEvents {
 	 * User event data key for the tracked previous request content value.
 	 *
 	 * <p>
-	 * If the content is textual, the content will be included as-is. Otherwise
+	 * If the content is textual, the content will be included as-is. Otherwise,
 	 * it will be Base64 encoded.
 	 * </p>
 	 *

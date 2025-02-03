@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -50,6 +51,7 @@ public class TransformConfiguration
 		implements DatumInputConfigurationEntity<TransformConfiguration, UserLongCompositePK>,
 		IdentifiableConfiguration {
 
+	@Serial
 	private static final long serialVersionUID = -4398071329872156479L;
 
 	private String name;
