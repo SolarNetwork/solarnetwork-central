@@ -382,7 +382,7 @@ public class DaoDataCollectorBizTests {
 
 		// THEN
 		SolarLocation update = locCaptor.getValue();
-		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		SolarLocation expectedUpdate = curr.clone();
 		expectedUpdate.setElevation(loc.getElevation());
 		expectedUpdate.setLatitude(loc.getLatitude());
 		expectedUpdate.setLongitude(loc.getLongitude());
@@ -416,7 +416,7 @@ public class DaoDataCollectorBizTests {
 
 		// THEN
 		SolarLocation update = locCaptor.getValue();
-		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		SolarLocation expectedUpdate = curr.clone();
 		expectedUpdate.setElevation(loc.getElevation());
 		expectedUpdate.setLatitude(loc.getLatitude());
 		expectedUpdate.setLongitude(loc.getLongitude());
@@ -472,7 +472,7 @@ public class DaoDataCollectorBizTests {
 		// THEN
 		assertThat("Saved new location", locCaptor.getValues(), hasSize(1));
 		SolarLocation update = locCaptor.getValues().get(0);
-		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		SolarLocation expectedUpdate = curr.clone();
 		expectedUpdate.setId(null);
 		expectedUpdate.setPostalCode(curr.getPostalCode().toUpperCase());
 		expectedUpdate.setElevation(loc.getElevation());

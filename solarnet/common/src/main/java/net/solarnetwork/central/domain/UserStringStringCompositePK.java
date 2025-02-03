@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserStringStringCompositePK.java - 25/10/2024 9:03:25 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,17 +23,19 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.util.Objects;
 
 /**
  * Basic implementation of a user-related Long, String, String composite key.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class UserStringStringCompositePK extends BasePK implements
 		UserRelatedCompositeKey<UserStringStringCompositePK>, CompositeKey3<Long, String, String> {
 
+	@Serial
 	private static final long serialVersionUID = 6089539799437151759L;
 
 	/**
@@ -56,7 +58,7 @@ public class UserStringStringCompositePK extends BasePK implements
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to use
 	 * @param groupId
@@ -73,7 +75,7 @@ public class UserStringStringCompositePK extends BasePK implements
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param groupId
@@ -124,8 +126,8 @@ public class UserStringStringCompositePK extends BasePK implements
 	}
 
 	@Override
-	protected UserStringCompositePK clone() {
-		return (UserStringCompositePK) super.clone();
+	public UserStringStringCompositePK clone() {
+		return (UserStringStringCompositePK) super.clone();
 	}
 
 	@Override
@@ -138,17 +140,16 @@ public class UserStringStringCompositePK extends BasePK implements
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserStringStringCompositePK) ) {
+		if ( !(obj instanceof UserStringStringCompositePK other) ) {
 			return false;
 		}
-		UserStringStringCompositePK other = (UserStringStringCompositePK) obj;
 		return Objects.equals(userId, other.userId) && Objects.equals(groupId, other.groupId)
 				&& Objects.equals(entityId, other.entityId);
 	}
 
 	/**
 	 * Get the user ID.
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	public final String getGroupId() {
@@ -157,7 +158,7 @@ public class UserStringStringCompositePK extends BasePK implements
 
 	/**
 	 * Get the entity ID.
-	 * 
+	 *
 	 * @return the entity ID
 	 */
 	public final String getEntityId() {
@@ -181,19 +182,17 @@ public class UserStringStringCompositePK extends BasePK implements
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 0 ) {
-			return userId != UNASSIGNED_USER_ID;
-		} else if ( index == 1 ) {
-			return groupId != UNASSIGNED_GROUP_ID;
-		} else if ( index == 2 ) {
-			return entityId != UNASSIGNED_ENTITY_ID;
-		}
-		return CompositeKey3.super.keyComponentIsAssigned(index);
+		return switch (index) {
+			case 0 -> userId != UNASSIGNED_USER_ID;
+			case 1 -> groupId != UNASSIGNED_GROUP_ID;
+			case 2 -> entityId != UNASSIGNED_ENTITY_ID;
+			default -> CompositeKey3.super.keyComponentIsAssigned(index);
+		};
 	}
 
 	/**
 	 * Test if the group ID is assigned.
-	 * 
+	 *
 	 * @return {@literal true} if the group ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
@@ -203,7 +202,7 @@ public class UserStringStringCompositePK extends BasePK implements
 
 	/**
 	 * Test if the entity ID is assigned.
-	 * 
+	 *
 	 * @return {@literal true} if the entity ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
@@ -216,21 +215,17 @@ public class UserStringStringCompositePK extends BasePK implements
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
 			if ( index == 0 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_USER_ID;
-				} else if ( val instanceof Number n ) {
-					return (T) (Long) n.longValue();
-				} else {
-					return (T) Long.valueOf(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_USER_ID;
+					case Number n -> (T) (Long) n.longValue();
+					default -> (T) Long.valueOf(val.toString());
+				};
 			} else if ( index == 1 || index == 2 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_ENTITY_ID;
-				} else if ( val instanceof String s ) {
-					return (T) s;
-				} else {
-					return (T) val.toString();
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_ENTITY_ID;
+					case String s -> (T) s;
+					default -> (T) val.toString();
+				};
 			}
 		} catch ( NumberFormatException e ) {
 			throw new IllegalArgumentException(

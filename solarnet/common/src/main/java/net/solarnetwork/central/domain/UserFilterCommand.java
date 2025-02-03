@@ -1,27 +1,28 @@
 /* ==================================================================
  * UserFilterCommand.java - 11/11/2016 5:21:29 PM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,13 +35,14 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Filter support for user actions.
- * 
+ *
  * @author matt
  * @version 2.2
  * @since 1.23
  */
 public class UserFilterCommand extends FilterSupport implements UserFilter {
 
+	@Serial
 	private static final long serialVersionUID = 915646548230356302L;
 
 	private List<MutableSortDescriptor> sorts;
@@ -51,7 +53,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * Convert to a {@link UserMetadataFilter}.
-	 * 
+	 *
 	 * @return the filter
 	 */
 	public UserMetadataFilter toUserMetadataFilter() {
@@ -99,7 +101,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * Get the email criteria.
-	 * 
+	 *
 	 * @return the email criteria
 	 * @since 1.1
 	 */
@@ -110,7 +112,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * Set the email criteria.
-	 * 
+	 *
 	 * @param email
 	 *        the email to set
 	 * @since 1.1
@@ -121,7 +123,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * Get the internal data criteria.
-	 * 
+	 *
 	 * @return the internal data criteria
 	 * @since 1.1
 	 */
@@ -132,7 +134,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * Set the internal data criteria.
-	 * 
+	 *
 	 * @param internalData
 	 *        the internal data criteria to set
 	 * @since 1.1
@@ -143,7 +145,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * Get the internal data criteria as a JSON string.
-	 * 
+	 *
 	 * @return the internal data criteria, as JSON
 	 * @since 1.1
 	 */
@@ -153,7 +155,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
@@ -170,7 +172,7 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
@@ -178,13 +180,9 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof UserFilterCommand other) ) {
 			return false;
 		}
-		if ( !(obj instanceof UserFilterCommand) ) {
-			return false;
-		}
-		UserFilterCommand other = (UserFilterCommand) obj;
 		if ( internalData == null ) {
 			if ( other.internalData != null ) {
 				return false;
@@ -214,13 +212,9 @@ public class UserFilterCommand extends FilterSupport implements UserFilter {
 			return false;
 		}
 		if ( sorts == null ) {
-			if ( other.sorts != null ) {
-				return false;
-			}
-		} else if ( !sorts.equals(other.sorts) ) {
-			return false;
+			return other.sorts == null;
 		}
-		return true;
+		return sorts.equals(other.sorts);
 	}
 
 }

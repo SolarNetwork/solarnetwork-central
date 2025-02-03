@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -36,6 +37,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  */
 public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 
+	@Serial
 	private static final long serialVersionUID = -6975117953635161471L;
 
 	private final ObjectDatumKind kind;
@@ -65,7 +67,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	}
 
 	@Override
-	protected ObjectDatumPK clone() {
+	public ObjectDatumPK clone() {
 		return (ObjectDatumPK) super.clone();
 	}
 

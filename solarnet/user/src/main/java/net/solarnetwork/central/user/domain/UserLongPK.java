@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.Serial;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
@@ -47,6 +48,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 */
 	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
 
+	@Serial
 	private static final long serialVersionUID = -4475927214213411061L;
 
 	private Long id;
@@ -175,15 +177,12 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
 			if ( index == 0 || index == 1 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_ENTITY_ID;
-				} else if ( val instanceof Long n ) {
-					return (T) n;
-				} else if ( val instanceof Number n ) {
-					return (T) Long.valueOf(n.longValue());
-				} else {
-					return (T) Long.valueOf(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_ENTITY_ID;
+					case Long n -> (T) n;
+					case Number n -> (T) Long.valueOf(n.longValue());
+					default -> (T) Long.valueOf(val.toString());
+				};
 			}
 		} catch ( NumberFormatException e ) {
 			throw new IllegalArgumentException(
@@ -215,12 +214,11 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 0 ) {
-			return userId != null && userId != UNASSIGNED_USER_ID;
-		} else if ( index == 1 ) {
-			return id != null && id != UNASSIGNED_ENTITY_ID;
-		}
-		return CompositeKey2.super.keyComponentIsAssigned(index);
+		return switch (index) {
+			case 0 -> userId != null && userId != UNASSIGNED_USER_ID;
+			case 1 -> id != null && id != UNASSIGNED_ENTITY_ID;
+			default -> CompositeKey2.super.keyComponentIsAssigned(index);
+		};
 	}
 
 	/**

@@ -1,21 +1,21 @@
 /* ==================================================================
  * AppSetting.java - 10/11/2021 8:21:01 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -31,7 +32,7 @@ import net.solarnetwork.domain.BasicIdentity;
 
 /**
  * An application setting.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -39,6 +40,7 @@ import net.solarnetwork.domain.BasicIdentity;
 public class AppSetting extends BasicIdentity<KeyTypePK>
 		implements Entity<KeyTypePK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -7907835439616081294L;
 
 	private final Instant created;
@@ -47,7 +49,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Create a new setting instance.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param type
@@ -64,7 +66,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -85,7 +87,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param type
@@ -105,7 +107,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Create a copy with a new value.
-	 * 
+	 *
 	 * @param value
 	 *        the new value to set
 	 * @return the new copy
@@ -149,7 +151,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Get the modification date.
-	 * 
+	 *
 	 * @return the modification date, or {@literal null}
 	 */
 	public Instant getModified() {
@@ -158,7 +160,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Get the key.
-	 * 
+	 *
 	 * @return the key
 	 */
 	public String getKey() {
@@ -167,7 +169,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Get the type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public String getType() {
@@ -176,7 +178,7 @@ public class AppSetting extends BasicIdentity<KeyTypePK>
 
 	/**
 	 * Get the value.
-	 * 
+	 *
 	 * @return the value, or {@literal null}
 	 */
 	public String getValue() {

@@ -1,27 +1,28 @@
 /* ==================================================================
  * StreamKindPK.java - 7/11/2020 7:09:54 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -29,20 +30,21 @@ import java.util.UUID;
 
 /**
  * Primary key for a stream associated with a string qualifier "kind".
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.8
  */
 public class StreamKindPK extends StreamPK implements Serializable, Cloneable, Comparable<StreamKindPK> {
 
+	@Serial
 	private static final long serialVersionUID = 9078757219353810241L;
 
 	private final String kind;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param timestamp
@@ -56,7 +58,7 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 	}
 
 	@Override
-	protected StreamKindPK clone() {
+	public StreamKindPK clone() {
 		return (StreamKindPK) super.clone();
 	}
 
@@ -122,7 +124,7 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 
 	/**
 	 * Get the kind qualifier.
-	 * 
+	 *
 	 * @return the kind
 	 */
 	public String getKind() {
