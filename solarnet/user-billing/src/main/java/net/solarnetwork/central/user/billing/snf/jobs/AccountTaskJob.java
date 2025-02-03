@@ -80,7 +80,7 @@ public class AccountTaskJob extends JobSupport {
 	}
 
 	@Override
-	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int processedCount = 0;
 		boolean processed = false;
 		do {
@@ -102,10 +102,10 @@ public class AccountTaskJob extends JobSupport {
 				processed = true;
 			}
 			if ( processed ) {
-				remainingIterataions.decrementAndGet();
+				remainingIterations.decrementAndGet();
 				processedCount++;
 			}
-		} while ( processed && remainingIterataions.get() > 0 );
+		} while ( processed && remainingIterations.get() > 0 );
 		return processedCount;
 	}
 

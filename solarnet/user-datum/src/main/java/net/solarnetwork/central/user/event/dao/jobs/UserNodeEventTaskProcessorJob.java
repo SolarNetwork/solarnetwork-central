@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserNodeEventTaskCleanerJob.java - 8/06/2020 2:23:54 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,7 +49,7 @@ import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
 /**
  * Job to process queued {@link UserNodeEventTask} entities by passing them to
  * the {@link UserNodeEventHookService} instance they are configured for.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -74,7 +74,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param transactionTemplate
 	 *        the transaction template to use, or {@literal null}
 	 * @param taskDao
@@ -113,7 +113,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	}
 
 	@Override
-	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int processedCount = 0;
 		boolean processed = false;
 		do {
@@ -135,22 +135,22 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 				processed = true;
 			}
 			if ( processed ) {
-				remainingIterataions.decrementAndGet();
+				remainingIterations.decrementAndGet();
 				processedCount++;
 			}
-		} while ( processed && remainingIterataions.get() > 0 );
+		} while ( processed && remainingIterations.get() > 0 );
 		return processedCount;
 	}
 
 	/**
 	 * Execute the hook task as a single transaction.
-	 * 
+	 *
 	 * <p>
 	 * This method is designed to operate within a single transaction, as per
 	 * the contract outlined in
 	 * {@link UserNodeEventTaskDao#claimQueuedTask(String)}.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if the task has been processed
 	 * @throws RepeatableTaskException
 	 *         if the task should be re-tried in the future
@@ -228,7 +228,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	/**
 	 * Set the event topic to process.
-	 * 
+	 *
 	 * @param topic
 	 *        the topic to set
 	 * @throws IllegalArgumentException
@@ -240,7 +240,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	/**
 	 * Set the maximum amount of time to wait for a hook service to execute.
-	 * 
+	 *
 	 * @param serviceTimeout
 	 *        the timeout to set, in milliseconds
 	 */
