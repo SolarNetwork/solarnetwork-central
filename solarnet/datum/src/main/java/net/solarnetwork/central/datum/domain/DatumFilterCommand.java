@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -68,6 +69,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		GeneralNodeDatumAuxiliaryFilter, GeneralNodeDatumMetadataFilter, SolarNodeMetadataFilter,
 		ReadingTypeFilter, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -2340410285910280329L;
 
 	private final SolarLocation location;
@@ -130,9 +132,6 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public DatumFilterCommand(AggregateGeneralNodeDatumFilter other) {
 		this((GeneralNodeDatumFilter) other);
-		if ( other == null ) {
-			return;
-		}
 	}
 
 	/**
@@ -346,9 +345,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( localEndDate != null ) {
 			filter.put("localEnd", localEndDate);
 		}
-		if ( location != null ) {
-			filter.putAll(location.getFilter());
-		}
+		filter.putAll(location.getFilter());
 		if ( startDate != null ) {
 			filter.put("start", startDate);
 		}
@@ -387,7 +384,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 
 	@JsonIgnore
 	public boolean isHasLocationCriteria() {
-		return (location != null && location.getFilter().size() > 0);
+		return !location.getFilter().isEmpty();
 	}
 
 	@Override
@@ -453,7 +450,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( sorts == null ) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<SortDescriptor>(sorts);
+		return new ArrayList<>(sorts);
 	}
 
 	public Long getOffset() {
@@ -519,7 +516,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.9
 	 */
 	public void setAggregationKey(String key) {
-		Aggregation agg = null;
+		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -574,7 +571,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.15
 	 */
 	public void setPartialAggregationKey(String key) {
-		Aggregation agg = null;
+		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -703,7 +700,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 * @since 1.10
 	 */
 	public void setCombiningTypeKey(String key) {
-		CombiningType type = null;
+		CombiningType type;
 		try {
 			type = CombiningType.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -756,7 +753,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
-			result = new LinkedHashMap<Long, Set<Long>>(mappings.length);
+			result = new LinkedHashMap<>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
@@ -774,7 +771,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<Long>(rIds.size());
+					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
 					for ( String rId : rIds ) {
 						rNodeIds.add(Long.valueOf(rId));
 					}
@@ -833,7 +830,7 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
-			result = new LinkedHashMap<String, Set<String>>(mappings.length);
+			result = new LinkedHashMap<>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
@@ -947,13 +944,9 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof DatumFilterCommand other) ) {
 			return false;
 		}
-		if ( !(obj instanceof DatumFilterCommand) ) {
-			return false;
-		}
-		DatumFilterCommand other = (DatumFilterCommand) obj;
 		return aggregation == other.aggregation && combiningType == other.combiningType
 				&& readingType == other.readingType && Objects.equals(dataPath, other.dataPath)
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)

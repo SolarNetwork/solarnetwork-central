@@ -275,7 +275,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
-		return found.stream().map(d -> copyWith(d)).toList();
+		return found.stream().map(this::copyWith).toList();
 	}
 
 	/**
@@ -323,7 +323,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
-		return found.stream().map(d -> copyWith(d)).toList();
+		return found.stream().map(this::copyWith).toList();
 	}
 
 	/**
@@ -418,7 +418,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
 	 * @return {@code true} if at least one matching datum is available
-	 * @see #hasOffsetMatching(String, int , Instant)
+	 * @see #hasOffsetMatching(String, int, Instant)
 	 * @since 1.1
 	 */
 	public boolean hasLatestMatching(String sourceIdPattern, Instant timestamp) {
@@ -608,7 +608,6 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 *
 	 * @param sourceId
 	 *        the source ID to find the offset datum for
-	 * @return the matching datum, or {@literal null} if not available
 	 * @return {@code true} if a matching datum exists
 	 * @see #hasOffset(String, int)
 	 */
@@ -647,7 +646,6 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 *        the source ID to find the offset datum for
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
-	 * @return the matching datum, or {@literal null} if not available
 	 * @return {@code true} if a matching datum exists
 	 * @see #hasOffset(String, int, Instant)
 	 * @since 1.1

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -51,6 +52,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
 public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Cloneable, Serializable,
 		GeneralObjectDatum<GeneralLocationDatumPK> {
 
+	@Serial
 	private static final long serialVersionUID = 7682061775759924209L;
 
 	private GeneralLocationDatumPK id = new GeneralLocationDatumPK();
@@ -179,21 +181,14 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		GeneralLocationDatum other = (GeneralLocationDatum) obj;
 		if ( id == null ) {
-			if ( other.id != null ) {
-				return false;
-			}
-		} else if ( !id.equals(other.id) ) {
-			return false;
+			return other.id == null;
 		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	/**

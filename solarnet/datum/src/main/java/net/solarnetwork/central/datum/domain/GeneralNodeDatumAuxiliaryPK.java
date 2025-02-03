@@ -1,34 +1,35 @@
 /* ==================================================================
  * GeneralNodeDatumAuxiliaryPK.java - 1/02/2019 4:30:40 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
 /**
  * Primary key for a general node datum auxiliary entity.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 1.35
@@ -36,6 +37,7 @@ import java.util.Objects;
 public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 		implements Serializable, Cloneable, Comparable<GeneralNodeDatumAuxiliaryPK> {
 
+	@Serial
 	private static final long serialVersionUID = 5523741563653967531L;
 
 	private DatumAuxiliaryType type;
@@ -49,11 +51,11 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The {@link DatumAuxiliaryType#Reset} type will be set.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param created
@@ -67,7 +69,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param created
@@ -84,6 +86,11 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
+	public GeneralNodeDatumAuxiliaryPK clone() {
+		return (GeneralNodeDatumAuxiliaryPK) super.clone();
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
@@ -96,13 +103,9 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof GeneralNodeDatumAuxiliaryPK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof GeneralNodeDatumAuxiliaryPK) ) {
-			return false;
-		}
-		GeneralNodeDatumAuxiliaryPK other = (GeneralNodeDatumAuxiliaryPK) obj;
 		return type == other.type;
 	}
 
@@ -119,7 +122,7 @@ public class GeneralNodeDatumAuxiliaryPK extends BasicNodeSourceDatePK
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
 		if ( type != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("type=").append(type);

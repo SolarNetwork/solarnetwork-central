@@ -1,27 +1,28 @@
 /* ==================================================================
  * GeneralNodeDatumAuxiliary.java - 1/02/2019 5:08:04 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -39,7 +40,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 /**
  * An "auxiliary" node datum entity, which contains "final" and "starting"
  * before/after samples at a specific point in time for a node data stream.
- * 
+ *
  * @author matt
  * @version 1.2
  * @since 1.35
@@ -49,6 +50,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 public class GeneralNodeDatumAuxiliary
 		implements Entity<GeneralNodeDatumAuxiliaryPK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -1132588952509774037L;
 
 	private GeneralNodeDatumAuxiliaryPK id = new GeneralNodeDatumAuxiliaryPK();
@@ -70,7 +72,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param samplesFinal
@@ -88,7 +90,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Convenience getter for {@link GeneralNodeDatumPK#getNodeId()}.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
@@ -98,7 +100,7 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience setter for
 	 * {@link GeneralNodeDatumAuxiliaryPK#setNodeId(Long)}.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
@@ -111,7 +113,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getSourceId()}.
-	 * 
+	 *
 	 * @return the sourceId
 	 */
 	public String getSourceId() {
@@ -121,7 +123,7 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience setter for
 	 * {@link GeneralNodeDatumAuxiliaryPK#setSourceId(String)}.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the sourceId to set
 	 */
@@ -135,7 +137,7 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience setter for
 	 * {@link GeneralNodeDatumAuxiliaryPK#setCreated(Instant)}.
-	 * 
+	 *
 	 * @param created
 	 *        the created to set
 	 */
@@ -153,7 +155,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Convenience getter for {@link GeneralNodeDatumAuxiliaryPK#getType()}.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public DatumAuxiliaryType getType() {
@@ -163,7 +165,7 @@ public class GeneralNodeDatumAuxiliary
 	/**
 	 * Convenience setter for
 	 * {@link GeneralNodeDatumAuxiliaryPK#setType(DatumAuxiliaryType)}.
-	 * 
+	 *
 	 * @param type
 	 *        the type to set
 	 */
@@ -227,23 +229,19 @@ public class GeneralNodeDatumAuxiliary
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
+		if ( (obj == null) || !(obj instanceof GeneralNodeDatumAuxiliary other) ) {
 			return false;
 		}
-		if ( !(obj instanceof GeneralNodeDatumAuxiliary) ) {
-			return false;
-		}
-		GeneralNodeDatumAuxiliary other = (GeneralNodeDatumAuxiliary) obj;
 		return Objects.equals(id, other.id);
 	}
 
 	/**
 	 * Get the final {@link DatumSamples} object as a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will ignore {@literal null} values.
 	 * </p>
-	 * 
+	 *
 	 * @return a JSON encoded string, never {@literal null}
 	 */
 	@SerializeIgnore
@@ -257,13 +255,13 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the final {@link DatumSamples} object via a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will remove any previously created final DatumSamples and
 	 * replace it with the values parsed from the JSON. All floating point
 	 * values will be converted to {@link BigDecimal} instances.
 	 * </p>
-	 * 
+	 *
 	 * @param json
 	 *        the JSON to set
 	 */
@@ -284,12 +282,12 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the final {@link DatumSamples} instance to use.
-	 * 
+	 *
 	 * <p>
 	 * This will replace any value set previously via
 	 * {@link #setSampleJsonFinal(String)} as well.
 	 * </p>
-	 * 
+	 *
 	 * @param samples
 	 *        the samples instance to set
 	 */
@@ -301,7 +299,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
-	 * 
+	 *
 	 * @return the sample data, or {@literal null} if none available
 	 */
 	@SerializeIgnore
@@ -313,11 +311,11 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Get the start {@link DatumSamples} object as a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will ignore {@literal null} values.
 	 * </p>
-	 * 
+	 *
 	 * @return a JSON encoded string, never {@literal null}
 	 */
 	@SerializeIgnore
@@ -331,13 +329,13 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the start {@link DatumSamples} object via a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will remove any previously created start DatumSamples and
 	 * replace it with the values parsed from the JSON. All floating point
 	 * values will be converted to {@link BigDecimal} instances.
 	 * </p>
-	 * 
+	 *
 	 * @param json
 	 *        the JSON to set
 	 */
@@ -358,12 +356,12 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the start {@link DatumSamples} instance to use.
-	 * 
+	 *
 	 * <p>
 	 * This will replace any value set previously via
 	 * {@link #setSampleJsonStart(String)} as well.
 	 * </p>
-	 * 
+	 *
 	 * @param samples
 	 *        the samples instance to set
 	 */
@@ -375,7 +373,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
-	 * 
+	 *
 	 * @return the sample data, or {@literal null} if none available
 	 */
 	@JsonIgnore
@@ -387,7 +385,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Get the notes.
-	 * 
+	 *
 	 * @return the notes
 	 */
 	public String getNotes() {
@@ -396,7 +394,7 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the notes.
-	 * 
+	 *
 	 * @param notes
 	 *        the notes
 	 */
@@ -406,11 +404,11 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Get the metadata.
-	 * 
+	 *
 	 * <p>
 	 * This will parse the {code metaJson} property if that is available.
 	 * </p>
-	 * 
+	 *
 	 * @return the metadata
 	 * @since 1.1
 	 */
@@ -424,11 +422,11 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the metadata.
-	 * 
+	 *
 	 * <p>
 	 * This will clear the {code metaJson} property.
 	 * </p>
-	 * 
+	 *
 	 * @param meta
 	 *        the metadata to set
 	 * @since 1.1
@@ -440,11 +438,11 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Get the metadata as JSON.
-	 * 
+	 *
 	 * <p>
 	 * This will serialize the {@code meta} property if that is available.
 	 * </p>
-	 * 
+	 *
 	 * @return the metadata JSON
 	 * @since 1.1
 	 */
@@ -460,11 +458,11 @@ public class GeneralNodeDatumAuxiliary
 
 	/**
 	 * Set the metadata as JSON.
-	 * 
+	 *
 	 * <p>
 	 * This will clear the {@code meta} property if that is available.
 	 * </p>
-	 * 
+	 *
 	 * @param metaJson
 	 *        the metadata
 	 */
