@@ -137,7 +137,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		if ( next == null ) {
 			try {
 				// read in rows of data until we parse a non-null value
-				List<String> row = null;
+				List<String> row;
 				do {
 					row = reader.read();
 					if ( row != null ) {
@@ -223,9 +223,9 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		}
 		DatumProperties props = new DatumProperties();
 		props.setInstantaneous(
-				parseDecimalColummns(row, meta.propertyNamesForType(DatumSamplesType.Instantaneous)));
+				parseDecimalColumns(row, meta.propertyNamesForType(DatumSamplesType.Instantaneous)));
 		props.setAccumulating(
-				parseDecimalColummns(row, meta.propertyNamesForType(DatumSamplesType.Accumulating)));
+				parseDecimalColumns(row, meta.propertyNamesForType(DatumSamplesType.Accumulating)));
 		props.setStatus(parseStringColumns(row, meta.propertyNamesForType(DatumSamplesType.Status)));
 		return new DatumEntity(meta.getStreamId(), ts, parseTime, props);
 	}
@@ -238,8 +238,8 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		String[] result = new String[propertyNames.length];
 		for ( int i = 0, rowLen = row.size(); i < propertyNames.length; i++ ) {
 			Integer idx = columnMap.get(propertyNames[i]);
-			if ( idx != null && idx.intValue() < rowLen ) {
-				String v = row.get(idx.intValue());
+			if ( idx != null && idx < rowLen ) {
+				String v = row.get(idx);
 				if ( v != null ) {
 					result[i] = v;
 					empty = false;
@@ -249,7 +249,7 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		return (empty ? null : result);
 	}
 
-	private BigDecimal[] parseDecimalColummns(List<String> row, String[] propertyNames) {
+	private BigDecimal[] parseDecimalColumns(List<String> row, String[] propertyNames) {
 		if ( propertyNames == null || propertyNames.length < 1 ) {
 			return null;
 		}
@@ -257,8 +257,8 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		BigDecimal[] result = new BigDecimal[propertyNames.length];
 		for ( int i = 0, rowLen = row.size(); i < propertyNames.length; i++ ) {
 			Integer idx = columnMap.get(propertyNames[i]);
-			if ( idx != null && idx.intValue() < rowLen ) {
-				String v = row.get(idx.intValue());
+			if ( idx != null && idx < rowLen ) {
+				String v = row.get(idx);
 				if ( v != null ) {
 					result[i] = new BigDecimal(v);
 					empty = false;
