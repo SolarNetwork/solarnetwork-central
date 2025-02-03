@@ -41,7 +41,7 @@ import net.solarnetwork.central.inin.domain.EndpointAuthConfiguration;
  * @author matt
  * @version 1.0
  */
-public class UpsertEndpointAuthConfiguration implements PreparedStatementCreator, SqlProvider {
+public final class UpsertEndpointAuthConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.inin_endpoint_auth_cred (

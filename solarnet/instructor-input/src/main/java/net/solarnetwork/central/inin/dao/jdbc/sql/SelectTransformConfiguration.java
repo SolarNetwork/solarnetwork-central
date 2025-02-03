@@ -43,7 +43,7 @@ import net.solarnetwork.central.inin.domain.TransformPhase;
  * @author matt
  * @version 1.0
  */
-public class SelectTransformConfiguration
+public final class SelectTransformConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */

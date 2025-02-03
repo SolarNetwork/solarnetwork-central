@@ -42,7 +42,7 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectCredentialConfiguration
+public final class SelectCredentialConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -133,7 +133,7 @@ public class SelectCredentialConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled().booleanValue());
+			stmt.setBoolean(++p, filter.getEnabled());
 		}
 		return p;
 	}
