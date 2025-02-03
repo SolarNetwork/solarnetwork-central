@@ -1,21 +1,21 @@
 /* ==================================================================
  * AesPasswordEncoder.java - 8/10/2024 12:59:34 pm
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,7 +33,7 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Implementation of {@link PasswordEncoder} using <b>symmetric</b> encryption.
- * 
+ *
  * <p>
  * For typical password-handling scenarios where only password comparisons are
  * required, an <b>asymmetric</b> encoder like the
@@ -42,12 +42,12 @@ import net.solarnetwork.util.ObjectUtils;
  * password is required for further processing, such as decrypting a
  * previously-encrypted secret.
  * </p>
- * 
+ *
  * <p>
  * This class also implements {@link BytesEncryptor} and encrypts/decrypts
  * without any prefix added.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -58,7 +58,7 @@ public final class PrefixedTextEncryptor implements TextEncryptor, BytesEncrypto
 
 	/**
 	 * Create a new encryptor using AES.
-	 * 
+	 *
 	 * @param password
 	 *        the password
 	 * @param salt
@@ -72,7 +72,7 @@ public final class PrefixedTextEncryptor implements TextEncryptor, BytesEncrypto
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param prefix
 	 *        a prefix to prepend to encrypted values
 	 * @param encryptor
@@ -123,10 +123,10 @@ public final class PrefixedTextEncryptor implements TextEncryptor, BytesEncrypto
 
 	/**
 	 * Get the configured prefix.
-	 * 
+	 *
 	 * @return the prefix
 	 */
-	public final String getPrefix() {
+	public String getPrefix() {
 		return prefix;
 	}
 

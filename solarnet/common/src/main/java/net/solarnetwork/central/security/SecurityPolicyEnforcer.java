@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecurityPolicyEnforcer.java - 10/10/2016 8:33:46 PM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
- * 
+ *
  * @author matt
  * @version 2.2
  * @since 1.12
@@ -63,7 +63,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	/**
 	 * Construct a new enforcer.
-	 * 
+	 *
 	 * @param policy
 	 *        The policy to enforce.
 	 * @param principal
@@ -72,12 +72,12 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        The domain object to enforce the policy on.
 	 */
 	public SecurityPolicyEnforcer(SecurityPolicy policy, Object principal, Object delegate) {
-		this(policy, principal, delegate, (PathMatcher) null);
+		this(policy, principal, delegate, null);
 	}
 
 	/**
 	 * Construct a new enforcer with patch matching support.
-	 * 
+	 *
 	 * @param policy
 	 *        The policy to enforce.
 	 * @param principal
@@ -95,7 +95,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	/**
 	 * Construct a new enforcer with patch matching support.
-	 * 
+	 *
 	 * @param policy
 	 *        The policy to enforce.
 	 * @param principal
@@ -122,10 +122,12 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	/**
 	 * Wrap an object with a {@link SecurityPolicyEnforcer}, enforcing policy
 	 * properties.
-	 * 
+	 *
+	 * <p>
 	 * This will return a proxy object that implements all interfaces on the
-	 * provided enforder's {@code delegate} property.
-	 * 
+	 * provided enforcer's {@code delegate} property.
+	 * </p>
+	 *
 	 * @param <T>
 	 *        the return object type
 	 * @param enforcer
@@ -134,14 +136,14 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T createSecurityPolicyProxy(SecurityPolicyEnforcer enforcer) {
-		Class<?>[] interfaces = ClassUtils.getAllInterfaces(enforcer.getDelgate());
-		return (T) Proxy.newProxyInstance(enforcer.getDelgate().getClass().getClassLoader(), interfaces,
+		Class<?>[] interfaces = ClassUtils.getAllInterfaces(enforcer.getDelegate());
+		return (T) Proxy.newProxyInstance(enforcer.getDelegate().getClass().getClassLoader(), interfaces,
 				enforcer);
 	}
 
 	/**
 	 * Verify the security policy on all supported properties immediately.
-	 * 
+	 *
 	 * @throws AuthorizationException
 	 *         if any policy fails
 	 */
@@ -200,7 +202,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	/**
 	 * Verify an arbitrary list of node IDs against the configured policy.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        The node IDs to verify.
 	 * @return The allowed node IDs.
@@ -218,7 +220,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		}
 		if ( nodeIds != null && nodeIds.length > 0 ) {
 			// remove any source IDs not in the policy
-			Set<Long> nodeIdsSet = new LinkedHashSet<Long>(Arrays.asList(nodeIds));
+			Set<Long> nodeIdsSet = new LinkedHashSet<>(Arrays.asList(nodeIds));
 			for ( Iterator<Long> itr = nodeIdsSet.iterator(); itr.hasNext(); ) {
 				Long nodeId = itr.next();
 				if ( !policyNodeIds.contains(nodeId) ) {
@@ -226,16 +228,16 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 					itr.remove();
 				}
 			}
-			if ( nodeIdsSet.size() < 1 ) {
+			if ( nodeIdsSet.isEmpty() ) {
 				LOG.warn("Access DENIED to nodes {} for {}", nodeIds, principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeIds);
 			} else if ( nodeIdsSet.size() < nodeIds.length ) {
-				nodeIds = nodeIdsSet.toArray(new Long[nodeIdsSet.size()]);
+				nodeIds = nodeIdsSet.toArray(Long[]::new);
 			}
-		} else if ( nodeIds == null || nodeIds.length < 1 ) {
+		} else {
 			// no source IDs provided, set to policy source IDs
 			LOG.info("Access RESTRICTED to nodes {} for {}", policyNodeIds, principal);
-			nodeIds = policyNodeIds.toArray(new Long[policyNodeIds.size()]);
+			nodeIds = policyNodeIds.toArray(Long[]::new);
 		}
 		cachedNodeIds = (nodeIds == null ? new Long[0] : nodeIds);
 		return nodeIds;
@@ -261,7 +263,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	/**
 	 * Verify an arbitrary list of source IDs against the configured policy.
-	 * 
+	 *
 	 * @param sourceIds
 	 *        The source IDs to verify.
 	 * @return The allowed source IDs.
@@ -321,11 +323,8 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			// remove any source IDs not in the policy (or not matching a pattern)
 			for ( Iterator<String> itr = sourceIdsSet.iterator(); itr.hasNext(); ) {
 				final String sourceId = itr.next();
-				if ( policySourceIds.contains(sourceId) ) {
-					continue;
-				}
-				if ( policySourceIdPatterns != null
-						&& matchesPattern(policySourceIdPatterns, sourceId) ) {
+				if ( policySourceIds.contains(sourceId) || (policySourceIdPatterns != null
+						&& matchesPattern(policySourceIdPatterns, sourceId)) ) {
 					continue;
 				}
 				LOG.warn("Access DENIED to source {} for {}: policy restriction", sourceId, principal);
@@ -357,12 +356,12 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				LOG.warn("Access DENIED to sources {} for {}", sourceIds, principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, sourceIds);
 			} else if ( !sourceIdsSet.equals(new HashSet<>(Arrays.asList(sourceIds))) ) {
-				sourceIds = sourceIdsSet.toArray(new String[sourceIdsSet.size()]);
+				sourceIds = sourceIdsSet.toArray(String[]::new);
 			}
-		} else if ( sourceIds == null || sourceIds.length < 1 ) {
+		} else {
 			// no source IDs provided, set to policy source IDs
 			LOG.info("Access RESTRICTED to sources {} for {}", policySourceIds, principal);
-			sourceIds = policySourceIds.toArray(new String[policySourceIds.size()]);
+			sourceIds = policySourceIds.toArray(String[]::new);
 		}
 		if ( cacheResults ) {
 			cachedSourceIds = (sourceIds == null ? new String[0] : sourceIds);
@@ -389,7 +388,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 
 	/**
 	 * Verify an arbitrary metadata instance against the configured policy.
-	 * 
+	 *
 	 * @param metadata
 	 *        The metadata to verify.
 	 * @return The allowed metadata.
@@ -477,7 +476,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				mapVal = enforceMetadataPaths(policyPaths, mapVal, entryPath);
 				if ( mapVal != null ) {
 					if ( result == null ) {
-						result = new LinkedHashMap<String, Object>(meta.size());
+						result = new LinkedHashMap<>(meta.size());
 					}
 					result.put(me.getKey(), mapVal);
 				}
@@ -485,7 +484,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				// leaf node
 				if ( matchesPattern(policyPaths, entryPath) ) {
 					if ( result == null ) {
-						result = new LinkedHashMap<String, Object>(meta.size());
+						result = new LinkedHashMap<>(meta.size());
 					}
 					result.put(me.getKey(), val);
 				}
@@ -497,7 +496,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		return result;
 	}
 
-	public Object getDelgate() {
+	public Object getDelegate() {
 		return delegate;
 	}
 
