@@ -152,10 +152,10 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 * Create a job status changed event out of this instance.
 	 *
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumImportStatus)
+	 * @see #createJobStatusChangedEvent(DatumImportStatus)
 	 */
-	default AppEvent asJobStatusChagnedEvent() {
-		return createJobStatusChagnedEvent(this);
+	default AppEvent asJobStatusChangedEvent() {
+		return createJobStatusChangedEvent(this);
 	}
 
 	/**
@@ -164,10 +164,10 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 * @param result
 	 *        a specific result to use
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumImportStatus, DatumImportResult)
+	 * @see #createJobStatusChangedEvent(DatumImportStatus, DatumImportResult)
 	 */
-	default AppEvent asJobStatusChagnedEvent(DatumImportResult result) {
-		return createJobStatusChagnedEvent(this, result);
+	default AppEvent asJobStatusChangedEvent(DatumImportResult result) {
+		return createJobStatusChangedEvent(this, result);
 	}
 
 	/**
@@ -182,7 +182,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumImportStatus status) {
+	static AppEvent createJobStatusChangedEvent(DatumImportStatus status) {
 		DatumImportResult result = null;
 		if ( status.isDone() ) {
 			try {
@@ -191,7 +191,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 				// ignore
 			}
 		}
-		return createJobStatusChagnedEvent(status, result);
+		return createJobStatusChangedEvent(status, result);
 	}
 
 	/**
@@ -208,7 +208,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 	 *        the import result
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumImportStatus status, DatumImportResult result) {
+	static AppEvent createJobStatusChangedEvent(DatumImportStatus status, DatumImportResult result) {
 		Map<String, Object> props = new HashMap<>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
