@@ -541,7 +541,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		if ( ea == null ) {
 			return;
 		}
-		ea.postEvent(task.asJobStatusChagnedEvent(task.info));
+		ea.postEvent(task.asJobStatusChangedEvent(task.info));
 	}
 
 	private <T> T doWithinOptionalTransaction(Supplier<T> supplier) {
