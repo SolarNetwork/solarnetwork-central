@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPConnectionClosedException;
 import org.apache.commons.net.ftp.FTPReply;
@@ -84,7 +85,8 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 		result.add(new BasicTextFieldSettingSpecifier("username", ""));
 		result.add(new BasicTextFieldSettingSpecifier("password", "", true));
 		result.add(new BasicToggleSettingSpecifier("implicitTls", Boolean.FALSE));
-		result.add(new BasicToggleSettingSpecifier("dataTls", FtpDestinationProperties.DEFAUT_DATA_TLS));
+		result.add(
+				new BasicToggleSettingSpecifier("dataTls", FtpDestinationProperties.DEFAULT_DATA_TLS));
 		return result;
 	}
 
@@ -110,7 +112,7 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final String destUrl = expandTemplateString(props.getUrl(),
-				new UrlEncodingOnAccessMap<String>((Map) runtimeProperties));
+				new UrlEncodingOnAccessMap<>((Map) runtimeProperties));
 
 		final URI uri;
 		try {
@@ -124,7 +126,7 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 		int port = (uri.getPort() > 0 ? uri.getPort()
 				: "ftps".equalsIgnoreCase(uri.getScheme()) && props.isImplicitTls()
 						? FTPSClient.DEFAULT_FTPS_PORT
-						: FTPClient.DEFAULT_PORT);
+						: FTP.DEFAULT_PORT);
 		ftp.connect(uri.getHost(), port);
 		ftp.enterLocalPassiveMode();
 		if ( props.isDataTls() && ftp instanceof FTPSClient ftps ) {
@@ -143,7 +145,7 @@ public class FtpDatumExportDestinationService extends BaseDatumExportDestination
 					throw new IOException("Username rejected by server.");
 				}
 			}
-			if ( !ftp.setFileType(FTPClient.BINARY_FILE_TYPE) ) {
+			if ( !ftp.setFileType(FTP.BINARY_FILE_TYPE) ) {
 				throw new IOException("Unable to switch to binary file type.");
 			}
 			var inputs = new ArrayList<InputStream>();
