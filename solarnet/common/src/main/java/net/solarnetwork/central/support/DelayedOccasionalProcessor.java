@@ -1,5 +1,5 @@
 /* ==================================================================
- * DelayedOcassionalProcessor.java - 3/07/2024 11:09:30 am
+ * DelayedOccasionalProcessor.java - 3/07/2024 11:09:30 am
  *
  * Copyright 2024 SolarNetwork.net Dev Team
  *
@@ -59,7 +59,7 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 1.0
  */
-public abstract class DelayedOcassionalProcessor<T>
+public abstract class DelayedOccasionalProcessor<T>
 		implements AsyncProcessor<T>, Runnable, ServiceLifecycleObserver, PingTest {
 
 	/** The {@code delay} property default value. */
@@ -122,7 +122,7 @@ public abstract class DelayedOcassionalProcessor<T>
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DelayedOcassionalProcessor(Clock clock, StatTracker stats, TaskScheduler scheduler,
+	public DelayedOccasionalProcessor(Clock clock, StatTracker stats, TaskScheduler scheduler,
 			Queue<T> items) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");

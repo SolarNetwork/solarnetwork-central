@@ -37,7 +37,7 @@ import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.support.DelayQueueSet;
-import net.solarnetwork.central.support.DelayedOcassionalProcessor;
+import net.solarnetwork.central.support.DelayedOccasionalProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -52,7 +52,7 @@ import net.solarnetwork.util.StatTracker;
  * @version 1.1
  */
 public class AsyncChargePointStatusDao
-		extends DelayedOcassionalProcessor<AsyncChargePointStatusDao.StatusUpdate>
+		extends DelayedOccasionalProcessor<AsyncChargePointStatusDao.StatusUpdate>
 		implements ChargePointStatusDao, Runnable, ServiceLifecycleObserver {
 
 	/** The {@code flushDelay} property default value. */

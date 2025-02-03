@@ -47,7 +47,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.Instruction;
@@ -57,8 +56,9 @@ import net.solarnetwork.central.ocpp.domain.CentralChargePoint;
 import net.solarnetwork.central.ocpp.domain.CentralOcppUserEvents;
 import net.solarnetwork.central.ocpp.domain.OcppAppEvents;
 import net.solarnetwork.central.ocpp.util.OcppInstructionUtils;
-import net.solarnetwork.central.support.DelayedOcassionalProcessor;
+import net.solarnetwork.central.support.DelayedOccasionalProcessor;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.event.AppEvent;
 import net.solarnetwork.event.AppEventHandler;
@@ -78,7 +78,7 @@ import net.solarnetwork.util.StatTracker;
  * @version 1.0
  */
 public class CentralOcppNodeInstructionProvider extends
-		DelayedOcassionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
+		DelayedOccasionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
 		implements AppEventHandler, CentralOcppUserEvents {
 
 	/** The {@code flushDelay} property default value. */
@@ -174,7 +174,8 @@ public class CentralOcppNodeInstructionProvider extends
 			SimpleInstructionFilter filter = new SimpleInstructionFilter();
 			filter.setNodeId(cp.getNodeId());
 			filter.setStateSet(EnumSet.of(InstructionState.Received));
-			FilterResults<EntityMatch, Long> matches = instructionDao.findFiltered(filter, null, null, null);
+			FilterResults<EntityMatch, Long> matches = instructionDao.findFiltered(filter, null, null,
+					null);
 			for ( EntityMatch match : matches ) {
 				Instruction instruction;
 				if ( match instanceof Instruction ) {
