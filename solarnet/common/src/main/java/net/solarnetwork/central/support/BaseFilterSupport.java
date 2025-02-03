@@ -1,27 +1,28 @@
 /* ==================================================================
  * BaseFilterSupport.java - 29/04/2022 4:35:38 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.support;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -35,13 +36,14 @@ import net.solarnetwork.central.domain.TagFilter;
 
 /**
  * Base common filter support.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.2
  */
 public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, TagFilter {
 
+	@Serial
 	private static final long serialVersionUID = 4146553587756173455L;
 
 	private Long[] userIds;
@@ -93,14 +95,14 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Set a single tag.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single tag at a
 	 * time. The tag is still stored on the {@code tags} array, just as the
 	 * first value. Calling this method replaces any existing {@code tags} value
 	 * with a new array containing just the tag passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param tag
 	 *        the tag
 	 */
@@ -116,7 +118,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Set a list of tags to filter on.
-	 * 
+	 *
 	 * @param tags
 	 *        the tags to filter on
 	 */
@@ -126,7 +128,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Set a single user ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single user ID at a
 	 * time. The user ID is still stored on the {@code userIds} array, just as
@@ -134,7 +136,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 	 * {@code userIds} value with a new array containing just the ID passed into
 	 * this method.
 	 * </p>
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user
 	 */
@@ -145,12 +147,12 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Get the first user ID.
-	 * 
+	 *
 	 * <p>
 	 * This returns the first available user ID from the {@code userIds} array,
 	 * or {@literal null} if not available.
 	 * </p>
-	 * 
+	 *
 	 * @return the first user ID, or {@literal null}
 	 */
 	@JsonIgnore
@@ -160,7 +162,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Get all user IDs to filter on.
-	 * 
+	 *
 	 * @return The user IDs, or {@literal null}.
 	 */
 	public Long[] getUserIds() {
@@ -169,7 +171,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Set a list of user IDs to filter on.
-	 * 
+	 *
 	 * @param userIds
 	 *        The user IDs to filter on.
 	 */
@@ -184,7 +186,7 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 
 	/**
 	 * Set a metadata search filter, in LDAP search filter syntax.
-	 * 
+	 *
 	 * @param metadataFilter
 	 *        the metadata filter to use, or {@literal null}
 	 */
@@ -207,10 +209,9 @@ public class BaseFilterSupport implements Filter, Serializable, MetadataFilter, 
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof BaseFilterSupport) ) {
+		if ( !(obj instanceof BaseFilterSupport other) ) {
 			return false;
 		}
-		BaseFilterSupport other = (BaseFilterSupport) obj;
 		return Arrays.equals(tags, other.tags) && Arrays.equals(userIds, other.userIds)
 				&& Objects.equals(metadataFilter, other.metadataFilter);
 	}

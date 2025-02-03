@@ -1,21 +1,21 @@
 /* ==================================================================
  * DelayedOcassionalProcessor.java - 3/07/2024 11:09:30 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,22 +40,22 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 import net.solarnetwork.util.StatTracker;
 
 /**
- * Asynchronously process ocassionally-appearing items.
- * 
+ * Asynchronously process occasionally-appearing items.
+ *
  * <p>
  * The goal of this class is to help asynchronously process "bursty" items that
  * come into being inconsistently, and sometimes in a duplicate manner, after a
  * brief delay. The delay allows de-duplication to occur within the delay
  * period.
  * </p>
- * 
+ *
  * <p>
  * Different processing styles can be achieved via different {@link Queue}
  * implementations, such as {@link LinkedHashSetBlockingQueue} for
  * de-duplication or {@link DelayQueueSet} for consistently delayed
  * de-duplication.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -110,7 +110,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param clock
 	 *        the clock
 	 * @param stats
@@ -144,7 +144,7 @@ public abstract class DelayedOcassionalProcessor<T>
 			if ( flushTask != null && flushTask.isDone() ) {
 				flushTask.cancel(true);
 			}
-			T item = null;
+			T item;
 			while ( (item = items.poll()) != null ) {
 				stats.increment(Stats.ItemsRemoved);
 				try {
@@ -176,7 +176,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	@Override
 	public boolean cancelAsyncProcessItem(T item) {
-		boolean result = false;
+		boolean result;
 		flushLock.lock();
 		try {
 			result = items.remove(item);
@@ -191,7 +191,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	/**
 	 * Process a delayed item.
-	 * 
+	 *
 	 * @param item
 	 *        the item to process
 	 */
@@ -201,7 +201,7 @@ public abstract class DelayedOcassionalProcessor<T>
 	public final void run() {
 		stats.increment(Stats.Batches);
 		try {
-			T item = null;
+			T item;
 			while ( (item = items.poll()) != null ) {
 				stats.increment(Stats.ItemsRemoved);
 				try {
@@ -258,7 +258,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	/**
 	 * Get the delay.
-	 * 
+	 *
 	 * @return the delay; defaults to {@link #DEFAULT_DELAY}
 	 */
 	public final Duration getDelay() {
@@ -267,7 +267,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	/**
 	 * Set the delay.
-	 * 
+	 *
 	 * @param delay
 	 *        the delay to set
 	 */
@@ -277,7 +277,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	/**
 	 * Set the queue size alert threshold.
-	 * 
+	 *
 	 * @return the queue size threshold after which the ping test should fail;
 	 *         defaults to {@link #DEFAULT_QUEUE_SIZE_ALERT_THRESHOLD}
 	 */
@@ -287,7 +287,7 @@ public abstract class DelayedOcassionalProcessor<T>
 
 	/**
 	 * Set the queue size alert threshold.
-	 * 
+	 *
 	 * @param queueSizeAlertThreshold
 	 *        the queue size threshold after which the ping test should fail
 	 */

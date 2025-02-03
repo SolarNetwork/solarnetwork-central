@@ -32,12 +32,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A blocking queue implementation backed by a linked hash set for predictable
  * iteration order and constant time addition, removal and contains operations.
- * 
+ *
  * <p>
  * Adapted from the Apache Marmotta project and
  * {@code java.util.LinkedBlockingQueue}.
  * </p>
- * 
+ *
  * @author Sebastian Schaffert
  * @author matt
  * @version 1.0
@@ -63,7 +63,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param capacity
 	 *        the queue capacity
 	 */
@@ -73,7 +73,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param delegate
 	 *        the delegate
 	 * @param capacity
@@ -198,7 +198,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 
 	@Override
 	public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-		E x = null;
+		E x;
 		final int c;
 		long nanos = unit.toNanos(timeout);
 		final AtomicInteger count = this.count;
@@ -253,6 +253,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 			for ( int i = 0; i < n && it.hasNext(); i++ ) {
 				E x = it.next();
 				c.add(x);
+				signalNotFull = true;
 			}
 			count.getAndAdd(-n);
 			if ( signalNotFull ) {
@@ -316,7 +317,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 	public Iterator<E> iterator() {
 		final ReentrantLock lock = this.lock;
 		final Iterator<E> it = delegate.iterator();
-		return new Iterator<E>() {
+		return new Iterator<>() {
 
 			@Override
 			public boolean hasNext() {

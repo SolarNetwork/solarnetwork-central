@@ -373,7 +373,7 @@ public class DaoUserBizTests {
 
 		replayAll();
 
-		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		UserNode entry = new UserNode(testUser, testNode.clone());
 		entry.getNode().setLocation(loc);
 
 		UserNode result = userBiz.saveUserNode(entry);
@@ -435,7 +435,7 @@ public class DaoUserBizTests {
 
 		replayAll();
 
-		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		UserNode entry = new UserNode(testUser, testNode.clone());
 		entry.getNode().setLocation(loc);
 
 		UserNode result = userBiz.saveUserNode(entry);
@@ -472,7 +472,7 @@ public class DaoUserBizTests {
 
 		replayAll();
 
-		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		UserNode entry = new UserNode(testUser, testNode.clone());
 		entry.getNode().setLocation(loc);
 
 		UserNode result = userBiz.saveUserNode(entry);
