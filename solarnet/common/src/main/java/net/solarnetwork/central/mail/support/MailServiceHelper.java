@@ -1,27 +1,28 @@
 /* ==================================================================
  * MailServiceHelper.java - Jan 14, 2010 11:56:12 AM
- * 
+ *
  * Copyright 2007-2010 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.mail.support;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Locale;
@@ -31,18 +32,19 @@ import net.solarnetwork.central.mail.MessageTemplateDataSource;
 
 /**
  * Factory helper class for creating mail objects.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class MailServiceHelper implements Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 534833315331249860L;
 
 	/**
 	 * Create a new {@link MailAddress} from a display name and an email
 	 * address.
-	 * 
+	 *
 	 * @param toName
 	 *        the display name
 	 * @param toAddress
@@ -55,7 +57,7 @@ public class MailServiceHelper implements Serializable {
 
 	/**
 	 * Create a new {@link MessageTemplateDataSource} from necessary components.
-	 * 
+	 *
 	 * @param subject
 	 *        the mail subject
 	 * @param resourcePath
@@ -68,7 +70,7 @@ public class MailServiceHelper implements Serializable {
 	 */
 	public MessageTemplateDataSource createResourceDataSource(String subject, String resourcePath,
 			Locale locale, Object... params) {
-		Map<String, Object> model = new HashMap<String, Object>();
+		Map<String, Object> model = new HashMap<>();
 		for ( Object o : params ) {
 			Class<?> clazz = o.getClass();
 			// prefer interfaces to class names if possible
