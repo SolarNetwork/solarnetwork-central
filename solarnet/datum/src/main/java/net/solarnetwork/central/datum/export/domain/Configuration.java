@@ -124,7 +124,7 @@ public interface Configuration {
 	 *
 	 * @since 1.1
 	 */
-	Pattern PROP_NAME_SANITIZER = Pattern.compile("(?U)[^\\w\\._-]+");
+	Pattern PROP_NAME_SANITIZER = Pattern.compile("(?U)[^\\w._-]+");
 
 	/**
 	 * A runtime property for the job export process time, as a millisecond Unix
@@ -174,7 +174,7 @@ public interface Configuration {
 	 */
 	default Map<String, Object> createRuntimeProperties(DatumExportRequest request,
 			DateTimeFormatter dateFormatter, DatumExportOutputFormatService outputFormatService) {
-		Map<String, Object> result = new LinkedHashMap<String, Object>(8);
+		Map<String, Object> result = new LinkedHashMap<>(8);
 
 		if ( request != null && request.getId() != null ) {
 			result.put(PROP_EXPORT_ID, request.getId());
@@ -234,20 +234,12 @@ public interface Configuration {
 			schedule = ScheduleType.Daily;
 		}
 		ZoneId zone = (getTimeZoneId() != null ? ZoneId.of(getTimeZoneId()) : ZoneOffset.UTC);
-		switch (schedule) {
-			case Hourly:
-				return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").withZone(zone);
-
-			case Weekly:
-				return WEEK_DATE.withZone(zone);
-
-			case Monthly:
-				return DateTimeFormatter.ofPattern("yyyy-MM").withZone(zone);
-
-			default:
-				return DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(zone);
-
-		}
+		return switch (schedule) {
+			case Hourly -> DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm").withZone(zone);
+			case Weekly -> WEEK_DATE.withZone(zone);
+			case Monthly -> DateTimeFormatter.ofPattern("yyyy-MM").withZone(zone);
+			default -> DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(zone);
+		};
 	}
 
 }
