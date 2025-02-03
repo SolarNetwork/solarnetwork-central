@@ -145,7 +145,7 @@ public interface PropertyNameCriteria {
 	 * @return {@literal true} if the instantaneous property name is non-null
 	 */
 	@JsonIgnore
-	default boolean hasInstantatneousPropertyNameCriteria() {
+	default boolean hasInstantaneousPropertyNameCriteria() {
 		return getInstantaneousPropertyName() != null;
 	}
 
@@ -177,7 +177,7 @@ public interface PropertyNameCriteria {
 	 */
 	@JsonIgnore
 	default boolean hasAnyPropertyNameCriteria() {
-		return hasPropertyNameCriteria() || hasInstantatneousPropertyNameCriteria()
+		return hasPropertyNameCriteria() || hasInstantaneousPropertyNameCriteria()
 				|| hasAccumulatingPropertyNameCriteria() || hasStatusPropertyNameCriteria();
 	}
 

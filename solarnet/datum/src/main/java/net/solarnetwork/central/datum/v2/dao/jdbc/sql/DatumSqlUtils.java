@@ -386,7 +386,7 @@ public final class DatumSqlUtils {
 			buf.append("	AND (s.names_i && ? OR s.names_a && ? OR s.names_s && ?)\n");
 			paramCount += 3;
 		}
-		if ( filter.hasInstantatneousPropertyNameCriteria() ) {
+		if ( filter.hasInstantaneousPropertyNameCriteria() ) {
 			buf.append("	AND s.names_i @> ?\n");
 			paramCount += 1;
 		}
@@ -1065,7 +1065,7 @@ public final class DatumSqlUtils {
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			if ( filter.hasInstantatneousPropertyNameCriteria() ) {
+			if ( filter.hasInstantaneousPropertyNameCriteria() ) {
 				Array array = con.createArrayOf("text", filter.getInstantaneousPropertyNames());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
