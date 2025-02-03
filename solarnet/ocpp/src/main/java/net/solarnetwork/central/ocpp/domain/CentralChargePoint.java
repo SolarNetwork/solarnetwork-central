@@ -1,27 +1,28 @@
 /* ==================================================================
  * CentralChargePoint.java - 25/02/2020 6:56:59 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.ocpp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -35,7 +36,7 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
 
 /**
  * A Charge Point entity.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -44,6 +45,7 @@ import net.solarnetwork.ocpp.domain.ChargePointInfo;
 		"connectorCount", "info" })
 public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEntity<Long> {
 
+	@Serial
 	private static final long serialVersionUID = 8776836546559666984L;
 
 	private final Long userId;
@@ -51,7 +53,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the owner user ID
 	 * @param nodeId
@@ -65,7 +67,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param userId
@@ -81,7 +83,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param userId
@@ -103,7 +105,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param userId
@@ -123,7 +125,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the owner user ID
 	 * @param nodeId
@@ -146,14 +148,13 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param other
 	 *        the object to copy
 	 */
 	public CentralChargePoint(ChargePoint other) {
 		super(other);
-		if ( other instanceof CentralChargePoint ) {
-			CentralChargePoint ccp = (CentralChargePoint) other;
+		if ( other instanceof CentralChargePoint ccp ) {
 			this.userId = ccp.userId;
 			this.nodeId = ccp.nodeId;
 		} else {
@@ -164,7 +165,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Create a charge point identity based on this system user.
-	 * 
+	 *
 	 * <p>
 	 * This implementation uses the {@link #getUserId()} value for the returned
 	 * {@link ChargePointIdentity#getUserIdentifier()}.
@@ -216,7 +217,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * Get the owner user ID.
-	 * 
+	 *
 	 * @return the owner user ID
 	 */
 	@Override
@@ -226,7 +227,7 @@ public class CentralChargePoint extends ChargePoint implements UserNodeRelatedEn
 
 	/**
 	 * The associated node ID.
-	 * 
+	 *
 	 * @return the node ID
 	 */
 	@Override

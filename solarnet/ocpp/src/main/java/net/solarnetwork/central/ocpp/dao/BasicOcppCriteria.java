@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicOcppCriteria.java - 17/11/2022 9:09:41 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,7 +35,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
 
 /**
  * Basic implementation of OCPP criteria APIs.
- * 
+ *
  * @author matt
  * @version 1.3
  */
@@ -56,12 +56,12 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Copy the properties of another criteria into this instance.
-	 * 
+	 *
 	 * <p>
 	 * This method will test for conformance to all the various criteria
 	 * interfaces implemented by this class, and copy those properties as well.
 	 * </p>
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 */
@@ -113,7 +113,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Create a copy of a criteria.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 * @return the copy
@@ -150,13 +150,9 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicOcppCriteria other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicOcppCriteria) ) {
-			return false;
-		}
-		BasicOcppCriteria other = (BasicOcppCriteria) obj;
 		return Arrays.equals(actions, other.actions)
 				&& Arrays.equals(chargePointIds, other.chargePointIds)
 				&& Arrays.equals(identifiers, other.identifiers) && Arrays.equals(evseIds, other.evseIds)
@@ -237,7 +233,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single charge point ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single charge point
 	 * ID at a time. The charge point ID is still stored on the
@@ -245,7 +241,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * method replaces any existing {@code chargePointIds} value with a new
 	 * array containing just the ID passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the ID of the charge point
 	 */
@@ -268,7 +264,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a list of charge point IDs to filter on.
-	 * 
+	 *
 	 * @param chargePointIds
 	 *        The charge point IDs to filter on.
 	 */
@@ -278,7 +274,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single EVSE ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single EVSE ID at a
 	 * time. The EVSE ID is still stored on the {@code evseIds} array, just as
@@ -286,7 +282,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * {@code evseIds} value with a new array containing just the ID passed into
 	 * this method.
 	 * </p>
-	 * 
+	 *
 	 * @param evseId
 	 *        the ID of the EVSE
 	 * @since 1.2
@@ -309,7 +305,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a list of EVSE IDs to filter on.
-	 * 
+	 *
 	 * @param evseIds
 	 *        The EVSE IDs to filter on.
 	 * @since 1.2
@@ -320,7 +316,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single connector ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single connector ID
 	 * at a time. The connector ID is still stored on the {@code connectorIds}
@@ -328,7 +324,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * {@code connectorIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param connectorId
 	 *        the ID of the charge point
 	 */
@@ -350,7 +346,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a list of charge point IDs to filter on.
-	 * 
+	 *
 	 * @param connectorIds
 	 *        The connector IDs to filter on.
 	 */
@@ -360,7 +356,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set an identifier.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single identifier at
 	 * a time. The identifier is still stored on the {@code identifiers} array,
@@ -368,7 +364,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * {@code identifiers} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param identifier
 	 *        the identifier to set
 	 */
@@ -390,7 +386,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a list of identifiers to filter on.
-	 * 
+	 *
 	 * @param identifiers
 	 *        The identifiers to filter on.
 	 */
@@ -400,7 +396,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set an action.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single action at a
 	 * time. The action is still stored on the {@code actions} array, just as
@@ -408,7 +404,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * {@code actions} value with a new array containing just the ID passed into
 	 * this method.
 	 * </p>
-	 * 
+	 *
 	 * @param action
 	 *        the action to set
 	 */
@@ -430,7 +426,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a list of actions to filter on.
-	 * 
+	 *
 	 * @param actions
 	 *        The actions to filter on.
 	 */
@@ -445,7 +441,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the start date.
-	 * 
+	 *
 	 * @param startDate
 	 *        the date to set
 	 */
@@ -460,7 +456,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the end date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the date to set
 	 */
@@ -477,7 +473,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single charge session ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single connector ID
 	 * at a time. The connector ID is still stored on the
@@ -485,7 +481,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * method replaces any existing {@code chargeSessionIds} value with a new
 	 * array containing just the ID passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param chargeSessionId
 	 *        the ID of the charge session
 	 */
@@ -501,7 +497,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the charge session IDs.
-	 * 
+	 *
 	 * @param chargeSessionIds
 	 *        the charge session IDs to set
 	 */
@@ -518,7 +514,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single transaction ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use one transaction ID at
 	 * a time. The transaction ID is still stored on the {@code transactionIds}
@@ -526,7 +522,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * {@code transactionIds} value with a new array containing just the ID
 	 * passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param transactionId
 	 *        the ID of the transaction
 	 */
@@ -542,7 +538,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the transaction IDs.
-	 * 
+	 *
 	 * @param transactionIds
 	 *        the transaction IDs to set
 	 */
@@ -558,7 +554,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set a single charge session end reason.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use one end reason at a
 	 * time. The end reason is still stored on the {@code endReasons} array,
@@ -566,7 +562,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 	 * {@code endReasons} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param endReason
 	 *        the end reason
 	 */
@@ -588,7 +584,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the charge session end reasons.
-	 * 
+	 *
 	 * @param endReasons
 	 *        the end reasons to set
 	 */
@@ -603,7 +599,7 @@ public class BasicOcppCriteria extends BasicCoreCriteria
 
 	/**
 	 * Set the active status.
-	 * 
+	 *
 	 * @param active
 	 *        the active to set
 	 */

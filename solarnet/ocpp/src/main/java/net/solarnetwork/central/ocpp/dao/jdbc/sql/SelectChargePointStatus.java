@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectChargePointStatus.java - 17/11/2022 7:47:40 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -44,11 +44,11 @@ import net.solarnetwork.central.ocpp.dao.ChargePointStatusFilter;
 
 /**
  * Generate dynamic SQL for a "find charge point status" query.
- * 
+ *
  * @author matt
  * @version 1.0
  */
-public class SelectChargePointStatus implements PreparedStatementCreator, SqlProvider {
+public final class SelectChargePointStatus implements PreparedStatementCreator, SqlProvider {
 
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
@@ -56,11 +56,11 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by charge point status entities.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>charger -&gt; cp_id</li>
 	 * <li>created -&gt; created</li>
@@ -69,6 +69,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 	 * </ol>
 	 */
 	public static final Map<String, String> SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
 		map.put("user", "user_id");
@@ -83,7 +84,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
@@ -95,7 +96,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param fetchSize
@@ -109,7 +110,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 		this.fetchSize = fetchSize;
 	}
 
-	private void sqlCore(StringBuilder buf, boolean ordered) {
+	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				SELECT created, user_id, cp_id, connected_to, session_id, connected_date
 				FROM solarev.ocpp_charge_point_status
@@ -137,7 +138,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 		} else {
 			order.append(", user_id, cp_id");
 		}
-		if ( order.length() > 0 ) {
+		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}
@@ -145,7 +146,7 @@ public class SelectChargePointStatus implements PreparedStatementCreator, SqlPro
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf, true);
+		sqlCore(buf);
 		sqlOrderBy(buf);
 		limitOffset(filter, buf);
 		return buf.toString();

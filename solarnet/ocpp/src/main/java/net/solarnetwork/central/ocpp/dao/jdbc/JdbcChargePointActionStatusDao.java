@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcChargePointActionStatusDao.java - 16/11/2022 5:40:42 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,13 +24,10 @@ package net.solarnetwork.central.ocpp.dao.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -48,7 +45,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * JDBC implementation of {@link ChargePointActionStatusDao}.
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -58,7 +55,7 @@ public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDa
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
@@ -101,22 +98,17 @@ public class JdbcChargePointActionStatusDao implements ChargePointActionStatusDa
 		final RowMapper<ChargePointActionStatus> mapper = ChargePointActionStatusRowMapper.INSTANCE;
 		processor.start(null, null, null, Collections.emptyMap());
 		try {
-			jdbcOps.execute(sql, new PreparedStatementCallback<Void>() {
-
-				@Override
-				public Void doInPreparedStatement(PreparedStatement ps)
-						throws SQLException, DataAccessException {
-					try (ResultSet rs = ps.executeQuery()) {
-						int row = 0;
-						while ( rs.next() ) {
-							ChargePointActionStatus d = mapper.mapRow(rs, ++row);
-							processor.handleResultItem(d);
-						}
-					} catch ( IOException e ) {
-						throw new RuntimeException(e);
+			jdbcOps.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+				try (ResultSet rs = ps.executeQuery()) {
+					int row = 0;
+					while ( rs.next() ) {
+						ChargePointActionStatus d = mapper.mapRow(rs, ++row);
+						processor.handleResultItem(d);
 					}
-					return null;
+				} catch ( IOException e ) {
+					throw new RuntimeException(e);
 				}
+				return null;
 			});
 		} catch ( RuntimeException e ) {
 			if ( e.getCause() instanceof IOException ) {
