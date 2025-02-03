@@ -1,21 +1,21 @@
 /* ==================================================================
  * JCacheContentCachingService.java - 1/10/2018 7:23:19 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -71,7 +71,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * Caching service backed by a {@link javax.cache.Cache}.
- * 
+ *
  * @author matt
  * @version 1.7
  */
@@ -101,7 +101,7 @@ public class JCacheContentCachingService
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param cache
 	 *        the cache to use
 	 * @throws IllegalArgumentException
@@ -142,8 +142,8 @@ public class JCacheContentCachingService
 		Map<String, Long> statMap = stats.allCounts();
 		Long hits = statMap.get(ContentCacheStats.Hit.name());
 		Long misses = statMap.get(ContentCacheStats.Miss.name());
-		long total = (hits != null ? hits.longValue() : 0L) + (misses != null ? misses.longValue() : 0L);
-		double hitRate = (hits == null || hits.longValue() < 1 ? 0.0 : (double) hits / (double) total);
+		long total = (hits != null ? hits : 0L) + (misses != null ? misses : 0L);
+		double hitRate = (hits == null || hits < 1 ? 0.0 : (double) hits / (double) total);
 		statMap.put("HitRate", (long) (hitRate * 100));
 		return new PingTestResult(true, "Cache active.", statMap);
 	}
@@ -209,15 +209,10 @@ public class JCacheContentCachingService
 		}
 		Matcher m = null;
 		if ( scheme != null ) {
-			switch (scheme) {
-				case V1:
-					m = SNWS_V1_KEY_PATTERN.matcher(header);
-					break;
-
-				case V2:
-					m = SNWS_V2_KEY_PATTERN.matcher(header);
-					break;
-			}
+			m = switch (scheme) {
+				case V1 -> SNWS_V1_KEY_PATTERN.matcher(header);
+				case V2 -> SNWS_V2_KEY_PATTERN.matcher(header);
+			};
 		}
 		if ( m != null && m.find() ) {
 			digest.update(m.group(1).getBytes());
@@ -227,21 +222,23 @@ public class JCacheContentCachingService
 
 	/**
 	 * Apply some normalization rules to the query parameters of a request.
-	 * 
+	 *
 	 * <p>
 	 * This is done so that different ordering of parameters on the request URL
 	 * result in a consistent cache key.
 	 * </p>
-	 * 
+	 *
 	 * @param request
-	 * @return
+	 *        the HTTP request
+	 * @param digest
+	 *        the digest to update
 	 */
 	private void addNormalizedQueryParameters(HttpServletRequest request, MessageDigest digest) {
 		Set<String> paramKeys = request.getParameterMap().keySet();
-		if ( paramKeys.size() < 1 ) {
+		if ( paramKeys.isEmpty() ) {
 			return;
 		}
-		String[] keys = paramKeys.toArray(new String[paramKeys.size()]);
+		String[] keys = paramKeys.toArray(String[]::new);
 		Arrays.sort(keys);
 		boolean first = true;
 		for ( String key : keys ) {
@@ -271,14 +268,13 @@ public class JCacheContentCachingService
 		Enumeration<String> acceptHeader = request.getHeaders(HttpHeaders.ACCEPT);
 		StringBuilder buf = new StringBuilder();
 		while ( acceptHeader.hasMoreElements() ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(",");
 			}
 			buf.append(acceptHeader.nextElement());
 		}
 		String value = buf.toString();
-		return (value != null && value.length() > 0 ? MediaType.parseMediaTypes(value)
-				: Collections.emptyList());
+		return (!value.isEmpty() ? MediaType.parseMediaTypes(value) : Collections.emptyList());
 	}
 
 	private void addNormalizedAccept(HttpServletRequest request, MessageDigest digest) {
@@ -300,7 +296,7 @@ public class JCacheContentCachingService
 					|| MediaType.TEXT_XML.isCompatibleWith(type) ) {
 				digest.update(XML_MEDIA_TYPE_COMPONENT);
 				return;
-			} else if ( type.getType() != null && type.getSubtype() != null ) {
+			} else {
 				digest.update((byte) '+');
 				digest.update(type.getType().getBytes());
 				digest.update((byte) '/');
@@ -311,15 +307,15 @@ public class JCacheContentCachingService
 
 	/**
 	 * Get a cache key for a given request.
-	 * 
+	 *
 	 * <p>
 	 * This implementation uses the following components to generate the cache
 	 * key:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>SolarNetwork authorization user, from the {@literal Authorization}
-	 * HTTP header)</li>
+	 * HTTP header</li>
 	 * <li>request method (via {@link HttpServletRequest#getMethod()})</li>
 	 * <li>request URI (via {@link HttpServletRequest#getRequestURI()})</li>
 	 * <li>request query parameters</li>
@@ -456,13 +452,13 @@ public class JCacheContentCachingService
 
 	/**
 	 * Get metadata for the cache content.
-	 * 
+	 *
 	 * <p>
 	 * This method returns {@literal null}, so extending classes can override.
 	 * Note that the returned object must implement {@link Serializable}, along
 	 * with all values in the map.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the cache key
 	 * @param request
@@ -480,7 +476,7 @@ public class JCacheContentCachingService
 
 	/**
 	 * Configure a set of compressible media types.
-	 * 
+	 *
 	 * @param compressibleMediaTypes
 	 *        compressible media types
 	 */
@@ -491,7 +487,7 @@ public class JCacheContentCachingService
 
 	/**
 	 * A minimum size content must be to qualify for storing compressed.
-	 * 
+	 *
 	 * @param compressMinimumLength
 	 *        the minimum length, in bytes
 	 */
@@ -501,13 +497,13 @@ public class JCacheContentCachingService
 
 	/**
 	 * Set the statistic log update count.
-	 * 
+	 *
 	 * <p>
 	 * Setting this to something greater than {@literal 0} will cause
 	 * {@literal INFO} level statistic log entries to be emitted every
 	 * {@code statLogAccessCount} times a cachable request has been processed.
 	 * </p>
-	 * 
+	 *
 	 * @param statLogAccessCount
 	 *        the access count the access count; defaults to
 	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}

@@ -1,21 +1,21 @@
 /* ==================================================================
  * ContentCachingFilter.java - 29/09/2018 2:07:21 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -62,11 +62,11 @@ import net.solarnetwork.util.StatTracker;
 
 /**
  * Filter for caching HTTP responses, returning cached data when possible.
- * 
+ *
  * <p>
  * This filter delegates most behavior to a {@link ContentCachingService}.
  * </p>
- * 
+ *
  * @author matt
  * @version 3.4
  * @since 1.16
@@ -85,7 +85,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 	private final ConcurrentMap<String, LockAndCount> requestLocks;
 	private final StatTracker stats;
 	private final int lockPoolCapacity;
-	private final LongAccumulator lockPoolMinize;
+	private final LongAccumulator lockPoolMinSize;
 
 	private Set<String> methodsToCache = Collections.singleton("GET");
 	private long requestLockTimeout = TimeUnit.SECONDS.toMillis(240);
@@ -134,7 +134,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 		/**
 		 * Get the identifier.
-		 * 
+		 *
 		 * @return the ID
 		 */
 		public int getId() {
@@ -143,7 +143,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 		/**
 		 * Get the count value.
-		 * 
+		 *
 		 * @return the count
 		 */
 		public int count() {
@@ -160,7 +160,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 		/**
 		 * Test if the lock is locked (by any thread).
-		 * 
+		 *
 		 * @return {@literal true} if the lock is locked by any thread
 		 */
 		public boolean isLocked() {
@@ -201,7 +201,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	/**
 	 * Create a look pool.
-	 * 
+	 *
 	 * @param lockPoolCapacity
 	 *        the desired capacity of the pool
 	 * @return the pool
@@ -216,7 +216,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param contentCachingService
 	 *        the caching service to use
 	 * @param lockPoolCapacity
@@ -231,7 +231,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param contentCachingService
 	 *        the caching service to use
 	 * @param lockPool
@@ -254,23 +254,22 @@ public class ContentCachingFilter implements Filter, PingTest {
 		}
 		this.stats = new StatTracker("ContentCacheFilter", null, log, DEFAULT_STAT_LOG_ACCESS_COUNT);
 		this.lockPoolCapacity = lockPool.size();
-		this.lockPoolMinize = new LongAccumulator(Math::min, Long.MAX_VALUE);
-		this.lockPoolMinize.accumulate(this.lockPoolCapacity);
+		this.lockPoolMinSize = new LongAccumulator(Math::min, Long.MAX_VALUE);
+		this.lockPoolMinSize.accumulate(this.lockPoolCapacity);
 	}
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
-		if ( !(request instanceof HttpServletRequest) || !(response instanceof HttpServletResponse) ) {
+		if ( !(request instanceof HttpServletRequest origRequest)
+				|| !(response instanceof HttpServletResponse origResponse) ) {
 			log.debug("Not HTTP request; caching disabled");
 			chain.doFilter(request, response);
 			return;
 		}
 
-		final HttpServletRequest origRequest = (HttpServletRequest) request;
 		final String requestUri = origRequest.getRequestURI();
 		final Long requestId = requestCounter.incrementAndGet();
-		final HttpServletResponse origResponse = (HttpServletResponse) response;
 
 		final String method = origRequest.getMethod().toUpperCase();
 		if ( !methodsToCache.contains(method) ) {
@@ -298,7 +297,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 					stats.increment(ContentCachingFilterStats.LockPoolBorrowFailures);
 				} else {
 					stats.increment(ContentCachingFilterStats.LockPoolBorrows, true);
-					lockPoolMinize.accumulate(lockPool.size());
+					lockPoolMinSize.accumulate(lockPool.size());
 					if ( log.isTraceEnabled() ) {
 						log.trace("{} {} [{}] Borrowed lock {} from pool", requestId, key, requestUri,
 								l.id);
@@ -434,7 +433,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 		long activeRequests = requestLocks.values().stream().mapToLong(LockAndCount::count).sum();
 		statMap.put("LockPoolCapacity", lockPoolCapacity);
 		statMap.put("LockPoolAvailable", lockPool.size());
-		statMap.put("LockPoolWatermark", lockPoolMinize.get());
+		statMap.put("LockPoolWatermark", lockPoolMinSize.get());
 		statMap.put("ActiveRequests", activeRequests);
 
 		return new PingTestResult(true, null, statMap);
@@ -442,11 +441,11 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	/**
 	 * Configure the HTTP methods that can be cached.
-	 * 
+	 *
 	 * <p>
 	 * The method names should be all upper case.
 	 * </p>
-	 * 
+	 *
 	 * @param methodsToCache
 	 *        the methods to cache; defaults to {@literal GET} only
 	 */
@@ -456,7 +455,7 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	/**
 	 * A timeout for waiting for a request lock.
-	 * 
+	 *
 	 * @param requestLockTimeout
 	 *        the timeout to use, in milliseconds; defaults to 4 minutes
 	 */
@@ -466,13 +465,13 @@ public class ContentCachingFilter implements Filter, PingTest {
 
 	/**
 	 * Set the statistic log update count.
-	 * 
+	 *
 	 * <p>
 	 * Setting this to something greater than {@literal 0} will cause
 	 * {@literal INFO} level statistic log entries to be emitted every
 	 * {@code statLogAccessCount} times a cachable request has been processed.
 	 * </p>
-	 * 
+	 *
 	 * @param statLogAccessCount
 	 *        the access count the access count; defaults to
 	 *        {@link #DEFAULT_STAT_LOG_ACCESS_COUNT}

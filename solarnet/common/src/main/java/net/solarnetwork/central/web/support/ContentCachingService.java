@@ -1,21 +1,21 @@
 /* ==================================================================
  * ContentCachingService.java - 29/09/2018 2:25:51 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Service that supports caching HTTP responses using keys derived from HTTP
  * requests.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 1.16
@@ -39,29 +39,29 @@ import jakarta.servlet.http.HttpServletResponse;
 public interface ContentCachingService {
 
 	/**
-	 * A HTTP response header for the content cache status.
-	 * 
+	 * An HTTP response header for the content cache status.
+	 *
 	 * @since 1.1
 	 */
 	String CONTENT_CACHE_HEADER = "X-SN-Content-Cache";
 
 	/**
 	 * The {@link #CONTENT_CACHE_HEADER} value for a cache hit.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	String CONTENT_CACHE_HEADER_HIT = "HIT";
 
 	/**
 	 * The {@link #CONTENT_CACHE_HEADER} value for a cache miss.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	String CONTENT_CACHE_HEADER_MISS = "MISS";
 
 	/**
 	 * Enumeration of supported compression types.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	enum CompressionType {
@@ -78,7 +78,7 @@ public interface ContentCachingService {
 		/**
 		 * Get the HTTP {@literal Content-Encoding} value associated with this
 		 * compression type.
-		 * 
+		 *
 		 * @return the content encoding
 		 */
 		public String getContentEncoding() {
@@ -88,8 +88,8 @@ public interface ContentCachingService {
 	}
 
 	/**
-	 * Get a cache key from a HTTP request.
-	 * 
+	 * Get a cache key from an HTTP request.
+	 *
 	 * @param request
 	 *        the HTTP request to derive a key from
 	 * @return the key, or {@literal null} if the request should not be cached
@@ -98,7 +98,7 @@ public interface ContentCachingService {
 
 	/**
 	 * Send a cached response for a given cache key, if possible.
-	 * 
+	 *
 	 * @param key
 	 *        the cache key, returned previously from
 	 *        {@link #keyForRequest(HttpServletRequest)}
@@ -116,7 +116,7 @@ public interface ContentCachingService {
 
 	/**
 	 * Cache a response after completing an intercepted response.
-	 * 
+	 *
 	 * @param key
 	 *        the cache key, returned previously from
 	 *        {@link #keyForRequest(HttpServletRequest)}
@@ -138,7 +138,7 @@ public interface ContentCachingService {
 
 	/**
 	 * Cache a response after completing an intercepted response.
-	 * 
+	 *
 	 * @param key
 	 *        the cache key, returned previously from
 	 *        {@link #keyForRequest(HttpServletRequest)}
