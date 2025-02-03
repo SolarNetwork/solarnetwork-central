@@ -1,21 +1,21 @@
 /* ==================================================================
  * SolarInputDatumObserver.java - 10/08/2023 6:41:01 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -60,7 +60,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Observer of SolarInput datum streams.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -69,7 +69,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * The default MQTT topic template for node data subscription.
-	 * 
+	 *
 	 * <p>
 	 * This template will be passed a single node ID (or {@literal +} wildcard)
 	 * parameter.
@@ -109,7 +109,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executor
 	 *        the executor
 	 * @param objectMapper
@@ -129,7 +129,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param observers
 	 *        the map to use for holding observer registrations
 	 * @param executor
@@ -160,7 +160,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 	@Override
 	public void registerNodeObserver(final Consumer<ObjectDatum> observer, final Long... nodeIds) {
 		requireNonNullArgument(observer, "observer");
-		final var handler = handlers.computeIfAbsent(observer, (k) -> new MessageHandler(k));
+		final var handler = handlers.computeIfAbsent(observer, MessageHandler::new);
 		for ( Long nodeId : requireNonEmptyArgument(nodeIds, "nodeIds") ) {
 			if ( observers.computeIfAbsent(nodeId, (k) -> new CopyOnWriteArrayList<>())
 					.addIfAbsent(observer) ) {
@@ -268,7 +268,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 			try {
 				Matcher m = nodeDatumTopicRegex.matcher(topic);
 				if ( !m.matches() ) {
-					log.debug("Unsupported node datum topic: {}" + topic);
+					log.debug("Unsupported node datum topic: {}", topic);
 					return;
 				}
 				final Long nodeId = Long.valueOf(m.group(1));
@@ -360,6 +360,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 				if ( meta == null ) {
 					log.debug("Ignoring node {} stream datum with missing stream metadata: {}", nodeId,
 							d);
+					return null;
 				}
 				final DatumId id = DatumId.nodeId(nodeId, meta.getSourceId(), d.getTimestamp());
 				return ObjectDatum.forStreamDatum(d, owner.getUserId(), id, meta);
@@ -400,7 +401,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Get the metadata cache.
-	 * 
+	 *
 	 * @return the metadata cache to use
 	 */
 	public Cache<DatumId, ObjectDatumStreamMetadata> getMetadataCache() {
@@ -409,7 +410,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Set the metadata cache
-	 * 
+	 *
 	 * @param metadataCache
 	 *        the metadata cache to set
 	 */
@@ -419,7 +420,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Get the node datum topic template.
-	 * 
+	 *
 	 * @return the template
 	 */
 	public String getNodeDatumTopicTemplate() {
@@ -428,14 +429,14 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Set the node datum topic template.
-	 * 
+	 *
 	 * <p>
 	 * This template is used to generate MQTT topics for subscriptions, and must
 	 * accept a single string placeholder for a node ID (or wildcard). The
 	 * template must work in conjunction with the
 	 * {@link #getNodeDatumTopicRegex()} pattern.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeDatumTopicTemplate
 	 *        the template to set; if {@literal null} then
 	 *        {@link #DEFAULT_NODE_DATUM_TOPIC_TEMPLATE} will be set instead
@@ -447,7 +448,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Get the node datum topic pattern.
-	 * 
+	 *
 	 * @return the pattern
 	 */
 	public Pattern getNodeDatumTopicRegex() {
@@ -456,13 +457,13 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	/**
 	 * Set the node datum topic pattern.
-	 * 
+	 *
 	 * <p>
 	 * This pattern is applied to MQTT topics and must return two group matches:
 	 * the node ID and the sub-topic. The pattern must work in conjunction with
 	 * the {@link #getNodeDatumTopicTemplate()} value.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeDatumTopicRegex
 	 *        the nodeDatumTopicRegex to set; if {@literal null} then
 	 *        {@link #DEFAULT_NODE_TOPIC_REGEX} will be set instead
