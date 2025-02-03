@@ -1,21 +1,21 @@
 /* ==================================================================
  * PingController.java - 25/05/2015 10:19:49 am
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -49,7 +48,7 @@ import net.solarnetwork.service.PingTestResultDisplay;
 /**
  * A web controller for running a set of {@link PingTest} tests and returning
  * the results.
- * 
+ *
  * @author matt
  * @version 3.1
  */
@@ -62,7 +61,7 @@ public class PingController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tests
 	 *        the tests
 	 */
@@ -79,25 +78,17 @@ public class PingController {
 			allTests.addAll(tests);
 		}
 		if ( !allTests.isEmpty() ) {
-			results = new TreeMap<String, PingTestResultDisplay>();
+			results = new TreeMap<>();
 			for ( final PingTest t : allTests ) {
 				final Instant start = Instant.now();
 				PingTest.Result pingTestResult = null;
 				Future<PingTest.Result> f = null;
 				try {
-					f = EXECUTOR.submit(new Callable<PingTest.Result>() {
-
-						@Override
-						public PingTest.Result call() throws Exception {
-							return t.performPingTest();
-						}
-					});
+					f = EXECUTOR.submit(t::performPingTest);
 					pingTestResult = f.get(t.getPingTestMaximumExecutionMilliseconds(),
 							TimeUnit.MILLISECONDS);
 				} catch ( TimeoutException e ) {
-					if ( f != null ) {
-						f.cancel(true);
-					}
+					f.cancel(true);
 					pingTestResult = new PingTestResult(false, "Timeout: no result provided within "
 							+ t.getPingTestMaximumExecutionMilliseconds() + "ms");
 				} catch ( Throwable e ) {
@@ -107,6 +98,7 @@ public class PingController {
 					}
 					pingTestResult = new PingTestResult(false, "Exception: " + root.toString());
 				} finally {
+					assert pingTestResult != null;
 					results.put(t.getPingTestId(), new PingTestResultDisplay(t, pingTestResult, start));
 				}
 			}
@@ -139,7 +131,7 @@ public class PingController {
 
 		/**
 		 * Construct with values.
-		 * 
+		 *
 		 * @param date
 		 *        The date the tests were executed at.
 		 * @param results
@@ -166,7 +158,7 @@ public class PingController {
 
 		/**
 		 * Get a map of test ID to test results.
-		 * 
+		 *
 		 * @return All test results.
 		 */
 		public Map<String, PingTestResultDisplay> getResults() {
@@ -175,7 +167,7 @@ public class PingController {
 
 		/**
 		 * Get the date the tests were executed.
-		 * 
+		 *
 		 * @return The date.
 		 */
 		public Instant getDate() {
@@ -185,7 +177,7 @@ public class PingController {
 		/**
 		 * Return <em>true</em> if there are test results available and all the
 		 * results return <em>true</em> for {@link PingTestResult#isSuccess()}.
-		 * 
+		 *
 		 * @return Boolean flag.
 		 */
 		public boolean isAllGood() {
@@ -196,7 +188,7 @@ public class PingController {
 
 	/**
 	 * Get the ping tests.
-	 * 
+	 *
 	 * @return the tests
 	 */
 	public List<PingTest> getTests() {
