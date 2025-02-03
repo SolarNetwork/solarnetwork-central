@@ -253,6 +253,7 @@ public class LinkedHashSetBlockingQueue<E> extends AbstractQueue<E> implements B
 			for ( int i = 0; i < n && it.hasNext(); i++ ) {
 				E x = it.next();
 				c.add(x);
+				it.remove();
 				signalNotFull = true;
 			}
 			count.getAndAdd(-n);
