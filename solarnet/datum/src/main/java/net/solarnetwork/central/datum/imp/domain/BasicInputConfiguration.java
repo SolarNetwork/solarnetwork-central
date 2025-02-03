@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.imp.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -42,6 +43,7 @@ import net.solarnetwork.util.StringUtils;
 public class BasicInputConfiguration extends BasicIdentifiableConfiguration
 		implements InputConfiguration, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 3386550853352176750L;
 
 	private Long userId;
