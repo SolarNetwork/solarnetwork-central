@@ -42,7 +42,7 @@ import net.solarnetwork.central.dnp3.domain.ServerMeasurementConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectServerMeasurementConfiguration
+public final class SelectServerMeasurementConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -156,7 +156,7 @@ public class SelectServerMeasurementConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSourceIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled().booleanValue());
+			stmt.setBoolean(++p, filter.getEnabled());
 		}
 		return p;
 	}

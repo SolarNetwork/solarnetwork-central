@@ -42,7 +42,7 @@ import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
  * @author matt
  * @version 1.0
  */
-public class SelectTrustedIssuerCertificate
+public final class SelectTrustedIssuerCertificate
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -133,7 +133,7 @@ public class SelectTrustedIssuerCertificate
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSubjectDns());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled().booleanValue());
+			stmt.setBoolean(++p, filter.getEnabled());
 		}
 		return p;
 	}

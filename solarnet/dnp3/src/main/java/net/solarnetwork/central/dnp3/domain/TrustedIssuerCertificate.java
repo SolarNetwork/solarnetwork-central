@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import java.io.Serial;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.domain.UserStringCompositePK;
 @JsonPropertyOrder({ "userId", "subjectDn", "created", "modified", "enabled", "expires" })
 public class TrustedIssuerCertificate extends BaseUserCertificate<TrustedIssuerCertificate> {
 
+	@Serial
 	private static final long serialVersionUID = 4567846203298487079L;
 
 	/**

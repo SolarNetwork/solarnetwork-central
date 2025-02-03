@@ -42,7 +42,7 @@ import net.solarnetwork.central.dnp3.domain.ServerConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectServerConfiguration
+public final class SelectServerConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -133,7 +133,7 @@ public class SelectServerConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServerIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled().booleanValue());
+			stmt.setBoolean(++p, filter.getEnabled());
 		}
 		return p;
 	}
