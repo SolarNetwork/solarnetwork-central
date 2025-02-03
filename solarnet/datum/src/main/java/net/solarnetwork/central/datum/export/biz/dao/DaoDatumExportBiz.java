@@ -48,8 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.dao.SecurityTokenDao;
@@ -211,7 +209,6 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		private final DatumExportTaskInfo info;
 		private DatumExportState jobState;
 		private double percentComplete;
-		private long completionDate;
 		private Future<DatumExportResult> delegate;
 
 		/**
@@ -370,7 +367,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 					GeneralNodeDatumPK auditDatumKey = new GeneralNodeDatumPK();
 					auditDatumKey.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 
-					datumDao.bulkExport(new ExportCallback<GeneralNodeDatumFilterMatch>() {
+					datumDao.bulkExport(new ExportCallback<>() {
 
 						@Override
 						public void didBegin(Long totalResultCountEstimate) {
@@ -468,7 +465,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 		@Override
 		public long getCompletionDate() {
-			return completionDate;
+			Instant ts = (info != null ? info.getCompletionDate() : null);
+			return (ts != null ? ts.toEpochMilli() : 0L);
 		}
 
 		@Override
@@ -501,7 +499,8 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		public String toString() {
 			return "DatumExportTask{jobId=" + getJobId() + ",config="
 					+ (info != null ? info.getConfig() : null) + ",jobState=" + jobState
-					+ ",percentComplete=" + percentComplete + ",completionDate=" + completionDate + "}";
+					+ ",percentComplete=" + percentComplete + ",completionDate="
+					+ (info != null ? info.getCompletionDate() : null) + "}";
 		}
 
 	}
@@ -547,15 +546,7 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 
 	private <T> T doWithinOptionalTransaction(Supplier<T> supplier) {
 		if ( transactionTemplate != null ) {
-			return transactionTemplate.execute(new TransactionCallback<T>() {
-
-				@Override
-				public T doInTransaction(TransactionStatus status) {
-
-					return supplier.get();
-				}
-
-			});
+			return transactionTemplate.execute(status -> supplier.get());
 		} else {
 			return supplier.get();
 		}
