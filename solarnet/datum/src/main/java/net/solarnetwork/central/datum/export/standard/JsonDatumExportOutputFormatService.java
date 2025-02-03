@@ -62,14 +62,14 @@ public class JsonDatumExportOutputFormatService extends BaseDatumExportOutputFor
 	 * Default constructor.
 	 */
 	public JsonDatumExportOutputFormatService() {
-		this((ObjectMapper) null);
+		this(null);
 	}
 
 	/**
 	 * Construct with an {@link ObjectMapper}.
 	 *
 	 * @param objectMapper
-	 *        the object mapper to use
+	 *        the object mapper to use, or {@code null} to create a standard one
 	 */
 	public JsonDatumExportOutputFormatService(ObjectMapper objectMapper) {
 		super("net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputFormatService");
