@@ -86,7 +86,7 @@ public class DatumAuxiliaryPK extends StreamPK
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
 		if ( kind != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("kind=");
@@ -107,13 +107,9 @@ public class DatumAuxiliaryPK extends StreamPK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof DatumAuxiliaryPK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof DatumAuxiliaryPK) ) {
-			return false;
-		}
-		DatumAuxiliaryPK other = (DatumAuxiliaryPK) obj;
 		return kind == other.kind;
 	}
 

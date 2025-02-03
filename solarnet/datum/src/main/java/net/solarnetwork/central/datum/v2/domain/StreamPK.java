@@ -88,7 +88,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 		if ( o == null ) {
 			return -1;
 		}
-		int result = 0;
+		int result;
 		if ( streamId != o.streamId ) {
 			if ( streamId == null ) {
 				return 1;
@@ -125,14 +125,14 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		if ( streamId != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("streamId=");
 			buf.append(streamId);
 		}
 		if ( timestamp != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("timestamp=");
@@ -150,10 +150,9 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof StreamPK) ) {
+		if ( !(obj instanceof StreamPK other) ) {
 			return false;
 		}
-		StreamPK other = (StreamPK) obj;
 		return Objects.equals(streamId, other.streamId) && Objects.equals(timestamp, other.timestamp);
 	}
 

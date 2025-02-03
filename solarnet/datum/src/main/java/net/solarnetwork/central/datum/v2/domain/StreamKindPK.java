@@ -75,7 +75,7 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
 		if ( kind != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("kind=");
@@ -96,14 +96,10 @@ public class StreamKindPK extends StreamPK implements Serializable, Cloneable, C
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof StreamKindPK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof StreamKindPK) ) {
-			return false;
-		}
-		StreamKindPK other = (StreamKindPK) obj;
-		return kind == other.kind;
+		return Objects.equals(kind, other.kind);
 	}
 
 	@Override
