@@ -42,7 +42,7 @@ import net.solarnetwork.central.din.domain.EndpointAuthConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectEndpointAuthConfiguration
+public final class SelectEndpointAuthConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -138,7 +138,7 @@ public class SelectEndpointAuthConfiguration
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getCredentialIds());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled().booleanValue());
+			stmt.setBoolean(++p, filter.getEnabled());
 		}
 		return p;
 	}

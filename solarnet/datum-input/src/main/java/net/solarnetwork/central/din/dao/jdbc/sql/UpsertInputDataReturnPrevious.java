@@ -39,7 +39,7 @@ import net.solarnetwork.central.domain.UserLongStringCompositePK;
  * @author matt
  * @version 1.0
  */
-public class UpsertInputDataReturnPrevious implements PreparedStatementCreator, SqlProvider {
+public final class UpsertInputDataReturnPrevious implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			WITH prev AS (
@@ -56,8 +56,8 @@ public class UpsertInputDataReturnPrevious implements PreparedStatementCreator, 
 			RETURNING (SELECT input_data FROM prev)
 			""";
 
-	private UserLongStringCompositePK key;
-	private byte[] data;
+	private final UserLongStringCompositePK key;
+	private final byte[] data;
 
 	/**
 	 * Constructor.

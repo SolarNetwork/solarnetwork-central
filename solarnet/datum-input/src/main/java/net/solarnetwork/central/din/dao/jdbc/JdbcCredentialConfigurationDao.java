@@ -81,9 +81,8 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 		final var sql = new InsertCredentialConfiguration(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
 
-		return pk;
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
