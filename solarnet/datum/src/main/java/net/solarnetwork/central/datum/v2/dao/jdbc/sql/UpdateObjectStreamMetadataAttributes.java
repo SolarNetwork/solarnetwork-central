@@ -41,7 +41,8 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 1.0
  * @since 2.0
  */
-public class UpdateObjectStreamMetadataAttributes implements PreparedStatementCreator, SqlProvider {
+public final class UpdateObjectStreamMetadataAttributes
+		implements PreparedStatementCreator, SqlProvider {
 
 	private final ObjectDatumKind kind;
 	private final UUID streamId;

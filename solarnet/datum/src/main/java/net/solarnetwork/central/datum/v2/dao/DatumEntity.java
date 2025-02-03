@@ -1,46 +1,47 @@
 /* ==================================================================
  * Datum.java - 22/10/2020 10:02:38 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.UUID;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.dao.Entity;
+import net.solarnetwork.domain.datum.DatumProperties;
 
 /**
  * Basic unit of a datum stream.
- * 
+ *
  * <p>
  * A datum is the smallest unit of data within a datum stream, identified by a
  * stream ID and timestamp. A {@link DatumProperties} instance holds the
  * property sample values associated with the datum.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.8
@@ -48,6 +49,7 @@ import net.solarnetwork.dao.Entity;
 public class DatumEntity extends BasicIdentity<DatumPK>
 		implements Datum, Entity<DatumPK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -6655090793049766389L;
 
 	private final Instant received;
@@ -55,7 +57,7 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param received
@@ -71,7 +73,7 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param timestamp
@@ -87,7 +89,7 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * <p>
 	 * This method exists to adhere to {@link Serializable}.
 	 * </p>
@@ -146,12 +148,12 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Get the datum timestamp.
-	 * 
+	 *
 	 * <p>
 	 * The {@link #getCreated()} method is an alias for this method. This method
 	 * is a shortcut for {@code getId().getTimestamp()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the datum timestamp
 	 */
 	@Override
@@ -162,11 +164,11 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Get the datum stream ID.
-	 * 
+	 *
 	 * <p>
 	 * This method is a shortcut for {@code getId().getStreamId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the stream ID
 	 */
 	@Override
@@ -177,7 +179,7 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Get the received date.
-	 * 
+	 *
 	 * @return the received date
 	 */
 	public Instant getReceived() {
@@ -186,7 +188,7 @@ public class DatumEntity extends BasicIdentity<DatumPK>
 
 	/**
 	 * Get the property values.
-	 * 
+	 *
 	 * @return the property values
 	 */
 	@Override

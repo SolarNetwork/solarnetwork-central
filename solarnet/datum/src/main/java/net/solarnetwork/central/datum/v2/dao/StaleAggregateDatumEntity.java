@@ -1,27 +1,28 @@
 /* ==================================================================
  * StaleAggregateDatumEntity.java - 3/11/2020 12:58:01 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -34,7 +35,7 @@ import net.solarnetwork.domain.datum.Aggregation;
 /**
  * Entity for a "stale" aggregation record, which is used to mark specific
  * aggregation time periods as needing to be (re)computed.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.8
@@ -42,13 +43,14 @@ import net.solarnetwork.domain.datum.Aggregation;
 public class StaleAggregateDatumEntity extends BasicIdentity<StreamKindPK>
 		implements StaleAggregateDatum, Entity<StreamKindPK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 6192621556532302225L;
 
 	private final Instant created;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param timestamp
@@ -62,6 +64,11 @@ public class StaleAggregateDatumEntity extends BasicIdentity<StreamKindPK>
 			Instant created) {
 		super(new StreamKindPK(streamId, timestamp, kind.getKey()));
 		this.created = created;
+	}
+
+	@Override
+	public StaleAggregateDatumEntity clone() {
+		return (StaleAggregateDatumEntity) super.clone();
 	}
 
 	@Override
