@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicCsvDatumImportInputProperties.java - 7/11/2018 8:07:27 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import net.solarnetwork.util.IntRangeSet;
 
 /**
  * Service properties for simple CSV based datum import.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -44,7 +44,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 
 	/**
 	 * Get settings for configuring an instance of this class.
-	 * 
+	 *
 	 * @return the settings, never {@literal null}
 	 */
 	public static List<SettingSpecifier> getSimpleCsvSettingSpecifiers() {
@@ -120,7 +120,7 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 		boolean valid = super.isValid();
 		if ( valid ) {
 			// at least 1 header row and at least one data column must be present
-			valid = getHeaderRowCount() != null && getHeaderRowCount().intValue() > 0
+			valid = getHeaderRowCount() != null && getHeaderRowCount() > 0
 					&& (isValidColumnsReference(instantaneousDataColumns)
 							|| isValidColumnsReference(accumulatingDataColumns)
 							|| isValidColumnsReference(statusDataColumns));
@@ -148,27 +148,18 @@ public class SimpleCsvDatumImportInputProperties extends CsvDatumImportInputProp
 
 	/**
 	 * Get the set of columns configured for a given type.
-	 * 
+	 *
 	 * @param type
 	 *        the type of column to get the set for
 	 * @return the set, or {@literal null} if nothing configured for that type
 	 */
 	public IntRangeSet columnsForType(DatumSamplesType type) {
-		String refs = null;
-		switch (type) {
-			case Instantaneous:
-				refs = getInstantaneousDataColumns();
-				break;
-			case Accumulating:
-				refs = getAccumulatingDataColumns();
-				break;
-			case Status:
-				refs = getStatusDataColumns();
-				break;
-			case Tag:
-				refs = getTagDataColumns();
-				break;
-		}
+		String refs = switch (type) {
+			case Instantaneous -> getInstantaneousDataColumns();
+			case Accumulating -> getAccumulatingDataColumns();
+			case Status -> getStatusDataColumns();
+			case Tag -> getTagDataColumns();
+		};
 		return CsvUtils.parseColumnsReference(refs);
 	}
 

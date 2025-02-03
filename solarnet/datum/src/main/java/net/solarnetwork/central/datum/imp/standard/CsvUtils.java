@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvUtils.java - 3/04/2022 4:12:59 PM
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,7 +27,7 @@ import net.solarnetwork.util.IntRangeSet;
 
 /**
  * CSV utilities.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -39,7 +39,7 @@ public final class CsvUtils {
 
 	/**
 	 * Parse a single 1-based column reference value, either a number or string.
-	 * 
+	 *
 	 * @param ref
 	 *        the column reference to parse
 	 * @return the column number (1-based)
@@ -55,11 +55,11 @@ public final class CsvUtils {
 			c = Integer.parseInt(ref);
 		} catch ( NumberFormatException e ) {
 			char[] chars = ref.toCharArray();
-			for ( int i = 0, len = chars.length; i < len; i++ ) {
-				char l = Character.toUpperCase(chars[i]);
+			for ( char aChar : chars ) {
+				char l = Character.toUpperCase(aChar);
 				if ( l < 'A' || l > 'Z' ) {
 					throw new IllegalArgumentException(
-							format("The character [%c] is not a valid column reference.", chars[i]));
+							format("The character [%c] is not a valid column reference.", aChar));
 				}
 				c *= 26;
 				c += (l - 'A' + 1);
@@ -71,7 +71,7 @@ public final class CsvUtils {
 	/**
 	 * Parse a delimited columns reference into an {@link IntRangeSet} of
 	 * 1-based column numbers.
-	 * 
+	 *
 	 * <p>
 	 * The {@code value} format is a comma-delimited list of numbers or
 	 * spreadsheet-style column names using the characters {@literal A} -
@@ -82,7 +82,7 @@ public final class CsvUtils {
 	 * example {@literal 4-F,10} would result in the same set as the previous
 	 * examples.
 	 * </p>
-	 * 
+	 *
 	 * @param value
 	 *        a delimited list of column references
 	 * @return the column numbers as a set, or {@literal null} if {@code value}
