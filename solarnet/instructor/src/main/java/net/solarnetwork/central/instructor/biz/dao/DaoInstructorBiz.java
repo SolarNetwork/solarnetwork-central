@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoInstructorBiz.java - Sep 30, 2011 11:31:38 AM
- * 
+ *
  * Copyright 2007-2011 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -51,7 +51,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * DAO based implementation of {@link InstructorBiz}.
- * 
+ *
  * @author matt
  * @version 2.3
  */
@@ -59,14 +59,14 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	/**
 	 * The default value for the {@code maxParamValueLength} property.
-	 * 
+	 *
 	 * @since 1.8
 	 */
 	public static final int DEFAULT_MAX_PARAM_VALUE_LENGTH = 256;
 
 	/**
 	 * A maximum number of filter results to return.
-	 * 
+	 *
 	 * @since 2.1
 	 */
 	public static final Integer MAX_FILTER_RESULTS = 2000;
@@ -80,9 +80,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	/**
 	 * Construct without queue hooks.
-	 * 
+	 *
 	 * @param nodeInstructionDao
-	 *        the DAO to use
+	 * 		the DAO to use
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao) {
 		this(nodeInstructionDao, null);
@@ -90,11 +90,11 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeInstructionDao
-	 *        the DAO to use
+	 * 		the DAO to use
 	 * @param queueHooks
-	 *        the queue hooks to use (may be {@literal null}
+	 * 		the queue hooks to use (may be {@literal null}
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
 			List<NodeInstructionQueueHook> queueHooks) {
@@ -103,26 +103,25 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeInstructionDao
-	 *        the DAO to use
+	 * 		the DAO to use
 	 * @param queueHooks
-	 *        the queue hooks to use (may be {@literal null}
+	 * 		the queue hooks to use (may be {@literal null}
 	 * @param nodeServiceAuditor
-	 *        the node service auditor to use (may be {@literal null})
+	 * 		the node service auditor to use (may be {@literal null})
 	 * @since 2.2
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
 			List<NodeInstructionQueueHook> queueHooks, NodeServiceAuditor nodeServiceAuditor) {
 		super();
 		this.nodeInstructionDao = nodeInstructionDao;
-		this.queueHooks = (queueHooks != null ? queueHooks
-				: Collections.<NodeInstructionQueueHook> emptyList());
+		this.queueHooks = (queueHooks != null ? queueHooks : Collections.emptyList());
 		this.nodeServiceAuditor = nodeServiceAuditor;
 	}
 
 	private List<Instruction> asResultList(FilterResults<EntityMatch, Long> matches) {
-		List<Instruction> results = new ArrayList<Instruction>(matches.getReturnedResultCount());
+		List<Instruction> results = new ArrayList<>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
 			if ( match instanceof Instruction ) {
 				results.add((Instruction) match);
@@ -134,7 +133,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	private List<NodeInstruction> asNodeInstructionList(FilterResults<EntityMatch, Long> matches) {
-		List<NodeInstruction> results = new ArrayList<NodeInstruction>(matches.getReturnedResultCount());
+		List<NodeInstruction> results = new ArrayList<>(matches.getReturnedResultCount());
 		for ( EntityMatch match : matches.getResults() ) {
 			if ( match instanceof NodeInstruction ) {
 				results.add((NodeInstruction) match);
@@ -154,7 +153,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<NodeInstruction> getInstructions(Set<Long> instructionIds) {
-		Long[] ids = instructionIds.toArray(new Long[instructionIds.size()]);
+		Long[] ids = instructionIds.toArray(Long[]::new);
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setInstructionIds(ids);
 		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
@@ -176,7 +175,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<NodeInstruction> getActiveInstructionsForNodes(Set<Long> nodeIds) {
-		Long[] ids = nodeIds.toArray(new Long[nodeIds.size()]);
+		Long[] ids = nodeIds.toArray(Long[]::new);
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(ids);
 		filter.setState(InstructionState.Queued);
@@ -200,7 +199,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<NodeInstruction> getPendingInstructionsForNodes(Set<Long> nodeIds) {
-		Long[] ids = nodeIds.toArray(new Long[nodeIds.size()]);
+		Long[] ids = nodeIds.toArray(Long[]::new);
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(ids);
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
@@ -217,7 +216,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public NodeInstruction queueInstruction(Long nodeId, Instruction instruction) {
 		log.debug("Received node {} instruction {}", nodeId, instruction.getTopic());
 		NodeInstruction instr = new NodeInstruction(instruction.getTopic(),
@@ -228,8 +227,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 		instr.setState(InstructionState.Queued);
 		if ( instruction.getParameters() != null ) {
 			for ( InstructionParameter param : instruction.getParameters() ) {
-				if ( param == null || param.getName() == null || param.getName().isEmpty()
-						|| param.getValue() == null ) {
+				if ( param == null || param.getName() == null || param.getName()
+						.isEmpty() || param.getValue() == null ) {
 					continue;
 				}
 				String v = param.getValue();
@@ -262,9 +261,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public List<NodeInstruction> queueInstructions(Set<Long> nodeIds, Instruction instruction) {
-		List<NodeInstruction> results = new ArrayList<NodeInstruction>(nodeIds.size());
+		List<NodeInstruction> results = new ArrayList<>(nodeIds.size());
 		for ( Long nodeId : nodeIds ) {
 			NodeInstruction copy = new NodeInstruction(instruction.getTopic(),
 					instruction.getInstructionDate(), nodeId);
@@ -276,7 +275,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionState(Long instructionId, InstructionState state) {
 		NodeInstruction instr = nodeInstructionDao.get(instructionId);
 		if ( instr != null ) {
@@ -288,7 +287,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state) {
 		for ( Long id : instructionIds ) {
 			updateInstructionState(id, state);
@@ -296,7 +295,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionState(Long instructionId, InstructionState state,
 			Map<String, ?> resultParameters) {
 		NodeInstruction instr = nodeInstructionDao.get(instructionId);
@@ -306,7 +305,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 				if ( resultParameters != null ) {
 					Map<String, Object> params = instr.getResultParameters();
 					if ( params == null ) {
-						params = new LinkedHashMap<String, Object>();
+						params = new LinkedHashMap<>();
 					}
 					params.putAll(resultParameters);
 					instr.setResultParameters(params);
@@ -317,7 +316,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateInstructionsState(Set<Long> instructionIds, InstructionState state,
 			Map<Long, Map<String, ?>> resultParameters) {
 		for ( Long id : instructionIds ) {
@@ -328,7 +327,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	/**
 	 * Get the maximum parameter value length.
-	 * 
+	 *
 	 * @return the length; defaults to {@link #DEFAULT_MAX_PARAM_VALUE_LENGTH}
 	 * @since 1.8
 	 */
@@ -338,11 +337,11 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	/**
 	 * Set the maximum parameter value length.
-	 * 
+	 *
 	 * @param maxParamValueLength
-	 *        the length to set
+	 * 		the length to set
 	 * @throws IllegalArgumentException
-	 *         if {@code maxParamValueLength} is 0 or less
+	 * 		if {@code maxParamValueLength} is 0 or less
 	 * @since 1.8
 	 */
 	public void setMaxParamValueLength(int maxParamValueLength) {
