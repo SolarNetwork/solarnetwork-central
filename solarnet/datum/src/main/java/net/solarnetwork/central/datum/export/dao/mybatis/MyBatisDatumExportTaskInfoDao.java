@@ -76,7 +76,7 @@ public class MyBatisDatumExportTaskInfoDao extends BaseMyBatisGenericDao<DatumEx
 		params.put("date", olderThanDate);
 		getSqlSession().update(updateDeleteCompletedTasks, params);
 		Long result = (Long) params.get("result");
-		return (result == null ? 0 : result.longValue());
+		return (result == null ? 0 : result);
 	}
 
 	/**
