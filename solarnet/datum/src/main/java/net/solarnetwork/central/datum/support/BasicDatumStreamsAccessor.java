@@ -81,9 +81,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 				map.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(8)).add(d);
 			}
 			for ( List<Datum> list : map.values() ) {
-				Collections.sort(list, (l, r) -> {
-					return r.getTimestamp().compareTo(l.getTimestamp());
-				});
+				list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
 			}
 			timeSortedDatumBySource = map;
 		}
