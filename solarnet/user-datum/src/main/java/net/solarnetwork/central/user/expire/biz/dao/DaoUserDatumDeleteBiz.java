@@ -276,7 +276,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		if ( ea == null ) {
 			return;
 		}
-		ea.postEvent(status.asJobStatusChagnedEvent(result));
+		ea.postEvent(status.asJobStatusChangedEvent(result));
 	}
 
 	private class DatumDeleteTask implements Callable<DatumDeleteJobInfo>, DatumDeleteJobStatus {

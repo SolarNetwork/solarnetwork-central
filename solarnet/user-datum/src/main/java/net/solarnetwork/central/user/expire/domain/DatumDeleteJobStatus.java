@@ -160,10 +160,10 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 * Create a job status changed event out of this instance.
 	 *
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumDeleteJobStatus)
+	 * @see #createJobStatusChangedEvent(DatumDeleteJobStatus)
 	 */
-	default AppEvent asJobStatusChagnedEvent() {
-		return createJobStatusChagnedEvent(this);
+	default AppEvent asJobStatusChangedEvent() {
+		return createJobStatusChangedEvent(this);
 	}
 
 	/**
@@ -172,11 +172,11 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 * @param result
 	 *        a specific result to use
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumDeleteJobStatus,
+	 * @see #createJobStatusChangedEvent(DatumDeleteJobStatus,
 	 *      DatumDeleteJobInfo)
 	 */
-	default AppEvent asJobStatusChagnedEvent(DatumDeleteJobInfo result) {
-		return createJobStatusChagnedEvent(this, result);
+	default AppEvent asJobStatusChangedEvent(DatumDeleteJobInfo result) {
+		return createJobStatusChangedEvent(this, result);
 	}
 
 	/**
@@ -191,7 +191,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumDeleteJobStatus status) {
+	static AppEvent createJobStatusChangedEvent(DatumDeleteJobStatus status) {
 		DatumDeleteJobInfo result = null;
 		if ( status.isDone() ) {
 			try {
@@ -200,7 +200,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 				// ignore
 			}
 		}
-		return createJobStatusChagnedEvent(status, result);
+		return createJobStatusChangedEvent(status, result);
 	}
 
 	/**
@@ -217,7 +217,7 @@ public interface DatumDeleteJobStatus extends Future<DatumDeleteJobInfo> {
 	 *        the delete result
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
+	static AppEvent createJobStatusChangedEvent(DatumDeleteJobStatus status, DatumDeleteJobInfo result) {
 		Map<String, Object> props = new HashMap<>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
