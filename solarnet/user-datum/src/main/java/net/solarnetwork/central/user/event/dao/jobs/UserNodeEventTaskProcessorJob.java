@@ -27,15 +27,12 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -115,17 +112,11 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	@Override
 	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int processedCount = 0;
-		boolean processed = false;
+		boolean processed;
 		do {
 			try {
 				if ( transactionTemplate != null ) {
-					processed = transactionTemplate.execute(new TransactionCallback<Boolean>() {
-
-						@Override
-						public Boolean doInTransaction(TransactionStatus status) {
-							return execute();
-						}
-					});
+					processed = transactionTemplate.execute(status -> execute());
 				} else {
 					processed = execute();
 				}
@@ -174,24 +165,16 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 				throw new UnsupportedOperationException(
 						format("Service %s is not available", serviceId));
 			}
-			if ( service != null ) {
-				final AsyncTaskExecutor executor = getParallelTaskExecutor();
-				if ( executor != null ) {
-					Future<Boolean> future = executor.submit(new Callable<Boolean>() {
-
-						@Override
-						public Boolean call() throws Exception {
-							return execute(config, task, service);
-						}
-					});
-					try {
-						success = future.get(serviceTimeout, TimeUnit.MILLISECONDS);
-					} catch ( ExecutionException e ) {
-						throw e.getCause();
-					}
-				} else {
-					success = execute(config, task, service);
+			final AsyncTaskExecutor executor = getParallelTaskExecutor();
+			if ( executor != null ) {
+				Future<Boolean> future = executor.submit(() -> execute(config, task, service));
+				try {
+					success = future.get(serviceTimeout, TimeUnit.MILLISECONDS);
+				} catch ( ExecutionException e ) {
+					throw e.getCause();
 				}
+			} else {
+				success = execute(config, task, service);
 			}
 		} catch ( RepeatableTaskException e ) {
 			retry = true;

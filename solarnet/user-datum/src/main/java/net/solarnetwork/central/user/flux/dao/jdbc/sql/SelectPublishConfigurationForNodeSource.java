@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectPublishConfigurationForNodeSource.java - 24/06/2024 8:42:05 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,11 +34,12 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Select {@link FluxPublishSettingsInfo} for a node and source ID combination.
- * 
+ *
  * @author matt
  * @version 1.0
  */
-public class SelectPublishConfigurationForNodeSource implements PreparedStatementCreator, SqlProvider {
+public final class SelectPublishConfigurationForNodeSource
+		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			SELECT publish,retain
@@ -49,7 +50,7 @@ public class SelectPublishConfigurationForNodeSource implements PreparedStatemen
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param nodeId
@@ -67,7 +68,7 @@ public class SelectPublishConfigurationForNodeSource implements PreparedStatemen
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param key
 	 *        the user, node, and source ID primary key to query
 	 * @throws IllegalArgumentException

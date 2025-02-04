@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserDatumDeleteBiz.java - 24/11/2018 9:55:53 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -71,7 +71,7 @@ import net.solarnetwork.event.AppEventPublisher;
 
 /**
  * DAO implementation of {@link UserDatumDeleteBiz}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -102,7 +102,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executor
 	 *        the executor service to use
 	 * @param userNodeDao
@@ -123,7 +123,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Initialize after properties configured.
-	 * 
+	 *
 	 * <p>
 	 * Call this method once all properties have been configured on the
 	 * instance.
@@ -163,7 +163,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		if ( filter.getNodeId() == null ) {
 			f = new DatumFilterCommand(filter);
 			Set<Long> nodes = userNodeDao.findNodeIdsForUser(filter.getUserId());
-			f.setNodeIds(nodes.toArray(new Long[nodes.size()]));
+			f.setNodeIds(nodes.toArray(Long[]::new));
 			filter = f;
 		}
 		if ( filter.getSourceIds() != null && filter.getSourceIds().length < 1 ) {
@@ -191,7 +191,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public long purgeOldJobs(Instant olderThanDate) {
 		return jobInfoDao.purgeOldJobs(olderThanDate);
 	}
@@ -210,7 +210,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public DatumDeleteJobInfo submitDatumDeleteRequest(GeneralNodeDatumFilter request) {
 		GeneralNodeDatumFilter f = prepareFilter(request);
 
@@ -233,7 +233,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public DatumDeleteJobStatus performDatumDelete(UserUuidPK id) {
 		DatumDeleteTask task = taskForId(id);
 
@@ -287,12 +287,12 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		/**
 		 * Construct from a task info.
-		 * 
+		 *
 		 * <p>
 		 * Once this task has been submitted to an executor, call
 		 * {@link #setDelegate(Future)} with the resulting {@code Future}.
 		 * </p>
-		 * 
+		 *
 		 * @param info
 		 *        the info
 		 */
@@ -386,10 +386,9 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			final String id = info.getJobId();
 			final GeneralNodeDatumFilter f = info.getConfiguration();
 			final String nodeIds = (f.getNodeIds() != null
-					? stream(f.getNodeIds()).map(n -> n.toString()).collect(Collectors.joining(","))
+					? stream(f.getNodeIds()).map(Object::toString).collect(Collectors.joining(","))
 					: "*");
-			final String sourceIds = (f.getSourceIds() != null
-					? stream(f.getSourceIds()).collect(Collectors.joining(","))
+			final String sourceIds = (f.getSourceIds() != null ? String.join(",", f.getSourceIds())
 					: "*");
 			log.info("Executing user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
 					f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
@@ -552,7 +551,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	/**
 	 * Set the minimum time, in milliseconds, to maintain import job status
 	 * information after the job has completed.
-	 * 
+	 *
 	 * @param completedTaskMinimumCacheTime
 	 *        the time in milliseconds to set
 	 */
@@ -562,7 +561,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Get the event admin service.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public AppEventPublisher getEventPublisher() {
@@ -571,7 +570,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Configure an {@link EventAdmin} service for posting status events.
-	 * 
+	 *
 	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
@@ -581,7 +580,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Configure a scheduler for task maintenance.
-	 * 
+	 *
 	 * @param scheduler
 	 *        the scheduler to use
 	 */
@@ -591,7 +590,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Get the delete batch duration.
-	 * 
+	 *
 	 * @return the duration, or {@literal null} to not perform time-based delete
 	 *         batching; defaults to {@link #DEFAULT_DELETE_BATCH_DURATION}
 	 */
@@ -601,7 +600,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Set the delete batch duration.
-	 * 
+	 *
 	 * @param deleteBatchDuration
 	 *        the duration to set, or {@literal null} to not perform time-based
 	 *        delete batching
@@ -612,7 +611,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Set the delete batch duration as a number of days.
-	 * 
+	 *
 	 * @param days
 	 *        the number of days to use for delete batches, or {@literal 0} to
 	 *        disable batching
