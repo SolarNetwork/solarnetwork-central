@@ -346,7 +346,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	public void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException {
 		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
 		if ( xfer != null ) {
-			userNodeDao.deleteUserNodeTrasnfer(xfer);
+			userNodeDao.deleteUserNodeTransfer(xfer);
 		}
 	}
 
@@ -370,7 +370,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			}
 
 			// at this point, we can delete the transfer request
-			userNodeDao.deleteUserNodeTrasnfer(xfer);
+			userNodeDao.deleteUserNodeTransfer(xfer);
 
 			// remove any node alerts associated with this node
 			int deletedAlertCount = userAlertDao.deleteAllAlertsForNode(userId, nodeId);

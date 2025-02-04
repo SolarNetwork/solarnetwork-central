@@ -389,7 +389,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		insertUserNodeTransfer();
 		UserNodeTransfer xfer1 = userNodeDao
 				.getUserNodeTransfer(new UserNodePK(this.user.getId(), this.node.getId()));
-		userNodeDao.deleteUserNodeTrasnfer(xfer1);
+		userNodeDao.deleteUserNodeTransfer(xfer1);
 		xfer1 = userNodeDao.getUserNodeTransfer(xfer1.getId());
 		assertNull("UserNodeTransfer deleted", xfer1);
 	}

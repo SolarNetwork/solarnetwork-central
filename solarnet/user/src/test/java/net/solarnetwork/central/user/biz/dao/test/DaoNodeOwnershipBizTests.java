@@ -146,7 +146,7 @@ public class DaoNodeOwnershipBizTests {
 		expect(userDao.getUserByEmail(newOwner.getEmail())).andReturn(newOwner);
 
 		// delete the xfer record
-		userNodeDao.deleteUserNodeTrasnfer(xfer);
+		userNodeDao.deleteUserNodeTransfer(xfer);
 
 		// remove alerts associated with node
 		expect(userAlertDao.deleteAllAlertsForNode(testUser.getId(), testNode.getId())).andReturn(0);

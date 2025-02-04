@@ -73,7 +73,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 */
 	public static final String CALL_STORE_USER_NODE_TRANSFER = "store-UserNodeTransfer";
 
-	/** The query name for {@link #deleteUserNodeTrasnfer(UserNodeTransfer)}. */
+	/** The query name for {@link #deleteUserNodeTransfer(UserNodeTransfer)}. */
 	public static final String DELETE_USER_NODE_TRANSFER = "delete-UserNodeTransfer";
 
 	/**
@@ -141,7 +141,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	public void deleteUserNodeTrasnfer(UserNodeTransfer transfer) {
+	public void deleteUserNodeTransfer(UserNodeTransfer transfer) {
 		int count = getSqlSession().delete(DELETE_USER_NODE_TRANSFER, transfer.getId());
 		log.debug("Deleted {} UserNodeTransfer entities for ID {}", count, transfer.getId());
 	}

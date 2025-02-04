@@ -496,7 +496,7 @@ public class DaoUserBizTests {
 		expect(userDao.getUserByEmail(userNodeXfer.getEmail())).andReturn(recipient);
 
 		// delete the xfer
-		userNodeDao.deleteUserNodeTrasnfer(userNodeXfer);
+		userNodeDao.deleteUserNodeTransfer(userNodeXfer);
 
 		// delete alerts associated with node
 		expect(userAlertDao.deleteAllAlertsForNode(TEST_USER_ID, TEST_NODE_ID)).andReturn(0);
@@ -541,7 +541,7 @@ public class DaoUserBizTests {
 		expect(userDao.getUserByEmail(userNodeXfer.getEmail())).andReturn(recipient);
 
 		// delete the xfer
-		userNodeDao.deleteUserNodeTrasnfer(userNodeXfer);
+		userNodeDao.deleteUserNodeTransfer(userNodeXfer);
 
 		// delete alerts associated with node
 		expect(userAlertDao.deleteAllAlertsForNode(TEST_USER_ID, TEST_NODE_ID)).andReturn(0);

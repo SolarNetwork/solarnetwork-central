@@ -150,7 +150,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 	 *        The transfer to delete.
 	 * @since 1.2
 	 */
-	void deleteUserNodeTrasnfer(UserNodeTransfer transfer);
+	void deleteUserNodeTransfer(UserNodeTransfer transfer);
 
 	/**
 	 * Get all {@link UserNodeTransfer} instances for a given email address.
