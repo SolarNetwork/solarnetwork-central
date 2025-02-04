@@ -1,21 +1,21 @@
 /* ==================================================================
  * NodeOwnershipBiz.java - Apr 20, 2015 8:16:26 PM
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
 /**
  * API for node owner tasks.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -36,7 +36,7 @@ public interface NodeOwnershipBiz {
 
 	/**
 	 * Get a specific transfer for a given node.
-	 * 
+	 *
 	 * @param userId
 	 *        The ID of the user making the request.
 	 * @param nodeId
@@ -47,12 +47,12 @@ public interface NodeOwnershipBiz {
 
 	/**
 	 * Get a complete list of transfers for a given recipient.
-	 * 
+	 *
 	 * <p>
 	 * This provides a view into all transfer requests awaiting confirmation by
 	 * a single user.
 	 * </p>
-	 * 
+	 *
 	 * @param email
 	 *        The email address of the requested ownership recipient.
 	 * @return A list of all ownership requests associated with the given
@@ -62,13 +62,15 @@ public interface NodeOwnershipBiz {
 
 	/**
 	 * Request a transfer of ownership of a node.
-	 * 
+	 *
+	 * <p>
 	 * When requesting a new owner for a node, the email address of the new
 	 * owner is provided and an email will be sent a message with a special link
 	 * for confirming or rejecting the transfer request. The node will not be
 	 * transferred until the request is confirmed, via the
 	 * {@link #confirmNodeOwnershipTransfer(Long, Long, boolean)}.
-	 * 
+	 * </p>
+	 *
 	 * @param userId
 	 *        The ID of the user making the request.
 	 * @param nodeId
@@ -85,12 +87,14 @@ public interface NodeOwnershipBiz {
 
 	/**
 	 * Cancel a node ownership transfer request.
-	 * 
+	 *
+	 * <p>
 	 * After a node transfer request has been made via
 	 * {@link #requestNodeOwnershipTransfer(Long, Long, String)} but before the
 	 * new owner has accepted the request, the original owner can cancel the
 	 * request by calling this method.
-	 * 
+	 * </p>
+	 *
 	 * @param userId
 	 *        The ID of the user making the request.
 	 * @param nodeId
@@ -103,15 +107,17 @@ public interface NodeOwnershipBiz {
 
 	/**
 	 * Confirm or reject a node transfer request.
-	 * 
+	 *
+	 * <p>
 	 * After a node transfer request has been made via
 	 * {@link #requestNodeOwnershipTransfer(Long, Long, String)} the recipient
 	 * of the transfer request can confirm or reject the request by calling this
 	 * method.
-	 * 
+	 * </p>
+	 *
 	 * <b>Note:</b> the active user's email address must match the one used in
 	 * the original transfer request.
-	 * 
+	 *
 	 * @param userId
 	 *        The ID of the user making the request.
 	 * @param nodeId
