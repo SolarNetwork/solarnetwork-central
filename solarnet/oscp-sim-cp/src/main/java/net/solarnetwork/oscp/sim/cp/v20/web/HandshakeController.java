@@ -1,21 +1,21 @@
 /* ==================================================================
  * HandshakeController.java - 24/08/2022 10:42:41 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -55,7 +55,7 @@ import oscp.v20.HandshakeAcknowledge;
 
 /**
  * Handshake web API.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -69,7 +69,7 @@ public class HandshakeController {
 	public static final String HS_ACK_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH
 			+ HANDSHAKE_ACK_URL_PATH;
 
-	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
+	private static final Logger log = LoggerFactory.getLogger(HandshakeController.class);
 
 	private final Executor executor;
 	private final CapacityProviderDao capacityProviderDao;
@@ -94,12 +94,11 @@ public class HandshakeController {
 
 		SystemConfiguration system = capacityProviderDao
 				.verifyAuthToken(authorizationTokenFromRequest(request));
-		synchronized ( system ) {
-			/*- could verify response settings here, but ignore for now
+		/*-synchronized ( system ) {
+			// could verify response settings here, but ignore for now
 			system.setSettings(settings);
 			capacityProviderDao.saveSystemConfiguration(system);
-			*/
-		}
+		}*/
 
 		URI uri = URI.create(system.getBaseUrl() + HANDSHAKE_ACK_URL_PATH);
 		log.info("Initiating handshake ack for {} to [{}]", system.getId(), uri);
@@ -123,14 +122,13 @@ public class HandshakeController {
 
 		log.info("Got handshake settings: {}", settings);
 
-		SystemConfiguration system = capacityProviderDao
-				.verifyAuthToken(authorizationTokenFromRequest(request));
-		synchronized ( system ) {
-			/*- could verify response settings here, but ignore for now
+		/* SystemConfiguration system = */
+		capacityProviderDao.verifyAuthToken(authorizationTokenFromRequest(request));
+		/*-synchronized ( system ) {
+			// could verify response settings here, but ignore for now
 			system.setSettings(settings);
 			capacityProviderDao.saveSystemConfiguration(system);
-			*/
-		}
+		}*/
 
 		return ResponseEntity.noContent().build();
 	}
