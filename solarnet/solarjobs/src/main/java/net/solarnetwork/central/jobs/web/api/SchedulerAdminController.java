@@ -24,7 +24,6 @@ package net.solarnetwork.central.jobs.web.api;
 
 import static net.solarnetwork.domain.Result.success;
 import java.util.Collection;
-import java.util.Iterator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -134,12 +133,7 @@ public class SchedulerAdminController {
 	public Result<Collection<JobInfo>> listJobs(final JobFilter filter) {
 		Collection<JobInfo> infos = schedulerManager.allJobInfos();
 		if ( filter != null ) {
-			for ( Iterator<JobInfo> itr = infos.iterator(); itr.hasNext(); ) {
-				JobInfo info = itr.next();
-				if ( !filter.includesJobInfo(info) ) {
-					itr.remove();
-				}
-			}
+			infos.removeIf(info -> !filter.includesJobInfo(info));
 		}
 		return success(infos);
 	}
