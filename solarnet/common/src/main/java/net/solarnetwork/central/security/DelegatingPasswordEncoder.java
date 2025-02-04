@@ -1,21 +1,21 @@
 /* ==================================================================
  * DelegatingPasswordEncoder.java - Mar 19, 2013 9:37:08 AM
- * 
+ *
  * Copyright 2007-2013 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,13 +31,13 @@ import net.solarnetwork.util.ObjectUtils;
  * {@code org.springframework.security.crypto.password.PasswordEncoder}
  * instances, returning passwords with a prefix tag to be able to recognize what
  * encryption technique was used.
- * 
+ *
  * <p>
  * The first entry in the map according to iteration order will be used as the
- * primary encoder. Thus a map implementation like
+ * primary encoder. Thus, a map implementation like
  * {@link java.util.LinkedHashMap} is recommended.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -48,7 +48,7 @@ public class DelegatingPasswordEncoder
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param encoders
 	 *        the encoders to use
 	 * @throws IllegalArgumentException
@@ -76,7 +76,7 @@ public class DelegatingPasswordEncoder
 
 	@Override
 	public String encode(CharSequence rawPassword) {
-		if ( encoders == null || encoders.size() < 1 ) {
+		if ( encoders == null || encoders.isEmpty() ) {
 			throw new RuntimeException("No password encoders configured");
 		}
 		Map.Entry<String, org.springframework.security.crypto.password.PasswordEncoder> entry = encoders

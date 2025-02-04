@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserNodeEventTaskCleanerJob.java - 8/06/2020 2:23:54 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,15 +27,12 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -49,7 +46,7 @@ import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
 /**
  * Job to process queued {@link UserNodeEventTask} entities by passing them to
  * the {@link UserNodeEventHookService} instance they are configured for.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -74,7 +71,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param transactionTemplate
 	 *        the transaction template to use, or {@literal null}
 	 * @param taskDao
@@ -113,19 +110,13 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 	}
 
 	@Override
-	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int processedCount = 0;
-		boolean processed = false;
+		boolean processed;
 		do {
 			try {
 				if ( transactionTemplate != null ) {
-					processed = transactionTemplate.execute(new TransactionCallback<Boolean>() {
-
-						@Override
-						public Boolean doInTransaction(TransactionStatus status) {
-							return execute();
-						}
-					});
+					processed = transactionTemplate.execute(status -> execute());
 				} else {
 					processed = execute();
 				}
@@ -135,22 +126,22 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 				processed = true;
 			}
 			if ( processed ) {
-				remainingIterataions.decrementAndGet();
+				remainingIterations.decrementAndGet();
 				processedCount++;
 			}
-		} while ( processed && remainingIterataions.get() > 0 );
+		} while ( processed && remainingIterations.get() > 0 );
 		return processedCount;
 	}
 
 	/**
 	 * Execute the hook task as a single transaction.
-	 * 
+	 *
 	 * <p>
 	 * This method is designed to operate within a single transaction, as per
 	 * the contract outlined in
 	 * {@link UserNodeEventTaskDao#claimQueuedTask(String)}.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if the task has been processed
 	 * @throws RepeatableTaskException
 	 *         if the task should be re-tried in the future
@@ -174,24 +165,16 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 				throw new UnsupportedOperationException(
 						format("Service %s is not available", serviceId));
 			}
-			if ( service != null ) {
-				final AsyncTaskExecutor executor = getParallelTaskExecutor();
-				if ( executor != null ) {
-					Future<Boolean> future = executor.submit(new Callable<Boolean>() {
-
-						@Override
-						public Boolean call() throws Exception {
-							return execute(config, task, service);
-						}
-					});
-					try {
-						success = future.get(serviceTimeout, TimeUnit.MILLISECONDS);
-					} catch ( ExecutionException e ) {
-						throw e.getCause();
-					}
-				} else {
-					success = execute(config, task, service);
+			final AsyncTaskExecutor executor = getParallelTaskExecutor();
+			if ( executor != null ) {
+				Future<Boolean> future = executor.submit(() -> execute(config, task, service));
+				try {
+					success = future.get(serviceTimeout, TimeUnit.MILLISECONDS);
+				} catch ( ExecutionException e ) {
+					throw e.getCause();
 				}
+			} else {
+				success = execute(config, task, service);
 			}
 		} catch ( RepeatableTaskException e ) {
 			retry = true;
@@ -228,7 +211,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	/**
 	 * Set the event topic to process.
-	 * 
+	 *
 	 * @param topic
 	 *        the topic to set
 	 * @throws IllegalArgumentException
@@ -240,7 +223,7 @@ public class UserNodeEventTaskProcessorJob extends JobSupport {
 
 	/**
 	 * Set the maximum amount of time to wait for a hook service to execute.
-	 * 
+	 *
 	 * @param serviceTimeout
 	 *        the timeout to set, in milliseconds
 	 */

@@ -31,7 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -59,7 +59,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.RowMapper;
@@ -162,9 +161,8 @@ public final class DatumDbUtils {
 	 */
 	public static SortedSet<UUID> sortedStreamIds(ObjectDatumStreamMetadataProvider provider,
 			Comparator<UUID> comparator) {
-		return provider.metadataStreamIds().stream().collect(Collectors.toCollection(() -> {
-			return new TreeSet<>(comparator);
-		}));
+		return provider.metadataStreamIds().stream()
+				.collect(Collectors.toCollection(() -> new TreeSet<>(comparator)));
 	}
 
 	/**
@@ -338,9 +336,10 @@ public final class DatumDbUtils {
 	public static List<?> loadJsonDatumAndAuxiliaryResource(String resource, Class<?> clazz,
 			Consumer<GeneralNodeDatum> datumMapper, Consumer<GeneralNodeDatumAuxiliary> auxMapper)
 			throws IOException {
+		assert clazz != null;
 		List<Object> result = new ArrayList<>();
 		try (BufferedReader r = new BufferedReader(
-				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+				new InputStreamReader(clazz.getResourceAsStream(resource), StandardCharsets.UTF_8))) {
 			while ( true ) {
 				String line = r.readLine();
 				if ( line == null ) {
@@ -449,7 +448,7 @@ public final class DatumDbUtils {
 		List<AggregateDatum> result = new ArrayList<>();
 		JsonFactory factory = new JsonFactory();
 		try (BufferedReader r = new BufferedReader(
-				new InputStreamReader(clazz.getResourceAsStream(resource), Charset.forName("UTF-8")))) {
+				new InputStreamReader(clazz.getResourceAsStream(resource), StandardCharsets.UTF_8))) {
 			while ( true ) {
 				String line = r.readLine();
 				if ( line == null ) {
@@ -528,9 +527,9 @@ public final class DatumDbUtils {
 		}
 		return new BasicObjectDatumStreamMetadata(streamId, timeZoneId, ObjectDatumKind.Node,
 				nspk.getNodeId(), nspk.getSourceId(),
-				iNames.isEmpty() ? null : iNames.toArray(new String[iNames.size()]),
-				aNames.isEmpty() ? null : aNames.toArray(new String[aNames.size()]),
-				sNames.isEmpty() ? null : sNames.toArray(new String[sNames.size()]));
+				iNames.isEmpty() ? null : iNames.toArray(String[]::new),
+				aNames.isEmpty() ? null : aNames.toArray(String[]::new),
+				sNames.isEmpty() ? null : sNames.toArray(String[]::new));
 	}
 
 	/**
@@ -549,82 +548,77 @@ public final class DatumDbUtils {
 	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> insertDatumStream(Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement(
-						"insert into solardatm.da_datm (stream_id,ts,received,data_i,data_a,data_s,data_t) "
-								+ "VALUES (?::uuid,?,?,?::numeric[],?::numeric[],?::text[],?::text[])")) {
-					final Timestamp now = Timestamp.from(Instant.now());
-					for ( GeneralNodeDatum d : datums ) {
-						final DatumSamples s = d.getSamples();
-						if ( s == null || s.isEmpty() ) {
-							continue;
-						}
-						if ( log != null ) {
-							log.debug("Inserting Datum {}", d);
-						}
-
-						NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
-						ObjectDatumStreamMetadata meta = result.computeIfAbsent(nspk, k -> {
-							return createMetadata(datums, timeZoneId, k);
-						});
-						datumStmt.setString(1, meta.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getCreated()));
-						datumStmt.setTimestamp(3, now);
-
-						String[] iNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
-						if ( iNames == null || iNames.length < 1 ) {
-							datumStmt.setNull(4, Types.OTHER);
-						} else {
-							BigDecimal[] numbers = new BigDecimal[iNames.length];
-							for ( int i = 0; i < iNames.length; i++ ) {
-								numbers[i] = s.getInstantaneousSampleBigDecimal(iNames[i]);
-							}
-							Array iArray = con.createArrayOf("NUMERIC", numbers);
-							datumStmt.setArray(4, iArray);
-						}
-
-						String[] aNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
-						if ( aNames == null || aNames.length < 1 ) {
-							datumStmt.setNull(5, Types.OTHER);
-						} else {
-							BigDecimal[] numbers = new BigDecimal[aNames.length];
-							for ( int i = 0; i < aNames.length; i++ ) {
-								numbers[i] = s.getAccumulatingSampleBigDecimal(aNames[i]);
-							}
-							Array aArray = con.createArrayOf("NUMERIC", numbers);
-							datumStmt.setArray(5, aArray);
-						}
-
-						String[] sNames = meta.propertyNamesForType(DatumSamplesType.Status);
-						if ( sNames == null || sNames.length < 1 ) {
-							datumStmt.setNull(6, Types.OTHER);
-						} else {
-							String[] strings = new String[sNames.length];
-							for ( int i = 0; i < sNames.length; i++ ) {
-								strings[i] = s.getStatusSampleString(sNames[i]);
-							}
-							Array aArray = con.createArrayOf("TEXT", strings);
-							datumStmt.setArray(6, aArray);
-						}
-
-						Set<String> tags = s.getTags();
-						if ( tags == null || tags.isEmpty() ) {
-							datumStmt.setNull(7, Types.OTHER);
-						} else {
-							String[] strings = tags.toArray(new String[tags.size()]);
-							Array aArray = con.createArrayOf("TEXT", strings);
-							datumStmt.setArray(7, aArray);
-						}
-
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement datumStmt = con.prepareStatement("""
+					INSERT INTO solardatm.da_datm (stream_id,ts,received,data_i,data_a,data_s,data_t)
+					VALUES (?::uuid,?,?,?::numeric[],?::numeric[],?::text[],?::text[])""")) {
+				final Timestamp now = Timestamp.from(Instant.now());
+				for ( GeneralNodeDatum d : datums ) {
+					final DatumSamples s = d.getSamples();
+					if ( s == null || s.isEmpty() ) {
+						continue;
 					}
+					if ( log != null ) {
+						log.debug("Inserting Datum {}", d);
+					}
+
+					NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
+					ObjectDatumStreamMetadata meta = result.computeIfAbsent(nspk,
+							k -> createMetadata(datums, timeZoneId, k));
+					datumStmt.setString(1, meta.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getCreated()));
+					datumStmt.setTimestamp(3, now);
+
+					String[] iNames = meta.propertyNamesForType(DatumSamplesType.Instantaneous);
+					if ( iNames == null || iNames.length < 1 ) {
+						datumStmt.setNull(4, Types.OTHER);
+					} else {
+						BigDecimal[] numbers = new BigDecimal[iNames.length];
+						for ( int i = 0; i < iNames.length; i++ ) {
+							numbers[i] = s.getInstantaneousSampleBigDecimal(iNames[i]);
+						}
+						Array iArray = con.createArrayOf("NUMERIC", numbers);
+						datumStmt.setArray(4, iArray);
+					}
+
+					String[] aNames = meta.propertyNamesForType(DatumSamplesType.Accumulating);
+					if ( aNames == null || aNames.length < 1 ) {
+						datumStmt.setNull(5, Types.OTHER);
+					} else {
+						BigDecimal[] numbers = new BigDecimal[aNames.length];
+						for ( int i = 0; i < aNames.length; i++ ) {
+							numbers[i] = s.getAccumulatingSampleBigDecimal(aNames[i]);
+						}
+						Array aArray = con.createArrayOf("NUMERIC", numbers);
+						datumStmt.setArray(5, aArray);
+					}
+
+					String[] sNames = meta.propertyNamesForType(DatumSamplesType.Status);
+					if ( sNames == null || sNames.length < 1 ) {
+						datumStmt.setNull(6, Types.OTHER);
+					} else {
+						String[] strings = new String[sNames.length];
+						for ( int i = 0; i < sNames.length; i++ ) {
+							strings[i] = s.getStatusSampleString(sNames[i]);
+						}
+						Array aArray = con.createArrayOf("TEXT", strings);
+						datumStmt.setArray(6, aArray);
+					}
+
+					Set<String> tags = s.getTags();
+					if ( tags == null || tags.isEmpty() ) {
+						datumStmt.setNull(7, Types.OTHER);
+					} else {
+						String[] strings = tags.toArray(String[]::new);
+						Array aArray = con.createArrayOf("TEXT", strings);
+						datumStmt.setArray(7, aArray);
+					}
+
+					datumStmt.execute();
 				}
-				insertObjectDatumStreamMetadata(log, con, result.values());
-				return null;
 			}
+			insertObjectDatumStreamMetadata(log, con, result.values());
+			return null;
 		});
 		return result;
 	}
@@ -655,7 +649,7 @@ public final class DatumDbUtils {
 		List<GeneralNodeDatumAuxiliary> auxDatums = elementsOf(data, GeneralNodeDatumAuxiliary.class);
 		Map<NodeSourcePK, ObjectDatumStreamMetadata> meta = insertDatumStream(log, jdbcTemplate, datums,
 				timeZoneId);
-		UUID streamId = null;
+		UUID streamId;
 		if ( !meta.isEmpty() ) {
 			streamId = meta.values().iterator().next().getStreamId();
 			if ( !auxDatums.isEmpty() ) {
@@ -719,13 +713,9 @@ public final class DatumDbUtils {
 	 */
 	public static void insertObjectDatumStreamMetadata(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<? extends ObjectDatumStreamMetadata> metas) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				insertObjectDatumStreamMetadata(log, con, metas);
-				return null;
-			}
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			insertObjectDatumStreamMetadata(log, con, metas);
+			return null;
 		});
 	}
 
@@ -806,43 +796,37 @@ public final class DatumDbUtils {
 	public static Map<NodeSourcePK, ObjectDatumStreamMetadata> ingestDatumStream(Logger log,
 			JdbcOperations jdbcTemplate, Iterable<GeneralNodeDatum> datums, String timeZoneId) {
 		final Map<NodeSourcePK, ObjectDatumStreamMetadata> result = new LinkedHashMap<>();
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement datumStmt = con
-						.prepareCall("{? = call solardatm.store_datum(?,?,?,?,?)}")) {
-					datumStmt.registerOutParameter(1, Types.OTHER);
-					final Timestamp now = Timestamp.from(Instant.now());
-					for ( GeneralNodeDatum d : datums ) {
-						final DatumSamples s = d.getSamples();
-						if ( s == null || s.isEmpty() ) {
-							continue;
-						}
-						if ( log != null ) {
-							log.debug("Inserting Datum {}", d);
-						}
-
-						NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getCreated()));
-						datumStmt.setObject(3, nspk.getNodeId());
-						datumStmt.setString(4, nspk.getSourceId());
-						datumStmt.setTimestamp(5, now);
-
-						String json = JsonUtils.getJSONString(s, null);
-						datumStmt.setString(6, json);
-						datumStmt.execute();
-
-						Object id = datumStmt.getObject(1);
-						UUID streamId = (id instanceof UUID ? (UUID) id
-								: id != null ? UUID.fromString(id.toString()) : null);
-						result.computeIfAbsent(nspk, k -> {
-							return createMetadata(streamId, timeZoneId, datums, k);
-						});
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (CallableStatement datumStmt = con
+					.prepareCall("{? = call solardatm.store_datum(?,?,?,?,?)}")) {
+				datumStmt.registerOutParameter(1, Types.OTHER);
+				final Timestamp now = Timestamp.from(Instant.now());
+				for ( GeneralNodeDatum d : datums ) {
+					final DatumSamples s = d.getSamples();
+					if ( s == null || s.isEmpty() ) {
+						continue;
 					}
+					if ( log != null ) {
+						log.debug("Inserting Datum {}", d);
+					}
+
+					NodeSourcePK nspk = new NodeSourcePK(d.getNodeId(), d.getSourceId());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getCreated()));
+					datumStmt.setObject(3, nspk.getNodeId());
+					datumStmt.setString(4, nspk.getSourceId());
+					datumStmt.setTimestamp(5, now);
+
+					String json = getJSONString(s, null);
+					datumStmt.setString(6, json);
+					datumStmt.execute();
+
+					Object id = datumStmt.getObject(1);
+					UUID streamId = (id instanceof UUID ? (UUID) id
+							: id != null ? UUID.fromString(id.toString()) : null);
+					result.computeIfAbsent(nspk, k -> createMetadata(streamId, timeZoneId, datums, k));
 				}
-				return null;
 			}
+			return null;
 		});
 		return result;
 	}
@@ -861,10 +845,10 @@ public final class DatumDbUtils {
 	 */
 	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
 			Iterable<GeneralNodeDatumAuxiliary> datums) {
-		List<DatumAuxiliary> converted = StreamSupport.stream(datums.spliterator(), false).map(d -> {
-			return new DatumAuxiliaryEntity(streamId, d.getCreated(), d.getType(), d.getCreated(),
-					d.getSamplesFinal(), d.getSamplesStart(), d.getNotes(), d.getMeta());
-		}).collect(Collectors.toList());
+		List<DatumAuxiliary> converted = StreamSupport.stream(datums.spliterator(), false)
+				.map(d -> new DatumAuxiliaryEntity(streamId, d.getCreated(), d.getType(), d.getCreated(),
+						d.getSamplesFinal(), d.getSamplesStart(), d.getNotes(), d.getMeta()))
+				.collect(Collectors.toList());
 		insertDatumAuxiliary(log, jdbcTemplate, converted);
 	}
 
@@ -880,29 +864,25 @@ public final class DatumDbUtils {
 	 */
 	public static void insertDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<DatumAuxiliary> datums) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement(
-						"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
-								+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
-					for ( DatumAuxiliary d : datums ) {
-						String sf = getJSONString(d.getSamplesFinal().getA(), null);
-						String ss = getJSONString(d.getSamplesStart().getA(), null);
-						if ( log != null ) {
-							log.debug("Inserting DatumAuxiliary {}; {} -> {}", d.getId(), sf, ss);
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
-						datumStmt.setString(3, d.getType().name());
-						datumStmt.setString(4, sf);
-						datumStmt.setString(5, ss);
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement datumStmt = con.prepareStatement(
+					"insert into solardatm.da_datm_aux (stream_id,ts,atype,jdata_af,jdata_as) "
+							+ "VALUES (?::uuid,?,?::solardatm.da_datm_aux_type,?::jsonb,?::jsonb)")) {
+				for ( DatumAuxiliary d : datums ) {
+					String sf = getJSONString(d.getSamplesFinal().getA(), null);
+					String ss = getJSONString(d.getSamplesStart().getA(), null);
+					if ( log != null ) {
+						log.debug("Inserting DatumAuxiliary {}; {} -> {}", d.getId(), sf, ss);
 					}
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+					datumStmt.setString(3, d.getType().name());
+					datumStmt.setString(4, sf);
+					datumStmt.setString(5, ss);
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -917,56 +897,52 @@ public final class DatumDbUtils {
 	 *        the datum to insert
 	 */
 	public static void insertDatum(Logger log, JdbcOperations jdbcTemplate, Iterable<Datum> datums) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement(insertDatumStmt())) {
-					final Timestamp now = Timestamp.from(Instant.now());
-					for ( Datum d : datums ) {
-						if ( log != null ) {
-							log.debug("Inserting Datum: {}", d);
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
-
-						DatumProperties props = d.getProperties();
-						if ( props != null && props.getInstantaneousLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
-							datumStmt.setArray(3, array);
-							array.free();
-						} else {
-							datumStmt.setNull(3, Types.ARRAY);
-						}
-						if ( props != null && props.getAccumulatingLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
-							datumStmt.setArray(4, array);
-							array.free();
-						} else {
-							datumStmt.setNull(4, Types.ARRAY);
-						}
-						if ( props != null && props.getStatusLength() > 0 ) {
-							Array array = con.createArrayOf("TEXT", props.getStatus());
-							datumStmt.setArray(5, array);
-							array.free();
-						} else {
-							datumStmt.setNull(5, Types.ARRAY);
-						}
-						if ( props != null && props.getTagsLength() > 0 ) {
-							Array array = con.createArrayOf("TEXT", props.getTags());
-							datumStmt.setArray(6, array);
-							array.free();
-						} else {
-							datumStmt.setNull(6, Types.ARRAY);
-						}
-
-						datumStmt.setTimestamp(7, now);
-
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement datumStmt = con.prepareStatement(insertDatumStmt())) {
+				final Timestamp now = Timestamp.from(Instant.now());
+				for ( Datum d : datums ) {
+					if ( log != null ) {
+						log.debug("Inserting Datum: {}", d);
 					}
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+
+					DatumProperties props = d.getProperties();
+					if ( props != null && props.getInstantaneousLength() > 0 ) {
+						Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
+						datumStmt.setArray(3, array);
+						array.free();
+					} else {
+						datumStmt.setNull(3, Types.ARRAY);
+					}
+					if ( props != null && props.getAccumulatingLength() > 0 ) {
+						Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
+						datumStmt.setArray(4, array);
+						array.free();
+					} else {
+						datumStmt.setNull(4, Types.ARRAY);
+					}
+					if ( props != null && props.getStatusLength() > 0 ) {
+						Array array = con.createArrayOf("TEXT", props.getStatus());
+						datumStmt.setArray(5, array);
+						array.free();
+					} else {
+						datumStmt.setNull(5, Types.ARRAY);
+					}
+					if ( props != null && props.getTagsLength() > 0 ) {
+						Array array = con.createArrayOf("TEXT", props.getTags());
+						datumStmt.setArray(6, array);
+						array.free();
+					} else {
+						datumStmt.setNull(6, Types.ARRAY);
+					}
+
+					datumStmt.setTimestamp(7, now);
+
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1017,99 +993,83 @@ public final class DatumDbUtils {
 	 */
 	public static void insertAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AggregateDatum> datums) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement rawStmt = con.prepareStatement(insertDatumStmt());
-						PreparedStatement hourStmt = con
-								.prepareStatement(insertAggStmt(Aggregation.Hour));
-						PreparedStatement dayStmt = con.prepareStatement(insertAggStmt(Aggregation.Day));
-						PreparedStatement monthStmt = con
-								.prepareStatement(insertAggStmt(Aggregation.Month))) {
-					final Timestamp now = Timestamp.from(Instant.now());
-					for ( AggregateDatum d : datums ) {
-						Aggregation kind = (d.getAggregation() != null ? d.getAggregation()
-								: Aggregation.Hour);
-						PreparedStatement datumStmt;
-						switch (kind) {
-							case Hour:
-								datumStmt = hourStmt;
-								break;
-
-							case Day:
-								datumStmt = dayStmt;
-								break;
-
-							case Month:
-								datumStmt = monthStmt;
-								break;
-
-							default:
-								datumStmt = rawStmt;
-								break;
-						}
-						if ( log != null ) {
-							log.debug("Inserting {} AggregateDatum: {}", kind, d);
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
-
-						DatumProperties props = d.getProperties();
-						if ( props != null && props.getInstantaneousLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
-							datumStmt.setArray(3, array);
-							array.free();
-						} else {
-							datumStmt.setNull(3, Types.ARRAY);
-						}
-						if ( props != null && props.getAccumulatingLength() > 0 ) {
-							Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
-							datumStmt.setArray(4, array);
-							array.free();
-						} else {
-							datumStmt.setNull(4, Types.ARRAY);
-						}
-						if ( props != null && props.getStatusLength() > 0 ) {
-							Array array = con.createArrayOf("TEXT", props.getStatus());
-							datumStmt.setArray(5, array);
-							array.free();
-						} else {
-							datumStmt.setNull(5, Types.ARRAY);
-						}
-						if ( props != null && props.getTagsLength() > 0 ) {
-							Array array = con.createArrayOf("TEXT", props.getTags());
-							datumStmt.setArray(6, array);
-							array.free();
-						} else {
-							datumStmt.setNull(6, Types.ARRAY);
-						}
-
-						if ( d.getAggregation() == Aggregation.None ) {
-							datumStmt.setTimestamp(7, now);
-						} else {
-							DatumPropertiesStatistics stats = d.getStatistics();
-							if ( stats != null && stats.getInstantaneousLength() > 0 ) {
-								Array array = con.createArrayOf("NUMERIC", stats.getInstantaneous());
-								datumStmt.setArray(7, array);
-								array.free();
-							} else {
-								datumStmt.setNull(7, Types.ARRAY);
-							}
-							if ( stats != null && stats.getAccumulatingLength() > 0 ) {
-								Array array = con.createArrayOf("NUMERIC", stats.getAccumulating());
-								datumStmt.setArray(8, array);
-								array.free();
-							} else {
-								datumStmt.setNull(8, Types.ARRAY);
-							}
-						}
-
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement rawStmt = con.prepareStatement(insertDatumStmt());
+					PreparedStatement hourStmt = con.prepareStatement(insertAggStmt(Aggregation.Hour));
+					PreparedStatement dayStmt = con.prepareStatement(insertAggStmt(Aggregation.Day));
+					PreparedStatement monthStmt = con
+							.prepareStatement(insertAggStmt(Aggregation.Month))) {
+				final Timestamp now = Timestamp.from(Instant.now());
+				for ( AggregateDatum d : datums ) {
+					Aggregation kind = (d.getAggregation() != null ? d.getAggregation()
+							: Aggregation.Hour);
+					@SuppressWarnings("resource")
+					PreparedStatement datumStmt = switch (kind) {
+						case Hour -> hourStmt;
+						case Day -> dayStmt;
+						case Month -> monthStmt;
+						default -> rawStmt;
+					};
+					if ( log != null ) {
+						log.debug("Inserting {} AggregateDatum: {}", kind, d);
 					}
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+
+					DatumProperties props = d.getProperties();
+					if ( props != null && props.getInstantaneousLength() > 0 ) {
+						Array array = con.createArrayOf("NUMERIC", props.getInstantaneous());
+						datumStmt.setArray(3, array);
+						array.free();
+					} else {
+						datumStmt.setNull(3, Types.ARRAY);
+					}
+					if ( props != null && props.getAccumulatingLength() > 0 ) {
+						Array array = con.createArrayOf("NUMERIC", props.getAccumulating());
+						datumStmt.setArray(4, array);
+						array.free();
+					} else {
+						datumStmt.setNull(4, Types.ARRAY);
+					}
+					if ( props != null && props.getStatusLength() > 0 ) {
+						Array array = con.createArrayOf("TEXT", props.getStatus());
+						datumStmt.setArray(5, array);
+						array.free();
+					} else {
+						datumStmt.setNull(5, Types.ARRAY);
+					}
+					if ( props != null && props.getTagsLength() > 0 ) {
+						Array array = con.createArrayOf("TEXT", props.getTags());
+						datumStmt.setArray(6, array);
+						array.free();
+					} else {
+						datumStmt.setNull(6, Types.ARRAY);
+					}
+
+					if ( d.getAggregation() == Aggregation.None ) {
+						datumStmt.setTimestamp(7, now);
+					} else {
+						DatumPropertiesStatistics stats = d.getStatistics();
+						if ( stats != null && stats.getInstantaneousLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", stats.getInstantaneous());
+							datumStmt.setArray(7, array);
+							array.free();
+						} else {
+							datumStmt.setNull(7, Types.ARRAY);
+						}
+						if ( stats != null && stats.getAccumulatingLength() > 0 ) {
+							Array array = con.createArrayOf("NUMERIC", stats.getAccumulating());
+							datumStmt.setArray(8, array);
+							array.free();
+						} else {
+							datumStmt.setNull(8, Types.ARRAY);
+						}
+					}
+
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1127,28 +1087,24 @@ public final class DatumDbUtils {
 	 */
 	public static void insertAuditNodeServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AuditNodeServiceValue> data) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement stmt = con.prepareStatement("""
-						INSERT INTO solardatm.aud_node_daily
-							(node_id, service, ts_start, cnt)
-						VALUES (?, ?, ?, ?)
-						""")) {
-					for ( AuditNodeServiceValue v : data ) {
-						if ( log != null ) {
-							log.debug("Inserting AuditNodeServiceValue: {}", v);
-						}
-						stmt.setObject(1, v.getNodeId());
-						stmt.setObject(2, v.getService());
-						stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
-						stmt.setObject(4, v.getCount());
-						stmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement stmt = con.prepareStatement("""
+					INSERT INTO solardatm.aud_node_daily
+						(node_id, service, ts_start, cnt)
+					VALUES (?, ?, ?, ?)
+					""")) {
+				for ( AuditNodeServiceValue v : data ) {
+					if ( log != null ) {
+						log.debug("Inserting AuditNodeServiceValue: {}", v);
 					}
+					stmt.setObject(1, v.getNodeId());
+					stmt.setObject(2, v.getService());
+					stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
+					stmt.setObject(4, v.getCount());
+					stmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1166,28 +1122,24 @@ public final class DatumDbUtils {
 	 */
 	public static void insertAuditUserServiceValueDaily(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AuditUserServiceValue> data) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement stmt = con.prepareStatement("""
-						INSERT INTO solardatm.aud_user_daily
-							(user_id, service, ts_start, cnt)
-						VALUES (?, ?, ?, ?)
-						""")) {
-					for ( AuditUserServiceValue v : data ) {
-						if ( log != null ) {
-							log.debug("Inserting AuditNodeServiceValue: {}", v);
-						}
-						stmt.setObject(1, v.getUserId());
-						stmt.setObject(2, v.getService());
-						stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
-						stmt.setObject(4, v.getCount());
-						stmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement stmt = con.prepareStatement("""
+					INSERT INTO solardatm.aud_user_daily
+						(user_id, service, ts_start, cnt)
+					VALUES (?, ?, ?, ?)
+					""")) {
+				for ( AuditUserServiceValue v : data ) {
+					if ( log != null ) {
+						log.debug("Inserting AuditNodeServiceValue: {}", v);
 					}
+					stmt.setObject(1, v.getUserId());
+					stmt.setObject(2, v.getService());
+					stmt.setTimestamp(3, Timestamp.from(v.getTimestamp()));
+					stmt.setObject(4, v.getCount());
+					stmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1203,89 +1155,70 @@ public final class DatumDbUtils {
 	 */
 	public static void insertAuditDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AuditDatum> datums) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement hourStmt = con.prepareStatement(insertAuditStmt(Aggregation.Hour));
+					PreparedStatement dayStmt = con.prepareStatement(insertAuditStmt(Aggregation.Day));
+					PreparedStatement monthStmt = con
+							.prepareStatement(insertAuditStmt(Aggregation.Month));
+					PreparedStatement accStmt = con
+							.prepareStatement(insertAuditStmt(Aggregation.RunningTotal))) {
 
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement hourStmt = con
-						.prepareStatement(insertAuditStmt(Aggregation.Hour));
-						PreparedStatement dayStmt = con
-								.prepareStatement(insertAuditStmt(Aggregation.Day));
-						PreparedStatement monthStmt = con
-								.prepareStatement(insertAuditStmt(Aggregation.Month));
-						PreparedStatement accStmt = con
-								.prepareStatement(insertAuditStmt(Aggregation.RunningTotal))) {
-
-					for ( AuditDatum d : datums ) {
-						if ( log != null ) {
-							log.debug("Inserting {} AuditDatum; {}", d.getAggregation(), d);
-						}
-						PreparedStatement datumStmt;
-						switch (d.getAggregation()) {
-							case Hour:
-								datumStmt = hourStmt;
-								break;
-
-							case Day:
-								datumStmt = dayStmt;
-								break;
-
-							case Month:
-								datumStmt = monthStmt;
-								break;
-
-							default:
-								datumStmt = accStmt;
-								break;
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
-
-						switch (d.getAggregation()) {
-							case Hour:
-								datumStmt.setObject(3, d.getDatumPropertyCount());
-								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
-								datumStmt.setObject(5, d.getDatumQueryCount());
-								datumStmt.setObject(6, d.getFluxDataInCount());
-								datumStmt.setObject(7, d.getDatumCount());
-								break;
-
-							case Day:
-								datumStmt.setObject(3, d.getDatumPropertyCount());
-								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
-								datumStmt.setObject(5, d.getDatumQueryCount());
-								datumStmt.setObject(6, d.getFluxDataInCount());
-								datumStmt.setObject(7, d.getDatumCount());
-								datumStmt.setObject(8, d.getDatumHourlyCount());
-								datumStmt.setBoolean(9,
-										d.getDatumDailyCount().intValue() > 0 ? true : false);
-								break;
-
-							case Month:
-								datumStmt.setObject(3, d.getDatumPropertyCount());
-								datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
-								datumStmt.setObject(5, d.getDatumQueryCount());
-								datumStmt.setObject(6, d.getFluxDataInCount());
-								datumStmt.setObject(7, d.getDatumCount());
-								datumStmt.setObject(8, d.getDatumHourlyCount());
-								datumStmt.setObject(9, d.getDatumDailyCount());
-								datumStmt.setBoolean(10,
-										d.getDatumMonthlyCount().intValue() > 0 ? true : false);
-								break;
-
-							default:
-								datumStmt.setObject(3, d.getDatumCount());
-								datumStmt.setObject(4, d.getDatumHourlyCount());
-								datumStmt.setObject(5, d.getDatumDailyCount());
-								datumStmt.setObject(6, d.getDatumMonthlyCount());
-								break;
-						}
-
-						datumStmt.execute();
+				for ( AuditDatum d : datums ) {
+					if ( log != null ) {
+						log.debug("Inserting {} AuditDatum; {}", d.getAggregation(), d);
 					}
+					@SuppressWarnings("resource")
+					PreparedStatement datumStmt = switch (d.getAggregation()) {
+						case Hour -> hourStmt;
+						case Day -> dayStmt;
+						case Month -> monthStmt;
+						default -> accStmt;
+					};
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+
+					switch (d.getAggregation()) {
+						case Hour:
+							datumStmt.setObject(3, d.getDatumPropertyCount());
+							datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
+							datumStmt.setObject(5, d.getDatumQueryCount());
+							datumStmt.setObject(6, d.getFluxDataInCount());
+							datumStmt.setObject(7, d.getDatumCount());
+							break;
+
+						case Day:
+							datumStmt.setObject(3, d.getDatumPropertyCount());
+							datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
+							datumStmt.setObject(5, d.getDatumQueryCount());
+							datumStmt.setObject(6, d.getFluxDataInCount());
+							datumStmt.setObject(7, d.getDatumCount());
+							datumStmt.setObject(8, d.getDatumHourlyCount());
+							datumStmt.setBoolean(9, d.getDatumDailyCount() > 0);
+							break;
+
+						case Month:
+							datumStmt.setObject(3, d.getDatumPropertyCount());
+							datumStmt.setObject(4, d.getDatumPropertyUpdateCount());
+							datumStmt.setObject(5, d.getDatumQueryCount());
+							datumStmt.setObject(6, d.getFluxDataInCount());
+							datumStmt.setObject(7, d.getDatumCount());
+							datumStmt.setObject(8, d.getDatumHourlyCount());
+							datumStmt.setObject(9, d.getDatumDailyCount());
+							datumStmt.setBoolean(10, d.getDatumMonthlyCount() > 0);
+							break;
+
+						default:
+							datumStmt.setObject(3, d.getDatumCount());
+							datumStmt.setObject(4, d.getDatumHourlyCount());
+							datumStmt.setObject(5, d.getDatumDailyCount());
+							datumStmt.setObject(6, d.getDatumMonthlyCount());
+							break;
+					}
+
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1364,33 +1297,28 @@ public final class DatumDbUtils {
 	 *        the stream ID
 	 * @param datums
 	 *        the datum to insert
-	 *
 	 */
 	public static void ingestDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate, UUID streamId,
 			Iterable<GeneralNodeDatumAuxiliary> datums) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement stmt = con.prepareCall(
-						"{call solardatm.store_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
-					for ( GeneralNodeDatumAuxiliary d : datums ) {
-						if ( log != null ) {
-							log.debug("Inserting GeneralNodeDatumAuxiliary {}; {} -> {}", d.getId(),
-									d.getSampleDataFinal(), d.getSampleDataStart());
-						}
-						stmt.setObject(1, streamId, Types.OTHER);
-						stmt.setTimestamp(2, Timestamp.from(d.getCreated()));
-						stmt.setString(3, d.getType().name());
-						stmt.setNull(4, Types.VARCHAR);
-						stmt.setString(5, d.getSampleJsonFinal());
-						stmt.setString(6, d.getSampleJsonStart());
-						stmt.setNull(7, Types.VARCHAR);
-						stmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (CallableStatement stmt = con.prepareCall(
+					"{call solardatm.store_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
+				for ( GeneralNodeDatumAuxiliary d : datums ) {
+					if ( log != null ) {
+						log.debug("Inserting GeneralNodeDatumAuxiliary {}; {} -> {}", d.getId(),
+								d.getSampleDataFinal(), d.getSampleDataStart());
 					}
+					stmt.setObject(1, streamId, Types.OTHER);
+					stmt.setTimestamp(2, Timestamp.from(d.getCreated()));
+					stmt.setString(3, d.getType().name());
+					stmt.setNull(4, Types.VARCHAR);
+					stmt.setString(5, d.getSampleJsonFinal());
+					stmt.setString(6, d.getSampleJsonStart());
+					stmt.setNull(7, Types.VARCHAR);
+					stmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1411,29 +1339,25 @@ public final class DatumDbUtils {
 	 */
 	public static boolean moveDatumAuxiliary(Logger log, JdbcOperations jdbcTemplate,
 			DatumAuxiliaryPK from, DatumAuxiliary to) {
-		return jdbcTemplate.execute(new ConnectionCallback<Boolean>() {
-
-			@Override
-			public Boolean doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement stmt = con.prepareCall(
-						"{? = call solardatm.move_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
-					if ( log != null ) {
-						log.debug("Moving GeneralNodeDatumAuxiliary {} -> {}", from, to.getId());
-					}
-					stmt.registerOutParameter(1, Types.BOOLEAN);
-					stmt.setObject(2, from.getStreamId(), Types.OTHER);
-					stmt.setTimestamp(3, Timestamp.from(from.getTimestamp()));
-					stmt.setString(4, from.getKind().name());
-					stmt.setObject(5, to.getStreamId(), Types.OTHER);
-					stmt.setTimestamp(6, Timestamp.from(to.getTimestamp()));
-					stmt.setString(7, to.getType().name());
-					stmt.setString(8, to.getNotes());
-					stmt.setString(9, JsonUtils.getJSONString(to.getSamplesFinal(), null));
-					stmt.setString(10, JsonUtils.getJSONString(to.getSamplesStart(), null));
-					stmt.setString(11, JsonUtils.getJSONString(to.getMetadata(), null));
-					stmt.execute();
-					return stmt.getBoolean(1);
+		return jdbcTemplate.execute((ConnectionCallback<Boolean>) con -> {
+			try (CallableStatement stmt = con.prepareCall(
+					"{? = call solardatm.move_datum_aux(?,?,?::solardatm.da_datm_aux_type,?,?,?::solardatm.da_datm_aux_type,?,?::jsonb,?::jsonb,?::jsonb)}")) {
+				if ( log != null ) {
+					log.debug("Moving GeneralNodeDatumAuxiliary {} -> {}", from, to.getId());
 				}
+				stmt.registerOutParameter(1, Types.BOOLEAN);
+				stmt.setObject(2, from.getStreamId(), Types.OTHER);
+				stmt.setTimestamp(3, Timestamp.from(from.getTimestamp()));
+				stmt.setString(4, from.getKind().name());
+				stmt.setObject(5, to.getStreamId(), Types.OTHER);
+				stmt.setTimestamp(6, Timestamp.from(to.getTimestamp()));
+				stmt.setString(7, to.getType().name());
+				stmt.setString(8, to.getNotes());
+				stmt.setString(9, getJSONString(to.getSamplesFinal(), null));
+				stmt.setString(10, getJSONString(to.getSamplesStart(), null));
+				stmt.setString(11, getJSONString(to.getMetadata(), null));
+				stmt.execute();
+				return stmt.getBoolean(1);
 			}
 		});
 	}
@@ -1450,25 +1374,21 @@ public final class DatumDbUtils {
 	 */
 	public static void insertStaleAggregateDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleAggregateDatum> stales) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement(
-						"INSERT INTO solardatm.agg_stale_datm (stream_id,ts_start,agg_kind) VALUES (?::uuid,?,?)")) {
-					for ( StaleAggregateDatum d : stales ) {
-						if ( log != null ) {
-							log.debug("Inserting {} StaleAggregateDatum: {}", d.getKind(), d);
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
-						datumStmt.setString(3, d.getKind().getKey());
-
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement datumStmt = con.prepareStatement(
+					"INSERT INTO solardatm.agg_stale_datm (stream_id,ts_start,agg_kind) VALUES (?::uuid,?,?)")) {
+				for ( StaleAggregateDatum d : stales ) {
+					if ( log != null ) {
+						log.debug("Inserting {} StaleAggregateDatum: {}", d.getKind(), d);
 					}
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+					datumStmt.setString(3, d.getKind().getKey());
+
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1476,7 +1396,7 @@ public final class DatumDbUtils {
 			String msg) {
 		List<Map<String, Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solardatm.agg_stale_datm ORDER BY ts_start, stream_id");
-		log.debug("{}:\n{}", msg, staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
+		log.debug("{}:\n{}", msg, staleRows.stream().map(Object::toString).collect(joining("\n")));
 	}
 
 	/**
@@ -1495,24 +1415,19 @@ public final class DatumDbUtils {
 			Set<Aggregation> kinds) {
 		debugStaleAggregateDatumTable(log, jdbcTemplate, "Stale datum at start");
 
-		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel)
-				.collect(Collectors.toList());
+		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel).toList();
 
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement cs = con
-						.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}")) {
-					for ( Aggregation kind : sortedKinds ) {
-						int processed = processStaleAggregateKind(log, kind.getKey(), cs);
-						log.debug("Processed {} stale {} datum", processed, kind.getKey());
-						debugStaleAggregateDatumTable(log, jdbcTemplate,
-								"Stale datum after process " + kind.getKey());
-					}
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (CallableStatement cs = con
+					.prepareCall("{call solardatm.process_one_agg_stale_datm(?)}")) {
+				for ( Aggregation kind : sortedKinds ) {
+					int processed = processStaleAggregateKind(log, kind.getKey(), cs);
+					log.debug("Processed {} stale {} datum", processed, kind.getKey());
+					debugStaleAggregateDatumTable(log, jdbcTemplate,
+							"Stale datum after process " + kind.getKey());
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1565,24 +1480,20 @@ public final class DatumDbUtils {
 	 */
 	public static void insertStaleFluxDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleFluxDatum> stales) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement(
-						"INSERT INTO solardatm.agg_stale_flux (stream_id,agg_kind) VALUES (?::uuid,?)")) {
-					for ( StaleFluxDatum d : stales ) {
-						if ( log != null ) {
-							log.debug("Inserting {} StaleFluxDatum: {}", d.getKind(), d.getStreamId());
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setString(2, d.getKind().getKey());
-
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement datumStmt = con.prepareStatement(
+					"INSERT INTO solardatm.agg_stale_flux (stream_id,agg_kind) VALUES (?::uuid,?)")) {
+				for ( StaleFluxDatum d : stales ) {
+					if ( log != null ) {
+						log.debug("Inserting {} StaleFluxDatum: {}", d.getKind(), d.getStreamId());
 					}
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setString(2, d.getKind().getKey());
+
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1598,25 +1509,21 @@ public final class DatumDbUtils {
 	 */
 	public static void insertStaleAuditDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<StaleAuditDatum> stales) {
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (PreparedStatement datumStmt = con.prepareStatement(
-						"INSERT INTO solardatm.aud_stale_datm (stream_id,ts_start,aud_kind) VALUES (?::uuid,?,?)")) {
-					for ( StaleAuditDatum d : stales ) {
-						if ( log != null ) {
-							log.debug("Inserting {} StaleAuditDatum: {}", d.getKind(), d);
-						}
-						datumStmt.setString(1, d.getStreamId().toString());
-						datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
-						datumStmt.setString(3, d.getKind().getKey());
-
-						datumStmt.execute();
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (PreparedStatement datumStmt = con.prepareStatement(
+					"INSERT INTO solardatm.aud_stale_datm (stream_id,ts_start,aud_kind) VALUES (?::uuid,?,?)")) {
+				for ( StaleAuditDatum d : stales ) {
+					if ( log != null ) {
+						log.debug("Inserting {} StaleAuditDatum: {}", d.getKind(), d);
 					}
+					datumStmt.setString(1, d.getStreamId().toString());
+					datumStmt.setTimestamp(2, Timestamp.from(d.getTimestamp()));
+					datumStmt.setString(3, d.getKind().getKey());
+
+					datumStmt.execute();
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1636,25 +1543,20 @@ public final class DatumDbUtils {
 			Set<Aggregation> kinds) {
 		debugStaleAuditDatumTable(log, jdbcTemplate, "Stale audit datum at start");
 
-		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel)
-				.collect(Collectors.toList());
+		List<Aggregation> sortedKinds = kinds.stream().sorted(Aggregation::compareLevel).toList();
 
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
-
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-				try (CallableStatement cs = con
-						.prepareCall("{? = call solardatm.process_one_aud_stale_datm(?)}")) {
-					cs.registerOutParameter(1, Types.INTEGER);
-					for ( Aggregation kind : sortedKinds ) {
-						int processed = processStaleAuditKind(kind.getKey(), cs);
-						log.debug("Processed {} stale {} audit datum", processed, kind.getKey());
-						debugStaleAuditDatumTable(log, jdbcTemplate,
-								"Stale audit datum after process " + kind.getKey());
-					}
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
+			try (CallableStatement cs = con
+					.prepareCall("{? = call solardatm.process_one_aud_stale_datm(?)}")) {
+				cs.registerOutParameter(1, Types.INTEGER);
+				for ( Aggregation kind : sortedKinds ) {
+					int processed = processStaleAuditKind(kind.getKey(), cs);
+					log.debug("Processed {} stale {} audit datum", processed, kind.getKey());
+					debugStaleAuditDatumTable(log, jdbcTemplate,
+							"Stale audit datum after process " + kind.getKey());
 				}
-				return null;
 			}
+			return null;
 		});
 	}
 
@@ -1689,7 +1591,7 @@ public final class DatumDbUtils {
 	private static void debugStaleAuditDatumTable(Logger log, JdbcOperations jdbcTemplate, String msg) {
 		List<Map<String, Object>> staleRows = jdbcTemplate
 				.queryForList("SELECT * FROM solardatm.aud_stale_datm ORDER BY ts_start, stream_id");
-		log.debug("{}:\n{}", msg, staleRows.stream().map(e -> e.toString()).collect(joining("\n")));
+		log.debug("{}:\n{}", msg, staleRows.stream().map(Object::toString).collect(joining("\n")));
 	}
 
 	/**
@@ -1705,7 +1607,7 @@ public final class DatumDbUtils {
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(
 				"SELECT stream_id, obj_id, source_id, names_i, names_a, names_s, jdata, kind, time_zone FROM solardatm.find_metadata_for_stream(?::uuid)",
 				ObjectDatumStreamMetadataRowMapper.INSTANCE, streamId);
-		return (results.isEmpty() ? null : results.get(0));
+		return (results.isEmpty() ? null : results.getFirst());
 	}
 
 	/**
@@ -1853,22 +1755,20 @@ public final class DatumDbUtils {
 	public static List<AggregateDatum> listAggregateDatum(JdbcOperations jdbcTemplate,
 			Aggregation kind) {
 		String tableName;
-		RowMapper<AggregateDatum> mapper;
-		switch (kind) {
-			case Day:
+		RowMapper<AggregateDatum> mapper = switch (kind) {
+			case Day -> {
 				tableName = "daily";
-				mapper = AggregateDatumEntityRowMapper.DAY_INSTANCE;
-				break;
-
-			case Month:
+				yield AggregateDatumEntityRowMapper.DAY_INSTANCE;
+			}
+			case Month -> {
 				tableName = "monthly";
-				mapper = AggregateDatumEntityRowMapper.MONTH_INSTANCE;
-				break;
-
-			default:
+				yield AggregateDatumEntityRowMapper.MONTH_INSTANCE;
+			}
+			default -> {
 				tableName = "hourly";
-				mapper = AggregateDatumEntityRowMapper.HOUR_INSTANCE;
-		}
+				yield AggregateDatumEntityRowMapper.HOUR_INSTANCE;
+			}
+		};
 		return jdbcTemplate.query(String.format(
 				"SELECT * FROM solardatm.agg_datm_%s ORDER BY stream_id, ts_start", tableName), mapper);
 	}

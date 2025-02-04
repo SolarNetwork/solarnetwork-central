@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.security;
 
+import java.io.Serial;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -38,6 +39,7 @@ import net.solarnetwork.central.support.EventDetailsProvider;
 public class EndpointAuthenticationDetails extends WebAuthenticationDetails
 		implements UserIdRelated, EventDetailsProvider {
 
+	@Serial
 	private static final long serialVersionUID = 1532466056959330725L;
 
 	private final Long userId;

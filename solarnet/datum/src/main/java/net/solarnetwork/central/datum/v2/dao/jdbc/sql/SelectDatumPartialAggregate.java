@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectDatumPartialAggregate.java - 3/12/2020 4:23:00 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,29 +47,28 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 /**
  * Select for {@link DatumEntity} instances via a {@link DatumCriteria} filter
  * using partial aggregation ranges.
- * 
+ *
  * <p>
  * Special handling is provided when the main aggregation is {@code Year}. Since
  * there is no yearly aggregation table to query from, the monthly aggregation
  * table will be queried and aggregated to year values.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 3.8
  */
-public class SelectDatumPartialAggregate
+public final class SelectDatumPartialAggregate
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	private final DatumCriteria filter;
 	private final Aggregation aggregation;
 	private final CombiningConfig combine;
-	private final PartialAggregationInterval partialInterval;
 	private final List<DatumCriteria> intervalFilters;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
@@ -81,7 +80,7 @@ public class SelectDatumPartialAggregate
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param partial
@@ -122,7 +121,8 @@ public class SelectDatumPartialAggregate
 					"%s partial aggregation is too small to use with Year aggregation.", partial));
 		}
 		this.combine = CombiningConfig.configFromCriteria(filter);
-		this.partialInterval = new PartialAggregationInterval(aggregation, partial, start, end);
+		PartialAggregationInterval partialInterval = new PartialAggregationInterval(aggregation, partial,
+				start, end);
 		if ( partialInterval.getIntervals().isEmpty() ) {
 			throw new IllegalArgumentException("Invalid date range for partial aggregation.");
 		}
@@ -163,19 +163,12 @@ public class SelectDatumPartialAggregate
 	}
 
 	private static String sqlAgg(Aggregation agg) {
-		switch (agg) {
-			case Year:
-				return "year";
-
-			case Month:
-				return "month";
-
-			case Day:
-				return "day";
-
-			default:
-				return "hour";
-		}
+		return switch (agg) {
+			case Year -> "year";
+			case Month -> "month";
+			case Day -> "day";
+			default -> "hour";
+		};
 	}
 
 	private void sqlSelect(DatumCriteria filter, StringBuilder buf) {
@@ -224,21 +217,13 @@ public class SelectDatumPartialAggregate
 				.append(" datum ON datum.stream_id = s.stream_id\n");
 	}
 
-	protected String sqlTableName(DatumCriteria filter) {
-		switch (filter.getAggregation()) {
-			case Hour:
-				return "solardatm.agg_datm_hourly";
-
-			case Day:
-				return "solardatm.agg_datm_daily";
-
-			case Month:
-			case Year:
-				return "solardatm.agg_datm_monthly";
-
-			default:
-				return "solardatm.da_datm";
-		}
+	private String sqlTableName(DatumCriteria filter) {
+		return switch (filter.getAggregation()) {
+			case Hour -> "solardatm.agg_datm_hourly";
+			case Day -> "solardatm.agg_datm_daily";
+			case Month, Year -> "solardatm.agg_datm_monthly";
+			default -> "solardatm.da_datm";
+		};
 	}
 
 	private void sqlWhere(DatumCriteria filter, StringBuilder buf) {
@@ -268,7 +253,7 @@ public class SelectDatumPartialAggregate
 		} else {
 			order.append(", datum.stream_id, ts");
 		}
-		if ( order.length() > 0 ) {
+		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}

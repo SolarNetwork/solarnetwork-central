@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecurityTokenAuthenticationFilter.java - Nov 26, 2012 11:01:46 AM
- * 
+ *
  * Copyright 2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -64,18 +64,19 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
 
 /**
  * Authentication filter for "SolarNetworkWS" style authentication.
- * 
+ *
  * <p>
  * This authentication method has been modeled after the Amazon Web Service
- * authentication scheme used by the S3 service
- * (http://docs.amazonwebservices.com/AmazonS3/latest/dev/S3_Authentication2.html).
- * The auth token is fixed at {@link #AUTH_TOKEN_LENGTH} characters. All query
- * parameters (GET or POST) are added to the request path in the message;
- * parameters are sorted lexicographically and then their keys and
- * <em>first</em> value is appended to the path following a {@code ?} character
- * and separated by a {@code &} character.
+ * (<a href=
+ * "http://docs.amazonwebservices.com/AmazonS3/latest/dev/S3_Authentication2.html">authentication
+ * scheme used by the S3 service</a>). The auth token is fixed at
+ * {@link #AUTH_TOKEN_LENGTH} characters. All query parameters (GET or POST) are
+ * added to the request path in the message; parameters are sorted
+ * lexicographically and then their keys and <em>first</em> value is appended to
+ * the path following a {@code ?} character and separated by a {@code &}
+ * character.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.10
  */
@@ -86,7 +87,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * The default value for the {@code maxRequestBodySize} property.
-	 * 
+	 *
 	 * @since 1.3
 	 */
 	public static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 65535;
@@ -109,7 +110,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * Construct with a {@link PathMatcher}.
-	 * 
+	 *
 	 * @param pathMatcher
 	 *        the matcher to use, or {@literal null} if not supported
 	 * @param pathMatcherPrefixStrip
@@ -125,7 +126,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * Construct with a {@link PathMatcher}.
-	 * 
+	 *
 	 * @param pathMatcher
 	 *        the matcher to use, or {@literal null} if not supported
 	 * @param pathMatcherPrefixStrip
@@ -159,7 +160,6 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 				(int) settings.getMinimumCompressLength().toBytes(),
 				settings.getCompressibleContentTypePattern(),
 				(int) settings.getMinimumSpoolLength().toBytes(), settings.getSpoolDirectory());
-		HttpServletResponse response = res;
 
 		AuthenticationData data;
 		try {
@@ -172,20 +172,20 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 			data = AuthenticationDataFactory.authenticationDataForAuthorizationHeader(request);
 		} catch ( net.solarnetwork.web.jakarta.security.SecurityException e ) {
-			deny(request, response, new MaxUploadSizeExceededException(
+			deny(request, res, new MaxUploadSizeExceededException(
 					(int) settings.getMaxRequestBodySize().toBytes(), e));
 			return;
 		} catch ( SecurityException e ) {
-			deny(request, response, e);
+			deny(request, res, e);
 			return;
 		} catch ( AuthenticationException e ) {
-			fail(request, response, e);
+			fail(request, res, e);
 			return;
 		}
 
 		if ( data == null ) {
 			log.trace("Missing Authorization header or unsupported scheme");
-			chain.doFilter(request, response);
+			chain.doFilter(request, res);
 			return;
 		}
 
@@ -194,28 +194,27 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 			user = userDetailsService.loadUserByUsername(data.getAuthTokenId());
 		} catch ( AuthenticationException e ) {
 			log.debug("Auth token [{}] exception: {}", data.getAuthTokenId(), e.getMessage());
-			fail(request, response, new BadCredentialsException("Bad credentials"));
+			fail(request, res, new BadCredentialsException("Bad credentials"));
 			return;
 		} catch ( DataAccessException | TransactionException e ) {
 			log.debug("Auth token [{}] transient DAO exception: {}", data.getAuthTokenId(),
 					e.getMessage());
-			failDao(request, response, e);
+			failDao(request, res, e);
 			return;
 		} catch ( Exception e ) {
 			log.debug("Auth token [{}] exception: {}", data.getAuthTokenId(), e.getMessage());
-			fail(request, response,
-					new AuthenticationServiceException("Unable to verify credentials", e));
+			fail(request, res, new AuthenticationServiceException("Unable to verify credentials", e));
 			return;
 		}
 
 		if ( user instanceof SecurityToken ) {
 			SecurityPolicy policy = ((SecurityToken) user).getPolicy();
 			if ( policy != null && !policy.isValidAt(Instant.now()) ) {
-				fail(request, response, new CredentialsExpiredException("Expired token"));
+				fail(request, res, new CredentialsExpiredException("Expired token"));
 				return;
 			}
 			if ( !isValidApiPath(request, policy) ) {
-				fail(request, response, new BadCredentialsException("Access denied"));
+				fail(request, res, new BadCredentialsException("Access denied"));
 				return;
 			}
 		}
@@ -224,13 +223,13 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		if ( !computedDigest.equals(data.getSignatureDigest()) ) {
 			log.debug("Expected response: [{}] but received: [{}]", computedDigest,
 					data.getSignatureDigest());
-			fail(request, response, new BadCredentialsException("Bad credentials"));
+			fail(request, res, new BadCredentialsException("Bad credentials"));
 			return;
 		}
 
 		if ( !data.isDateValid(settings.getMaxDateSkew()) ) {
 			log.debug("Request date [{}] diff too large: {}", data.getDate(), data.getDateSkew());
-			fail(request, response, new BadCredentialsException("Date skew too large"));
+			fail(request, res, new BadCredentialsException("Date skew too large"));
 			return;
 		}
 
@@ -239,7 +238,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 		SecurityContextHolder.getContext()
 				.setAuthentication(createSuccessfulAuthentication(request, user));
 
-		chain.doFilter(request, response);
+		chain.doFilter(request, res);
 	}
 
 	private boolean isValidApiPath(final HttpServletRequest request, final SecurityPolicy policy) {
@@ -323,7 +322,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * Get the user details service.
-	 * 
+	 *
 	 * @return the service
 	 * @since 1.9
 	 */
@@ -336,12 +335,12 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * usernames (email addresses) and plain-text authorization token secret
 	 * passwords via {@link UserDetails#getUsername()} and
 	 * {@link UserDetails#getPassword()}.
-	 * 
+	 *
 	 * <p>
 	 * After validating the request authorization, this filter will authenticate
 	 * the user with Spring Security.
 	 * </p>
-	 * 
+	 *
 	 * @param userDetailsService
 	 *        the service
 	 */
@@ -351,11 +350,11 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * Set the details source to use.
-	 * 
+	 *
 	 * <p>
 	 * Defaults to a {@link WebAuthenticationDetailsSource}.
 	 * </p>
-	 * 
+	 *
 	 * @param authenticationDetailsSource
 	 *        the source to use
 	 */
@@ -368,11 +367,11 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	 * Set the maximum amount of difference in the supplied HTTP {@code Date}
 	 * (or {@code X-SN-Date}) header value with the current time as reported by
 	 * the system.
-	 * 
+	 *
 	 * <p>
 	 * If this difference is exceeded, authorization fails.
 	 * </p>
-	 * 
+	 *
 	 * @param maxDateSkew
 	 *        the maximum allowed date skew
 	 */
@@ -383,7 +382,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 	/**
 	 * The {@link SecurityTokenAuthenticationEntryPoint} to use as the entry
 	 * point.
-	 * 
+	 *
 	 * @param entryPoint
 	 *        the entry point to use
 	 */
@@ -393,7 +392,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * Set the maximum allowed request body size.
-	 * 
+	 *
 	 * @param maxRequestBodySize
 	 *        the maximum request body size allowed
 	 * @since 1.3
@@ -404,7 +403,7 @@ public class SecurityTokenAuthenticationFilter extends OncePerRequestFilter impl
 
 	/**
 	 * Get the filter settings.
-	 * 
+	 *
 	 * @return the settings, never {@literal null}
 	 * @since 1.7
 	 */

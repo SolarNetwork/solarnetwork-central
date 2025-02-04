@@ -1,21 +1,21 @@
 /* ==================================================================
  * WebServiceControllerSupport.java - Dec 18, 2012 7:29:54 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -73,7 +73,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * A base class to support web service style controllers.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -90,7 +90,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * The default format pattern for adate and time property with an explicit
 	 * {@literal Z} time zone.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String DEFAULT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd'T'HH:mm'Z'";
@@ -98,7 +98,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * An alternate format pattern for a date and time property using a space
 	 * delimiter between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
@@ -106,7 +106,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * An alternate format pattern for a date and time property with an explicit
 	 * {@literal Z} time zone using a space delimiter between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd HH:mm'Z'";
@@ -114,7 +114,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * The default format pattern for a millisecond-precise date and time
 	 * property.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
@@ -122,7 +122,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * The default format pattern for a millisecond-precise date and time
 	 * property with an explicit {@literal Z} time zone.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String DEFAULT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -130,7 +130,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * An alternate format pattern for a millisecond-precise date and time
 	 * property using a space delimiter between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
@@ -139,14 +139,14 @@ public final class WebServiceControllerSupport {
 	 * An alternate format pattern for a millisecond-precise date and time
 	 * property with an explicit {@literal Z} time zone using a space delimiter
 	 * between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
 	/**
 	 * A value to use for anonymous users in log messages.
-	 * 
+	 *
 	 * @since 2.1
 	 */
 	public static final String ANONYMOUS_USER_PRINCIPAL = "anonymous";
@@ -162,7 +162,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Get a standardized string description of a request.
-	 * 
+	 *
 	 * @param request
 	 *        the request
 	 * @return the description
@@ -170,7 +170,7 @@ public final class WebServiceControllerSupport {
 	public static String requestDescription(WebRequest request) {
 		StringBuilder buf = new StringBuilder(request.getDescription(false));
 		Map<String, String[]> params = request.getParameterMap();
-		if ( params != null ) {
+		if ( !params.isEmpty() ) {
 			buf.append("?");
 			boolean next = false;
 			for ( Entry<String, String[]> e : params.entrySet() ) {
@@ -201,7 +201,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Get the user principal name of a given request.
-	 * 
+	 *
 	 * @param request
 	 *        the request
 	 * @return the name, or {@link #ANONYMOUS_USER_PRINCIPAL}
@@ -214,7 +214,7 @@ public final class WebServiceControllerSupport {
 		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if ( authHeader != null ) {
 			int idx = authHeader.indexOf(' ');
-			if ( idx > 0 && idx < authHeader.length() ) {
+			if ( idx > 0 && idx + 1 < authHeader.length() ) {
 				String data = authHeader.substring(idx + 1);
 				Map<String, String> dataMap = StringUtils.commaDelimitedStringToMap(data);
 				String name = dataMap
@@ -230,7 +230,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link BeanInstantiationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -250,7 +250,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link TypeMismatchException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -272,7 +272,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * Handle an {@link UnsupportedOperationException} as a {@literal 404} error
 	 * status.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -292,7 +292,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
 	 * input.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -310,7 +310,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle a {@link DateTimeParseException}, from malformed date input.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -327,8 +327,8 @@ public final class WebServiceControllerSupport {
 	}
 
 	/**
-	 * Handle a general {@Link DateTimeException}.
-	 * 
+	 * Handle a general {@link DateTimeException}.
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -347,7 +347,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
 	 * input.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -373,7 +373,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle a {@link DataIntegrityViolationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -445,7 +445,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle a {@link DataRetrievalFailureException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -477,7 +477,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle a {@link InvalidDataAccessResourceUsageException} .
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -506,7 +506,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link ConstraintViolationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -526,7 +526,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link BindException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -549,7 +549,7 @@ public final class WebServiceControllerSupport {
 		if ( msgSrc != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {
-				if ( buf.length() > 0 ) {
+				if ( !buf.isEmpty() ) {
 					buf.append(" ");
 				}
 				buf.append(msgSrc.getMessage(error, locale));
@@ -561,7 +561,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link InvalidPropertyException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -583,7 +583,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link ValidationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -605,7 +605,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle a {@link MultipartException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -630,11 +630,11 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Add a {@literal Vary} HTTP response header.
-	 * 
+	 *
 	 * <p>
 	 * This is so the responses work well with caching proxies.
 	 * </p>
-	 * 
+	 *
 	 * @param response
 	 *        the response to add the header to
 	 * @since 1.11
@@ -649,7 +649,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Get the message source.
-	 * 
+	 *
 	 * @return the message source
 	 */
 	public MessageSource getMessageSource() {
@@ -658,7 +658,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Set a message source to use for resolving exception messages.
-	 * 
+	 *
 	 * @param messageSource
 	 *        the message source
 	 */

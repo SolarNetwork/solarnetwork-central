@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumStreamController.java - 29/04/2022 10:44:01 AM
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -67,7 +67,7 @@ import net.solarnetwork.io.ProvidedOutputStream;
 
 /**
  * Controller for querying datum stream related data.
- * 
+ *
  * @author matt
  * @version 1.4
  */
@@ -85,7 +85,7 @@ public class DatumStreamController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param objectMapper
@@ -104,7 +104,7 @@ public class DatumStreamController {
 
 	private static final Pattern GZIP_ENCODING = Pattern.compile("\\bgzip\\b", Pattern.CASE_INSENSITIVE);
 
-	private static final OutputStream responseOutputStream(HttpServletResponse response,
+	private static OutputStream responseOutputStream(HttpServletResponse response,
 			String acceptEncoding) {
 		return new ProvidedOutputStream(() -> {
 			try {
@@ -120,7 +120,7 @@ public class DatumStreamController {
 		});
 	}
 
-	private static final Writer responseWriter(HttpServletResponse response, String acceptEncoding) {
+	private static Writer responseWriter(HttpServletResponse response, String acceptEncoding) {
 		return new OutputStreamWriter(responseOutputStream(response, acceptEncoding),
 				StandardCharsets.UTF_8);
 	}
@@ -166,7 +166,7 @@ public class DatumStreamController {
 
 	/**
 	 * Query for a listing of datum.
-	 * 
+	 *
 	 * @param cmd
 	 *        the query criteria
 	 * @param accept
@@ -180,7 +180,8 @@ public class DatumStreamController {
 	@RequestMapping(value = "/datum", method = RequestMethod.GET)
 	public void listDatum(final StreamDatumFilterCommand cmd,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
-			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding,
+			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING,
+					required = false) final String acceptEncoding,
 			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
 			filterValidator.validate(cmd, validationResult);
@@ -199,7 +200,7 @@ public class DatumStreamController {
 
 	/**
 	 * Query for a reading datum.
-	 * 
+	 *
 	 * @param cmd
 	 *        the query criteria
 	 * @param readingType
@@ -217,9 +218,11 @@ public class DatumStreamController {
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
 	public void listReadings(final StreamDatumFilterCommand cmd,
 			final @RequestParam("readingType") DatumReadingType readingType,
-			@RequestParam(value = "tolerance", required = false, defaultValue = "P1M") final Period tolerance,
+			@RequestParam(value = "tolerance", required = false,
+					defaultValue = "P1M") final Period tolerance,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
-			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding,
+			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING,
+					required = false) final String acceptEncoding,
 
 			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
@@ -238,7 +241,7 @@ public class DatumStreamController {
 
 	/**
 	 * Get the filter validator to use.
-	 * 
+	 *
 	 * @return the validator
 	 */
 	public SmartValidator getFilterValidator() {
@@ -247,7 +250,7 @@ public class DatumStreamController {
 
 	/**
 	 * Set the filter validator to use.
-	 * 
+	 *
 	 * @param filterValidator
 	 *        the validator to set
 	 * @throws IllegalArgumentException
@@ -267,7 +270,7 @@ public class DatumStreamController {
 	/**
 	 * Get the length of time to use to determine an implicit start date in most
 	 * recent queries.
-	 * 
+	 *
 	 * @return the mostRecentStartPeriod the duration
 	 * @since 1.3
 	 */
@@ -278,7 +281,7 @@ public class DatumStreamController {
 	/**
 	 * Set the length of time to use to determine an implicit start date in most
 	 * recent queries.
-	 * 
+	 *
 	 * @param mostRecentStartPeriod
 	 *        the period to set
 	 * @since 1.3

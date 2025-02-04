@@ -1,27 +1,28 @@
 /* ==================================================================
  * SolarNodeMetadata.java - 11/11/2016 10:43:37 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,10 +37,13 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Metadata about a {@link SolarNode}.
- * 
+ *
+ * <p>
+ * </p>
  * <b>Note</b> that {@link JsonUtils#getObjectFromJSON(String, Class)} is used
  * to manage the JSON value passed to {@link #setMetaJson(String)}.
- * 
+ * </p>
+ *
  * @author matt
  * @version 2.1
  * @since 1.32
@@ -48,6 +52,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 @JsonPropertyOrder({ "nodeId", "created", "updated" })
 public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 7366747359583724835L;
 
 	private Instant updated;
@@ -62,7 +67,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the node ID
 	 * @since 2.1
@@ -72,9 +77,14 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 		setId(id);
 	}
 
+	@Override
+	public SolarNodeMetadata clone() {
+		return (SolarNodeMetadata) super.clone();
+	}
+
 	/**
 	 * Convenience getter for {@link #getId()}.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	@Override
@@ -84,7 +94,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 
 	/**
 	 * Convenience setter for {@link #setId(Long)}.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
@@ -97,7 +107,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 	 * configure {@code @JsonUnwrapped} on our {@link GeneralDatumMetadata} but
 	 * still support setting it in a normal, wrapped fashion via
 	 * {@link #setMeta(GeneralDatumMetadata)}.
-	 * 
+	 *
 	 * @return GeneralDatumMetadata
 	 */
 	@Override
@@ -125,7 +135,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 
 	/**
 	 * Set the metadata as JSON.
-	 * 
+	 *
 	 * @param metaJson
 	 *        the JSON metadata to set
 	 */
@@ -140,7 +150,7 @@ public class SolarNodeMetadata extends BaseEntity implements NodeMetadata, Clone
 
 	/**
 	 * Set the updated date.
-	 * 
+	 *
 	 * @param updated
 	 *        the date to set
 	 */

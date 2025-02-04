@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoDataCollectorBiz.java - Dec 14, 2009 10:46:26 AM
- * 
+ *
  * Copyright 2007-2009 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -78,7 +78,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
 /**
  * Implementation of {@link DataCollectorBiz} using {@link DatumEntityDao} to
  * persist the data.
- * 
+ *
  * <p>
  * This service expects all calls into {@link #postGeneralNodeDatum(Iterable)}
  * and {@link #postGeneralLocationDatum(Iterable)} and
@@ -89,7 +89,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * posted with a <em>null</em> {@link GeneralNodeDatum#getNodeId()} value, this
  * service will set the node ID to the authenticated node ID automatically.
  * </p>
- * 
+ *
  * @author matt
  * @version 4.3
  */
@@ -109,8 +109,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
-		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
-				|| requestedMaximum.intValue() < 1 ) {
+		if ( requestedMaximum == null || requestedMaximum > filteredResultsLimit
+				|| requestedMaximum < 1 ) {
 			return filteredResultsLimit;
 		}
 		return requestedMaximum;
@@ -287,14 +287,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		} else if ( nodeId == null ) {
 			nodeId = authNode.getNodeId();
-		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+		} else if ( !nodeId.equals(authNode.getNodeId()) ) {
 			log.warn("Illegal location fetch by node {} for node {}", authNode.getNodeId(), nodeId);
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		return solarLocationDao.getSolarLocationForNode(nodeId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateLocation(Long nodeId, final net.solarnetwork.domain.Location location) {
 		// verify node ID with security
@@ -304,7 +304,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		}
 		if ( nodeId == null ) {
 			nodeId = authNode.getNodeId();
-		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
+		} else if ( !nodeId.equals(authNode.getNodeId()) ) {
 			log.warn("Illegal location update by node {} for node {}", authNode.getNodeId(), nodeId);
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
@@ -351,7 +351,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void addGeneralNodeDatumMetadata(Long nodeId, final String sourceId,
 			final GeneralDatumMetadata meta) {
@@ -369,17 +369,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		}
 		if ( nodeId == null ) {
 			nodeId = authNode.getNodeId();
-		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
-			if ( log.isWarnEnabled() ) {
-				log.warn("Illegal datum metadata post by node " + authNode.getNodeId() + " as node "
-						+ nodeId);
-			}
+		} else if ( !nodeId.equals(authNode.getNodeId()) ) {
+			log.warn("Illegal datum metadata post by node {} as node {}", authNode.getNodeId(), nodeId);
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		datumMetadataBiz.addGeneralNodeDatumMetadata(nodeId, sourceId, meta);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void addSolarNodeMetadata(Long nodeId, GeneralDatumMetadata meta) {
 		if ( meta == null || ((meta.getTags() == null || meta.getTags().isEmpty())
@@ -395,11 +392,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		}
 		if ( nodeId == null ) {
 			nodeId = authNode.getNodeId();
-		} else if ( nodeId.equals(authNode.getNodeId()) == false ) {
-			if ( log.isWarnEnabled() ) {
-				log.warn("Illegal node metadata post by node " + authNode.getNodeId() + " as node "
-						+ nodeId);
-			}
+		} else if ( !nodeId.equals(authNode.getNodeId()) ) {
+			log.warn("Illegal node metadata post by node {} as node {}", authNode.getNodeId(), nodeId);
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		solarNodeMetadataBiz.addSolarNodeMetadata(nodeId, meta);
@@ -415,10 +409,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( criteria.getNodeId() != null && authNode.getNodeId().equals(criteria.getNodeId()) ) {
 			return criteria;
 		}
-		if ( !(criteria instanceof DatumFilterCommand) ) {
+		if ( !(criteria instanceof DatumFilterCommand dfc) ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
-		DatumFilterCommand dfc = (DatumFilterCommand) criteria;
 		dfc.setNodeId(authNode.getNodeId());
 		return dfc;
 	}
@@ -442,10 +435,9 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		if ( criteria.getNodeId() != null && authNode.getNodeId().equals(criteria.getNodeId()) ) {
 			return criteria;
 		}
-		if ( !(criteria instanceof DatumFilterCommand) ) {
+		if ( !(criteria instanceof DatumFilterCommand dfc) ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
 		}
-		DatumFilterCommand dfc = (DatumFilterCommand) criteria;
 		dfc.setNodeId(authNode.getNodeId());
 		return dfc;
 	}
@@ -508,7 +500,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Get the datum DAO.
-	 * 
+	 *
 	 * @return the DAO to use
 	 * @since 3.3
 	 */
@@ -518,7 +510,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Set the datum DAO.
-	 * 
+	 *
 	 * @param datumDao
 	 *        the DAO to set
 	 * @since 3.3
@@ -529,7 +521,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Get the datum stream metadata DAO.
-	 * 
+	 *
 	 * @return the DAO to use
 	 * @since 3.4
 	 */
@@ -539,7 +531,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Set the datum stream metadata DAO.
-	 * 
+	 *
 	 * @param metaDao
 	 *        the DAO to set
 	 * @since 3.4
@@ -558,7 +550,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Get the configured node metadata biz.
-	 * 
+	 *
 	 * @return the service, or {@literal null} if not configured
 	 * @since 2.1
 	 */
@@ -568,7 +560,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Set the node metadata biz to use.
-	 * 
+	 *
 	 * @param solarNodeMetadataBiz
 	 *        the service to set
 	 * @since 2.1
@@ -579,7 +571,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Get the datum cache.
-	 * 
+	 *
 	 * @return the cache
 	 * @since 3.2
 	 */
@@ -589,14 +581,14 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Set the datum cache.
-	 * 
+	 *
 	 * <p>
 	 * If this cache is configured, then datum are stored here <b>instead</b> of
 	 * directly storing via one of the configured DAO instances. Some other
 	 * process must persist the entities from the cache, e.g.
 	 * {@link AsyncDatumCollector}.
 	 * </p>
-	 * 
+	 *
 	 * @param datumCache
 	 *        the cache
 	 * @since 3.2
@@ -607,7 +599,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Set the transaction template.
-	 * 
+	 *
 	 * @param transactionTemplate
 	 *        the template
 	 * @since 3.2
@@ -618,7 +610,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Get the transaction template.
-	 * 
+	 *
 	 * @return the template
 	 * @since 3.2
 	 */
@@ -628,7 +620,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Get the node DAO.
-	 * 
+	 *
 	 * @return the node DAO
 	 * @since 3.5
 	 */
@@ -638,7 +630,7 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 
 	/**
 	 * Set the node DAO.
-	 * 
+	 *
 	 * @param solarNodeDao
 	 *        the DAO to set
 	 * @since 3.5

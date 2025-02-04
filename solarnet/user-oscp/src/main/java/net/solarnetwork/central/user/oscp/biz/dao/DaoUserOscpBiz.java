@@ -187,20 +187,20 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return requireNonNullObject(assetDao.get(new UserLongCompositePK(userId, entityId)), entityId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserSettings(Long userId) {
 		userSettingsDao.delete(new UserSettings(userId));
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityProvider(Long userId, Long entityId) {
 		capacityProviderDao.delete(new CapacityProviderConfiguration(userId, entityId, Instant.now()));
 		deleteOauthClientSecret(OscpRole.CapacityProvider, userId, entityId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityOptimizer(Long userId, Long entityId) {
 		capacityOptimizerDao.delete(new CapacityOptimizerConfiguration(userId, entityId, Instant.now()));
@@ -215,19 +215,19 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityGroup(Long userId, Long entityId) {
 		capacityGroupDao.delete(new CapacityGroupConfiguration(userId, entityId, Instant.now()));
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteCapacityGroupSettings(Long userId, Long entityId) {
 		capacityGroupSettingsDao.delete(new CapacityGroupSettings(userId, entityId));
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteAsset(Long userId, Long entityId) {
 		assetDao.delete(new AssetConfiguration(userId, entityId, Instant.now()));
@@ -266,7 +266,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 				requireNonNullArgument(groupId, "groupId"), null);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityProviderConfiguration createCapacityProvider(Long userId,
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
@@ -304,7 +304,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityOptimizerConfiguration createCapacityOptimizer(Long userId,
 			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
@@ -342,7 +342,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityGroupConfiguration createCapacityGroup(Long userId,
 			CapacityGroupConfigurationInput input) throws AuthorizationException {
@@ -352,7 +352,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return capacityGroupDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public AssetConfiguration createAsset(Long userId, AssetConfigurationInput input)
 			throws AuthorizationException {
@@ -362,7 +362,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return assetDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserSettings updateUserSettings(Long userId, UserSettingsInput input)
 			throws AuthorizationException {
@@ -371,7 +371,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return userSettingsDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityProviderConfiguration updateCapacityProvider(Long userId, Long entityId,
 			CapacityProviderConfigurationInput input) throws AuthorizationException {
@@ -384,7 +384,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return capacityProviderForUser(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityOptimizerConfiguration updateCapacityOptimizer(Long userId, Long entityId,
 			CapacityOptimizerConfigurationInput input) throws AuthorizationException {
@@ -409,7 +409,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityGroupConfiguration updateCapacityGroup(Long userId, Long entityId,
 			CapacityGroupConfigurationInput input) throws AuthorizationException {
@@ -419,7 +419,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return capacityGroupDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CapacityGroupSettings updateCapacityGroupSettings(Long userId, Long entityId,
 			CapacityGroupSettingsInput input) throws AuthorizationException {
@@ -429,7 +429,7 @@ public class DaoUserOscpBiz implements UserOscpBiz {
 		return capacityGroupSettingsDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public AssetConfiguration updateAsset(Long userId, Long entityId, AssetConfigurationInput input)
 			throws AuthorizationException {

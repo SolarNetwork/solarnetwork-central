@@ -1,21 +1,21 @@
 /* ==================================================================
  * AuthorizationSupport.java - Oct 3, 2014 4:24:23 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,7 +39,7 @@ import net.solarnetwork.dao.FilterResults;
 
 /**
  * Helper class for authorization needs, e.g. aspect implementations.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -52,7 +52,7 @@ public class AuthorizationSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
 	 * @throws IllegalArgumentException
@@ -65,7 +65,7 @@ public class AuthorizationSupport {
 
 	/**
 	 * Get the {@link SolarNodeOwnershipDao}.
-	 * 
+	 *
 	 * @return The {@link SolarNodeOwnershipDao}.
 	 */
 	public SolarNodeOwnershipDao getNodeOwnershipDao() {
@@ -76,7 +76,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "write" access to a given node ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to check
 	 * @throws AuthorizationException
@@ -90,7 +90,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "write" access to a given node ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to check
 	 * @param log
@@ -161,7 +161,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "read" access to a given node ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to check
 	 * @throws AuthorizationException
@@ -175,7 +175,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "read" access to a given node ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to check
 	 * @param log
@@ -251,7 +251,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "write" access to a given user ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to check
 	 * @throws AuthorizationException
@@ -265,7 +265,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "write" access to a given user ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to check
 	 * @param log
@@ -309,7 +309,7 @@ public class AuthorizationSupport {
 
 	/**
 	 * Get a {@link SecurityPolicy} for the active user, if available.
-	 * 
+	 *
 	 * @return The active user's policy, or {@code null}.
 	 */
 	public SecurityPolicy getActiveSecurityPolicy() {
@@ -320,7 +320,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "read" access to a given user ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to check
 	 * @throws AuthorizationException
@@ -334,7 +334,7 @@ public class AuthorizationSupport {
 	 * Require the active user have "read" access to a given user ID. If the
 	 * active user is not authorized, a {@link AuthorizationException} will be
 	 * thrown.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to check
 	 * @param log
@@ -402,7 +402,7 @@ public class AuthorizationSupport {
 	/**
 	 * Enforce a security policy on a domain object and
 	 * {@code SecurityPolicyMetadataType#Node} metadata type.
-	 * 
+	 *
 	 * @param <T>
 	 *        the domain object type
 	 * @param domainObject
@@ -418,9 +418,11 @@ public class AuthorizationSupport {
 	/**
 	 * Enforce a security policy on a domain object or collection of domain
 	 * objects.
-	 * 
+	 *
+	 * <p>
 	 * The {@link FilterResults} API is supported, as is {@link List}.
-	 * 
+	 * </p>
+	 *
 	 * @param <T>
 	 *        the domain object type
 	 * @param domainObject
@@ -466,7 +468,7 @@ public class AuthorizationSupport {
 		if ( input == null ) {
 			return null;
 		}
-		List<Object> enforced = new ArrayList<Object>();
+		List<Object> enforced = new ArrayList<>();
 		for ( Object obj : input ) {
 			SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, obj,
 					pathMatcher, metadataType);
@@ -478,7 +480,7 @@ public class AuthorizationSupport {
 
 	/**
 	 * Get the path matcher to use.
-	 * 
+	 *
 	 * @return the path matcher
 	 */
 	public PathMatcher getPathMatcher() {
@@ -487,7 +489,7 @@ public class AuthorizationSupport {
 
 	/**
 	 * Set the path matcher to use.
-	 * 
+	 *
 	 * @param pathMatcher
 	 *        the matcher to use
 	 */

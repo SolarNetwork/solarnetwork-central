@@ -1,27 +1,28 @@
 /* ==================================================================
  * UserAlertSituation.java - 15/05/2015 12:00:27 pm
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -33,12 +34,13 @@ import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A triggered alert condition.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class UserAlertSituation extends BaseEntity {
 
+	@Serial
 	private static final long serialVersionUID = -6858352050110675205L;
 
 	private UserAlert alert;
@@ -73,11 +75,11 @@ public class UserAlertSituation extends BaseEntity {
 
 	/**
 	 * Get the info object as a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will ignore <em>null</em> values.
 	 * </p>
-	 * 
+	 *
 	 * @return a JSON encoded string, never <em>null</em>
 	 * @since 1.1
 	 */
@@ -92,13 +94,13 @@ public class UserAlertSituation extends BaseEntity {
 
 	/**
 	 * Set the info object via a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will remove any previously created info and replace it with
 	 * the values parsed from the JSON. All floating point values will be
 	 * converted to {@link BigDecimal} instances.
 	 * </p>
-	 * 
+	 *
 	 * @param json
 	 *        the JSON to set
 	 * @since 1.1
@@ -112,7 +114,7 @@ public class UserAlertSituation extends BaseEntity {
 
 	/**
 	 * Get the info object.
-	 * 
+	 *
 	 * @return the info object
 	 * @since 1.1
 	 */
@@ -127,12 +129,12 @@ public class UserAlertSituation extends BaseEntity {
 
 	/**
 	 * Set the info instance to use.
-	 * 
+	 *
 	 * <p>
 	 * This will replace any value set previously via
 	 * {@link #setInfoJson(String)} as well.
 	 * </p>
-	 * 
+	 *
 	 * @param info
 	 *        the info to set
 	 * @since 1.1

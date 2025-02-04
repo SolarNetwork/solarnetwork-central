@@ -42,7 +42,7 @@ import net.solarnetwork.util.UuidTimestampDecoder;
  * @author matt
  * @version 1.1
  */
-public class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
+public final class DeleteUserEvent implements PreparedStatementCreator, SqlProvider {
 
 	private final UuidTimestampDecoder uuidTimestampDecoder;
 	private final UserEventPurgeFilter filter;

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DirectoryCleanerJob.java - 18/03/2022 3:36:44 PM
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Job to clean out expired files from a directory.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -62,7 +62,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param directory
 	 *        the directory to remove files from
 	 * @throws IllegalArgumentException
@@ -80,7 +80,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	public synchronized void run() {
 		final Instant expireDate = Instant.now().minus(minimumAge);
 		try {
-			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+			Files.walkFileTree(directory, new SimpleFileVisitor<>() {
 
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
@@ -141,7 +141,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 
 	/**
 	 * Convenience method to set the minimum age, in minutes.
-	 * 
+	 *
 	 * @param minutes
 	 *        the minimum age to set, in minutes
 	 */
@@ -151,7 +151,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 
 	/**
 	 * Get the minimum age of files that can be deleted.
-	 * 
+	 *
 	 * @return the minimum age
 	 */
 	public Duration getMinimumAge() {
@@ -160,7 +160,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 
 	/**
 	 * Set the minimum age of files that can be deleted.
-	 * 
+	 *
 	 * @param minimumAge
 	 *        the age to set; if {@literal null} then
 	 *        {@link #DEFAULT_MINIMUM_AGE} will be set instead
@@ -172,7 +172,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	/**
 	 * Get the minimum amount of free space on the file system of the configured
 	 * directory before {@link #performPingTest()} will fail.
-	 * 
+	 *
 	 * @return the free space size; defaults to
 	 *         {@link #DEFAULT_FREE_SPACE_WARNING_SIZE}
 	 */
@@ -183,7 +183,7 @@ public class DirectoryCleanerJob extends JobSupport implements PingTest {
 	/**
 	 * Set the minimum amount of free space on the file system of the configured
 	 * directory before {@link #performPingTest()} will fail.
-	 * 
+	 *
 	 * @param freeSpaceWarningSize
 	 *        the free space size to set
 	 */

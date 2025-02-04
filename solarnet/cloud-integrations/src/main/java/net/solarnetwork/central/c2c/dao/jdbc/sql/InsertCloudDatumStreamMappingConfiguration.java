@@ -39,7 +39,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
  * @author matt
  * @version 1.0
  */
-public class InsertCloudDatumStreamMappingConfiguration
+public final class InsertCloudDatumStreamMappingConfiguration
 		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """

@@ -1,27 +1,28 @@
 /* ==================================================================
  * ReportingGeneralNodeDatumReading.java - 13/02/2019 1:41:27 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -37,12 +38,12 @@ import net.solarnetwork.domain.datum.DatumSamples;
 /**
  * Extension of {@link ReportingGeneralNodeDatum} geared towards reading
  * reporting data.
- * 
+ *
  * <p>
  * This data model uses the existing {@link GeneralNodeDatum#getSamples()} data
  * to hold the reading difference values.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 1.36
@@ -50,6 +51,7 @@ import net.solarnetwork.domain.datum.DatumSamples;
 @JsonPropertyOrder({ "created", "nodeId", "sourceId", "localDate", "localTime" })
 public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum implements ReadingDatum {
 
+	@Serial
 	private static final long serialVersionUID = 9141977325189089319L;
 
 	private DatumSamples samplesFinal;
@@ -66,14 +68,14 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Get a merged map of all sample data, including start/final data.
-	 * 
+	 *
 	 * <p>
 	 * The {@link #getSampleDataStart()} entries will be included, with keys
-	 * suffixed with {@literal _start}. Similarly the
+	 * suffixed with {@literal _start}. Similarly, the
 	 * {@link #getSampleDataFinal()} entries will be included, with keys
 	 * suffixed with {@literal _end}.
 	 * </p>
-	 * 
+	 *
 	 * @return a map with all sample data combined
 	 */
 	@JsonUnwrapped
@@ -110,11 +112,11 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Get the final {@link DatumSamples} object as a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will ignore {@literal null} values.
 	 * </p>
-	 * 
+	 *
 	 * @return a JSON encoded string, never {@literal null}
 	 */
 	@SerializeIgnore
@@ -128,13 +130,13 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Set the final {@link DatumSamples} object via a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will remove any previously created final DatumSamples and
 	 * replace it with the values parsed from the JSON. All floating point
 	 * values will be converted to {@link BigDecimal} instances.
 	 * </p>
-	 * 
+	 *
 	 * @param json
 	 *        the JSON to set
 	 */
@@ -156,12 +158,12 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Set the final {@link DatumSamples} instance to use.
-	 * 
+	 *
 	 * <p>
 	 * This will replace any value set previously via
 	 * {@link #setSampleJsonFinal(String)} as well.
 	 * </p>
-	 * 
+	 *
 	 * @param samples
 	 *        the samples instance to set
 	 */
@@ -173,7 +175,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
-	 * 
+	 *
 	 * @return the sample data, or {@literal null} if none available
 	 */
 	@Override
@@ -186,11 +188,11 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Get the start {@link DatumSamples} object as a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will ignore {@literal null} values.
 	 * </p>
-	 * 
+	 *
 	 * @return a JSON encoded string, never {@literal null}
 	 */
 	@SerializeIgnore
@@ -204,13 +206,13 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Set the start {@link DatumSamples} object via a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will remove any previously created start DatumSamples and
 	 * replace it with the values parsed from the JSON. All floating point
 	 * values will be converted to {@link BigDecimal} instances.
 	 * </p>
-	 * 
+	 *
 	 * @param json
 	 *        the JSON to set
 	 */
@@ -232,12 +234,12 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Set the start {@link DatumSamples} instance to use.
-	 * 
+	 *
 	 * <p>
 	 * This will replace any value set previously via
 	 * {@link #setSampleJsonStart(String)} as well.
 	 * </p>
-	 * 
+	 *
 	 * @param samples
 	 *        the samples instance to set
 	 */
@@ -249,7 +251,7 @@ public class ReportingGeneralNodeDatumReading extends ReportingGeneralNodeDatum 
 
 	/**
 	 * Convenience method for final {@link DatumSamples#getSampleData()}.
-	 * 
+	 *
 	 * @return the sample data, or {@literal null} if none available
 	 */
 	@Override

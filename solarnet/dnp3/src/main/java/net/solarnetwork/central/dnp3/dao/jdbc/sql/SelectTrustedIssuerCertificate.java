@@ -42,7 +42,7 @@ import net.solarnetwork.central.dnp3.domain.TrustedIssuerCertificate;
  * @author matt
  * @version 1.0
  */
-public class SelectTrustedIssuerCertificate
+public final class SelectTrustedIssuerCertificate
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -118,7 +118,7 @@ public class SelectTrustedIssuerCertificate
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, con, stmt, p);
+		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}
@@ -133,7 +133,7 @@ public class SelectTrustedIssuerCertificate
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getSubjectDns());
 		}
 		if ( filter.hasEnabledCriteria() ) {
-			stmt.setBoolean(++p, filter.getEnabled().booleanValue());
+			stmt.setBoolean(++p, filter.getEnabled());
 		}
 		return p;
 	}

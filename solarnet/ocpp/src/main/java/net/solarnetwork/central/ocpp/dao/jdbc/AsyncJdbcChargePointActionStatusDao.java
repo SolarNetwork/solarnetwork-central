@@ -1,21 +1,21 @@
 /* ==================================================================
  * AsyncJdbcChargePointActionStatusDao.java - 15/05/2024 7:39:21 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -46,7 +46,7 @@ import net.solarnetwork.util.StatTracker;
 
 /**
  * Asynchronous JDBC {@link ChargePointActionStatusUpdateDao} implementation.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -62,7 +62,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	/** The default value for the {@code statLogUpdateCount} property. */
 	public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
 
-	/** The default value for the {@code connecitonRecoveryDelay} property. */
+	/** The default value for the {@code connectionRecoveryDelay} property. */
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 5000;
 
 	/** The {@code bufferRemovalLagAlertThreshold} default value. */
@@ -81,11 +81,11 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * A {@link LinkedBlockingQueue} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @throws IllegalArgumentException
@@ -97,7 +97,7 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param statuses
@@ -113,7 +113,7 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataSource
 	 *        the JDBC data source to use
 	 * @param statuses
@@ -220,8 +220,7 @@ public class AsyncJdbcChargePointActionStatusDao
 		}
 
 		private Boolean execute() throws SQLException {
-			final DataSource ds = dataSource;
-			try (Connection conn = ds.getConnection()) {
+			try (Connection conn = dataSource.getConnection()) {
 				stats.increment(AsyncJdbcChargePointActionStatusCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = createPreparedStatement(conn);
@@ -345,13 +344,9 @@ public class AsyncJdbcChargePointActionStatusDao
 		final Map<String, Long> statMap = stats.allCounts();
 		// verify buffer removals does not lag additions
 		final long addCount = statMap
-				.containsKey(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name())
-						? statMap.get(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name())
-						: 0L;
-		final long removeLag = addCount
-				- (statMap.containsKey(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name())
-						? statMap.get(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name())
-						: 0L);
+				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
+		final long removeLag = addCount - (statMap
+				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L));
 		final WriterThread t = this.writerThread;
 		final boolean writerRunning = t != null && t.isAlive();
 		if ( removeLag > bufferRemovalLagAlertThreshold ) {
@@ -370,7 +365,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	/**
 	 * Set the delay, in milliseconds, to wait after a JDBC connection error
 	 * before trying to recover and connect again.
-	 * 
+	 *
 	 * @param connectionRecoveryDelay
 	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
@@ -387,7 +382,7 @@ public class AsyncJdbcChargePointActionStatusDao
 	/**
 	 * Set the delay, in milliseconds, to wait after executing JDBC statements
 	 * within a loop before executing another statement.
-	 * 
+	 *
 	 * @param updateDelay
 	 *        the delay, in milliseconds; set to 0 for no delay; defaults to
 	 *        {@link #DEFAULT_UPDATE_DELAY}
@@ -398,13 +393,13 @@ public class AsyncJdbcChargePointActionStatusDao
 
 	/**
 	 * Set the statistic log update count.
-	 * 
+	 *
 	 * <p>
 	 * Setting this to something greater than {@literal 0} will cause
 	 * {@literal INFO} level statistic log entries to be emitted every
 	 * {@code statLogUpdateCount} records have been updated in the database.
 	 * </p>
-	 * 
+	 *
 	 * @param statLogUpdateCount
 	 *        the update count; defaults to
 	 *        {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}

@@ -69,6 +69,7 @@ import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
@@ -149,10 +150,10 @@ public class DaoInstructionInputEndpointBiz
 		this.userMetadataDao = requireNonNullArgument(userMetadataDao, "userMetadataDao");
 		this.requestTransformServices = requireNonNullArgument(requestTransformServices,
 				"requestTransformServices").stream()
-						.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
+						.collect(Collectors.toMap(Identity::getId, Function.identity()));
 		this.responseTransformServices = requireNonNullArgument(responseTransformServices,
 				"responseTransformServices").stream()
-						.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
+						.collect(Collectors.toMap(Identity::getId, Function.identity()));
 	}
 
 	private static LogEventInfo importEvent(String msg, EndpointConfiguration endpoint,

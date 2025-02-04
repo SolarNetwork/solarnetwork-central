@@ -66,25 +66,23 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 	public static final int DEFAULT_MAX_CONTAINER_ID_LENGTH = 8;
 
 	/**
-	 * The system environment variable for the maximum application instance ID
-	 * length, when derived from an ECS container ID.
+	 * The system environment variable for the maximum application instance ID length, when derived from
+	 * an ECS container ID.
 	 *
 	 * <p>
-	 * The variable value must be an integer; if less than {@literal 1} then no
-	 * maximum length is enforced. If not defined then
-	 * {@link #DEFAULT_MAX_CONTAINER_ID_LENGTH} will be used.
+	 * The variable value must be an integer; if less than {@literal 1} then no maximum length is
+	 * enforced. If not defined then {@link #DEFAULT_MAX_CONTAINER_ID_LENGTH} will be used.
 	 * </p>
 	 */
 	public static final String ENV_APP_ID_CONTAINER_ID_LENGTH = "APP_ID_CONTAINER_ID_LENGTH";
 
 	private final DeferredLog logger = new DeferredLog();
 
-	// Before ConfigFileApplicationListener so values there can use these ones
+	// Before ConfigFileApplicationListener so values there can use these
 	private int order = ConfigDataEnvironmentPostProcessor.ORDER - 1;
 
 	/**
-	 * Create a new {@link ApplicationMetadataEnvironmentPostProcessor}
-	 * instance.
+	 * Create a new {@link ApplicationMetadataEnvironmentPostProcessor} instance.
 	 */
 	public ApplicationMetadataEnvironmentPostProcessor() {
 		super();
@@ -125,7 +123,8 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			if ( meta != null ) {
 				appInstanceId = meta.getContainerId();
 				Object maxLengthProp = sysEnv.get(ENV_APP_ID_CONTAINER_ID_LENGTH);
-				int maxLength = (maxLengthProp != null ? Integer.parseInt(maxLengthProp.toString())
+				int maxLength = (maxLengthProp != null
+						? Integer.parseInt(maxLengthProp.toString())
 						: DEFAULT_MAX_CONTAINER_ID_LENGTH);
 				if ( maxLength > 0 && appInstanceId.length() > maxLength ) {
 					appInstanceId = appInstanceId.substring(0, maxLength);
@@ -138,7 +137,7 @@ public class ApplicationMetadataEnvironmentPostProcessor implements EnvironmentP
 			if ( hostname != null && !hostname.toString().isBlank() ) {
 				appInstanceId = hostname.toString();
 			} else {
-				// next from `hostname` commmand
+				// next from `hostname` command
 				hostname = exec(new String[] { "hostname" });
 				if ( hostname != null && !hostname.toString().isBlank() ) {
 					appInstanceId = hostname.toString();

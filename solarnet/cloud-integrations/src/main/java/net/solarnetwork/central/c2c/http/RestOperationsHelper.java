@@ -116,11 +116,9 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		ThreadLocal<AtomicLong> tracker = null;
 		if ( restOps instanceof RestTemplate rt ) {
 			var interceptors = rt.getInterceptors();
-			if ( interceptors != null ) {
-				for ( var interceptor : interceptors ) {
-					if ( interceptor instanceof ContentLengthTrackingClientHttpRequestInterceptor t ) {
-						tracker = t.countThreadLocal();
-					}
+			for ( var interceptor : interceptors ) {
+				if ( interceptor instanceof ContentLengthTrackingClientHttpRequestInterceptor t ) {
+					tracker = t.countThreadLocal();
 				}
 			}
 		}
@@ -200,7 +198,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		URI uri = null;
 		try {
 			final var headers = new HttpHeaders();
-			final var req = new HttpEntity<B>(body, headers);
+			final var req = new HttpEntity<>(body, headers);
 			uri = setup.apply(headers);
 			final ResponseEntity<R> res = restOps.exchange(uri, method, req, responseType);
 			return handler.apply(res);
@@ -262,7 +260,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.toString(), e);
 			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
-					errorEventTags, format("Unknown error: %s", e.toString())));
+					errorEventTags, format("Unknown error: %s", e)));
 			throw e;
 		} finally {
 			if ( responseLengthTracker != null ) {

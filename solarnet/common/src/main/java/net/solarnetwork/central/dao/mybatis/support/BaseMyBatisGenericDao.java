@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseMyBatisGenericDao.java - Nov 10, 2014 7:04:47 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -43,7 +43,7 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * Base implementation of {@link GenericDao} using MyBatis via
  * {@link SqlSessionDaoSupport}.
- * 
+ *
  * <p>
  * The default configuration of this class allows implementations to be used
  * with minimal configuration, by following some simple naming conventions on
@@ -51,13 +51,13 @@ import net.solarnetwork.domain.SortDescriptor;
  * {@code insert}, {@code update}, and {@code delete} query names all follow a
  * pattern using the name of the domain class as a parameter.
  * </p>
- * 
+ *
  * <p>
  * For example, if the domain class managed by this DAO is
  * {@code some.package.Foo} then the default query names used by this class will
  * be:
  * </p>
- * 
+ *
  * <ul>
  * <li>get-Foo-by-id</li>
  * <li>findall-Foo</li>
@@ -65,7 +65,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * <li>update-Foo</li>
  * <li>delete-Foo</li>
  * </ul>
- * 
+ *
  * <p>
  * The {@link #handleRelation(Long, List, Class, Map)} can be used by extending
  * classes to manage a <em>to-many</em> type relationship. The
@@ -75,60 +75,60 @@ import net.solarnetwork.domain.SortDescriptor;
  * end. For example, if the relation domain class was {@code some.package.Bar}
  * then the default relationship query names used by this class will be:
  * </p>
- * 
+ *
  * <ul>
  * <li>findall-Foo-Bar</li>
  * <li>insert-Foo-Bar</li>
  * <li>update-Foo-Bar</li>
  * <li>delete-Foo-Bar</li>
  * </ul>
- * 
+ *
  * <p>
  * The {@link #ID_PROPERTY}, {@link #INDEX_PROPERTY}, and
  * {@link #BEAN_OBJECT_PROPERTY} keys will be passed to the query as needed to
  * manage the related entity list.
  * </p>
- * 
+ *
  * <p>
  * The configurable properties of this class are:
  * </p>
- * 
+ *
  * <dl class="class-properties">
  * <dt>domainClass</dt>
  * <dd>The implementation Class managed by this DAO.</dd>
- * 
+ *
  * <dt>queryForId</dt>
  * <dd>The name of the MyBatis SQL query to load an entity based on its primary
  * key (a Long). Defaults to <code>get-<em>DomainClass</em>-for-id</code> where
  * <em>DatumClass</em> is the simple name of the configured {@code domainClass}.
  * </dd>
- * 
+ *
  * <dt>queryForAll</dt>
  * <dd>The name of the MyBatis SQL query to return a list of entities,
  * supporting a custom sort order. Defaults to
  * <code>findall-<em>DomainClass</em></code> where <em>DatumClass</em> is the
  * simple name of the configured {@code domainClass}.</dd>
- * 
+ *
  * <dt>insert</dt>
  * <dd>The name of the MyBatis SQL query to insert a new entity into the
  * database. Defaults to <code>insert-<em>DomainClass</em></code> where
  * <em>DatumClass</em> is the simple name of the configured {@code domainClass}.
  * </dd>
- * 
+ *
  * <dt>update</dt>
  * <dd>The name of the MyBatis SQL query to update an existing entity in the
  * database. Defaults to <code>update-<em>DomainClass</em></code> where
  * <em>DatumClass</em> is the simple name of the configured {@code domainClass}.
  * </dd>
- * 
+ *
  * <dt>delete</dt>
  * <dd>The name of the MyBatis SQL query to delete an existing entity from the
  * database. Defaults to <code>delete-<em>DomainClass</em></code> where
  * <em>DatumClass</em> is the simple name of the configured {@code domainClass}.
  * </dd>
- * 
+ *
  * </dl>
- * 
+ *
  * @param <T>
  *        The entity type this DAO supports.
  * @param <PK>
@@ -136,6 +136,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @author matt
  * @version 2.1
  */
+@SuppressWarnings("ALL")
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, PK> {
 
@@ -148,10 +149,10 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	/** The query name used for {@link #getAll(List)}. */
 	public static final String QUERY_FOR_ALL = "findall-%s";
 
-	/** The query name used for inserts in {@link #store(Entity)}. */
+	/** The query name used for inserts in {@link #save(Entity)}. */
 	public static final String INSERT_OBJECT = "insert-%s";
 
-	/** The query name used for updates in {@link #store(Entity)}. */
+	/** The query name used for updates in {@link #save(Entity)}. */
 	public static final String UPDATE_OBJECT = "update-%s";
 
 	/** The query name used for updates in {@link #delete(Entity)}. */
@@ -202,7 +203,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param domainClass
 	 *        the domain class
 	 * @param pkClass
@@ -239,7 +240,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Get the primary key type used by this DAO.
-	 * 
+	 *
 	 * @return the primary key type
 	 */
 	public Class<? extends PK> getPrimaryKeyType() {
@@ -254,8 +255,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	@Override
 	public List<T> getAll(List<SortDescriptor> sortDescriptors) {
 		List<T> results;
-		if ( sortDescriptors != null && sortDescriptors.size() > 0 ) {
-			Map<String, Object> params = new HashMap<String, Object>(1);
+		if ( sortDescriptors != null && !sortDescriptors.isEmpty() ) {
+			Map<String, Object> params = new HashMap<>(1);
 			params.put(SORT_DESCRIPTORS_PROPERTY, sortDescriptors);
 			results = getSqlSession().selectList(this.queryForAll, params);
 		} else {
@@ -274,16 +275,16 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	}
 
 	/**
-	 * Supporting method for handling the {@link #store(Entity)} method for
+	 * Supporting method for handling the {@link #save(Entity)} method for
 	 * entities that use assigned primary keys, where the default logic of
 	 * handling insert versus update will not work.
-	 * 
+	 *
 	 * <p>
 	 * This implementation attempts to update the given entity first. If that
 	 * does not actually update any rows, {@link #preprocessInsert(Entity)} is
 	 * called, followed by an insert.
 	 * </p>
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to store
 	 * @return the primary key
@@ -299,14 +300,14 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Process a new unsaved entity for persisting.
-	 * 
+	 *
 	 * <p>
 	 * This implementation will set the value of the {@code created} bean
 	 * property of the datum instance to the current time if
 	 * {@link T#getCreated()} is null. Extending classes may want to extend or
 	 * modify this behavior.
 	 * </p>
-	 * 
+	 *
 	 * @param datum
 	 *        the entity to be persisted
 	 */
@@ -319,13 +320,13 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Process the update of a persisted entity.
-	 * 
+	 *
 	 * <p>
 	 * This implementation merely calls
 	 * {@link SqlSession#update(String, Object)} using the {@link #getUpdate()}
 	 * SqlMap.
 	 * </p>
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to update
 	 * @return {@link T#getId()}
@@ -337,12 +338,12 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Process the insert of a persisted entity.
-	 * 
+	 *
 	 * <p>
 	 * This implementation calls {@link SqlSession#insert(String, Object)} using
 	 * the {@link #getInsert()} SqlMap.
 	 * </p>
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to insert
 	 * @return the result of the insert statement
@@ -369,7 +370,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	/**
 	 * Insert, update, and delete domain object list related to the entity
 	 * managed by this DAO.
-	 * 
+	 *
 	 * <p>
 	 * This method will use the {@code relationQueryForParent},
 	 * {@code relationInsert}, {@code relationUpdate}, and
@@ -377,26 +378,26 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * set of related objects to a single parent entity. The related objects are
 	 * <em>not</em> assumed to have surrogate primary keys.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method will pass the following query properties:
 	 * </p>
-	 * 
+	 *
 	 * <dl>
 	 * <dt>{@link #ID_PROPERTY}</dt>
 	 * <dd>The {@code parentId} value, passed to all queries.</dd>
-	 * 
+	 *
 	 * <dt>{@link #INDEX_PROPERTY}</dt>
 	 * <dd>The list index, starting at zero. This defines the ordering of the
 	 * related objects. Note the {@code relationDelete} query must support
 	 * <em>not</em> having this property set, which signals that <em>all</em>
 	 * related objects should be deleted.</dd>
-	 * 
+	 *
 	 * <dt>{@link #BEAN_OBJECT_PROPERTY}</dt>
 	 * <dd>The related object to persist, passed to {@code relationInsert} and
 	 * {@code relationUpdate} queries.</dd>
 	 * </dl>
-	 * 
+	 *
 	 * <p>
 	 * Note that this method does not follow a pattern of deleting all related
 	 * objects and then re-inserting objects. If there is a unique constraint
@@ -404,7 +405,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * constraint check until after the end of the transaction. Otherwise
 	 * constraint violations can occur while making the updates.
 	 * </p>
-	 * 
+	 *
 	 * @param <E>
 	 *        the related object type
 	 * @param parentId
@@ -427,15 +428,15 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 		List<E> oldList = getSqlSession().selectList(findForParentQuery, parentId);
 
-		Map<String, Object> sqlProperties = new HashMap<String, Object>(
+		Map<String, Object> sqlProperties = new HashMap<>(
 				3 + (additionalProperties == null ? 0 : additionalProperties.size()));
 		if ( additionalProperties != null ) {
 			sqlProperties.putAll(additionalProperties);
 		}
 		sqlProperties.put(ID_PROPERTY, parentId);
 
-		if ( newList == null || newList.size() == 0 ) {
-			if ( oldList != null && oldList.size() > 0 ) {
+		if ( newList == null || newList.isEmpty() ) {
+			if ( oldList != null && !oldList.isEmpty() ) {
 				// short cut, delete all for user
 				getSqlSession().delete(deleteRelationQuery, sqlProperties);
 			}
@@ -444,10 +445,8 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 			final String updateRelationQuery = this.relationUpdate + domainName;
 
 			int index = 0;
-			Iterator<E> newItr = newList.iterator();
 			Iterator<E> oldItr = oldList == null ? null : oldList.iterator();
-			while ( newItr.hasNext() ) {
-				E newContact = newItr.next();
+			for ( E newContact : newList ) {
 				E oldContact = (oldItr == null || !oldItr.hasNext() ? null : oldItr.next());
 				sqlProperties.put(INDEX_PROPERTY, index);
 				sqlProperties.put(BEAN_OBJECT_PROPERTY, newContact);
@@ -473,7 +472,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	/**
 	 * Insert, update, and delete domain object related to the entity managed by
 	 * this DAO.
-	 * 
+	 *
 	 * <p>
 	 * This method will use the {@code relationObjectQueryForParent},
 	 * {@code relationInsert}, {@code relationUpdate}, and
@@ -481,20 +480,20 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * related object to a single parent entity. The related object is
 	 * <em>not</em> assumed to have surrogate primary keys.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method will pass the following query properties:
 	 * </p>
-	 * 
+	 *
 	 * <dl>
 	 * <dt>{@link #ID_PROPERTY}</dt>
 	 * <dd>The {@code parentId} value, passed to all queries.</dd>
-	 * 
+	 *
 	 * <dt>{@link #BEAN_OBJECT_PROPERTY}</dt>
 	 * <dd>The related object to persist, passed to {@code relationInsert} and
 	 * {@code relationUpdate} and {@code relationDelete} queries.</dd>
 	 * </dl>
-	 * 
+	 *
 	 * @param <E>
 	 *        the related object type
 	 * @param parentId
@@ -514,9 +513,9 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 		final String domainName = relationClass.getSimpleName();
 		final String findForParentQuery = this.relationObjectQueryForParent + domainName;
 
-		Long oldObjectId = (Long) getSqlSession().selectOne(findForParentQuery, parentId);
+		Long oldObjectId = getSqlSession().selectOne(findForParentQuery, parentId);
 
-		Map<String, Object> sqlProperties = new HashMap<String, Object>(
+		Map<String, Object> sqlProperties = new HashMap<>(
 				2 + (additionalProperties == null ? 0 : additionalProperties.size()));
 		if ( additionalProperties != null ) {
 			sqlProperties.putAll(additionalProperties);
@@ -541,33 +540,33 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	/**
 	 * Insert, update, and delete domain object child of the entity managed by
 	 * this DAO.
-	 * 
+	 *
 	 * <p>
 	 * This method will use the {@code relationObjectQueryForParent},
 	 * {@code childInsert}, {@code childUpdate}, and {@code childDelete} query
 	 * names configured on this class to persist a related object to a single
 	 * parent entity.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method will pass the following query objects:
 	 * </p>
-	 * 
+	 *
 	 * <dl>
 	 * <dt>relationObjectQueryForParent</dt>
 	 * <dd>A Long, taken from ID value of the {@code parent}.</dd>
-	 * 
+	 *
 	 * <dt>childDelete</dt>
 	 * <dd>A Long, from the ID value of the {@code child}.</dd>
-	 * 
+	 *
 	 * <dt>childInsert</dt>
 	 * <dd>The {@code child} object. This query is expected to return the
 	 * child's primary key in the form of a Long object.</dd>
-	 * 
+	 *
 	 * <dt>childUpdate</dt>
 	 * <dd>The {@code child} object.</dd>
 	 * </dl>
-	 * 
+	 *
 	 * @param <E>
 	 *        the related object type
 	 * @param parent
@@ -598,11 +597,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 			return null;
 		} else if ( child.getId() == null ) {
 			final String insertRelationQuery = this.childInsert + domainName;
-			Object childId = getSqlSession().insert(insertRelationQuery, child);
-			if ( childId instanceof Long ) {
-				return (Long) childId;
-			}
-			return null;
+			getSqlSession().insert(insertRelationQuery, child);
 		} else {
 			final String updateRelationQuery = this.childUpdate + domainName;
 			getSqlSession().insert(updateRelationQuery, child);
@@ -615,7 +610,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	 * error message handling. This method will catch runtime exceptions and
 	 * attempt to map those to message codes. If the exception can be mapped, a
 	 * new {@link ValidationException} will be thrown instead.
-	 * 
+	 *
 	 * @param <R>
 	 *        the result object type
 	 * @param callback
@@ -637,7 +632,7 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 	/**
 	 * Attempt to map a runtime, SQL related exception to some friendlier
 	 * exception.
-	 * 
+	 *
 	 * @param e
 	 *        the original exception
 	 * @param errorObject
@@ -659,12 +654,12 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Get a "domain" for member queries.
-	 * 
+	 *
 	 * <p>
 	 * This returns a composite string based from {@link #getDomainClass()} and
 	 * the {@code memberClass} passed in.
 	 * </p>
-	 * 
+	 *
 	 * @param memberClass
 	 *        the member class type
 	 * @return domain key
@@ -675,12 +670,12 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	/**
 	 * Append to a space-delimited string buffer.
-	 * 
+	 *
 	 * <p>
 	 * This is designed with full-text search in mind, for building up a query
 	 * string.
 	 * </p>
-	 * 
+	 *
 	 * @param value
 	 *        the value to append if not empty
 	 * @param buf
@@ -692,10 +687,10 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 			return false;
 		}
 		value = value.trim();
-		if ( value.length() < 1 ) {
+		if ( value.isEmpty() ) {
 			return false;
 		}
-		if ( buf.length() > 0 ) {
+		if ( !buf.isEmpty() ) {
 			buf.append(' ');
 		}
 		buf.append(value);

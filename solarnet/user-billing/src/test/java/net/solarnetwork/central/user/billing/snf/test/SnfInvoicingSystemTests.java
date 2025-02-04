@@ -48,6 +48,8 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -220,7 +222,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -286,7 +290,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -369,7 +375,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -467,7 +475,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));

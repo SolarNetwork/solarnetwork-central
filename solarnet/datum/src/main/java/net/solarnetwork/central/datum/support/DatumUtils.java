@@ -23,7 +23,6 @@
 package net.solarnetwork.central.datum.support;
 
 import java.math.BigDecimal;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.util.PathMatcher;
@@ -64,8 +63,8 @@ public final class DatumUtils {
 	 *        a default value to use if {@code o} is <em>null</em> or if any
 	 *        error occurs serializing the object to JSON
 	 * @return the JSON string
-	 * @since 1.1
 	 * @see JsonUtils#getJSONString(Object, String)
+	 * @since 1.1
 	 */
 	public static String getJSONString(final Object o, final String defaultValue) {
 		return JsonUtils.getJSONString(o, defaultValue);
@@ -85,8 +84,8 @@ public final class DatumUtils {
 	 * @param clazz
 	 *        the type of Object to map the JSON into
 	 * @return the object
-	 * @since 1.1
 	 * @see JsonUtils#getJSONString(Object, String)
+	 * @since 1.1
 	 */
 	public static <T> T getObjectFromJSON(final String json, Class<T> clazz) {
 		return JsonUtils.getObjectFromJSON(json, clazz);
@@ -115,12 +114,7 @@ public final class DatumUtils {
 				|| !pathMatcher.isPattern(pattern) ) {
 			return sources;
 		}
-		for ( Iterator<NodeSourcePK> itr = sources.iterator(); itr.hasNext(); ) {
-			NodeSourcePK pk = itr.next();
-			if ( !pathMatcher.match(pattern, pk.getSourceId()) ) {
-				itr.remove();
-			}
-		}
+		sources.removeIf(pk -> !pathMatcher.match(pattern, pk.getSourceId()));
 		return sources;
 	}
 
@@ -147,12 +141,7 @@ public final class DatumUtils {
 				|| !pathMatcher.isPattern(pattern) ) {
 			return sources;
 		}
-		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
-			String source = itr.next();
-			if ( !pathMatcher.match(pattern, source) ) {
-				itr.remove();
-			}
-		}
+		sources.removeIf(source -> !pathMatcher.match(pattern, source));
 		return sources;
 	}
 

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		implements StreamDatumFilter, AggregationFilter, CombiningFilter, DatumRollupFilter,
 		NodeMappingFilter, SourceMappingFilter, OptimizedQueryCriteria {
 
+	@Serial
 	private static final long serialVersionUID = 5720733579900923990L;
 
 	private UUID[] streamIds;
@@ -111,13 +113,9 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof StreamDatumFilterCommand other) ) {
 			return false;
 		}
-		if ( !(obj instanceof StreamDatumFilterCommand) ) {
-			return false;
-		}
-		StreamDatumFilterCommand other = (StreamDatumFilterCommand) obj;
 		return aggregation == other.aggregation && combiningType == other.combiningType
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
 				&& Objects.equals(endDate, other.endDate) && kind == other.kind
@@ -344,7 +342,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * This is a convenience method for requests that use a single stream ID at
 	 * a time. The stream ID is still stored on the {@code streamIds} array,
 	 * just as the first value. Calling this method replaces any existing
-	 * {@code steramIds} value with a new array containing just the ID passed
+	 * {@code streamIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
 	 *
@@ -535,7 +533,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( sorts == null ) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<SortDescriptor>(sorts);
+		return new ArrayList<>(sorts);
 	}
 
 	public Long getOffset() {
@@ -606,7 +604,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 *        the key to set
 	 */
 	public void setAggregationKey(String key) {
-		Aggregation agg = null;
+		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -654,7 +652,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@JsonSetter
 	public void setPartialAggregationKey(String key) {
-		Aggregation agg = null;
+		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -732,7 +730,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 */
 	@JsonSetter
 	public void setCombiningTypeKey(String key) {
-		CombiningType type = null;
+		CombiningType type;
 		try {
 			type = CombiningType.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -778,7 +776,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
-			result = new LinkedHashMap<Long, Set<Long>>(mappings.length);
+			result = new LinkedHashMap<>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
@@ -796,7 +794,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<Long>(rIds.size());
+					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
 					for ( String rId : rIds ) {
 						rNodeIds.add(Long.valueOf(rId));
 					}
@@ -848,7 +846,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
-			result = new LinkedHashMap<String, Set<String>>(mappings.length);
+			result = new LinkedHashMap<>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {

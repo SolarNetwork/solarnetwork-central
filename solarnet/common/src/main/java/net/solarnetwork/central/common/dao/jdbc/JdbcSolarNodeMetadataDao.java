@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcSolarNodeMetadataDao.java - 12/11/2024 8:34:36 pm
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.dao.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.sql.PreparedStatement;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -39,7 +40,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * JDBC implementation of {@link SolarNodeMetadata} DAO.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -49,7 +50,7 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @throws IllegalArgumentException
@@ -68,9 +69,7 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 	@Override
 	public Long save(SolarNodeMetadata entity) {
 		var sql = new StoreSolarNodeMetadata(entity);
-		jdbcOps.execute(sql, cs -> {
-			return cs.executeUpdate();
-		});
+		jdbcOps.execute(sql, PreparedStatement::executeUpdate);
 		return entity.getId();
 	}
 
@@ -80,7 +79,7 @@ public class JdbcSolarNodeMetadataDao implements SolarNodeMetadataDao {
 		filter.setNodeId(id);
 		var sql = new SelectSolarNodeMetadata(filter);
 		List<SolarNodeMetadata> list = jdbcOps.query(sql, SolarNodeMetadataRowMapper.INSTANCE);
-		return (list != null && !list.isEmpty() ? list.get(0) : null);
+		return (!list.isEmpty() ? list.getFirst() : null);
 	}
 
 	@Override

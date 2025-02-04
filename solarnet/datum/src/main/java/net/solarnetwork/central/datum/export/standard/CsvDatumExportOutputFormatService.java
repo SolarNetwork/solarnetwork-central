@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -138,7 +139,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 
 	@Override
 	public ExportContext createExportContext(OutputConfiguration config) {
-		return new CsvExportContext(config, false);
+		return new CsvExportContext(config);
 	}
 
 	private class CsvExportContext extends BaseDatumExportOutputFormatServiceExportContext {
@@ -150,7 +151,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		private String[] headers;
 		private CellProcessor[] cellProcessors;
 
-		private CsvExportContext(OutputConfiguration config, boolean includeHeader) {
+		private CsvExportContext(OutputConfiguration config) {
 			super(config);
 
 			CsvOutputFormatProperties props = new CsvOutputFormatProperties();
@@ -178,7 +179,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 		}
 
 		private CellProcessor processorForDatumProperty(String key, Object value) {
-			if ( value instanceof java.time.LocalDate || value instanceof ZonedDateTime
+			if ( value instanceof java.time.Instant || value instanceof ZonedDateTime
 					|| value instanceof LocalDateTime ) {
 				return INSTANT_CELL_PROCESSOR;
 			} else if ( value instanceof LocalDate ) {
@@ -216,7 +217,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			if ( match == null || match.getId() == null ) {
 				return Collections.emptyMap();
 			}
-			Map<String, Object> map = new LinkedHashMap<String, Object>(8);
+			Map<String, Object> map = new LinkedHashMap<>(8);
 
 			map.put("created", match.getId().getCreated());
 			map.put("nodeId", match.getId().getNodeId());
@@ -271,7 +272,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			}
 			for ( GeneralNodeDatumFilterMatch m : iterable ) {
 				Map<String, Object> map = datumMap(m);
-				if ( map != null && !map.isEmpty() ) {
+				if ( !map.isEmpty() ) {
 					if ( writer.getLineNumber() == 0 ) {
 						headers = headersForDatumMap(map);
 						headerSet = new LinkedHashSet<>(Arrays.asList(headers));
@@ -324,10 +325,11 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				try (BufferedOutputStream rawOut = new BufferedOutputStream(
 						new FileOutputStream(temporaryConcatenatedFile));
 						OutputStream out = (decompressTemp ? new GZIPOutputStream(rawOut)
-								: createCompressedOutputStream(rawOut));) {
+								: createCompressedOutputStream(rawOut))) {
 					if ( headers != null ) {
 						try (ICsvMapWriter concatenatedWriter = new CsvMapWriter(
-								new OutputStreamWriter(StreamUtils.nonClosing(out), "UTF-8"),
+								new OutputStreamWriter(StreamUtils.nonClosing(out),
+										StandardCharsets.UTF_8),
 								CsvPreference.STANDARD_PREFERENCE)) {
 							concatenatedWriter.writeHeader(headers);
 							concatenatedWriter.flush();

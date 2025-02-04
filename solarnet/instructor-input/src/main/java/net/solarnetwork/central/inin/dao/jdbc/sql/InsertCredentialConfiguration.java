@@ -39,7 +39,7 @@ import net.solarnetwork.central.inin.domain.CredentialConfiguration;
  * @author matt
  * @version 1.0
  */
-public class InsertCredentialConfiguration implements PreparedStatementCreator, SqlProvider {
+public final class InsertCredentialConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.inin_credential (

@@ -413,7 +413,7 @@ public interface UserDnp3Biz {
 	 * @param filter
 	 *        an optional filter
 	 * @param out
-	 *        the output steram to write to
+	 *        the output stream to write to
 	 * @param locale
 	 *        a locale for messages, or {@literal null} to use the runtime
 	 *        default

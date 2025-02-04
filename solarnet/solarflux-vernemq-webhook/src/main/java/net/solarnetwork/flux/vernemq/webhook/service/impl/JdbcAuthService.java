@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,8 @@ import static java.time.Instant.now;
 import static net.solarnetwork.flux.vernemq.webhook.Globals.AUDIT_LOG;
 import static net.solarnetwork.util.StringUtils.delimitedStringToMap;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -37,7 +35,6 @@ import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 
 import com.github.veqryn.net.Cidr4;
 
@@ -57,13 +54,13 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * {@link AuthService} implementation that uses JDBC to authenticate and authorize requests.
- * 
+ *
  * <p>
  * Two different authorization paths are performed here, one for subscription and the other for
  * publication events. See {@link #authorizeRequest(SubscribeRequest)} and
  * {@link #authorizeRequest(PublishRequest)} for details.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.4
  */
@@ -71,7 +68,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * The password token for the signature value.
-   * 
+   *
    * <p>
    * The signature must be provided as a hex-encoded value.
    * </p>
@@ -80,7 +77,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * The password token for the request date value.
-   * 
+   *
    * <p>
    * The date must be provided as the number of milliseconds since the epoch.
    * </p>
@@ -128,11 +125,11 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * The default value for the {@code directTokenSecretRegex} property.
-   * 
+   *
    * <p>
    * This pattern matches the RFC 1924 alphabet used by SolarNetwork when generating tokens.
    * </p>
-   * 
+   *
    * @since 1.1
    */
   public static final Pattern DEFAULT_DIRECT_TOKEN_SECRET_REGEX = Pattern
@@ -159,7 +156,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Constructor.
-   * 
+   *
    * @param jdbcOps
    *        the JDBC API
    * @param authEvaluator
@@ -171,7 +168,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Constructor.
-   * 
+   *
    * @param jdbcOps
    *        the JDBC API
    * @param authEvaluator
@@ -187,7 +184,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Constructor.
-   * 
+   *
    * @param jdbcOps
    *        the JDBC API
    * @param authEvaluator
@@ -260,8 +257,7 @@ public class JdbcAuthService implements AuthService {
     }
 
     AUDIT_LOG.info("Authorized node [{}]", nodeId);
-    if (forceCleanSession
-        && (request.getCleanSession() == null || !request.getCleanSession().booleanValue())) {
+    if (forceCleanSession && (request.getCleanSession() == null || !request.getCleanSession())) {
       return new Response(RegisterModifiers.builder().withCleanSession(true).build());
     }
     return Response.OK;
@@ -281,9 +277,8 @@ public class JdbcAuthService implements AuthService {
       return authorizeNodeRequest(request);
     }
 
-    final String tokenId = username;
     if (!isClientIdValidForTokenAuthentication(request)) {
-      AUDIT_LOG.info("Access denied to [{}]: invlalid client ID [{}]", tokenId,
+      AUDIT_LOG.info("Access denied to [{}]: invalid client ID [{}]", username,
           request.getClientId());
       return Response.NEXT;
     }
@@ -291,7 +286,7 @@ public class JdbcAuthService implements AuthService {
     final Map<String, String> pwTokens;
     if (allowDirectTokenAuthentication && request.getPassword() != null
         && directTokenSecretRegex.matcher(request.getPassword()).matches()) {
-      pwTokens = signTokenCredentials(tokenId, request.getPassword());
+      pwTokens = signTokenCredentials(username, request.getPassword());
     } else {
       pwTokens = delimitedStringToMap(request.getPassword(), ",", "=");
     }
@@ -310,7 +305,7 @@ public class JdbcAuthService implements AuthService {
 
     final long reqDateSkew = Math.abs(System.currentTimeMillis() - reqDate);
     if (maxDateSkew >= 0 && reqDateSkew > maxDateSkew) {
-      AUDIT_LOG.info("Access denied to [{}]: date {} skew {} > {} maximum", tokenId, reqDate,
+      AUDIT_LOG.info("Access denied to [{}]: date {} skew {} > {} maximum", username, reqDate,
           reqDateSkew, maxDateSkew);
       return Response.NEXT;
     }
@@ -320,38 +315,33 @@ public class JdbcAuthService implements AuthService {
       return Response.NEXT;
     }
 
-    log.debug("Authenticating [{}] @ {}{} with [{}]", tokenId, snHost, snPath,
+    log.debug("Authenticating [{}] @ {}{} with [{}]", username, snHost, snPath,
         pwTokens.get(SIGNATURE_PASSWORD_TOKEN));
-    List<SnTokenDetails> results = jdbcOps.query(new PreparedStatementCreator() {
+    List<SnTokenDetails> results = jdbcOps.query(con -> {
+      PreparedStatement stmt = con.prepareStatement(authenticateCall, ResultSet.TYPE_FORWARD_ONLY,
+          ResultSet.CONCUR_READ_ONLY);
+      stmt.setString(1, username);
+      stmt.setTimestamp(2, new Timestamp(reqDate));
+      stmt.setString(3, snHost);
+      stmt.setString(4, snPath);
+      stmt.setString(5, sig);
+      return stmt;
+    }, new SnTokenDetailsRowMapper(username));
 
-      @Override
-      public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-        PreparedStatement stmt = con.prepareStatement(authenticateCall, ResultSet.TYPE_FORWARD_ONLY,
-            ResultSet.CONCUR_READ_ONLY);
-        stmt.setString(1, tokenId);
-        stmt.setTimestamp(2, new Timestamp(reqDate));
-        stmt.setString(3, snHost);
-        stmt.setString(4, snPath);
-        stmt.setString(5, sig);
-        return stmt;
-      }
-    }, new SnTokenDetailsRowMapper(tokenId));
-
-    if (results == null || results.isEmpty()) {
+    if (results.isEmpty()) {
       return Response.NEXT;
     }
 
     // verify not expired
-    SnTokenDetails details = results.get(0);
+    SnTokenDetails details = results.getFirst();
     if (details.getPolicy() != null && !details.getPolicy().isValidAt(now())) {
       return Response.NEXT;
     }
 
     // request is authenticated
-    AUDIT_LOG.info("Authenticated [{}] client [{}] @ {}{}", tokenId, request.getClientId(), snHost,
+    AUDIT_LOG.info("Authenticated [{}] client [{}] @ {}{}", username, request.getClientId(), snHost,
         snPath);
-    if (forceCleanSession
-        && (request.getCleanSession() == null || !request.getCleanSession().booleanValue())) {
+    if (forceCleanSession && (request.getCleanSession() == null || !request.getCleanSession())) {
       return new Response(RegisterModifiers.builder().withCleanSession(true).build());
     }
     return Response.OK;
@@ -381,19 +371,15 @@ public class JdbcAuthService implements AuthService {
         return actor;
       }
     }
-    List<Actor> results = jdbcOps.query(new PreparedStatementCreator() {
-
-      @Override
-      public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-        PreparedStatement stmt = con.prepareStatement(authorizeCall, ResultSet.TYPE_FORWARD_ONLY,
-            ResultSet.CONCUR_READ_ONLY);
-        stmt.setString(1, tokenId);
-        return stmt;
-      }
+    List<Actor> results = jdbcOps.query(con -> {
+      PreparedStatement stmt = con.prepareStatement(authorizeCall, ResultSet.TYPE_FORWARD_ONLY,
+          ResultSet.CONCUR_READ_ONLY);
+      stmt.setString(1, tokenId);
+      return stmt;
     }, new ActorDetailsRowMapper(tokenId));
 
-    if (results != null && !results.isEmpty()) {
-      Actor actor = results.get(0);
+    if (!results.isEmpty()) {
+      Actor actor = results.getFirst();
       if (cache != null && actorCacheKey != null) {
         cache.put(actorCacheKey, actor);
       }
@@ -411,19 +397,15 @@ public class JdbcAuthService implements AuthService {
         return actor;
       }
     }
-    List<Actor> results = jdbcOps.query(new PreparedStatementCreator() {
-
-      @Override
-      public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-        PreparedStatement stmt = con.prepareStatement(authorizeNodeCall,
-            ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        stmt.setLong(1, nodeId);
-        return stmt;
-      }
+    List<Actor> results = jdbcOps.query(con -> {
+      PreparedStatement stmt = con.prepareStatement(authorizeNodeCall, ResultSet.TYPE_FORWARD_ONLY,
+          ResultSet.CONCUR_READ_ONLY);
+      stmt.setLong(1, nodeId);
+      return stmt;
     }, new ActorDetailsRowMapper(null));
 
-    if (results != null && !results.isEmpty()) {
-      Actor actor = results.get(0);
+    if (!results.isEmpty()) {
+      Actor actor = results.getFirst();
       if (cache != null && actorCacheKey != null) {
         cache.put(actorCacheKey, actor);
       }
@@ -448,7 +430,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Authorize a publish request.
-   * 
+   *
    * <p>
    * This implementation assumes the {@code clientId} is the node ID. The {@code username} must be
    * {@literal solarnode} (case insensitive).
@@ -470,12 +452,8 @@ public class JdbcAuthService implements AuthService {
 
     log.debug("Authorizing publish request for node {}", request);
     Actor actor = actorForNodeId(nodeId);
-    if (actor == null) {
-      return Response.NEXT;
-    }
-
     // verify not expired
-    if (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now())) {
+    if ((actor == null) || (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now()))) {
       return Response.NEXT;
     }
 
@@ -504,7 +482,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Authorize a subscribe request.
-   * 
+   *
    * <p>
    * This implementation assumes the {@code username} is a SolarNetwork security token ID. Topics
    * will be restricted to only use valid for the associated token.
@@ -519,12 +497,8 @@ public class JdbcAuthService implements AuthService {
 
     log.debug("Authorizing subscribe request {}", request);
     Actor actor = actorForTokenId(tokenId);
-    if (actor == null) {
-      return Response.NEXT;
-    }
-
     // verify not expired
-    if (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now())) {
+    if ((actor == null) || (actor.getPolicy() != null && !actor.getPolicy().isValidAt(now()))) {
       return Response.NEXT;
     }
 
@@ -540,7 +514,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the configured authenticate JDBC call.
-   * 
+   *
    * @return the authenticate JDBC call; defaults to {@link #DEFAULT_AUTHENTICATE_CALL}
    */
   public String getAuthenticateCall() {
@@ -549,12 +523,12 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the authenticate JDBC call to use.
-   * 
+   *
    * <p>
    * This JDBC statement is used to authenticate requests. This JDBC statement is expected to take
    * the following parameters:
    * </p>
-   * 
+   *
    * <ol>
    * <li><b>token_id</b> ({@code String}) - the SolarNetwork security token ID</li>
    * <li><b>req_date</b> ({@link Timestamp}) - the request date</li>
@@ -562,11 +536,11 @@ public class JdbcAuthService implements AuthService {
    * <li><b>path</b> ({@code String}) - the request path</li>
    * <li><b>signature</b> ({@code String}) - the hex-encoded SolarNetwork token signature</li>
    * </ol>
-   * 
+   *
    * <p>
    * If the credentials match, a result set with the following columns is expected to be returned:
    * </p>
-   * 
+   *
    * <ol>
    * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns the token</li>
    * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type, e.g.
@@ -574,11 +548,11 @@ public class JdbcAuthService implements AuthService {
    * <li><b>jpolicy</b> ({@code String}) - the SolarNetwork security policy associated with the
    * token</li>
    * </ol>
-   * 
+   *
    * <p>
    * If the credentials do not match, an empty result set is expected.
    * </p>
-   * 
+   *
    * @param jdbcCall
    *        the JDBC call
    * @throws IllegalArgumentException
@@ -593,7 +567,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the authorization JDBC call to use.
-   * 
+   *
    * @return the JDBC call; defaults to {@link #DEFAULT_AUTHORIZE_CALL}
    */
   public String getAuthorizeCall() {
@@ -602,20 +576,20 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the authorization JDBC call to use.
-   * 
+   *
    * <p>
    * This JDBC statement is used to authorize publish/subscribe requests. This JDBC statement is
    * expected to take the following parameters:
    * </p>
-   * 
+   *
    * <ol>
    * <li><b>token_id</b> ({@code String}) - the SolarNetwork security token ID</li>
    * </ol>
-   * 
+   *
    * <p>
    * A result set with the following columns is expected to be returned:
    * </p>
-   * 
+   *
    * <ol>
    * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns the token</li>
    * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type, e.g.
@@ -624,11 +598,11 @@ public class JdbcAuthService implements AuthService {
    * token</li>
    * <li><b>node_ids</b> ({@code Long[]}) - an array of SolarNode IDs valid for this actor</li>
    * </ol>
-   * 
+   *
    * <p>
    * If no token is available for {@code token_id}, an empty result set is expected.
    * </p>
-   * 
+   *
    * @param jdbcCall
    *        the JDBC call
    * @throws IllegalArgumentException
@@ -643,7 +617,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the configured SolarNetwork host.
-   * 
+   *
    * @return the host; defaults to {@link #DEFAULT_SN_HOST}
    */
   public String getSnHost() {
@@ -652,7 +626,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the SolarNetwork host to use.
-   * 
+   *
    * @param snHost
    *        the host
    * @throws IllegalArgumentException
@@ -667,7 +641,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the configured SolarNetwork path.
-   * 
+   *
    * @return the path; defaults to {@link #DEFAULT_SN_PATH}
    */
   public String getSnPath() {
@@ -676,7 +650,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the SolarNetwork path to use.
-   * 
+   *
    * @param snPath
    *        the path
    * @throws IllegalArgumentException
@@ -691,7 +665,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the maximum date skew allowed during authentication.
-   * 
+   *
    * @return the maximum date skew, in milliseconds; defaults to {@link #DEFAULT_MAX_DATE_SKEW}
    */
   public long getMaxDateSkew() {
@@ -700,7 +674,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the maximum date skew allowed during authentication.
-   * 
+   *
    * @param maxDateSkew
    *        the maximum date skew, in milliseconds
    */
@@ -710,7 +684,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the flag that forces the "clean session" setting on authentication.
-   * 
+   *
    * @return {@literal true} to force the "clean session" setting; defaults to {@literal false}
    */
   public boolean isForceCleanSession() {
@@ -719,7 +693,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Toggle the flag that forces the "clean session" setting on authentication.
-   * 
+   *
    * @param forceCleanSession
    *        {@literal true} to force the "clean session" setting
    */
@@ -729,7 +703,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the configured authorize node JDBC call.
-   * 
+   *
    * @return the JDBC call; defaults to {@link #DEFAULT_AUTHORIZE_NODE_CALL}
    */
   public String getAuthorizeNodeCall() {
@@ -738,20 +712,20 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the authorize node JDBC call to use.
-   * 
+   *
    * <p>
    * This JDBC statement is used to authorize node requests. This JDBC statement is expected to take
    * the following parameters:
    * </p>
-   * 
+   *
    * <ol>
    * <li><b>node_Id</b> ({@code Long}) - the SolarNetwork node ID</li>
    * </ol>
-   * 
+   *
    * <p>
    * A result set with the following columns is expected to be returned:
    * </p>
-   * 
+   *
    * <ol>
    * <li><b>user_id</b> ({@code Long}) - the SolarNetwork user ID that owns the token</li>
    * <li><b>token_type</b> ({@code String}) - the SolarNetwork token type, e.g. {@literal Node}</li>
@@ -759,11 +733,11 @@ public class JdbcAuthService implements AuthService {
    * node</li>
    * <li><b>node_ids</b> ({@code Long[]}) - the node ID, as an array
    * </ol>
-   * 
+   *
    * <p>
    * If the given {@code nodeId} is not found, an empty result set is expected.
    * </p>
-   * 
+   *
    * @param jdbcCall
    *        the JDBC call
    * @throws IllegalArgumentException
@@ -778,11 +752,11 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the publish username.
-   * 
+   *
    * <p>
    * This username is required when publishing. The {@code clientId} must be a SolarNode ID.
    * </p>
-   * 
+   *
    * @return the username for publishing
    */
   public String getPublishUsername() {
@@ -791,7 +765,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the username required for publishing.
-   * 
+   *
    * @param publishUsername
    *        the publish username
    * @throws IllegalArgumentException
@@ -806,7 +780,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the configured actor cache.
-   * 
+   *
    * @return the actor cache
    */
   public Cache<String, Actor> getActorCache() {
@@ -814,8 +788,8 @@ public class JdbcAuthService implements AuthService {
   }
 
   /**
-   * Configure a actor cache.
-   * 
+   * Configure an actor cache.
+   *
    * @param actorCache
    *        the cache to use for actors
    */
@@ -825,11 +799,11 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the IP address mask for node authentication.
-   * 
+   *
    * <p>
    * This is provided in CIDR format, e.g. {@literal 192.168.0.0/24}.
    * </p>
-   * 
+   *
    * @return the IP address mask
    */
   public String getIpMask() {
@@ -838,7 +812,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the IP address mask for node authentication.
-   * 
+   *
    * <p>
    * If configured, then for node authentication requests the
    * {@link RegisterRequest#getPeerAddress()} will be compared to this CIDR range, and if it falls
@@ -846,7 +820,7 @@ public class JdbcAuthService implements AuthService {
    * node authentication is actually only authorization, with the assumption that actual
    * authentication has been performed externally, for example with an X.509 certificate.
    * </p>
-   * 
+   *
    * @param ipMask
    *        an IP address range to limit requests to, in CIDR format, e.g. {@literal 192.168.0.0/24}
    * @throws IllegalArgumentException
@@ -858,7 +832,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the token client ID prefix requirement setting.
-   * 
+   *
    * @return the setting; default to {@literal true}
    */
   public boolean isRequireTokenClientIdPrefix() {
@@ -867,7 +841,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Toggle the token client ID prefix requirement.
-   * 
+   *
    * @param requireTokenClientIdPrefix
    *        {@literal true} to force token-based authentication to require that the MQTT client ID
    *        starts with the token ID
@@ -878,7 +852,7 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Get the direct token authentication permission flag.
-   * 
+   *
    * @return {@literal true} if direct token secrets can be passed for token credentials; defaults
    *         to {@literal false}
    */
@@ -888,13 +862,13 @@ public class JdbcAuthService implements AuthService {
 
   /**
    * Set the direct token authentication permission flag.
-   * 
+   *
    * <p>
    * Enabling this setting means that un-hashed raw token secrets can be used for the password in
    * token-based credentials. If a raw token secret is detected, this service will calculate the
    * token signature itself during the authentication process.
    * </p>
-   * 
+   *
    * @param allowDirectTokenAuthentication
    *        {@literal true} to allow token secrets can be passed for token credentials,
    *        {@literal false} to required pre-signed signatures

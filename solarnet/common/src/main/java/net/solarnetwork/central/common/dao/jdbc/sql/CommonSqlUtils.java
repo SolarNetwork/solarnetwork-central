@@ -1,21 +1,21 @@
 /* ==================================================================
  * CommonSqlUtils.java - 6/10/2021 10:04:35 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -41,7 +41,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Common SQL utilities for SolarNetwork.
- * 
+ *
  * @author matt
  * @version 2.8
  */
@@ -62,11 +62,11 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code INTEGER} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -88,11 +88,11 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code BIGINT} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -113,7 +113,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code BIGINT} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -138,11 +138,11 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code TEXT} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -163,7 +163,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code TEXT} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -188,11 +188,11 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code UUID} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -214,7 +214,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement {@code UUID} array parameter, optimized to a
 	 * non-array parameter if the array holds a single object.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -239,11 +239,11 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement array parameter, optimized to a non-array
 	 * parameter if the array holds a single object.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -266,7 +266,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Prepare a SQL statement array parameter, optimized to a non-array
 	 * parameter if the array holds a single object.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -303,11 +303,11 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code INTEGER} array parameter.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -328,7 +328,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code INTEGER} array parameter.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -337,10 +337,10 @@ public final class CommonSqlUtils {
 	 *        the zero-based starting JDBC statement parameter offset
 	 * @param value
 	 *        the array value
-	 * @return the new JDBC statement parameter offset
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
 	 *        {@literal null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
@@ -352,11 +352,11 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code BIGINT} array parameter.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -377,7 +377,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code BIGINT} array parameter.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -386,10 +386,10 @@ public final class CommonSqlUtils {
 	 *        the zero-based starting JDBC statement parameter offset
 	 * @param value
 	 *        the array value
-	 * @return the new JDBC statement parameter offset
 	 * @param setNull
 	 *        {@literal true} to set a NULL parameter if {@code value} is
 	 *        {@literal null}, or {@literal false} to skip the parameter
+	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
 	 * @since 2.2
@@ -401,11 +401,11 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code TEXT} array parameter.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -426,7 +426,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code TEXT} array parameter.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -450,11 +450,11 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code UUID} array parameter.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -475,7 +475,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement {@code UUID} array parameter.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -499,11 +499,11 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement array parameter.
-	 * 
+	 *
 	 * <p>
 	 * The parameter will <b>not</b> be set if {@code value} is {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -526,7 +526,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL statement array parameter.
-	 * 
+	 *
 	 * @param con
 	 *        the JDBC connection
 	 * @param stmt
@@ -560,7 +560,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Generate SQL {@literal FOR UPDATE SKIP LOCKED} criteria to support
 	 * locking.
-	 * 
+	 *
 	 * @param skipLocked
 	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
 	 * @param buf
@@ -573,7 +573,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Generate SQL {@literal FOR UPDATE SKIP LOCKED} criteria to support
 	 * locking.
-	 * 
+	 *
 	 * @param skipLocked
 	 *        {@literal true} to include the {@literal SKIP LOCKED} clause
 	 * @param tableNames
@@ -603,11 +603,11 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \nLIMIT ? OFFSET ?}.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -640,11 +640,9 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query limit/offset.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
-	 * @param con
-	 *        the JDBC connection
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -655,8 +653,8 @@ public final class CommonSqlUtils {
 	 * @see #limitOffset(PaginationCriteria, StringBuilder)
 	 * @since 2.1
 	 */
-	public static int prepareLimitOffset(PaginationCriteria filter, Connection con,
-			PreparedStatement stmt, int parameterOffset) throws SQLException {
+	public static int prepareLimitOffset(PaginationCriteria filter, PreparedStatement stmt,
+			int parameterOffset) throws SQLException {
 		if ( filter != null && filter.getMax() != null ) {
 			int max = filter.getMax();
 			if ( max > 0 ) {
@@ -674,7 +672,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Wrap a SQL query with a {@literal SELECT COUNT(*)} clause.
-	 * 
+	 *
 	 * @param sql
 	 *        the SQL query to wrap
 	 * @return the wrapped query
@@ -687,11 +685,11 @@ public final class CommonSqlUtils {
 	/**
 	 * Generate SQL {@literal LIMIT x OFFSET y} criteria to support pagination
 	 * where the limit and offset are generated as literal values.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \nLIMIT x OFFSET y}.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param buf
@@ -713,7 +711,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Create a {@link PreparedStatement} with settings appropriate for updating
 	 * or not.
-	 * 
+	 *
 	 * @param con
 	 *        the connection
 	 * @param sql
@@ -742,7 +740,7 @@ public final class CommonSqlUtils {
 	/**
 	 * Generate SQL {@literal WHERE} criteria for an array column containment
 	 * clause.
-	 * 
+	 *
 	 * @param array
 	 *        the array value to match
 	 * @param colName
@@ -750,9 +748,9 @@ public final class CommonSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @since 2.7
 	 * @see #prepareArrayParameter(Connection, PreparedStatement, int, String,
 	 *      Object[])
+	 * @since 2.7
 	 */
 	public static int whereArrayColContains(Object[] array, String colName, StringBuilder buf) {
 		if ( array != null && array.length > 0 ) {
@@ -764,13 +762,13 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria for an array containment clause.
-	 * 
+	 *
 	 * <p>
 	 * If {@code array} contains exactly one value, the generated SQL will use a
-	 * simple equality comparison. Otherwise an {@code ANY()} comparison will be
-	 * generated.
+	 * simple equality comparison. Otherwise, an {@code ANY()} comparison will
+	 * be generated.
 	 * </p>
-	 * 
+	 *
 	 * @param array
 	 *        the array value to match
 	 * @param colName
@@ -778,9 +776,9 @@ public final class CommonSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @since 2.1
 	 * @see #prepareOptimizedArrayParameter(Connection, PreparedStatement, int,
 	 *      String, Object[])
+	 * @since 2.1
 	 */
 	public static int whereOptimizedArrayContains(Object[] array, String colName, StringBuilder buf) {
 		int paramCount = 0;
@@ -799,13 +797,13 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Generate SQL {@literal WHERE} criteria for a date range.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal \tAND c = ?\n} for
 	 * each clause. The leading tab and {@literal AND} and space characters are
 	 * <b>not</b> stripped.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param colName
@@ -830,7 +828,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query date range filter.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param stmt
@@ -855,7 +853,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query JSON string parameter.
-	 * 
+	 *
 	 * @param data
 	 *        the JSON data; will be serialized via
 	 *        {@link JsonUtils#getJSONString(Object, String)}
@@ -884,7 +882,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query {@code CodedValue} parameter as a {@code INTEGER}.
-	 * 
+	 *
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -915,7 +913,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query {@code CodedValue} parameter as a {@code CHARACTER}.
-	 * 
+	 *
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -947,7 +945,7 @@ public final class CommonSqlUtils {
 
 	/**
 	 * Prepare a SQL query {@code CodedValue} parameter as a {@code INTEGER}.
-	 * 
+	 *
 	 * @param stmt
 	 *        the JDBC statement
 	 * @param parameterOffset
@@ -976,14 +974,14 @@ public final class CommonSqlUtils {
 	/**
 	 * Generate SQL {@literal ORDER BY} criteria for a set of
 	 * {@link SortDescriptor}.
-	 * 
+	 *
 	 * <p>
 	 * The buffer is populated with a pattern of {@literal , key} for each key.
 	 * The leading comma and space characters are <b>not</b> stripped, but the
 	 * returned value indicates the number of characters to trim from the
 	 * results if needed.
 	 * </p>
-	 * 
+	 *
 	 * @param sorts
 	 *        the sorts
 	 * @param sortKeyMapping

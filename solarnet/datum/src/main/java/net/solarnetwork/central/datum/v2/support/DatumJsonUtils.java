@@ -387,7 +387,7 @@ public final class DatumJsonUtils {
 		writeStreamMetadata(generator, metadata);
 
 		generator.writeFieldName("values");
-		if ( datum == null || datumLength < 1 ) {
+		if ( datumLength < 1 ) {
 			generator.writeNull();
 		} else {
 			generator.writeStartArray(datum, datumLength);
@@ -514,7 +514,6 @@ public final class DatumJsonUtils {
 	 * each datum. The timestamp value will be identical for each pair.
 	 * </p>
 	 *
-	 *
 	 * @param generator
 	 *        the generator to write to
 	 * @param streamId
@@ -551,7 +550,7 @@ public final class DatumJsonUtils {
 		writeStreamMetadata(generator, metadata);
 
 		generator.writeFieldName("values");
-		if ( datum == null || datumLength < 1 ) {
+		if ( datumLength < 1 ) {
 			generator.writeNull();
 		} else {
 			generator.writeStartArray(datum, datumLength * 2);
@@ -925,7 +924,7 @@ public final class DatumJsonUtils {
 		if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
 			Map<String, BigDecimal> map = parseDecimalsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
-			if ( names != null ) {
+			if ( names != null && map != null ) {
 				result = new BigDecimal[names.length];
 				for ( int i = 0; i < names.length; i++ ) {
 					result[i] = map.get(names[i]);
@@ -948,13 +947,13 @@ public final class DatumJsonUtils {
 					}
 				}
 				if ( !tags.isEmpty() ) {
-					result = tags.toArray(new String[tags.size()]);
+					result = tags.toArray(String[]::new);
 				}
 			}
 		} else if ( parser.getCurrentToken() == JsonToken.START_OBJECT ) {
 			Map<String, String> map = parseStringsObject(parser);
 			String[] names = meta.propertyNamesForType(type);
-			if ( names != null ) {
+			if ( names != null && map != null ) {
 				result = new String[names.length];
 				for ( int i = 0; i < names.length; i++ ) {
 					result[i] = map.get(names[i]);
@@ -973,7 +972,7 @@ public final class DatumJsonUtils {
 			if ( names != null ) {
 				result = new BigDecimal[names.length][];
 				for ( int i = 0; i < names.length; i++ ) {
-					BigDecimal[] array = map.get(names[i]);
+					BigDecimal[] array = (map != null ? map.get(names[i]) : null);
 					if ( array == null ) {
 						// map array to null values... both "i" and "a" stats have 3 elements
 						array = new BigDecimal[] { null, null, null };
@@ -1075,7 +1074,7 @@ public final class DatumJsonUtils {
 				return null;
 			}
 			if ( t == JsonToken.FIELD_NAME ) {
-				t = parser.nextToken();
+				parser.nextToken();
 				String v = parser.getText();
 				if ( v != null ) {
 					map.put(parser.currentName(), v);
@@ -1162,7 +1161,7 @@ public final class DatumJsonUtils {
 				}
 			}
 		}
-		return list.toArray(new BigDecimal[list.size()]);
+		return list.toArray(BigDecimal[]::new);
 	}
 
 	/**
@@ -1186,7 +1185,7 @@ public final class DatumJsonUtils {
 	 *         if any parsing error occurs
 	 */
 	public static Instant parseInstant(JsonParser parser) throws IOException {
-		Instant timestamp;
+		Instant timestamp = null;
 		if ( parser.getCurrentToken() == JsonToken.VALUE_NUMBER_INT ) {
 			// parse as millisecond epoch value
 			timestamp = Instant.ofEpochMilli(parser.getLongValue());
@@ -1195,12 +1194,12 @@ public final class DatumJsonUtils {
 			String text = parser.getText();
 			if ( text != null ) {
 				text = text.replace(' ', 'T');
-			}
-			try {
-				timestamp = ISO_INSTANT.parse(text, Instant::from);
-			} catch ( DateTimeParseException e ) {
-				ZonedDateTime zdt = DateTimeFormatter.ISO_DATE_TIME.parse(text, ZonedDateTime::from);
-				timestamp = zdt.toInstant();
+				try {
+					timestamp = ISO_INSTANT.parse(text, Instant::from);
+				} catch ( DateTimeParseException e ) {
+					ZonedDateTime zdt = DateTimeFormatter.ISO_DATE_TIME.parse(text, ZonedDateTime::from);
+					timestamp = zdt.toInstant();
+				}
 			}
 		}
 		return timestamp;
@@ -1212,6 +1211,7 @@ public final class DatumJsonUtils {
 	 * @since 2.1
 	 */
 	public static final com.fasterxml.jackson.databind.Module DATUM_MODULE;
+
 	static {
 		SimpleModule m = new SimpleModule("SolarNet Datum");
 		m.addSerializer(ObjectDatumStreamMetadataId.class,

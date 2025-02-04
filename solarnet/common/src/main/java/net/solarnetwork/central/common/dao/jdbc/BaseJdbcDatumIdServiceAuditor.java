@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseJdbcDatumIdServiceAuditor.java - 29/10/2024 9:59:09 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,7 +47,7 @@ import net.solarnetwork.util.StatTracker;
 
 /**
  * Base class for {@link DatumId} related service auditors using JDBC.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -64,7 +64,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	public static final long DEFAULT_FLUSH_DELAY = 10000;
 
 	/**
-	 * The default value for the {@code connecitonRecoveryDelay} property.
+	 * The default value for the {@code connectionRecoveryDelay} property.
 	 */
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 15000;
 
@@ -72,7 +72,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	 * A regular expression that matches if a JDBC statement is a
 	 * {@link CallableStatement}.
 	 */
-	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*\\}",
+	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*}",
 			Pattern.CASE_INSENSITIVE);
 
 	/** A class-level logger. */
@@ -83,7 +83,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	/**
 	 * A temporary cache of service counters.
-	 * 
+	 *
 	 * <p>
 	 * This cache is where service updates are performed. The primary key is a
 	 * {@link DatumId} but the actual meaning of the kind, object ID, source ID,
@@ -97,7 +97,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	/**
 	 * The clock to use.
-	 * 
+	 *
 	 * <p>
 	 * A tick-based clock can be used to group updates into time-based
 	 * "buckets".
@@ -117,7 +117,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataSource
 	 *        the JDBC DataSource
 	 * @param serviceCounters
@@ -155,7 +155,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	/**
 	 * Add a service count.
-	 * 
+	 *
 	 * @param key
 	 *        the key of the count
 	 * @param count
@@ -364,7 +364,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	/**
 	 * Set the delay, in milliseconds, between flushing cached audit data.
-	 * 
+	 *
 	 * @param flushDelay
 	 *        the delay, in milliseconds; defaults to
 	 *        {@link #DEFAULT_FLUSH_DELAY}
@@ -381,7 +381,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	/**
 	 * Set the delay, in milliseconds, to wait after a JDBC connection error
 	 * before trying to recover and connect again.
-	 * 
+	 *
 	 * @param connectionRecoveryDelay
 	 *        the delay, in milliseconds; defaults t[
 	 *        {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
@@ -398,7 +398,7 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	/**
 	 * Set the delay, in milliseconds, to wait after executing JDBC statements
 	 * within a loop before executing another statement.
-	 * 
+	 *
 	 * @param updateDelay
 	 *        the delay, in milliseconds; defaults t[
 	 *        {@link #DEFAULT_UPDATE_DELAY}
@@ -412,18 +412,18 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 	/**
 	 * The JDBC statement to execute for incrementing a count for a single
 	 * {@code DatumId} key.
-	 * 
+	 *
 	 * <p>
 	 * The statement must accept the following parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>long - the object ID</li>
 	 * <li>string - the source ID (service name)</li>
 	 * <li>timestamp - the audit date</li>
 	 * <li>integer - the count to add</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sql
 	 *        the SQL statement to use
 	 */
@@ -437,13 +437,13 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 
 	/**
 	 * Set the statistic log update count.
-	 * 
+	 *
 	 * <p>
 	 * Setting this to something greater than {@literal 0} will cause
 	 * {@literal INFO} level statistic log entries to be emitted every
 	 * {@code statLogUpdateCount} records have been updated in the database.
 	 * </p>
-	 * 
+	 *
 	 * @param statLogUpdateCount
 	 *        the update count
 	 */

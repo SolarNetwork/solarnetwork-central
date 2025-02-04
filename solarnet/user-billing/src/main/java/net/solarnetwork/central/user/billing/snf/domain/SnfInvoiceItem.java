@@ -1,28 +1,30 @@
 /* ==================================================================
  * SnfInvoiceItem.java - 20/07/2020 9:39:36 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -35,12 +37,13 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * SNF invoice item entity.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
 
+	@Serial
 	private static final long serialVersionUID = 3844737823712570024L;
 
 	/** A metadata key for a node ID. */
@@ -51,7 +54,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * The metadata key for a {@code Map} of usage information.
-	 * 
+	 *
 	 * <p>
 	 * The usage is stored with map keys that match the properties of the
 	 * {@link UsageInfo} class.
@@ -78,7 +81,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Create a new invoice item.
-	 * 
+	 *
 	 * @param invoice
 	 *        the invoice to associate this item with; it must already have a
 	 *        valid ID defined
@@ -99,7 +102,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Create a new invoice item.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param type
@@ -119,7 +122,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Create a new invoice item.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param type
@@ -141,7 +144,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Create a new invoice item.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 * @param type
@@ -171,7 +174,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the invoice ID
 	 */
@@ -182,7 +185,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the invoice item ID
 	 * @param invoiceId
@@ -219,12 +222,12 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -251,7 +254,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Get usage information, if available.
-	 * 
+	 *
 	 * @return the usage info, or {@literal null} if none available
 	 */
 	@SuppressWarnings("unchecked")
@@ -266,7 +269,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Get the invoice ID.
-	 * 
+	 *
 	 * @return the invoice ID
 	 */
 	public Long getInvoiceId() {
@@ -275,11 +278,11 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Get the item key.
-	 * 
+	 *
 	 * <p>
 	 * This is a unique identifier defined externally, such as a product key.
 	 * </p>
-	 * 
+	 *
 	 * @return the key
 	 */
 	public String getKey() {
@@ -288,7 +291,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Set the item key.
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 */
@@ -298,7 +301,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Get the item type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public InvoiceItemType getItemType() {
@@ -307,7 +310,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Set the item type.
-	 * 
+	 *
 	 * @param itemType
 	 *        the type to set
 	 */
@@ -317,14 +320,14 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Get the amount.
-	 * 
+	 *
 	 * <p>
 	 * This value represents the total cost for the associated
-	 * {@link #getQuantity()}. Thus the individual quantity cost is derived via
+	 * {@link #getQuantity()}. Thus, the individual quantity cost is derived via
 	 * {@code amount / quantity}. The {@link #getUnitQuantityAmount()} returns
 	 * the individual quantity cost.
 	 * </p>
-	 * 
+	 *
 	 * @return the amount, never {@literal null}
 	 */
 	public BigDecimal getAmount() {
@@ -333,7 +336,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Set the amount.
-	 * 
+	 *
 	 * @param amount
 	 *        the amount to set
 	 */
@@ -343,12 +346,12 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Get the individual quantity cost.
-	 * 
+	 *
 	 * <p>
 	 * This returns {@code amount / quantity}. If {@code quantity} is
 	 * {@literal 0} then {@code amount} is returned.
 	 * </p>
-	 * 
+	 *
 	 * @return the cost per individual quantity
 	 */
 	public BigDecimal getUnitQuantityAmount() {
@@ -357,12 +360,12 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		if ( quantity.compareTo(BigDecimal.ZERO) == 0 ) {
 			return amount;
 		}
-		return amount.divide(quantity);
+		return amount.divide(quantity, 9, RoundingMode.DOWN);
 	}
 
 	/**
 	 * Get the quantity.
-	 * 
+	 *
 	 * @return the quantity, never {@literal null}
 	 */
 	public BigDecimal getQuantity() {
@@ -371,7 +374,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * Set the quantity.
-	 * 
+	 *
 	 * @param quantity
 	 *        the quantity to set
 	 */
@@ -381,7 +384,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * The item metadata.
-	 * 
+	 *
 	 * @return the metadata
 	 */
 	public Map<String, Object> getMetadata() {
@@ -390,7 +393,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	/**
 	 * The item metadata.
-	 * 
+	 *
 	 * @param metadata
 	 *        the metadata to set
 	 */

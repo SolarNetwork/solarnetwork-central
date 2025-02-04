@@ -1,27 +1,28 @@
 /* ==================================================================
  * Instruction.java - Mar 1, 2011 11:21:25 AM
- * 
+ *
  * Copyright 2007 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.instructor.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,12 +38,13 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Domain object for an individual instruction.
- * 
+ *
  * @author matt
  * @version 2.4
  */
 public class Instruction extends BaseEntity {
 
+	@Serial
 	private static final long serialVersionUID = -7005343646718912195L;
 
 	private String topic;
@@ -63,11 +65,11 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Construct with data.
-	 * 
+	 *
 	 * @param topic
-	 *        the topic
+	 * 		the topic
 	 * @param instructionDate
-	 *        the instruction date
+	 * 		the instruction date
 	 */
 	public Instruction(String topic, Instant instructionDate) {
 		super();
@@ -77,14 +79,15 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param other
-	 *        the instance to copy
+	 * 		the instance to copy
 	 * @since 1.2
 	 */
 	public Instruction(Instruction other) {
 		this(other.getTopic(), other.getInstructionDate());
 		setId(other.getId());
+		setStatusDate(other.getStatusDate());
 		setParameters(other.getParameters());
 		setResultParameters(other.getResultParameters());
 		setState(other.getState());
@@ -104,31 +107,31 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Add a parameter value.
-	 * 
+	 *
 	 * @param key
-	 *        the key
+	 * 		the key
 	 * @param value
-	 *        the value
+	 * 		the value
 	 */
 	public void addParameter(String key, String value) {
 		if ( parameters == null ) {
-			parameters = new ArrayList<InstructionParameter>(5);
+			parameters = new ArrayList<>(5);
 		}
 		parameters.add(new InstructionParameter(key, value));
 	}
 
 	/**
 	 * Set a result parameter value.
-	 * 
+	 *
 	 * @param key
-	 *        the key
+	 * 		the key
 	 * @param value
-	 *        the value
+	 * 		the value
 	 */
 	public void putResultParameter(String key, Object value) {
 		Map<String, Object> map = resultParameters;
 		if ( map == null ) {
-			map = new LinkedHashMap<String, Object>();
+			map = new LinkedHashMap<>();
 			resultParameters = map;
 		}
 		map.put(key, value);
@@ -136,7 +139,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the topic.
-	 * 
+	 *
 	 * @return the topic
 	 */
 	public final String getTopic() {
@@ -145,9 +148,9 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the topic.
-	 * 
+	 *
 	 * @param topic
-	 *        the topic to set
+	 * 		the topic to set
 	 */
 	public final void setTopic(String topic) {
 		this.topic = topic;
@@ -155,7 +158,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the instruction date.
-	 * 
+	 *
 	 * @return the date
 	 */
 	public final Instant getInstructionDate() {
@@ -164,9 +167,9 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the instruction date.
-	 * 
+	 *
 	 * @param instructionDate
-	 *        the date to set
+	 * 		the date to set
 	 */
 	public final void setInstructionDate(Instant instructionDate) {
 		this.instructionDate = instructionDate;
@@ -174,7 +177,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the status date.
-	 * 
+	 *
 	 * @return the status date
 	 */
 	public final Instant getStatusDate() {
@@ -183,9 +186,9 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the status date.
-	 * 
+	 *
 	 * @param statusDate
-	 *        the date to set
+	 * 		the date to set
 	 */
 	public final void setStatusDate(Instant statusDate) {
 		this.statusDate = statusDate;
@@ -193,7 +196,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the state.
-	 * 
+	 *
 	 * @return the state
 	 */
 	public final InstructionState getState() {
@@ -202,9 +205,9 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the state.
-	 * 
+	 *
 	 * @param state
-	 *        the state to set
+	 * 		the state to set
 	 */
 	public final void setState(InstructionState state) {
 		this.state = state;
@@ -212,7 +215,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the parameters.
-	 * 
+	 *
 	 * @return the parameters
 	 */
 	public final List<InstructionParameter> getParameters() {
@@ -221,9 +224,9 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the parameters.
-	 * 
+	 *
 	 * @param parameters
-	 *        the parameters to set
+	 * 		the parameters to set
 	 */
 	public final void setParameters(List<InstructionParameter> parameters) {
 		this.parameters = parameters;
@@ -231,9 +234,8 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the instruction parameters as a single-valued map.
-	 * 
-	 * @return the parameters as a map, or {@literal null} if
-	 *         {@link #getParameters()} is {@literal null}
+	 *
+	 * @return the parameters as a map, or {@literal null} if {@link #getParameters()} is {@literal null}
 	 * @since 1.3
 	 */
 	@JsonIgnore
@@ -253,14 +255,13 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the instruction parameters as a single-valued map.
-	 * 
+	 *
 	 * <p>
-	 * This completely replaces any existing parameters set via
-	 * {@link #setParameters(List)}.
+	 * This completely replaces any existing parameters set via {@link #setParameters(List)}.
 	 * </p>
-	 * 
+	 *
 	 * @param params
-	 *        the parameters to set
+	 * 		the parameters to set
 	 * @since 1.3
 	 */
 	@JsonSetter("params")
@@ -279,7 +280,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the result parameters.
-	 * 
+	 *
 	 * @return the result parameters
 	 */
 	@JsonIgnore
@@ -299,9 +300,9 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the result parameters.
-	 * 
+	 *
 	 * @param resultParameters
-	 *        the parameters to set
+	 * 		the parameters to set
 	 */
 	@JsonIgnore
 	public void setResultParameters(Map<String, Object> resultParameters) {
@@ -311,7 +312,7 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Get the result parameters object as a JSON string.
-	 * 
+	 *
 	 * @return a JSON encoded string, never <em>null</em>
 	 */
 	@JsonGetter("resultParameters")
@@ -331,14 +332,14 @@ public class Instruction extends BaseEntity {
 
 	/**
 	 * Set the result parameters object via a JSON string.
-	 * 
+	 *
 	 * <p>
-	 * This method will remove any previously created result parameters and
-	 * replace it with the values parsed from the JSON.
+	 * This method will remove any previously created result parameters and replace it with the values
+	 * parsed from the JSON.
 	 * </p>
-	 * 
+	 *
 	 * @param json
-	 *        the JSON to set
+	 * 		the JSON to set
 	 */
 	@JsonSetter("resultParameters")
 	@JsonRawValue

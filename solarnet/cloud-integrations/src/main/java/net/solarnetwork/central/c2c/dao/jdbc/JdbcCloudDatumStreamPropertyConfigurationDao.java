@@ -151,7 +151,7 @@ public class JdbcCloudDatumStreamPropertyConfigurationDao
 				? new UserLongIntegerCompositePK(userId, filter.getDatumStreamMappingId(),
 						filter.getIndex())
 				: UserLongIntegerCompositePK.unassignedEntityIdKey(userId,
-						filter.getDatumStreamMappingId());
+						filter != null ? filter.getDatumStreamMappingId() : null);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);
 	}

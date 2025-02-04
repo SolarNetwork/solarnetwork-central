@@ -113,7 +113,7 @@ public class AuditingQueryBiz extends DelegatingQueryBiz {
 			StreamDatumFilteredResultsProcessor processor, List<SortDescriptor> sortDescriptors,
 			Long offset, Integer max) throws IOException {
 		auditor.resetCurrentAuditResults();
-		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilterdResultsProcessor(
+		StreamDatumFilteredResultsProcessor proxy = new AuditingStreamDatumFilteredResultsProcessor(
 				processor, auditor);
 		super.findFilteredStreamDatum(filter, proxy, sortDescriptors, offset, max);
 	}

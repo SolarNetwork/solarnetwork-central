@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumCsvUtils.java - 18/05/2021 3:12:40 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,7 +57,7 @@ import net.solarnetwork.util.DateUtils;
 
 /**
  * Utilities for Datum CSV processing.
- * 
+ *
  * @author matt
  * @version 2.2
  * @since 2.9
@@ -73,6 +73,7 @@ public final class DatumCsvUtils {
 	 * using an hour-only offset pattern.
 	 */
 	public static final DateTimeFormatter ISO_DATE_OPT_TIME_ALT_HOUR_OFFSET;
+
 	static {
 		// @formatter:off
 		ISO_DATE_OPT_TIME_ALT_HOUR_OFFSET = new DateTimeFormatterBuilder()
@@ -88,7 +89,7 @@ public final class DatumCsvUtils {
 
 	/**
 	 * Parse CSV formatted stream metadata.
-	 * 
+	 *
 	 * @param in
 	 *        the input to parse as CSV
 	 * @param kind
@@ -104,7 +105,7 @@ public final class DatumCsvUtils {
 		List<ObjectDatumStreamMetadata> result = new ArrayList<>();
 		try (ICsvListReader r = new CsvListReader(in, CsvPreference.STANDARD_PREFERENCE)) {
 			r.getHeader(true);
-			List<String> row = null;
+			List<String> row;
 			while ( (row = r.read()) != null ) {
 				if ( row.size() < 8 ) {
 					continue;
@@ -165,7 +166,7 @@ public final class DatumCsvUtils {
 		if ( value.endsWith("}") ) {
 			value = value.substring(0, value.length() - 1);
 		}
-		String[] components = value.split("\\}\\s*,\\s*\\{");
+		String[] components = value.split("}\\s*,\\s*\\{");
 		String[][] result = new String[components.length][];
 		for ( int i = 0; i < components.length; i++ ) {
 			result[i] = parseArrayValue(components[i]);
@@ -201,7 +202,7 @@ public final class DatumCsvUtils {
 
 	/**
 	 * Parse CSV formatted aggregate datum.
-	 * 
+	 *
 	 * @param in
 	 *        the input to parse as CSV
 	 * @param aggregation
@@ -215,7 +216,7 @@ public final class DatumCsvUtils {
 		List<AggregateDatum> result = new ArrayList<>();
 		try (ICsvListReader r = new CsvListReader(in, CsvPreference.STANDARD_PREFERENCE)) {
 			r.getHeader(true);
-			List<String> row = null;
+			List<String> row;
 			while ( (row = r.read()) != null ) {
 				if ( row.size() < 8 ) {
 					continue;
@@ -247,7 +248,7 @@ public final class DatumCsvUtils {
 
 	/**
 	 * Get an iterator for Datum parsed from a classpath UTF-8 CSV file.
-	 * 
+	 *
 	 * @param clazz
 	 *        the class to load the UTF-8 encoded CSV resource from
 	 * @param resource
@@ -260,14 +261,13 @@ public final class DatumCsvUtils {
 	 *        timestamp will be assumed
 	 * @return the iterator, never {@literal null}
 	 * @since 2.0
-	 * 
 	 */
 	public static CloseableIterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
 			ObjectDatumStreamMetadataProvider metaProvider, DateTimeFormatter formatter) {
 		try {
 			InputStream is = clazz.getResourceAsStream(resource);
 			if ( is == null ) {
-				return new CloseableIterator<Datum>() {
+				return new CloseableIterator<>() {
 
 					@Override
 					public void close() throws IOException {
@@ -296,7 +296,7 @@ public final class DatumCsvUtils {
 
 	/**
 	 * Get a list of Datum parsed from a classpath CSV file.
-	 * 
+	 *
 	 * @param clazz
 	 *        the class to load the CSV resource from
 	 * @param resource

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
 import java.util.List;
+import java.util.Objects;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
@@ -76,12 +77,8 @@ public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, Use
 			filter = filter.clone();
 			filter.setSorts(sorts);
 			filter.setMax(max);
-			if ( offset == null ) {
-				// force offset to 0 if implied
-				filter.setOffset(0L);
-			} else {
-				filter.setOffset(offset);
-			}
+			// force offset to 0 if implied
+			filter.setOffset(Objects.requireNonNullElse(offset, 0L));
 		}
 		List<Payment> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null, null);
 		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,

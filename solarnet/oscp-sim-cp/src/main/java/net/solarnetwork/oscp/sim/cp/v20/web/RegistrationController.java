@@ -1,21 +1,21 @@
 /* ==================================================================
  * RegistrationController.java - 23/08/2022 10:21:49 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,7 +23,6 @@
 package net.solarnetwork.oscp.sim.cp.v20.web;
 
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.authorizationTokenFromRequest;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.newResponseSentCondition;
@@ -34,6 +33,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromController;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ import oscp.v20.VersionUrl;
 
 /**
  * Registration web API.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -114,7 +114,7 @@ public class RegistrationController {
 			// build a URL to ourselves to give to the system
 			URI loc = fromController(getClass()).path(CAPACITY_PROVIDER_V20_URL_PATH).build().toUri();
 
-			Register req = new Register(newInToken, asList(new VersionUrl(V20, loc.toString())));
+			Register req = new Register(newInToken, List.of(new VersionUrl(V20, loc.toString())));
 			executor.execute(new SystemHttpTask<>("Register", restOps, newResponseSentCondition(),
 					HttpMethod.POST, uri, req, tokenAuthorizer(input.getOutToken())));
 		}

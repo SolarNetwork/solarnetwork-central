@@ -1,21 +1,21 @@
 /* ==================================================================
  * AuthenticationUserEventPublisher.java - 5/08/2022 2:57:55 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,6 +31,7 @@ import org.springframework.security.authentication.event.AbstractAuthenticationF
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.authentication.event.LogoutSuccessEvent;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -44,7 +45,7 @@ import net.solarnetwork.codec.JsonUtils;
 
 /**
  * Service for publishing user events from authentication events.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -63,7 +64,7 @@ public class AuthenticationUserEventPublisher {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param context
 	 *        the top-level event context, such as the application name, to use
 	 *        in the generated event tags
@@ -82,7 +83,7 @@ public class AuthenticationUserEventPublisher {
 		this.authFailureTags = setupTags(context, AUTH_FAILURE_TAGS);
 	}
 
-	private static final String[] setupTags(String context, String[] src) {
+	private static String[] setupTags(String context, String[] src) {
 		String[] dest = new String[src.length + 1];
 		dest[0] = context;
 		System.arraycopy(src, 0, dest, 1, src.length);
@@ -91,7 +92,7 @@ public class AuthenticationUserEventPublisher {
 
 	/**
 	 * Process authentication events.
-	 * 
+	 *
 	 * @param event
 	 *        the event to process
 	 */
@@ -110,8 +111,7 @@ public class AuthenticationUserEventPublisher {
 				return;
 			}
 			tags = authLogoutTags;
-		} else if ( event instanceof AbstractAuthenticationFailureEvent ) {
-			AbstractAuthenticationFailureEvent fe = (AbstractAuthenticationFailureEvent) event;
+		} else if ( event instanceof AbstractAuthenticationFailureEvent fe ) {
 			tags = authFailureTags;
 			message = fe.getException().getClass().getSimpleName();
 			data = new HashMap<>(2);
@@ -120,7 +120,7 @@ public class AuthenticationUserEventPublisher {
 			return;
 		}
 
-		Long userId = null;
+		Long userId;
 		Authentication auth = event.getAuthentication();
 		try {
 			userId = SecurityUtils.getActorUserId(auth);
@@ -146,11 +146,9 @@ public class AuthenticationUserEventPublisher {
 
 		try {
 			SecurityActor actor = SecurityUtils.getActor(auth);
-			if ( actor instanceof SecurityUser ) {
-				SecurityUser user = (SecurityUser) actor;
+			if ( actor instanceof SecurityUser user ) {
 				data.put("email", user.getEmail());
-			} else if ( actor instanceof SecurityToken ) {
-				SecurityToken tok = (SecurityToken) actor;
+			} else if ( actor instanceof SecurityToken tok ) {
 				data.put("token", tok.getToken());
 			}
 		} catch ( SecurityException e ) {
@@ -158,8 +156,8 @@ public class AuthenticationUserEventPublisher {
 		}
 
 		if ( auth.getAuthorities() != null && !auth.getAuthorities().isEmpty() ) {
-			data.put("roles",
-					auth.getAuthorities().stream().map(e -> e.getAuthority()).toArray(String[]::new));
+			data.put("roles", auth.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+					.toArray(String[]::new));
 		}
 
 		LogEventInfo info = new LogEventInfo(tags, message, JsonUtils.getJSONString(data, null));
@@ -168,7 +166,7 @@ public class AuthenticationUserEventPublisher {
 
 	/**
 	 * Get the publish failure events only setting.
-	 * 
+	 *
 	 * @return {@literal true} to publish failure events only
 	 */
 	public boolean isFailureOnly() {
@@ -177,7 +175,7 @@ public class AuthenticationUserEventPublisher {
 
 	/**
 	 * Set the publish failure events only setting
-	 * 
+	 *
 	 * @param failureOnly
 	 *        {@literal true} to publish failure events only
 	 */

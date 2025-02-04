@@ -1,27 +1,28 @@
 /* ==================================================================
  * DatumPK.java - 22/10/2020 8:55:47 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -30,13 +31,14 @@ import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Primary key for a time-based stream.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.8
  */
 public class StreamPK extends BasePK implements Serializable, Cloneable {
 
+	@Serial
 	private static final long serialVersionUID = -8674108064779256512L;
 
 	private final UUID streamId;
@@ -44,7 +46,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param timestamp
@@ -57,23 +59,23 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	}
 
 	@Override
-	protected StreamPK clone() {
+	public StreamPK clone() {
 		return (StreamPK) super.clone();
 	}
 
 	/**
 	 * Compare two key objects.
-	 * 
+	 *
 	 * <p>
 	 * This compares stream ID values followed by timestamp values. Both are
 	 * ordered in ascending order with {@literal null} values ordered last.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method can be used to implement {@link java.lang.Comparable} in
 	 * subclasses.
 	 * </p>
-	 * 
+	 *
 	 * @param o
 	 *        the other key to compare to
 	 * @return {@literal -1}, {@literal 0}, {@literal 1} if {@code o} is less
@@ -86,7 +88,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 		if ( o == null ) {
 			return -1;
 		}
-		int result = 0;
+		int result;
 		if ( streamId != o.streamId ) {
 			if ( streamId == null ) {
 				return 1;
@@ -123,14 +125,14 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		if ( streamId != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("streamId=");
 			buf.append(streamId);
 		}
 		if ( timestamp != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("timestamp=");
@@ -148,16 +150,15 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof StreamPK) ) {
+		if ( !(obj instanceof StreamPK other) ) {
 			return false;
 		}
-		StreamPK other = (StreamPK) obj;
 		return Objects.equals(streamId, other.streamId) && Objects.equals(timestamp, other.timestamp);
 	}
 
 	/**
 	 * Get the stream ID.
-	 * 
+	 *
 	 * @return the stream ID
 	 */
 	public UUID getStreamId() {
@@ -166,7 +167,7 @@ public class StreamPK extends BasePK implements Serializable, Cloneable {
 
 	/**
 	 * Get the timestamp.
-	 * 
+	 *
 	 * @return the timestamp
 	 */
 	public Instant getTimestamp() {

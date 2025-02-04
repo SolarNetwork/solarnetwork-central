@@ -68,12 +68,10 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 	 *        the MQTT retained flag to use
 	 * @param publishQos
 	 *        the MQTT QoS level to use
-	 * @param
 	 */
 	public OscpActionDatumPublisher(ObjectMapper objectMapper, boolean retained, MqttQos publishQos) {
-		super("OSCP Action Datum Publisher", objectMapper, (d) -> {
-			return topicForDatum(d);
-		}, retained, publishQos);
+		super("OSCP Action Datum Publisher", objectMapper, OscpActionDatumPublisher::topicForDatum,
+				retained, publishQos);
 		this.consumer = new EventConsumer(this);
 	}
 
@@ -117,15 +115,13 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 			}
 			Long nodeId = event.nodeId();
 			Long userId = event.userId();
-			if ( datum != null ) {
-				for ( OwnedGeneralNodeDatum d : datum ) {
-					if ( (d.getNodeId() != null && !nodeId.equals(d.getNodeId()))
-							|| !userId.equals(d.getUserId()) ) {
-						// not allowed
-						continue;
-					}
-					delegate.apply(d);
+			for ( OwnedGeneralNodeDatum d : datum ) {
+				if ( (d.getNodeId() != null && !nodeId.equals(d.getNodeId()))
+						|| !userId.equals(d.getUserId()) ) {
+					// not allowed
+					continue;
 				}
+				delegate.apply(d);
 			}
 		}
 	}

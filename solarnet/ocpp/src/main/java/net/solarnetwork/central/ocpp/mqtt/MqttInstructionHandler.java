@@ -1,21 +1,21 @@
 /* ==================================================================
  * MqttInstructionHandler.java - 2/04/2020 4:30:39 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -62,7 +62,7 @@ import net.solarnetwork.service.Identifiable;
 
 /**
  * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
- * 
+ *
  * @author matt
  * @version 2.4
  */
@@ -93,7 +93,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param actionClass
 	 *        the action class
 	 * @param instructionDao
@@ -211,8 +211,8 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 								null) ) {
 							return;
 						}
-						BasicActionMessage<Object> actionMessage = new BasicActionMessage<Object>(
-								identity, action, payload);
+						BasicActionMessage<Object> actionMessage = new BasicActionMessage<>(identity,
+								action, payload);
 						log.info("Sending instruction {} action {} to charge point {}", instructionId,
 								action, identity);
 						boolean sent = broker.sendMessageToChargePoint(actionMessage,
@@ -311,7 +311,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Get the MQTT topic to subscribe to.
-	 * 
+	 *
 	 * @return the topic
 	 */
 	public String getMqttTopic() {
@@ -320,7 +320,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Set the MQTT topic to subscribe to.
-	 * 
+	 *
 	 * @param mqttTopic
 	 *        the topic
 	 * @throws IllegalArgumentException
@@ -335,7 +335,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Get the "publish only" setting.
-	 * 
+	 *
 	 * @return {@literal true} to not subscribe to the MQTT topic; defaults to
 	 *         {@link #DEFAULT_PUBLISH_ONLY}
 	 */
@@ -345,7 +345,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Set the "publish only" setting.
-	 * 
+	 *
 	 * @param publishOnly
 	 *        {@literal true} to not subscribe to the MQTT topic
 	 */
@@ -355,7 +355,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Get the user event appender service.
-	 * 
+	 *
 	 * @return the service
 	 * @since 2.1
 	 */
@@ -365,7 +365,7 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 
 	/**
 	 * Set the user event appender service.
-	 * 
+	 *
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 * @since 2.1

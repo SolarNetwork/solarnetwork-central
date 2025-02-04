@@ -1,34 +1,35 @@
 /* ==================================================================
  * UserLongPK.java - 3/06/2020 3:58:50 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.Serial;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
  * Primary key based on a user ID and another {@code Long} ID.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.2
@@ -47,6 +48,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	 */
 	public static final Long UNASSIGNED_ENTITY_ID = Long.MIN_VALUE;
 
+	@Serial
 	private static final long serialVersionUID = -4475927214213411061L;
 
 	private Long id;
@@ -61,7 +63,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	/**
 	 * Construct with values.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param id
@@ -75,12 +77,12 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	/**
 	 * Compare two {@code UserLongPK} objects. Keys are ordered based on:
-	 * 
+	 *
 	 * <ol>
 	 * <li>userId</li>
 	 * <li>id</li>
 	 * </ol>
-	 * 
+	 *
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
@@ -136,10 +138,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		UserLongPK other = (UserLongPK) obj;
@@ -151,17 +150,13 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 			return false;
 		}
 		if ( userId == null ) {
-			if ( other.userId != null ) {
-				return false;
-			}
-		} else if ( !userId.equals(other.userId) ) {
-			return false;
+			return other.userId == null;
 		}
-		return true;
+		return userId.equals(other.userId);
 	}
 
 	@Override
-	protected UserLongPK clone() {
+	public UserLongPK clone() {
 		try {
 			return (UserLongPK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
@@ -175,15 +170,12 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
 			if ( index == 0 || index == 1 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_ENTITY_ID;
-				} else if ( val instanceof Long n ) {
-					return (T) n;
-				} else if ( val instanceof Number n ) {
-					return (T) Long.valueOf(n.longValue());
-				} else {
-					return (T) Long.valueOf(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_ENTITY_ID;
+					case Long n -> (T) n;
+					case Number n -> (T) Long.valueOf(n.longValue());
+					default -> (T) Long.valueOf(val.toString());
+				};
 			}
 		} catch ( NumberFormatException e ) {
 			throw new IllegalArgumentException(
@@ -215,17 +207,16 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 0 ) {
-			return userId != null && userId != UNASSIGNED_USER_ID;
-		} else if ( index == 1 ) {
-			return id != null && id != UNASSIGNED_ENTITY_ID;
-		}
-		return CompositeKey2.super.keyComponentIsAssigned(index);
+		return switch (index) {
+			case 0 -> userId != null && userId != UNASSIGNED_USER_ID;
+			case 1 -> id != null && id != UNASSIGNED_ENTITY_ID;
+			default -> CompositeKey2.super.keyComponentIsAssigned(index);
+		};
 	}
 
 	/**
 	 * Get the ID.
-	 * 
+	 *
 	 * @return the ID
 	 */
 	public Long getId() {
@@ -234,7 +225,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 
 	/**
 	 * Set the ID.
-	 * 
+	 *
 	 * @param id
 	 *        the ID to set
 	 */
@@ -243,8 +234,8 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 	}
 
 	/**
-	 * Set the uesr ID.
-	 * 
+	 * Set the user ID.
+	 *
 	 * @param userId
 	 *        the user ID to set
 	 */

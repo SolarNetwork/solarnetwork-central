@@ -1,21 +1,21 @@
 /* ==================================================================
  * CacheSettings.java - 9/10/2021 2:28:43 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,7 +34,7 @@ import org.ehcache.jsr107.Eh107Configuration;
 
 /**
  * A standardized cache settings bean.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -63,7 +63,7 @@ public class CacheSettings {
 
 	/**
 	 * Create a cache.
-	 * 
+	 *
 	 * @param <K>
 	 *        the key type
 	 * @param <V>
@@ -105,7 +105,7 @@ public class CacheSettings {
 
 	/**
 	 * Get the time to idle, in seconds.
-	 * 
+	 *
 	 * @return the time to idle, or {@literal 0} for no idle timeout; defaults
 	 *         to {@link #DEFAULT_TIME_TO_IDLE}
 	 */
@@ -115,7 +115,7 @@ public class CacheSettings {
 
 	/**
 	 * Set the time to idle, in seconds.
-	 * 
+	 *
 	 * @param tti
 	 *        the time to idle, or {@literal 0} for no idle timeout
 	 */
@@ -125,7 +125,7 @@ public class CacheSettings {
 
 	/**
 	 * Get the time to live, in seconds.
-	 * 
+	 *
 	 * @return the time to live seconds, or {@literal 0} for no life timeout;
 	 *         defaults to {@link #DEFAULT_TIME_TO_LIVE}
 	 */
@@ -135,7 +135,7 @@ public class CacheSettings {
 
 	/**
 	 * Set the time to live, in seconds.
-	 * 
+	 *
 	 * @param ttl
 	 *        the time to live, or {@literal 0} for no life timeout
 	 */
@@ -144,8 +144,8 @@ public class CacheSettings {
 	}
 
 	/**
-	 * Get a on-heap (memory) max number of cached elements.
-	 * 
+	 * Get an on-heap (memory) max number of cached elements.
+	 *
 	 * @return the max heap element count, {@literal 0} for no limit; defaults
 	 *         to {@link #DEFAULT_HEAP_MAX_ENTRIES}
 	 */
@@ -155,7 +155,7 @@ public class CacheSettings {
 
 	/**
 	 * Set the on-heap (memory) max number of cached elements.
-	 * 
+	 *
 	 * @param heapMaxEntries
 	 *        the max heap element count
 	 */
@@ -165,7 +165,7 @@ public class CacheSettings {
 
 	/**
 	 * Get the on-disk maximum size, in MB.
-	 * 
+	 *
 	 * @return the on-disk maximum size; defaults to
 	 *         {@link #DEFAULT_DISK_MAX_SIZE_MB}
 	 */
@@ -175,7 +175,7 @@ public class CacheSettings {
 
 	/**
 	 * Get the on-disk maximum size, in MB.
-	 * 
+	 *
 	 * @param diskMaxSizeMb
 	 *        the on-disk maximum size, in MB
 	 */
@@ -185,7 +185,7 @@ public class CacheSettings {
 
 	/**
 	 * Get the disk persistent setting.
-	 * 
+	 *
 	 * @return {@literal true} to persist the cache between reboots; defaults to
 	 *         {@link #DEFAULT_DISK_PERSISTENT}
 	 */
@@ -195,7 +195,7 @@ public class CacheSettings {
 
 	/**
 	 * Set the disk persistent setting.
-	 * 
+	 *
 	 * @param diskPersistent
 	 *        {@literal true} to persist the cache between reboots
 	 */

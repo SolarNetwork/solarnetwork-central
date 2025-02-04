@@ -67,14 +67,13 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 
 	@Override
 	public String save(final UserAuthToken datum) {
-		final String pk = handleAssignedPrimaryKeyStore(datum);
-		return pk;
+		return handleAssignedPrimaryKeyStore(datum);
 	}
 
 	@Override
 	public Snws2AuthorizationBuilder createSnws2AuthorizationBuilder(String tokenId,
 			Instant signingDate) {
-		Map<String, Object> params = new HashMap<String, Object>(2);
+		Map<String, Object> params = new HashMap<>(2);
 		params.put("id", tokenId);
 		LocalDate date = signingDate.atZone(ZoneOffset.UTC).toLocalDate();
 		java.sql.Date sqlDate = java.sql.Date.valueOf(date);
@@ -86,11 +85,9 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 		}
 		byte[] key = new byte[data.length];
 		for ( int i = 0, len = data.length; i < len; i++ ) {
-			key[i] = data[i].byteValue();
+			key[i] = data[i];
 		}
-		Snws2AuthorizationBuilder builder = new Snws2AuthorizationBuilder(tokenId).date(signingDate)
-				.signingKey(key);
-		return builder;
+		return new Snws2AuthorizationBuilder(tokenId).date(signingDate).signingKey(key);
 	}
 
 	@Override

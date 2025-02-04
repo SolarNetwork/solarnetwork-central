@@ -277,11 +277,10 @@ public class SnfBillingSystem implements BillingSystem {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
 
-		LocalDate start;
-		LocalDate end;
+		final LocalDate start;
+		final LocalDate end;
 		if ( options != null && options.getMonth() != null ) {
 			start = options.getMonth().atDay(1);
-			end = start.plusMonths(1);
 		} else {
 			// find current month in account's time zone
 			ZoneId zone = account.getTimeZone();
@@ -289,16 +288,15 @@ public class SnfBillingSystem implements BillingSystem {
 				zone = ZoneId.systemDefault();
 			}
 			start = LocalDate.now(zone).withDayOfMonth(1);
-			end = start.plusMonths(1);
 		}
+		end = start.plusMonths(1);
 
 		log.debug("Generating preview invoice for account {} (user {}) month {}", account.getId(),
 				account.getUserId(), start);
 
 		SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
-				options != null ? options.isUseAccountCredit() : false);
-		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, start, end, opts);
-		return invoice;
+				options != null && options.isUseAccountCredit());
+		return invoicingSystem.generateInvoice(userId, start, end, opts);
 	}
 
 }

@@ -1,21 +1,21 @@
 /* ==================================================================
  * HeartbeatController.java - 24/08/2022 10:00:07 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,7 +40,7 @@ import oscp.v20.Heartbeat;
 
 /**
  * Heartbeat web API.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -50,7 +50,7 @@ public class HeartbeatController {
 	/** The URL path for 2.0 Heartbeat. */
 	public static final String HB_20_URL_PATH = CAPACITY_PROVIDER_V20_URL_PATH + HEARTBEAT_URL_PATH;
 
-	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
+	private static final Logger log = LoggerFactory.getLogger(HeartbeatController.class);
 
 	private final CapacityProviderDao capacityProviderDao;
 

@@ -104,9 +104,7 @@ public class NodeEventController {
 		if ( eventHookBiz != null ) {
 			configs = maskConfigurations(
 					eventHookBiz.configurationsForUser(userId, UserNodeEventHookConfiguration.class),
-					serviceSettings, (Void) -> {
-						return eventHookBiz.availableNodeEventHookServices();
-					});
+					serviceSettings, (Void) -> eventHookBiz.availableNodeEventHookServices());
 		}
 		return success(configs);
 	}
@@ -123,9 +121,8 @@ public class NodeEventController {
 			if ( id != null ) {
 				config = eventHookBiz.configurationForUser(id.keyComponent1(),
 						UserNodeEventHookConfiguration.class, id.keyComponent2());
-				return success(maskConfiguration(config, serviceSettings, (Void) -> {
-					return eventHookBiz.availableNodeEventHookServices();
-				}));
+				return success(maskConfiguration(config, serviceSettings,
+						(Void) -> eventHookBiz.availableNodeEventHookServices()));
 			}
 		}
 		return error();
@@ -140,9 +137,8 @@ public class NodeEventController {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = eventHookBiz.configurationForUser(userId, UserNodeEventHookConfiguration.class, id);
 			if ( result != null ) {
-				result = maskConfiguration(result, serviceSettings, (Void) -> {
-					return eventHookBiz.availableNodeEventHookServices();
-				});
+				result = maskConfiguration(result, serviceSettings,
+						(Void) -> eventHookBiz.availableNodeEventHookServices());
 			}
 		}
 		return success(result);

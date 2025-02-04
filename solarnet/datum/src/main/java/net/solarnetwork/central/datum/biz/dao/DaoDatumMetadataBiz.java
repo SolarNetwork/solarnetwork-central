@@ -138,9 +138,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 		final GeneralDatumMetadata existingMeta = extractGeneralDatumMetadata(metas);
 		GeneralDatumMetadata newMeta = meta;
-		if ( existingMeta == null ) {
-			newMeta = meta;
-		} else if ( existingMeta != null && !existingMeta.equals(meta) ) {
+		if ( existingMeta != null && !existingMeta.equals(meta) ) {
 			newMeta = new GeneralDatumMetadata(existingMeta);
 			newMeta.merge(meta, true);
 		}
@@ -246,9 +244,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		return StreamSupport.stream(metas.spliterator(), false).filter(m -> {
 			Map<String, Object> map = JsonUtils.getStringMap(m.getMetaJson());
 			return (map != null && MapPathMatcher.matches(map, filter));
-		}).map(m -> {
-			return factory.apply(m.getObjectId(), m.getSourceId());
-		}).collect(Collectors.toCollection(LinkedHashSet::new));
+		}).map(m -> factory.apply(m.getObjectId(), m.getSourceId()))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -315,7 +312,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		if ( results.isEmpty() ) {
 			throw new EmptyResultDataAccessException(1);
 		}
-		return results.get(0);
+		return results.getFirst();
 	}
 
 	private LocationRequestInfo normalizedInfo(LocationRequestInfo info) {

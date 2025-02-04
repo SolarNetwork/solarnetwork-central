@@ -189,9 +189,7 @@ public class DatumExpireController {
 			Set<DatumDeleteJobState> stateFilter = null;
 			if ( states != null && states.length > 0 ) {
 				stateFilter = new HashSet<>(states.length);
-				for ( DatumDeleteJobState state : states ) {
-					stateFilter.add(state);
-				}
+				Collections.addAll(stateFilter, states);
 				stateFilter = EnumSet.copyOf(stateFilter);
 			}
 			Long userId = SecurityUtils.getCurrentActorUserId();

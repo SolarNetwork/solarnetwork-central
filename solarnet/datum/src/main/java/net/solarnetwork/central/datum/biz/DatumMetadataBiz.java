@@ -165,9 +165,11 @@ public interface DatumMetadataBiz {
 	/**
 	 * Find available datum source IDs that match a datum metadata filter.
 	 *
+	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
 	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * </p>
 	 *
 	 * @param nodeIds
 	 *        the node IDs to search for
@@ -182,9 +184,11 @@ public interface DatumMetadataBiz {
 	/**
 	 * Find available location source IDs that match a location metadata filter.
 	 *
+	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
 	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * </p>
 	 *
 	 * @param locationIds
 	 *        the node IDs to search for

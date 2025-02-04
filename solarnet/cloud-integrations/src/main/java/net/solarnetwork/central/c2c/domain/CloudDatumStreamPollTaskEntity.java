@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -45,9 +46,10 @@ import net.solarnetwork.codec.JsonUtils;
 @JsonIgnoreProperties({ "id", "enabled" })
 @JsonPropertyOrder({ "userId", "datumStreamId", "state", "executeAt", "startAt", "message",
 		"serviceProperties" })
-public class CloudDatumStreamPollTaskEntity
+public final class CloudDatumStreamPollTaskEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamPollTaskEntity, UserLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = -8913216603960129724L;
 
 	/** The job state. */
@@ -174,7 +176,7 @@ public class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the state
 	 */
-	public final BasicClaimableJobState getState() {
+	public BasicClaimableJobState getState() {
 		return state;
 	}
 
@@ -184,7 +186,7 @@ public class CloudDatumStreamPollTaskEntity
 	 * @param state
 	 *        the state to set
 	 */
-	public final void setState(BasicClaimableJobState state) {
+	public void setState(BasicClaimableJobState state) {
 		this.state = state;
 	}
 
@@ -193,7 +195,7 @@ public class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the date
 	 */
-	public final Instant getStartAt() {
+	public Instant getStartAt() {
 		return startAt;
 	}
 
@@ -203,7 +205,7 @@ public class CloudDatumStreamPollTaskEntity
 	 * @param startAt
 	 *        the date to set
 	 */
-	public final void setStartAt(Instant startAt) {
+	public void setStartAt(Instant startAt) {
 		this.startAt = startAt;
 	}
 
@@ -212,7 +214,7 @@ public class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the date
 	 */
-	public final Instant getExecuteAt() {
+	public Instant getExecuteAt() {
 		return executeAt;
 	}
 
@@ -222,7 +224,7 @@ public class CloudDatumStreamPollTaskEntity
 	 * @param executeAt
 	 *        the date to set
 	 */
-	public final void setExecuteAt(Instant executeAt) {
+	public void setExecuteAt(Instant executeAt) {
 		this.executeAt = executeAt;
 	}
 
@@ -231,7 +233,7 @@ public class CloudDatumStreamPollTaskEntity
 	 *
 	 * @return the message
 	 */
-	public final String getMessage() {
+	public String getMessage() {
 		return message;
 	}
 
@@ -241,7 +243,7 @@ public class CloudDatumStreamPollTaskEntity
 	 * @param message
 	 *        the message to set
 	 */
-	public final void setMessage(String message) {
+	public void setMessage(String message) {
 		this.message = message;
 	}
 

@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisGenericDaoSupport.java - 24/02/2020 5:39:15 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * Base implementation of {@link GenericDao} using MyBatis via
  * {@link SqlSessionDaoSupport}.
- * 
+ *
  * @author matt
  * @version 1.4
  * @since 2.1
@@ -82,7 +82,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param objectType
 	 *        the entity type
 	 * @param keyType
@@ -111,7 +111,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the main domain object type.
-	 * 
+	 *
 	 * @return the object type, never {@literal null}
 	 */
 	@Override
@@ -121,7 +121,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the primary key type.
-	 * 
+	 *
 	 * @return the key type, never {@literal null}
 	 */
 	public Class<? extends K> getKeyType() {
@@ -136,7 +136,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 	@Override
 	public Collection<T> getAll(List<SortDescriptor> sorts) {
 		List<T> results;
-		if ( sorts != null && sorts.size() > 0 ) {
+		if ( sorts != null && !sorts.isEmpty() ) {
 			results = getSqlSession().selectList(this.queryForAll,
 					singletonMap(SORT_DESCRIPTORS_PROPERTY, sorts));
 		} else {
@@ -159,12 +159,12 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Save an entity that uses an assigned primary key.
-	 * 
+	 *
 	 * <p>
 	 * This method is called by {@code #save(Entity)} when
 	 * {@link #isAssignedPrimaryKeys()} returns {@literal true}.
 	 * </p>
-	 * 
+	 *
 	 * @param entity
 	 *        the entity to save
 	 * @return the primary key
@@ -181,7 +181,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the last updated count, supporting batch operations.
-	 * 
+	 *
 	 * @param count
 	 *        the last returned count from calling {@code SqlSession#update()}
 	 * @return the count, extracted from batch updates if necessary
@@ -207,11 +207,11 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Delete an entity based on its primary key.
-	 * 
+	 *
 	 * <p>
 	 * This method is called from {@link #delete(Entity)}.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the primary key of the entity to delete
 	 * @return the number of deleted rows
@@ -231,14 +231,14 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Process a new unsaved entity for persisting.
-	 * 
+	 *
 	 * <p>
 	 * This implementation will set the value of a writable {@code created} bean
 	 * property of the datum instance to the current time if
 	 * {@link T#getCreated()} is null. Extending classes may want to extend or
 	 * modify this behavior.
 	 * </p>
-	 * 
+	 *
 	 * @param entity
 	 *        the entity to be persisted
 	 */
@@ -253,13 +253,13 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Process the update of a persisted entity.
-	 * 
+	 *
 	 * <p>
 	 * This implementation merely calls
 	 * {@link SqlSession#update(String, Object)} using the {@link #getUpdate()}
 	 * SqlMap.
 	 * </p>
-	 * 
+	 *
 	 * @param entity
 	 *        the datum to update
 	 * @return {@link T#getId()}
@@ -271,12 +271,12 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Process the insert of a persisted entity.
-	 * 
+	 *
 	 * <p>
 	 * This implementation calls {@link SqlSession#insert(String, Object)} using
 	 * the {@link #getInsert()} SqlMap.
 	 * </p>
-	 * 
+	 *
 	 * @param entity
 	 *        the datum to insert
 	 * @return the result of the insert statement
@@ -289,12 +289,12 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Tell if entities used assigned primary keys.
-	 * 
+	 *
 	 * <p>
 	 * This method returns {@literal false}. Extending classes can override to
 	 * change the setting.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if entities use assigned primary keys, or
 	 *         {@literal false} if keys are generated by the database
 	 */
@@ -304,7 +304,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the query name to query by primary key.
-	 * 
+	 *
 	 * @return the query name; defaults to {@link #QUERY_FOR_ID}
 	 */
 	public String getQueryForId() {
@@ -313,7 +313,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Set the query name to query by primary key.
-	 * 
+	 *
 	 * @param queryForId
 	 *        the query name to set
 	 */
@@ -323,7 +323,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the query name to query for all entities.
-	 * 
+	 *
 	 * @return the query name; defaults to {@link #QUERY_FOR_ALL}
 	 */
 	public String getQueryForAll() {
@@ -332,7 +332,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Set the query name to query for all entities.
-	 * 
+	 *
 	 * @param queryForAll
 	 *        the query name to set
 	 */
@@ -342,7 +342,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the query name to insert an entity.
-	 * 
+	 *
 	 * @return the query name; defaults to {@link #INSERT_OBJECT}
 	 */
 	public String getInsert() {
@@ -351,7 +351,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Set the query name to insert an entity.
-	 * 
+	 *
 	 * @param insert
 	 *        the query name to set
 	 */
@@ -361,7 +361,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Set the query name to update an entity.
-	 * 
+	 *
 	 * @param update
 	 *        the query name to set
 	 */
@@ -371,7 +371,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the query name to update an entity.
-	 * 
+	 *
 	 * @return the query name; defaults to {@link #UPDATE_OBJECT}
 	 */
 	public String getUpdate() {
@@ -380,7 +380,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Get the query name to delete an entity.
-	 * 
+	 *
 	 * @return the query name; defaults to {@link #DELETE_OBJECT}
 	 */
 	public String getDelete() {
@@ -389,7 +389,7 @@ public abstract class BaseMyBatisGenericDaoSupport<T extends Entity<K>, K> exten
 
 	/**
 	 * Set the query name to delete an entity.
-	 * 
+	 *
 	 * @param delete
 	 *        the delete to set
 	 */

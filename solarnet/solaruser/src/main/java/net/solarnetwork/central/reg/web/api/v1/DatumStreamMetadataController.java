@@ -234,7 +234,7 @@ public class DatumStreamMetadataController {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		List<ObjectDatumStreamMetadata> results = datumStreamMetadataBiz.findDatumStreamMetadata(actor,
 				filter);
-		return success(results != null && !results.isEmpty() ? results.get(0) : null);
+		return success(results != null && !results.isEmpty() ? results.getFirst() : null);
 	}
 
 }

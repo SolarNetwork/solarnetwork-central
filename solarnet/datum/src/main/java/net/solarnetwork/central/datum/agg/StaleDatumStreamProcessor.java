@@ -1,21 +1,21 @@
 /* ==================================================================
  * StaleDatumStreamProcessor.java - 23/11/2020 6:39:30 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,18 +40,18 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Job to process "stale" datum stream aggregate data.
- * 
+ *
  * <p>
  * This job executes a JDBC procedure, which is expected to return a result set
  * of 0 or 1 rows for the processed stale record. If the procedure returns no
  * result rows, the job stops immediately.
  * </p>
- * 
+ *
  * <p>
  * If {@code taskCount} is higher than {@code 1} then {@code taskCount} threads
  * will be spawned and each process {@code maximumRowCount / taskCount} rows.
  * </p>
- * 
+ *
  * @author matt
  * @version 3.0
  * @since 1.14
@@ -65,7 +65,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JdbcOperations to use
 	 * @throws IllegalArgumentException
@@ -87,28 +87,23 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 			return;
 		}
 		final AsyncTaskExecutor executor = getParallelTaskExecutor();
-		Runnable task = new Runnable() {
-
-			@Override
-			public void run() {
-				for ( DatumAppEventAcceptor acceptor : services ) {
-					try {
-						acceptor.offerDatumEvent(event);
-					} catch ( CannotCreateTransactionException | TransientDataAccessException
-							| DataAccessResourceFailureException e ) {
-						log.warn("Transient DB error offering datum event {} to {}: {}", event, acceptor,
-								e.toString());
-					} catch ( Throwable t ) {
-						Throwable root = t;
-						while ( root.getCause() != null ) {
-							root = root.getCause();
-						}
-						log.error("Error offering datum event {} to {}: {}", event, acceptor,
-								root.toString(), t);
+		Runnable task = () -> {
+			for ( DatumAppEventAcceptor acceptor : services ) {
+				try {
+					acceptor.offerDatumEvent(event);
+				} catch ( CannotCreateTransactionException | TransientDataAccessException
+						| DataAccessResourceFailureException e ) {
+					log.warn("Transient DB error offering datum event {} to {}: {}", event, acceptor,
+							e.toString());
+				} catch ( Throwable t ) {
+					Throwable root = t;
+					while ( root.getCause() != null ) {
+						root = root.getCause();
 					}
+					log.error("Error offering datum event {} to {}: {}", event, acceptor,
+							root.toString(), t);
 				}
 			}
-
 		};
 		if ( executor != null ) {
 			executor.execute(task);
@@ -142,7 +137,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 
 	/**
 	 * Get the aggregate process type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public String getAggregateProcessType() {
@@ -152,7 +147,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	/**
 	 * Set the type of aggregate data to process. This is the first parameter
 	 * passed to the JDBC procedure.
-	 * 
+	 *
 	 * @param aggregateProcessType
 	 *        the type to set
 	 */
@@ -162,22 +157,22 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 
 	/**
 	 * Get the maximum aggregate rows to process per procedure call.
-	 * 
+	 *
 	 * @return the maximum row count
 	 */
 	public int getAggregateProcessMax() {
 		Integer max = getTierProcessMax();
-		return (max != null ? max.intValue() : 0);
+		return (max != null ? max : 0);
 	}
 
 	/**
 	 * Set the maximum number of aggregate rows to process per procedure call.
-	 * 
+	 *
 	 * <p>
 	 * This is the second parameter passed to the JDBC procedure. Default is
 	 * {@code 1}.
 	 * </p>
-	 * 
+	 *
 	 * @param aggregateProcessMax
 	 *        the maximum number of rows
 	 */
@@ -188,7 +183,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	/**
 	 * Get a collection of {@link DatumAppEventAcceptor} services to publish
 	 * {@link AggregateUpdatedEventInfo#AGGREGATE_UPDATED_TOPIC} events to.
-	 * 
+	 *
 	 * @return the services
 	 * @since 1.4
 	 */
@@ -199,7 +194,7 @@ public class StaleDatumStreamProcessor extends TieredStoredProcedureStaleRecordP
 	/**
 	 * Set a collection of {@link DatumAppEventAcceptor} services to publish
 	 * {@link AggregateUpdatedEventInfo#AGGREGATE_UPDATED_TOPIC} events to.
-	 * 
+	 *
 	 * @param datumAppEventAcceptors
 	 *        the services to set
 	 * @since 1.4

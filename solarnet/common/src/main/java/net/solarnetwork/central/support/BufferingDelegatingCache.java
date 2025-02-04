@@ -1,21 +1,21 @@
 /* ==================================================================
  * BufferingDelegatingCache.java - 28/03/2020 4:48:01 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.support;
 
 import static java.util.Collections.singleton;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ import net.solarnetwork.util.UnionIterator;
  * {@link Cache} implementation that uses an in-memory only store for up to a
  * maximum number of keys, then delegates operations to another {@link Cache}
  * for overflow.
- * 
+ *
  * <p>
  * This cache has been designed to help minimize the cost required to
  * serialize/deserialize objects as they are placed into an off-heap cache
@@ -69,7 +70,7 @@ import net.solarnetwork.util.UnionIterator;
  * internally and occasionally excess elements would be pushed into the delegate
  * cache instance.
  * </p>
- * 
+ *
  * <p>
  * <b>Note</b> that not {@literal null} values are not supported. Not all
  * {@link Cache} methods are supported, and will throw an
@@ -78,7 +79,7 @@ import net.solarnetwork.util.UnionIterator;
  * is supported, when calling
  * {@link #registerCacheEntryListener(CacheEntryListenerConfiguration)}.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.2
@@ -97,11 +98,11 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * A {@link ConcurrentHashMap} will be created for the internal store.
 	 * </p>
-	 * 
+	 *
 	 * @param delegate
 	 *        the cache to delegate elements to once more than
 	 *        {@code internalCapacity} elemements are managed by the cache
@@ -115,7 +116,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param delegate
 	 *        the cache to delegate elements to once more than
 	 *        {@code internalCapacity} elements are managed by the cache
@@ -136,7 +137,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Get the configured internal capacity.
-	 * 
+	 *
 	 * @return the number of elements that can be stored internally, before
 	 *         passing them to the delegate {@link Cache}
 	 */
@@ -146,7 +147,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Get the number of elements currently stored internally.
-	 * 
+	 *
 	 * @return the internal element count
 	 */
 	public int getInternalSize() {
@@ -156,7 +157,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	/**
 	 * Get the highest number of elements stored internally, since the last
 	 * reset via {@link #clear()}.
-	 * 
+	 *
 	 * @return the highest number of elements stored internally
 	 * @since 1.1
 	 */
@@ -236,7 +237,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 			throw new IllegalArgumentException("Null values are not allowed.");
 		}
 		int currSize;
-		V result = null;
+		V result;
 		do {
 			result = internalStore.replace(key, value);
 			if ( result == null ) {
@@ -256,9 +257,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 					size.decrementAndGet();
 					publishUpdatedEvent(key, value);
 				} else {
-					maxSize.getAndUpdate(m -> {
-						return (m < newSize ? newSize : m);
-					});
+					maxSize.getAndUpdate(m -> Math.max(m, newSize));
 					publishCreatedEvent(key, value);
 				}
 				return result;
@@ -329,13 +328,13 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Get an iterator over all cache elements.
-	 * 
+	 *
 	 * <p>
 	 * The iterator returned by this method will return the cache elements
 	 * stored internally first, followed by any elements stored in the delegate
 	 * {@link Cache}.
 	 * </p>
-	 * 
+	 *
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -343,7 +342,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 		List<Iterator<Entry<K, V>>> combined = new ArrayList<>(2);
 		combined.add(new EntryIteratorAdaptor(internalStore.entrySet().iterator()));
 		combined.add(delegate.iterator());
-		return new UnionIterator<Entry<K, V>>(combined);
+		return new UnionIterator<>(combined);
 	}
 
 	@Override
@@ -353,13 +352,13 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Add an element to the cache.
-	 * 
+	 *
 	 * <p>
 	 * If less than {@link #getInternalCapacity()} elements are in the cache
 	 * when this is invoked, the element will be added to the internal store.
-	 * Otherwise it will be put into the delegate {@link Cache}.
+	 * Otherwise, it will be put into the delegate {@link Cache}.
 	 * </p>
-	 * 
+	 *
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -384,9 +383,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 					size.decrementAndGet();
 					publishUpdatedEvent(key, value);
 				} else {
-					maxSize.getAndUpdate(m -> {
-						return (m < newSize ? newSize : m);
-					});
+					maxSize.getAndUpdate(m -> Math.max(m, newSize));
 					publishCreatedEvent(key, value);
 				}
 				return;
@@ -409,7 +406,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 	/**
 	 * Add an element to the cache only if its key does not already exist in the
 	 * cache.
-	 * 
+	 *
 	 * @throws UnsupportedOperationException
 	 *         always
 	 */
@@ -420,13 +417,13 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Register a cache entry listener configuration.
-	 * 
+	 *
 	 * <p>
 	 * <b>Note</b> this method only supports registering a <b>single</b>
 	 * {@link CacheEntryCreatedListener} instance. The configuration will be
 	 * shared between this instance and the delegate {@link Cache}.
 	 * </p>
-	 * 
+	 *
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -529,7 +526,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Unwrap an object.
-	 * 
+	 *
 	 * @throws UnsupportedOperationException
 	 *         always
 	 */
@@ -589,6 +586,7 @@ public class BufferingDelegatingCache<K, V> implements Cache<K, V> {
 
 	private final class CacheEntryEventImpl extends CacheEntryEvent<K, V> {
 
+		@Serial
 		private static final long serialVersionUID = 6369201595734400543L;
 
 		private final K key;

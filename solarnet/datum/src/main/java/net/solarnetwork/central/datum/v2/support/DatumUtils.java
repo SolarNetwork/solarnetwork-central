@@ -25,7 +25,7 @@ package net.solarnetwork.central.datum.v2.support;
 import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
@@ -34,6 +34,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -179,9 +180,7 @@ public final class DatumUtils {
 			c.setAccumulatingPropertyNames(f.getAccumulatingPropertyNames());
 			c.setStatusPropertyNames(f.getStatusPropertyNames());
 			tags = f.getTags();
-			if ( s == null || s.isEmpty() ) {
-				s = f.getSorts();
-			}
+			s = f.getSorts();
 			if ( m == null ) {
 				m = f.getMax();
 			}
@@ -215,9 +214,7 @@ public final class DatumUtils {
 			c.setSourceIdMappings(f.getSourceIdMappings());
 			c.setSearchFilter(f.getMetadataFilter());
 			tags = f.getTags();
-			if ( s == null || s.isEmpty() ) {
-				s = f.getSorts();
-			}
+			s = f.getSorts();
 			if ( m == null ) {
 				m = f.getMax();
 			}
@@ -362,7 +359,7 @@ public final class DatumUtils {
 	 */
 	public static ObjectStreamCriteria criteriaWithoutDates(ObjectStreamCriteria criteria) {
 		requireNonNullArgument(criteria, "criteria");
-		BasicDatumCriteria result = null;
+		BasicDatumCriteria result;
 		if ( criteria instanceof BasicDatumCriteria ) {
 			result = ((BasicDatumCriteria) criteria).clone();
 		} else {
@@ -499,9 +496,7 @@ public final class DatumUtils {
 				meta.propertyNamesForType(DatumSamplesType.Status), props.getStatus());
 		if ( props.getTagsLength() > 0 ) {
 			Set<String> tags = new LinkedHashSet<>(props.getTagsLength());
-			for ( String t : props.getTags() ) {
-				tags.add(t);
-			}
+			Collections.addAll(tags, props.getTags());
 			s.setTags(tags);
 		}
 	}
@@ -872,22 +867,14 @@ public final class DatumUtils {
 	 *         if {@code agg} is not supported
 	 */
 	public static LocalDateTime truncateDate(LocalDateTime date, Aggregation agg) {
-		switch (agg) {
-			case Hour:
-				return date.truncatedTo(ChronoUnit.HOURS);
-
-			case Day:
-				return date.truncatedTo(ChronoUnit.DAYS);
-
-			case Month:
-				return date.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
-
-			case Year:
-				return date.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
-
-			default:
-				throw new IllegalArgumentException(format("The aggregation %s is not supported.", agg));
-		}
+		return switch (agg) {
+			case Hour -> date.truncatedTo(ChronoUnit.HOURS);
+			case Day -> date.truncatedTo(ChronoUnit.DAYS);
+			case Month -> date.with(TemporalAdjusters.firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS);
+			case Year -> date.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
+			default -> throw new IllegalArgumentException(
+					format("The aggregation %s is not supported.", agg));
+		};
 	}
 
 	/** A UUID namespace for URLs. */
@@ -917,7 +904,8 @@ public final class DatumUtils {
 	 * Generate a v5 UUID.
 	 *
 	 * <p>
-	 * Adapted from https://stackoverflow.com/a/40230410
+	 * Adapted from <a href="https://stackoverflow.com/a/40230410">Stack
+	 * Overflow</a>
 	 * </p>
 	 *
 	 * @param namespace
@@ -927,7 +915,7 @@ public final class DatumUtils {
 	 * @return the UUID
 	 */
 	public static UUID v5UUID(UUID namespace, String name) {
-		return v5UUID(namespace, name.getBytes(Charset.forName("UTF-8")));
+		return v5UUID(namespace, name.getBytes(StandardCharsets.UTF_8));
 	}
 
 	private static UUID v5UUID(UUID namespace, byte[] name) {
@@ -952,10 +940,12 @@ public final class DatumUtils {
 		long msb = 0;
 		long lsb = 0;
 		assert data.length >= 16;
-		for ( int i = 0; i < 8; i++ )
+		for ( int i = 0; i < 8; i++ ) {
 			msb = (msb << 8) | (data[i] & 0xff);
-		for ( int i = 8; i < 16; i++ )
+		}
+		for ( int i = 8; i < 16; i++ ) {
 			lsb = (lsb << 8) | (data[i] & 0xff);
+		}
 		return new UUID(msb, lsb);
 	}
 
@@ -964,10 +954,12 @@ public final class DatumUtils {
 		byte[] out = new byte[16];
 		long msb = uuid.getMostSignificantBits();
 		long lsb = uuid.getLeastSignificantBits();
-		for ( int i = 0; i < 8; i++ )
+		for ( int i = 0; i < 8; i++ ) {
 			out[i] = (byte) ((msb >> ((7 - i) * 8)) & 0xff);
-		for ( int i = 8; i < 16; i++ )
+		}
+		for ( int i = 8; i < 16; i++ ) {
 			out[i] = (byte) ((lsb >> ((15 - i) * 8)) & 0xff);
+		}
 		return out;
 	}
 
@@ -1004,16 +996,11 @@ public final class DatumUtils {
 	 */
 	public static net.solarnetwork.domain.datum.ObjectDatumKind toCommonObjectDatumKind(
 			ObjectDatumKind kind) {
-		switch (kind) {
-			case Node:
-				return net.solarnetwork.domain.datum.ObjectDatumKind.Node;
-
-			case Location:
-				return net.solarnetwork.domain.datum.ObjectDatumKind.Location;
-
-			default:
-				return null;
-		}
+		return switch (kind) {
+			case Node -> ObjectDatumKind.Node;
+			case Location -> ObjectDatumKind.Location;
+			default -> null;
+		};
 	}
 
 	/**

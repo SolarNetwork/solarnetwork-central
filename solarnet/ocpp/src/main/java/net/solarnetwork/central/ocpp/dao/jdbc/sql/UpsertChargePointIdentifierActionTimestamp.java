@@ -1,21 +1,21 @@
 /* ==================================================================
  * UpsertChargePointActionStatus.java - 16/11/2022 5:44:19 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,11 +35,11 @@ import net.solarnetwork.central.ocpp.domain.ChargePointActionStatus;
 /**
  * Update a {@link ChargePointActionStatus} entity timestamp, creating it if not
  * already present.
- * 
+ *
  * @author matt
  * @version 1.2
  */
-public class UpsertChargePointIdentifierActionTimestamp
+public final class UpsertChargePointIdentifierActionTimestamp
 		implements PreparedStatementCreator, SqlProvider {
 
 	private final Long userId;
@@ -52,7 +52,7 @@ public class UpsertChargePointIdentifierActionTimestamp
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointIdentifier
@@ -75,7 +75,7 @@ public class UpsertChargePointIdentifierActionTimestamp
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointIdentifier
@@ -115,7 +115,7 @@ public class UpsertChargePointIdentifierActionTimestamp
 
 	/**
 	 * Get the SQL used by this class.
-	 * 
+	 *
 	 * @return the SQL
 	 */
 	public static String sql() {
@@ -134,16 +134,14 @@ public class UpsertChargePointIdentifierActionTimestamp
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement ps = con.prepareStatement(getSql());
-		prepareStatement(ps, userId, chargePointIdentifier, evseId != null ? evseId.intValue() : 0,
-				connectorId != null ? connectorId.intValue() : 0, action, messageId, date);
+		prepareStatement(ps, userId, chargePointIdentifier, evseId != null ? evseId : 0,
+				connectorId != null ? connectorId : 0, action, messageId, date);
 		return ps;
 	}
 
 	/**
 	 * Prepare a statement, assuming SQL as returned by {@link #sql()}.
-	 * 
-	 * 
-	 * 
+	 *
 	 * @param ps
 	 *        the statement to prepare
 	 * @param userId
@@ -163,9 +161,9 @@ public class UpsertChargePointIdentifierActionTimestamp
 	 * @throws SQLException
 	 *         if any SQL erroor occurs
 	 */
-	public static final void prepareStatement(PreparedStatement ps, long userId,
-			String chargePointIdentifier, int evseId, int connectorId, String action, String messageId,
-			Instant date) throws SQLException {
+	public static void prepareStatement(PreparedStatement ps, long userId, String chargePointIdentifier,
+			int evseId, int connectorId, String action, String messageId, Instant date)
+			throws SQLException {
 		ps.setInt(1, evseId);
 		ps.setInt(2, connectorId);
 		ps.setString(3, action);

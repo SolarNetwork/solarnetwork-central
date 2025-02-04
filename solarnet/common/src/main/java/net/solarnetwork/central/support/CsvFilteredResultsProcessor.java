@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvFilteredResultsProcessor.java - 18/11/2022 11:16:09 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -50,7 +50,7 @@ import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * Basic {@link FilteredResultsProcessor} that serializes to CSV.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -63,6 +63,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 * The default value for the <code>javaBeanIgnoreProperties</code> property.
 	 */
 	public static final Set<String> DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES;
+
 	static {
 		DEFAULT_JAVA_BEAN_IGNORE_PROPERTIES = Collections.singleton("class");
 	}
@@ -72,6 +73,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 * property.
 	 */
 	public static final Set<Class<?>> DEFAULT_JAVA_BEAN_STRING_VALUES;
+
 	static {
 		DEFAULT_JAVA_BEAN_STRING_VALUES = Collections.singleton(Class.class);
 	}
@@ -91,7 +93,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	 * A mapping of column names to associated column index; linked so insertion
 	 * order is column order.
 	 */
-	private Map<String, Integer> columnOrder = new LinkedHashMap<>(8);
+	private final Map<String, Integer> columnOrder = new LinkedHashMap<>(8);
 
 	/** The count of output columns. */
 	private int columnCount = 0;
@@ -100,19 +102,19 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 	private long rowNum = -1;
 
 	/** A cache of properties that should be ignored. */
-	private Map<Class<?>, Map<String, Boolean>> ignoredProperties = new HashMap<>(8);
+	private final Map<Class<?>, Map<String, Boolean>> ignoredProperties = new HashMap<>(8);
 
 	/** A cache of property orders. */
-	private Map<Class<?>, String[]> propertyOrder = new HashMap<>(8);
+	private final Map<Class<?>, String[]> propertyOrder = new HashMap<>(8);
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * <p>
 	 * The media type will be set to {@literal text/csv}; the
 	 * {@code includeHeader} property will be set to {@literal true}.
 	 * </p>
-	 * 
+	 *
 	 * @param out
 	 *        the output stream to write to
 	 */
@@ -122,11 +124,11 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The media type will be set to {@literal text/csv}.
 	 * </p>
-	 * 
+	 *
 	 * @param out
 	 *        the output stream to write to
 	 * @param includeHeader
@@ -139,11 +141,11 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The media type will be set to {@literal text/csv}.
 	 * </p>
-	 * 
+	 *
 	 * @param out
 	 *        the output stream to write to
 	 * @param mimeType
@@ -161,7 +163,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param out
 	 *        the output stream to write to
 	 * @param mimeType
@@ -221,7 +223,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 		if ( rowNum == 0 && includeHeader ) {
 			// writer header based only one first item's properties
-			writer.writeHeader(columnOrder.keySet().stream().toArray(String[]::new));
+			writer.writeHeader(columnOrder.keySet().toArray(String[]::new));
 		}
 
 		Object[] row = new Object[columnCount];
@@ -262,63 +264,59 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 					result.put(key, val);
 				}
 			}
-		} else {
-			BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(item);
-			PropertyDescriptor[] descriptors = wrapper.getPropertyDescriptors();
-			final Class<?> clazz = item.getClass();
-			if ( descriptors != null ) {
-				String[] propOrder = propertyOrder.computeIfAbsent(clazz, k -> {
-					JsonPropertyOrder order = AnnotationUtils.findAnnotation(clazz,
-							JsonPropertyOrder.class);
-					if ( order != null ) {
-						return order.value();
-					}
-					return new String[0];
-				});
-				if ( propOrder.length > 0 ) {
-					Arrays.sort(descriptors, (l, r) -> {
-						int lIdx = -1;
-						int rIdx = -1;
-						for ( int i = 0; i < propOrder.length && lIdx < 0 && rIdx < 0; i++ ) {
-							if ( propOrder[i].equals(l.getName()) ) {
-								lIdx = i;
-							} else if ( propOrder[i].equals(r.getName()) ) {
-								rIdx = i;
-							}
-						}
-						return Integer.compare(rIdx, lIdx);
-					});
-				}
-				Map<String, Object> result = new HashMap<>(descriptors.length);
-				for ( PropertyDescriptor desc : descriptors ) {
-					String key = desc.getName();
-					if ( javaBeanIgnoreProperties.contains(key) ) {
-						continue;
-					}
-					if ( wrapper.isReadableProperty(key) && !shouldIgnoreProperty(item, key, desc) ) {
-						Object val = wrapper.getPropertyValue(key);
-						val = getRowPropertyValue(item, key, val, wrapper);
-						if ( val != null ) {
-							updateColumnOrder(key);
-							result.put(key, val);
-						}
+			return result;
+		}
+		BeanWrapper wrapper = PropertyAccessorFactory.forBeanPropertyAccess(item);
+		PropertyDescriptor[] descriptors = wrapper.getPropertyDescriptors();
+		final Class<?> clazz = item.getClass();
+		String[] propOrder = propertyOrder.computeIfAbsent(clazz, k -> {
+			JsonPropertyOrder order = AnnotationUtils.findAnnotation(clazz, JsonPropertyOrder.class);
+			if ( order != null ) {
+				return order.value();
+			}
+			return new String[0];
+		});
+		if ( propOrder.length > 0 ) {
+			Arrays.sort(descriptors, (l, r) -> {
+				int lIdx = -1;
+				int rIdx = -1;
+				for ( int i = 0; i < propOrder.length && lIdx < 0 && rIdx < 0; i++ ) {
+					if ( propOrder[i].equals(l.getName()) ) {
+						lIdx = i;
+					} else if ( propOrder[i].equals(r.getName()) ) {
+						rIdx = i;
 					}
 				}
-				return result;
+				return Integer.compare(rIdx, lIdx);
+			});
+		}
+		Map<String, Object> result = new HashMap<>(descriptors.length);
+		for ( PropertyDescriptor desc : descriptors ) {
+			String key = desc.getName();
+			if ( javaBeanIgnoreProperties.contains(key) ) {
+				continue;
+			}
+			if ( wrapper.isReadableProperty(key) && !shouldIgnoreProperty(item, key, desc) ) {
+				Object val = wrapper.getPropertyValue(key);
+				val = getRowPropertyValue(item, key, val, wrapper);
+				if ( val != null ) {
+					updateColumnOrder(key);
+					result.put(key, val);
+				}
 			}
 		}
-		return null;
+		return result;
 	}
 
 	/**
 	 * Return {@literal true} if a given JavaBean property should be ignored due
 	 * to annotations.
-	 * 
+	 *
 	 * <p>
 	 * The {@link JsonIgnore}, {@link SerializeIgnore}, and
 	 * {@link JsonIgnoreProperties} annotations are supported.
 	 * </p>
-	 * 
+	 *
 	 * @param item
 	 *        the object
 	 * @param key
@@ -378,7 +376,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Get the property serializer registrar.
-	 * 
+	 *
 	 * @return the registrar
 	 */
 	public PropertySerializerRegistrar getPropertySerializerRegistrar() {
@@ -387,7 +385,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Get the JavaBean properties to ignore.
-	 * 
+	 *
 	 * @return the properties
 	 */
 	public Set<String> getJavaBeanIgnoreProperties() {
@@ -396,7 +394,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Get the JavaBean classes to treat as strings.
-	 * 
+	 *
 	 * @return the class set
 	 */
 	public Set<Class<?>> getJavaBeanTreatAsStringValues() {
@@ -405,7 +403,7 @@ public class CsvFilteredResultsProcessor<R> extends AbstractFilteredResultsProce
 
 	/**
 	 * Get the "include header" option.
-	 * 
+	 *
 	 * @return {@literal true} to include a header rowNum in the output;
 	 *         defaults to {@literal true}
 	 */

@@ -24,6 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import static net.solarnetwork.domain.Differentiable.differ;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -36,6 +37,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfiguration> {
 
+	@Serial
 	private static final long serialVersionUID = -337374989043029897L;
 
 	private Long capacityGroupId;

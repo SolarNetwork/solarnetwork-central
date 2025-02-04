@@ -154,7 +154,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void enableConfiguration(
 			K id, boolean enabled, Class<C> configurationClass) {
@@ -181,7 +181,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		dao.updateEnabledStatus(id.getUserId(), filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <T extends DatumInputConfigurationInput<C, K>, C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C saveConfiguration(
 			K id, T input) {
@@ -208,7 +208,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
 			K id, Class<C> configurationClass) {

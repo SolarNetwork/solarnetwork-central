@@ -313,7 +313,10 @@ public class UserDnp3Controller {
 	/**
 	 * Update a server configuration for the current user.
 	 *
-	 * @param
+	 * @param serverId
+	 *        the server ID to update
+	 * @param input
+	 *        the configuration to save
 	 * @return the configuration
 	 */
 	@RequestMapping(method = PUT, value = "/servers/{serverId}", consumes = APPLICATION_JSON_VALUE)

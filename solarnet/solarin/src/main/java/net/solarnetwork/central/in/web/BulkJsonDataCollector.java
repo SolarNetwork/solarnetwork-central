@@ -1,21 +1,21 @@
 /* ==================================================================
  * BulkJsonDataCollector.java - Aug 25, 2014 10:53:53 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,7 +57,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * JSON implementation of bulk upload service.
- * 
+ *
  * @author matt
  * @version 3.3
  */
@@ -83,7 +83,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	/**
 	 * The JSON field name for an instruction ID on a {@link Instruction} value.
-	 * 
+	 *
 	 * @since 2.2
 	 */
 	public static final String INSTRUCTION_ID_FIELD = "instructionId";
@@ -92,7 +92,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataCollectorBiz
 	 *        the {@link DataCollectorBiz} to use
 	 * @param solarNodeDao
@@ -110,7 +110,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 
 	/**
 	 * Handle a {@link RuntimeException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param response
@@ -121,18 +121,18 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	@ResponseBody
 	public Result<?> handleRuntimeException(RuntimeException e, HttpServletResponse response) {
 		log.error("RuntimeException in {} controller", getClass().getSimpleName(), e);
-		return new Result<Object>(Boolean.FALSE, null, "Internal error", null);
+		return new Result<>(Boolean.FALSE, null, "Internal error", null);
 	}
 
 	/**
 	 * Post new data.
-	 * 
+	 *
 	 * <p>
 	 * If {@code encoding} contains {@code gzip} the InputStream itself is
-	 * assumed to be compressed with GZip and encoded as Base64. Otherwise the
+	 * assumed to be compressed with GZip and encoded as Base64. Otherwise, the
 	 * InputStream is assumed to be regular text (not compressed).
 	 * </p>
-	 * 
+	 *
 	 * @param encoding
 	 *        an optional encoding value
 	 * @param in
@@ -158,7 +158,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		List<GeneralNodeDatum> parsedGeneralNodeDatum = new ArrayList<>();
 		List<GeneralLocationDatum> parsedGeneralLocationDatum = new ArrayList<>();
 		List<StreamDatum> parsedStreamDatum = new ArrayList<>();
-		List<Object> resultDatum = new ArrayList<Object>();
+		List<Object> resultDatum = new ArrayList<>();
 
 		try {
 			JsonNode tree = objectMapper.readTree(input);
@@ -214,12 +214,12 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 				while ( root.getCause() != null ) {
 					root = root.getCause();
 				}
-				log.debug("RepeatableTaskException caused by: " + root.getMessage());
+				log.debug("RepeatableTaskException caused by: {}", root.getMessage());
 			}
 		}
 
 		BulkUploadResult result = new BulkUploadResult();
-		if ( resultDatum.size() > 0 ) {
+		if ( !resultDatum.isEmpty() ) {
 			result.setDatum(resultDatum);
 			log.trace("Upload result datum: {}", resultDatum);
 		}
@@ -229,12 +229,12 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		if ( instructorBiz != null ) {
 			List<Instruction> instructions = instructorBiz
 					.getActiveInstructionsForNode(authNode.getNodeId());
-			if ( instructions != null && instructions.size() > 0 ) {
+			if ( instructions != null && !instructions.isEmpty() ) {
 				result.setInstructions(instructions);
 			}
 		}
 
-		return new Result<BulkUploadResult>(result);
+		return new Result<>(result);
 	}
 
 	private Object handleNode(JsonNode node) {

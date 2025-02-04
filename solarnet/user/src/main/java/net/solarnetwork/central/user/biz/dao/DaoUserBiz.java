@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserBiz.java - Dec 12, 2012 2:38:53 PM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -61,7 +61,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -99,22 +99,19 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		if ( result == null ) {
 			throw new AuthorizationException(nodeId.toString(), Reason.UNKNOWN_OBJECT);
 		}
-		if ( result.getUser().getId().equals(userId) == false ) {
+		if ( !result.getUser().getId().equals(userId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 		}
 		return result;
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public UserNode saveUserNode(UserNode entry) throws AuthorizationException {
 		assert entry != null;
 		assert entry.getNode() != null;
 		assert entry.getUser() != null;
-		if ( entry.getNode().getId() == null ) {
-			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, null);
-		}
-		if ( entry.getUser().getId() == null ) {
+		if ( (entry.getNode().getId() == null) || (entry.getUser().getId() == null) ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, null);
 		}
 		UserNode entity = userNodeDao.get(entry.getNode().getId());
@@ -137,10 +134,10 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			SolarLocation norm = SolarLocation.normalizedLocation(entry.getNodeLocation());
 			SolarLocation locEntity = solarLocationDao.getSolarLocationForLocation(norm);
 			if ( locEntity == null ) {
-				log.debug("Saving new SolarLocation {}", locEntity);
+				log.debug("Saving new SolarLocation {}", norm);
 				locEntity = solarLocationDao.get(solarLocationDao.save(norm));
 			}
-			if ( locEntity.getId().equals(node.getLocationId()) == false ) {
+			if ( !locEntity.getId().equals(node.getLocationId()) ) {
 				log.debug("Updating node {} location from {} to {}", node.getId(), node.getLocationId(),
 						locEntity.getId());
 				node.setLocationId(locEntity.getId());
@@ -154,7 +151,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived)
 			throws AuthorizationException {
 		userNodeDao.updateUserNodeArchivedStatus(userId, nodeIds, archived);
@@ -188,7 +185,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public UserAuthToken generateUserAuthToken(Long userId, SecurityTokenType type,
 			SecurityPolicy policy) {
 		assert userId != null;
@@ -216,7 +213,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 						if ( userNode == null ) {
 							throw new AuthorizationException(Reason.UNKNOWN_OBJECT, nodeId);
 						}
-						if ( userNode.getUser().getId().equals(userId) == false ) {
+						if ( !userNode.getUser().getId().equals(userId) ) {
 							throw new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
 						}
 					}
@@ -244,7 +241,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void deleteUserAuthToken(Long userId, String tokenId) {
 		assert userId != null;
 		UserAuthToken token = userAuthTokenDao.get(tokenId);
@@ -258,7 +255,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public UserAuthToken updateUserAuthTokenStatus(Long userId, String tokenId,
 			SecurityTokenStatus newStatus) {
 		assert userId != null;
@@ -277,7 +274,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public UserAuthToken updateUserAuthTokenPolicy(Long userId, String tokenId, SecurityPolicy newPolicy,
 			boolean replace) {
 		assert userId != null;
@@ -303,7 +300,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public UserAuthToken updateUserAuthTokenInfo(Long userId, String tokenId, UserAuthToken info) {
 		assert userId != null;
 		UserAuthToken token = userAuthTokenDao.get(tokenId);
@@ -334,7 +331,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void requestNodeOwnershipTransfer(Long userId, Long nodeId, String newOwnerEmail)
 			throws AuthorizationException {
 		UserNodeTransfer xfer = new UserNodeTransfer();
@@ -345,16 +342,16 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public void cancelNodeOwnershipTransfer(Long userId, Long nodeId) throws AuthorizationException {
 		UserNodeTransfer xfer = userNodeDao.getUserNodeTransfer(new UserNodePK(userId, nodeId));
 		if ( xfer != null ) {
-			userNodeDao.deleteUserNodeTrasnfer(xfer);
+			userNodeDao.deleteUserNodeTransfer(xfer);
 		}
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public UserNodeTransfer confirmNodeOwnershipTransfer(Long userId, Long nodeId, boolean accept)
 			throws AuthorizationException {
 		UserNodePK pk = new UserNodePK(userId, nodeId);
@@ -373,7 +370,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			}
 
 			// at this point, we can delete the transfer request
-			userNodeDao.deleteUserNodeTrasnfer(xfer);
+			userNodeDao.deleteUserNodeTransfer(xfer);
 
 			// remove any node alerts associated with this node
 			int deletedAlertCount = userAlertDao.deleteAllAlertsForNode(userId, nodeId);
@@ -394,7 +391,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 						log.debug(
 								"Removing node ID {} from UserAuthToken {} for node ownership transfer",
 								nodeId, token.getId());
-						Set<Long> nodeIds = new LinkedHashSet<Long>(token.getNodeIds()); // get mutable set
+						Set<Long> nodeIds = new LinkedHashSet<>(token.getNodeIds()); // get mutable set
 						nodeIds.remove(nodeId);
 						BasicSecurityPolicy.Builder secPolicyBuilder = new BasicSecurityPolicy.Builder()
 								.withPolicy(token.getPolicy()).withNodeIds(nodeIds);
@@ -406,7 +403,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			}
 
 			// and now, transfer ownership
-			if ( recipient.getId().equals(userNode.getUser().getId()) == false ) {
+			if ( !recipient.getId().equals(userNode.getUser().getId()) ) {
 				userNode.setUser(recipient);
 				userNodeDao.save(userNode);
 			}

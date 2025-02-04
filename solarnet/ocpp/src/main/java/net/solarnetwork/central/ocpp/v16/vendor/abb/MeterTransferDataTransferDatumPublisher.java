@@ -1,21 +1,21 @@
 /* ==================================================================
  * MeterTransferDataTransferDatumPublisher.java - 17/06/2023 7:23:06 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,6 +40,7 @@ import net.solarnetwork.central.ocpp.service.DatumPublisherSupport;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.AcPhase;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.EnergyDatum;
 import net.solarnetwork.ocpp.domain.ActionMessage;
 import net.solarnetwork.ocpp.service.ActionMessageResultHandler;
 import net.solarnetwork.ocpp.v16.jakarta.cs.DataTransferProcessor;
@@ -52,7 +53,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
 
 /**
  * Publish ABB data transfer {@code MeterTransfer} messages as a datum stream.
- * 
+ *
  * <p>
  * The ABB chargers publish {@code DataTransfer} messages with metering data
  * that this processor converts into a datum stream. The datum stream will have
@@ -60,14 +61,14 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * charger configuration entity in SolarNetwork, with {@code /meter} appended to
  * the end.
  * </p>
- * 
+ *
  * <p>
  * The format of the {@code DataTransfer} data is JSON, structured like this
  * example:
  * </p>
- * 
+ *
  * <pre>
- * {@code{
+ * {@code {
  *     "type": "MeterTransfer",
  *     "timestamp": "2023-06-16T19:05:46.000Z",
  *     "sampledValue": [
@@ -92,7 +93,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  *     ]
  * }}
  * </pre>
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -112,7 +113,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointDao
 	 *        the charge point DAO to use
 	 * @param chargePointSettingsDao
@@ -190,7 +191,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		final Instant ts = JsonUtils.parseDateAttribute(root, "timestamp", DateTimeFormatter.ISO_INSTANT,
 				Instant::from);
 		final JsonNode samples = root.path("sampledValue");
-		if ( msgType == null || !"MeterTransfer".equals(msgType) || ts == null || !samples.isArray() ) {
+		if ( !"MeterTransfer".equals(msgType) || ts == null || !samples.isArray() ) {
 			return null;
 		}
 		for ( JsonNode sampleNode : samples ) {
@@ -202,7 +203,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			String propName = phased(switch (measurand.name()) {
 				case "Voltage" -> net.solarnetwork.domain.datum.AcEnergyDatum.VOLTAGE_KEY;
 				case "Current" -> net.solarnetwork.domain.datum.AcEnergyDatum.CURRENT_KEY;
-				case "Active.Power" -> net.solarnetwork.domain.datum.AcEnergyDatum.WATTS_KEY;
+				case "Active.Power" -> EnergyDatum.WATTS_KEY;
 				default -> null;
 			}, measurand);
 			if ( propName == null ) {
@@ -268,7 +269,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		if ( unit.length() > 1 ) {
 			unit = unit.toUpperCase();
 			if ( unit.startsWith("K") ) {
-				n.movePointRight(3);
+				n = n.movePointRight(3);
 			}
 		}
 		return NumberUtils.narrow(n, 2);
@@ -276,7 +277,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
@@ -286,18 +287,18 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
 	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
@@ -307,7 +308,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 
 	/**
 	 * Set a suffix to append to the resolved source ID template.
-	 * 
+	 *
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */

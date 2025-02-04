@@ -1,21 +1,21 @@
 /* ==================================================================
  * CombiningConfig.java - 4/12/2020 3:06:51 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,7 +33,7 @@ import net.solarnetwork.central.datum.domain.CombiningType;
 
 /**
  * Data structure to help with combining query execution.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.8
@@ -51,7 +51,7 @@ public class CombiningConfig {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param type
 	 *        the type
 	 * @param configs
@@ -63,7 +63,7 @@ public class CombiningConfig {
 		if ( configs == null || configs.isEmpty() ) {
 			this.configMap = Collections.emptyMap();
 		} else {
-			this.configMap = new LinkedHashMap<String, CombiningIdsConfig<?>>(configs.size());
+			this.configMap = new LinkedHashMap<>(configs.size());
 			for ( CombiningIdsConfig<?> config : configs ) {
 				this.configMap.put(config.getName(), config);
 			}
@@ -73,7 +73,7 @@ public class CombiningConfig {
 	/**
 	 * Create a new {@link CombiningConfig} instance from an
 	 * {@link ObjectStreamCriteria}.
-	 * 
+	 *
 	 * @param filter
 	 *        the criteria
 	 * @return the config, or {@literal null} if {@code filter} is
@@ -109,7 +109,7 @@ public class CombiningConfig {
 
 	/**
 	 * Get the combining action type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public CombiningType getType() {
@@ -118,7 +118,7 @@ public class CombiningConfig {
 
 	/**
 	 * Get all available ID configuration keys.
-	 * 
+	 *
 	 * @return the available ID configuration keys
 	 */
 	public Set<String> getIdsConfigKeys() {
@@ -127,7 +127,7 @@ public class CombiningConfig {
 
 	/**
 	 * Get the IDs configuration for a specific key, casting the result.
-	 * 
+	 *
 	 * @param <T>
 	 *        the expected IDs configuration type
 	 * @param key
@@ -143,7 +143,7 @@ public class CombiningConfig {
 
 	/**
 	 * Get the combining IDs configurations.
-	 * 
+	 *
 	 * @return the IDs configurations
 	 */
 	public Collection<CombiningIdsConfig<?>> getIdsConfigs() {
@@ -152,7 +152,7 @@ public class CombiningConfig {
 
 	/**
 	 * Test if an object IDs configuration is available.
-	 * 
+	 *
 	 * @return {@literal true} if an IDs configuration for
 	 *         {@link #OBJECT_IDS_CONFIG} exists
 	 */
@@ -162,7 +162,7 @@ public class CombiningConfig {
 
 	/**
 	 * Test if a source IDs configuration is available.
-	 * 
+	 *
 	 * @return {@literal true} if an IDs configuration for
 	 *         {@link #SOURCE_IDS_CONFIG} exists
 	 */

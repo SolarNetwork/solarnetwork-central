@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicSolarNodeOwnership.java - 6/10/2021 8:50:17 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -31,13 +32,14 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * Basic implementation of {@link SolarNodeOwnership}.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class BasicSolarNodeOwnership
 		implements Serializable, SolarNodeOwnership, Differentiable<SolarNodeOwnership> {
 
+	@Serial
 	private static final long serialVersionUID = 3442524641711956994L;
 
 	private final Long nodeId;
@@ -49,12 +51,12 @@ public class BasicSolarNodeOwnership
 
 	/**
 	 * Create a new ownership instance.
-	 * 
+	 *
 	 * <p>
 	 * The zone will be set to {@literal UTC}. The {@code requiresAuthorization}
 	 * and {@code archived} properties will be set to {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param userId
@@ -69,13 +71,13 @@ public class BasicSolarNodeOwnership
 
 	/**
 	 * Create a new private ownership instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code requiresAuthorization} property will be set to
 	 * {@literal true}. The {@code archived} property will be set to
 	 * {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param userId
@@ -96,13 +98,13 @@ public class BasicSolarNodeOwnership
 
 	/**
 	 * Create a new private ownership instance.
-	 * 
+	 *
 	 * <p>
 	 * The zone will be set to {@literal UTC}. The {@code requiresAuthorization}
 	 * property will be set to {@literal true}. The {@code archived} property
 	 * will be set to {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param userId
@@ -117,13 +119,13 @@ public class BasicSolarNodeOwnership
 
 	/**
 	 * Create a new private ownership instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code requiresAuthorization} property will be set to
 	 * {@literal true}. The {@code archived} property will be set to
 	 * {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param userId
@@ -144,7 +146,7 @@ public class BasicSolarNodeOwnership
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param userId
@@ -175,7 +177,7 @@ public class BasicSolarNodeOwnership
 	/**
 	 * Test if the properties of another object are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -235,11 +237,11 @@ public class BasicSolarNodeOwnership
 
 	/**
 	 * Compare node ownership.
-	 * 
+	 *
 	 * <p>
 	 * This compares <b>only</b> by node ID.
 	 * </p>
-	 * 
+	 *
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -247,10 +249,9 @@ public class BasicSolarNodeOwnership
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof BasicSolarNodeOwnership) ) {
+		if ( !(obj instanceof BasicSolarNodeOwnership other) ) {
 			return false;
 		}
-		BasicSolarNodeOwnership other = (BasicSolarNodeOwnership) obj;
 		return Objects.equals(nodeId, other.nodeId);
 	}
 

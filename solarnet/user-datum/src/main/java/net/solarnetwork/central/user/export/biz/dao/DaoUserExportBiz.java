@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserExportBiz.java - 25/03/2018 1:01:05 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -76,7 +76,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * DAO implementation of {@link UserExportBiz}.
- * 
+ *
  * @author matt
  * @version 2.3
  */
@@ -99,7 +99,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumExportConfigDao
 	 *        the datum export configuration DAO to use
 	 * @param dataConfigDao
@@ -152,7 +152,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			if ( messageSource != null ) {
 				name = messageSource.getMessage("compressionType." + type.name() + ".key", null, name,
 						locale);
-				desc = messageSource.getMessage("compressionType." + type.name() + ".desc", null, desc,
+				desc = messageSource.getMessage("compressionType." + type.name() + ".desc", null, null,
 						locale);
 			}
 			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
@@ -174,7 +174,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			if ( messageSource != null ) {
 				name = messageSource.getMessage("scheduleType." + type.name() + ".key", null, name,
 						locale);
-				desc = messageSource.getMessage("scheduleType." + type.name() + ".desc", null, desc,
+				desc = messageSource.getMessage("scheduleType." + type.name() + ".desc", null, null,
 						locale);
 			}
 			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
@@ -192,7 +192,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			if ( messageSource != null ) {
 				name = messageSource.getMessage("aggregation." + type.name() + ".key", null, name,
 						locale);
-				desc = messageSource.getMessage("aggregation." + type.name() + ".desc", null, desc,
+				desc = messageSource.getMessage("aggregation." + type.name() + ".desc", null, null,
 						locale);
 			}
 			results.add(new BasicLocalizedServiceInfo(String.valueOf(type.getKey()), locale, name, desc,
@@ -207,7 +207,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		return datumExportConfigDao.get(id, userId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveDatumExportConfiguration(UserDatumExportConfiguration configuration) {
 		if ( configuration.getMinimumExportDate() == null && configuration.getSchedule() != null ) {
@@ -219,7 +219,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		return datumExportConfigDao.save(configuration);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteDatumExportConfiguration(UserDatumExportConfiguration configuration) {
 		datumExportConfigDao.delete(configuration);
@@ -246,17 +246,18 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
-		if ( configuration instanceof UserDataConfiguration ) {
-			dataConfigDao.delete((UserDataConfiguration) configuration);
-		} else if ( configuration instanceof UserDestinationConfiguration ) {
-			destinationConfigDao.delete((UserDestinationConfiguration) configuration);
-		} else if ( configuration instanceof UserOutputConfiguration ) {
-			outputConfigDao.delete((UserOutputConfiguration) configuration);
-		} else {
-			throw new IllegalArgumentException("Unsupported configuration type: " + configuration);
+		switch (configuration) {
+			case UserDataConfiguration userDataConfiguration -> dataConfigDao
+					.delete(userDataConfiguration);
+			case UserDestinationConfiguration userDestinationConfiguration -> destinationConfigDao
+					.delete(userDestinationConfiguration);
+			case UserOutputConfiguration userOutputConfiguration -> outputConfigDao
+					.delete(userOutputConfiguration);
+			case null, default -> throw new IllegalArgumentException(
+					"Unsupported configuration type: " + configuration);
 		}
 	}
 
@@ -284,7 +285,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	private <T extends BaseExportConfigurationEntity> T mergeServiceProperties(T entity) {
 		if ( entity == null ) {
-			return entity;
+			return null;
 		}
 		Map<String, Object> serviceProps = entity.getServiceProps();
 		if ( serviceProps == null || serviceProps.isEmpty() ) {
@@ -329,7 +330,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		return entity;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
@@ -338,8 +339,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			return destinationConfigDao
 					.save(mergeServiceProperties((UserDestinationConfiguration) configuration));
 		} else if ( configuration instanceof UserOutputConfiguration ) {
-			return outputConfigDao
-					.save(mergeServiceProperties((UserOutputConfiguration) configuration));
+			return outputConfigDao.save(mergeServiceProperties((UserOutputConfiguration) configuration));
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}
@@ -359,21 +359,21 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public UserDatumExportTaskInfo saveDatumExportTaskForConfiguration(
 			UserDatumExportConfiguration configuration, Instant exportDate) {
 		return userExportTaskBiz.submitDatumExportConfiguration(configuration, exportDate);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
 			UserDatumExportConfiguration config) {
 		return userExportTaskBiz.submitAdhocDatumExportConfiguration(config);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public List<UserAdhocDatumExportTaskInfo> adhocExportTasksForUser(Long userId,
 			Set<DatumExportState> states, Boolean success) {
@@ -382,12 +382,10 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	@Override
 	public void handleEvent(AppEvent event) {
-		if ( event == null
-				|| !DatumExportStatus.EVENT_TOPIC_JOB_STATUS_CHANGED.equals(event.getTopic()) ) {
-			return;
-		}
-		if ( !(event.getProperty(DatumExportStatus.EVENT_PROP_JOB_STATE) instanceof Character
-				&& event.getProperty(DatumExportStatus.EVENT_PROP_JOB_ID) instanceof String) ) {
+		if ( event == null || !DatumExportStatus.EVENT_TOPIC_JOB_STATUS_CHANGED.equals(event.getTopic())
+				|| !(event.getProperty(DatumExportStatus.EVENT_PROP_JOB_STATE) instanceof Character
+						&& event.getProperty(
+								DatumExportStatus.EVENT_PROP_JOB_ID) instanceof String jobId) ) {
 			return;
 		}
 		DatumExportState jobState = DatumExportState
@@ -396,7 +394,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			return;
 		}
 
-		String jobId = (String) event.getProperty(DatumExportStatus.EVENT_PROP_JOB_ID); // TODO: maybe rename this TASK_ID?
+		// TODO: maybe rename this TASK_ID?
 		UUID taskId = UUID.fromString(jobId);
 
 		UserDatumExportTaskInfo info = taskDao.getForTaskId(taskId);
@@ -408,7 +406,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 		boolean success = false;
 		if ( event.getProperty(DatumExportStatus.EVENT_PROP_SUCCESS) instanceof Boolean ) {
-			success = ((Boolean) event.getProperty(DatumExportStatus.EVENT_PROP_SUCCESS)).booleanValue();
+			success = (Boolean) event.getProperty(DatumExportStatus.EVENT_PROP_SUCCESS);
 		}
 		if ( !success ) {
 			log.info("Datum export job {} was not successful; not updating minimum export date: {}",
@@ -433,7 +431,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	/**
 	 * Set the optional output format services.
-	 * 
+	 *
 	 * @param outputFormatServices
 	 *        the optional services
 	 */
@@ -443,7 +441,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	/**
 	 * Set the optional destination services.
-	 * 
+	 *
 	 * @param destinationServices
 	 *        the optional services
 	 */
@@ -453,7 +451,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 
 	/**
 	 * A message source for resolving messages with.
-	 * 
+	 *
 	 * @param messageSource
 	 *        the message source
 	 */

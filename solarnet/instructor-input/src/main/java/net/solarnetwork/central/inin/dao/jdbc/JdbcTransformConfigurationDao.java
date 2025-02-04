@@ -37,6 +37,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformFilter;
+import net.solarnetwork.central.inin.dao.jdbc.TransformConfigurationRowMapper.RequestTransformConfigurationRowMapper;
+import net.solarnetwork.central.inin.dao.jdbc.TransformConfigurationRowMapper.ResponseTransformConfigurationRowMapper;
 import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration.InsertRequestTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration.InsertResponseTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectTransformConfiguration;
@@ -86,7 +88,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected RowMapper<RequestTransformConfiguration> rowMapper() {
-			return TransformConfigurationRowMapper.REQ_INSTANCE;
+			return RequestTransformConfigurationRowMapper.INSTANCE;
 		}
 
 		@Override
@@ -132,7 +134,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected RowMapper<ResponseTransformConfiguration> rowMapper() {
-			return TransformConfigurationRowMapper.RES_INSTANCE;
+			return ResponseTransformConfigurationRowMapper.INSTANCE;
 		}
 
 		@Override
@@ -205,9 +207,8 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		final var sql = createSql(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
 
-		return pk;
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override

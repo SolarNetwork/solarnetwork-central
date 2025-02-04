@@ -60,8 +60,8 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
-import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.service.CertificateException;
 
 /**
  * Controller for "my nodes".
@@ -125,7 +125,7 @@ public class MyNodesController extends ControllerSupport {
 
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
-		// now now, only one alert type!
+		// now, only one alert type!
 		return Collections.singletonList(UserAlertType.NodeStaleData);
 	}
 
@@ -145,7 +145,7 @@ public class MyNodesController extends ControllerSupport {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentUser().getUserId());
 
 		// move any nodes with pending transfer into own list
-		List<UserNode> pendingTransferNodes = new ArrayList<UserNode>(nodes == null ? 0 : nodes.size());
+		List<UserNode> pendingTransferNodes = new ArrayList<>(nodes == null ? 0 : nodes.size());
 		if ( nodes != null ) {
 			for ( Iterator<UserNode> itr = nodes.iterator(); itr.hasNext(); ) {
 				UserNode node = itr.next();
@@ -279,7 +279,7 @@ public class MyNodesController extends ControllerSupport {
 
 				uriBuilder.pathSegment("u", "sec", "my-nodes");
 
-				Map<String, Object> mailModel = new HashMap<String, Object>(2);
+				Map<String, Object> mailModel = new HashMap<>(2);
 				mailModel.put("actor", actor);
 				mailModel.put("recipient", email);
 				mailModel.put("nodeId", nodeId);
@@ -311,7 +311,7 @@ public class MyNodesController extends ControllerSupport {
 				try {
 					User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
 
-					Map<String, Object> mailModel = new HashMap<String, Object>(2);
+					Map<String, Object> mailModel = new HashMap<>(2);
 					mailModel.put("actor", actor);
 					mailModel.put("transfer", xfer);
 
@@ -343,7 +343,7 @@ public class MyNodesController extends ControllerSupport {
 				try {
 					User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
 
-					Map<String, Object> mailModel = new HashMap<String, Object>(2);
+					Map<String, Object> mailModel = new HashMap<>(2);
 					mailModel.put("actor", actor);
 					mailModel.put("transfer", xfer);
 

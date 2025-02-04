@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserNodeDao.java - Jan 29, 2010 11:45:43 AM
- * 
+ *
  * Copyright 2007-2010 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,16 +24,16 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.List;
 import java.util.Set;
-import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for UserNode objects.
- * 
+ *
  * @author matt
  * @version 1.6
  */
@@ -41,10 +41,12 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find a list of all UserNode objects for a particular user.
-	 * 
+	 *
+	 * <p>
 	 * This will not return archived nodes (see
 	 * {@link #findArchivedUserNodesForUser(Long)}).
-	 * 
+	 * </p>
+	 *
 	 * @param user
 	 *        the user to get all nodes for
 	 * @return list of {@link UserNode} objects, or an empty list if none found
@@ -53,10 +55,12 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find a set of node IDs for a user ID.
-	 * 
+	 *
+	 * <p>
 	 * This will not return archived nodes (see
 	 * {@link #findArchivedUserNodesForUser(Long)}).
-	 * 
+	 * </p>
+	 *
 	 * @param userId
 	 *        the user ID to get all node IDs for
 	 * @return set of node IDs, or an empty set if none found
@@ -66,13 +70,13 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find a set of node IDs for a security token.
-	 * 
+	 *
 	 * <p>
 	 * This will not return archived nodes (see
 	 * {@link #findArchivedUserNodesForUser(Long)}). It will also restrict the
 	 * returned node IDs based on the policy associated with the token.
 	 * </p>
-	 * 
+	 *
 	 * @param tokenId
 	 *        the token ID to get all node IDs for
 	 * @return set of node IDs, or an empty set if none found
@@ -82,14 +86,14 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find all UserNodes for a given user.
-	 * 
+	 *
 	 * <p>
 	 * The returned nodes will have {@link UserNodeCertificate} values populated
 	 * in {@link UserNode#getCertificate()}, with the priority being requested,
 	 * active, disabled. The {@link UserNodeTransfer} values will be populated
 	 * in {@link UserNode#getTransfer()} as well.
 	 * </p>
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @return the nodes
@@ -98,7 +102,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Find a list of all archived UserNode objects for a particular user.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to get all archived nodes for
 	 * @return list of {@link UserNode} objects, or an empty list if none found
@@ -108,7 +112,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Update the archived status of a set of node IDs.
-	 * 
+	 *
 	 * @param userId
 	 *        The user ID of the nodes to update the status for.
 	 * @param nodeIds
@@ -122,7 +126,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Store a {@link UserNodeTransfer}.
-	 * 
+	 *
 	 * @param transfer
 	 *        The transfer to store.
 	 * @since 1.2
@@ -131,7 +135,7 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Get a {@link UserNodeTransfer} by primary key.
-	 * 
+	 *
 	 * @param pk
 	 *        The ID of the transfer to get.
 	 * @return The matching UserNodeTransfer, or <em>null</em> if not available.
@@ -141,18 +145,18 @@ public interface UserNodeDao extends GenericDao<UserNode, Long> {
 
 	/**
 	 * Delete a {@link UserNodeTransfer}.
-	 * 
+	 *
 	 * @param transfer
 	 *        The transfer to delete.
 	 * @since 1.2
 	 */
-	void deleteUserNodeTrasnfer(UserNodeTransfer transfer);
+	void deleteUserNodeTransfer(UserNodeTransfer transfer);
 
 	/**
 	 * Get all {@link UserNodeTransfer} instances for a given email address.
-	 * 
+	 *
 	 * @param email
-	 *        The email of the requested recipient of the ownership trasnfer.
+	 *        The email of the requested recipient of the ownership transfer.
 	 * @return The available node transfers, never <em>null</em>.
 	 * @since 1.2
 	 */

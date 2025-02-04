@@ -1,21 +1,21 @@
 /* ==================================================================
  * SnfBillingUtils.java - 1/11/2021 1:17:02 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -45,7 +45,7 @@ import net.solarnetwork.central.user.billing.support.MoneyUtils;
 
 /**
  * Utilities for SNF billing.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -53,7 +53,7 @@ public final class SnfBillingUtils {
 
 	/**
 	 * Generate usage metadata for a set of usage data.
-	 * 
+	 *
 	 * @param usageData
 	 *        the usage data
 	 * @param tierData
@@ -69,8 +69,8 @@ public final class SnfBillingUtils {
 			result.put(SnfInvoiceItem.META_USAGE, usageData.get(tierKey).toMetadata());
 		}
 		if ( tierData.containsKey(tierKey) ) {
-			List<Map<String, Object>> tierMeta = tierData.get(tierKey).stream().map(e -> e.toMetadata())
-					.collect(toList());
+			List<Map<String, Object>> tierMeta = tierData.get(tierKey).stream()
+					.map(NamedCost::toMetadata).collect(toList());
 			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, tierMeta);
 		}
 		return result;
@@ -79,7 +79,7 @@ public final class SnfBillingUtils {
 	/**
 	 * Create a {@link net.solarnetwork.central.user.billing.domain.Invoice}
 	 * from a {@link SnfInvoice}.
-	 * 
+	 *
 	 * @param invoice
 	 *        the input invoice entity
 	 * @param messageSource
@@ -90,7 +90,7 @@ public final class SnfBillingUtils {
 	 */
 	public static InvoiceImpl invoiceForSnfInvoice(SnfInvoice invoice, MessageSource messageSource,
 			Locale locale) {
-		List<InvoiceItem> invoiceItems = null;
+		List<InvoiceItem> invoiceItems;
 		if ( locale != null ) {
 			invoiceItems = invoice.getItems().stream().sorted(DEFAULT_ITEM_ORDER).map(e -> {
 				String desc = messageSource.getMessage(e.getKey() + ".item", null, null, locale);
@@ -132,9 +132,8 @@ public final class SnfBillingUtils {
 
 			}).collect(toList());
 		} else {
-			invoiceItems = invoice.getItems().stream().sorted(DEFAULT_ITEM_ORDER).map(e -> {
-				return new InvoiceItemImpl(invoice, e);
-			}).collect(toList());
+			invoiceItems = invoice.getItems().stream().sorted(DEFAULT_ITEM_ORDER)
+					.map(e -> new InvoiceItemImpl(invoice, e)).collect(toList());
 		}
 
 		return new InvoiceImpl(invoice, invoiceItems);

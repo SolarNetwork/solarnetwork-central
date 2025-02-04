@@ -166,7 +166,7 @@ public class BillingController {
 		}
 		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-				: acceptTypes.get(0).removeQualityValue();
+				: acceptTypes.getFirst().removeQualityValue();
 		Resource result = biz.renderInvoice(userId, invoiceId, outputType, locale);
 		if ( result != null ) {
 			HttpHeaders headers = new HttpHeaders();
@@ -176,7 +176,7 @@ public class BillingController {
 				headers.set(HttpHeaders.CONTENT_DISPOSITION,
 						format("attachment; filename=\"%s\"", result.getFilename()));
 			}
-			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+			return new ResponseEntity<>(result, headers, HttpStatus.OK);
 		}
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
@@ -212,8 +212,8 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
-	public Result<FilterResults<InvoiceMatch, String>> findFilteredInvoices(
-			InvoiceFilterCommand filter, Locale locale) {
+	public Result<FilterResults<InvoiceMatch, String>> findFilteredInvoices(InvoiceFilterCommand filter,
+			Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( filter.getUserId() == null ) {
 			filter.setUserId(SecurityUtils.getCurrentActorUserId());
@@ -234,6 +234,7 @@ public class BillingController {
 
 	/** A YYYY-MM date format to use for parsing a billing month. */
 	public static final DateTimeFormatter MONTH_FORMAT;
+
 	static {
 		// @formatter:off
 		MONTH_FORMAT = new DateTimeFormatterBuilder()
@@ -264,8 +265,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/preview", method = RequestMethod.GET)
-	public Result<Invoice> previewInvoice(
-			@RequestParam(value = "userId", required = false) Long userId,
+	public Result<Invoice> previewInvoice(@RequestParam(value = "userId", required = false) Long userId,
 			@RequestParam(value = "month", required = false) String month,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
 		BillingBiz biz = billingBiz();
@@ -322,7 +322,7 @@ public class BillingController {
 		}
 		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-				: acceptTypes.get(0).removeQualityValue();
+				: acceptTypes.getFirst().removeQualityValue();
 		YearMonth date = null;
 		if ( month != null && !month.isEmpty() ) {
 			date = MONTH_FORMAT.parse(month, YearMonth::from);
@@ -337,7 +337,7 @@ public class BillingController {
 				headers.set(HttpHeaders.CONTENT_DISPOSITION,
 						format("attachment; filename=\"%s\"", result.getFilename()));
 			}
-			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+			return new ResponseEntity<>(result, headers, HttpStatus.OK);
 		}
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}

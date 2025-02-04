@@ -1,27 +1,28 @@
 /* ==================================================================
  * LocationRequest.java - 19/05/2022 1:37:42 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -30,7 +31,7 @@ import net.solarnetwork.dao.BasicLongEntity;
 
 /**
  * Entity for location requests.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.3
@@ -38,6 +39,7 @@ import net.solarnetwork.dao.BasicLongEntity;
 @JsonPropertyOrder({ "id", "created", "modified", "userId", "status", "locationId", "message", "data" })
 public class LocationRequest extends BasicLongEntity {
 
+	@Serial
 	private static final long serialVersionUID = 7700770585486402946L;
 
 	private Instant modified;
@@ -56,7 +58,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Construct with an ID.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -73,7 +75,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Create a copy with a given ID.
-	 * 
+	 *
 	 * @param id
 	 *        the ID to use
 	 * @return the new copy
@@ -128,7 +130,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Get the modification date.
-	 * 
+	 *
 	 * @return the modified
 	 */
 	public Instant getModified() {
@@ -137,7 +139,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Set the modification date.
-	 * 
+	 *
 	 * @param modified
 	 *        the modified to set
 	 */
@@ -147,7 +149,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Get the user ID.
-	 * 
+	 *
 	 * @return the userId
 	 */
 	public Long getUserId() {
@@ -156,7 +158,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Set the user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the userId to set
 	 */
@@ -166,7 +168,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Get the status.
-	 * 
+	 *
 	 * @return the status
 	 */
 	public LocationRequestStatus getStatus() {
@@ -175,7 +177,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Set the status.
-	 * 
+	 *
 	 * @param status
 	 *        the status to set
 	 */
@@ -185,7 +187,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Get the location ID.
-	 * 
+	 *
 	 * @return the locationId
 	 */
 	public Long getLocationId() {
@@ -194,7 +196,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Set the location ID.
-	 * 
+	 *
 	 * @param locationId
 	 *        the locationId to set
 	 */
@@ -204,7 +206,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Get the message.
-	 * 
+	 *
 	 * @return the message
 	 */
 	public String getMessage() {
@@ -213,7 +215,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Set the message.
-	 * 
+	 *
 	 * @param message
 	 *        the message to set
 	 */
@@ -223,7 +225,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Set the JSON data.
-	 * 
+	 *
 	 * @return the JSON data
 	 */
 	@JsonProperty("data")
@@ -234,7 +236,7 @@ public class LocationRequest extends BasicLongEntity {
 
 	/**
 	 * Get the JSON data.
-	 * 
+	 *
 	 * @param jsonData
 	 *        the jsonData to set
 	 */

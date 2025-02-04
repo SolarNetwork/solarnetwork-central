@@ -1,23 +1,23 @@
 /* ===================================================================
  * QueryBiz.java
- * 
+ *
  * Created Aug 5, 2009 11:39:52 AM
- * 
- * Copyright (c) 2009 Solarnetwork.net Dev Team.
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * Copyright (c) 2009 SolarNetwork.net Dev Team.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ===================================================================
  * $Id$
@@ -57,7 +57,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for querying business logic.
- * 
+ *
  * @author matt
  * @version 4.2
  */
@@ -66,7 +66,7 @@ public interface QueryBiz {
 	/**
 	 * Get a date interval of available data for a node, optionally limited to a
 	 * source ID.
-	 * 
+	 *
 	 * <p>
 	 * This method can be used to find the earliest and latest dates data is
 	 * available for a set of given {@link GeneralNodeDatum}. This could be
@@ -77,7 +77,7 @@ public interface QueryBiz {
 	 * If the {@code sourceId} parameter is {@literal null} then the returned
 	 * interval will be for the node as a whole, for any sources.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node to look for
 	 * @param sourceId
@@ -89,18 +89,18 @@ public interface QueryBiz {
 
 	/**
 	 * Get the available source IDs for a given filter.
-	 * 
+	 *
 	 * <p>
 	 * The filter is expected to provide a node ID. Multiple node IDs may be
 	 * provided. Start and end dates may be provided to limit the query to a
 	 * specific date range.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * <b>Note</b> that the precision of dates may be rounded by implementations
 	 * when executing the query, for performance reasons.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @return the distinct source IDs available (never {@literal null})
@@ -111,18 +111,18 @@ public interface QueryBiz {
 
 	/**
 	 * Get the available source IDs for a given filter.
-	 * 
+	 *
 	 * <p>
 	 * The filter is expected to provide a node ID. Multiple node IDs may be
 	 * provided. Start and end dates may be provided to limit the query to a
 	 * specific date range.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * <b>Note</b> that the precision of dates may be rounded by implementations
 	 * when executing the query, for performance reasons.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @return the distinct node and source IDs available (never
@@ -133,7 +133,7 @@ public interface QueryBiz {
 
 	/**
 	 * Find all available nodes for a given actor.
-	 * 
+	 *
 	 * @param actor
 	 *        the actor to get nodes for
 	 * @return the results, never {@literal null}
@@ -143,7 +143,7 @@ public interface QueryBiz {
 
 	/**
 	 * Find all available node sources for a given actor.
-	 * 
+	 *
 	 * @param actor
 	 *        the actor to get node sources for
 	 * @param filter
@@ -157,7 +157,7 @@ public interface QueryBiz {
 	/**
 	 * API for querying for a filtered set of GeneralNodeDatum results from all
 	 * possible results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param sortDescriptors
@@ -176,7 +176,7 @@ public interface QueryBiz {
 	/**
 	 * API for querying for a filtered set of aggregated GeneralNodeDatum
 	 * results from all possible results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param sortDescriptors
@@ -195,7 +195,7 @@ public interface QueryBiz {
 	/**
 	 * API for querying for a filtered set of stream datum, streaming the
 	 * results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param processor
@@ -216,7 +216,7 @@ public interface QueryBiz {
 	/**
 	 * API for querying for a filtered set of reading stream datum, streaming
 	 * the results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param readingType
@@ -243,14 +243,14 @@ public interface QueryBiz {
 
 	/**
 	 * API for querying for a filtered set of "readings".
-	 * 
+	 *
 	 * <p>
 	 * The {@code filter} must provide the required date(s) to use for the
 	 * reading type. If the reading type only requires one date, then the
 	 * {@link GeneralNodeDatumFilter#getLocalStartDate()} or
 	 * {@link GeneralNodeDatumFilter#getStartDate()} value should be provided.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter, to specify the nodes/sources to find as well as
 	 *        the start/end dates
@@ -268,14 +268,14 @@ public interface QueryBiz {
 
 	/**
 	 * API for querying for a filtered set of aggregate "readings".
-	 * 
+	 *
 	 * <p>
 	 * The {@code filter} must provide the required date(s) to use for the
 	 * reading type. If the reading type only requires one date, then the
 	 * {@link GeneralNodeDatumFilter#getLocalStartDate()} or
 	 * {@link GeneralNodeDatumFilter#getStartDate()} value should be provided.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter, to specify the nodes/sources to find as well as
 	 *        the start/end dates
@@ -302,7 +302,7 @@ public interface QueryBiz {
 	 * API for querying for a filtered set of
 	 * {@link GeneralLocationDatumFilterMatch} results from all possible
 	 * results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param sortDescriptors
@@ -322,7 +322,7 @@ public interface QueryBiz {
 	 * API for querying for a filtered set of aggregated
 	 * {@link ReportingGeneralLocationDatumMatch} results from all possible
 	 * results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param sortDescriptors
@@ -341,7 +341,7 @@ public interface QueryBiz {
 	/**
 	 * Get the available source IDs for a given location, optionally limited to
 	 * a date range.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID to search for
 	 * @param start
@@ -356,7 +356,7 @@ public interface QueryBiz {
 	/**
 	 * Get a date interval of available data for a location, optionally limited
 	 * to a source ID.
-	 * 
+	 *
 	 * <p>
 	 * This method can be used to find the earliest and latest dates data is
 	 * available for a set of given {@link GeneralLocationDatum}. This could be
@@ -367,7 +367,7 @@ public interface QueryBiz {
 	 * If the {@code sourceId} parameter is {@literal null} then the returned
 	 * interval will be for the node as a whole, for any sources.
 	 * </p>
-	 * 
+	 *
 	 * @param locationId
 	 *        the ID of the location to look for
 	 * @param sourceId
@@ -381,7 +381,7 @@ public interface QueryBiz {
 	/**
 	 * API for querying for a filtered set of locations from all possible
 	 * results.
-	 * 
+	 *
 	 * @param filter
 	 *        the query filter
 	 * @param sortDescriptors
@@ -390,7 +390,7 @@ public interface QueryBiz {
 	 *        an optional result offset
 	 * @param max
 	 *        an optional maximum number of returned results
-	 * 
+	 *
 	 * @return the results, never {@literal null}
 	 * @since 1.4
 	 */
