@@ -140,7 +140,7 @@ public class InvoiceGenerationTaskCreator {
 		// grab current account time zone
 		final ZoneId accountTimeZone = account.getTimeZone();
 		if ( accountTimeZone == null ) {
-			throw new RuntimeException(String.format("Account %s has no time zone set.",
+			throw new RuntimeException(String.format("Account %s (%s) has no time zone set.",
 					account.getId().getId(), user.getEmail()));
 		}
 
@@ -157,13 +157,12 @@ public class InvoiceGenerationTaskCreator {
 		// time to invoice for this account
 		ZonedDateTime currInvoiceDate = invoicedThroughDate;
 		do {
-			log.info("Generating invoice for user {} for month {}", user.getEmail(), currInvoiceDate,
-					endDate);
+			log.info("Generating invoice for user {} for month {}", user.getEmail(), currInvoiceDate);
 			AccountTask task = AccountTask.newTask(currInvoiceDate.toInstant(),
 					AccountTaskType.GenerateInvoice, account.getId().getId());
 			accountTaskDao.save(task);
-			log.info("InvoiceImpl generation task created for user {} for month {} total = {} {}",
-					user.getEmail(), currInvoiceDate);
+			log.info("InvoiceImpl generation task created for user {} for month {}", user.getEmail(),
+					currInvoiceDate);
 			currInvoiceDate = currInvoiceDate.plusMonths(1);
 		} while ( currInvoiceDate.isBefore(invoiceEndDate) );
 	}

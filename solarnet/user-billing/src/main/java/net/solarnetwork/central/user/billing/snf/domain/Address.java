@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -41,6 +42,7 @@ import net.solarnetwork.domain.Differentiable;
 public class Address extends BasicLongEntity
 		implements UserRelatedEntity<Long>, Differentiable<Address> {
 
+	@Serial
 	private static final long serialVersionUID = -8287306387880683563L;
 
 	private Long userId;
@@ -52,7 +54,7 @@ public class Address extends BasicLongEntity
 	private String stateOrProvince;
 	private String locality;
 	private String postalCode;
-	private String street[];
+	private String[] street;
 
 	/**
 	 * Default constructor.

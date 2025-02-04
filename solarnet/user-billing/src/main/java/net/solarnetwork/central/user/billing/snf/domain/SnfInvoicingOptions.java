@@ -1,21 +1,21 @@
 /* ==================================================================
  * SnfInvoicingOptions.java - 30/07/2020 9:22:35 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,7 +27,7 @@ import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 
 /**
  * Options to use during invoice generation.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -35,12 +35,12 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 
 	/**
 	 * Get an instance with the default options configured.
-	 * 
+	 *
 	 * <p>
 	 * The {@code dryRun} flag will be {@literal false} and
 	 * {@code useAccountCredit} will be {@literal true}.
 	 * </p>
-	 * 
+	 *
 	 * @return the options, never {@literal null}
 	 */
 	public static SnfInvoicingOptions defaultOptions() {
@@ -49,12 +49,12 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 
 	/**
 	 * Get an instance with the "dry run" options configured.
-	 * 
+	 *
 	 * <p>
 	 * The {@code dryRun} flag will be {@literal true} and
 	 * {@code useAccountCredit} will be {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @return the options, never {@literal null}
 	 */
 	public static SnfInvoicingOptions dryRunOptions() {
@@ -66,7 +66,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * <p>
 	 * The {@code dryRun} flag will be {@literal false} and
 	 * {@code useAccountCredit} will be {@literal true}.
@@ -78,7 +78,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dryRun
 	 *        the "dry run" flag
 	 * @param useAccountCredit
@@ -111,10 +111,9 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof SnfInvoicingOptions) ) {
+		if ( !(obj instanceof SnfInvoicingOptions other) ) {
 			return false;
 		}
-		SnfInvoicingOptions other = (SnfInvoicingOptions) obj;
 		return dryRun == other.dryRun && useAccountCredit == other.useAccountCredit;
 	}
 
@@ -125,7 +124,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 
 	/**
 	 * Set the "dry run" flag.
-	 * 
+	 *
 	 * @param dryRun
 	 *        {@literal true} if an invoice should be generated but not
 	 *        persisted
@@ -141,7 +140,7 @@ public class SnfInvoicingOptions implements SnfInvoicingSystem.InvoiceGeneration
 
 	/**
 	 * Set the "use account credit" flag.
-	 * 
+	 *
 	 * @param useAccountCredit
 	 *        {@literal true} to use available account credit by adding a credit
 	 *        item to the generated invoice

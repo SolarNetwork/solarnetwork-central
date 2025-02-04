@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import static java.util.Arrays.stream;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -61,6 +62,7 @@ import net.solarnetwork.util.ArrayUtils;
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
+	@Serial
 	private static final long serialVersionUID = 6848689122993706234L;
 
 	/**
@@ -565,7 +567,7 @@ public class NodeUsage extends BasicLongEntity
 		if ( counts == null || counts.length < 1 ) {
 			return Collections.emptyList();
 		}
-		List<NamedCost> result = new ArrayList<>(counts != null ? counts.length : 4);
+		List<NamedCost> result = new ArrayList<>(counts.length);
 		for ( int i = 0; i < counts.length; i++ ) {
 			BigInteger q = counts[i];
 			if ( BigInteger.ZERO.compareTo(q) == 0 ) {

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
 import java.util.List;
+import java.util.Objects;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -85,17 +86,13 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 			filter = filter.clone();
 			filter.setSorts(sorts);
 			filter.setMax(max);
-			if ( offset == null ) {
-				// force offset to 0 if implied
-				filter.setOffset(0L);
-			} else {
-				filter.setOffset(offset);
-			}
+			// force offset to 0 if implied
+			filter.setOffset(Objects.requireNonNullElse(offset, 0L));
 		}
 
 		// attempt count first, if max NOT specified as -1 and NOT a mostRecent query
 		Long totalCount = null;
-		if ( max == null || max.intValue() != -1 ) {
+		if ( max == null || max != -1 ) {
 			SnfInvoiceFilter countFilter = filter.clone();
 			countFilter.setOffset(null);
 			countFilter.setMax(null);
