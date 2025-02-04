@@ -3,7 +3,7 @@
  *
  * Created Aug 31, 2008 2:49:36 PM
  *
- * Copyright (c) 2008 Solarnetwork.net Dev Team.
+ * Copyright (c) 2008 SolarNetwork.net Dev Team.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

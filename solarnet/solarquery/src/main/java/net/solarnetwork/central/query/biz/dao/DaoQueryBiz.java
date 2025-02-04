@@ -1,23 +1,23 @@
 /* ===================================================================
  * DaoQueryBiz.java
- * 
+ *
  * Created Aug 5, 2009 12:31:45 PM
- * 
- * Copyright (c) 2009 Solarnetwork.net Dev Team.
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * Copyright (c) 2009 SolarNetwork.net Dev Team.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ===================================================================
  */
@@ -100,7 +100,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Implementation of {@link QueryBiz}.
- * 
+ *
  * @author matt
  * @version 4.5
  */
@@ -110,8 +110,8 @@ public class DaoQueryBiz implements QueryBiz {
 	private final DatumEntityDao datumDao;
 	private final DatumStreamMetadataDao metaDao;
 	private final ReadingDatumDao readingDao;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private SolarLocationDao solarLocationDao;
-	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private Validator criteriaValidator;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
@@ -127,7 +127,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumDao
 	 *        the datum DAO
 	 * @param metaDao
@@ -267,9 +267,9 @@ public class DaoQueryBiz implements QueryBiz {
 			// running total
 			return null;
 		}
-		Object startDate = null;
-		Object endDate = null;
-		long diffDays = 0;
+		Object startDate;
+		Object endDate;
+		long diffDays;
 		if ( filter instanceof LocalDateRangeFilter
 				&& ((LocalDateRangeFilter) filter).getLocalStartDate() != null ) {
 			LocalDateTime s = ((LocalDateRangeFilter) filter).getLocalStartDate();
@@ -294,10 +294,11 @@ public class DaoQueryBiz implements QueryBiz {
 			endDate = e;
 			diffDays = (s != null && e != null ? ChronoUnit.DAYS.between(s, e) : 0);
 		}
-		if ( startDate == null && endDate == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
-				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
-				&& agg != Aggregation.HourOfYear && agg != Aggregation.DayOfYear ) {
+		if ( startDate == null && endDate == null
+				&& (agg == null || agg.compareLevel(Aggregation.Day) < 0) && agg != Aggregation.HourOfDay
+				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.DayOfWeek
+				&& agg != Aggregation.SeasonalDayOfWeek && agg != Aggregation.HourOfYear
+				&& agg != Aggregation.DayOfYear ) {
 			log.info("Restricting aggregate to Day for filter with missing start or end date: {}",
 					filter);
 			forced = Aggregation.Day;
@@ -537,15 +538,15 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
-		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
-				|| requestedMaximum.intValue() < 1 ) {
+		if ( requestedMaximum == null || requestedMaximum > filteredResultsLimit
+				|| requestedMaximum < 1 ) {
 			return filteredResultsLimit;
 		}
 		return requestedMaximum;
 	}
 
 	private Long limitFilterOffset(Long requestedOffset) {
-		if ( requestedOffset == null || requestedOffset.longValue() < 0 ) {
+		if ( requestedOffset == null || requestedOffset < 0 ) {
 			return 0L;
 		}
 		return requestedOffset;
@@ -562,7 +563,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum hour time range allowed for minute aggregate queries
 	 * before a higher aggregation level (e.g. hour) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForMinuteAggregation
 	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
 	 *        to {@literal 7}
@@ -574,7 +575,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum hour time range allowed for hour aggregate queries before
 	 * a higher aggregation level (e.g. day) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForHourAggregation
 	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
 	 *        to {@literal 31}
@@ -586,7 +587,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum hour time range allowed for day aggregate queries before
 	 * a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForDayAggregation
 	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
 	 *        to {@literal 730}
@@ -598,7 +599,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for hour-of-day aggregate queries
 	 * before a higher aggregation level (e.g. day) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForDayOfWeekAggregation
 	 *        the maximum day time range; defaults to {@literal 3650}
 	 */
@@ -609,7 +610,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for hour-of-day aggregate queries
 	 * before a higher aggregation level (e.g. day) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForHourOfDayAggregation
 	 *        the maximum day range
 	 */
@@ -620,7 +621,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Get the maximum day time range allowed for week-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @return the maximum day time range; defaults to {@literal 3650}
 	 * @since 4.2
 	 */
@@ -631,7 +632,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for week-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForWeekOfYearAggregation
 	 *        the maximum day range
 	 * @since 4.2
@@ -642,7 +643,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	/**
 	 * Get the location DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	public SolarLocationDao getSolarLocationDao() {
@@ -656,7 +657,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	/**
 	 * Set a Validator to use for reading datum queries.
-	 * 
+	 *
 	 * @param criteriaValidator
 	 *        the validator to set
 	 * @since 3.4
@@ -668,7 +669,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for day-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForDayOfYearAggregation
 	 *        the maximum day range to set
 	 * @since 4.4
@@ -680,7 +681,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for hour-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForHourOfYearAggregation
 	 *        the maximum day range to set
 	 * @since 4.4

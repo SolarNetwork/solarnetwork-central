@@ -1,21 +1,21 @@
 /* ==================================================================
  * LocationDatumController.java - Oct 18, 2014 3:47:51 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,7 +48,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for location-based data.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -62,7 +62,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 */
@@ -72,7 +72,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param pathMatcher
@@ -91,20 +91,20 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 * Get the set of source IDs available for the available
 	 * GeneralLocationDatum for a single location, optionally constrained within
 	 * a date range.
-	 * 
+	 *
 	 * <p>
 	 * A <code>sourceId</code> path pattern may also be provided, to restrict
 	 * the resulting source ID set to.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL: <code>/api/v1/sec/location/datum/sources?locationId=1</code>
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -113,7 +113,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 *   ]
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * @param cmd
 	 *        the input command
 	 * @return the available sources
@@ -136,20 +136,20 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	/**
 	 * Get a date range of available GeneralLocationDatum for a single location
 	 * and an optional source ID.
-	 * 
+	 *
 	 * <p>
 	 * This method returns a start/end date range.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL:
 	 * <code>/api/v1/sec/location/datum/interval?locationId=1</code>
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -163,7 +163,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 *   }
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * @param cmd
 	 *        the input command
 	 * @return the {@link ReportableInterval}
@@ -185,7 +185,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 		}
 		String sourceId = cmd.getSourceId();
 		if ( sourceId != null && pathMatcher.isPattern(sourceId) && cmd.getLocationIds() != null ) {
-			Set<String> allSources = new LinkedHashSet<String>();
+			Set<String> allSources = new LinkedHashSet<>();
 			for ( Long locationId : cmd.getLocationIds() ) {
 				Set<String> data = queryBiz.getLocationAvailableSources(locationId, cmd.getStartDate(),
 						cmd.getEndDate());
@@ -195,7 +195,7 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 			}
 			allSources = filterSources(allSources, pathMatcher, sourceId);
 			if ( !allSources.isEmpty() ) {
-				cmd.setSourceIds(allSources.toArray(new String[allSources.size()]));
+				cmd.setSourceIds(allSources.toArray(String[]::new));
 			}
 		}
 	}

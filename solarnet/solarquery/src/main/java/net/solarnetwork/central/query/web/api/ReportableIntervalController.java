@@ -1,21 +1,21 @@
 /* ==================================================================
  * ReportableIntervalController.java - Dec 18, 2012 9:19:43 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,12 +48,12 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Controller for querying for reportable interval values.
- * 
+ *
  * <p>
  * See the {@link ReportableInterval} class for information about what is
  * returned to the view.
  * </p>
- * 
+ *
  * @author matt
  * @version 3.2
  */
@@ -78,7 +78,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param datumMetadataBiz
@@ -90,7 +90,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param datumMetadataBiz
@@ -111,19 +111,19 @@ public class ReportableIntervalController {
 	/**
 	 * Get a date range of available GeneralNodeData for a node and an optional
 	 * source ID.
-	 * 
+	 *
 	 * <p>
 	 * This method returns a start/end date range.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL: <code>/api/v1/sec/range/interval?nodeId=1</code>
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -137,7 +137,7 @@ public class ReportableIntervalController {
 	 *   }
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * @param req
 	 *        the HTTP request
 	 * @param cmd
@@ -157,20 +157,20 @@ public class ReportableIntervalController {
 	/**
 	 * Get the set of source IDs available for the available GeneralNodeData for
 	 * a single node, optionally constrained within a date range.
-	 * 
+	 *
 	 * <p>
 	 * A <code>sourceId</code> path pattern may also be provided, to restrict
 	 * the resulting source ID set to.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL: <code>/api/v1/sec/range/sources?nodeId=1</code>
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -179,7 +179,7 @@ public class ReportableIntervalController {
 	 *   ]
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * @param req
 	 *        the HTTP request
 	 * @param cmd
@@ -207,13 +207,13 @@ public class ReportableIntervalController {
 
 	/**
 	 * Get all available node+source ID pairs.
-	 * 
+	 *
 	 * <p>
 	 * A <code>sourceId</code> path pattern may also be provided, to restrict
 	 * the resulting source ID set to. Also {@code startDate} and
 	 * {@code endDate} values may be provided to restrict the query further.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL:
 	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;withNodeIds=true</code>
@@ -222,7 +222,7 @@ public class ReportableIntervalController {
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -232,12 +232,12 @@ public class ReportableIntervalController {
 	 *   ]
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * <p>
-	 * If {@code withNodeIds} is specifed as {@literal false} then the result
+	 * If {@code withNodeIds} is specified as {@literal false} then the result
 	 * will be simply a set of string source ID values.
 	 * </p>
-	 * 
+	 *
 	 * @param cmd
 	 *        the criteria
 	 * @return the found source IDs
@@ -258,7 +258,7 @@ public class ReportableIntervalController {
 			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
 
 			if ( !cmd.isWithNodeIds() ) {
-				Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+				Set<String> sourceIds = new LinkedHashSet<>(data.size());
 				for ( NodeSourcePK pk : data ) {
 					sourceIds.add(pk.getSourceId());
 				}
@@ -272,12 +272,12 @@ public class ReportableIntervalController {
 	/**
 	 * Get all available node+source ID pairs that match a node datum metadata
 	 * search filter.
-	 * 
+	 *
 	 * <p>
 	 * A <code>sourceId</code> path pattern may also be provided, to restrict
 	 * the resulting source ID set to.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL:
 	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;metadataFilter=(/m/foo=bar)</code>
@@ -286,7 +286,7 @@ public class ReportableIntervalController {
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -296,13 +296,13 @@ public class ReportableIntervalController {
 	 *   ]
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * <p>
 	 * If only a single node ID is specified, then the results will be
 	 * simplified to just an array of strings for the source IDs, omitting the
 	 * node ID which is redundant.
 	 * </p>
-	 * 
+	 *
 	 * @param req
 	 *        the HTTP request
 	 * @param cmd
@@ -323,7 +323,7 @@ public class ReportableIntervalController {
 
 			if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
 				// at most 1 node ID, so simplify results to just source ID values
-				Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+				Set<String> sourceIds = new LinkedHashSet<>(data.size());
 				for ( NodeSourcePK pk : data ) {
 					sourceIds.add(pk.getSourceId());
 				}
@@ -335,7 +335,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Get the number of retry attempts for transient DAO exceptions.
-	 * 
+	 *
 	 * @return the retry count; defaults to
 	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT}.
 	 * @since 2.5
@@ -346,7 +346,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Set the number of retry attempts for transient DAO exceptions.
-	 * 
+	 *
 	 * @param transientExceptionRetryCount
 	 *        the retry count, or {@literal 0} for no retries
 	 * @since 2.5
@@ -358,7 +358,7 @@ public class ReportableIntervalController {
 	/**
 	 * Get the length of time, in milliseconds, to sleep before retrying a
 	 * request after a transient exception.
-	 * 
+	 *
 	 * @return the delay, in milliseconds; defaults to
 	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY}
 	 * @since 3.1
@@ -370,7 +370,7 @@ public class ReportableIntervalController {
 	/**
 	 * Set the length of time, in milliseconds, to sleep before retrying a
 	 * request after a transient exception.
-	 * 
+	 *
 	 * @param transientExceptionRetryDelay
 	 *        the delay to set
 	 * @since 3.1
