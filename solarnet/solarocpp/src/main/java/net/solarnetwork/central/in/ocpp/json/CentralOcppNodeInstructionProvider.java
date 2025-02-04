@@ -1,21 +1,21 @@
 /* ==================================================================
  * CentralOcppNodeInstructionManager.java - 2/07/2024 4:36:24 pm
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -73,7 +73,7 @@ import net.solarnetwork.util.StatTracker;
 /**
  * Manage queued OCPP node instructions asynchronously, when OCPP clients
  * connect.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -110,7 +110,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param clock
 	 *        the clock
 	 * @param stats
@@ -269,7 +269,7 @@ public class CentralOcppNodeInstructionProvider extends
 						return null;
 					}
 
-					ActionMessage<Object> message = new BasicActionMessage<Object>(identity,
+					ActionMessage<Object> message = new BasicActionMessage<>(identity,
 							UUID.randomUUID().toString(), action, payload);
 					chargePointBroker.sendMessageToChargePoint(message, (msg, res, err) -> {
 						if ( err != null ) {
@@ -350,10 +350,9 @@ public class CentralOcppNodeInstructionProvider extends
 			if ( this == obj ) {
 				return true;
 			}
-			if ( !(obj instanceof DelayedChargePointIdentifier) ) {
+			if ( !(obj instanceof DelayedChargePointIdentifier other) ) {
 				return false;
 			}
-			DelayedChargePointIdentifier other = (DelayedChargePointIdentifier) obj;
 			return Objects.equals(ident, other.ident);
 		}
 
@@ -377,7 +376,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 	/**
 	 * Get the instruction topic to listen to for OCPP messages.
-	 * 
+	 *
 	 * @return the instruction topic to listen to, or {@literal null} to not
 	 *         look for OCPP instructions
 	 */
@@ -387,7 +386,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 	/**
 	 * Set the instruction topic to listen to for OCPP messages.
-	 * 
+	 *
 	 * @param instructionTopic
 	 *        the instruction topic to set
 	 */
@@ -397,7 +396,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 	/**
 	 * Get the user event appender service.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public UserEventAppenderBiz getUserEventAppenderBiz() {
@@ -406,7 +405,7 @@ public class CentralOcppNodeInstructionProvider extends
 
 	/**
 	 * Set the user event appender service.
-	 * 
+	 *
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */
