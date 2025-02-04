@@ -388,16 +388,23 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 		private int monthCount = 0;
 		private int expiredMonthCount = 0;
 		private int staleAuditMonthCount = 0;
+
+		private ZonedDateTime expireMonth() {
+			var expireMonth = expire.with(firstDayOfMonth());
+			if ( expireMonth.compareTo(expire) == 0 ) {
+				expireMonth = expireMonth.minusMonths(1);
+			}
+			return expireMonth;
+		}
 	}
 
 	private DataToExpire setupDataToExpire() {
 		final ZoneId zone = ZoneId.of(TEST_TZ);
 		final DataToExpire result = new DataToExpire();
 		final ZonedDateTime today = ZonedDateTime.now(zone).truncatedTo(ChronoUnit.DAYS);
-		result.expire = ZonedDateTime.now(zone).minusDays(35).truncatedTo(ChronoUnit.DAYS);
+		result.expire = today.minusDays(35);
 
-		final ZonedDateTime expireMonth = result.expire.with(firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS);
+		final ZonedDateTime expireMonth = result.expireMonth();
 
 		final ZonedDateTime start = today.minus(8, ChronoUnit.WEEKS);
 		result.start = start.toInstant();
@@ -507,7 +514,7 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0).getTimestamp(),
+		assertThat("First datum date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks(range.expiredCount).toInstant()));
 
 		datum = findAllHourlyDatum(streamMeta.getStreamId());
@@ -546,13 +553,13 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0).getTimestamp(),
+		assertThat("First datum date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks((int) range.expiredCount).toInstant()));
 
 		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum,
 				hasSize((int) (range.hourCount - range.expiredHourCount)));
-		assertThat("First hourly date", datum.get(0).getTimestamp(),
+		assertThat("First hourly date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks((int) range.expiredHourCount).toInstant()));
 
 		datum = findAllDailyDatum(streamMeta.getStreamId());
@@ -589,18 +596,18 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0).getTimestamp(),
+		assertThat("First datum date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks((int) range.expiredCount).toInstant()));
 
 		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum,
 				hasSize((int) (range.hourCount - range.expiredHourCount)));
-		assertThat("First hourly date", datum.get(0).getTimestamp(),
+		assertThat("First hourly date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks((int) range.expiredHourCount).toInstant()));
 
 		datum = findAllDailyDatum(streamMeta.getStreamId());
 		assertThat("Daily datum count", datum, hasSize(range.dayCount - range.expiredDayCount));
-		assertThat("First daily date", datum.get(0).getTimestamp(),
+		assertThat("First daily date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks(range.expiredDayCount).toInstant()));
 
 		datum = findAllMonthlyDatum(streamMeta.getStreamId());
@@ -634,30 +641,29 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		List<? extends Datum> datum = findAllDatum(streamMeta.getStreamId());
 		assertThat("Datum count", datum, hasSize((int) (range.rawCount - range.expiredCount)));
-		assertThat("First datum date", datum.get(0).getTimestamp(),
+		assertThat("First datum date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks((int) range.expiredCount).toInstant()));
 
 		datum = findAllHourlyDatum(streamMeta.getStreamId());
 		assertThat("Hourly datum count", datum,
 				hasSize((int) (range.hourCount - range.expiredHourCount)));
-		assertThat("First hourly date", datum.get(0).getTimestamp(),
+		assertThat("First hourly date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks((int) range.expiredHourCount).toInstant()));
 
 		datum = findAllDailyDatum(streamMeta.getStreamId());
 		assertThat("Daily datum count", datum, hasSize(range.dayCount - range.expiredDayCount));
-		assertThat("First daily date", datum.get(0).getTimestamp(),
+		assertThat("First daily date", datum.getFirst().getTimestamp(),
 				equalTo(start.plusWeeks(range.expiredDayCount).toInstant()));
 
 		datum = findAllMonthlyDatum(streamMeta.getStreamId());
 		assertThat("Monthly datum count", datum, hasSize(range.monthCount - range.expiredMonthCount));
-		assertThat("First monthly date", datum.get(0).getTimestamp(),
+		assertThat("First monthly date", datum.getFirst().getTimestamp(),
 				equalTo(start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS)
 						.plusMonths(range.expiredMonthCount).toInstant()));
 
 		Period p = Period.between(
 				start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toLocalDate(),
-				range.expire.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).plusMonths(1)
-						.toLocalDate());
+				range.expireMonth().plusMonths(1).toLocalDate());
 		assertAuditDatumDailyStaleMonths(start.toInstant(), p.getMonths());
 		assertNoAggStaleDatum();
 	}
