@@ -138,8 +138,8 @@ public class DatumImportController {
 			cause = cause.getCause();
 		}
 		StringBuilder buf = new StringBuilder(e.getMessage());
-		if ( cause != null && cause != e ) {
-			buf.append(" Root cause: ").append(cause.toString());
+		if ( cause != e ) {
+			buf.append(" Root cause: ").append(cause);
 		}
 		Map<String, Object> data = new LinkedHashMap<>(4);
 		if ( e.getLoadedCount() != null ) {
@@ -236,32 +236,26 @@ public class DatumImportController {
 			future = null;
 		}
 		// we have to wrap our FilterResults response with a Response; hence the Callable result here
-		return new Callable<Result<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>>() {
-
-			@Override
-			public Result<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> call()
-					throws Exception {
-				if ( future == null ) {
-					return error(null, "Import service not available");
-				}
-				try {
-					FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> result = future.get();
-					return success(result);
-				} catch ( ExecutionException e ) {
-					Throwable t = e.getCause();
-					if ( t instanceof AuthorizationException ) {
-						AuthorizationException ae = (AuthorizationException) t;
-						if ( ae.getId() instanceof Long ) {
-							// treat as node ID, and re-throw as validation exception for preview
-							throw new DatumImportValidationException(
-									"Import not allowed for node " + ae.getId());
-						}
+		return () -> {
+			if ( future == null ) {
+				return error(null, "Import service not available");
+			}
+			try {
+				FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> result = future.get();
+				return success(result);
+			} catch ( ExecutionException e ) {
+				Throwable t = e.getCause();
+				if ( t instanceof AuthorizationException ae ) {
+					if ( ae.getId() instanceof Long ) {
+						// treat as node ID, and re-throw as validation exception for preview
+						throw new DatumImportValidationException(
+								"Import not allowed for node " + ae.getId());
 					}
-					if ( t instanceof Exception ) {
-						throw (Exception) t;
-					}
-					throw e;
 				}
+				if ( t instanceof Exception ) {
+					throw (Exception) t;
+				}
+				throw e;
 			}
 		};
 	}
@@ -288,9 +282,7 @@ public class DatumImportController {
 			Set<DatumImportState> stateFilter = null;
 			if ( states != null && states.length > 0 ) {
 				stateFilter = new HashSet<>(states.length);
-				for ( DatumImportState state : states ) {
-					stateFilter.add(state);
-				}
+				Collections.addAll(stateFilter, states);
 				stateFilter = EnumSet.copyOf(stateFilter);
 			}
 			Long userId = SecurityUtils.getCurrentActorUserId();

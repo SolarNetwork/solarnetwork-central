@@ -168,19 +168,15 @@ public class DatumExportController {
 		List<UserDestinationConfiguration> destConfigs = Collections.emptyList();
 		List<UserOutputConfiguration> outputConfigs = Collections.emptyList();
 		if ( exportBiz != null ) {
-			configs = exportBiz.datumExportsForUser(userId).stream()
-					.map(c -> new DatumExportProperties(c)).collect(Collectors.toList());
+			configs = exportBiz.datumExportsForUser(userId).stream().map(DatumExportProperties::new)
+					.collect(Collectors.toList());
 			dataConfigs = exportBiz.configurationsForUser(userId, UserDataConfiguration.class);
 			destConfigs = maskConfigurations(
 					exportBiz.configurationsForUser(userId, UserDestinationConfiguration.class),
-					serviceSettings, (Void) -> {
-						return exportBiz.availableDestinationServices();
-					});
+					serviceSettings, (Void) -> exportBiz.availableDestinationServices());
 			outputConfigs = maskConfigurations(
 					exportBiz.configurationsForUser(userId, UserOutputConfiguration.class),
-					serviceSettings, (Void) -> {
-						return exportBiz.availableOutputFormatServices();
-					});
+					serviceSettings, (Void) -> exportBiz.availableOutputFormatServices());
 		}
 		return success(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
@@ -322,9 +318,8 @@ public class DatumExportController {
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return success(maskConfiguration(config, serviceSettings, (Void) -> {
-					return exportBiz.availableOutputFormatServices();
-				}));
+				return success(maskConfiguration(config, serviceSettings,
+						(Void) -> exportBiz.availableOutputFormatServices()));
 			}
 		}
 		return error();
@@ -358,9 +353,8 @@ public class DatumExportController {
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
 				config.setId(id);
-				return success(maskConfiguration(config, serviceSettings, (Void) -> {
-					return exportBiz.availableDestinationServices();
-				}));
+				return success(maskConfiguration(config, serviceSettings,
+						(Void) -> exportBiz.availableDestinationServices()));
 			}
 		}
 		return error();
@@ -512,9 +506,8 @@ public class DatumExportController {
 				.getDestinationConfiguration() instanceof BasicDestinationConfiguration
 						? (BasicDestinationConfiguration) respConfig.getDestinationConfiguration()
 						: new BasicDestinationConfiguration(respConfig.getDestinationConfiguration()));
-		respDestConfig = maskConfiguration(respDestConfig, serviceSettings, (Void) -> {
-			return exportBiz.availableDestinationServices();
-		});
+		respDestConfig = maskConfiguration(respDestConfig, serviceSettings,
+				(Void) -> exportBiz.availableDestinationServices());
 		respConfig.setDestinationConfiguration(respDestConfig);
 		return respConfig;
 	}

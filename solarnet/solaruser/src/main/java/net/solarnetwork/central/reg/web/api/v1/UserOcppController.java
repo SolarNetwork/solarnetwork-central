@@ -25,8 +25,8 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_ACTION_STATUS_FILTER;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_STATUS_FILTER;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -74,10 +74,10 @@ import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
-import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for OCPP management.
@@ -149,7 +149,7 @@ public class UserOcppController {
 	 */
 	private <T extends Entity<?>> ResponseEntity<Result<T>> responseForSave(Object id, T out) {
 		HttpStatus status = id == null ? HttpStatus.CREATED : HttpStatus.OK;
-		return new ResponseEntity<Result<T>>(success(out), status);
+		return new ResponseEntity<>(success(out), status);
 	}
 
 	/**

@@ -1,21 +1,21 @@
 /* ==================================================================
  * ResetPasswordController.java - Mar 19, 2013 6:34:43 AM
- * 
+ *
  * Copyright 2007-2013 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,7 +28,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.MessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.stereotype.Controller;
@@ -37,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
+import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
@@ -49,7 +49,7 @@ import net.solarnetwork.domain.RegistrationReceipt;
 
 /**
  * Controller for managing the reset password functionality.
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -64,7 +64,7 @@ public class ResetPasswordController extends ControllerSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param registrationBiz
 	 *        the registration service
 	 * @param mailService
@@ -88,7 +88,7 @@ public class ResetPasswordController extends ControllerSupport {
 
 	/**
 	 * View the reset password start form.
-	 * 
+	 *
 	 * @return the view name
 	 */
 	@RequestMapping(value = "", method = RequestMethod.GET)
@@ -98,7 +98,7 @@ public class ResetPasswordController extends ControllerSupport {
 
 	/**
 	 * Generate an account reset email with a reset link.
-	 * 
+	 *
 	 * @param email
 	 *        the account email to generate a reset link for
 	 * @param locale
@@ -122,7 +122,7 @@ public class ResetPasswordController extends ControllerSupport {
 			// Base64 encode email to avoid issues with browsers decoding + character as space
 			uriBuilder.queryParam("m", Base64.getUrlEncoder().encodeToString(email.getBytes(UTF_8)));
 
-			Map<String, Object> mailModel = new HashMap<String, Object>(2);
+			Map<String, Object> mailModel = new HashMap<>(2);
 			mailModel.put("receipt", receipt);
 			mailModel.put("url", uriBuilder.build().encode().toUriString());
 
@@ -142,7 +142,7 @@ public class ResetPasswordController extends ControllerSupport {
 	/**
 	 * Confirm a reset password link, and return a form view to set a new
 	 * password.
-	 * 
+	 *
 	 * @param confirmationCode
 	 *        the confirmation code generated in
 	 *        {@link #generateResetCode(String, Locale, UriComponentsBuilder)}
@@ -162,7 +162,7 @@ public class ResetPasswordController extends ControllerSupport {
 
 	/**
 	 * Reset an account password, login, and return the logged-in home view.
-	 * 
+	 *
 	 * @param form
 	 *        the reset form with the confirmation code and new password
 	 *        details.

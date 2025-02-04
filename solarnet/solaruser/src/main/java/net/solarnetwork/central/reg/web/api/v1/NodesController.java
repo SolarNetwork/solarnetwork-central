@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.domain.Result.error;
 import static net.solarnetwork.domain.Result.success;
+import java.io.Serial;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -73,7 +74,8 @@ import net.solarnetwork.service.CertificateService;
  * @version 2.2
  */
 @GlobalExceptionRestController
-@Controller("v1nodesController") // note no @RequestMapping because of getMyNodes() same path with MyNodesController
+@Controller("v1nodesController")
+// note no @RequestMapping because of getMyNodes() same path with MyNodesController
 public class NodesController {
 
 	private final Logger log = LoggerFactory.getLogger(NodesController.class);
@@ -241,7 +243,7 @@ public class NodesController {
 		headers.set("Content-Disposition",
 				"attachment; filename=solarnode-" + cert.getNode().getId() + ".p12");
 
-		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
+		return new ResponseEntity<>(data, headers, HttpStatus.OK);
 	}
 
 	/**
@@ -321,6 +323,7 @@ public class NodesController {
 
 	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
 
+		@Serial
 		private static final long serialVersionUID = -2314002517991208690L;
 
 		private final UserNodeCertificateInstallationStatus installationStatus;

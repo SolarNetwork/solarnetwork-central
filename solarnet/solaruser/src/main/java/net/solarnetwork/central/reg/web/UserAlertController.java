@@ -1,29 +1,29 @@
 /* ==================================================================
  * UserAlertController.java - 19/05/2015 7:35:10 pm
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -61,12 +61,12 @@ import net.solarnetwork.central.user.domain.UserAlertOptions;
 import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
-import net.solarnetwork.util.StringUtils;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Controller for user alerts.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -91,7 +91,7 @@ public class UserAlertController extends ControllerSupport {
 
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
-		// now now, only one alert type!
+		// now, only one alert type!
 		return Collections.singletonList(UserAlertType.NodeStaleData);
 	}
 
@@ -102,7 +102,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * View the main Alerts screen.
-	 * 
+	 *
 	 * @param model
 	 *        The model object.
 	 * @return The view name.
@@ -112,12 +112,11 @@ public class UserAlertController extends ControllerSupport {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		List<UserAlert> alerts = userAlertBiz.userAlertsForUser(user.getUserId());
 		if ( alerts != null ) {
-			List<UserAlert> nodeDataAlerts = new ArrayList<UserAlert>(alerts.size());
+			List<UserAlert> nodeDataAlerts = new ArrayList<>(alerts.size());
 			for ( UserAlert alert : alerts ) {
-				switch (alert.getType()) {
-					case NodeStaleData:
-						nodeDataAlerts.add(alert);
-						break;
+				if ( alert.getType() == UserAlertType.NodeStaleData ) {
+					nodeDataAlerts.add(alert);
+					break;
 				}
 			}
 			model.addAttribute("nodeDataAlerts", nodeDataAlerts);
@@ -128,7 +127,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Get all available sources for a given node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        The ID of the node to get all available sources for.
 	 * @param start
@@ -154,9 +153,9 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Get <em>active</em> situations for a given node.
-	 * 
+	 *
 	 * @param nodeId
-	 *        The ID of the node to get the sitautions for.
+	 *        The ID of the node to get the situations for.
 	 * @param locale
 	 *        The request locale.
 	 * @return The alerts with active situations.
@@ -175,7 +174,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Get a count of <em>active</em> situations for the active user.
-	 * 
+	 *
 	 * @return The count.
 	 * @since 1.1
 	 */
@@ -189,7 +188,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Get <em>active</em> situations for the active user
-	 * 
+	 *
 	 * @param locale
 	 *        The request locale.
 	 * @return The alerts with active situations.
@@ -208,7 +207,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Create or update an alert.
-	 * 
+	 *
 	 * @param model
 	 *        The UserAlert details.
 	 * @return The saved details.
@@ -282,13 +281,13 @@ public class UserAlertController extends ControllerSupport {
 							}
 						}
 					}
-					if ( windowsList.size() > 0 ) {
+					if ( !windowsList.isEmpty() ) {
 						options.put(UserAlertOptions.TIME_WINDOWS, windowsList);
 					}
 				}
 			}
 		}
-		if ( options.size() > 0 ) {
+		if ( !options.isEmpty() ) {
 			alert.setOptions(options);
 		}
 
@@ -328,7 +327,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * View an alert with the most recent active situation populated.
-	 * 
+	 *
 	 * @param alertId
 	 *        The ID of the alert to view.
 	 * @param locale
@@ -344,8 +343,8 @@ public class UserAlertController extends ControllerSupport {
 	}
 
 	/**
-	 * Update an active alert sitaution's status.
-	 * 
+	 * Update an active alert situation's status.
+	 *
 	 * @param alertId
 	 *        The ID of the alert with the active situation.
 	 * @param status
@@ -365,7 +364,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Delete an alert.
-	 * 
+	 *
 	 * @param alertId
 	 *        The ID of the alert to delete.
 	 * @return The result.

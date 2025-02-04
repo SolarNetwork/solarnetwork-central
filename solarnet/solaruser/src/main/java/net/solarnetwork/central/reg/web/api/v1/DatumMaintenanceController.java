@@ -63,7 +63,7 @@ public class DatumMaintenanceController {
 	}
 
 	/**
-	 * Find datum aggregates maarked as "stale".
+	 * Find datum aggregates marked as "stale".
 	 *
 	 * <p>
 	 * The following criteria should be specified at a minimum:
