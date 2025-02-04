@@ -1,5 +1,5 @@
 /* ==================================================================
- * AuditingStreamDatumFilterdResultsProcessor.java - 2/05/2022 7:03:16 am
+ * AuditingStreamDatumFilteredResultsProcessor.java - 2/05/2022 7:03:16 am
  *
  * Copyright 2022 SolarNetwork.net Dev Team
  *
@@ -55,7 +55,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * @version 1.0
  * @since 1.2
  */
-public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<GeneralNodeDatumPK, Integer>
+public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<GeneralNodeDatumPK, Integer>
 		implements StreamDatumFilteredResultsProcessor, Entry<GeneralNodeDatumPK, Integer> {
 
 	private final StreamDatumFilteredResultsProcessor delegate;
@@ -79,7 +79,7 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public AuditingStreamDatumFilterdResultsProcessor(StreamDatumFilteredResultsProcessor delegate,
+	public AuditingStreamDatumFilteredResultsProcessor(StreamDatumFilteredResultsProcessor delegate,
 			QueryAuditor auditor) {
 		super();
 		this.delegate = requireNonNullArgument(delegate, "delegate");
@@ -102,7 +102,7 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 					@Override
 					public Entry<GeneralNodeDatumPK, Integer> next() {
 						hasNext = false;
-						return AuditingStreamDatumFilterdResultsProcessor.this;
+						return AuditingStreamDatumFilteredResultsProcessor.this;
 					}
 				};
 			}
