@@ -151,52 +151,52 @@ public class UserCloudIntegrationsSecurityAspect extends AuthorizationSupport {
 	public void deleteEntityForUserId(Long userId) {
 	}
 
-	@Before("readForUserKey(userKey)")
+	@Before(value = "readForUserKey(userKey)", argNames = "userKey")
 	public void userKeyReadAccessCheck(UserIdRelated userKey) {
 		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("readForUserId(userId)")
+	@Before(value = "readForUserId(userId)", argNames = "userId")
 	public void userIdReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("listForUserId(userId)")
+	@Before(value = "listForUserId(userId)", argNames = "userId")
 	public void userIdListAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("listForUserKey(userKey)")
+	@Before(value = "listForUserKey(userKey)", argNames = "userKey")
 	public void userKeyListAccessCheck(UserIdRelated userKey) {
 		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("replaceEntityForUserKey(userKey)")
+	@Before(value = "replaceEntityForUserKey(userKey)", argNames = "userKey")
 	public void replaceEntityAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("saveEntityForUserKey(userKey)")
+	@Before(value = "saveEntityForUserKey(userKey)", argNames = "userKey")
 	public void saveEntityAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("saveEntityForUserId(userId)")
+	@Before(value = "saveEntityForUserId(userId)", argNames = "userId")
 	public void saveEntityForUserAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}
 
-	@Before("updateEntityForUserKey(userKey)")
+	@Before(value = "updateEntityForUserKey(userKey)", argNames = "userKey")
 	public void updateEntityAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("deleteEntityForUserKey(userKey)")
+	@Before(value = "deleteEntityForUserKey(userKey)", argNames = "userKey")
 	public void deleteEntityAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("deleteEntityForUserId(userId)")
+	@Before(value = "deleteEntityForUserId(userId)", argNames = "userId")
 	public void userIdDeleteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}
