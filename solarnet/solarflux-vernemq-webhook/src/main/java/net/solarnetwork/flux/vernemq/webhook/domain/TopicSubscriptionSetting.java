@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A topic subscription setting.
- * 
+ *
  * @author matt
  */
 @JsonPropertyOrder({ "topic", "qos" })
@@ -39,7 +39,7 @@ public class TopicSubscriptionSetting {
 
   /**
    * Creates builder to build {@link TopicSubscriptionSetting}.
-   * 
+   *
    * @return created builder
    */
   public static Builder builder() {
@@ -91,10 +91,7 @@ public class TopicSubscriptionSetting {
     if (this == obj) {
       return true;
     }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
+    if ((obj == null) || (getClass() != obj.getClass())) {
       return false;
     }
     TopicSubscriptionSetting other = (TopicSubscriptionSetting) obj;
@@ -102,13 +99,9 @@ public class TopicSubscriptionSetting {
       return false;
     }
     if (topic == null) {
-      if (other.topic != null) {
-        return false;
-      }
-    } else if (!topic.equals(other.topic)) {
-      return false;
+      return other.topic == null;
     }
-    return true;
+    return topic.equals(other.topic);
   }
 
   public String getTopic() {
