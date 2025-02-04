@@ -1,23 +1,23 @@
 /* ===================================================================
  * AbstractDataCollector.java
- * 
+ *
  * Created Aug 31, 2008 2:49:36 PM
- * 
+ *
  * Copyright (c) 2008 Solarnetwork.net Dev Team.
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ===================================================================
  */
@@ -27,10 +27,12 @@ package net.solarnetwork.central.in.web;
 import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
@@ -71,23 +73,22 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Warn that POST is required.
-	 * 
-	 * @return the view name
 	 */
 	@RequestMapping(method = RequestMethod.GET)
-	public String getData() {
-		return "post-required";
+	@ResponseStatus(value = HttpStatus.METHOD_NOT_ALLOWED, reason = "POST required")
+	public Void getData() {
+		return null;
 	}
 
 	/**
 	 * Default handling of node instructions.
-	 * 
+	 *
 	 * <p>
 	 * This method will use the configured {@link #getInstructorBiz()}, if
 	 * available, and put the returned instructions on the {@code Model} on the
 	 * {@link #MODEL_KEY_INSTRUCTIONS} key.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to get instructions for
 	 * @param model
@@ -98,7 +99,7 @@ public abstract class AbstractDataCollector {
 		final InstructorBiz biz = getInstructorBiz();
 		if ( biz != null ) {
 			List<Instruction> instructions = biz.getActiveInstructionsForNode(nodeId);
-			if ( instructions.size() > 0 ) {
+			if ( !instructions.isEmpty() ) {
 				model.addAttribute(MODEL_KEY_INSTRUCTIONS, instructions);
 			}
 		}
@@ -106,7 +107,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Add a SolarNode's TimeZone to the result model.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param model
@@ -124,7 +125,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Get the currently authenticated node.
-	 * 
+	 *
 	 * @param required
 	 *        <em>true</em> if AuthenticatedNode is required, or <em>false</em>
 	 *        if not
@@ -146,7 +147,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Get the node DAO.
-	 * 
+	 *
 	 * @return the solarNodeDao
 	 */
 	public SolarNodeDao getSolarNodeDao() {
@@ -155,7 +156,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Set the node DAO.
-	 * 
+	 *
 	 * @param solarNodeDao
 	 *        the solarNodeDao to set
 	 */
@@ -165,7 +166,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Get the view name.
-	 * 
+	 *
 	 * @return the viewName
 	 */
 	public String getViewName() {
@@ -174,7 +175,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Set the view name.
-	 * 
+	 *
 	 * @param viewName
 	 *        the viewName to set
 	 */
@@ -184,7 +185,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Get the data collector biz.
-	 * 
+	 *
 	 * @return the dataCollectorBiz
 	 */
 	public DataCollectorBiz getDataCollectorBiz() {
@@ -193,7 +194,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Set the data collector biz.
-	 * 
+	 *
 	 * @param dataCollectorBiz
 	 *        the dataCollectorBiz to set
 	 */
@@ -203,7 +204,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Get the instructor biz.
-	 * 
+	 *
 	 * @return the instructorBiz
 	 */
 	public InstructorBiz getInstructorBiz() {
@@ -212,7 +213,7 @@ public abstract class AbstractDataCollector {
 
 	/**
 	 * Set the instructor biz.
-	 * 
+	 *
 	 * @param instructorBiz
 	 *        the instructorBiz to set
 	 */
