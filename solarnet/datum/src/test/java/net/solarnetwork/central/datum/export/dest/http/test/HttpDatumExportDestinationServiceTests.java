@@ -329,8 +329,8 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 
 				try {
 					var f = new Promise.Completable<MultiPartFormData.Parts>();
-					var inv = Promise.from(InvocationType.NON_BLOCKING, f);
-					formData.parse(request, f, inv);
+					var p = Promise.from(InvocationType.NON_BLOCKING, f);
+					formData.parse(request, p);
 					process(f.join());
 					callback.succeeded();
 				} catch ( Exception x ) {
