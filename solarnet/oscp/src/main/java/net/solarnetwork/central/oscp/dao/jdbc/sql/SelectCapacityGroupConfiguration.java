@@ -43,7 +43,7 @@ import net.solarnetwork.central.oscp.domain.CapacityGroupConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectCapacityGroupConfiguration
+public final class SelectCapacityGroupConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */

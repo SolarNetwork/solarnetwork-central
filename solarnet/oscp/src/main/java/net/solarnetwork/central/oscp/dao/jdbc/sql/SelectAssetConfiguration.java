@@ -42,7 +42,7 @@ import net.solarnetwork.central.oscp.domain.AssetConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectAssetConfiguration
+public final class SelectAssetConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */

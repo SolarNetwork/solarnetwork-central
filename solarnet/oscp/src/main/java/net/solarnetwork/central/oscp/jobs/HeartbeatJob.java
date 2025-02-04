@@ -47,9 +47,9 @@ import oscp.v20.Heartbeat;
  * method is used to exclusively process individual pending external system
  * heartbeats by locking the heartbeat table row, making the heartbeat request,
  * and updating the locked row with the execution time. When querying for
- * pending heartbeat rows to process, locked rows are skipped. Thus the parallel
- * tasks compete for rows to process, until none remain or the maximum iteration
- * count is reached.
+ * pending heartbeat rows to process, locked rows are skipped. Thus, the
+ * parallel tasks compete for rows to process, until none remain or the maximum
+ * iteration count is reached.
  * </p>
  *
  * @author matt
@@ -109,13 +109,11 @@ public class HeartbeatJob extends JobSupport {
 		int totalProcessedCount = 0;
 		Set<String> supportedOscpVersions = singleton(V20);
 		final TransactionTemplate txTemplate = this.txTemplate;
-		boolean processed = false;
+		boolean processed;
 		do {
-			processed = false;
 			if ( txTemplate != null ) {
-				processed = txTemplate.execute((tx) -> {
-					return exchange(supportedOscpVersions, remainingIterations);
-				});
+				processed = txTemplate
+						.execute((tx) -> exchange(supportedOscpVersions, remainingIterations));
 			} else {
 				processed = exchange(supportedOscpVersions, remainingIterations);
 			}
@@ -126,9 +124,9 @@ public class HeartbeatJob extends JobSupport {
 		return totalProcessedCount;
 	}
 
-	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterataions) {
+	private boolean exchange(Set<String> supportedOscpVersions, AtomicInteger remainingIterations) {
 		return dao.processExternalSystemWithExpiredHeartbeat((ctx) -> {
-			remainingIterataions.decrementAndGet();
+			remainingIterations.decrementAndGet();
 			Integer secs = ctx.config().getSettings().heartbeatSeconds();
 			if ( secs == null ) {
 				return null;

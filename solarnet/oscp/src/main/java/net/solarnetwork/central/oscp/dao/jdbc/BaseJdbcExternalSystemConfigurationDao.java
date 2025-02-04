@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseJdbcExternalSystemConfigurationDao.java - 18/08/2022 3:35:37 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -59,7 +59,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Base implementation of ExternalSystemConfigurationDao.
- * 
+ *
  * @param <C>
  *        the configuration type
  * @author matt
@@ -78,7 +78,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations
 	 * @param role
@@ -103,7 +103,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 
 	/**
 	 * Create a new filter instance for a specific configuration entity.
-	 * 
+	 *
 	 * @param configId
 	 *        the configuration ID
 	 * @return the filter
@@ -133,7 +133,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 
 	/**
 	 * Create the SQL to create a new entity.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param entity
@@ -190,7 +190,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 
 	/**
 	 * Get the {@link RowMapper} to use for mapping full entity result objects.
-	 * 
+	 *
 	 * @return the mapper, never {@literal null}
 	 */
 	protected abstract RowMapper<C> rowMapperForEntity();
@@ -198,7 +198,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
-	 * 
+	 *
 	 * @return the tags, never {@literal null}
 	 */
 	protected abstract String[] expiredHeartbeatEventSuccessTags();
@@ -206,7 +206,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredHeartbeat(Function)}.
-	 * 
+	 *
 	 * @return the tags, never {@literal null}
 	 */
 	protected abstract String[] expiredHeartbeatEventErrorTags();
@@ -214,7 +214,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the success event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
-	 * 
+	 *
 	 * @return the tags, never {@literal null}
 	 */
 	protected abstract String[] expiredMeasurementEventSuccessTags();
@@ -222,7 +222,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	/**
 	 * Get the error event tags to use within
 	 * {@link #processExternalSystemWithExpiredMeasurement(Function)}.
-	 * 
+	 *
 	 * @return the tags, never {@literal null}
 	 */
 	protected abstract String[] expiredMeasurementEventErrorTags();
@@ -232,8 +232,8 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 		PreparedStatementCreator sql = new SelectExternalSystemForHeartbeat(role, ONE_FOR_UPDATE_SKIP);
 		List<C> rows = jdbcOps.query(sql, rowMapperForEntity());
 		if ( !rows.isEmpty() ) {
-			C row = rows.get(0);
-			SystemTaskContext<C> context = new SystemTaskContext<C>("Heartbeat", role, row,
+			C row = rows.getFirst();
+			SystemTaskContext<C> context = new SystemTaskContext<>("Heartbeat", role, row,
 					expiredHeartbeatEventErrorTags(), expiredHeartbeatEventSuccessTags(), this,
 					Collections.emptyMap());
 			Instant ts = handler.apply(context);
@@ -260,7 +260,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 						new CapacityGroupConfigurationRowMapper(
 								((ColumnCountProvider) entityMapper).getColumnCount())));
 		if ( !rows.isEmpty() ) {
-			ExternalSystemAndGroup<C> row = rows.get(0);
+			ExternalSystemAndGroup<C> row = rows.getFirst();
 			Instant measurementDate = (role == OscpRole.CapacityProvider
 					? row.group().getCapacityProviderMeasurementDate()
 					: row.group().getCapacityOptimizerMeasurementDate());
@@ -274,7 +274,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 						: row.group().getCapacityOptimizerMeasurementPeriod());
 				taskDate = p.previousPeriodStart(Instant.now());
 			}
-			CapacityGroupSystemTaskContext<C> context = new CapacityGroupSystemTaskContext<C>(
+			CapacityGroupSystemTaskContext<C> context = new CapacityGroupSystemTaskContext<>(
 					"Measurement", role, row.conf(), row.group(), taskDate,
 					expiredMeasurementEventErrorTags(), expiredMeasurementEventSuccessTags(), this,
 					Collections.emptyMap());

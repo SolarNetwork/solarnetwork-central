@@ -1,21 +1,21 @@
 /* ==================================================================
  * ActionEvent.java - 10/10/2022 1:48:44 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,7 +32,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * An event for publishing to a datum stream.
- * 
+ *
  * @param role
  *        the system user
  * @param action
@@ -97,7 +97,7 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 
 	/**
 	 * Get the event user ID.
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	public Long userId() {
@@ -107,7 +107,7 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 
 	/**
 	 * Get the node ID.
-	 * 
+	 *
 	 * @return the settings node ID, or {@literal null} if not available
 	 */
 	public Long nodeId() {
@@ -115,9 +115,8 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 	}
 
 	/**
-	 * Resolve the source ID according the the configured settings and
-	 * parameters.
-	 * 
+	 * Resolve the source ID according the configured settings and parameters.
+	 *
 	 * @return the source ID, or {@literal null} if no source ID template is
 	 *         available
 	 */
@@ -131,20 +130,20 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 
 	/**
 	 * Get the "publish to SolarIn" flag.
-	 * 
+	 *
 	 * @return {@literal true} if datum should be published to SolarIn
 	 */
 	public boolean publishToSolarIn() {
-		return (settings != null ? settings.isPublishToSolarIn() : false);
+		return (settings != null && settings.isPublishToSolarIn());
 	}
 
 	/**
 	 * Get the "publish to SolarFlux" flag.
-	 * 
+	 *
 	 * @return {@literal true} if datum should be published to SolarFlux
 	 */
 	public boolean publishToSolarFlux() {
-		return (settings != null ? settings.isPublishToSolarFlux() : false);
+		return (settings != null && settings.isPublishToSolarFlux());
 	}
 
 	private void populateSystemId(BaseOscpExternalSystemConfiguration<?> sys, Map<String, Object> m) {
@@ -162,13 +161,14 @@ public record DatumPublishEvent(OscpRole role, String action, BaseOscpExternalSy
 				m.put(CAPACITY_OPTIMIZER_NAME_PARAM, sys.getName());
 			}
 			case FlexibilityProvider -> {
-				/* ignore */ }
+				/* ignore */
+			}
 		}
 	}
 
 	/**
 	 * Get a map of all event parameters.
-	 * 
+	 *
 	 * @return the event parameters
 	 */
 	public Map<String, Object> parameters() {

@@ -40,7 +40,7 @@ public record AuthRoleInfo(UserLongCompositePK id, OscpRole role) {
 	/**
 	 * Get the user ID.
 	 *
-	 * @return the uesr ID
+	 * @return the user ID
 	 */
 	public Long userId() {
 		return id().getUserId();

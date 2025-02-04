@@ -42,7 +42,7 @@ import net.solarnetwork.central.oscp.domain.CapacityOptimizerConfiguration;
  * @author matt
  * @version 1.0
  */
-public class SelectCapacityOptimizerConfiguration
+public final class SelectCapacityOptimizerConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
