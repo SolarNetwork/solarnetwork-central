@@ -388,16 +388,23 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 		private int monthCount = 0;
 		private int expiredMonthCount = 0;
 		private int staleAuditMonthCount = 0;
+
+		private ZonedDateTime expireMonth() {
+			var expireMonth = expire.with(firstDayOfMonth());
+			if ( expireMonth.compareTo(expire) == 0 ) {
+				expireMonth = expireMonth.minusMonths(1);
+			}
+			return expireMonth;
+		}
 	}
 
 	private DataToExpire setupDataToExpire() {
 		final ZoneId zone = ZoneId.of(TEST_TZ);
 		final DataToExpire result = new DataToExpire();
 		final ZonedDateTime today = ZonedDateTime.now(zone).truncatedTo(ChronoUnit.DAYS);
-		result.expire = ZonedDateTime.now(zone).minusDays(35).truncatedTo(ChronoUnit.DAYS);
+		result.expire = today.minusDays(35);
 
-		final ZonedDateTime expireMonth = result.expire.with(firstDayOfMonth())
-				.truncatedTo(ChronoUnit.DAYS);
+		final ZonedDateTime expireMonth = result.expireMonth();
 
 		final ZonedDateTime start = today.minus(8, ChronoUnit.WEEKS);
 		result.start = start.toInstant();
@@ -656,8 +663,7 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 
 		Period p = Period.between(
 				start.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).toLocalDate(),
-				range.expire.with(firstDayOfMonth()).truncatedTo(ChronoUnit.DAYS).plusMonths(1)
-						.toLocalDate());
+				range.expireMonth().plusMonths(1).toLocalDate());
 		assertAuditDatumDailyStaleMonths(start.toInstant(), p.getMonths());
 		assertNoAggStaleDatum();
 	}
