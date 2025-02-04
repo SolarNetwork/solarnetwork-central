@@ -32,11 +32,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
+import net.solarnetwork.central.datum.domain.PaginationFilter;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;
@@ -77,15 +84,29 @@ public class DatumMetadataController {
 	 * 
 	 * @param nodeId
 	 *        the node ID
+	 * @param sourceId
+	 *        the optional source ID
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
 	 */
+
+	@Operation(operationId = "datumMetadataListForNode",
+			summary = "List datum stream metadata for a node",
+			parameters = {
+					@Parameter(name = "nodeId", in = ParameterIn.PATH, description = "The node ID."),
+					@Parameter(name = "sourceId", in = ParameterIn.QUERY, required = false,
+							description = "The source ID."),
+					@Parameter(name = "criteria", description = "The pagination criteria.",
+							schema = @Schema(implementation = PaginationFilter.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
-			@PathVariable("nodeId") Long nodeId, DatumFilterCommand criteria) {
-		return findMetadata(nodeId, null, criteria);
+	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataForNode(
+			@PathVariable("nodeId") Long nodeId,
+			@RequestParam(name = "sourceId", required = false) String sourceId,
+			DatumFilterCommand criteria) {
+		return success(findForNodeAndSource(nodeId, sourceId, criteria));
 	}
 
 	/**
@@ -98,27 +119,38 @@ public class DatumMetadataController {
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
+	 * @deprecated use
+	 *             {@link #findMetadataForNode(Long, String, DatumFilterCommand)}
+	 *             instead
 	 */
+	@Operation(operationId = "datumMetadataListForNodeSource", deprecated = true,
+			summary = "List datum stream metadata for a node and source",
+			description = """
+					This API accepts the source ID as a URL path parameter, but source IDs often contain slash
+					delimiters, making them unsuitable for URL paths. Instead, provide the source ID as a
+					`sourceId` query parameter.""",
+			parameters = {
+					@Parameter(name = "nodeId", in = ParameterIn.PATH, description = "The node ID."),
+					@Parameter(name = "sourceId", in = ParameterIn.PATH, description = "The source ID."),
+					@Parameter(name = "criteria", description = "The pagination criteria.",
+							schema = @Schema(implementation = PaginationFilter.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE) })
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = { "/{sourceId}" }, method = RequestMethod.GET)
-	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadata(
+	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataForSource(
 			@PathVariable("nodeId") Long nodeId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
+		return success(findForNodeAndSource(nodeId, sourceId, criteria));
+	}
+
+	private FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findForNodeAndSource(
+			Long nodeId, String sourceId, DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
 		filter.setSourceId(sourceId);
-		FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> results = datumMetadataBiz
-				.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
-						criteria.getOffset(), criteria.getMax());
-		return success(results);
-	}
-
-	@ResponseBody
-	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET, params = { "sourceId" })
-	public Result<FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK>> findMetadataAlt(
-			@PathVariable("nodeId") Long nodeId, @RequestParam("sourceId") String sourceId,
-			DatumFilterCommand criteria) {
-		return findMetadata(nodeId, sourceId, criteria);
+		return datumMetadataBiz.findGeneralNodeDatumMetadata(filter, criteria.getSortDescriptors(),
+				criteria.getOffset(), criteria.getMax());
 	}
 
 }
