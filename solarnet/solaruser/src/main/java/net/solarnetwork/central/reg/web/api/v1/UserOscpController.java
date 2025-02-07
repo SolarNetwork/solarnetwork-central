@@ -64,7 +64,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for OSCP management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(OSCP_V20)
 @GlobalExceptionRestController

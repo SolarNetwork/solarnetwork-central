@@ -31,8 +31,15 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.query.domain.LocationSearchFilter;
 import net.solarnetwork.central.support.SourceLocationFilter;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
@@ -42,10 +49,11 @@ import net.solarnetwork.domain.Result;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })
+@Tag(name = "location-lookup", description = "Methods to find location entities.")
 @GlobalExceptionRestController
 public class LocationLookupController {
 
@@ -71,22 +79,31 @@ public class LocationLookupController {
 	/**
 	 * Search for locations.
 	 * 
-	 * @param cmd
+	 * @param criteria
 	 *        the search criteria
 	 * @return the search results
 	 * @since 1.2
 	 */
+	// @formatter:off
+	@Operation(operationId = "locationList",
+			summary = "List locations matching filter criteria",
+			description = "Query for locations that match criteria like country and postal code.",
+			parameters = @Parameter(name = "criteria", description = "The search criteria", 
+					schema = @Schema(implementation = LocationSearchFilter.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Result<FilterResults<LocationMatch, Long>> findLocations(SourceLocationFilter cmd) {
-		if ( cmd == null ) {
+	public Result<FilterResults<LocationMatch, Long>> findLocations(SourceLocationFilter criteria) {
+		if ( criteria == null ) {
 			return error("422", "Search filter is required.");
 		}
 		// convert empty strings to null
-		cmd.removeEmptyValues();
+		criteria.removeEmptyValues();
 
-		FilterResults<LocationMatch, Long> results = queryBiz.findFilteredLocations(cmd.getLocation(),
-				cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+		FilterResults<LocationMatch, Long> results = queryBiz.findFilteredLocations(
+				criteria.getLocation(), criteria.getSortDescriptors(), criteria.getOffset(),
+				criteria.getMax());
 		return success(results);
 	}
 

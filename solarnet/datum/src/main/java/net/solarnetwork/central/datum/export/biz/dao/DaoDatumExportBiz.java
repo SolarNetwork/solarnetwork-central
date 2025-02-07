@@ -92,7 +92,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO-based implementation of {@link DatumExportBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
 

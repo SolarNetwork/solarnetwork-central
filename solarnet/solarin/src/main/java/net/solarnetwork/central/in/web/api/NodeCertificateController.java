@@ -46,7 +46,7 @@ import net.solarnetwork.domain.Result;
  * Controller for node certificate API actions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 @Controller("v1NodeCertificateController")
 @RequestMapping(value = "/solarin/api/v1/sec/cert")

@@ -92,7 +92,7 @@ import net.solarnetwork.service.CertificateException;
  * Web service API for DNP3 management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(DNP3)
 @GlobalExceptionRestController

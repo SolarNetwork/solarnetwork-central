@@ -32,8 +32,16 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import net.solarnetwork.central.datum.domain.AggregateGeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
@@ -50,10 +58,11 @@ import net.solarnetwork.domain.Result;
  * Controller for location-based data.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })
+@Tag(name = "location-datum", description = "Methods to query location datum streams.")
 @GlobalExceptionRestController
 public class LocationDatumController extends BaseTransientDataAccessRetryController {
 
@@ -113,21 +122,23 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 *   ]
 	 * }
 	 * </pre>
-	 *
-	 * @param cmd
+	 * 
+	 * @param criteria
 	 *        the input command
 	 * @return the available sources
 	 */
+	@Operation(operationId = "locationDatumSources", summary = "List location datum available sources",
+			description = "Get the source IDs available for location datum matching a single location ID and an optional source ID.")
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
 	public Result<Set<String>> getAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+			final GeneralReportableIntervalCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			Set<String> data = queryBiz.getLocationAvailableSources(cmd.getLocationId(),
-					cmd.getStartDate(), cmd.getEndDate());
+			Set<String> data = queryBiz.getLocationAvailableSources(criteria.getLocationId(),
+					criteria.getStartDate(), criteria.getEndDate());
 
 			// support filtering based on sourceId path pattern
-			data = filterSources(data, this.pathMatcher, cmd.getSourceId());
+			data = filterSources(data, this.pathMatcher, criteria.getSourceId());
 
 			return success(data);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
@@ -163,18 +174,25 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 	 *   }
 	 * }
 	 * </pre>
-	 *
-	 * @param cmd
-	 *        the input command
+	 * 
+	 * @param req
+	 *        the HTTP request
+	 * @param locationId
+	 *        the location ID
+	 * @param sourceId
+	 *        the optional source ID
 	 * @return the {@link ReportableInterval}
 	 */
+	@Operation(operationId = "locationDatumReportableInterval",
+			summary = "List location datum available date range",
+			description = "Get a date range of available location datum for a single location and an optional source ID.")
 	@ResponseBody
 	@RequestMapping(value = "/interval", method = RequestMethod.GET)
 	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+			@RequestParam(name = "locationId") Long locationId,
+			@RequestParam(name = "sourceId", required = false) String sourceId) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			ReportableInterval data = queryBiz.getLocationReportableInterval(cmd.getLocationId(),
-					cmd.getSourceId());
+			ReportableInterval data = queryBiz.getLocationReportableInterval(locationId, sourceId);
 			return success(data);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
@@ -200,32 +218,49 @@ public class LocationDatumController extends BaseTransientDataAccessRetryControl
 		}
 	}
 
+	@Operation(operationId = "locationDatumList",
+			summary = "List location datum matching filter criteria",
+			description = "Query for location datum that match criteria like location ID, source ID, and date range.",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralLocationDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/list", method = RequestMethod.GET)
 	public Result<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> filterGeneralDatumData(
-			final HttpServletRequest req, final DatumFilterCommand cmd) {
+			final HttpServletRequest req, final DatumFilterCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
 			// support filtering based on sourceId path pattern, by simply finding the sources that match first
-			resolveSourceIdPattern(cmd);
+			resolveSourceIdPattern(criteria);
 
 			FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> results;
-			if ( cmd.getAggregation() != null ) {
-				results = queryBiz.findAggregateGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
+			if ( criteria.getAggregation() != null ) {
+				results = queryBiz.findAggregateGeneralLocationDatum(criteria,
+						criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 			} else {
-				results = queryBiz.findGeneralLocationDatum(cmd, cmd.getSortDescriptors(),
-						cmd.getOffset(), cmd.getMax());
+				results = queryBiz.findGeneralLocationDatum(criteria, criteria.getSortDescriptors(),
+						criteria.getOffset(), criteria.getMax());
 			}
 			return success(results);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}
 
+	@Operation(operationId = "locationDatumListMostRecent",
+			summary = "List the most recently posted location datum matching filter criteria",
+			description = """
+					Query for location datum that match criteria like location ID, source ID, and date range.
+					The most recently posted datum for each matching source will be returned.
+					""",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = AggregateGeneralLocationDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ResponseBody
 	@RequestMapping(value = "/mostRecent", method = RequestMethod.GET)
 	public Result<FilterResults<? extends GeneralLocationDatumFilterMatch, GeneralLocationDatumPK>> getMostRecentGeneralNodeDatumData(
-			final HttpServletRequest req, final DatumFilterCommand cmd) {
-		cmd.setMostRecent(true);
-		return filterGeneralDatumData(req, cmd);
+			final HttpServletRequest req, final DatumFilterCommand criteria) {
+		criteria.setMostRecent(true);
+		return filterGeneralDatumData(req, criteria);
 	}
 
 }

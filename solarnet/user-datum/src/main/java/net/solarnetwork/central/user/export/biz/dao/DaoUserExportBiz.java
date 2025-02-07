@@ -78,7 +78,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 

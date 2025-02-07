@@ -23,8 +23,8 @@
 package net.solarnetwork.central.user.dao;
 
 import java.io.Serializable;
-import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * Extension of {@link GenericDao} to restrict actions based on the owner of the
@@ -38,7 +38,7 @@ import net.solarnetwork.central.dao.UserRelatedEntity;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
 		extends GenericDao<T, PK> {

@@ -34,7 +34,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for SolarNode data.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface SolarNodeDao
 		extends GenericDao<SolarNode, Long>, FilterableDao<SolarNodeFilterMatch, Long, SolarNodeFilter> {

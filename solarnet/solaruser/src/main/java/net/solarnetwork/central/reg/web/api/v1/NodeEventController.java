@@ -51,7 +51,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Web service API for node event hook management.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 2.3
  */
 @GlobalExceptionRestController

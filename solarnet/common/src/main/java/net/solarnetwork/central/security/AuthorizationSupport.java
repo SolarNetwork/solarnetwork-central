@@ -41,7 +41,7 @@ import net.solarnetwork.dao.FilterResults;
  * Helper class for authorization needs, e.g. aspect implementations.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AuthorizationSupport {
 

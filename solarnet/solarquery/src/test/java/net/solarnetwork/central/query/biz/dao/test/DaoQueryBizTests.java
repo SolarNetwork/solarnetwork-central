@@ -578,7 +578,7 @@ public class DaoQueryBizTests extends AbstractQueryBizDaoTestSupport {
 				hasEntry("i2", props.getInstantaneous()[1]),
 				hasEntry("a1", props.getAccumulating()[0])
 				// @formatter:on
-				));
+		));
 	}
 
 	@Test

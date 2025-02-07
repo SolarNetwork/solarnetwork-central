@@ -29,7 +29,7 @@ import net.solarnetwork.dao.FilterResults;
  * API for a set of invoices returned from a filter query.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface InvoiceMatchFilterResults extends FilterResults<InvoiceMatch, String> {
 

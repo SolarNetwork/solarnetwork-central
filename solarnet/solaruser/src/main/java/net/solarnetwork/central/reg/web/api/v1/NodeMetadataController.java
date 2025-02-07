@@ -43,14 +43,14 @@ import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Controller for node metadata.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.18
  */
 @GlobalExceptionRestController

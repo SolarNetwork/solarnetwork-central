@@ -83,7 +83,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController

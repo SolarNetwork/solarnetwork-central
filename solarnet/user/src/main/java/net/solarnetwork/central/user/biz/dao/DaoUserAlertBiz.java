@@ -35,7 +35,7 @@ import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
  * DAO-based implementation of {@link UserAlertBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserAlertBiz implements UserAlertBiz {
 

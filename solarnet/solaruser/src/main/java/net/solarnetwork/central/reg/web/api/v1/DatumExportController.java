@@ -75,7 +75,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Web service API for datum export management.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.26
  */
 @GlobalExceptionRestController

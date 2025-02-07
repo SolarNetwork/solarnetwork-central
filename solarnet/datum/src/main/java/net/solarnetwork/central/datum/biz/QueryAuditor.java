@@ -33,7 +33,7 @@ import net.solarnetwork.dao.FilterResults;
  * API for auditing query events in SolarNetwork.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface QueryAuditor {
 

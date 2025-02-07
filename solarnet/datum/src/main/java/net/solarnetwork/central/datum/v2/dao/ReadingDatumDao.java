@@ -34,7 +34,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * API for datum reading information.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface ReadingDatumDao {

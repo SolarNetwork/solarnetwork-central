@@ -32,7 +32,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for Location.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface SolarLocationDao
 		extends GenericDao<SolarLocation, Long>, FilterableDao<LocationMatch, Long, Location> {

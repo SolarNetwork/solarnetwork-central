@@ -63,7 +63,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 

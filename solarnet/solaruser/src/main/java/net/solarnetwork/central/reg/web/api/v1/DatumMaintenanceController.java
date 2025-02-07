@@ -40,7 +40,7 @@ import net.solarnetwork.domain.Result;
  * Web controller for datum maintenance functions.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.39
  */
 @GlobalExceptionRestController

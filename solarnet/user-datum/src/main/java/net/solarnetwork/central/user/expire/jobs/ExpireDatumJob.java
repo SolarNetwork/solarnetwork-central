@@ -32,7 +32,7 @@ import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
  * Job to delete datum for user defined expire policies.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class ExpireDatumJob extends JobSupport {
 

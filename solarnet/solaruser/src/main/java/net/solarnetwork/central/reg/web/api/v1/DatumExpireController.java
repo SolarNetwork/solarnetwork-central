@@ -58,7 +58,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for datum expire management.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.29
  */
 @GlobalExceptionRestController

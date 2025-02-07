@@ -23,8 +23,8 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
@@ -49,14 +49,14 @@ import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.reg.web.domain.LocationRequestInfoValidator;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Controller for location metadata actions.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
@@ -266,8 +266,8 @@ public class LocationMetadataController {
 	@RequestMapping(value = "/request", method = RequestMethod.GET)
 	public Result<net.solarnetwork.dao.FilterResults<LocationRequest, Long>> findLocationRequests(
 			BasicLocationRequestCriteria filter) {
-		return success(datumMetadataBiz.findLocationRequests(getCurrentActorUserId(), filter, null,
-				null, null));
+		return success(datumMetadataBiz.findLocationRequests(getCurrentActorUserId(), filter, null, null,
+				null));
 	}
 
 	@InitBinder(value = LocationRequestInfoValidator.LOCATION_REQUEST_INFO)

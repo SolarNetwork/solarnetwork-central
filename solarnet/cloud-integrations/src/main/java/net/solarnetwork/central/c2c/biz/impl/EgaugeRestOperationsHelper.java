@@ -70,7 +70,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * eGauge REST operations helper.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 

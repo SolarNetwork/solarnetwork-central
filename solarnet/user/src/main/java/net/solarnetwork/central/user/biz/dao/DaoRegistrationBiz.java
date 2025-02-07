@@ -115,7 +115,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * DAO-based implementation of {@link RegistrationBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoRegistrationBiz implements RegistrationBiz {
 

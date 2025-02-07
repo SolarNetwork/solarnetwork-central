@@ -77,7 +77,7 @@ import net.solarnetwork.util.DateUtils;
  * Process stale data alerts for nodes.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class EmailNodeStaleDataAlertProcessor implements UserAlertBatchProcessor {
 

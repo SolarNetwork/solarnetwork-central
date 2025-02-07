@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * DAO implementation of {@link UserExpireBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserExpireBiz implements UserExpireBiz {
 

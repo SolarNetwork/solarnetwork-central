@@ -40,7 +40,7 @@ import net.solarnetwork.domain.Result;
  * REST controller for job scheduler management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1SchedulerController")
 @RequestMapping(value = { "/api/v1/sec/scheduler" })

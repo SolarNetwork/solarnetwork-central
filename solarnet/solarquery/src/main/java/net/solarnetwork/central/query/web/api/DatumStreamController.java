@@ -51,8 +51,17 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.StreamDatumFilter;
 import net.solarnetwork.central.datum.domain.StreamDatumFilterCommand;
@@ -61,6 +70,7 @@ import net.solarnetwork.central.datum.v2.support.ObjectMapperStreamDatumFiltered
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.query.biz.QueryBiz;
 import net.solarnetwork.central.query.config.JsonConfig;
+import net.solarnetwork.central.query.domain.StreamDatumResult;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.io.ProvidedOutputStream;
 
@@ -72,6 +82,11 @@ import net.solarnetwork.io.ProvidedOutputStream;
  */
 @Controller("v1DatumStreamController")
 @RequestMapping({ "/api/v1/pub/datum/stream", "/api/v1/sec/datum/stream" })
+@Tag(name = "datum-stream", description = """
+		Methods to query datum streams with streaming result. These methods are similar to
+		the `/datum` API methods, but stream the results directly to the client, and offer
+		unlimited results for most criteria.
+		""")
 @GlobalExceptionRestController
 public class DatumStreamController {
 
@@ -165,7 +180,7 @@ public class DatumStreamController {
 	/**
 	 * Query for a listing of datum.
 	 *
-	 * @param cmd
+	 * @param criteria
 	 *        the query criteria
 	 * @param accept
 	 *        the HTTP accept header value
@@ -174,32 +189,44 @@ public class DatumStreamController {
 	 * @param response
 	 *        the HTTP response
 	 */
+	// @formatter:off
+	@Operation(operationId = "datumStreamList",
+			summary = "List node stream datum matching filter criteria",
+			description = """
+					Query for node stream datum that match criteria like node ID, source ID, and date range.""",
+			parameters = @Parameter(name = "criteria", description = """
+					The search criteria. A maximum result count will be enforced.
+					""", schema = @Schema(implementation = StreamDatumFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE))
+	@ApiResponse(description = "Streaming list of stream datum", responseCode = "200",
+			content = @Content(schema = @Schema(implementation = StreamDatumResult.class)))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = "/datum", method = RequestMethod.GET)
-	public void listDatum(final StreamDatumFilterCommand cmd,
+	public void listDatum(final StreamDatumFilterCommand criteria,
 			@RequestHeader(HttpHeaders.ACCEPT) final String accept,
 			@RequestHeader(name = HttpHeaders.ACCEPT_ENCODING,
 					required = false) final String acceptEncoding,
 			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
-			filterValidator.validate(cmd, validationResult);
+			filterValidator.validate(criteria, validationResult);
 			if ( validationResult.hasErrors() ) {
 				throw new ValidationException(validationResult);
 			}
 		}
-		populateMostRecentImplicitStartDate(cmd);
+		populateMostRecentImplicitStartDate(criteria);
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
 				acceptEncoding, response)) {
-			queryBiz.findFilteredStreamDatum(cmd, processor, cmd.getSortDescriptors(), cmd.getOffset(),
-					cmd.getMax());
+			queryBiz.findFilteredStreamDatum(criteria, processor, criteria.getSortDescriptors(),
+					criteria.getOffset(), criteria.getMax());
 		}
 	}
 
 	/**
 	 * Query for a reading datum.
 	 *
-	 * @param cmd
+	 * @param criteria
 	 *        the query criteria
 	 * @param readingType
 	 *        the reading type
@@ -212,9 +239,30 @@ public class DatumStreamController {
 	 * @param response
 	 *        the HTTP response
 	 */
+	// @formatter:off
+	@Operation(operationId = "readingDatumStreamList",
+			summary = "List node reading style stream datum matching filter criteria",
+			description = """
+					Query for node stream datum that match criteria like node ID, source ID, and date range,
+					returning reading style results.
+					""",
+			parameters = { 
+					@Parameter(name = "criteria", description = """
+						The search criteria. A maximum result count will be enforced.
+						""", schema = @Schema(
+								implementation = AggregateGeneralNodeDatumFilter.class),
+								style = ParameterStyle.FORM, explode = Explode.TRUE),
+					@Parameter(name = "readingType", description = "The desired reading type."),
+					@Parameter(name = "tolerance", description = "The reading tolerance, used by some reading types."),
+			}
+	)
+	@ApiResponse(description = "Streaming list of stream datum",
+			responseCode = "200",
+			content = @Content( schema = @Schema(implementation = StreamDatumResult.class)))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = "/reading", method = RequestMethod.GET)
-	public void listReadings(final StreamDatumFilterCommand cmd,
+	public void listReadings(final StreamDatumFilterCommand criteria,
 			final @RequestParam("readingType") DatumReadingType readingType,
 			@RequestParam(value = "tolerance", required = false,
 					defaultValue = "P1M") final Period tolerance,
@@ -224,7 +272,7 @@ public class DatumStreamController {
 
 			final HttpServletResponse response, BindingResult validationResult) throws IOException {
 		if ( filterValidator != null ) {
-			filterValidator.validate(cmd, validationResult, readingType, tolerance);
+			filterValidator.validate(criteria, validationResult, readingType, tolerance);
 			if ( validationResult.hasErrors() ) {
 				throw new ValidationException(validationResult);
 			}
@@ -232,8 +280,8 @@ public class DatumStreamController {
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (StreamDatumFilteredResultsProcessor processor = processorForType(acceptTypes,
 				acceptEncoding, response)) {
-			queryBiz.findFilteredStreamReadings(cmd, readingType, tolerance, processor,
-					cmd.getSortDescriptors(), cmd.getOffset(), cmd.getMax());
+			queryBiz.findFilteredStreamReadings(criteria, readingType, tolerance, processor,
+					criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
 		}
 	}
 

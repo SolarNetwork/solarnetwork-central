@@ -43,8 +43,8 @@ public record ServerConfigurations(Iterable<ServerMeasurementConfiguration> meas
 	 */
 	@JsonIgnore
 	public boolean isEmpty() {
-		return ((measurementConfigs == null || measurementConfigs.iterator().hasNext())
-				&& (controlConfigs == null || controlConfigs.iterator().hasNext()));
+		return ((measurementConfigs == null || !measurementConfigs.iterator().hasNext())
+				&& (controlConfigs == null || !controlConfigs.iterator().hasNext()));
 	}
 
 }

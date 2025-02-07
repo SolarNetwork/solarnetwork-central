@@ -35,7 +35,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for UserNode objects.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public interface UserNodeDao extends GenericDao<UserNode, Long> {
 

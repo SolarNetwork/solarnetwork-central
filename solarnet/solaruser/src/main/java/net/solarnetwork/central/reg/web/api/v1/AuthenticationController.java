@@ -39,7 +39,7 @@ import net.solarnetwork.domain.Result;
  * Remote authentication for nodes.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1AuthenticationController")
 @GlobalExceptionRestController

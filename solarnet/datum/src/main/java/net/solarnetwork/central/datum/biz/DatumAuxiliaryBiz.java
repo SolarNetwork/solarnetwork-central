@@ -34,7 +34,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * API for manipulating datum auxiliary data.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.35
  */
 public interface DatumAuxiliaryBiz {

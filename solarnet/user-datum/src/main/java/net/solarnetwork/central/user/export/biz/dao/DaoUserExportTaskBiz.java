@@ -60,7 +60,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * DAO implementation of {@link UserExportTaskBiz}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 

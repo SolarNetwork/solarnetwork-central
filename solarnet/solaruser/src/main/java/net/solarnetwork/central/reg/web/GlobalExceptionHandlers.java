@@ -35,7 +35,7 @@ import net.solarnetwork.domain.Result;
  * App-wide global exception handlers.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 public class GlobalExceptionHandlers {

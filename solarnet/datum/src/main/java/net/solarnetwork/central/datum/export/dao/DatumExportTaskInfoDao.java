@@ -31,7 +31,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link DatumExportTaskInfo} entities.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface DatumExportTaskInfoDao extends GenericDao<DatumExportTaskInfo, UUID> {
 

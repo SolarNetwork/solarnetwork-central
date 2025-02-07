@@ -59,7 +59,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * JSON implementation of bulk upload service.
  *
  * @author matt
- * @version 3.3
+ * @version 3.4
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },

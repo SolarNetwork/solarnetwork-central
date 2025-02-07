@@ -134,9 +134,8 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <PK>
  *        The primary key type this DAO supports.
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-@SuppressWarnings("ALL")
 public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Serializable>
 		extends BaseMyBatisDao implements GenericDao<T, PK> {
 

@@ -47,7 +47,7 @@ import net.solarnetwork.util.ObjectUtils;
  * JDBC implementation of {@link UserFluxAggregatePublishConfigurationDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcUserFluxAggregatePublishConfigurationDao
 		implements UserFluxAggregatePublishConfigurationDao {

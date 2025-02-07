@@ -48,7 +48,7 @@ import net.solarnetwork.central.support.SourceLocationFilter;
  * Web access to PriceLocation data.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller
 public class LocationLookupController {
