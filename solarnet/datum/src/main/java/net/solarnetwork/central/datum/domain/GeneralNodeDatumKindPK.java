@@ -1,34 +1,35 @@
 /* ==================================================================
  * GeneralNodeDatumKindPK.java - 11/04/2019 9:12:16 am
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
 /**
  * A primary key based on a node, source, date, and "kind" flag.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 1.39
@@ -36,6 +37,7 @@ import java.util.Objects;
 public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 		implements Serializable, Cloneable, Comparable<GeneralNodeDatumKindPK> {
 
+	@Serial
 	private static final long serialVersionUID = 8861820278176468489L;
 
 	private String kind;
@@ -49,7 +51,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param created
@@ -65,6 +67,11 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	}
 
 	@Override
+	public GeneralNodeDatumKindPK clone() {
+		return (GeneralNodeDatumKindPK) super.clone();
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
@@ -77,14 +84,10 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof GeneralNodeDatumKindPK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof GeneralNodeDatumKindPK) ) {
-			return false;
-		}
-		GeneralNodeDatumKindPK other = (GeneralNodeDatumKindPK) obj;
-		return kind == other.kind;
+		return Objects.equals(kind, other.kind);
 	}
 
 	@Override
@@ -100,7 +103,7 @@ public class GeneralNodeDatumKindPK extends BasicNodeSourceDatePK
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
 		if ( kind != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("kind=").append(kind);

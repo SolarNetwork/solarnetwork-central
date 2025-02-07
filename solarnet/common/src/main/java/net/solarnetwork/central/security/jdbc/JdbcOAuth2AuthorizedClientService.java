@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcOAuth2AuthorizedClientService.java - 20/09/2024 1:10:34 pm
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -57,13 +57,13 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * A JDBC implementation of an {@link OAuth2AuthorizedClientService} that uses a
  * {@link JdbcOperations} for {@link OAuth2AuthorizedClient} persistence.
- * 
+ *
  * <p>
  * Based on
  * {@link org.springframework.security.oauth2.client.JdbcOAuth2AuthorizedClientService}.
  * The SQL table is expected to have the following structure:
  * </p>
- * 
+ *
  * <pre>{@code TABLE oauth2_authorized_client (
  *   user_id BIGINT NOT NULL,
  *   client_registration_id varchar(100) NOT NULL,
@@ -78,9 +78,9 @@ import net.solarnetwork.domain.SortDescriptor;
  *   created_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
  *   PRIMARY KEY (client_registration_id, principal_name)
  * )}</pre>
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcOAuth2AuthorizedClientService
 		implements OAuth2AuthorizedClientService, ClientAccessTokenDao {
@@ -146,7 +146,7 @@ public class JdbcOAuth2AuthorizedClientService
 	/**
 	 * Constructs a {@code JdbcOAuth2AuthorizedClientService} using the provided
 	 * parameters.
-	 * 
+	 *
 	 * @param encryptor
 	 *        the encryptor
 	 * @param jdbcOperations
@@ -162,7 +162,7 @@ public class JdbcOAuth2AuthorizedClientService
 	/**
 	 * Constructs a {@code JdbcOAuth2AuthorizedClientService} using the provided
 	 * parameters.
-	 * 
+	 *
 	 * @param encryptor
 	 *        the encryptor
 	 * @param jdbcOperations
@@ -199,7 +199,7 @@ public class JdbcOAuth2AuthorizedClientService
 		final var sql = new SelectAuthorizedClient(userId, clientRegistrationId, principalName);
 		List<OAuth2AuthorizedClient> result = this.jdbcOperations.query(sql,
 				this.authorizedClientRowMapper);
-		return !result.isEmpty() ? (T) result.get(0) : null;
+		return !result.isEmpty() ? (T) result.getFirst() : null;
 	}
 
 	@Override
@@ -224,8 +224,8 @@ public class JdbcOAuth2AuthorizedClientService
 	}
 
 	@Override
-	public UserStringStringCompositePK store(ClientAccessTokenEntity entity) {
-		byte[] refreshTokenValue = null;
+	public UserStringStringCompositePK save(ClientAccessTokenEntity entity) {
+		byte[] refreshTokenValue;
 		if ( entity.getRefreshToken() != null ) {
 			refreshTokenValue = encryptor.encrypt(entity.getRefreshToken());
 			entity = entity.clone();
@@ -241,7 +241,7 @@ public class JdbcOAuth2AuthorizedClientService
 		final var sql = new SelectAuthorizedClient(id.getUserId(), id.getGroupId(), id.getEntityId());
 		List<ClientAccessTokenEntity> result = this.jdbcOperations.query(sql,
 				this.clientAccessTokenRowMapper);
-		return !result.isEmpty() ? result.get(0) : null;
+		return !result.isEmpty() ? result.getFirst() : null;
 	}
 
 	@Override
@@ -404,9 +404,13 @@ public class JdbcOAuth2AuthorizedClientService
 						+ "however, it was not found in the ClientRegistrationRepository.");
 			}
 			String principalName = rs.getString(3);
-			OAuth2AccessToken.TokenType tokenType = null;
-			if ( OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(rs.getString(4)) ) {
+			String tokenTypeVal = rs.getString(4);
+			OAuth2AccessToken.TokenType tokenType;
+			if ( OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(tokenTypeVal) ) {
 				tokenType = OAuth2AccessToken.TokenType.BEARER;
+			} else {
+				throw new DataRetrievalFailureException("The ClientRegistration with id '"
+						+ clientRegistrationId + "' token type unsupported: [" + tokenTypeVal + "].");
 			}
 			String tokenValue = new String(rs.getBytes(5), UTF_8);
 			Instant issuedAt = getTimestampInstant(rs, 6);

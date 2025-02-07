@@ -79,7 +79,7 @@ public class JdbcInputDataEntityDao implements InputDataEntityDao {
 	public InputDataEntity get(UserLongStringCompositePK id) {
 		var sql = new SelectInputDataEntity(id);
 		var results = jdbcOps.query(sql, InputDataEntityRowMapper.INSTANCE);
-		return (results != null && !results.isEmpty() ? results.get(0) : null);
+		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class JdbcInputDataEntityDao implements InputDataEntityDao {
 		jdbcOps.update(sql);
 	}
 
-	private static final PreparedStatementCallback<byte[]> DATA_CALLBACK = new PreparedStatementCallback<byte[]>() {
+	private static final PreparedStatementCallback<byte[]> DATA_CALLBACK = new PreparedStatementCallback<>() {
 
 		@Override
 		public byte[] doInPreparedStatement(PreparedStatement ps)

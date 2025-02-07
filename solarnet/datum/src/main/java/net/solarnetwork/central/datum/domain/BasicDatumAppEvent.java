@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicDatumAppEvent.java - 29/05/2020 3:58:24 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import net.solarnetwork.event.BasicAppEvent;
 
 /**
  * Basic immutable implementation of {@link DatumAppEvent}.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 2.6
@@ -44,11 +44,11 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The event creation date will be set to the current time.
 	 * </p>
-	 * 
+	 *
 	 * @param topic
 	 *        the event topic
 	 * @param eventProperties
@@ -68,7 +68,7 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param topic
 	 *        the event topic
 	 * @param created
@@ -122,13 +122,9 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicDatumAppEvent other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicDatumAppEvent) ) {
-			return false;
-		}
-		BasicDatumAppEvent other = (BasicDatumAppEvent) obj;
 		return Objects.equals(nodeId, other.nodeId) && Objects.equals(sourceId, other.sourceId);
 	}
 
@@ -158,7 +154,7 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 
 	/**
 	 * Creates builder to build {@link BasicDatumAppEvent}.
-	 * 
+	 *
 	 * @return created builder
 	 */
 	public static Builder builder() {
@@ -167,7 +163,7 @@ public class BasicDatumAppEvent extends BasicAppEvent implements DatumAppEvent {
 
 	/**
 	 * Get a builder, populated with this instance's values.
-	 * 
+	 *
 	 * @return a pre-populated builder
 	 */
 	@Override

@@ -107,13 +107,9 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicDatumCriteria other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicDatumCriteria) ) {
-			return false;
-		}
-		BasicDatumCriteria other = (BasicDatumCriteria) obj;
 		return aggregation == other.aggregation && combiningType == other.combiningType
 				&& datumAuxiliaryType == other.datumAuxiliaryType
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)

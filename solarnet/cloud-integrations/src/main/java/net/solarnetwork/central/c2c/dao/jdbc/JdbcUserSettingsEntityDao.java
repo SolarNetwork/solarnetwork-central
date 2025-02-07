@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link UserSettingsEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 
@@ -61,7 +61,7 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 	}
 
 	@Override
-	public Long store(UserSettingsEntity entity) {
+	public Long save(UserSettingsEntity entity) {
 		Long userId = requireNonNullArgument(requireNonNullArgument(entity, "entity").getUserId(),
 				"entity.userId");
 		final var sql = new UpsertUserSettingsEntity(userId, entity);
@@ -73,7 +73,7 @@ public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 	public UserSettingsEntity get(Long id) {
 		var sql = new SelectUserSettingsEntity(id);
 		List<UserSettingsEntity> results = jdbcOps.query(sql, UserSettingsEntityRowMapper.INSTANCE);
-		return (results != null && !results.isEmpty() ? results.getFirst() : null);
+		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 	@Override

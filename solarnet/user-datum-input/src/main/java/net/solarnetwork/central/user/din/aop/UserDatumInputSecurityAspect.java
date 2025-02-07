@@ -91,17 +91,17 @@ public class UserDatumInputSecurityAspect extends AuthorizationSupport {
 	public void previewTransform(UserIdRelated userKey) {
 	}
 
-	@Before("readForUserId(userId)")
+	@Before(value = "readForUserId(userId)", argNames = "userId")
 	public void userIdReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("readForUserKey(userKey) || previewTransform(userKey)")
+	@Before(value = "readForUserKey(userKey) || previewTransform(userKey)", argNames = "userKey")
 	public void userKeyReadAccessCheck(UserIdRelated userKey) {
 		requireUserReadAccess(userKey != null ? userKey.getUserId() : null);
 	}
 
-	@Before("updateConfigurationForUserKey(userKey)")
+	@Before(value = "updateConfigurationForUserKey(userKey)", argNames = "userKey")
 	public void userKeyWriteAccessCheck(UserIdRelated userKey) {
 		requireUserWriteAccess(userKey != null ? userKey.getUserId() : null);
 	}

@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseUserModifiableEntity.java - 7/08/2023 10:47:02 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.time.Instant;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
@@ -31,13 +32,14 @@ import net.solarnetwork.dao.BasicEntity;
 /**
  * Base mutable user-related configuration entity, where the first component of
  * its primary key is a Long user ID.
- * 
+ *
  * @author matt
  * @version 1.2
  */
 public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		extends BasicEntity<K> implements UserRelatedStdEntity<C, K> {
 
+	@Serial
 	private static final long serialVersionUID = -8201311252309117005L;
 
 	private Instant modified;
@@ -45,7 +47,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @throws IllegalArgumentException
@@ -58,7 +60,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -84,12 +86,12 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Test if this entity has the same property values as another.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id}, {@code created}, and {@code modified} properties are not
 	 * compared.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the entity to compare to
 	 * @return {@literal true} if the properties of this entity are equal to the
@@ -123,7 +125,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 		if ( id instanceof BasePK pk ) {
 			buf.append(pk.getId());
 		} else if ( id != null ) {
-			buf.append(id.toString());
+			buf.append(id);
 		}
 		Instant mod = getModified();
 		if ( mod != null ) {
@@ -135,7 +137,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Get the modification date.
-	 * 
+	 *
 	 * @return the modified date
 	 */
 	public Instant getModified() {
@@ -144,7 +146,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Set the modification date.
-	 * 
+	 *
 	 * @param modified
 	 *        the modified date to set
 	 */
@@ -154,7 +156,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Get the enabled flag.
-	 * 
+	 *
 	 * @return {@literal true} if enabled
 	 */
 	public boolean isEnabled() {
@@ -163,7 +165,7 @@ public abstract class BaseUserModifiableEntity<C extends BaseUserModifiableEntit
 
 	/**
 	 * Set the enabled flag.
-	 * 
+	 *
 	 * @param enabled
 	 *        the value to set
 	 */

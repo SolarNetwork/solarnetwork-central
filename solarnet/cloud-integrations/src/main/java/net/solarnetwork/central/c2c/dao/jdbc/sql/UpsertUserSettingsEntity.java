@@ -39,7 +39,7 @@ import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
  * @author matt
  * @version 1.0
  */
-public class UpsertUserSettingsEntity implements PreparedStatementCreator, SqlProvider {
+public final class UpsertUserSettingsEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.cin_user_settings (

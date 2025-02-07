@@ -82,6 +82,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -101,7 +102,6 @@ import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatServ
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
@@ -109,6 +109,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BulkLoadingDao;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
@@ -199,7 +200,7 @@ public class DaoDatumImportBizTests {
 				new ClassPathResource("test-data-01.csv", getClass()), "text/csv");
 
 		Capture<DatumImportJobInfo> jobInfoCaptor = new Capture<>();
-		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+		expect(jobInfoDao.save(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
 
 			@Override
 			public UserUuidPK answer() throws Throwable {
@@ -272,7 +273,7 @@ public class DaoDatumImportBizTests {
 				new ClassPathResource("test-data-01.csv", getClass()), "text/csv");
 
 		Capture<DatumImportJobInfo> jobInfoCaptor = new Capture<>();
-		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+		expect(jobInfoDao.save(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
 
 			@Override
 			public UserUuidPK answer() throws Throwable {
@@ -361,7 +362,7 @@ public class DaoDatumImportBizTests {
 				eq(true), anyObject())).andReturn(savedFuture);
 
 		Capture<DatumImportJobInfo> jobInfoCaptor = new Capture<>();
-		expect(jobInfoDao.store(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+		expect(jobInfoDao.save(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
 
 			@Override
 			public UserUuidPK answer() throws Throwable {
@@ -530,12 +531,12 @@ public class DaoDatumImportBizTests {
 		info.setImportState(DatumImportState.Staged);
 		expect(jobInfoDao.get(pk)).andReturn(info);
 
-		Capture<Callable<FilterResults<GeneralNodeDatumComponents>>> taskCaptor = new Capture<>();
-		CompletableFuture<FilterResults<GeneralNodeDatumComponents>> future = new CompletableFuture<>();
+		Capture<Callable<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>> taskCaptor = new Capture<>();
+		CompletableFuture<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> future = new CompletableFuture<>();
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -549,16 +550,17 @@ public class DaoDatumImportBizTests {
 		replayAll();
 		BasicDatumImportPreviewRequest request = new BasicDatumImportPreviewRequest(TEST_USER_ID, jobId,
 				10);
-		Future<FilterResults<GeneralNodeDatumComponents>> preview = biz
+		Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> preview = biz
 				.previewStagedImportRequest(request);
 
 		// pretend to perform work via executor service
-		FilterResults<GeneralNodeDatumComponents> result = taskCaptor.getValue().call();
+		FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> result = taskCaptor.getValue()
+				.call();
 
 		// then
 		assertThat("Preview future available", preview, notNullValue());
 		assertThat("Preview result available", result, notNullValue());
-		assertThat("Preview starting offset", result.getStartingOffset(), equalTo(0));
+		assertThat("Preview starting offset", result.getStartingOffset(), equalTo(0L));
 		assertThat("Preview returned result count", result.getReturnedResultCount(), equalTo(10));
 		assertThat("Preview returned total count", result.getTotalResults(), equalTo(100L));
 		assertThat("Preview result data", result.getResults(), notNullValue());
@@ -586,7 +588,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -670,7 +672,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership1 = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -764,7 +766,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership1 = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -835,7 +837,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership1 = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -906,7 +908,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership1 = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -1018,7 +1020,7 @@ public class DaoDatumImportBizTests {
 		expect(resourceStorageService.getUid()).andReturn("Magic Storage").anyTimes();
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -1111,7 +1113,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node owned by job's user
 		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
@@ -1193,7 +1195,7 @@ public class DaoDatumImportBizTests {
 		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
 
 		// allow updating the status as job progresses
-		expect(jobInfoDao.store(info)).andReturn(pk).anyTimes();
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
 
 		// make test node NOT owned by job's user
 		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID_2, TEST_USER_ID, "NZ",

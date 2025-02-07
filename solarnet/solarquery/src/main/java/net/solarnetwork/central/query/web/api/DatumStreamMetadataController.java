@@ -30,16 +30,22 @@ import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -50,6 +56,7 @@ import net.solarnetwork.util.ObjectUtils;
  */
 @GlobalExceptionRestController
 @Controller("v1DatumStreamMetadataController")
+@Tag(name = "datum-stream-meta", description = "Methods to query stream metadata for datum streams.")
 @RequestMapping(value = "/api/v1/sec/datum/stream/meta")
 public class DatumStreamMetadataController {
 
@@ -83,6 +90,13 @@ public class DatumStreamMetadataController {
 	 *        properties
 	 * @return the results, never {@literal null}
 	 */
+	// @formatter:off
+	@Operation(operationId = "datumStreamMetadataList",
+			summary = "List stream metadata for node datum streams",
+			parameters = @Parameter(name = "criteria", description = "The search criteria.",
+							schema = @Schema(implementation = ObjectStreamCriteria.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = { "/node" }, method = RequestMethod.GET)
 	public Result<List<ObjectDatumStreamMetadata>> findNodeMetadata(BasicDatumCriteria criteria) {
@@ -99,6 +113,13 @@ public class DatumStreamMetadataController {
 	 *        properties
 	 * @return the results, never {@literal null}
 	 */
+	// @formatter:off
+	@Operation(operationId = "locationDatumStreamMetadataList",
+			summary = "List stream metadata for location datum streams",
+			parameters = @Parameter(name = "criteria", description = "The search criteria.",
+							schema = @Schema(implementation = ObjectStreamCriteria.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = { "/loc" }, method = RequestMethod.GET)
 	public Result<List<ObjectDatumStreamMetadata>> findLocationMetadata(BasicDatumCriteria criteria) {
@@ -120,6 +141,13 @@ public class DatumStreamMetadataController {
 	 *        properties
 	 * @return the results, never {@literal null}
 	 */
+	// @formatter:off
+	@Operation(operationId = "datumStreamMetadataIdList",
+			summary = "List stream metadata IDs for node datum streams",
+			parameters = @Parameter(name = "criteria", description = "The search criteria.",
+							schema = @Schema(implementation = ObjectStreamCriteria.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = { "/node/ids" }, method = RequestMethod.GET)
 	public Result<List<ObjectDatumStreamMetadataId>> findNodeMetadataIds(BasicDatumCriteria criteria) {
@@ -136,6 +164,13 @@ public class DatumStreamMetadataController {
 	 *        properties
 	 * @return the results, never {@literal null}
 	 */
+	// @formatter:off
+	@Operation(operationId = "locationDatumStreamMetadataIdList",
+			summary = "List stream metadata IDs for location datum streams",
+			parameters = @Parameter(name = "criteria", description = "The search criteria.",
+							schema = @Schema(implementation = ObjectStreamCriteria.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE))
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = { "/loc/ids" }, method = RequestMethod.GET)
 	public Result<List<ObjectDatumStreamMetadataId>> findLocationMetadataIds(

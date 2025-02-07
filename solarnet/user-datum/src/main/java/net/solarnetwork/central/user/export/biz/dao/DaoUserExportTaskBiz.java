@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserExportTaskBiz.java - 5/11/2021 9:15:33 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -59,9 +58,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * DAO implementation of {@link UserExportTaskBiz}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
@@ -76,7 +75,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param taskDao
 	 *        the task DAO to use
 	 * @param adhocTaskDao
@@ -100,14 +99,14 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
 	/**
 	 * Filter a set of sources using a source ID path pattern.
-	 * 
+	 *
 	 * <p>
 	 * If any arguments are {@literal null}, or {@code pattern} is
 	 * {@literal null} or empty, then {@code sources} will be returned without
-	 * filtering. Otherwise a singleton set with just {@code pattern} will be
+	 * filtering. Otherwise, a singleton set with just {@code pattern} will be
 	 * returned.
 	 * </p>
-	 * 
+	 *
 	 * @param sources
 	 *        the sources to filter
 	 * @param pathMatcher
@@ -122,16 +121,11 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				|| !pathMatcher.isPattern(pattern) ) {
 			return (pattern == null || pattern.isEmpty() ? sources : Collections.singleton(pattern));
 		}
-		for ( Iterator<String> itr = sources.iterator(); itr.hasNext(); ) {
-			String source = itr.next();
-			if ( !pathMatcher.match(pattern, source) ) {
-				itr.remove();
-			}
-		}
+		sources.removeIf(source -> !pathMatcher.match(pattern, source));
 		return sources;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public UserAdhocDatumExportTaskInfo submitAdhocDatumExportConfiguration(
 			UserDatumExportConfiguration config) {
@@ -149,7 +143,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 			// set to all available node IDs
 			Set<Long> nodeIds = userNodeDao.findNodeIdsForUser(config.getUserId());
 			if ( nodeIds != null && !nodeIds.isEmpty() ) {
-				taskDatumFilter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
+				taskDatumFilter.setNodeIds(nodeIds.toArray(Long[]::new));
 			} else {
 				log.info("User {} has no nodes available for datum export", config.getUserId());
 				return null;
@@ -171,9 +165,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				Set<String> nodeSources = stream(results.spliterator(), false)
 						.map(ObjectDatumStreamMetadata::getSourceId)
 						.collect(toCollection(LinkedHashSet::new));
-				if ( nodeSources != null ) {
-					allSourceIds.addAll(nodeSources);
-				}
+				allSourceIds.addAll(nodeSources);
 			}
 			Set<String> resolvedSourceIds = new LinkedHashSet<>(allSourceIds.size());
 			for ( String sourceId : taskDatumFilter.getSourceIds() ) {
@@ -182,8 +174,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 					resolvedSourceIds.addAll(sources);
 				}
 			}
-			taskDatumFilter
-					.setSourceIds(resolvedSourceIds.toArray(new String[resolvedSourceIds.size()]));
+			taskDatumFilter.setSourceIds(resolvedSourceIds.toArray(String[]::new));
 		}
 
 		taskDataConfig.setDatumFilter(taskDatumFilter);
@@ -195,12 +186,12 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		task.setScheduleType(scheduleType);
 		task.setConfig(taskConfig);
 		task.setTokenId(SecurityUtils.currentTokenId());
-		UUID pk = adhocTaskDao.store(task);
+		UUID pk = adhocTaskDao.save(task);
 		task.setId(pk);
 		return task;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.SUPPORTS)
+	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public UserDatumExportTaskInfo submitDatumExportConfiguration(UserDatumExportConfiguration config,
 			Instant exportDate) {
@@ -222,7 +213,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 			// set to all available node IDs
 			Set<Long> nodeIds = userNodeDao.findNodeIdsForUser(config.getUserId());
 			if ( nodeIds != null && !nodeIds.isEmpty() ) {
-				taskDatumFilter.setNodeIds(nodeIds.toArray(new Long[nodeIds.size()]));
+				taskDatumFilter.setNodeIds(nodeIds.toArray(Long[]::new));
 			} else {
 				log.info("User {} has no nodes available for datum export", config.getUserId());
 				return null;
@@ -246,9 +237,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				Set<String> nodeSources = stream(results.spliterator(), false)
 						.map(ObjectDatumStreamMetadata::getSourceId)
 						.collect(toCollection(LinkedHashSet::new));
-				if ( nodeSources != null ) {
-					allSourceIds.addAll(nodeSources);
-				}
+				allSourceIds.addAll(nodeSources);
 			}
 			Set<String> resolvedSourceIds = new LinkedHashSet<>(allSourceIds.size());
 			for ( String sourceId : taskDatumFilter.getSourceIds() ) {
@@ -257,8 +246,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 					resolvedSourceIds.addAll(sources);
 				}
 			}
-			taskDatumFilter
-					.setSourceIds(resolvedSourceIds.toArray(new String[resolvedSourceIds.size()]));
+			taskDatumFilter.setSourceIds(resolvedSourceIds.toArray(String[]::new));
 		}
 
 		taskDataConfig.setDatumFilter(taskDatumFilter);
@@ -271,18 +259,18 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		task.setScheduleType(scheduleType);
 		task.setUserDatumExportConfigurationId(config.getId());
 		task.setConfig(taskConfig);
-		UserDatumExportTaskPK pk = taskDao.store(task);
+		UserDatumExportTaskPK pk = taskDao.save(task);
 		task.setId(pk);
 		return task;
 	}
 
 	/**
 	 * Set a path matcher to resolve patterns against.
-	 * 
+	 *
 	 * <p>
 	 * If configured, this will be used to resolve source ID patterns.
 	 * </p>
-	 * 
+	 *
 	 * @param pathMatcher
 	 *        the path matcher to use
 	 */

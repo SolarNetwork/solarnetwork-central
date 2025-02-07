@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecurityUtils.java - Nov 22, 2012 7:34:27 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,7 +48,7 @@ import net.solarnetwork.util.CollectionUtils;
 
 /**
  * Security helper methods.
- * 
+ *
  * @author matt
  * @version 2.4
  */
@@ -58,7 +58,7 @@ public class SecurityUtils {
 
 	/**
 	 * Authenticate a user.
-	 * 
+	 *
 	 * @param authenticationManager
 	 *        the {@link AuthenticationManager}
 	 * @param username
@@ -81,7 +81,7 @@ public class SecurityUtils {
 
 	/**
 	 * Clear the current authentication.
-	 * 
+	 *
 	 * @since 2.2
 	 */
 	public static void removeAuthentication() {
@@ -90,7 +90,7 @@ public class SecurityUtils {
 
 	/**
 	 * Become an authenticated token with a {@code RUN_AS_ROLE_USER} authority.
-	 * 
+	 *
 	 * @param tokenId
 	 *        the token ID to use
 	 * @param type
@@ -116,7 +116,7 @@ public class SecurityUtils {
 
 	/**
 	 * Become a user with a {@code RUN_AS_ROLE_USER} authority.
-	 * 
+	 *
 	 * @param username
 	 *        the username (email) to use
 	 * @param name
@@ -138,7 +138,7 @@ public class SecurityUtils {
 
 	/**
 	 * Become a node with a {@code RUN_AS_ROLE_NODE} authority.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to become
 	 * @since 1.4
@@ -158,14 +158,14 @@ public class SecurityUtils {
 	 * Require any one of a set of roles for the current actor. The actor's
 	 * roles are converted to upper case before testing for inclusion in the
 	 * {@code roles} argument.
-	 * 
+	 *
 	 * @param roles
 	 *        the roles, one of which is required
 	 * @since 1.2
 	 */
 	public static void requireAnyRole(final Set<String> roles) {
 		Authentication auth = getCurrentAuthentication();
-		if ( auth == null || auth.isAuthenticated() == false ) {
+		if ( auth == null || !auth.isAuthenticated() ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED,
 					null);
 		}
@@ -181,34 +181,34 @@ public class SecurityUtils {
 	 * Require any one of a set of roles for the current actor. The actor's
 	 * roles are converted to upper case before testing for inclusion in the
 	 * {@code roles} argument.
-	 * 
+	 *
 	 * @param roles
 	 *        the required roles
 	 * @since 1.2
 	 */
 	public static void requireAllRoles(final Set<String> roles) {
 		Authentication auth = getCurrentAuthentication();
-		if ( auth == null || auth.isAuthenticated() == false ) {
+		if ( auth == null || !auth.isAuthenticated() ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ANONYMOUS_ACCESS_DENIED,
 					null);
 		}
-		Set<String> rolesCopy = new HashSet<String>(roles);
+		Set<String> rolesCopy = new HashSet<>(roles);
 		for ( GrantedAuthority role : auth.getAuthorities() ) {
-			if ( rolesCopy.remove(role.getAuthority().toUpperCase()) == false ) {
+			if ( !rolesCopy.remove(role.getAuthority().toUpperCase()) ) {
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
-			if ( rolesCopy.size() < 1 ) {
+			if ( rolesCopy.isEmpty() ) {
 				return;
 			}
 		}
-		if ( rolesCopy.size() > 0 ) {
+		if ( !rolesCopy.isEmpty() ) {
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 	}
 
 	/**
 	 * Get the current active authentication.
-	 * 
+	 *
 	 * @return the active Authentication, or {@literal null} if none available
 	 */
 	public static Authentication getCurrentAuthentication() {
@@ -222,7 +222,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the current {@link SecurityActor}.
-	 * 
+	 *
 	 * @return the current actor, never {@literal null}
 	 * @throws SecurityException
 	 *         if the actor is not available
@@ -233,7 +233,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the actor for a given authentication.
-	 * 
+	 *
 	 * @param auth
 	 *        the authentication
 	 * @return the actor, never {@literal null}
@@ -254,7 +254,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the current {@link SecurityActor}'s {@code userId}.
-	 * 
+	 *
 	 * @return The user ID of the current {@link SecurityActor} (never
 	 *         {@literal null}).
 	 * @throws SecurityException
@@ -267,7 +267,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the ID of the user associated with a given authentication.
-	 * 
+	 *
 	 * @param auth
 	 *        the authentication
 	 * @return the ID of the user associated with the actor, never
@@ -296,7 +296,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the current {@link SecurityToken}.
-	 * 
+	 *
 	 * @return the current actor, never {@literal null}
 	 * @throws SecurityException
 	 *         if the actor is not available
@@ -307,7 +307,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get a {@link SecurityToken} for a given authentication.
-	 * 
+	 *
 	 * @param auth
 	 *        the authentication
 	 * @return the token actor, never {@literal null}
@@ -326,7 +326,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the current {@link SecurityToken#getToken()}, if available.
-	 * 
+	 *
 	 * @return the token, or {@literal null} if a token is not available
 	 * @since 2.2
 	 */
@@ -340,7 +340,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the current {@link SecurityUser}.
-	 * 
+	 *
 	 * @return the current user, never {@literal null}
 	 * @throws SecurityException
 	 *         if the user is not available
@@ -351,7 +351,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get a {@link SecurityUser} for a given authentication.
-	 * 
+	 *
 	 * @param auth
 	 *        the authentication
 	 * @return the user actor, never {@literal null}
@@ -370,7 +370,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get the current {@link SecurityNode}.
-	 * 
+	 *
 	 * @return the current node, never {@literal null}
 	 * @throws SecurityException
 	 *         if the node is not available
@@ -381,7 +381,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get a {@link SecurityNode} for a given authentication.
-	 * 
+	 *
 	 * @param auth
 	 *        the authentication
 	 * @return the node actor, never {@literal null}
@@ -400,7 +400,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get all node IDs the current actor is authorized to access.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        The DAO to use to fill in all available nodes for user-based
 	 *        actors, or {@code null} to not fill in nodes.
@@ -415,7 +415,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get all node IDs the given authentication is authorized to access.
-	 * 
+	 *
 	 * @param auth
 	 *        the authentication
 	 * @param nodeOwnershipDao
@@ -431,32 +431,29 @@ public class SecurityUtils {
 		try {
 			actor = getActor(auth);
 		} catch ( SecurityException e ) {
-			LOG.warn("Access DENIED to node {} for non-authenticated user");
+			LOG.warn("Access DENIED to nodes for non-authenticated user");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
 
-		if ( actor instanceof SecurityNode ) {
-			SecurityNode node = (SecurityNode) actor;
+		if ( actor instanceof SecurityNode node ) {
 			return new Long[] { node.getNodeId() };
-		} else if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		} else if ( actor instanceof SecurityUser user ) {
 			// default to all nodes for actor
 			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(user.getUserId());
 			if ( ownerships != null && ownerships.length > 0 ) {
 				return Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId).toArray(Long[]::new);
 			}
-		} else if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
-			Long[] result = null;
-			// get full list to all nodes for actor; in future could optimize with query 
+		} else if ( actor instanceof SecurityToken token ) {
+			Long[] result;
+			// get full list to all nodes for actor; in future could optimize with query
 			// that accepts policy node IDs to restrict result to
 			SolarNodeOwnership[] ownerships = nodeOwnershipDao.ownershipsForUserId(token.getUserId());
 			Long[] allNodeIds = (ownerships != null
 					? Arrays.stream(ownerships).map(SolarNodeOwnership::getNodeId).toArray(Long[]::new)
 					: null);
 			Set<Long> restrictedToNodeIds = tokenRestrictedNodeIds(token);
-			if ( restrictedToNodeIds != null ) {
-				result = Arrays.stream(allNodeIds).filter(e -> restrictedToNodeIds.contains(e))
+			if ( restrictedToNodeIds != null && allNodeIds != null ) {
+				result = Arrays.stream(allNodeIds).filter(restrictedToNodeIds::contains)
 						.toArray(Long[]::new);
 			} else {
 				result = allNodeIds;
@@ -485,7 +482,7 @@ public class SecurityUtils {
 
 	/**
 	 * Get a {@link SecurityPolicy} for the active user, if available.
-	 * 
+	 *
 	 * @return The active user's policy, or {@code null}.
 	 * @since 2.2
 	 */
@@ -557,7 +554,7 @@ public class SecurityUtils {
 	 * be decrypted value computed by calling
 	 * {@link TextEncryptor#decrypt(String)}.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Any exception thrown by {@link TextEncryptor#decrypt(String)} will be
 	 * ignored, and the original value will be used instead.

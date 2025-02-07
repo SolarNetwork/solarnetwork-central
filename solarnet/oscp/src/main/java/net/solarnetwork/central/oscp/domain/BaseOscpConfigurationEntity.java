@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -52,6 +53,7 @@ public abstract class BaseOscpConfigurationEntity<C extends BaseOscpConfiguratio
 		implements Entity<UserLongCompositePK>, UserRelatedEntity<UserLongCompositePK>,
 		CopyingIdentity<UserLongCompositePK, C>, Differentiable<C>, Serializable, Cloneable {
 
+	@Serial
 	private static final long serialVersionUID = -4040376195754476954L;
 
 	private Instant modified;

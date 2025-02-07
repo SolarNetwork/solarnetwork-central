@@ -67,6 +67,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumComponents;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportException;
@@ -93,7 +94,6 @@ import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResult;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -101,11 +101,12 @@ import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.dao.BasicBulkLoadingOptions;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingContext;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.dao.BulkLoadingDao.LoadingTransactionMode;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ResourceStorageService;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -115,7 +116,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -251,7 +252,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			if ( this.resourceStorageWaitMs > 0 ) {
 				try {
 					Boolean result = saveFuture.get(this.resourceStorageWaitMs, TimeUnit.MILLISECONDS);
-					if ( result != null && !result.booleanValue() ) {
+					if ( result != null && !result ) {
 						throw new RuntimeException("Failed to save resource.");
 					}
 				} catch ( TimeoutException e ) {
@@ -264,7 +265,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 							this.resourceStorageWaitMs, f.getName(), rss.getUid());
 				} catch ( ExecutionException | RuntimeException e ) {
 					log.error("Error saving data import file [{}] to resource storage [{}]: {}",
-							this.resourceStorageWaitMs, f.getName(), rss.getUid(), e.getCause(), e);
+							f.getName(), rss.getUid(), e.getCause(), e);
 					Throwable t = e;
 					while ( t.getCause() != null ) {
 						t = t.getCause();
@@ -275,7 +276,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			}
 		}
 
-		jobInfoDao.store(info);
+		jobInfoDao.save(info);
 
 		DatumImportTask task = taskForId(id);
 
@@ -294,8 +295,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			final int prev = logCount.get();
 			final int diff = now - prev;
 			if ( diff > 10 || now >= 100 ) {
-				String msg = String.format("Saved %.1f%% of datum import [%s] to resource storage [%s]",
-						percent, f.getName(), rss.getUid());
+				String msg = String.format(
+						"Saved %.1f%% of user %d datum import %s [%s] to resource storage [%s]", percent,
+						id.getUserId(), id.getId(), f.getName(), rss.getUid());
 				log.info(msg);
 				logCount.set(now);
 			}
@@ -303,7 +305,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	}
 
 	@Override
-	public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+	public Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> previewStagedImportRequest(
 			DatumImportPreviewRequest request) {
 		UserUuidPK id = new UserUuidPK(request.getUserId(), UUID.fromString(request.getJobId()));
 		DatumImportTask task = taskForId(id);
@@ -320,7 +322,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			return previewExecutor.submit(preview);
 		}
 
-		CompletableFuture<FilterResults<GeneralNodeDatumComponents>> result = new CompletableFuture<>();
+		CompletableFuture<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> result = new CompletableFuture<>();
 		try {
 			result.complete(preview.call());
 		} catch ( Exception e ) {
@@ -351,7 +353,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	@Override
 	public UserUuidPK saveJobInfo(DatumImportJobInfo jobInfo) {
-		return jobInfoDao.store(jobInfo);
+		return jobInfoDao.save(jobInfo);
 	}
 
 	@Override
@@ -388,7 +390,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 	@Override
 	public Collection<DatumImportStatus> datumImportJobStatusesForUser(Long userId,
 			Set<DatumImportState> states) {
-		return jobInfoDao.findForUser(userId, states).stream().map(d -> taskForJobInfo(d))
+		return jobInfoDao.findForUser(userId, states).stream().map(this::taskForJobInfo)
 				.collect(toList());
 	}
 
@@ -416,10 +418,12 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	@Override
 	public Collection<DatumImportStatus> deleteDatumImportJobsForUser(Long userId, Set<String> jobIds) {
+		if ( jobIds == null || jobIds.isEmpty() ) {
+			return Collections.emptyList();
+		}
 		Set<DatumImportState> allowStates = EnumSet
 				.complementOf(EnumSet.of(DatumImportState.Claimed, DatumImportState.Executing));
-		Set<UUID> ids = (jobIds != null ? jobIds.stream().map(s -> UUID.fromString(s)).collect(toSet())
-				: null);
+		Set<UUID> ids = jobIds.stream().map(UUID::fromString).collect(toSet());
 		int deleted = jobInfoDao.deleteForUser(userId, ids, allowStates);
 		log.debug("Deleted {} import jobs for user {} matching ids {} in states {}", deleted, userId,
 				jobIds, allowStates);
@@ -428,9 +432,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			return userId.equals(task.getUserId()) && jobIds.contains(task.getJobId())
 					&& allowStates.contains(task.getJobState());
 		});
-		return jobInfoDao.findForUser(userId, null).stream().filter(job -> {
-			return userId.equals(job.getUserId()) && jobIds.contains(job.getId().getId().toString());
-		}).map(job -> taskForJobInfo(job)).collect(toList());
+		return jobInfoDao.findForUser(userId, null).stream().filter(
+				job -> userId.equals(job.getUserId()) && jobIds.contains(job.getId().getId().toString()))
+				.map(this::taskForJobInfo).collect(toList());
 	}
 
 	private ImportContext createImportContext(DatumImportJobInfo info,
@@ -490,7 +494,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					t = t.getCause();
 				}
 				log.error("Error fetching data import file [{}] from resource storage [{}]: {}",
-						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), t.getMessage(), t);
+						dataFile.getName(), rss.getUid(), t.getMessage(), t);
 				throw new RuntimeException(
 						"Failed to save import data to resource storage: " + t.getMessage());
 			}
@@ -503,8 +507,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		final ResourceStorageService rss = this.resourceStorageService;
 		if ( rss != null && rss.isConfigured() ) {
 			try {
-				CompletableFuture<Set<String>> f = rss
-						.deleteResources(Arrays.asList(dataFile.getName()));
+				CompletableFuture<Set<String>> f = rss.deleteResources(List.of(dataFile.getName()));
 				f.get(resourceStorageWaitMs, TimeUnit.MILLISECONDS);
 				log.info("Deleted completed data import resource from storage [{}]: {}", rss.getUid(),
 						dataFile.getName());
@@ -522,12 +525,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					t = t.getCause();
 				}
 				log.error("Error deleting data import file [{}] from resource storage [{}]: {}",
-						this.resourceStorageWaitMs, dataFile.getName(), rss.getUid(), t.getMessage(), t);
+						dataFile.getName(), rss.getUid(), t.getMessage(), t);
 			}
 		}
 	}
 
-	private class DatumImportPreview implements Callable<FilterResults<GeneralNodeDatumComponents>>,
+	private class DatumImportPreview
+			implements Callable<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>,
 			ProgressListener<DatumImportService> {
 
 		private final DatumImportJobInfo info;
@@ -552,7 +556,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		}
 
 		@Override
-		public FilterResults<GeneralNodeDatumComponents> call() throws Exception {
+		public FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> call() throws Exception {
 			final Configuration config = info.getConfiguration();
 			if ( config == null || config.getInputConfiguration() == null ) {
 				throw new IllegalArgumentException("Configuration missing for job " + info.getId());
@@ -562,20 +566,16 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					.ownershipsForUserId(info.getUserId());
 			final SecurityPolicy policy = tokenPolicyForId(info.getTokenId());
 
-			final Set<Long> allowedNodeIds;
-			final Map<Long, ZoneId> tzMap;
+			final Map<Long, ZoneId> tzMap; // key set represents the allowed node IDs as well
 			if ( ownerships != null ) {
-				allowedNodeIds = new HashSet<>(ownerships.length);
 				tzMap = new HashMap<>(ownerships.length);
 				for ( SolarNodeOwnership ownership : ownerships ) {
 					if ( policy == null || policy.getNodeIds() == null || policy.getNodeIds().isEmpty()
 							|| policy.getNodeIds().contains(ownership.getNodeId()) ) {
-						allowedNodeIds.add(ownership.getNodeId());
 						tzMap.put(ownership.getNodeId(), ownership.getZone());
 					}
 				}
 			} else {
-				allowedNodeIds = Collections.emptySet();
 				tzMap = Collections.emptyMap();
 			}
 
@@ -602,7 +602,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			if ( percentComplete > 0 ) {
 				totalCountEstimate = Math.round(results.size() / percentComplete);
 			}
-			return new BasicFilterResults<>(results, totalCountEstimate, 0, results.size());
+			return new BasicFilterResults<>(results, totalCountEstimate, 0L, results.size());
 		}
 
 		@Override
@@ -674,8 +674,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					root = root.getCause();
 				}
 				StringBuilder msg = new StringBuilder();
-				if ( e instanceof AuthorizationException ) {
-					AuthorizationException ae = (AuthorizationException) e;
+				if ( e instanceof AuthorizationException ae ) {
 					if ( ae.getReason() == Reason.ACCESS_DENIED ) {
 						msg.append("Not authorized to load data for ")
 								.append(ae.getId() instanceof Long ? "node" : "source").append(" ")
@@ -691,8 +690,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 					} else {
 						msg.append(root.getMessage());
 					}
-					if ( e instanceof DatumImportValidationException ) {
-						DatumImportValidationException dive = (DatumImportValidationException) e;
+					if ( e instanceof DatumImportValidationException dive ) {
 						if ( root.getMessage() != null ) {
 							msg.insert(0, " ");
 							msg.insert(0, dive.getMessage());
@@ -750,8 +748,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public void handleLoadingException(Throwable t, LoadingContext<GeneralNodeDatum> context) {
-			if ( t instanceof DatumImportValidationException ) {
-				DatumImportValidationException ve = (DatumImportValidationException) t;
+			if ( t instanceof DatumImportValidationException ve ) {
 				throw new DatumImportException(ve.getMessage(), ve.getCause(), ve.getLineNumber(),
 						ve.getLine(), context.getCommittedCount());
 			}
@@ -983,7 +980,7 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 		@Override
 		public void run() {
-			jobInfoDao.store(info);
+			jobInfoDao.save(info);
 		}
 
 	}

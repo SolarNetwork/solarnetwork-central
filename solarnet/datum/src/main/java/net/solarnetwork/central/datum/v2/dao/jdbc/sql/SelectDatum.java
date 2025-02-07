@@ -49,7 +49,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 1.5
  * @since 3.8
  */
-public class SelectDatum
+public final class SelectDatum
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/**
@@ -126,7 +126,7 @@ public class SelectDatum
 				|| filter.getAggregation() == Aggregation.Week);
 	}
 
-	private void sqlCte(StringBuilder buf, boolean ordered) {
+	private void sqlCte(StringBuilder buf) {
 		buf.append("WITH ").append(combine != null ? "rs" : "s").append(" AS (\n");
 		if ( filter.getObjectKind() == ObjectDatumKind.Location ) {
 			DatumSqlUtils.locationMetadataFilterSql(filter,
@@ -369,13 +369,13 @@ public class SelectDatum
 		} else {
 			order.append(", datum.stream_id, ts");
 		}
-		if ( order.length() > 0 ) {
+		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}
 
-	private void sqlCore(StringBuilder buf, boolean ordered) {
-		sqlCte(buf, ordered);
+	private void sqlCore(StringBuilder buf) {
+		sqlCte(buf);
 		if ( combine != null ) {
 			buf.append(", d AS (\n");
 		}
@@ -411,7 +411,7 @@ public class SelectDatum
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf, true);
+		sqlCore(buf);
 		sqlOrderByJoins(buf);
 		sqlOrderBy(buf);
 		CommonSqlUtils.limitOffset(filter, buf);
@@ -462,7 +462,7 @@ public class SelectDatum
 				// We use a specialized count query here because the actual query does a lot
 				// of computation to produce minute-level aggregation. The
 				// solardatm.count_datm_time_span_slots() function is designed to run faster.
-				sqlCte(buf, false);
+				sqlCte(buf);
 				buf.append("SELECT SUM(datum.dcount) AS dcount\n");
 				buf.append("FROM s\n");
 				buf.append("INNER JOIN solardatm.count_datm_time_span_slots(s.stream_id");
@@ -476,7 +476,7 @@ public class SelectDatum
 			}
 
 			// non-minute aggregation; use normal wrapped count query
-			sqlCore(buf, false);
+			sqlCore(buf);
 			return DatumSqlUtils.wrappedCountQuery(buf.toString());
 		}
 

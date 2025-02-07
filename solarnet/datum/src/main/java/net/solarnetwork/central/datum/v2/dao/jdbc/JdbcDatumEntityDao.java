@@ -62,7 +62,6 @@ import javax.cache.Cache;
 import javax.sql.DataSource;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
-import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
@@ -144,7 +143,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -169,7 +168,7 @@ public class JdbcDatumEntityDao
 	 * The {@code maxMinuteAggregationHours} property default value.
 	 *
 	 * <p>
-	 * This represents a 5 week time span to that full months can be queried.
+	 * This represents a 5-week time span to that full months can be queried.
 	 * </p>
 	 */
 	public static final int DEFAULT_MAX_MINUTE_AGG_HOURS = (24 * 7 * 5);
@@ -222,20 +221,15 @@ public class JdbcDatumEntityDao
 			return null;
 		}
 		var sql = new StoreGeneralObjectDatum(datum);
-		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
-
-			@Override
-			public DatumPK doInCallableStatement(CallableStatement cs)
-					throws SQLException, DataAccessException {
-				cs.execute();
-				UUID streamId = uuidFromCall(cs, 1);
-				return new DatumPK(streamId, sql.getTimestamp());
-			}
+		return jdbcTemplate.execute(sql, cs -> {
+			cs.execute();
+			UUID streamId = uuidFromCall(cs, 1);
+			return new DatumPK(streamId, sql.getTimestamp());
 		});
 	}
 
 	private static UUID uuidFromCall(CallableStatement call, int parameterIndex) throws SQLException {
-		Object streamId = call.getObject(1);
+		Object streamId = call.getObject(parameterIndex);
 		return (streamId instanceof UUID ? (UUID) streamId
 				: streamId != null ? UUID.fromString(streamId.toString()) : null);
 	}
@@ -252,14 +246,9 @@ public class JdbcDatumEntityDao
 	@Override
 	public DatumPK store(DatumEntity datum) {
 		StoreDatum sql = new StoreDatum(datum);
-		return jdbcTemplate.execute(sql, new CallableStatementCallback<DatumPK>() {
-
-			@Override
-			public DatumPK doInCallableStatement(CallableStatement cs)
-					throws SQLException, DataAccessException {
-				cs.execute();
-				return datum.getId();
-			}
+		return jdbcTemplate.execute(sql, cs -> {
+			cs.execute();
+			return datum.getId();
 		});
 	}
 
@@ -276,7 +265,7 @@ public class JdbcDatumEntityDao
 	@Override
 	public DatumEntity get(DatumPK id) {
 		List<Datum> result = jdbcTemplate.query(new GetDatum(id), DatumEntityRowMapper.INSTANCE);
-		return (!result.isEmpty() ? (DatumEntity) result.get(0) : null);
+		return (!result.isEmpty() ? (DatumEntity) result.getFirst() : null);
 	}
 
 	@Override
@@ -293,21 +282,11 @@ public class JdbcDatumEntityDao
 		DatumReadingType readingType = filter.getReadingType();
 		if ( readingType != null
 				&& (filter.getAggregation() == null || filter.getAggregation() == Aggregation.None) ) {
-			switch (readingType) {
-				case Difference:
-				case DifferenceWithin:
-				case NearestDifference:
-				case CalculatedAtDifference:
-					return new SelectReadingDifference(filter);
-
-				case CalculatedAt:
-					return new SelectDatumCalculatedAt(filter);
-
-				default:
-					throw new UnsupportedOperationException(
-							"Reading type " + readingType + " is not supported.");
-
-			}
+			return switch (readingType) {
+				case Difference, DifferenceWithin, NearestDifference, CalculatedAtDifference -> new SelectReadingDifference(
+						filter);
+				case CalculatedAt -> new SelectDatumCalculatedAt(filter);
+			};
 		}
 		if ( (filter.getPartialAggregation() != null
 				&& filter.getPartialAggregation() != Aggregation.None)
@@ -363,7 +342,7 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		if ( filter == null ) {
 			throw new IllegalArgumentException("The filter argument must be provided.");
 		}
@@ -381,7 +360,7 @@ public class JdbcDatumEntityDao
 					results.getReturnedResultCount());
 		}
 
-		Map<UUID, ObjectDatumStreamMetadata> metaMap = null;
+		Map<UUID, ObjectDatumStreamMetadata> metaMap;
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {
@@ -402,7 +381,7 @@ public class JdbcDatumEntityDao
 
 	@Override
 	public void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
 		validateFilter(filter);
@@ -428,22 +407,17 @@ public class JdbcDatumEntityDao
 		}
 		processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, metadataProvider)); // TODO: support count total results/offset/max
 		try {
-			jdbcTemplate.execute(sql, new PreparedStatementCallback<Void>() {
-
-				@Override
-				public Void doInPreparedStatement(PreparedStatement ps)
-						throws SQLException, DataAccessException {
-					try (ResultSet rs = ps.executeQuery()) {
-						int row = 0;
-						while ( rs.next() ) {
-							Datum d = mapper.mapRow(rs, ++row);
-							processor.handleResultItem(d);
-						}
-					} catch ( IOException e ) {
-						throw new RuntimeException(e);
+			jdbcTemplate.execute(sql, (PreparedStatementCallback<Void>) ps -> {
+				try (ResultSet rs = ps.executeQuery()) {
+					int row = 0;
+					while ( rs.next() ) {
+						Datum d = mapper.mapRow(rs, ++row);
+						processor.handleResultItem(d);
 					}
-					return null;
+				} catch ( IOException e ) {
+					throw new RuntimeException(e);
 				}
+				return null;
 			});
 		} catch ( RuntimeException e ) {
 			if ( e.getCause() instanceof IOException ) {
@@ -463,20 +437,16 @@ public class JdbcDatumEntityDao
 	public DatumRecordCounts countDatumRecords(ObjectStreamCriteria filter) {
 		List<AuditDatum> result = jdbcTemplate.query(new SelectDatumRecordCounts(filter),
 				AuditDatumAccumulativeEntityRowMapper.INSTANCE);
-		return (result.isEmpty() ? null : result.get(0));
+		return (result.isEmpty() ? null : result.getFirst());
 	}
 
 	@Override
 	public long deleteFiltered(ObjectStreamCriteria filter) {
-		return jdbcTemplate.query(new DeleteDatum(filter), new ResultSetExtractor<Long>() {
-
-			@Override
-			public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
-				if ( rs.next() ) {
-					return rs.getLong(1);
-				}
-				return 0L;
+		return jdbcTemplate.query(new DeleteDatum(filter), rs -> {
+			if ( rs.next() ) {
+				return rs.getLong(1);
 			}
+			return 0L;
 		});
 	}
 
@@ -493,7 +463,7 @@ public class JdbcDatumEntityDao
 		}
 		List<ObjectDatumStreamMetadata> results = jdbcTemplate.query(new SelectStreamMetadata(filter),
 				ObjectDatumStreamMetadataRowMapper.INSTANCE);
-		ObjectDatumStreamMetadata meta = (results.isEmpty() ? null : results.get(0));
+		ObjectDatumStreamMetadata meta = (results.isEmpty() ? null : results.getFirst());
 		if ( meta != null && streamMetadataCache != null ) {
 			streamMetadataCache.put(filter.getStreamId(), meta);
 		}
@@ -553,30 +523,26 @@ public class JdbcDatumEntityDao
 			return result;
 		}
 
-		jdbcTemplate.execute(new ConnectionCallback<Void>() {
+		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
 
-			@Override
-			public Void doInConnection(Connection con) throws SQLException, DataAccessException {
-
-				try (PreparedStatement stmt = con.prepareStatement(FIND_METADATA_IDS_FOR_STREAM_ID)) {
-					int resultNum = 0;
-					for ( UUID streamId : queryList ) {
-						stmt.setObject(1, streamId, Types.OTHER);
-						try (ResultSet rs = stmt.executeQuery()) {
-							if ( rs.next() ) {
-								ObjectDatumStreamMetadataId id = ObjectDatumStreamMetadataIdRowMapper.INSTANCE
-										.mapRow(rs, ++resultNum);
-								result.put(streamId, id);
-								if ( streamMetadataIdCache != null ) {
-									streamMetadataIdCache.put(streamId, id);
-								}
+			try (PreparedStatement stmt = con.prepareStatement(FIND_METADATA_IDS_FOR_STREAM_ID)) {
+				int resultNum = 0;
+				for ( UUID streamId : queryList ) {
+					stmt.setObject(1, streamId, Types.OTHER);
+					try (ResultSet rs = stmt.executeQuery()) {
+						if ( rs.next() ) {
+							ObjectDatumStreamMetadataId id = ObjectDatumStreamMetadataIdRowMapper.INSTANCE
+									.mapRow(rs, ++resultNum);
+							result.put(streamId, id);
+							if ( streamMetadataIdCache != null ) {
+								streamMetadataIdCache.put(streamId, id);
 							}
 						}
 					}
 				}
-
-				return null;
 			}
+
+			return null;
 		});
 		return result;
 	}
@@ -611,29 +577,23 @@ public class JdbcDatumEntityDao
 		UpdateObjectStreamMetadataAttributes sql = new UpdateObjectStreamMetadataAttributes(kind,
 				streamId, objectId, sourceId, instantaneousProperties, accumulatingProperties,
 				statusProperties);
-		ObjectDatumStreamMetadata result = jdbcTemplate.execute(sql,
-				new PreparedStatementCallback<ObjectDatumStreamMetadata>() {
+		ObjectDatumStreamMetadata result = jdbcTemplate.execute(sql, ps -> {
+			RowMapper<ObjectDatumStreamMetadata> rowMapper;
+			if ( kind == ObjectDatumKind.Location ) {
+				rowMapper = ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE;
+			} else {
+				rowMapper = ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE;
+			}
 
-					@Override
-					public ObjectDatumStreamMetadata doInPreparedStatement(PreparedStatement ps)
-							throws SQLException, DataAccessException {
-						RowMapper<ObjectDatumStreamMetadata> rowMapper;
-						if ( kind == ObjectDatumKind.Location ) {
-							rowMapper = ObjectDatumStreamMetadataRowMapper.LOCATION_INSTANCE;
-						} else {
-							rowMapper = ObjectDatumStreamMetadataRowMapper.NODE_INSTANCE;
-						}
-
-						if ( ps.execute() ) {
-							try (ResultSet rs = ps.getResultSet()) {
-								if ( rs.next() ) {
-									return rowMapper.mapRow(rs, 1);
-								}
-							}
-						}
-						return null;
+			if ( ps.execute() ) {
+				try (ResultSet rs = ps.getResultSet()) {
+					if ( rs.next() ) {
+						return rowMapper.mapRow(rs, 1);
 					}
-				});
+				}
+			}
+			return null;
+		});
 		if ( result != null ) {
 			// remove from cache
 			final Cache<UUID, ObjectDatumStreamMetadata> cache = getStreamMetadataCache();
@@ -662,19 +622,12 @@ public class JdbcDatumEntityDao
 		if ( agg == null ) {
 			agg = Aggregation.None;
 		}
-		switch (agg) {
-			case Hour:
-				return ReadingDatumEntityRowMapper.HOUR_INSTANCE;
-
-			case Day:
-				return ReadingDatumEntityRowMapper.DAY_INSTANCE;
-
-			case Month:
-				return ReadingDatumEntityRowMapper.MONTH_INSTANCE;
-
-			default:
-				return ReadingDatumEntityRowMapper.INSTANCE;
-		}
+		return switch (agg) {
+			case Hour -> ReadingDatumEntityRowMapper.HOUR_INSTANCE;
+			case Day -> ReadingDatumEntityRowMapper.DAY_INSTANCE;
+			case Month -> ReadingDatumEntityRowMapper.MONTH_INSTANCE;
+			default -> ReadingDatumEntityRowMapper.INSTANCE;
+		};
 	}
 
 	@Override
@@ -702,7 +655,7 @@ public class JdbcDatumEntityDao
 					readingMapper(filter.getAggregation()));
 		}
 
-		Map<UUID, ObjectDatumStreamMetadata> metaMap = null;
+		Map<UUID, ObjectDatumStreamMetadata> metaMap;
 		if ( filter.getStreamIds() != null && filter.getStreamIds().length == 1 ) {
 			ObjectDatumStreamMetadata meta = findStreamMetadata(filter);
 			if ( meta != null ) {
@@ -802,6 +755,9 @@ public class JdbcDatumEntityDao
 			final StreamIdStreamMetadataCriteria metaCriteria = new StreamIdStreamMetadataCriteria();
 			while ( rs.next() ) {
 				Datum d = mapper.mapRow(rs, (int) ++count);
+				if ( d == null ) {
+					continue;
+				}
 				metaCriteria.setStreamId(d.getStreamId());
 				ObjectDatumStreamMetadata meta = findStreamMetadata(metaCriteria);
 				ReportingGeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(d, meta);
@@ -955,9 +911,8 @@ public class JdbcDatumEntityDao
 			UUID streamId = uuidFromCall((CallableStatement) stmt, 1);
 
 			// keep track of import min/max date ranges, so they can be updated at end
-			BulkLoadStats stats = streamStats.compute(streamId, (k, v) -> {
-				return (v != null ? v : new BulkLoadStats(k));
-			});
+			BulkLoadStats stats = streamStats.compute(streamId,
+					(k, v) -> (v != null ? v : new BulkLoadStats(k)));
 			stats.updateStatsForDatum(d);
 
 			return true;

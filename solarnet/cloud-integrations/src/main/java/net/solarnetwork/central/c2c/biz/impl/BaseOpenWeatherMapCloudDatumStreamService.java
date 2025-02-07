@@ -187,9 +187,9 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 * <p>
 	 * This method will look for a {@link #LOCATION_ID_SETTING} service property
 	 * on the given {@code datumStream} and include that in the returned URI
-	 * builder. Otherwise it will look for {@link #LATITUDE_SETTING} and
+	 * builder. Otherwise, it will look for {@link #LATITUDE_SETTING} and
 	 * {@link #LONGITUDE_SETTING} service properties and include those.
-	 * Otherwise a {@link ValidationException} will be thrown with a
+	 * Otherwise, a {@link ValidationException} will be thrown with a
 	 * {@code error.datumStream.missingLocation} message key.
 	 * </p>
 	 *
@@ -328,7 +328,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 				AtmosphericDatum.HUMIDITY_KEY, samples);
 
 		JsonNode weather = json.path("weather");
-		if ( weather.isArray() && weather.size() > 0 ) {
+		if ( weather.isArray() && !weather.isEmpty() ) {
 			weather = weather.iterator().next();
 			populateJsonDatumPropertyValue(weather, "main", DatumSamplesType.Status,
 					AtmosphericDatum.SKY_CONDITIONS_KEY, samples);

@@ -24,6 +24,7 @@ package net.solarnetwork.central.inin.security;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
+import java.io.Serial;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.security.core.userdetails.User;
@@ -38,6 +39,7 @@ import net.solarnetwork.central.support.EventDetailsProvider;
 public class AuthenticatedEndpointCredentials extends User
 		implements EndpointUserDetails, EventDetailsProvider {
 
+	@Serial
 	private static final long serialVersionUID = 1221233194260672700L;
 
 	private final Long userId;

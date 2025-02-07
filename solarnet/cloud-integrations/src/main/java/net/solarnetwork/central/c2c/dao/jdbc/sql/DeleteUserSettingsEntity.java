@@ -36,7 +36,7 @@ import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
  * @author matt
  * @version 1.0
  */
-public class DeleteUserSettingsEntity implements PreparedStatementCreator, SqlProvider {
+public final class DeleteUserSettingsEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			DELETE FROM solardin.cin_user_settings

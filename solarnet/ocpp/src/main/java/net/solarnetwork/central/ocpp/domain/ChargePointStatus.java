@@ -1,27 +1,28 @@
 /* ==================================================================
  * ChargePointStatus.java - 16/11/2022 5:08:46 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.ocpp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -32,7 +33,7 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * OCPP charger overall status.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -41,6 +42,7 @@ import net.solarnetwork.util.ObjectUtils;
 public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 		implements UserRelatedEntity<UserLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = -4350200357133821464L;
 
 	/** The SolarIn instance connected to. */
@@ -54,7 +56,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointId
@@ -79,7 +81,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -110,7 +112,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Get the Charge Point ID.
-	 * 
+	 *
 	 * @return the Charge Point ID
 	 */
 	public Long getChargePointId() {
@@ -119,7 +121,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Get the SolarIn instance name the charger is connected to.
-	 * 
+	 *
 	 * @return the instance name, or {@literal null} if not connected
 	 */
 	public String getConnectedTo() {
@@ -128,7 +130,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Set the SolarIn instance name the charger is connected to.
-	 * 
+	 *
 	 * @param connectedTo
 	 *        the instance name, or {@literal null} if not connected
 	 */
@@ -138,7 +140,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Get the connection session ID.
-	 * 
+	 *
 	 * @return the sessionId the session ID
 	 * @since 1.1
 	 */
@@ -148,7 +150,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Set the connection session ID.
-	 * 
+	 *
 	 * @param sessionId
 	 *        the session ID to set
 	 * @since 1.1
@@ -159,7 +161,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Get the date the connection was last established.
-	 * 
+	 *
 	 * @return the date, or {@literal null} if never connected
 	 */
 	public Instant getConnectedDate() {
@@ -168,7 +170,7 @@ public class ChargePointStatus extends BasicEntity<UserLongCompositePK>
 
 	/**
 	 * Set the date the connection was last established.
-	 * 
+	 *
 	 * @param connectedDate
 	 *        the date to set
 	 */

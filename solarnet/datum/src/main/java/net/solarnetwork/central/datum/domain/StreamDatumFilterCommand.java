@@ -1,27 +1,28 @@
 /* ==================================================================
  * StreamDatumFilterCommand.java - 29/04/2022 4:34:08 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,9 +53,9 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Implementation of {@link StreamDatumFilter}.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.3
  */
 @JsonPropertyOrder({ "streamIds", "kind", "objectIds", "sourceIds", "userIds", "aggregation",
@@ -65,6 +66,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		implements StreamDatumFilter, AggregationFilter, CombiningFilter, DatumRollupFilter,
 		NodeMappingFilter, SourceMappingFilter, OptimizedQueryCriteria {
 
+	@Serial
 	private static final long serialVersionUID = 5720733579900923990L;
 
 	private UUID[] streamIds;
@@ -79,7 +81,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	private boolean mostRecent = false;
 
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset;
+	private Long offset;
 	private Integer max;
 
 	private Aggregation aggregation;
@@ -111,13 +113,9 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof StreamDatumFilterCommand other) ) {
 			return false;
 		}
-		if ( !(obj instanceof StreamDatumFilterCommand) ) {
-			return false;
-		}
-		StreamDatumFilterCommand other = (StreamDatumFilterCommand) obj;
 		return aggregation == other.aggregation && combiningType == other.combiningType
 				&& Arrays.equals(datumRollupTypes, other.datumRollupTypes)
 				&& Objects.equals(endDate, other.endDate) && kind == other.kind
@@ -287,7 +285,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the object datum kind.
-	 * 
+	 *
 	 * @param kind
 	 *        the kind
 	 */
@@ -298,7 +296,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Get the object datum kind as a string value.
-	 * 
+	 *
 	 * @return the kind
 	 */
 	@JsonGetter("kind")
@@ -309,7 +307,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the object datum kind.
-	 * 
+	 *
 	 * @param value
 	 *        the kind
 	 */
@@ -329,7 +327,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the stream IDs.
-	 * 
+	 *
 	 * @param streamIds
 	 *        the stream IDs to set
 	 */
@@ -339,15 +337,15 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set a single stream ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single stream ID at
 	 * a time. The stream ID is still stored on the {@code streamIds} array,
 	 * just as the first value. Calling this method replaces any existing
-	 * {@code steramIds} value with a new array containing just the ID passed
+	 * {@code streamIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 */
@@ -369,7 +367,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the object IDs.
-	 * 
+	 *
 	 * @param objectIds
 	 *        the object IDs to set
 	 */
@@ -379,7 +377,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set a single object ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single object ID at
 	 * a time. The object ID is still stored on the {@code objectIds} array,
@@ -387,7 +385,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * {@code objectIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param objectId
 	 *        the object ID
 	 */
@@ -404,7 +402,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the stream kind to {@literal Node} and configure the object IDs.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to set
 	 */
@@ -415,7 +413,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the stream kind to {@literal Node} and configure the object IDs.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
@@ -426,7 +424,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the stream kind to {@literal Location} and configure the object IDs.
-	 * 
+	 *
 	 * @param locId
 	 *        the node ID to set
 	 */
@@ -437,7 +435,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the stream kind to {@literal Location} and configure the object IDs.
-	 * 
+	 *
 	 * @param locIds
 	 *        the node IDs to set
 	 */
@@ -453,7 +451,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the source IDs.
-	 * 
+	 *
 	 * @param sourceIds
 	 *        the source IDs to set
 	 */
@@ -463,7 +461,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set a single source ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single source ID at
 	 * a time. The source ID is still stored on the {@code sourceIds} array,
@@ -471,7 +469,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * {@code sourceIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID
 	 */
@@ -535,14 +533,14 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( sorts == null ) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<SortDescriptor>(sorts);
+		return new ArrayList<>(sorts);
 	}
 
-	public Integer getOffset() {
+	public Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Integer offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 
@@ -553,7 +551,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	public void setMax(Integer max) {
 		this.max = max;
 		if ( this.offset == null ) {
-			this.offset = 0;
+			this.offset = 0L;
 		}
 	}
 
@@ -564,7 +562,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the aggregation.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation to set
 	 */
@@ -575,7 +573,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	/**
 	 * Calls {@link #setAggregation(Aggregation)} for backwards API
 	 * compatibility.
-	 * 
+	 *
 	 * @param aggregate
 	 *        the aggregation to set
 	 */
@@ -585,7 +583,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Get the aggregation key.
-	 * 
+	 *
 	 * @return the aggregation key, never {@literal null}
 	 */
 	@JsonIgnore
@@ -596,17 +594,17 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the aggregation as a key value.
-	 * 
+	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link Aggregation} key value, then
 	 * {@link Aggregation#None} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 */
 	public void setAggregationKey(String key) {
-		Aggregation agg = null;
+		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -622,7 +620,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the partial aggregation.
-	 * 
+	 *
 	 * @param partialAggregation
 	 *        the aggregation to set
 	 */
@@ -632,7 +630,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Get the aggregation key.
-	 * 
+	 *
 	 * @return the aggregation key, never {@literal null}
 	 */
 	@JsonIgnore
@@ -643,18 +641,18 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the aggregation as a key value.
-	 * 
+	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link Aggregation} key value, then
 	 * {@link Aggregation#None} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 */
 	@JsonSetter
 	public void setPartialAggregationKey(String key) {
-		Aggregation agg = null;
+		Aggregation agg;
 		try {
 			agg = Aggregation.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -670,7 +668,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the most recent query flag.
-	 * 
+	 *
 	 * @param mostRecent
 	 *        {@literal true} to return only the most recent matching data
 	 */
@@ -685,7 +683,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Toggle the total results count flag.
-	 * 
+	 *
 	 * @param withoutTotalResultsCount
 	 *        the value to set
 	 */
@@ -700,7 +698,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the combining type.
-	 * 
+	 *
 	 * @param combiningType
 	 *        the type
 	 */
@@ -710,7 +708,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Get the combining type key.
-	 * 
+	 *
 	 * @return the combining type key, or {@literal null} if not defined
 	 */
 	@JsonIgnore
@@ -721,18 +719,18 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the aggregation as a key value.
-	 * 
+	 *
 	 * <p>
 	 * If {@literal key} is not a supported {@link CombiningType} key value,
 	 * then {@literal null} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param key
 	 *        the key to set
 	 */
 	@JsonSetter
 	public void setCombiningTypeKey(String key) {
-		CombiningType type = null;
+		CombiningType type;
 		try {
 			type = CombiningType.forKey(key);
 		} catch ( IllegalArgumentException e ) {
@@ -748,7 +746,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the node ID mappings.
-	 * 
+	 *
 	 * @param nodeIdMappings
 	 *        the mappings to set
 	 */
@@ -758,7 +756,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the node ID mappings value via a list of string encoded mappings.
-	 * 
+	 *
 	 * <p>
 	 * Each mapping in {@code mappings} must be encoded as
 	 * {@literal VIRT_NODE_ID:NODE_ID1,NODE_ID2,...}. That is, a virtual node ID
@@ -769,7 +767,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * includes the colon delimiter, and the remaining values are simple
 	 * strings. In that case a single virtual node ID mapping is created.
 	 * </p>
-	 * 
+	 *
 	 * @param mappings
 	 *        the mappings to set
 	 */
@@ -778,7 +776,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
-			result = new LinkedHashMap<Long, Set<Long>>(mappings.length);
+			result = new LinkedHashMap<>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
@@ -796,7 +794,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 					Long vId = Long.valueOf(map.substring(0, vIdDelimIdx));
 					Set<String> rIds = StringUtils
 							.commaDelimitedStringToSet(map.substring(vIdDelimIdx + 1));
-					Set<Long> rNodeIds = new LinkedHashSet<Long>(rIds.size());
+					Set<Long> rNodeIds = new LinkedHashSet<>(rIds.size());
 					for ( String rId : rIds ) {
 						rNodeIds.add(Long.valueOf(rId));
 					}
@@ -816,7 +814,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the source ID mappings.
-	 * 
+	 *
 	 * @param sourceIdMappings
 	 *        the mappings to set
 	 */
@@ -826,20 +824,20 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the source ID mappings value via a list of string encoded mappings.
-	 * 
+	 *
 	 * <p>
 	 * Each mapping in {@code mappings} must be encoded as
 	 * {@literal VIRT_SOURCE_ID:SOURCE_ID1,SOURCE_ID2,...}. That is, a virtual
 	 * source ID followed by a colon followed by a comma-delimited list of real
 	 * source IDs.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * A special case is handled when the mappings are such that the first
 	 * includes the colon delimiter, and the remaining values are simple
 	 * strings. In that case a single virtual source ID mapping is created.
 	 * </p>
-	 * 
+	 *
 	 * @param mappings
 	 *        the mappings to set
 	 */
@@ -848,7 +846,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 		if ( mappings == null || mappings.length < 1 ) {
 			result = null;
 		} else {
-			result = new LinkedHashMap<String, Set<String>>(mappings.length);
+			result = new LinkedHashMap<>(mappings.length);
 			for ( String map : mappings ) {
 				int vIdDelimIdx = map.indexOf(':');
 				if ( vIdDelimIdx < 1 && result.size() == 1 ) {
@@ -885,7 +883,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Set the datum rollup types to use.
-	 * 
+	 *
 	 * @param datumRollupTypes
 	 *        the rollup types
 	 */
@@ -896,7 +894,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 
 	/**
 	 * Get the datum rollups as key values.
-	 * 
+	 *
 	 * @return the datum rollup type key values, or {@literal null} if not
 	 *         defined
 	 */

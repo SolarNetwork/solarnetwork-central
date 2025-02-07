@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralNodeDatumMapPropertySerializer.java - Sep 5, 2014 7:12:44 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,17 +33,17 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Serialize a {@link GeneralNodeDatum} to a {@code Map}.
- * 
+ *
  * <p>
  * The {@link ReportingDatum} API is also supported (those properties will be
  * added to the output if a {@link GeneralNodeDatum} subclass implements that
- * interface). Similarly the {@link ReadingDatum} API is supported and all start
- * and final properties will be added to the resulting map, adding the
+ * interface). Similarly, the {@link ReadingDatum} API is supported and all
+ * start and final properties will be added to the resulting map, adding the
  * {@link ReadingDatum#START_PROPERTY_SUFFIX} and
  * {@link ReadingDatum#FINAL_PROPERTY_SUFFIX} property name suffix as
  * appropriate.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -52,15 +52,13 @@ public class GeneralNodeDatumMapPropertySerializer implements PropertySerializer
 	@Override
 	public Object serialize(Object data, String propertyName, Object propertyValue) {
 		GeneralNodeDatum datum = (GeneralNodeDatum) propertyValue;
-		Map<String, Object> props = new LinkedHashMap<String, Object>(8);
+		Map<String, Object> props = new LinkedHashMap<>(8);
 		props.put("created", datum.getCreated());
-		if ( datum instanceof ReportingDatum ) {
-			ReportingDatum rd = (ReportingDatum) datum;
+		if ( datum instanceof ReportingDatum rd ) {
 			props.put("localDate", rd.getLocalDate());
 			props.put("localTime", rd.getLocalTime());
 		}
-		if ( datum instanceof ReadingDatum ) {
-			ReadingDatum rd = (ReadingDatum) datum;
+		if ( datum instanceof ReadingDatum rd ) {
 			Map<String, ?> dataStart = rd.getSampleDataStart();
 			if ( dataStart != null ) {
 				for ( Map.Entry<String, ?> me : dataStart.entrySet() ) {

@@ -25,7 +25,7 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static java.lang.String.format;
 import static java.time.temporal.ChronoField.MONTH_OF_YEAR;
 import static java.time.temporal.ChronoField.YEAR;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.time.YearMonth;
 import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
@@ -46,7 +46,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.billing.biz.BillingBiz;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
@@ -59,13 +58,14 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatchFilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for billing management.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @RestController("v1BillingController")
 @RequestMapping(value = { "/u/sec/billing", "/api/v1/sec/user/billing" })
@@ -100,12 +100,12 @@ public class BillingController {
 	 * @return the billing system info
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/systemInfo", params = "!key")
-	public Response<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
+	public Result<BillingSystemInfo> billingSystemInfoForUser(Locale locale) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		BillingBiz biz = billingBiz();
 		BillingSystem system = biz.billingSystemForUser(userId);
 		BillingSystemInfo info = (system != null ? system.getInfo(locale) : null);
-		return response(info);
+		return success(info);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/{invoiceId}", method = RequestMethod.GET)
-	public Response<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
+	public Result<Invoice> getInvoice(@PathVariable("invoiceId") String invoiceId,
 			@RequestParam(value = "userId", required = false) Long userId, Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( userId == null ) {
@@ -138,7 +138,7 @@ public class BillingController {
 			result = new LocalizedInvoice(result, locale);
 		}
 
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class BillingController {
 		}
 		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-				: acceptTypes.get(0).removeQualityValue();
+				: acceptTypes.getFirst().removeQualityValue();
 		Resource result = biz.renderInvoice(userId, invoiceId, outputType, locale);
 		if ( result != null ) {
 			HttpHeaders headers = new HttpHeaders();
@@ -176,7 +176,7 @@ public class BillingController {
 				headers.set(HttpHeaders.CONTENT_DISPOSITION,
 						format("attachment; filename=\"%s\"", result.getFilename()));
 			}
-			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+			return new ResponseEntity<>(result, headers, HttpStatus.OK);
 		}
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}
@@ -212,28 +212,29 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/list", method = RequestMethod.GET)
-	public Response<FilterResults<InvoiceMatch>> findFilteredInvoices(InvoiceFilterCommand filter,
+	public Result<FilterResults<InvoiceMatch, String>> findFilteredInvoices(InvoiceFilterCommand filter,
 			Locale locale) {
 		BillingBiz biz = billingBiz();
 		if ( filter.getUserId() == null ) {
 			filter.setUserId(SecurityUtils.getCurrentActorUserId());
 		}
-		FilterResults<InvoiceMatch> results = biz.findFilteredInvoices(filter,
+		FilterResults<InvoiceMatch, String> results = biz.findFilteredInvoices(filter,
 				filter.getSortDescriptors(), filter.getOffset(), filter.getMax());
 
 		// localize the response
-		if ( results.getReturnedResultCount() != null && results.getReturnedResultCount() > 0 ) {
+		if ( results.getReturnedResultCount() > 0 ) {
 			if ( locale == null ) {
 				locale = Locale.getDefault();
 			}
 			results = new LocalizedInvoiceMatchFilterResults(results, locale);
 		}
 
-		return response(results);
+		return success(results);
 	}
 
 	/** A YYYY-MM date format to use for parsing a billing month. */
 	public static final DateTimeFormatter MONTH_FORMAT;
+
 	static {
 		// @formatter:off
 		MONTH_FORMAT = new DateTimeFormatterBuilder()
@@ -264,8 +265,7 @@ public class BillingController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/invoices/preview", method = RequestMethod.GET)
-	public Response<Invoice> previewInvoice(
-			@RequestParam(value = "userId", required = false) Long userId,
+	public Result<Invoice> previewInvoice(@RequestParam(value = "userId", required = false) Long userId,
 			@RequestParam(value = "month", required = false) String month,
 			@RequestParam(value = "useCredit", required = false) boolean useCredit, Locale locale) {
 		BillingBiz biz = billingBiz();
@@ -288,7 +288,7 @@ public class BillingController {
 			result = new LocalizedInvoice(result, locale);
 		}
 
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -322,7 +322,7 @@ public class BillingController {
 		}
 		List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		MediaType outputType = acceptTypes.isEmpty() ? MediaType.TEXT_HTML
-				: acceptTypes.get(0).removeQualityValue();
+				: acceptTypes.getFirst().removeQualityValue();
 		YearMonth date = null;
 		if ( month != null && !month.isEmpty() ) {
 			date = MONTH_FORMAT.parse(month, YearMonth::from);
@@ -337,7 +337,7 @@ public class BillingController {
 				headers.set(HttpHeaders.CONTENT_DISPOSITION,
 						format("attachment; filename=\"%s\"", result.getFilename()));
 			}
-			return new ResponseEntity<Resource>(result, headers, HttpStatus.OK);
+			return new ResponseEntity<>(result, headers, HttpStatus.OK);
 		}
 		return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 	}

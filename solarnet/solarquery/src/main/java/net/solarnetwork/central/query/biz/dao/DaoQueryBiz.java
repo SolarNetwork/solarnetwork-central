@@ -1,23 +1,23 @@
 /* ===================================================================
  * DaoQueryBiz.java
- * 
+ *
  * Created Aug 5, 2009 12:31:45 PM
- * 
- * Copyright (c) 2009 Solarnetwork.net Dev Team.
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * Copyright (c) 2009 SolarNetwork.net Dev Team.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ===================================================================
  */
@@ -59,8 +59,10 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatumPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.domain.ReportingGeneralLocationDatumMatch;
 import net.solarnetwork.central.datum.domain.ReportingGeneralNodeDatumMatch;
@@ -79,7 +81,6 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.support.StreamDatumFilteredResultsProcessor;
 import net.solarnetwork.central.domain.AggregationFilter;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocalDateRangeFilter;
 import net.solarnetwork.central.domain.Location;
 import net.solarnetwork.central.domain.LocationMatch;
@@ -90,7 +91,8 @@ import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.security.SecurityActor;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -98,9 +100,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Implementation of {@link QueryBiz}.
- * 
+ *
  * @author matt
- * @version 4.4
+ * @version 4.5
  */
 @Securable
 public class DaoQueryBiz implements QueryBiz {
@@ -108,8 +110,8 @@ public class DaoQueryBiz implements QueryBiz {
 	private final DatumEntityDao datumDao;
 	private final DatumStreamMetadataDao metaDao;
 	private final ReadingDatumDao readingDao;
+	private final SolarNodeOwnershipDao nodeOwnershipDao;
 	private SolarLocationDao solarLocationDao;
-	private SolarNodeOwnershipDao nodeOwnershipDao;
 	private Validator criteriaValidator;
 	private int filteredResultsLimit = 1000;
 	private long maxDaysForMinuteAggregation = 7;
@@ -125,7 +127,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datumDao
 	 *        the datum DAO
 	 * @param metaDao
@@ -226,8 +228,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<GeneralNodeDatumFilterMatch> findFilteredGeneralNodeDatum(
-			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<GeneralNodeDatumFilterMatch, GeneralNodeDatumPK> findFilteredGeneralNodeDatum(
+			GeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
@@ -243,8 +245,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateGeneralNodeDatum(
-			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateGeneralNodeDatum(
+			AggregateGeneralNodeDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
@@ -265,9 +267,9 @@ public class DaoQueryBiz implements QueryBiz {
 			// running total
 			return null;
 		}
-		Object startDate = null;
-		Object endDate = null;
-		long diffDays = 0;
+		Object startDate;
+		Object endDate;
+		long diffDays;
 		if ( filter instanceof LocalDateRangeFilter
 				&& ((LocalDateRangeFilter) filter).getLocalStartDate() != null ) {
 			LocalDateTime s = ((LocalDateRangeFilter) filter).getLocalStartDate();
@@ -292,10 +294,11 @@ public class DaoQueryBiz implements QueryBiz {
 			endDate = e;
 			diffDays = (s != null && e != null ? ChronoUnit.DAYS.between(s, e) : 0);
 		}
-		if ( startDate == null && endDate == null && (agg == null || agg.compareTo(Aggregation.Day) < 0)
-				&& agg != Aggregation.HourOfDay && agg != Aggregation.SeasonalHourOfDay
-				&& agg != Aggregation.DayOfWeek && agg != Aggregation.SeasonalDayOfWeek
-				&& agg != Aggregation.HourOfYear && agg != Aggregation.DayOfYear ) {
+		if ( startDate == null && endDate == null
+				&& (agg == null || agg.compareLevel(Aggregation.Day) < 0) && agg != Aggregation.HourOfDay
+				&& agg != Aggregation.SeasonalHourOfDay && agg != Aggregation.DayOfWeek
+				&& agg != Aggregation.SeasonalDayOfWeek && agg != Aggregation.HourOfYear
+				&& agg != Aggregation.DayOfYear ) {
 			log.info("Restricting aggregate to Day for filter with missing start or end date: {}",
 					filter);
 			forced = Aggregation.Day;
@@ -369,9 +372,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredAggregateReading(
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredAggregateReading(
 			AggregateGeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		if ( readingType != DatumReadingType.Difference ) {
 			throw new IllegalArgumentException("The DatumReadingType [" + readingType
 					+ "] is not supported for aggregate level [" + filter.getAggregation() + "]");
@@ -391,7 +394,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<ReportingGeneralNodeDatumMatch> findFilteredReading(
+	public FilterResults<ReportingGeneralNodeDatumMatch, GeneralNodeDatumPK> findFilteredReading(
 			GeneralNodeDatumFilter filter, DatumReadingType readingType, Period tolerance) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
@@ -425,7 +428,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public void findFilteredStreamDatum(StreamDatumFilter filter,
 			StreamDatumFilteredResultsProcessor processor,
-			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Integer offset, Integer max)
+			List<net.solarnetwork.domain.SortDescriptor> sortDescriptors, Long offset, Integer max)
 			throws IOException {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), max);
@@ -437,7 +440,7 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public void findFilteredStreamReadings(StreamDatumFilter filter, DatumReadingType readingType,
 			Period tolerance, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter);
 		c.setObjectKind(ObjectDatumKind.Node);
 		c.setReadingType(readingType);
@@ -454,8 +457,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<LocationMatch> findFilteredLocations(Location filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<LocationMatch, Long> findFilteredLocations(Location filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		if ( filter == null || filter.getFilter() == null || filter.getFilter().isEmpty() ) {
 			throw new IllegalArgumentException("Filter is required.");
 		}
@@ -465,8 +468,8 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<GeneralLocationDatumFilterMatch> findGeneralLocationDatum(
-			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<GeneralLocationDatumFilterMatch, GeneralLocationDatumPK> findGeneralLocationDatum(
+			GeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(filter, sortDescriptors,
 				limitFilterOffset(offset), limitFilterMaximum(max));
@@ -481,9 +484,9 @@ public class DaoQueryBiz implements QueryBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public FilterResults<ReportingGeneralLocationDatumMatch> findAggregateGeneralLocationDatum(
+	public FilterResults<ReportingGeneralLocationDatumMatch, GeneralLocationDatumPK> findAggregateGeneralLocationDatum(
 			AggregateGeneralLocationDatumFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+			Long offset, Integer max) {
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(enforceGeneralAggregateLevel(filter),
 				sortDescriptors, limitFilterOffset(offset), limitFilterMaximum(max));
 		c.setObjectKind(ObjectDatumKind.Location);
@@ -535,16 +538,16 @@ public class DaoQueryBiz implements QueryBiz {
 	}
 
 	private Integer limitFilterMaximum(Integer requestedMaximum) {
-		if ( requestedMaximum == null || requestedMaximum.intValue() > filteredResultsLimit
-				|| requestedMaximum.intValue() < 1 ) {
+		if ( requestedMaximum == null || requestedMaximum > filteredResultsLimit
+				|| requestedMaximum < 1 ) {
 			return filteredResultsLimit;
 		}
 		return requestedMaximum;
 	}
 
-	private Integer limitFilterOffset(Integer requestedOffset) {
-		if ( requestedOffset == null || requestedOffset.intValue() < 0 ) {
-			return 0;
+	private Long limitFilterOffset(Long requestedOffset) {
+		if ( requestedOffset == null || requestedOffset < 0 ) {
+			return 0L;
 		}
 		return requestedOffset;
 	}
@@ -560,7 +563,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum hour time range allowed for minute aggregate queries
 	 * before a higher aggregation level (e.g. hour) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForMinuteAggregation
 	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
 	 *        to {@literal 7}
@@ -572,7 +575,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum hour time range allowed for hour aggregate queries before
 	 * a higher aggregation level (e.g. day) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForHourAggregation
 	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
 	 *        to {@literal 31}
@@ -584,7 +587,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum hour time range allowed for day aggregate queries before
 	 * a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForDayAggregation
 	 *        the maximum hour range, or {@literal 0} to not restrict; defaults
 	 *        to {@literal 730}
@@ -596,7 +599,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for hour-of-day aggregate queries
 	 * before a higher aggregation level (e.g. day) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForDayOfWeekAggregation
 	 *        the maximum day time range; defaults to {@literal 3650}
 	 */
@@ -607,7 +610,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for hour-of-day aggregate queries
 	 * before a higher aggregation level (e.g. day) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForHourOfDayAggregation
 	 *        the maximum day range
 	 */
@@ -618,7 +621,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Get the maximum day time range allowed for week-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @return the maximum day time range; defaults to {@literal 3650}
 	 * @since 4.2
 	 */
@@ -629,7 +632,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for week-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForWeekOfYearAggregation
 	 *        the maximum day range
 	 * @since 4.2
@@ -640,7 +643,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	/**
 	 * Get the location DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	public SolarLocationDao getSolarLocationDao() {
@@ -654,7 +657,7 @@ public class DaoQueryBiz implements QueryBiz {
 
 	/**
 	 * Set a Validator to use for reading datum queries.
-	 * 
+	 *
 	 * @param criteriaValidator
 	 *        the validator to set
 	 * @since 3.4
@@ -666,7 +669,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for day-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForDayOfYearAggregation
 	 *        the maximum day range to set
 	 * @since 4.4
@@ -678,7 +681,7 @@ public class DaoQueryBiz implements QueryBiz {
 	/**
 	 * Set the maximum day time range allowed for hour-of-year aggregate queries
 	 * before a higher aggregation level (e.g. month) is enforced.
-	 * 
+	 *
 	 * @param maxDaysForHourOfYearAggregation
 	 *        the maximum day range to set
 	 * @since 4.4

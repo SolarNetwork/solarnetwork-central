@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,13 +51,13 @@ import net.solarnetwork.flux.vernemq.webhook.service.AuditService;
 
 /**
  * A JDBC implementation of {@link AuditService}.
- * 
+ *
  * <p>
  * This service coalesces updates per node/source/hour in memory and flushes these to the database
  * via a single "writer" thread. This design is meant to support better throughput of audit updates,
  * but has the potential to drop some count values if the service is restarted.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -81,7 +81,7 @@ public class JdbcAuditService implements AuditService {
   public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
 
   /**
-   * The default value for the {@code connecitonRecoveryDelay} property.
+   * The default value for the {@code connectionRecoveryDelay} property.
    */
   public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 15000;
 
@@ -97,7 +97,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * The default value for the {@link mqttServiceName} property.
-   * 
+   *
    * @since 1.2
    */
   public static final String DEFAULT_AUDIT_DELIVER_MQTT_SERVICE_NAME = "flxo";
@@ -105,7 +105,7 @@ public class JdbcAuditService implements AuditService {
   /**
    * A regular expression that matches if a JDBC statement is a {@link CallableStatement}.
    */
-  public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*\\}",
+  public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*}",
       Pattern.CASE_INSENSITIVE);
 
   /**
@@ -145,7 +145,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Constructor.
-   * 
+   *
    * @param dataSource
    *        the JDBC DataSource
    * @throws IllegalArgumentException
@@ -158,7 +158,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Constructor.
-   * 
+   *
    * @param dataSource
    *        the JDBC DataSource
    * @param counters
@@ -202,7 +202,7 @@ public class JdbcAuditService implements AuditService {
       Matcher m = deliverTopicRegex.matcher(message.getTopic());
       if (m.matches()) {
         final String userId = m.group(1);
-        ;
+
         if (userId != null && !userId.isBlank()) {
           final DelayedKey key = key(Long.valueOf(userId), null);
           log.trace("Message on topic [{}] delivers {} bytes to user {} @ {}", message.getTopic(),
@@ -224,8 +224,10 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * A delayed key.
-   * 
+   *
+   * <p>
    * This class is public to support testing, and is otherwise meant to be internal to this class.
+   * </p>
    */
   public static final class DelayedKey implements Delayed {
 
@@ -243,7 +245,7 @@ public class JdbcAuditService implements AuditService {
 
     /**
      * Constructor.
-     * 
+     *
      * @param objectId
      *        the object ID
      * @param sourceId
@@ -497,7 +499,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Set the MQTT audit service name to use for publish events.
-   * 
+   *
    * @param mqttServiceName
    *        the service to set; defaults to {@link #DEFAULT_AUDIT_MQTT_SERVICE_NAME}
    */
@@ -508,7 +510,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Set the MQTT audit service name to use for deliver events.
-   * 
+   *
    * @param deliverMqttServiceName
    *        the service to use; defaults to {@link #DEFAULT_AUDIT_DELIVER_MQTT_SERVICE_NAME}
    * @since 1.2
@@ -521,7 +523,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Set the delay, in milliseconds, between flushing cached audit data.
-   * 
+   *
    * @param flushDelay
    *        the delay, in milliseconds; defaults to {@link #DEFAULT_FLUSH_DELAY}
    * @throws IllegalArgumentException
@@ -537,7 +539,7 @@ public class JdbcAuditService implements AuditService {
   /**
    * Set the delay, in milliseconds, to wait after a JDBC connection error before trying to recover
    * and connect again.
-   * 
+   *
    * @param connectionRecoveryDelay
    *        the delay, in milliseconds; defaults t[ {@link #DEFAULT_CONNECTION_RECOVERY_DELAY}
    * @throws IllegalArgumentException
@@ -553,7 +555,7 @@ public class JdbcAuditService implements AuditService {
   /**
    * Set the delay, in milliseconds, to wait after executing JDBC statements within a loop before
    * executing another statement.
-   * 
+   *
    * @param updateDelay
    *        the delay, in milliseconds; defaults t[ {@link #DEFAULT_UPDATE_DELAY}
    * @throws IllegalArgumentException
@@ -565,11 +567,11 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * The JDBC statement to execute for incrementing a count for a single date, node, and source.
-   * 
+   *
    * <p>
    * The statement must accept the following parameters:
    * </p>
-   * 
+   *
    * <ol>
    * <li>string - the MQTT service name</li>
    * <li>long - the node ID</li>
@@ -577,7 +579,7 @@ public class JdbcAuditService implements AuditService {
    * <li>timestamp - the audit date</li>
    * <li>integer - the query count</li>
    * </ol>
-   * 
+   *
    * @param sql
    *        the SQL statement to use; defaults to {@link #DEFAULT_NODE_SOURCE_INCREMENT_SQL}
    */
@@ -592,13 +594,13 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Set the statistic log update count.
-   * 
+   *
    * <p>
    * Setting this to something greater than {@literal 0} will cause {@literal INFO} level statistic
    * log entries to be emitted every {@code statLogUpdateCount} records have been updated in the
    * database.
    * </p>
-   * 
+   *
    * @param statLogUpdateCount
    *        the update count; defaults to {@link #DEFAULT_STAT_LOG_UPDATE_COUNT}
    * @since 1.1
@@ -609,7 +611,7 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Get the deliver topic regular expression.
-   * 
+   *
    * @return the regular expression; defaults to {@link #DEFAULT_DELIVER_TOPIC_REGEX}
    * @since 1.2
    */
@@ -619,16 +621,16 @@ public class JdbcAuditService implements AuditService {
 
   /**
    * Set the deliver topic regular expression.
-   * 
+   *
    * <p>
    * This expression is matched against the deliver request topics, and must provide the following
    * matching groups:
    * </p>
-   * 
+   *
    * <ol>
    * <li>user ID</li>
    * </ol>
-   * 
+   *
    * @param deliverTopicRegex
    *        the regular expression to use
    * @throws IllegalArgumentException

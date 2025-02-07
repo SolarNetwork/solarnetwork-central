@@ -1,21 +1,21 @@
 /* ==================================================================
  * SimpleSchedulerManager.java - 7/11/2021 11:19:29 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Implementation of {@link SchedulerManager} using a {@link TaskScheduler}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -51,7 +51,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	/**
 	 * The default {@code pingTestMaximumExecutionMilliseconds} property value.
 	 */
-	public static final long DEFUALT_PING_TEST_MAX_EXECUTION = 2000;
+	public static final long DEFAULT_PING_TEST_MAX_EXECUTION = 2000;
 
 	/** The default {@code blockedJobMaxSeconds} property value. */
 	public static final long DEFAULT_BLOCKED_JOB_MAX_SECONDS = 1800;
@@ -61,13 +61,13 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 	private final ConcurrentNavigableMap<JobKey, ScheduledJob> jobs = new ConcurrentSkipListMap<>();
 	private final TaskScheduler taskScheduler;
 	private long blockedJobMaxSeconds = DEFAULT_BLOCKED_JOB_MAX_SECONDS;
-	private long pingTestMaximumExecutionMilliseconds = DEFUALT_PING_TEST_MAX_EXECUTION;
+	private long pingTestMaximumExecutionMilliseconds = DEFAULT_PING_TEST_MAX_EXECUTION;
 
 	private SchedulerStatus status = SchedulerStatus.Starting;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param taskScheduler
 	 *        the scheduler
 	 * @throws IllegalArgumentException
@@ -196,7 +196,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 			if ( triggerState == JobStatus.Error ) {
 				return new PingTestResult(false, String.format(stateErrorTemplate, key.getGroupId(),
 						key.getId(), "ERROR", sinceTime));
-			} else if ( job.isExecuting() && (System.currentTimeMillis()
+			} else if ( lastFireTime != null && job.isExecuting() && (System.currentTimeMillis()
 					- lastFireTime.toEpochMilli()) > (blockedJobMaxSeconds * 1000L) ) {
 				return new PingTestResult(false, String.format(stateErrorTemplate, key.getGroupId(),
 						key.getId(), "BLOCKED", sinceTime));
@@ -214,7 +214,7 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 
 	/**
 	 * A minimum amount of seconds before a blocked job results in an error.
-	 * 
+	 *
 	 * @param blockedJobMaxSeconds
 	 *        The number of seconds.
 	 */
@@ -224,10 +224,10 @@ public class SimpleSchedulerManager implements SchedulerManager, PingTest, Servi
 
 	/**
 	 * Set the maximum ping test execution time.
-	 * 
+	 *
 	 * @param pingTestMaximumExecutionMilliseconds
 	 *        the maximum execution time, in milliseconds; defaults to
-	 *        {@link #DEFUALT_PING_TEST_MAX_EXECUTION}
+	 *        {@link #DEFAULT_PING_TEST_MAX_EXECUTION}
 	 * @since 1.7
 	 */
 	public void setPingTestMaximumExecutionMilliseconds(long pingTestMaximumExecutionMilliseconds) {

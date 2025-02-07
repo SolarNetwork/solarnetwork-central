@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -43,6 +44,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements DatumInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
+	@Serial
 	private static final long serialVersionUID = -3845517573525287732L;
 
 	private String name;

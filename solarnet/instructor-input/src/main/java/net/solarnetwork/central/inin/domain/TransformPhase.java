@@ -83,7 +83,7 @@ public enum TransformPhase implements CodedValue {
 	 */
 	@JsonCreator
 	public static TransformPhase fromValue(String value) {
-		if ( value != null && value.length() > 0 ) {
+		if ( value != null && !value.isEmpty() ) {
 			final boolean coded = (value.length() == 1);
 			final char code = value.charAt(0);
 			for ( TransformPhase e : TransformPhase.values() ) {

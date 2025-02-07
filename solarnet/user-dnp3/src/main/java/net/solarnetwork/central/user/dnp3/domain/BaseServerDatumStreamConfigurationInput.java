@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseServerDatumStreamConfigurationInput.java - 13/08/2023 6:22:19 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,11 +33,11 @@ import net.solarnetwork.domain.CodedValue;
 /**
  * Base configuration input for datum stream related server configuration
  * entities.
- * 
+ *
  * @param <C>
  *        the configuration type
  * @param <T>
- *        the type type
+ *        the enum type
  * @author matt
  * @version 1.0
  */
@@ -78,7 +78,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the datum node ID.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
@@ -87,7 +87,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the datum node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
@@ -97,7 +97,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the datum source ID.
-	 * 
+	 *
 	 * @return the sourceId
 	 */
 	public String getSourceId() {
@@ -106,7 +106,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the datum source ID.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the sourceId to set
 	 */
@@ -116,7 +116,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the datum property name.
-	 * 
+	 *
 	 * @return the property
 	 */
 	public String getProperty() {
@@ -125,7 +125,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the datum property name.
-	 * 
+	 *
 	 * @param property
 	 *        the property to set
 	 */
@@ -135,7 +135,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the measurement type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public T getType() {
@@ -144,7 +144,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the measurement type.
-	 * 
+	 *
 	 * @param type
 	 *        the measurement type to set
 	 */
@@ -154,7 +154,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the decimal multiplier.
-	 * 
+	 *
 	 * @return the multiplier
 	 */
 	public BigDecimal getMultiplier() {
@@ -163,7 +163,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the decimal multiplier.
-	 * 
+	 *
 	 * @param multiplier
 	 *        the multiplier to set
 	 */
@@ -173,7 +173,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the decimal offset.
-	 * 
+	 *
 	 * @return the offset
 	 */
 	public BigDecimal getOffset() {
@@ -182,7 +182,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the decimal offset.
-	 * 
+	 *
 	 * @param offset
 	 *        the offset to set
 	 */
@@ -192,7 +192,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Get the decimal scale
-	 * 
+	 *
 	 * @return the scale
 	 */
 	public Integer getScale() {
@@ -201,7 +201,7 @@ public abstract class BaseServerDatumStreamConfigurationInput<C extends BaseServ
 
 	/**
 	 * Set the decimal scale.
-	 * 
+	 *
 	 * @param scale
 	 *        the scale to set
 	 */

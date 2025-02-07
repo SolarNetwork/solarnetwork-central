@@ -73,21 +73,16 @@ public class InstructionEndpointAuthenticationProvider implements Authentication
 				&& authentication.getCredentials() instanceof String password ) {
 			EndpointUserDetails user = authDao.credentialsForEndpoint(endpointDetails.getEndpointId(),
 					username, false);
-			if ( user == null ) {
+			if ( (user == null) || !passwordEncoder.matches(password, user.getPassword()) ) {
 				throw new BadCredentialsException("Bad credentials");
 			}
-			if ( user != null ) {
-				if ( !passwordEncoder.matches(password, user.getPassword()) ) {
-					throw new BadCredentialsException("Bad credentials");
-				}
 
-				UsernamePasswordAuthenticationToken result = UsernamePasswordAuthenticationToken
-						.authenticated(username, password, user.getAuthorities());
-				result.setDetails(user);
-				result.eraseCredentials();
+			UsernamePasswordAuthenticationToken result = UsernamePasswordAuthenticationToken
+					.authenticated(username, password, user.getAuthorities());
+			result.setDetails(user);
+			result.eraseCredentials();
 
-				return result;
-			}
+			return result;
 		}
 		return null;
 	}

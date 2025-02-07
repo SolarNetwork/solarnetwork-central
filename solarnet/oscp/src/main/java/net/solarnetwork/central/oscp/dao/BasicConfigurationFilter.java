@@ -127,13 +127,9 @@ public class BasicConfigurationFilter extends BasicCoreCriteria
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicConfigurationFilter other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicConfigurationFilter) ) {
-			return false;
-		}
-		BasicConfigurationFilter other = (BasicConfigurationFilter) obj;
 		return lockResults == other.lockResults && skipLockedResults == other.skipLockedResults
 				&& Arrays.equals(configurationIds, other.configurationIds)
 				&& Arrays.equals(groupIds, other.groupIds)

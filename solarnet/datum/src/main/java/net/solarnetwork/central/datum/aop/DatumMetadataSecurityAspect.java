@@ -65,7 +65,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	public static final Set<String> DEFAULT_LOCATION_METADATA_ADMIN_ROLES = Collections
 			.singleton("ROLE_LOC_META_ADMIN");
 
-	private Set<String> locaitonMetadataAdminRoles = DEFAULT_LOCATION_METADATA_ADMIN_ROLES;
+	private Set<String> locationMetadataAdminRoles = DEFAULT_LOCATION_METADATA_ADMIN_ROLES;
 
 	/**
 	 * Constructor.
@@ -143,7 +143,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param nodeId
 	 *        the ID of the node to verify
 	 */
-	@Before("addMetadata(nodeId) || storeMetadata(nodeId) || removeMetadata(nodeId)")
+	@Before(value = "addMetadata(nodeId) || storeMetadata(nodeId) || removeMetadata(nodeId)",
+			argNames = "nodeId")
 	public void updateMetadataCheck(Long nodeId) {
 		requireNodeWriteAccess(nodeId);
 	}
@@ -154,7 +155,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param filter
 	 *        the filter to verify
 	 */
-	@Before("findMetadata(filter)")
+	@Before(value = "findMetadata(filter)", argNames = "filter")
 	public void readMetadataCheck(GeneralNodeDatumMetadataFilter filter) {
 		requireNodeReadAccess(filter == null ? null : filter.getNodeId());
 	}
@@ -163,9 +164,11 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * Enforce node ID and source ID policy restrictions when requesting the
 	 * available sources for node datum metadata.
 	 *
+	 * <p>
 	 * First the node ID is verified. Then, for all returned source ID values,
 	 * if the active policy has no source ID restrictions return all values,
 	 * otherwise remove any value not included in the policy.
+	 * </p>
 	 *
 	 * @param pjp
 	 *        The join point.
@@ -176,7 +179,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 *         if any error occurs
 	 * @since 1.2
 	 */
-	@Around("getMetadataFilteredSources(nodeIds)")
+	@Around(value = "getMetadataFilteredSources(nodeIds)", argNames = "pjp,nodeIds")
 	public Object filteredMetadataSourcesAccessCheck(ProceedingJoinPoint pjp, Long[] nodeIds)
 			throws Throwable {
 		// verify node IDs
@@ -205,14 +208,13 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, principal, null,
 				getPathMatcher());
 		try {
-			List<String> inputSourceIds = new ArrayList<String>(result.size());
+			List<String> inputSourceIds = new ArrayList<>(result.size());
 			for ( NodeSourcePK pk : result ) {
 				inputSourceIds.add(pk.getSourceId());
 			}
-			String[] resultSourceIds = enforcer
-					.verifySourceIds(inputSourceIds.toArray(new String[inputSourceIds.size()]));
-			Set<String> allowedSourceIdSet = new HashSet<String>(Arrays.asList(resultSourceIds));
-			Set<NodeSourcePK> restricted = new LinkedHashSet<NodeSourcePK>(resultSourceIds.length);
+			String[] resultSourceIds = enforcer.verifySourceIds(inputSourceIds.toArray(String[]::new));
+			Set<String> allowedSourceIdSet = new HashSet<>(Arrays.asList(resultSourceIds));
+			Set<NodeSourcePK> restricted = new LinkedHashSet<>(resultSourceIds.length);
 			for ( NodeSourcePK oneResult : result ) {
 				if ( allowedSourceIdSet.contains(oneResult.getSourceId()) ) {
 					restricted.add(oneResult);
@@ -226,9 +228,10 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		return result;
 	}
 
-	@Before("addLocationMetadata(locationId) || storeLocationMetadata(locationId) || removeLocationMetadata(locationId)")
+	@Before(value = "addLocationMetadata(locationId) || storeLocationMetadata(locationId) || removeLocationMetadata(locationId)",
+			argNames = "locationId")
 	public void updateLocationMetadataCheck(Long locationId) {
-		SecurityUtils.requireAnyRole(locaitonMetadataAdminRoles);
+		SecurityUtils.requireAnyRole(locationMetadataAdminRoles);
 	}
 
 	/**
@@ -238,7 +241,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 *        the filter to verify
 	 * @since 1.3
 	 */
-	@Before("findDatumStreamMetadata(filter)")
+	@Before(value = "findDatumStreamMetadata(filter)", argNames = "filter")
 	public void findDatumStreamMetadataCheck(ObjectStreamCriteria filter) {
 		if ( filter == null || (filter.getUserId() == null && filter.getNodeId() == null
 				&& filter.getLocationId() == null) ) {
@@ -268,7 +271,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
-	@Before("findLocationRequests(userId) || getLocationRequest(userId)")
+	@Before(value = "findLocationRequests(userId) || getLocationRequest(userId)", argNames = "userId")
 	public void viewLocationRequestsCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
@@ -279,7 +282,8 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param userId
 	 *        the user ID
 	 */
-	@Before("submitLocationRequest(userId) || updateLocationRequest(userId) || removeLocationRequest(userId)")
+	@Before(value = "submitLocationRequest(userId) || updateLocationRequest(userId) || removeLocationRequest(userId)",
+			argNames = "userId")
 	public void modifyLocationRequestsCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}
@@ -294,7 +298,7 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 	 * @since 1.2
 	 */
 	public void setLocationMetadataAdminRoles(Set<String> locationMetadataAdminRoles) {
-		if ( locationMetadataAdminRoles == null || locationMetadataAdminRoles.size() < 1 ) {
+		if ( locationMetadataAdminRoles == null || locationMetadataAdminRoles.isEmpty() ) {
 			throw new IllegalArgumentException(
 					"The roleLocationMetadataAdmin argument must not be null or empty.");
 		}
@@ -303,12 +307,12 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 			capitalized = Collections
 					.singleton(locationMetadataAdminRoles.iterator().next().toUpperCase());
 		} else {
-			capitalized = new HashSet<String>(locationMetadataAdminRoles.size());
+			capitalized = new HashSet<>(locationMetadataAdminRoles.size());
 			for ( String role : locationMetadataAdminRoles ) {
 				capitalized.add(role.toUpperCase());
 			}
 		}
-		this.locaitonMetadataAdminRoles = capitalized;
+		this.locationMetadataAdminRoles = capitalized;
 	}
 
 }

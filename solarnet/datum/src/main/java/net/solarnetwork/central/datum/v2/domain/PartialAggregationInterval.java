@@ -1,21 +1,21 @@
 /* ==================================================================
  * PartialAggregationInterval.java - 3/12/2020 2:56:00 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,7 +33,7 @@ import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * A date interval for partial aggregation support.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.8
@@ -48,7 +48,7 @@ public class PartialAggregationInterval {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param main
 	 *        the main aggregation
 	 * @param partial
@@ -78,29 +78,13 @@ public class PartialAggregationInterval {
 	}
 
 	private static ChronoUnit unit(Aggregation agg) {
-		final ChronoUnit field;
-		switch (agg) {
-			case Year:
-				field = ChronoUnit.YEARS;
-				break;
-
-			case Month:
-				field = ChronoUnit.MONTHS;
-				break;
-
-			case Day:
-				field = ChronoUnit.DAYS;
-				break;
-
-			case Hour:
-				field = ChronoUnit.HOURS;
-				break;
-
-			default:
-				field = null;
-				break;
-		}
-		return field;
+		return switch (agg) {
+			case Year -> ChronoUnit.YEARS;
+			case Month -> ChronoUnit.MONTHS;
+			case Day -> ChronoUnit.DAYS;
+			case Hour -> ChronoUnit.HOURS;
+			default -> null;
+		};
 	}
 
 	private List<LocalDateInterval> buildIntervals() {
@@ -130,13 +114,13 @@ public class PartialAggregationInterval {
 	/**
 	 * Get a list of intervals representing the appropriate partial ranges
 	 * defined by the properties of this instance.
-	 * 
+	 *
 	 * <p>
 	 * This will return up to 3 intervals, representing leading, middle, and
 	 * trailing aggregate ranges with the {@code partial} and {@code main}
 	 * aggregation specified appropriately.
 	 * </p>
-	 * 
+	 *
 	 * @return the list of intervals, never {@literal null}
 	 */
 	public List<LocalDateInterval> getIntervals() {

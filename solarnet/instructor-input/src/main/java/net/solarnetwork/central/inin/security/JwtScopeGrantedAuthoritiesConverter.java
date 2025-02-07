@@ -47,7 +47,7 @@ public class JwtScopeGrantedAuthoritiesConverter
 	@Override
 	public Collection<GrantedAuthority> convert(Jwt jwt) {
 		String[] scopes = StringUtils.delimitedListToStringArray(jwt.getClaimAsString("scope"), " ");
-		if ( scopes == null || scopes.length < 1 ) {
+		if ( scopes.length < 1 ) {
 			return Collections.emptyList();
 		}
 		List<GrantedAuthority> auths = new ArrayList<>(scopes.length);

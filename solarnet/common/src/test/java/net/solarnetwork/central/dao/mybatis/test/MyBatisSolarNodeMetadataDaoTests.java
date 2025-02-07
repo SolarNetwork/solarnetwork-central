@@ -41,12 +41,12 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
@@ -86,7 +86,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 	@Test
 	public void storeNew() {
 		SolarNodeMetadata datum = getTestInstance();
-		Long id = dao.store(datum);
+		Long id = dao.save(datum);
 		assertNotNull(id);
 		lastDatum = datum;
 	}
@@ -96,7 +96,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		storeNew();
 		SolarNodeMetadata datum = lastDatum;
 		datum.getMeta().putInfoValue("bim", "bam");
-		Long id = dao.store(datum);
+		Long id = dao.save(datum);
 		assertEquals(lastDatum.getId(), id);
 	}
 
@@ -122,7 +122,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		datum.getMeta().getInfo().put("watts", 498475890235787897L);
 		datum.getMeta().getInfo().put("floating",
 				new BigDecimal("293487590845639845728947589237.49087"));
-		dao.store(datum);
+		dao.save(datum);
 
 		SolarNodeMetadata entity = dao.get(datum.getId());
 		validate(datum, entity);
@@ -135,11 +135,11 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		FilterSupport criteria = new FilterSupport();
 		criteria.setNodeId(TEST_NODE_ID);
 
-		FilterResults<SolarNodeMetadataFilterMatch> results = dao.findFiltered(criteria, null, null,
-				null);
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dao.findFiltered(criteria, null,
+				null, null);
 		assertNotNull(results);
 		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, (int) results.getReturnedResultCount());
+		assertEquals(1, results.getReturnedResultCount());
 		SolarNodeMetadataFilterMatch match = results.getResults().iterator().next();
 		assertEquals("Match ID", TEST_NODE_ID, match.getId());
 	}
@@ -162,7 +162,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 			msgs.put("foo", i);
 			samples.setInfo(msgs);
 
-			dao.store(datum);
+			dao.save(datum);
 
 		}
 
@@ -171,8 +171,8 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		criteria.setMetadataFilter("(&(/m/foo>100)(/m/foo<102))");
 
 		List<SortDescriptor> sorts = asList(new SimpleSortDescriptor("node", false));
-		FilterResults<SolarNodeMetadataFilterMatch> results = dao.findFiltered(criteria, sorts, null,
-				null);
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dao.findFiltered(criteria, sorts,
+				null, null);
 		assertThat("Result available", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 		assertThat("Result node IDs", stream(results.getResults().spliterator(), false)

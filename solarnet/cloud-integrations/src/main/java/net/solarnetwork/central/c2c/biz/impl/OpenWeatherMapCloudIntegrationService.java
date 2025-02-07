@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -90,10 +91,8 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
-		settings.add(BASE_URL_SETTING_SPECIFIER);
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true),
+				BASE_URL_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */
@@ -116,7 +115,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	 */
 	public OpenWeatherMapCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "Solcast", datumStreamServices, userEventAppenderBiz, encryptor,
+		super(SERVICE_IDENTIFIER, "OpenWeatherMap", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
 				new OpenWeatherMapRestOperationsHelper(
 						LoggerFactory.getLogger(OpenWeatherMapCloudIntegrationService.class),
@@ -153,7 +152,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 							.build()
 							.toUri(),
 					// @formatter:on
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

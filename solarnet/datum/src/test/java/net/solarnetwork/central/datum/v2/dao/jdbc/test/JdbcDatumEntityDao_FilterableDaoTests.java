@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_FilterableDaoTests.java - 3/12/2020 11:10:04 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -63,9 +63,9 @@ import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -74,9 +74,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link FilterableDao}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -139,7 +139,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(12L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(12));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(results, UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, hasSize(3));
@@ -180,7 +180,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(results, UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, contains(streamId));
@@ -221,7 +221,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(results, UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, contains(streamId));
@@ -262,7 +262,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(results, UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, contains(streamId));
@@ -304,7 +304,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		SortedSet<UUID> streamIds = sortedStreamIds(results, UUID_STRING_ORDER);
 		assertThat("Result stream IDs count", streamIds, contains(streamId));
@@ -335,14 +335,14 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		filter.setWithoutTotalResultsCount(true);
 		filter.setNodeId(1L);
 		filter.setMax(2);
-		filter.setOffset(0);
+		filter.setOffset(0L);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), nullValue());
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		Instant ts = start.toInstant();
 		for ( Datum d : results ) {
@@ -363,14 +363,14 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		filter.setWithoutTotalResultsCount(false);
 		filter.setNodeId(1L);
 		filter.setMax(2);
-		filter.setOffset(0);
+		filter.setOffset(0L);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		Instant ts = start.toInstant();
 		for ( Datum d : results ) {
@@ -391,14 +391,14 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		filter.setWithoutTotalResultsCount(false);
 		filter.setNodeId(1L);
 		filter.setMax(2);
-		filter.setOffset(2);
+		filter.setOffset(2L);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(2L));
 
 		Instant ts = start.plus(freq.multipliedBy(2)).toInstant();
 		for ( Datum d : results ) {
@@ -419,14 +419,14 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		filter.setWithoutTotalResultsCount(false);
 		filter.setNodeId(1L);
 		filter.setMax(2);
-		filter.setOffset(4);
+		filter.setOffset(4L);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(4));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(4L));
 
 		Instant ts = start.plus(freq.multipliedBy(4)).toInstant();
 		for ( Datum d : results ) {
@@ -447,14 +447,14 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		filter.setWithoutTotalResultsCount(false);
 		filter.setNodeId(1L);
 		filter.setMax(2);
-		filter.setOffset(6);
+		filter.setOffset(6L);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = dao.findFiltered(filter);
 
 		// THEN
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(0));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(6));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(6L));
 	}
 
 	@Test
@@ -478,7 +478,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		final UUID[] expectedStreamIds = metas.keySet().toArray(new UUID[metas.size()]);
 		Arrays.sort(expectedStreamIds, UUID_STRING_ORDER);
@@ -522,7 +522,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		final UUID streamId = metas.entrySet().stream()
 				.filter(e -> "s2".equals(e.getValue().getSourceId())).findAny().get().getKey();
@@ -560,7 +560,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		final UUID[] expectedStreamIds = metas.keySet().toArray(new UUID[metas.size()]);
 		Arrays.sort(expectedStreamIds, UUID_STRING_ORDER);
@@ -615,7 +615,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(2));

@@ -1,27 +1,28 @@
 /* ==================================================================
  * CentralChargePointConnector.java - 26/02/2020 8:52:41 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.ocpp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -33,11 +34,11 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 
 /**
  * A Charge Point connector entity.
- * 
+ *
  * <p>
  * A connector ID of {@literal 0} represents the Charge Point as a whole.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.3
  */
@@ -46,6 +47,7 @@ import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 public class CentralChargePointConnector extends ChargePointConnector
 		implements UserRelatedEntity<ChargePointConnectorKey> {
 
+	@Serial
 	private static final long serialVersionUID = 8009006297002891630L;
 
 	private final Long userId;
@@ -60,7 +62,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the owner user ID
 	 */
@@ -71,7 +73,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param userId
@@ -84,7 +86,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 */
@@ -95,7 +97,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -108,7 +110,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param connectorId
@@ -122,7 +124,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param evseId
@@ -141,7 +143,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param connectorId
@@ -161,7 +163,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the charge point ID
 	 * @param evseId
@@ -187,7 +189,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param other
 	 *        the other charge point to copy
 	 */
@@ -208,7 +210,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Get the charge point ID.
-	 * 
+	 *
 	 * @return the charge point ID
 	 */
 	public Long getChargePointId() {
@@ -218,7 +220,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Get the EVSE ID.
-	 * 
+	 *
 	 * @return the EVSE ID
 	 * @since 1.2
 	 */
@@ -229,7 +231,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Get the connector ID.
-	 * 
+	 *
 	 * @return the connector ID
 	 */
 	public Integer getConnectorId() {
@@ -239,7 +241,7 @@ public class CentralChargePointConnector extends ChargePointConnector
 
 	/**
 	 * Get the owner user ID.
-	 * 
+	 *
 	 * @return the owner user ID
 	 */
 	@Override

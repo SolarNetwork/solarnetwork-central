@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -50,7 +51,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name",
 		"datumStreamMappingId", "schedule", "kind", "objectId", "sourceId", "serviceIdentifier",
 		"serviceProperties" })
-public class CloudDatumStreamConfiguration
+public final class CloudDatumStreamConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudDatumStreamConfiguration, UserLongCompositePK>
 		implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamConfiguration, UserLongCompositePK>,
@@ -62,6 +63,7 @@ public class CloudDatumStreamConfiguration
 	 */
 	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-ds";
 
+	@Serial
 	private static final long serialVersionUID = 1899493393926823115L;
 
 	private Long datumStreamMappingId;
@@ -240,7 +242,7 @@ public class CloudDatumStreamConfiguration
 	 *
 	 * @return the datum stream mapping ID
 	 */
-	public final Long getDatumStreamMappingId() {
+	public Long getDatumStreamMappingId() {
 		return datumStreamMappingId;
 	}
 
@@ -251,7 +253,7 @@ public class CloudDatumStreamConfiguration
 	 * @param datumStreamMappingId
 	 *        the integration ID to set
 	 */
-	public final void setDatumStreamMappingId(Long datumStreamMappingId) {
+	public void setDatumStreamMappingId(Long datumStreamMappingId) {
 		this.datumStreamMappingId = datumStreamMappingId;
 	}
 
@@ -261,7 +263,7 @@ public class CloudDatumStreamConfiguration
 	 * @return the schedule, as either a cron schedule or a number of seconds,
 	 *         or {@literal null} if polling is not used
 	 */
-	public final String getSchedule() {
+	public String getSchedule() {
 		return schedule;
 	}
 
@@ -272,7 +274,7 @@ public class CloudDatumStreamConfiguration
 	 *        the schedule to set, as either a cron schedule or a number of
 	 *        seconds, or {@literal null} if polling is not used
 	 */
-	public final void setSchedule(String schedule) {
+	public void setSchedule(String schedule) {
 		this.schedule = schedule;
 	}
 
@@ -281,7 +283,7 @@ public class CloudDatumStreamConfiguration
 	 *
 	 * @return the kind
 	 */
-	public final ObjectDatumKind getKind() {
+	public ObjectDatumKind getKind() {
 		return kind;
 	}
 
@@ -291,7 +293,7 @@ public class CloudDatumStreamConfiguration
 	 * @param kind
 	 *        the kind to set
 	 */
-	public final void setKind(ObjectDatumKind kind) {
+	public void setKind(ObjectDatumKind kind) {
 		this.kind = kind;
 	}
 
@@ -300,7 +302,7 @@ public class CloudDatumStreamConfiguration
 	 *
 	 * @return the object ID
 	 */
-	public final Long getObjectId() {
+	public Long getObjectId() {
 		return objectId;
 	}
 
@@ -310,7 +312,7 @@ public class CloudDatumStreamConfiguration
 	 * @param objectId
 	 *        the object ID to set
 	 */
-	public final void setObjectId(Long objectId) {
+	public void setObjectId(Long objectId) {
 		this.objectId = objectId;
 	}
 
@@ -319,7 +321,7 @@ public class CloudDatumStreamConfiguration
 	 *
 	 * @return the source ID
 	 */
-	public final String getSourceId() {
+	public String getSourceId() {
 		return sourceId;
 	}
 
@@ -329,7 +331,7 @@ public class CloudDatumStreamConfiguration
 	 * @param sourceId
 	 *        the source ID to set
 	 */
-	public final void setSourceId(String sourceId) {
+	public void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
 	}
 

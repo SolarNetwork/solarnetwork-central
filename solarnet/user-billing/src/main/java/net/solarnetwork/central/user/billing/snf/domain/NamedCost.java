@@ -1,21 +1,21 @@
 /* ==================================================================
  * NamedCost.java - 23/07/2020 4:49:16 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,7 +33,7 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * A named resource with associated cost.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -46,7 +46,7 @@ public class NamedCost
 
 	/**
 	 * Get a "tier" cost, using string number values.
-	 * 
+	 *
 	 * @param i
 	 *        the tier number
 	 * @param quantity
@@ -61,7 +61,7 @@ public class NamedCost
 
 	/**
 	 * Get a "tier" cost.
-	 * 
+	 *
 	 * @param i
 	 *        the tier number
 	 * @param quantity
@@ -76,7 +76,7 @@ public class NamedCost
 
 	/**
 	 * Create a new named cost instance.
-	 * 
+	 *
 	 * @param name
 	 *        the name
 	 * @param quantity
@@ -93,7 +93,7 @@ public class NamedCost
 
 	/**
 	 * Get a list of instances out of a list of named cost Maps.
-	 * 
+	 *
 	 * @param namedCosts
 	 *        the named cost Maps, each of whose keys match the properties of
 	 *        this class
@@ -109,7 +109,7 @@ public class NamedCost
 
 	/**
 	 * Get an instance out of a named cost Map.
-	 * 
+	 *
 	 * @param namedCost
 	 *        the named cost Map, whose keys match the properties of this class
 	 * @return the named cost, or {@literal null} if {@code namedCosts} is
@@ -136,7 +136,7 @@ public class NamedCost
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name
 	 *        the name
 	 * @param quantity
@@ -153,13 +153,13 @@ public class NamedCost
 		}
 		this.name = name;
 		this.quantity = quantity != null ? quantity : BigInteger.ZERO;
-		this.cost = cost = cost != null ? cost : BigDecimal.ZERO;
+		this.cost = cost != null ? cost : BigDecimal.ZERO;
 	}
 
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -176,7 +176,7 @@ public class NamedCost
 
 	/**
 	 * Get a map of metadata from this instance.
-	 * 
+	 *
 	 * @return the usage Map, whose keys match the properties of this class,
 	 *         never {@literal null}
 	 */
@@ -211,10 +211,9 @@ public class NamedCost
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof NamedCost) ) {
+		if ( !(obj instanceof NamedCost other) ) {
 			return false;
 		}
-		NamedCost other = (NamedCost) obj;
 		return Objects.equals(name, other.name) && Objects.equals(quantity, other.quantity)
 				&& (cost == other.cost) || (cost != null && cost.compareTo(other.cost) == 0);
 	}

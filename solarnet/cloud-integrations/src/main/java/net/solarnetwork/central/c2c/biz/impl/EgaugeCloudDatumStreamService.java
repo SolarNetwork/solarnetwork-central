@@ -96,7 +96,7 @@ import net.solarnetwork.util.StringUtils;
  *
  * <p>
  * eGauge integrations actually work on the
- * {@link CloudDatumStreamConfiguration} level, as the usename and password
+ * {@link CloudDatumStreamConfiguration} level, as the username and password
  * required is specific to each eGauge device. The eGauge API is actually just a
  * proxy service that forwards all communication to the physical eGague device
  * for handling all queries. Because of this, each
@@ -257,8 +257,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		final String deviceId = requireNonNullArgument(
 				datumStream.serviceProperty(DEVICE_ID_FILTER, String.class),
 				"datumStream.serviceProperties.deviceId");
-		List<CloudDataValue> result = Collections.emptyList();
-		result = deviceRegisters(integration, datumStream, deviceId);
+		List<CloudDataValue> result = deviceRegisters(integration, datumStream, deviceId);
 		Collections.sort(result);
 		return result;
 	}
@@ -361,7 +360,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	}
 
 	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, JsonNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		    "ts": "1729828293",
@@ -591,6 +592,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	private static List<GeneralDatum> parseDatum(JsonNode json,
 			CloudDatumStreamConfiguration datumStream, String deviceId,
 			Map<String, List<ValueRef>> refsByRegisterName) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		List<GeneralDatum> result = new ArrayList<>(32);
 		/*- EXAMPLE JSON:
 		{

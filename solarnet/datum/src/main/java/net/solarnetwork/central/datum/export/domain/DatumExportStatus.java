@@ -90,10 +90,10 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * Create a job status changed event out of this instance.
 	 * 
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumExportStatus)
+	 * @see #createJobStatusChangedEvent(DatumExportStatus)
 	 */
-	default AppEvent asJobStatusChagnedEvent() {
-		return createJobStatusChagnedEvent(this);
+	default AppEvent asJobStatusChangedEvent() {
+		return createJobStatusChangedEvent(this);
 	}
 
 	/**
@@ -102,10 +102,10 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 * @param result
 	 *        a specific result to use
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumExportStatus, DatumExportResult)
+	 * @see #createJobStatusChangedEvent(DatumExportStatus, DatumExportResult)
 	 */
-	default AppEvent asJobStatusChagnedEvent(DatumExportResult result) {
-		return createJobStatusChagnedEvent(this, result);
+	default AppEvent asJobStatusChangedEvent(DatumExportResult result) {
+		return createJobStatusChangedEvent(this, result);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumExportStatus status) {
+	static AppEvent createJobStatusChangedEvent(DatumExportStatus status) {
 		DatumExportResult result = null;
 		if ( status.isDone() ) {
 			try {
@@ -129,7 +129,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 				// ignore
 			}
 		}
-		return createJobStatusChagnedEvent(status, result);
+		return createJobStatusChangedEvent(status, result);
 	}
 
 	/**
@@ -144,7 +144,7 @@ public interface DatumExportStatus extends Future<DatumExportResult> {
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumExportStatus status, DatumExportResult result) {
+	static AppEvent createJobStatusChangedEvent(DatumExportStatus status, DatumExportResult result) {
 		Map<String, Object> props = new HashMap<>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());

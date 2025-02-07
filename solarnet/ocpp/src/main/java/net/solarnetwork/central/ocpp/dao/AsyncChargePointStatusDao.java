@@ -37,7 +37,7 @@ import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.ocpp.domain.ChargePointStatus;
 import net.solarnetwork.central.support.DelayQueueSet;
-import net.solarnetwork.central.support.DelayedOcassionalProcessor;
+import net.solarnetwork.central.support.DelayedOccasionalProcessor;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
@@ -49,10 +49,10 @@ import net.solarnetwork.util.StatTracker;
  * Asynchronous implementation of {@link ChargePointStatusDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AsyncChargePointStatusDao
-		extends DelayedOcassionalProcessor<AsyncChargePointStatusDao.StatusUpdate>
+		extends DelayedOccasionalProcessor<AsyncChargePointStatusDao.StatusUpdate>
 		implements ChargePointStatusDao, Runnable, ServiceLifecycleObserver {
 
 	/** The {@code flushDelay} property default value. */
@@ -92,14 +92,14 @@ public class AsyncChargePointStatusDao
 
 	@Override
 	public FilterResults<ChargePointStatus, UserLongCompositePK> findFiltered(
-			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			ChargePointStatusFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 
 	@Override
 	public void findFilteredStream(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		delegate.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
 

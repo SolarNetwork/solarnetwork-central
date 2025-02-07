@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumAuxiliarySecurityAspect.java - 4/02/2019 12:37:58 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,16 +40,16 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumAuxiliaryPK;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.central.domain.Filter;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityPolicy;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Security AOP support for {@link DatumAuxiliaryBiz}.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 1.5
@@ -62,7 +62,7 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the ownership DAO to use
 	 * @param metaDao
@@ -86,7 +86,9 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 	public void storeAuxiliary(GeneralNodeDatumAuxiliary datum) {
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.moveGeneralNodeDatumAuxiliary(..)) && args(from,to)")
+	@Pointcut(
+			value = "execution(* net.solarnetwork.central.datum.biz.DatumAuxiliary*.moveGeneralNodeDatumAuxiliary(..)) && args(from,to)",
+			argNames = "from,to")
 	public void moveAuxiliary(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
 	}
 
@@ -100,11 +102,11 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to modifying datum auxiliary data.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum verify
 	 */
-	@Before("storeAuxiliary(datum)")
+	@Before(value = "storeAuxiliary(datum)", argNames = "datum")
 	public void storeAuxiliaryCheck(GeneralNodeDatumAuxiliary datum) {
 		if ( datum != null ) {
 			requireNodeWriteAccess(datum.getNodeId());
@@ -113,13 +115,13 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Check access to moving datum auxiliary data.
-	 * 
+	 *
 	 * @param from
 	 *        the ID of the datum to move
 	 * @param to
 	 *        the new datum
 	 */
-	@Before("moveAuxiliary(from,to)")
+	@Before(value = "moveAuxiliary(from,to)", argNames = "from,to")
 	public void moveAuxiliaryCheck(GeneralNodeDatumAuxiliaryPK from, GeneralNodeDatumAuxiliary to) {
 		if ( from != null ) {
 			requireNodeWriteAccess(from.getNodeId());
@@ -129,14 +131,14 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 		}
 	}
 
-	@Before("removeAuxiliary(id)")
+	@Before(value = "removeAuxiliary(id)", argNames = "id")
 	public void removeAuxiliaryCheck(GeneralNodeDatumAuxiliaryPK id) {
 		if ( id != null ) {
 			requireNodeWriteAccess(id.getNodeId());
 		}
 	}
 
-	@Before("viewAuxiliary(id)")
+	@Before(value = "viewAuxiliary(id)", argNames = "id")
 	public void viewAuxiliaryCheck(GeneralNodeDatumAuxiliaryPK id) {
 		if ( id == null ) {
 			return;
@@ -152,7 +154,7 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 		}
 	}
 
-	@Around(value = "findAuxiliary(filter)")
+	@Around(value = "findAuxiliary(filter)", argNames = "pjp,filter")
 	public Object userNodeFilterAccessCheck(ProceedingJoinPoint pjp,
 			GeneralNodeDatumAuxiliaryFilter filter) throws Throwable {
 		final SecurityPolicy policy = getActiveSecurityPolicy();
@@ -162,16 +164,15 @@ public class DatumAuxiliarySecurityAspect extends AuthorizationSupport {
 			// no source IDs provided, but policy restricts source IDs.
 			// restrict the filter to the available source IDs if using a DatumFilterCommand,
 			// and let call to userNodeAccessCheck later on filter out restricted values
-			if ( filter instanceof DatumFilterCommand ) {
-				DatumFilterCommand f = (DatumFilterCommand) filter;
+			if ( filter instanceof DatumFilterCommand f ) {
 				BasicDatumCriteria c = new BasicDatumCriteria();
 				c.setNodeIds(f.getNodeIds());
 				c.setObjectKind(ObjectDatumKind.Node);
 				Iterable<ObjectDatumStreamMetadata> metas = metaDao.findDatumStreamMetadata(c);
 				Set<String> availableSources = StreamSupport.stream(metas.spliterator(), false)
 						.map(ObjectDatumStreamMetadata::getSourceId).collect(Collectors.toSet());
-				if ( availableSources != null && !availableSources.isEmpty() ) {
-					f.setSourceIds(availableSources.toArray(new String[availableSources.size()]));
+				if ( !availableSources.isEmpty() ) {
+					f.setSourceIds(availableSources.toArray(String[]::new));
 				}
 			}
 		}

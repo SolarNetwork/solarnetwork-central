@@ -91,19 +91,12 @@ public enum ScheduleType {
 	 * @return the property, never {@literal null}
 	 */
 	public ChronoUnit temporalUnit() {
-		switch (this) {
-			case Hourly:
-				return ChronoUnit.HOURS;
-
-			case Weekly:
-				return ChronoUnit.WEEKS;
-
-			case Monthly:
-				return ChronoUnit.MONTHS;
-
-			default:
-				return ChronoUnit.DAYS;
-		}
+		return switch (this) {
+			case Hourly -> ChronoUnit.HOURS;
+			case Weekly -> ChronoUnit.WEEKS;
+			case Monthly -> ChronoUnit.MONTHS;
+			default -> ChronoUnit.DAYS;
+		};
 	}
 
 	/**

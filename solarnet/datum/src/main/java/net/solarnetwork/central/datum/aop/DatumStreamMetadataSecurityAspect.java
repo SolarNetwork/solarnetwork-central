@@ -70,7 +70,9 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 	}
 
-	@Pointcut("execution(* net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz.update*Attributes(..)) && args(kind, streamId, objectId, sourceId, ..)")
+	@Pointcut(
+			value = "execution(* net.solarnetwork.central.datum.biz.DatumStreamMetadataBiz.update*Attributes(..)) && args(kind, streamId, objectId, sourceId, ..)",
+			argNames = "kind,streamId,objectId,sourceId")
 	public void updateAttributesMetadata(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId) {
 	}
@@ -87,7 +89,8 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 	 * @param sourceId
 	 *        the source ID to verify
 	 */
-	@Before("updateAttributesMetadata(kind, streamId, objectId, sourceId)")
+	@Before(value = "updateAttributesMetadata(kind, streamId, objectId, sourceId)",
+			argNames = "kind,streamId,objectId,sourceId")
 	public void updateAttributesCheck(ObjectDatumKind kind, UUID streamId, Long objectId,
 			String sourceId) {
 		if ( streamId == null || kind == null ) {
@@ -97,9 +100,11 @@ public class DatumStreamMetadataSecurityAspect extends AuthorizationSupport {
 		if ( kind != ObjectDatumKind.Node ) {
 			final Authentication authentication = SecurityUtils.getCurrentAuthentication();
 			final String opsRole = Role.ROLE_OPS.toString();
-			for ( GrantedAuthority auth : authentication.getAuthorities() ) {
-				if ( opsRole.equals(auth.getAuthority()) ) {
-					return;
+			if ( authentication != null ) {
+				for ( GrantedAuthority auth : authentication.getAuthorities() ) {
+					if ( opsRole.equals(auth.getAuthority()) ) {
+						return;
+					}
 				}
 			}
 			log.warn("Access DENIED to {} stream {} for user {}; not authorized with required role {}",

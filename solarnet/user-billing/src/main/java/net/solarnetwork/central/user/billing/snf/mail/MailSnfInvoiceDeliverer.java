@@ -1,21 +1,21 @@
 /* ==================================================================
  * MailSnfInvoiceDeliverer.java - 26/07/2020 3:31:55 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,6 +27,8 @@ import static java.util.Collections.singleton;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.FileCopyUtils.copyToString;
 import java.io.InputStreamReader;
+import java.io.Serial;
+import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -49,12 +51,13 @@ import net.solarnetwork.service.IdentifiableConfiguration;
 
 /**
  * Deliver invoices by mail.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfInvoiceDeliverer {
 
+	@Serial
 	private static final long serialVersionUID = -9050752860528771057L;
 
 	private static final MimeType APPLICATION_PDF = MimeType.valueOf("application/pdf");
@@ -65,7 +68,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param invoicingSystem
 	 *        the invoicing system to render invoices with
 	 * @param mailService
@@ -88,45 +91,40 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 	public CompletableFuture<Result<Object>> deliverInvoice(SnfInvoice invoice, Account account,
 			IdentifiableConfiguration configuration) {
 		final CompletableFuture<Result<Object>> result = new CompletableFuture<>();
-		executor.execute(new Runnable() {
+		executor.execute(() -> {
+			try {
+				Locale locale = account.locale();
 
-			@Override
-			public void run() {
-				try {
-					Locale locale = account.locale();
+				// TODO: allow output type to be specified via configuration
+				//       for now assume HTML body with PDF attachment
+				Resource content = invoicingSystem.renderInvoice(invoice, MimeTypeUtils.TEXT_HTML,
+						locale);
+				Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
 
-					// TODO: allow output type to be specified via configuration
-					//       for now assume HTML body with PDF attachment
-					Resource content = invoicingSystem.renderInvoice(invoice, MimeTypeUtils.TEXT_HTML,
-							locale);
-					Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
+				BasicMailAddress to = new BasicMailAddress(account.getAddress().getName(),
+						account.getAddress().getEmail());
 
-					BasicMailAddress to = new BasicMailAddress(account.getAddress().getName(),
-							account.getAddress().getEmail());
+				// generate subject and pass invoice number and date as arguments
+				InvoiceImpl invoiceImpl = new InvoiceImpl(invoice);
+				String invoiceKey = invoiceImpl.getInvoiceNumber();
+				String invoiceDate = YearMonth.from(invoice.getStartDate()).toString();
+				Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
 
-					// generate subject and pass invoice number and date as arguments
-					InvoiceImpl invoiceImpl = new InvoiceImpl(invoice);
-					String invoiceKey = invoiceImpl.getInvoiceNumber();
-					String invoiceDate = YearMonth.from(invoice.getStartDate()).toString();
-					Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
+				MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
+				String subject = messageSource.getMessage("invoice.mail.subject", subjectArgs,
+						format("SolarNetwork invoice %s (%s)", subjectArgs), locale);
 
-					MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
-					String subject = messageSource.getMessage("invoice.mail.subject", subjectArgs,
-							format("SolarNetwork invoice %s (%s)", subjectArgs), locale);
-
-					mailService.sendMail(to,
-							new SimpleMessageDataSource(subject,
-									copyToString(
-											new InputStreamReader(content.getInputStream(), "UTF-8")),
-									singleton(pdf)));
-					result.complete(Result.result(null));
-				} catch ( Exception e ) {
-					result.completeExceptionally(e);
-				} finally {
-					if ( !result.isDone() ) {
-						String msg = format("Unknown problem delivering invoice %s via mail.", invoice);
-						result.completeExceptionally(new RuntimeException(msg));
-					}
+				mailService.sendMail(to,
+						new SimpleMessageDataSource(subject, copyToString(
+								new InputStreamReader(content.getInputStream(), StandardCharsets.UTF_8)),
+								singleton(pdf)));
+				result.complete(Result.result(null));
+			} catch ( Exception e ) {
+				result.completeExceptionally(e);
+			} finally {
+				if ( !result.isDone() ) {
+					String msg = format("Unknown problem delivering invoice %s via mail.", invoice);
+					result.completeExceptionally(new RuntimeException(msg));
 				}
 			}
 		});

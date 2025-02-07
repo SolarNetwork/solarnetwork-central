@@ -1,27 +1,28 @@
 /* ==================================================================
  * UserNodeEventHookConfiguration.java - 3/06/2020 2:50:40 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.event.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -34,7 +35,7 @@ import net.solarnetwork.dao.BasicEntity;
 
 /**
  * User and node specific event configuration entity.
- * 
+ *
  * @author matt
  * @version 1.3
  */
@@ -43,6 +44,7 @@ import net.solarnetwork.dao.BasicEntity;
 public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 		implements UserLongIdentifiableConfigurationEntity<UserLongPK> {
 
+	@Serial
 	private static final long serialVersionUID = 3878313156603958081L;
 
 	private Long[] nodeIds;
@@ -54,7 +56,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -66,7 +68,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param created
@@ -78,7 +80,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the long ID
 	 * @param userId
@@ -92,7 +94,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Create a copy with a given user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID ot assign to the copy
 	 * @return the new copy
@@ -122,7 +124,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the configuration ID.
-	 * 
+	 *
 	 * @return the configuration ID
 	 * @since 1.1
 	 */
@@ -134,7 +136,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the node IDs.
-	 * 
+	 *
 	 * @return the node IDs, or {@literal null} for any node
 	 */
 	public Long[] getNodeIds() {
@@ -143,7 +145,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the node IDs.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        the node IDs to set
 	 */
@@ -153,11 +155,11 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the source IDs.
-	 * 
+	 *
 	 * <p>
 	 * Source ID Ant-style patterns are allowed.
 	 * </p>
-	 * 
+	 *
 	 * @return the source IDs
 	 */
 	public String[] getSourceIds() {
@@ -166,7 +168,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the source IDs.
-	 * 
+	 *
 	 * @param sourceIds
 	 *        the source IDs or source ID Ant-style patterns to set
 	 */
@@ -176,8 +178,8 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Get the event topic.
-	 * 
-	 * @return the topic the topic
+	 *
+	 * @return the topic
 	 */
 	public String getTopic() {
 		return topic;
@@ -185,7 +187,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the event topic.
-	 * 
+	 *
 	 * @param topic
 	 *        the topic to set
 	 */
@@ -200,7 +202,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 
 	/**
 	 * Set the configuration name.
-	 * 
+	 *
 	 * @param name
 	 *        the name to use
 	 */
@@ -216,7 +218,7 @@ public class UserNodeEventHookConfiguration extends BasicEntity<UserLongPK>
 	/**
 	 * Set the unique identifier for the service this configuration is
 	 * associated with.
-	 * 
+	 *
 	 * @param serviceIdentifier
 	 *        the identifier of the service to use
 	 */

@@ -26,17 +26,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import net.solarnetwork.central.dao.ClaimableJobDao;
-import net.solarnetwork.central.dao.GenericDao;
-import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.dao.UserUuidPK;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link DatumDeleteJobInfo} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserDatumDeleteJobInfoDao extends GenericDao<DatumDeleteJobInfo, UserUuidPK>,
 		ClaimableJobDao<GeneralNodeDatumFilter, Long, DatumDeleteJobState, DatumDeleteJobInfo, UserUuidPK> {

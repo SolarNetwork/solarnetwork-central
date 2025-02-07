@@ -22,7 +22,8 @@
 
 package net.solarnetwork.central.in.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Base64;
@@ -39,13 +40,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for node certificate API actions.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 @Controller("v1NodeCertificateController")
 @RequestMapping(value = "/solarin/api/v1/sec/cert")
@@ -81,16 +82,17 @@ public class NodeCertificateController {
 	 *        keys and signed certificate.
 	 * @return the result
 	 */
-	@RequestMapping(value = "/renew", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@RequestMapping(value = "/renew", method = RequestMethod.POST,
+			consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@ResponseBody
-	public Response<Object> renewActiveCert(@RequestParam("password") String keystorePassword,
+	public Result<Object> renewActiveCert(@RequestParam("password") String keystorePassword,
 			@RequestPart("keystore") MultipartFile keystore) {
 		try {
 			registrationBiz.renewNodeCertificate(keystore.getInputStream(), keystorePassword);
-			return response(null);
+			return success();
 		} catch ( IOException e ) {
 			log.debug("IOException renewing certificate", e);
-			return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+			return error(null, e.getMessage());
 		}
 	}
 
@@ -110,15 +112,15 @@ public class NodeCertificateController {
 	 */
 	@RequestMapping(value = "/renew", method = RequestMethod.POST, params = "keystore")
 	@ResponseBody
-	public Response<Object> renewActiveCert(@RequestParam("password") String keystorePassword,
+	public Result<Object> renewActiveCert(@RequestParam("password") String keystorePassword,
 			@RequestParam("keystore") String base64Keystore) {
 		byte[] data = Base64.getMimeDecoder().decode(base64Keystore);
 		try {
 			registrationBiz.renewNodeCertificate(new ByteArrayInputStream(data), keystorePassword);
-			return response(null);
+			return success();
 		} catch ( IOException e ) {
 			log.debug("IOException renewing certificate", e);
-			return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+			return error(null, e.getMessage());
 		}
 	}
 

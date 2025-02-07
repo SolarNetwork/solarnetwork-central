@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoSolarNodeMetadataBiz.java - 11/11/2016 11:23:27 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -28,18 +28,18 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.SolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * DAO-based implementation of {@link SolarNodeMetadataBiz}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
@@ -47,7 +47,7 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param solarNodeMetadataDao
 	 *        the node metadata DAO to use
 	 */
@@ -67,15 +67,14 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 			snm = new SolarNodeMetadata();
 			snm.setCreated(Instant.now());
 			snm.setId(nodeId);
-			newMeta = meta;
-		} else if ( snm.getMeta() != null && snm.getMeta().equals(meta) == false ) {
+		} else if ( snm.getMeta() != null && !snm.getMeta().equals(meta) ) {
 			newMeta = new GeneralDatumMetadata(snm.getMeta());
 			newMeta.merge(meta, true);
 		}
-		if ( newMeta != null && newMeta.equals(snm.getMeta()) == false ) {
+		if ( !newMeta.equals(snm.getMeta()) ) {
 			// have changes, so persist
 			snm.setMeta(newMeta);
-			solarNodeMetadataDao.store(snm);
+			solarNodeMetadataDao.save(snm);
 		}
 	}
 
@@ -93,7 +92,7 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 		} else {
 			snm.setMeta(meta);
 		}
-		solarNodeMetadataDao.store(snm);
+		solarNodeMetadataDao.save(snm);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -107,8 +106,8 @@ public class DaoSolarNodeMetadataBiz implements SolarNodeMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<SolarNodeMetadataFilterMatch> findSolarNodeMetadata(
-			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<SolarNodeMetadataFilterMatch, Long> findSolarNodeMetadata(
+			SolarNodeMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		return solarNodeMetadataDao.findFiltered(criteria, sortDescriptors, offset, max);
 	}

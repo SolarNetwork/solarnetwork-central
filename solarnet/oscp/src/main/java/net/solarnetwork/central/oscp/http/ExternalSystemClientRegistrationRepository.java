@@ -99,23 +99,22 @@ public class ExternalSystemClientRegistrationRepository implements ClientRegistr
 							.formatted(role.role(), role.id().ident()));
 		}
 		// @formatter:off
-		var result = ClientRegistration.withRegistrationId(registrationId)
+		return ClientRegistration.withRegistrationId(registrationId)
 				.tokenUri(settings.tokenUrl())
 				.clientId(settings.clientId())
 				.clientSecret(secret)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.build();
 		// @formatter:on
-		return result;
 	}
 
 	/**
 	 * Set the secrets service.
 	 *
 	 * <p>
-	 * If {@link #setSecretsKeyFormatter(Function)} has not be called when this
-	 * method is called, a default {@link AuthRoleSecretKeyFormatter#INSTANCE}
-	 * will be configured.
+	 * If {@link #setSecretsKeyFormatter(Function)} has not been called when
+	 * this method is called, a default
+	 * {@link AuthRoleSecretKeyFormatter#INSTANCE} will be configured.
 	 * </p>
 	 *
 	 * @param secretsBiz

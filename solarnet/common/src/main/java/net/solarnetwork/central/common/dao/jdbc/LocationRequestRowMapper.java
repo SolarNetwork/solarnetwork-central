@@ -1,21 +1,21 @@
 /* ==================================================================
  * LocationRequestRowMapper.java - 19/05/2022 3:01:13 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,11 +32,11 @@ import net.solarnetwork.central.domain.LocationRequestStatus;
 
 /**
  * Row mapper for {@link LocationRequest} entities.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>id (BIGINT)</li>
  * <li>created (TIMESTAMP)</li>
@@ -47,7 +47,7 @@ import net.solarnetwork.central.domain.LocationRequestStatus;
  * <li>loc_id (BIGINT)</li>
  * <li>message (TEXT)</li>
  * </ol>
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.3
@@ -64,8 +64,7 @@ public class LocationRequestRowMapper implements RowMapper<LocationRequest> {
 		LocationRequest result = new LocationRequest(id, created);
 		result.setModified(rs.getTimestamp(3).toInstant());
 		result.setUserId((Long) rs.getObject(4));
-		result.setStatus(
-				forCodeValue((int) rs.getString(5).charAt(0), LocationRequestStatus.class, null));
+		result.setStatus(forCodeValue(rs.getString(5).charAt(0), LocationRequestStatus.class, null));
 		result.setJsonData(rs.getString(6));
 		result.setLocationId((Long) rs.getObject(7));
 		result.setMessage(rs.getString(8));

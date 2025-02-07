@@ -1,21 +1,21 @@
 /* ==================================================================
  * InvoiceGenerationTaskCreator.java - 21/07/2020 10:06:05 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
@@ -43,13 +42,14 @@ import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Create {@link AccountTask} entities for accounts that need to have invoices
  * generated.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.2
  */
 public class InvoiceGenerationTaskCreator {
 
@@ -66,7 +66,7 @@ public class InvoiceGenerationTaskCreator {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userDao
 	 *        the user DAO to use
 	 * @param invoicingSystem
@@ -95,12 +95,11 @@ public class InvoiceGenerationTaskCreator {
 
 	/**
 	 * Generate account tasks for all accounts, up to the given end date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the end date
 	 */
 	public void createTasks(final LocalDate endDate) {
-
 		// iterate over users configured to use SNF Billing
 		Map<String, Object> billingDataFilter = new HashMap<>();
 		billingDataFilter.put(BillingDataConstants.ACCOUNTING_DATA_PROP,
@@ -108,8 +107,8 @@ public class InvoiceGenerationTaskCreator {
 		UserFilterCommand criteria = new UserFilterCommand();
 		criteria.setInternalData(billingDataFilter);
 		final int max = this.batchSize;
-		int offset = 0;
-		FilterResults<UserFilterMatch> userResults;
+		long offset = 0L;
+		FilterResults<UserFilterMatch, Long> userResults;
 		do {
 			userResults = userDao.findFiltered(criteria, null, offset, max);
 			for ( UserFilterMatch match : userResults ) {
@@ -121,9 +120,8 @@ public class InvoiceGenerationTaskCreator {
 				}
 			}
 			offset += max;
-		} while ( userResults.getStartingOffset() != null && userResults.getReturnedResultCount() != null
-				&& userResults.getTotalResults() != null && (userResults.getStartingOffset()
-						+ userResults.getReturnedResultCount() < userResults.getTotalResults()) );
+		} while ( userResults.getTotalResults() != null && (userResults.getStartingOffset()
+				+ userResults.getReturnedResultCount() < userResults.getTotalResults()) );
 	}
 
 	private void processOneAccount(final UserFilterMatch user, final LocalDate endDate) {
@@ -142,7 +140,7 @@ public class InvoiceGenerationTaskCreator {
 		// grab current account time zone
 		final ZoneId accountTimeZone = account.getTimeZone();
 		if ( accountTimeZone == null ) {
-			throw new RuntimeException(String.format("Account %s has no time zone set.",
+			throw new RuntimeException(String.format("Account %s (%s) has no time zone set.",
 					account.getId().getId(), user.getEmail()));
 		}
 
@@ -159,13 +157,12 @@ public class InvoiceGenerationTaskCreator {
 		// time to invoice for this account
 		ZonedDateTime currInvoiceDate = invoicedThroughDate;
 		do {
-			log.info("Generating invoice for user {} for month {}", user.getEmail(), currInvoiceDate,
-					endDate);
+			log.info("Generating invoice for user {} for month {}", user.getEmail(), currInvoiceDate);
 			AccountTask task = AccountTask.newTask(currInvoiceDate.toInstant(),
 					AccountTaskType.GenerateInvoice, account.getId().getId());
 			accountTaskDao.save(task);
-			log.info("InvoiceImpl generation task created for user {} for month {} total = {} {}",
-					user.getEmail(), currInvoiceDate);
+			log.info("InvoiceImpl generation task created for user {} for month {}", user.getEmail(),
+					currInvoiceDate);
 			currInvoiceDate = currInvoiceDate.plusMonths(1);
 		} while ( currInvoiceDate.isBefore(invoiceEndDate) );
 	}
@@ -189,13 +186,13 @@ public class InvoiceGenerationTaskCreator {
 
 	/**
 	 * Set the batch size to process users with.
-	 * 
+	 *
 	 * <p>
 	 * This is the maximum number of user records to fetch from the database and
 	 * process at a time, e.g. a result page size. The service will iterate over
 	 * all result pages to process all users.
 	 * </p>
-	 * 
+	 *
 	 * @param batchSize
 	 *        the user record batch size to set
 	 */

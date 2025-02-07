@@ -223,7 +223,8 @@ public class UserCloudIntegrationsController {
 		return success(userCloudIntegrationsBiz.saveConfiguration(id, input));
 	}
 
-	@RequestMapping(value = "/integrations/{integrationId}/enabled/{enabled}", method = RequestMethod.POST)
+	@RequestMapping(value = "/integrations/{integrationId}/enabled/{enabled}",
+			method = RequestMethod.POST)
 	public Result<CloudIntegrationConfiguration> enableCloudIntegrationConfiguration(
 			@PathVariable("integrationId") Long integrationId,
 			@PathVariable("enabled") boolean enabled) {
@@ -278,7 +279,8 @@ public class UserCloudIntegrationsController {
 	@RequestMapping(value = "/integrations/{integrationId}/data-values", method = RequestMethod.GET)
 	public Result<Iterable<CloudDataValue>> listCloudDatumStreamDataValues(
 			@PathVariable("integrationId") Long integrationId,
-			@RequestParam(value = "datumStreamServiceIdentifier", required = false) String datumStreamServiceIdentifier,
+			@RequestParam(value = "datumStreamServiceIdentifier",
+					required = false) String datumStreamServiceIdentifier,
 			WebRequest req) {
 		var filter = new LinkedHashMap<String, Object>(4);
 		for ( Iterator<String> itr = req.getParameterNames(); itr.hasNext(); ) {
@@ -335,7 +337,8 @@ public class UserCloudIntegrationsController {
 		return success(userCloudIntegrationsBiz.saveConfiguration(id, input));
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}",
+			method = RequestMethod.DELETE)
 	public Result<Void> deleteCloudDatumStreamMappingConfiguration(
 			@PathVariable("datumStreamMappingId") Long datumStreamMappingId) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), datumStreamMappingId);
@@ -347,7 +350,8 @@ public class UserCloudIntegrationsController {
 	 * Datum Stream Mapping / Properties
 	 *-================================= */
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties", method = RequestMethod.GET)
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties",
+			method = RequestMethod.GET)
 	public Result<FilterResults<CloudDatumStreamPropertyConfiguration, UserLongIntegerCompositePK>> listCloudDatumStreamPropertyConfigurations(
 			@PathVariable("datumStreamMappingId") Long datumStreamMappingId, BasicFilter filter) {
 		filter.setDatumStreamMappingId(datumStreamMappingId);
@@ -356,7 +360,8 @@ public class UserCloudIntegrationsController {
 		return success(result);
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties", method = RequestMethod.POST)
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties",
+			method = RequestMethod.POST)
 	public Result<List<CloudDatumStreamPropertyConfiguration>> replaceCloudDatumStreamPropertyConfigurations(
 			@PathVariable("datumStreamMappingId") Long datumStreamMappingId,
 			@Valid @RequestBody List<CloudDatumStreamPropertyConfigurationInput> inputs) {
@@ -365,7 +370,8 @@ public class UserCloudIntegrationsController {
 		return success(result);
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}", method = RequestMethod.GET)
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}",
+			method = RequestMethod.GET)
 	public Result<CloudDatumStreamPropertyConfiguration> getCloudDatumStreamPropertyConfiguration(
 			@PathVariable("datumStreamMappingId") Long datumStreamMappingId,
 			@PathVariable("index") Integer index) {
@@ -374,16 +380,19 @@ public class UserCloudIntegrationsController {
 				CloudDatumStreamPropertyConfiguration.class));
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}", method = RequestMethod.PUT)
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}",
+			method = RequestMethod.PUT)
 	public Result<CloudDatumStreamPropertyConfiguration> updateCloudDatumStreamPropertyConfiguration(
-			@PathVariable("datumStreamId") Long datumStreamMappingId,
+			@PathVariable("datumStreamMappingId") Long datumStreamMappingId,
 			@PathVariable("index") Integer index,
 			@Valid @RequestBody CloudDatumStreamPropertyConfigurationInput input) {
 		var id = new UserLongIntegerCompositePK(getCurrentActorUserId(), datumStreamMappingId, index);
 		return success(userCloudIntegrationsBiz.saveConfiguration(id, input));
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}/enabled/{enabled}", method = RequestMethod.POST)
+	@RequestMapping(
+			value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}/enabled/{enabled}",
+			method = RequestMethod.POST)
 	public Result<CloudDatumStreamPropertyConfiguration> enableCloudDatumStreamPropertyConfiguration(
 			@PathVariable("datumStreamMappingId") Long datumStreamMappingId,
 			@PathVariable("index") Integer index, @PathVariable("enabled") boolean enabled) {
@@ -393,7 +402,8 @@ public class UserCloudIntegrationsController {
 		return success();
 	}
 
-	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/datum-stream-mappings/{datumStreamMappingId}/properties/{index}",
+			method = RequestMethod.DELETE)
 	public Result<Void> deleteCloudDatumStreamPropertyConfiguration(
 			@PathVariable("datumStreamMappingId") Long datumStreamMappingId,
 			@PathVariable("index") Integer index) {
@@ -440,7 +450,8 @@ public class UserCloudIntegrationsController {
 		return success(userCloudIntegrationsBiz.saveConfiguration(id, input));
 	}
 
-	@RequestMapping(value = "/datum-streams/{datumStreamId}/enabled/{enabled}", method = RequestMethod.POST)
+	@RequestMapping(value = "/datum-streams/{datumStreamId}/enabled/{enabled}",
+			method = RequestMethod.POST)
 	public Result<CloudDatumStreamConfiguration> enableCloudDatumStreamConfiguration(
 			@PathVariable("datumStreamId") Long datumStreamId,
 			@PathVariable("enabled") boolean enabled) {
@@ -563,7 +574,8 @@ public class UserCloudIntegrationsController {
 		return success();
 	}
 
-	@RequestMapping(value = "/datum-stream-poll-tasks/{datumStreamId}/state", method = RequestMethod.POST)
+	@RequestMapping(value = "/datum-stream-poll-tasks/{datumStreamId}/state",
+			method = RequestMethod.POST)
 	public Result<CloudDatumStreamPollTaskEntity> updateCloudDatumStreamPollTaskState(
 			@PathVariable("datumStreamId") Long datumStreamId,
 			@Valid @RequestBody CloudDatumStreamPollTaskStateInput input) {

@@ -56,7 +56,7 @@ import net.solarnetwork.central.ocpp.dao.jdbc.sql.SelectChargePointStatus;
  * Test cases for the {@link SelectChargePointStatus} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class SelectChargePointStatusTests {
@@ -134,7 +134,7 @@ public class SelectChargePointStatusTests {
 			then(result).should().setInt(++p, filter.getMax());
 		}
 		if ( filter.getOffset() != null && filter.getOffset() > 0 ) {
-			then(result).should().setInt(++p, filter.getOffset());
+			then(result).should().setLong(++p, filter.getOffset());
 		}
 	}
 

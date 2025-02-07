@@ -43,7 +43,8 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
  * @author matt
  * @version 1.0
  */
-public class UpdateCloudDatumStreamPollTaskEntityState implements PreparedStatementCreator, SqlProvider {
+public final class UpdateCloudDatumStreamPollTaskEntityState
+		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			UPDATE solardin.cin_datum_stream_poll_task

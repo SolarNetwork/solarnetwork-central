@@ -32,13 +32,13 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
 import net.solarnetwork.central.common.dao.jdbc.sql.UpdateEnabledIdFilter;
+import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.EndpointConfigurationDao;
 import net.solarnetwork.central.inin.dao.EndpointFilter;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectEndpointConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.UpsertEndpointConfiguration;
 import net.solarnetwork.central.inin.domain.EndpointConfiguration;
-import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
@@ -46,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link EndpointConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 
@@ -94,7 +94,7 @@ public class JdbcEndpointConfigurationDao implements EndpointConfigurationDao {
 
 	@Override
 	public FilterResults<EndpointConfiguration, UserUuidPK> findFiltered(EndpointFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectEndpointConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, EndpointConfigurationRowMapper.INSTANCE);

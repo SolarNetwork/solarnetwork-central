@@ -24,8 +24,6 @@ package net.solarnetwork.central.user.billing.snf.jobs;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.scheduler.JobSupport;
@@ -80,19 +78,13 @@ public class AccountTaskJob extends JobSupport {
 	}
 
 	@Override
-	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int processedCount = 0;
-		boolean processed = false;
+		boolean processed;
 		do {
 			try {
 				if ( transactionTemplate != null ) {
-					processed = transactionTemplate.execute(new TransactionCallback<Boolean>() {
-
-						@Override
-						public Boolean doInTransaction(TransactionStatus status) {
-							return execute();
-						}
-					});
+					processed = transactionTemplate.execute(status -> execute());
 				} else {
 					processed = execute();
 				}
@@ -102,10 +94,10 @@ public class AccountTaskJob extends JobSupport {
 				processed = true;
 			}
 			if ( processed ) {
-				remainingIterataions.decrementAndGet();
+				remainingIterations.decrementAndGet();
 				processedCount++;
 			}
-		} while ( processed && remainingIterataions.get() > 0 );
+		} while ( processed && remainingIterations.get() > 0 );
 		return processedCount;
 	}
 

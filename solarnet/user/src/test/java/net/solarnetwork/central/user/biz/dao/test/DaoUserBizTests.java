@@ -154,7 +154,7 @@ public class DaoUserBizTests {
 	@Test
 	public void generateUserAuthToken() {
 		expect(userAuthTokenDao.get(anyObject(String.class))).andReturn(null);
-		expect(userAuthTokenDao.store(anyObject(UserAuthToken.class))).andReturn(TEST_AUTH_TOKEN);
+		expect(userAuthTokenDao.save(anyObject(UserAuthToken.class))).andReturn(TEST_AUTH_TOKEN);
 		replayAll();
 		UserAuthToken generated = userBiz.generateUserAuthToken(TEST_USER_ID, SecurityTokenType.User,
 				(SecurityPolicy) null);
@@ -180,7 +180,7 @@ public class DaoUserBizTests {
 		entity.setAuthToken(tokenId);
 
 		expect(userAuthTokenDao.get(tokenId)).andReturn(entity);
-		expect(userAuthTokenDao.store(entity)).andReturn(tokenId);
+		expect(userAuthTokenDao.save(entity)).andReturn(tokenId);
 
 		// WHEN
 		replayAll();
@@ -265,7 +265,7 @@ public class DaoUserBizTests {
 		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
 
 		Capture<UserAuthToken> tokenCapture = new Capture<UserAuthToken>();
-		expect(userAuthTokenDao.store(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
+		expect(userAuthTokenDao.save(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
 
 		replayAll();
 
@@ -295,7 +295,7 @@ public class DaoUserBizTests {
 		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
 
 		Capture<UserAuthToken> tokenCapture = new Capture<UserAuthToken>();
-		expect(userAuthTokenDao.store(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
+		expect(userAuthTokenDao.save(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
 
 		replayAll();
 
@@ -327,7 +327,7 @@ public class DaoUserBizTests {
 		expect(userAuthTokenDao.get(TEST_AUTH_TOKEN)).andReturn(token);
 
 		Capture<UserAuthToken> tokenCapture = new Capture<UserAuthToken>();
-		expect(userAuthTokenDao.store(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
+		expect(userAuthTokenDao.save(EasyMock.capture(tokenCapture))).andReturn(TEST_AUTH_TOKEN);
 
 		replayAll();
 
@@ -369,11 +369,11 @@ public class DaoUserBizTests {
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
 		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
 				.andReturn(loc);
-		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+		expect(userNodeDao.save(userNode)).andReturn(testNode.getId());
 
 		replayAll();
 
-		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		UserNode entry = new UserNode(testUser, testNode.clone());
 		entry.getNode().setLocation(loc);
 
 		UserNode result = userBiz.saveUserNode(entry);
@@ -430,12 +430,12 @@ public class DaoUserBizTests {
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
 		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
 				.andReturn(locMatch);
-		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), -9L))).andReturn(testNode.getId());
-		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+		expect(solarNodeDao.save(nodeLocationMatch(testNode.getId(), -9L))).andReturn(testNode.getId());
+		expect(userNodeDao.save(userNode)).andReturn(testNode.getId());
 
 		replayAll();
 
-		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		UserNode entry = new UserNode(testUser, testNode.clone());
 		entry.getNode().setLocation(loc);
 
 		UserNode result = userBiz.saveUserNode(entry);
@@ -464,15 +464,15 @@ public class DaoUserBizTests {
 		expect(userNodeDao.get(testNode.getId())).andReturn(userNode);
 		expect(solarLocationDao.getSolarLocationForLocation(EasyMock.isA(loc.getClass())))
 				.andReturn(null);
-		expect(solarLocationDao.store(EasyMock.isA(loc.getClass()))).andReturn(newLoc.getId());
+		expect(solarLocationDao.save(EasyMock.isA(loc.getClass()))).andReturn(newLoc.getId());
 		expect(solarLocationDao.get(newLoc.getId())).andReturn(newLoc);
-		expect(solarNodeDao.store(nodeLocationMatch(testNode.getId(), newLoc.getId())))
+		expect(solarNodeDao.save(nodeLocationMatch(testNode.getId(), newLoc.getId())))
 				.andReturn(testNode.getId());
-		expect(userNodeDao.store(userNode)).andReturn(testNode.getId());
+		expect(userNodeDao.save(userNode)).andReturn(testNode.getId());
 
 		replayAll();
 
-		UserNode entry = new UserNode(testUser, (SolarNode) testNode.clone());
+		UserNode entry = new UserNode(testUser, testNode.clone());
 		entry.getNode().setLocation(loc);
 
 		UserNode result = userBiz.saveUserNode(entry);
@@ -496,7 +496,7 @@ public class DaoUserBizTests {
 		expect(userDao.getUserByEmail(userNodeXfer.getEmail())).andReturn(recipient);
 
 		// delete the xfer
-		userNodeDao.deleteUserNodeTrasnfer(userNodeXfer);
+		userNodeDao.deleteUserNodeTransfer(userNodeXfer);
 
 		// delete alerts associated with node
 		expect(userAlertDao.deleteAllAlertsForNode(TEST_USER_ID, TEST_NODE_ID)).andReturn(0);
@@ -514,7 +514,7 @@ public class DaoUserBizTests {
 		userAuthTokenDao.delete(EasyMock.same(userAuthToken));
 
 		// then store the updated UserNode
-		expect(userNodeDao.store(userNode)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(userNode)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 
@@ -541,7 +541,7 @@ public class DaoUserBizTests {
 		expect(userDao.getUserByEmail(userNodeXfer.getEmail())).andReturn(recipient);
 
 		// delete the xfer
-		userNodeDao.deleteUserNodeTrasnfer(userNodeXfer);
+		userNodeDao.deleteUserNodeTransfer(userNodeXfer);
 
 		// delete alerts associated with node
 		expect(userAlertDao.deleteAllAlertsForNode(TEST_USER_ID, TEST_NODE_ID)).andReturn(0);
@@ -557,10 +557,10 @@ public class DaoUserBizTests {
 				.andReturn(Arrays.asList(userAuthToken));
 
 		// then store the updated token
-		expect(userAuthTokenDao.store(EasyMock.same(userAuthToken))).andReturn("abc123");
+		expect(userAuthTokenDao.save(EasyMock.same(userAuthToken))).andReturn("abc123");
 
 		// then store the updated UserNode
-		expect(userNodeDao.store(userNode)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(userNode)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 

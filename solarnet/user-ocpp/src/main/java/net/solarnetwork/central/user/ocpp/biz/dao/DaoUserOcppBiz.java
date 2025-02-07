@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserOcppBiz.java - 29/02/2020 4:48:40 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -69,9 +69,9 @@ import net.solarnetwork.service.PasswordEncoder;
 
 /**
  * DAO-based implementation of {@link UserOcppBiz}.
- * 
+ *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoUserOcppBiz implements UserOcppBiz {
 
@@ -91,7 +91,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param systemUserDao
 	 *        the system user DAO
 	 * @param chargePointDao
@@ -113,7 +113,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	 * @param passwordEncoder
 	 *        the system user password encoder to use
 	 * @throws IllegalArgumentException
-	 *         if any parmeter is {@literal null}
+	 *         if any parameter is {@literal null}
 	 */
 	public DaoUserOcppBiz(CentralSystemUserDao systemUserDao, CentralChargePointDao chargePointDao,
 			CentralChargePointConnectorDao connectorDao, CentralAuthorizationDao authorizationDao,
@@ -160,16 +160,16 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	/**
 	 * Validate a result user-related entity has the same owner as an input
 	 * entity.
-	 * 
+	 *
 	 * <p>
 	 * The DAO update methods might only update a matching user ID, and then
 	 * return the (unchanged) record without having actually updated anything.
 	 * </p>
-	 * 
+	 *
 	 * @param in
 	 *        the entity that was passed in
 	 * @param out
-	 *        the entity that will be retuned
+	 *        the entity that will be returned
 	 * @throws AuthorizationException
 	 *         if {@code in} has no user ID, or its user ID does not match that
 	 *         in {@code out}
@@ -186,7 +186,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralSystemUser saveSystemUser(CentralSystemUser systemUser) {
 		if ( systemUser == null ) {
@@ -224,7 +224,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return systemUserDao.get(userId, id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserSystemUser(Long userId, Long id) {
 		systemUserDao.delete(userId, id);
@@ -242,7 +242,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return authorizationDao.get(userId, id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserAuthorization(Long userId, Long id) {
 		authorizationDao.delete(userId, id);
@@ -263,7 +263,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralAuthorization saveAuthorization(CentralAuthorization authorization) {
 		if ( authorization == null ) {
@@ -282,7 +282,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargePointDao.findAllForOwner(userId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralChargePoint saveChargePoint(CentralChargePoint chargePoint) {
 		if ( chargePoint == null ) {
@@ -301,7 +301,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargePointDao.get(userId, id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserChargePoint(Long userId, Long id) {
 		chargePointDao.delete(userId, id);
@@ -314,7 +314,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return connectorDao.get(userId, id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserChargePointConnector(Long userId, ChargePointConnectorKey id) {
 		connectorDao.delete(userId, id);
@@ -326,7 +326,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return connectorDao.findAllForOwner(userId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CentralChargePointConnector saveChargePointConnector(CentralChargePointConnector entity) {
 		if ( entity == null ) {
@@ -342,7 +342,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargePointSettingsDao.get(userId, chargePointId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserChargePointSettings(Long userId, Long chargePointId) {
 		chargePointSettingsDao.delete(userId, chargePointId);
@@ -354,7 +354,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargePointSettingsDao.findAllForOwner(userId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePointSettings saveChargePointSettings(ChargePointSettings settings) {
 		if ( settings == null ) {
@@ -372,13 +372,13 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return userSettingsDao.get(userId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteUserSettings(Long userId) {
 		userSettingsDao.delete(userId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public UserSettings saveSettings(UserSettings settings) {
 		if ( settings == null ) {
@@ -405,7 +405,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void findFilteredChargePointStatus(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException {
+			Long offset, Integer max) throws IOException {
 		validateInput(filter, "filter", getChargePointStatusFilterValidator());
 		chargePointStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
@@ -414,7 +414,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 	@Override
 	public void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException {
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException {
 		validateInput(filter, "filter", getChargePointActionStatusFilterValidator());
 		chargePointActionStatusDao.findFilteredStream(filter, processor, sortDescriptors, offset, max);
 	}
@@ -425,7 +425,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 		return chargeSessionDao.findFiltered(filter);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public boolean endChargeSession(Long userId, UUID sessionId, ChargeSessionEndReason reason,
 			String endAuthId) {
@@ -434,7 +434,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Get the validator.
-	 * 
+	 *
 	 * @return the validator
 	 */
 	public Validator getValidator() {
@@ -443,7 +443,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Set the validator to validate model objects with.
-	 * 
+	 *
 	 * @param validator
 	 *        the validator to set
 	 */
@@ -453,7 +453,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Get the charge point status filter validator.
-	 * 
+	 *
 	 * @return the validator
 	 * @since 2.1
 	 */
@@ -463,7 +463,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Set the charge point status filter validator.
-	 * 
+	 *
 	 * @param chargePointStatusFilterValidator
 	 *        the validator to set
 	 * @since 2.1
@@ -474,7 +474,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Get the charge point action status filter validator.
-	 * 
+	 *
 	 * @return the validator
 	 * @since 2.1
 	 */
@@ -484,7 +484,7 @@ public class DaoUserOcppBiz implements UserOcppBiz {
 
 	/**
 	 * Set the charge point action status filter validator.
-	 * 
+	 *
 	 * @param chargePointActionStatusFilterValidator
 	 *        the validator to set
 	 * @since 2.1

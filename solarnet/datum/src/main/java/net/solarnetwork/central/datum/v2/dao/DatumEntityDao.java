@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * DAO API for {@link DatumEntity} objects.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 2.8
  */
 public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
@@ -62,7 +62,7 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 */
 	@Override
 	ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max);
+			List<SortDescriptor> sorts, Long offset, Integer max);
 
 	@Override
 	default ObjectDatumStreamFilterResults<Datum, DatumPK> findFiltered(DatumCriteria filter) {
@@ -87,7 +87,7 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 * @since 1.2
 	 */
 	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a stream of {@link StreamDatum}.
@@ -131,6 +131,7 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 * @return the stored primary key
 	 * @since 1.1
 	 */
+	@Override
 	DatumPK store(DatumEntity datum);
 
 	/**

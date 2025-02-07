@@ -1,21 +1,21 @@
 /* ==================================================================
  * OutstationService.java - 9/08/2023 10:21:10 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -102,7 +102,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * DNP3 Outstation service.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -152,7 +152,7 @@ public class OutstationService
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param manager
 	 *        the manager
 	 * @param userEventAppenderBiz
@@ -217,7 +217,7 @@ public class OutstationService
 
 	/**
 	 * Get the unique ID of this service.
-	 * 
+	 *
 	 * @return the unique ID
 	 */
 	public String getUid() {
@@ -226,7 +226,7 @@ public class OutstationService
 
 	/**
 	 * Get the channel state.
-	 * 
+	 *
 	 * @return the channel state.
 	 */
 	public ChannelState getChannelState() {
@@ -437,7 +437,7 @@ public class OutstationService
 			Map<String, Object> eventData = new LinkedHashMap<>(2);
 			eventData.put(TOPIC_DATA_KEY, instr.getTopic());
 			if ( instr.getParameters() != null && !instr.getParameters().isEmpty() ) {
-				eventData.put(VALUE_DATA_KEY, instr.getParameters().get(0).getValue());
+				eventData.put(VALUE_DATA_KEY, instr.getParameters().getFirst().getValue());
 			}
 			userEventAppenderBiz.addEvent(auth.getUserId(),
 					Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
@@ -453,9 +453,7 @@ public class OutstationService
 		}
 		final Executor executor = getTaskExecutor();
 		if ( executor != null ) {
-			executor.execute(() -> {
-				applyDatumCapturedUpdates(datum);
-			});
+			executor.execute(() -> applyDatumCapturedUpdates(datum));
 		} else {
 			applyDatumCapturedUpdates(datum);
 		}
@@ -600,7 +598,7 @@ public class OutstationService
 			switch (config.getType()) {
 				case Analog -> {
 					try {
-						Number n = null;
+						Number n;
 						if ( controlVal instanceof Number controlNum ) {
 							n = controlNum;
 						} else {
@@ -638,20 +636,20 @@ public class OutstationService
 
 	/**
 	 * Extract a control value from a datum.
-	 * 
+	 *
 	 * <p>
-	 * If {@code property} is given, return that value. Otherwise try the
+	 * If {@code property} is given, return that value. Otherwise, try the
 	 * node-default "val" first, followed by "value". If neither of those work,
 	 * return the first-available status property.
 	 * </p>
-	 * 
+	 *
 	 * @param datum
 	 *        the datum
 	 * @param property
 	 *        the optional datum property name to extract
 	 * @return the control value, or {@literal null}
 	 */
-	private static final Object controlValue(final Datum datum, final String property) {
+	private static Object controlValue(final Datum datum, final String property) {
 		final DatumSamplesOperations ops = datum.asSampleOperations();
 		if ( property != null && !property.isBlank() ) {
 			return ops.findSampleValue(property);
@@ -681,9 +679,9 @@ public class OutstationService
 
 	private boolean booleanPropertyValue(Object propVal) {
 		if ( propVal instanceof Boolean ) {
-			return ((Boolean) propVal).booleanValue();
+			return (Boolean) propVal;
 		} else if ( propVal instanceof Number ) {
-			return ((Number) propVal).intValue() == 0 ? false : true;
+			return ((Number) propVal).intValue() != 0;
 		} else {
 			return StringUtils.parseBoolean(propVal.toString());
 		}
@@ -968,7 +966,7 @@ public class OutstationService
 
 	/**
 	 * Get the DNP3 manager.
-	 * 
+	 *
 	 * @return the manager
 	 */
 	public DNP3Manager getManager() {
@@ -977,7 +975,7 @@ public class OutstationService
 
 	/**
 	 * Get the measurement configurations.
-	 * 
+	 *
 	 * @return the configurations
 	 */
 	public List<ServerMeasurementConfiguration> getMeasurementConfigs() {
@@ -986,7 +984,7 @@ public class OutstationService
 
 	/**
 	 * Get the control configurations.
-	 * 
+	 *
 	 * @return the configurations
 	 */
 	public List<ServerControlConfiguration> getControlConfigs() {
@@ -995,7 +993,7 @@ public class OutstationService
 
 	/**
 	 * Get the link layer configuration.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	public LinkLayerConfig getLinkLayerConfig() {
@@ -1004,7 +1002,7 @@ public class OutstationService
 
 	/**
 	 * Get the Outstation configuration.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	public OutstationConfig getOutstationConfig() {
@@ -1013,7 +1011,7 @@ public class OutstationService
 
 	/**
 	 * Get the task executor.
-	 * 
+	 *
 	 * @return the task executor
 	 */
 	public Executor getTaskExecutor() {
@@ -1022,7 +1020,7 @@ public class OutstationService
 
 	/**
 	 * Set the task executor.
-	 * 
+	 *
 	 * @param taskExecutor
 	 *        the task executor to set
 	 */
@@ -1032,11 +1030,11 @@ public class OutstationService
 
 	/**
 	 * Get the event buffer size.
-	 * 
+	 *
 	 * <p>
 	 * This buffer is used by DNP3 to hold updated values.
 	 * </p>
-	 * 
+	 *
 	 * @return the buffer size, defaults to {@link #DEFAULT_EVENT_BUFFER_SIZE}
 	 */
 	public int getEventBufferSize() {
@@ -1045,7 +1043,7 @@ public class OutstationService
 
 	/**
 	 * Set the event buffer size.
-	 * 
+	 *
 	 * @param eventBufferSize
 	 *        the buffer size to set
 	 */
@@ -1058,7 +1056,7 @@ public class OutstationService
 
 	/**
 	 * Get the startup delay, in seconds.
-	 * 
+	 *
 	 * @return the delay; defaults to {@link #DEFAULT_STARTUP_DELAY_SECONDS}
 	 */
 	public int getStartupDelaySecs() {
@@ -1067,12 +1065,12 @@ public class OutstationService
 
 	/**
 	 * Set the startup delay, in seconds.
-	 * 
+	 *
 	 * <p>
 	 * This delay is used to allow the class to be configured fully before
 	 * starting.
 	 * </p>
-	 * 
+	 *
 	 * @param startupDelaySecs
 	 *        the delay
 	 */

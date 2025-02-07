@@ -1,21 +1,21 @@
 /* ==================================================================
  * MockMailSender.java - Jan 14, 2010 5:13:15 PM
- * 
+ *
  * Copyright 2007-2010 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.mail.mock;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -47,11 +48,11 @@ import jakarta.mail.internet.MimeMultipart;
 
 /**
  * Mock implementation of Spring's {@link MailSender}.
- * 
+ *
  * <p>
  * This implementation will log sending of messages only.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.3
  */
@@ -60,7 +61,7 @@ public class MockMailSender implements MailSender, JavaMailSender {
 	private final Logger log = LoggerFactory.getLogger(MockMailSender.class);
 
 	private final Session session = Session.getInstance(new Properties());
-	private final Queue<MailMessage> sent = new ConcurrentLinkedQueue<MailMessage>();
+	private final Queue<MailMessage> sent = new ConcurrentLinkedQueue<>();
 
 	@Override
 	public void send(SimpleMailMessage msg) throws MailException {
@@ -104,18 +105,16 @@ public class MockMailSender implements MailSender, JavaMailSender {
 	private void extractContent(Object content, StringBuilder buf)
 			throws MessagingException, IOException {
 		if ( content instanceof String ) {
-			buf.append(content.toString());
+			buf.append(content);
 		} else if ( content instanceof InputStream ) {
-			buf.append(
-					FileCopyUtils.copyToString(new InputStreamReader((InputStream) content, "UTF-8")));
-		} else if ( content instanceof MimeMultipart ) {
-			MimeMultipart multi = (MimeMultipart) content;
+			buf.append(FileCopyUtils
+					.copyToString(new InputStreamReader((InputStream) content, StandardCharsets.UTF_8)));
+		} else if ( content instanceof MimeMultipart multi ) {
 			for ( int i = 0; i < multi.getCount(); i++ ) {
 				BodyPart part = multi.getBodyPart(i);
 				extractContent(part, buf);
 			}
-		} else if ( content instanceof BodyPart ) {
-			BodyPart part = (BodyPart) content;
+		} else if ( content instanceof BodyPart part ) {
 			extractContent(part.getContent(), buf);
 		}
 	}
@@ -178,7 +177,7 @@ public class MockMailSender implements MailSender, JavaMailSender {
 	/**
 	 * Get a list of all sent messages. This list can be cleared during unit
 	 * tests to keep track of the messages sent during the test.
-	 * 
+	 *
 	 * @return List of messages, never {@literal null}.
 	 * @since 1.1
 	 */

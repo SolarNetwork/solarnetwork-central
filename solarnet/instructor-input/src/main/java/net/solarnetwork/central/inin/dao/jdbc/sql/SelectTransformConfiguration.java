@@ -43,7 +43,7 @@ import net.solarnetwork.central.inin.domain.TransformPhase;
  * @author matt
  * @version 1.0
  */
-public class SelectTransformConfiguration
+public final class SelectTransformConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/** The {@code fetchSize} property default value. */
@@ -146,7 +146,7 @@ public class SelectTransformConfiguration
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		CommonSqlUtils.prepareLimitOffset(filter, con, stmt, p);
+		CommonSqlUtils.prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}

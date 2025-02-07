@@ -34,7 +34,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * API for datum reading information.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 2.8
  */
 public interface ReadingDatumDao {
@@ -75,6 +75,6 @@ public interface ReadingDatumDao {
 	 * @since 1.1
 	 */
 	void findFilteredStream(DatumCriteria filter, StreamDatumFilteredResultsProcessor processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 }

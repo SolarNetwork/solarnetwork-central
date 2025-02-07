@@ -1,21 +1,21 @@
 /* ==================================================================
  * SchedulerUtils.java - Jun 30, 2011 3:30:05 PM
- * 
+ *
  * Copyright 2011 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,7 +40,7 @@ import com.cronutils.parser.CronParser;
 
 /**
  * Utility methods for working with scheduled jobs.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -58,14 +58,14 @@ public final class SchedulerUtils {
 
 	/**
 	 * Create a trigger from a schedule expression.
-	 * 
+	 *
 	 * <p>
 	 * The {@code expression} can be either an integer number representing a
 	 * {@code timeUnit} frequency or else a cron expression. If
 	 * {@code randomize} is {@literal true} then if the cron expression seconds
 	 * value is a constant value it
 	 * </p>
-	 * 
+	 *
 	 * @param expression
 	 *        the schedule expression
 	 * @param timeUnit
@@ -97,7 +97,7 @@ public final class SchedulerUtils {
 					Matcher m = CRON_PLAIN_SECOND_FIELD_PATTERN.matcher(expression);
 					if ( m.find() ) {
 						int randSec = new SecureRandom().nextInt(60);
-						cronExpr = String.valueOf(randSec) + expression.substring(m.end());
+						cronExpr = randSec + expression.substring(m.end());
 					}
 				}
 				return new CronTrigger(cronExpr);
@@ -110,14 +110,13 @@ public final class SchedulerUtils {
 
 	/**
 	 * Extract an execution schedule description from a trigger.
-	 * 
+	 *
 	 * @param trigger
 	 *        the trigger
 	 * @return a description of the given trigger
 	 */
-	public static final String extractExecutionScheduleDescription(Trigger trigger) {
-		if ( trigger instanceof CronTrigger ) {
-			CronTrigger cronTrigger = (CronTrigger) trigger;
+	public static String extractExecutionScheduleDescription(Trigger trigger) {
+		if ( trigger instanceof CronTrigger cronTrigger ) {
 			try {
 				Cron cron = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.SPRING))
 						.parse(cronTrigger.getExpression());
@@ -126,8 +125,7 @@ public final class SchedulerUtils {
 			} catch ( IllegalArgumentException e ) {
 				return ("cron: " + cronTrigger.getExpression());
 			}
-		} else if ( trigger instanceof PeriodicTrigger ) {
-			PeriodicTrigger calTrigger = (PeriodicTrigger) trigger;
+		} else if ( trigger instanceof PeriodicTrigger calTrigger ) {
 			return String.format("every %s (%s)", calTrigger.getPeriodDuration(),
 					calTrigger.isFixedRate() ? "fix" : "delay");
 		}

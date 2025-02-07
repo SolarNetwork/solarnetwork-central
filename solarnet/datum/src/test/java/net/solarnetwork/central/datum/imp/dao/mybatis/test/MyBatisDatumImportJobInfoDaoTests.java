@@ -108,7 +108,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void storeNew() {
 		DatumImportJobInfo info = createTestInfo();
 
-		UserUuidPK id = dao.store(info);
+		UserUuidPK id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -124,7 +124,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setTokenId(tokenId);
 		this.tokenId = tokenId;
 
-		UserUuidPK id = dao.store(info);
+		UserUuidPK id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -187,7 +187,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setLoadedCount(1234);
 		info.setPercentComplete(50.0);
 
-		UserUuidPK id = dao.store(info);
+		UserUuidPK id = dao.save(info);
 		assertThat("PK unchanged", id, equalTo(this.info.getId()));
 
 		DatumImportJobInfo updated = dao.get(id);
@@ -229,7 +229,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Completed);
 		info.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		long result = dao
 				.purgeOldJobs(Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
@@ -249,7 +249,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		long result = dao
 				.purgeOldJobs(Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
@@ -323,7 +323,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		int count = dao.deleteForUser(this.userId, singleton(this.info.getId().getId()),
 				EnumSet.of(DatumImportState.Unknown));
@@ -399,7 +399,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumImportJobInfo> results = dao.findForUser(this.userId, null);
 		assertThat("Results returned", results, hasSize(1));
@@ -418,7 +418,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				singleton(DatumImportState.Staged));
@@ -441,7 +441,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		info.setGroupKey(groupKey);
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				singleton(DatumImportState.Staged));
@@ -461,7 +461,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		info.setImportDate(Instant.now());
 		info.setImportState(DatumImportState.Staged);
 		info.setCreated(Instant.now().minus(1, ChronoUnit.HOURS));
-		info = dao.get(dao.store(info));
+		info = dao.get(dao.save(info));
 
 		List<DatumImportJobInfo> results = dao.findForUser(this.userId,
 				EnumSet.of(DatumImportState.Staged, DatumImportState.Unknown));
@@ -552,7 +552,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		// GIVEN
 		DatumImportJobInfo info = createTestInfo();
 		info.setImportState(DatumImportState.Completed);
-		dao.store(info);
+		dao.save(info);
 
 		// WHEN
 		DatumImportJobInfo claimed = dao.claimQueuedJob();
@@ -566,7 +566,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		// GIVEN
 		DatumImportJobInfo info = createTestInfo();
 		info.setImportState(DatumImportState.Queued);
-		UserUuidPK id = dao.store(info);
+		UserUuidPK id = dao.save(info);
 
 		// WHEN
 		DatumImportJobInfo claimed = dao.claimQueuedJob();
@@ -584,7 +584,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 			DatumImportJobInfo info = createTestInfo();
 			info.setImportState(DatumImportState.Queued);
 			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			UserUuidPK id = dao.store(info);
+			UserUuidPK id = dao.save(info);
 			ids.add(id);
 		}
 
@@ -614,7 +614,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 			}
 			info.setGroupKey("foo");
 			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			UserUuidPK id = dao.store(info);
+			UserUuidPK id = dao.save(info);
 			ids.add(id);
 		}
 
@@ -639,7 +639,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 			}
 			info.setGroupKey("foo");
 			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			UserUuidPK id = dao.store(info);
+			UserUuidPK id = dao.save(info);
 			ids.add(id);
 		}
 
@@ -735,7 +735,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	public void claimQueuedJob_ignoreClaimedInOtherTransaction() throws Exception {
 		final DatumImportJobInfo info = createTestInfo();
 		info.setImportState(DatumImportState.Queued);
-		final UserUuidPK id = dao.store(info);
+		final UserUuidPK id = dao.save(info);
 		TestTransaction.flagForCommit();
 		TestTransaction.end();
 
@@ -772,7 +772,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 			info.setImportState(DatumImportState.Queued);
 			info.setGroupKey("foo");
 			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			UserUuidPK id = dao.store(info);
+			UserUuidPK id = dao.save(info);
 			ids.add(id);
 		}
 		TestTransaction.flagForCommit();
@@ -817,7 +817,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 			}
 			info.setGroupKey("foo");
 			info.setCreated(start.plus(i, ChronoUnit.MINUTES));
-			UserUuidPK id = dao.store(info);
+			UserUuidPK id = dao.save(info);
 			ids.add(id);
 		}
 		TestTransaction.flagForCommit();

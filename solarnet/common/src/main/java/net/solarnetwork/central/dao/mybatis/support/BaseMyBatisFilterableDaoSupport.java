@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseMyBatisFilterableDaoSupport.java - 26/10/2020 1:04:30 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,9 +36,9 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * Base implementation of {@link FilterableDao} using MyBatis via
  * {@link SqlSessionDaoSupport}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.7
  */
 public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M extends Identity<K>, F extends PaginationCriteria>
@@ -49,7 +49,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param objectType
 	 *        the object type
 	 * @param keyType
@@ -65,7 +65,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	/**
 	 * Get the filter query name for a given domain.
-	 * 
+	 *
 	 * @param filterDomain
 	 *        the domain
 	 * @param filter
@@ -78,8 +78,8 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	/**
 	 * Callback to alter the default SQL properties set up by
-	 * {@link #findFiltered(Object, List, Integer, Integer)}
-	 * 
+	 * {@link #findFiltered(Object, List, Long, Integer)}
+	 *
 	 * @param filter
 	 *        the current filter
 	 * @param sqlProps
@@ -91,18 +91,18 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	/**
 	 * Perform a filter search using standardized semantics.
-	 * 
+	 *
 	 * <p>
 	 * The following steps are taken:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>Compute the MyBatis query name by calling
 	 * {@link #getFilteredQuery(String, PaginationCriteria)}.</li>
 	 * <li>Call
-	 * {@link BaseMyBatisDao#selectFiltered(String, Object, List, Integer, Integer, java.util.function.BiConsumer)}.</li>
+	 * {@link BaseMyBatisDao#selectFiltered(String, Object, List, Long, Integer, java.util.function.BiConsumer)}.</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param filter
 	 *        the search filter
 	 * @param sorts
@@ -112,10 +112,10 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	 * @param max
 	 *        the maximum number of results
 	 * @return the results
-	 * @see BaseMyBatisDao#selectFiltered(String, Object, List, Integer,
-	 *      Integer, java.util.function.BiConsumer)
+	 * @see BaseMyBatisDao#selectFiltered(String, Object, List, Long, Integer,
+	 *      java.util.function.BiConsumer)
 	 */
-	protected FilterResults<M, K> doFindFiltered(F filter, List<SortDescriptor> sorts, Integer offset,
+	protected FilterResults<M, K> doFindFiltered(F filter, List<SortDescriptor> sorts, Long offset,
 			Integer max) {
 		final String filterDomain = matchType.getSimpleName();
 		final String query = getFilteredQuery(filterDomain, filter);
@@ -125,7 +125,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 
 	@Override
 	public FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps,
-			Iterable<M> rows, Long totalCount, Integer offset, Integer returnedCount) {
+			Iterable<M> rows, Long totalCount, Long offset, Integer returnedCount) {
 		return BasicFilterResults.filterResults(rows, filter, totalCount,
 				(returnedCount != null ? returnedCount : 0));
 	}

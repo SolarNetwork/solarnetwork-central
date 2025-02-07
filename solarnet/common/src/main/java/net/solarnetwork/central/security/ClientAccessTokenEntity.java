@@ -1,27 +1,28 @@
 /* ==================================================================
  * ClientAccessTokenEntity.java - 25/10/2024 9:09:49 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.security;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
@@ -33,7 +34,7 @@ import net.solarnetwork.central.domain.UserStringStringCompositePK;
 
 /**
  * Entity implementation of {@link ClientAccessToken}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -45,6 +46,7 @@ public class ClientAccessTokenEntity
 		extends BaseUserModifiableEntity<ClientAccessTokenEntity, UserStringStringCompositePK>
 		implements ClientAccessToken {
 
+	@Serial
 	private static final long serialVersionUID = 4075961449877401018L;
 
 	private String accessTokenType;
@@ -57,7 +59,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -71,7 +73,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param registrationId
@@ -178,7 +180,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the access token type.
-	 * 
+	 *
 	 * @param accessTokenType
 	 *        the type to set
 	 */
@@ -193,7 +195,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the access token.
-	 * 
+	 *
 	 * @param accessToken
 	 *        the access token to set
 	 */
@@ -208,7 +210,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the access token issue date.
-	 * 
+	 *
 	 * @param accessTokenIssuedAt
 	 *        the date to set
 	 */
@@ -223,7 +225,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the access token expire date.
-	 * 
+	 *
 	 * @param accessTokenExpiresAt
 	 *        the date to set
 	 */
@@ -238,7 +240,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the access token scopes.
-	 * 
+	 *
 	 * @param accessTokenScopes
 	 *        the scopes to set, or {@literal null}
 	 */
@@ -253,7 +255,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the refresh token.
-	 * 
+	 *
 	 * @param refreshToken
 	 *        the refresh token to set, or {@literal null}
 	 */
@@ -268,7 +270,7 @@ public class ClientAccessTokenEntity
 
 	/**
 	 * Set the refresh token issue date.
-	 * 
+	 *
 	 * @param refreshTokenIssuedAt
 	 *        the date to set, or {@literal null}
 	 */

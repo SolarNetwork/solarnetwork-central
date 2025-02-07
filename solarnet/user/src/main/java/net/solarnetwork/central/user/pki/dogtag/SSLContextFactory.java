@@ -1,21 +1,21 @@
 /* ==================================================================
  * SSLContextFactory.java - Oct 14, 2014 2:38:08 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -43,8 +43,6 @@ import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
 import org.apache.hc.client5.http.ssl.DefaultHostnameVerifier;
 import org.apache.hc.core5.reactor.ssl.SSLBufferMode;
 import org.apache.hc.core5.ssl.SSLContexts;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -60,7 +58,7 @@ import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 /**
  * Factory for {@link SSLContext} objects configured with an associated
  * key/trust store.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -76,12 +74,10 @@ public class SSLContextFactory implements PingTest {
 
 	private CachedResult<PingTest.Result> cachedResult;
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
 	/**
 	 * Get a {@link SSLContext} configured to use the
 	 * {@link #getKeystoreResource()} as both a trust and key store.
-	 * 
+	 *
 	 * @return SSLContext
 	 */
 	public SSLContext createContext() {
@@ -100,7 +96,7 @@ public class SSLContextFactory implements PingTest {
 	/**
 	 * Get a {@link RestOperations} instance configured to use the
 	 * {@code SSLContext} returned by {@link #createContext()}.
-	 * 
+	 *
 	 * @return RestOperations
 	 */
 	public RestOperations createRestOps() {
@@ -130,18 +126,16 @@ public class SSLContextFactory implements PingTest {
 		// Spring 6 no longer includes SourceHttpMessageConverter by default, but we rely on that
 		if ( restTemplate.getMessageConverters().stream()
 				.filter(c -> c instanceof SourceHttpMessageConverter<?>).findAny().isEmpty() ) {
-			restTemplate.getMessageConverters().add(0, new SourceHttpMessageConverter<>());
+			restTemplate.getMessageConverters().addFirst(new SourceHttpMessageConverter<>());
 		}
 
 		return restTemplate;
 	}
 
 	private KeyStore loadKeyStore() throws GeneralSecurityException {
-		InputStream in = null;
-		KeyStore keyStore = null;
-		try {
+		KeyStore keyStore;
+		try (InputStream in = keystoreResource.getInputStream()) {
 			keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			in = keystoreResource.getInputStream();
 			keyStore.load(in, keystorePassword.toCharArray());
 			return keyStore;
 		} catch ( IOException e ) {
@@ -151,17 +145,7 @@ public class SSLContextFactory implements PingTest {
 			} else {
 				msg = "Error loading certificate key store ";
 			}
-			throw new CertificateException(
-					msg + (keystoreResource == null ? null : keystoreResource.getFilename()), e);
-		} finally {
-			if ( in != null ) {
-				try {
-					in.close();
-				} catch ( IOException e ) {
-					log.warn("Error closing key store file {}: {}", keystoreResource.getFilename(),
-							e.getMessage());
-				}
-			}
+			throw new CertificateException(msg + keystoreResource.getFilename(), e);
 		}
 	}
 
@@ -200,19 +184,17 @@ public class SSLContextFactory implements PingTest {
 		StringBuilder message = new StringBuilder();
 		while ( aliases.hasMoreElements() ) {
 			String alias = aliases.nextElement();
-			Entry entry = null;
+			Entry entry;
 			try {
 				entry = keyStore.getEntry(alias, null);
 			} catch ( UnrecoverableKeyException e ) {
 				entry = keyStore.getEntry(alias, new KeyStore.PasswordProtection(
 						keystorePassword == null ? null : keystorePassword.toCharArray()));
 			}
-			if ( entry instanceof PrivateKeyEntry ) {
-				PrivateKeyEntry keyEntry = (PrivateKeyEntry) entry;
+			if ( entry instanceof PrivateKeyEntry keyEntry ) {
 				Certificate[] certs = keyEntry.getCertificateChain();
 				for ( Certificate cert : certs ) {
-					if ( cert instanceof X509Certificate ) {
-						X509Certificate x509 = (X509Certificate) cert;
+					if ( cert instanceof X509Certificate x509 ) {
 						validated = true;
 						if ( x509.getNotBefore().getTime() > now ) {
 							result = new PingTestResult(false,
@@ -232,11 +214,11 @@ public class SSLContextFactory implements PingTest {
 											+ " will exipre on " + x509.getNotAfter() + ".");
 							break;
 						}
-						if ( message.length() > 0 ) {
+						if ( !message.isEmpty() ) {
 							message.append(" ");
 						}
-						message.append("Certificate " + x509.getSubjectX500Principal().getName()
-								+ " valid until " + x509.getNotAfter() + ".");
+						message.append("Certificate ").append(x509.getSubjectX500Principal().getName())
+								.append(" valid until ").append(x509.getNotAfter()).append(".");
 					}
 				}
 			}
@@ -248,7 +230,7 @@ public class SSLContextFactory implements PingTest {
 			result = new PingTestResult(validated, message.toString());
 		}
 		// cache the results: for success cache for longer so we don't spend a lot of time parsing the certificates
-		CachedResult<PingTest.Result> cached = new CachedResult<PingTest.Result>(result,
+		CachedResult<PingTest.Result> cached = new CachedResult<>(result,
 				(result.isSuccess() ? 1L : 30L),
 				(result.isSuccess() ? TimeUnit.DAYS : TimeUnit.MINUTES));
 		cachedResult = cached;
@@ -281,7 +263,7 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Get the list of explicitly enabled SSL protocols.
-	 * 
+	 *
 	 * @return the enabled SSL protocols
 	 * @since 1.5
 	 */
@@ -291,11 +273,11 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Set the list of explicitly enabled SSL protocols.
-	 * 
+	 *
 	 * <p>
 	 * This list is treated as regular expressions.
 	 * </p>
-	 * 
+	 *
 	 * @param enabledProtocols
 	 *        a list of regular expressions for the SSL protocols to enable
 	 * @since 1.5
@@ -306,7 +288,7 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Get the list of disabled SSL protocols.
-	 * 
+	 *
 	 * @return the disabled SSL protocols
 	 * @since 1.5
 	 */
@@ -316,12 +298,12 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Set the list of disabled SSL protocols.
-	 * 
+	 *
 	 * <p>
 	 * This list is treated as regular expressions, and applied <b>after</b> any
 	 * configured {@link #setEnabledProtocols(String[])} expressions.
 	 * </p>
-	 * 
+	 *
 	 * @param disabledProtocols
 	 *        a list of regular expressions for the SSL protocols to disable
 	 * @since 1.5
@@ -332,7 +314,7 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Get the list of explicitly enabled SSL cipher suites.
-	 * 
+	 *
 	 * @return the enabled SSL cipher suites
 	 * @since 1.5
 	 */
@@ -342,11 +324,11 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Set the list of explicitly enabled SSL cipher suites.
-	 * 
+	 *
 	 * <p>
 	 * This list is treated as regular expressions.
 	 * </p>
-	 * 
+	 *
 	 * @param enabledCipherSuites
 	 *        a list of regular expressions for the SSL cipher suites to enable
 	 * @since 1.5
@@ -357,7 +339,7 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Get the list of disabled SSL cipher suites.
-	 * 
+	 *
 	 * @return the disabled SSL cipher suites
 	 * @since 1.5
 	 */
@@ -367,12 +349,12 @@ public class SSLContextFactory implements PingTest {
 
 	/**
 	 * Set the list of disabled SSL cipher suites.
-	 * 
+	 *
 	 * <p>
 	 * This list is treated as regular expressions, and applied <b>after</b> any
 	 * configured {@link #setEnabledCipherSuites(String[])} expressions.
 	 * </p>
-	 * 
+	 *
 	 * @param disabledCipherSuites
 	 *        a list of regular expressions for the SSL cipher suites to disable
 	 * @since 1.5

@@ -28,7 +28,6 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -38,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
@@ -95,7 +95,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -176,8 +176,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		// create a map of all services to their corresponding secure keys
 		// we assume here that all integration and datum stream identifiers are globally unique
-		this.serviceSecureKeys = Arrays.asList(integrationServices, datumStreamServices.values())
-				.stream().flatMap(e -> e.stream()).map(SettingSpecifierProvider.class::cast)
+		this.serviceSecureKeys = Stream.of(integrationServices, datumStreamServices.values())
+				.flatMap(Collection::stream).map(SettingSpecifierProvider.class::cast)
 				.collect(toUnmodifiableMap(SettingSpecifierProvider::getSettingUid,
 						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
 
@@ -207,17 +207,17 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	@Override
 	public UserSettingsEntity saveSettings(Long userId, UserSettingsEntityInput input) {
 		UserSettingsEntity entity = requireNonNullArgument(input, "input").toEntity(userId, now());
-		return userSettingsDao.get(userSettingsDao.store(entity));
+		return userSettingsDao.get(userSettingsDao.save(entity));
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteSettings(Long userId) {
 		UserSettingsEntity key = new UserSettingsEntity(requireNonNullArgument(userId, "userId"), now());
 		userSettingsDao.delete(key);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CloudDatumStreamSettings defaultDatumStreamSettings() {
 		return defaultDatumStreamSettings;
@@ -232,8 +232,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		BasicFilter f = new BasicFilter(filter);
 		f.setUserId(userId);
 		FilterableDao<C, K, CloudIntegrationsFilter> dao = filterableDao(configurationClass);
-		FilterResults<C, K> result = dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
-		return result;
+		return dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -247,12 +246,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		}
 
 		GenericDao<C, K> dao = genericDao(configurationClass);
-		C result = requireNonNullObject(dao.get(id), id);
 
-		return result;
+		return requireNonNullObject(dao.get(id), id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <T extends CloudIntegrationsConfigurationInput<C, K>, C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C saveConfiguration(
 			K id, T input) {
@@ -272,12 +270,11 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
 		K updatedId = requireNonNullObject(dao.save(config), id);
-		C result = requireNonNullObject(dao.get(updatedId), updatedId);
 
-		return result;
+		return requireNonNullObject(dao.get(updatedId), updatedId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public List<CloudDatumStreamPropertyConfiguration> replaceDatumStreamPropertyConfiguration(
 			UserLongCompositePK datumStreamMappingId,
@@ -308,7 +305,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void updateConfigurationEnabled(
 			K id, boolean enabled, Class<C> configurationClass) {
@@ -337,7 +334,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		dao.updateEnabledStatus(id.getUserId(), filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> void deleteConfiguration(
 			K id, Class<C> configurationClass) {
@@ -426,7 +423,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return datumStreamPollTaskDao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CloudDatumStreamPollTaskEntity updateDatumStreamPollTaskState(UserLongCompositePK id,
 			BasicClaimableJobState desiredState, BasicClaimableJobState... expectedStates) {
@@ -444,7 +441,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return datumStreamPollTaskDao.get(id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public CloudDatumStreamPollTaskEntity saveDatumStreamPollTask(UserLongCompositePK id,
 			CloudDatumStreamPollTaskEntityInput input, BasicClaimableJobState... expectedStates) {
@@ -466,7 +463,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return datumStreamPollTaskDao.get(id);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteDatumStreamPollTask(UserLongCompositePK id) {
 		requireNonNullArgument(id, "id");

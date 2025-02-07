@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.in.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -35,20 +35,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Location;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/solarin/api/v1/pub/location", "/solarin/api/v1/sec/location" })
@@ -87,7 +88,7 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET, params = "!type")
-	public Response<FilterResults<GeneralLocationDatumMetadataFilterMatch>> findGeneralLocationMetadata(
+	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocationMetadata(
 			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
 		SolarLocation loc;
 		if ( command != null ) {
@@ -114,10 +115,10 @@ public class LocationLookupController {
 				criteria.setTags(command.getTags());
 			}
 		}
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dataCollectorBiz
+		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = dataCollectorBiz
 				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
 						command.getOffset(), command.getMax());
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -132,18 +133,18 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}" }, method = RequestMethod.GET, params = "sourceId")
-	public Response<GeneralLocationDatumMetadataFilterMatch> getGeneralLocationMetadata(
+	public Result<GeneralLocationDatumMetadataFilterMatch> getGeneralLocationMetadata(
 			@PathVariable("locationId") Long locationId,
 			@RequestParam(value = "sourceId") String sourceId) {
 		DatumFilterCommand criteria = new DatumFilterCommand();
 		criteria.setLocationId(locationId);
 		criteria.setSourceId(sourceId);
-		FilterResults<GeneralLocationDatumMetadataFilterMatch> results = dataCollectorBiz
-				.findGeneralLocationDatumMetadata(criteria, null, 0, 1);
+		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = dataCollectorBiz
+				.findGeneralLocationDatumMetadata(criteria, null, 0L, 1);
 		if ( results.getReturnedResultCount() < 1 ) {
 			throw new AuthorizationException(AuthorizationException.Reason.UNKNOWN_OBJECT, sourceId);
 		}
-		return response(results.getResults().iterator().next());
+		return success(results.getResults().iterator().next());
 	}
 
 	/**
@@ -162,10 +163,10 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/update" }, method = RequestMethod.POST)
-	public Response<Void> updateLocation(@RequestBody Location location) {
+	public Result<Void> updateLocation(@RequestBody Location location) {
 		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		dataCollectorBiz.updateLocation(nodeId, location);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -180,9 +181,9 @@ public class LocationLookupController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/view" }, method = RequestMethod.GET, params = "!sourceId")
-	public Response<Location> getLocation() {
+	public Result<Location> getLocation() {
 		Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
-		return response(dataCollectorBiz.getLocationForNode(nodeId));
+		return success(dataCollectorBiz.getLocationForNode(nodeId));
 	}
 
 }

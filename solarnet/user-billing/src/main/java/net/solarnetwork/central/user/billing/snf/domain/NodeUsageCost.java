@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Objects;
@@ -39,6 +40,7 @@ import java.util.Objects;
  */
 public class NodeUsageCost implements Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -1787655430294334300L;
 
 	private BigDecimal datumPropertiesInCost;
@@ -406,10 +408,9 @@ public class NodeUsageCost implements Serializable {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof NodeUsageCost) ) {
+		if ( !(obj instanceof NodeUsageCost other) ) {
 			return false;
 		}
-		NodeUsageCost other = (NodeUsageCost) obj;
 		return Objects.equals(datumDaysStoredCost, other.datumDaysStoredCost)
 				&& Objects.equals(datumOutCost, other.datumOutCost)
 				&& Objects.equals(datumPropertiesInCost, other.datumPropertiesInCost)

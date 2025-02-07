@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,10 +45,11 @@ import net.solarnetwork.domain.Differentiable;
  */
 @JsonIgnoreProperties({ "id" })
 @JsonPropertyOrder({ "userId", "created", "modified", "publishToSolarIn", "publishToSolarFlux" })
-public class UserSettingsEntity extends BasicLongEntity
+public final class UserSettingsEntity extends BasicLongEntity
 		implements Differentiable<UserSettingsEntity>, UserRelatedEntity<Long>,
 		CopyingIdentity<Long, UserSettingsEntity>, Serializable, Cloneable, CloudDatumStreamSettings {
 
+	@Serial
 	private static final long serialVersionUID = 2463852724878062639L;
 
 	private Instant modified;

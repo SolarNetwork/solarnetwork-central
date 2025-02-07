@@ -1,27 +1,28 @@
 /* ==================================================================
  * ObjectDatumId.java - 22/11/2020 9:50:39 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -31,12 +32,13 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general object datum identifier.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class ObjectDatumId implements Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 7571299682812609193L;
 
 	private final ObjectDatumKind kind;
@@ -48,7 +50,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Create a new node datum stream PK.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param nodeId
@@ -68,7 +70,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Create a new location datum stream PK.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param locationId
@@ -91,11 +93,12 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	 */
 	public static class NodeDatumId extends ObjectDatumId {
 
+		@Serial
 		private static final long serialVersionUID = -851538635627971228L;
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param streamId
 		 *        the stream ID
 		 * @param nodeId
@@ -119,7 +122,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 		/**
 		 * Alias for {@link #getObjectId()}.
-		 * 
+		 *
 		 * @return the node ID
 		 */
 		public Long getNodeId() {
@@ -133,11 +136,12 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	 */
 	public static class LocationDatumId extends ObjectDatumId {
 
+		@Serial
 		private static final long serialVersionUID = 2579981391355724098L;
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param streamId
 		 *        the stream ID
 		 * @param locationId
@@ -161,7 +165,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 		/**
 		 * Alias for {@link #getObjectId()}.
-		 * 
+		 *
 		 * @return the location ID
 		 */
 		public Long getLocationId() {
@@ -172,7 +176,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param kind
 	 *        the object kind
 	 * @param streamId
@@ -254,10 +258,9 @@ public class ObjectDatumId implements Cloneable, Serializable {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof ObjectDatumId) ) {
+		if ( !(obj instanceof ObjectDatumId other) ) {
 			return false;
 		}
-		ObjectDatumId other = (ObjectDatumId) obj;
 		return aggregation == other.aggregation && kind == other.kind
 				&& Objects.equals(objectId, other.objectId) && Objects.equals(sourceId, other.sourceId)
 				&& Objects.equals(timestamp, other.timestamp);
@@ -265,7 +268,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Test if this object ID is fully specified.
-	 * 
+	 *
 	 * @param expectedKind
 	 *        the kind to match
 	 * @return {@literal true} if {@code expectedKind} is the same as this
@@ -279,7 +282,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Test if this object ID is fully specified as an aggregate.
-	 * 
+	 *
 	 * @param expectedKind
 	 *        the kind to match
 	 * @return {@literal true} if {@link #isValidObjectId(ObjectDatumKind)}
@@ -287,12 +290,12 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	 * @see #isValidObjectId(ObjectDatumKind)
 	 */
 	public boolean isValidAggregateObjectId(ObjectDatumKind expectedKind) {
-		return isValidObjectId(kind) && aggregation != null;
+		return isValidObjectId(expectedKind) && aggregation != null;
 	}
 
 	/**
 	 * Get the kind.
-	 * 
+	 *
 	 * @return the kind
 	 */
 	public ObjectDatumKind getKind() {
@@ -301,7 +304,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Get the stream ID.
-	 * 
+	 *
 	 * @return the stream ID
 	 */
 	public UUID getStreamId() {
@@ -310,7 +313,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Get the object ID.
-	 * 
+	 *
 	 * @return the object ID
 	 */
 	public Long getObjectId() {
@@ -319,7 +322,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Get the source ID.
-	 * 
+	 *
 	 * @return the source ID
 	 */
 	public String getSourceId() {
@@ -328,7 +331,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Get the timestamp.
-	 * 
+	 *
 	 * @return the timestamp
 	 */
 	public Instant getTimestamp() {
@@ -337,7 +340,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 
 	/**
 	 * Get the aggregation.
-	 * 
+	 *
 	 * @return the aggregation
 	 */
 	public Aggregation getAggregation() {

@@ -31,6 +31,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.biz.UserMetadataBiz;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.domain.UserMetadataEntity;
@@ -46,7 +50,8 @@ import net.solarnetwork.domain.Result;
  * @version 2.1
  */
 @Controller("v1UserMetadataController")
-@RequestMapping({ "/api/v1/pub/users/meta", "/api/v1/sec/users/meta" })
+@RequestMapping("/api/v1/sec/users/meta")
+@Tag(name = "user-meta", description = "Methods to query user metadata.")
 @GlobalExceptionRestController
 public class UserMetadataController {
 
@@ -77,6 +82,10 @@ public class UserMetadataController {
 	 *        be used
 	 * @return the result
 	 */
+	@Operation(operationId = "userMetadataList",
+			summary = "List user metadata matching for the active user",
+			parameters = @Parameter(name = "userId", in = ParameterIn.PATH, required = false,
+					description = "The user ID; if not provided the user ID associated with the active user is assumed."))
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/{userId}" }, method = RequestMethod.GET)
 	public Result<UserMetadataEntity> getMetadata(

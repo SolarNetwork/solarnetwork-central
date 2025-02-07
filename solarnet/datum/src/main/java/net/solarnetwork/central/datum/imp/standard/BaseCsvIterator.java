@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseCsvIterator.java - 8/11/2018 7:22:12 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -53,13 +53,13 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Base class to support parsing CSV data into objects.
- * 
- * @author matt
- * @version 2.1
+ *
  * @param <E>
  *        the element type
  * @param <T>
  *        the properties type
+ * @author matt
+ * @version 2.1
  */
 public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties>
 		implements Iterator<E>, Closeable {
@@ -76,6 +76,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	}
 
 	private static final DateTimeFormatter ISO_LOCAL_DATE_OPTIONAL_TIME;
+
 	static {
 		// @formatter:off
 		ISO_LOCAL_DATE_OPTIONAL_TIME = new DateTimeFormatterBuilder()
@@ -88,6 +89,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 				.withChronology(IsoChronology.INSTANCE);
 		// @formatter:on
 	}
+
 	private final ICsvListReader reader;
 	protected final List<String> headerRow;
 	protected final T props;
@@ -143,7 +145,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Parse a single row of CSV data.
-	 * 
+	 *
 	 * @param row
 	 *        the row data
 	 * @return the parsed object, or {@literal null} to skip row and continue
@@ -154,7 +156,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Get a column value.
-	 * 
+	 *
 	 * @param row
 	 *        the row of column values
 	 * @param col
@@ -163,7 +165,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 	 *         available
 	 */
 	protected String getColumnValue(List<String> row, Integer col) {
-		if ( row == null || col == null || col.intValue() > row.size() || col.intValue() < 1 ) {
+		if ( row == null || col == null || col > row.size() || col < 1 ) {
 			return null;
 		}
 		return row.get(col - 1);
@@ -171,7 +173,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Get a combined column value.
-	 * 
+	 *
 	 * @param row
 	 *        the row of column values
 	 * @param cols
@@ -188,7 +190,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		}
 
 		if ( numCols == 1 ) {
-			return getColumnValue(row, cols.get(0));
+			return getColumnValue(row, cols.getFirst());
 		}
 
 		StringBuilder buf = new StringBuilder();
@@ -197,7 +199,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 			if ( v == null ) {
 				continue;
 			}
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(delimiter);
 			}
 			buf.append(v);
@@ -208,7 +210,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Parse a JSON object string into a map arbitrary values.
-	 * 
+	 *
 	 * @param row
 	 *        the data row
 	 * @param col
@@ -230,7 +232,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Parse a JSON object string into a map of number values.
-	 * 
+	 *
 	 * @param row
 	 *        the data row
 	 * @param col
@@ -245,7 +247,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 			Map<String, Object> m = JsonUtils.getStringMap(v);
 			if ( m != null ) {
 				result = m.entrySet().stream().filter(e -> e.getValue() instanceof Number)
-						.collect(toMap(e -> e.getKey(), e -> (Number) e.getValue()));
+						.collect(toMap(Map.Entry::getKey, e -> (Number) e.getValue()));
 				if ( result.isEmpty() ) {
 					result = null;
 				}
@@ -256,7 +258,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Parse a JSON array into a list of string values.
-	 * 
+	 *
 	 * @param row
 	 *        the data row
 	 * @param col
@@ -283,7 +285,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Parse a JSON array into a set of string values.
-	 * 
+	 *
 	 * @param row
 	 *        the data row
 	 * @param col
@@ -305,19 +307,19 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 
 	/**
 	 * Parse the basic properties of a datum from a row of data.
-	 * 
+	 *
 	 * <p>
 	 * The following properties are parsed and set on the returned datum, using
 	 * the columns configured on the provided
 	 * {@link CsvDatumImportInputProperties} object:
 	 * </p>
-	 * 
+	 *
 	 * <ul>
 	 * <li>node ID</li>
 	 * <li>source ID</li>
 	 * <li>date</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param row
 	 *        the row of data
 	 * @return the datum
@@ -407,7 +409,7 @@ public abstract class BaseCsvIterator<E, T extends CsvDatumImportInputProperties
 		if ( next == null ) {
 			try {
 				// read in rows of data until we parse a non-null value
-				List<String> row = null;
+				List<String> row;
 				do {
 					row = reader.read();
 					if ( row != null ) {

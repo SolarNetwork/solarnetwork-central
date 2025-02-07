@@ -1,39 +1,41 @@
 /* ==================================================================
  * UserUuidPK.java - 10/11/2018 7:23:06 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.dao;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * Primary key based on a user ID and a UUID.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.0
  */
 public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidPK> {
 
+	@Serial
 	private static final long serialVersionUID = -235030587630636014L;
 
 	private UUID id;
@@ -48,7 +50,7 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 
 	/**
 	 * Construct with values.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param id
@@ -62,12 +64,12 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 
 	/**
 	 * Compare two {@code UserUuidPK} objects. Keys are ordered based on:
-	 * 
+	 *
 	 * <ol>
 	 * <li>userId</li>
 	 * <li>id</li>
 	 * </ol>
-	 * 
+	 *
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
@@ -123,10 +125,7 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		UserUuidPK other = (UserUuidPK) obj;
@@ -138,19 +137,15 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 			return false;
 		}
 		if ( userId == null ) {
-			if ( other.userId != null ) {
-				return false;
-			}
-		} else if ( !userId.equals(other.userId) ) {
-			return false;
+			return other.userId == null;
 		}
-		return true;
+		return userId.equals(other.userId);
 	}
 
 	@Override
-	protected Object clone() {
+	public UserUuidPK clone() {
 		try {
-			return super.clone();
+			return (UserUuidPK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// shouldn't get here
 			throw new RuntimeException(e);

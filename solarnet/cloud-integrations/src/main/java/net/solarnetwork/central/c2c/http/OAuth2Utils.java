@@ -87,9 +87,9 @@ public final class OAuth2Utils {
 	 * If the {@link CloudIntegrationService#USERNAME_SETTING} and
 	 * {@link CloudIntegrationService#PASSWORD_SETTING} service properties are
 	 * available, they will be used to create a
-	 * {@link UsernamePasswordAuthenticationToken} principal. Otherwise a string
-	 * will be created like {@code "I N"} where {@code I} is the configuration's
-	 * ID's identifier and {@code N} is the configuration name.
+	 * {@link UsernamePasswordAuthenticationToken} principal. Otherwise, a
+	 * string will be created like {@code "I N"} where {@code I} is the
+	 * configuration's ID's identifier and {@code N} is the configuration name.
 	 * </p>
 	 *
 	 * @param config

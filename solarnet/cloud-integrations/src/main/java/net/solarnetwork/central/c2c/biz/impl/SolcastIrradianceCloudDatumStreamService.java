@@ -159,10 +159,10 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	@Override
 	public Iterable<CloudDataValue> dataValues(UserLongCompositePK integrationId,
 			Map<String, ?> filters) {
-		return Arrays.stream(SolcastIrradianceType.values()).map(e -> {
-			return dataValue(List.of(e.name()), e.getName(), Map.of(UNIT_OF_MEASURE_METADATA,
-					e.getUnit(), DESCRIPTION_METADATA, e.getDescription()));
-		}).toList();
+		return Arrays.stream(SolcastIrradianceType.values()).map(e -> dataValue(List.of(e.name()),
+				e.getName(),
+				Map.of(UNIT_OF_MEASURE_METADATA, e.getUnit(), DESCRIPTION_METADATA, e.getDescription())))
+				.toList();
 	}
 
 	@Override
@@ -263,7 +263,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 			final List<GeneralDatum> resultDatum = restOpsHelper.httpGet("List irradiance data",
 					integration, JsonNode.class, req -> uriBuilder.buildAndExpand().toUri(),
-					res -> parseDatum(res.getBody(), ds, valueProps, refsByFieldName, resolution,
+					res -> parseDatum(res.getBody(), ds, refsByFieldName, resolution,
 							usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
 
 			// evaluate expressions on merged datum
@@ -290,6 +290,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 	private static record ValueRef(String fieldName, SolcastIrradianceType type,
 			CloudDatumStreamPropertyConfiguration property) {
+
 	}
 
 	/**
@@ -341,9 +342,9 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	 * Resolve the number of hours to query.
 	 *
 	 * @param from
-	 *        the from date
+	 *        the start date
 	 * @param to
-	 *        the to date
+	 *        the end date
 	 * @return the number of hours
 	 */
 	private int resolveHours(Instant from, Instant to) {
@@ -353,9 +354,11 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	}
 
 	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream,
-			List<CloudDatumStreamPropertyConfiguration> propConfigs,
 			Map<String, ValueRef> refsByFieldName, Duration resolution, Instant minDate,
 			Instant maxDate) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "estimated_actuals": [

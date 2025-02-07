@@ -1,21 +1,21 @@
 /* ==================================================================
  * SnfInvoicingSystemTests.java - 22/07/2020 9:19:57 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,6 +48,8 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -74,9 +76,9 @@ import net.solarnetwork.dao.BasicFilterResults;
 /**
  * Test cases for the {@link SnfBillingSystem} implementation of
  * {@link SnfInvoicingSystem}.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
@@ -87,7 +89,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 				randomUUID().getMostSignificantBits());
 		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
 		expect(invoiceDao.findFiltered(capture(filterCaptor),
-				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0), eq(1)))
+				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0L), eq(1)))
 						.andReturn(new BasicFilterResults<>(emptyList()));
 
 		// WHEN
@@ -108,7 +110,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
 		SnfInvoice inv = new SnfInvoice(pk.getId());
 		expect(invoiceDao.findFiltered(capture(filterCaptor),
-				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0), eq(1)))
+				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0L), eq(1)))
 						.andReturn(new BasicFilterResults<>(singleton(inv)));
 
 		// WHEN
@@ -220,7 +222,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -286,7 +290,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -369,7 +375,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
@@ -467,7 +475,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+		// DAO must return mutable list
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate))
+				.andReturn(new ArrayList<>(Arrays.asList(usage)));
 
 		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
 		usage.setDatumPropertiesIn(new BigInteger("123"));

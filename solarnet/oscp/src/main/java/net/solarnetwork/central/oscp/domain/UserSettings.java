@@ -1,27 +1,28 @@
 /* ==================================================================
  * UserSettings.java - 10/10/2022 7:54:59 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.oscp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -36,11 +37,11 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * OSCP settings for a SolarNet user.
- * 
+ *
  * <p>
  * The {@link #getId()} value represents the SolarNet user ID.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -50,6 +51,7 @@ import net.solarnetwork.domain.Differentiable;
 public class UserSettings extends BasicLongEntity implements CopyingIdentity<Long, UserSettings>,
 		Differentiable<UserSettings>, UserRelatedEntity<Long>, DatumPublishSettings {
 
+	@Serial
 	private static final long serialVersionUID = -6867441421770638409L;
 
 	/** The default {@code sourceIdTemplate} value. */
@@ -58,13 +60,13 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 	/**
 	 * A regular expression for finding sequences of more than one {@literal /}
 	 * character or one or more {@literal /} character at the end of the string.
-	 * 
+	 *
 	 * <p>
 	 * This is designed to be used to normalize source IDs resolved using the
 	 * configured {@code sourceIdTemplate} where a placeholder might be missing
 	 * at runtime, resulting in an empty path segment. It can be used like this:
 	 * </p>
-	 * 
+	 *
 	 * <blockquote> <code>
 	 * SOURCE_ID_SLASH_PAT.matcher(<i>str</i>).replaceAll("")
 	 * </code> </blockquote>
@@ -74,7 +76,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 	/**
 	 * Replace matches found with {@link #SOURCE_ID_EMPTY_SEGMENT_PAT} with a
 	 * single {@literal /}.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID to remove empty path segments from
 	 * @return the resulting source ID
@@ -85,7 +87,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Get an instance of default datum publish settings.
-	 * 
+	 *
 	 * @param userId
 	 *        the user to associate the settings with
 	 * @return the default settings
@@ -111,7 +113,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -121,7 +123,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param created
@@ -152,12 +154,12 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -182,11 +184,11 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Get the user ID.
-	 * 
+	 *
 	 * <p>
 	 * This is an alias for {@link #getId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	@Override
@@ -196,7 +198,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Get the last modification date.
-	 * 
+	 *
 	 * @return the modified
 	 */
 	public Instant getModified() {
@@ -205,7 +207,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * SGet the last modification date.
-	 * 
+	 *
 	 * @param modified
 	 *        the modified to set
 	 */
@@ -220,7 +222,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Set the "publish to SolarIn" toggle.
-	 * 
+	 *
 	 * @param publishToSolarIn
 	 *        {@literal true} if data from this charge point should be published
 	 *        to SolarIn
@@ -236,7 +238,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Set the "publish to SolarFlux" toggle.
-	 * 
+	 *
 	 * @param publishToSolarFlux
 	 *        {@literal true} if data from this charge point should be published
 	 *        to SolarFlux
@@ -252,7 +254,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
@@ -267,7 +269,7 @@ public class UserSettings extends BasicLongEntity implements CopyingIdentity<Lon
 
 	/**
 	 * Set the node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */

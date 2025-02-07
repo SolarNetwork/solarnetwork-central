@@ -1,21 +1,21 @@
 /* ==================================================================
  * DefaultMailService.java - Jan 13, 2010 6:43:19 PM
- * 
+ *
  * Copyright 2007-2010 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -43,7 +43,7 @@ import net.solarnetwork.central.mail.MessageDataSource;
 /**
  * Default implementation of {@link MailService} that uses Spring's mail classes
  * for sending mail.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -58,7 +58,7 @@ public class DefaultMailService implements MailService {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param mailSender
 	 *        the {@link MailSender} to use
 	 */
@@ -94,7 +94,7 @@ public class DefaultMailService implements MailService {
 					StringBuilder buf = new StringBuilder();
 					String[] paragraphs = msgText.split("\n{2,}");
 					for ( String para : paragraphs ) {
-						if ( buf.length() > 0 ) {
+						if ( !buf.isEmpty() ) {
 							buf.append("\n\n");
 						}
 						// we also replace all single \n within the paragraph with spaces, in case the message was already hard-wrapped
@@ -114,10 +114,9 @@ public class DefaultMailService implements MailService {
 				: null);
 		if ( html || attachments != null && attachments.hasNext() ) {
 			// need JavaMailSender to send attachments
-			if ( !(mailSender instanceof JavaMailSender) ) {
+			if ( !(mailSender instanceof JavaMailSender sender) ) {
 				throw new RuntimeException("Cannot send mail attachments without a JavaMailSender.");
 			}
-			JavaMailSender sender = (JavaMailSender) mailSender;
 			try {
 				MimeMailMessage msg = new MimeMailMessage(new MimeMessageHelper(
 						sender.createMimeMessage(), MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED));
@@ -128,6 +127,9 @@ public class DefaultMailService implements MailService {
 				if ( attachments != null ) {
 					while ( attachments.hasNext() ) {
 						Resource att = attachments.next();
+						if ( att == null ) {
+							continue;
+						}
 						msg.getMimeMessageHelper().addAttachment(att.getFilename(), att);
 					}
 				}
@@ -158,7 +160,7 @@ public class DefaultMailService implements MailService {
 
 	/**
 	 * Get the template to use as a starting point for all messages.
-	 * 
+	 *
 	 * @return the template message, or {@literal null}
 	 */
 	public SimpleMailMessage getTemplateMessage() {
@@ -167,11 +169,11 @@ public class DefaultMailService implements MailService {
 
 	/**
 	 * Set the template to use as a starting point for all messages.
-	 * 
+	 *
 	 * <p>
 	 * This can be used to configure a default "from" address, for example.
 	 * </p>
-	 * 
+	 *
 	 * @param templateMessage
 	 *        the template to use
 	 */
@@ -181,7 +183,7 @@ public class DefaultMailService implements MailService {
 
 	/**
 	 * Get the hard-wrap character column size setting.
-	 * 
+	 *
 	 * @return The hard-wrap column.
 	 * @since 1.1
 	 */
@@ -192,7 +194,7 @@ public class DefaultMailService implements MailService {
 	/**
 	 * Set a character index to hard-wrap message text at. Hard-wrapping is
 	 * disabled by setting this to zero.
-	 * 
+	 *
 	 * @param hardWrapColumnIndex
 	 *        The column index to hard-wrap message text at, or <code>0</code>
 	 *        to disable hard wrapping.
@@ -204,7 +206,7 @@ public class DefaultMailService implements MailService {
 
 	/**
 	 * Get the HTML content flag.
-	 * 
+	 *
 	 * @return {@literal true} if the message body is HTML, {@literal false} for
 	 *         plain text; defaults to {@literal false}
 	 * @since 1.3
@@ -215,7 +217,7 @@ public class DefaultMailService implements MailService {
 
 	/**
 	 * Set the HTML content flag.
-	 * 
+	 *
 	 * @param html
 	 *        {@literal true} if the message body is HTML, {@literal false} for
 	 *        plain text

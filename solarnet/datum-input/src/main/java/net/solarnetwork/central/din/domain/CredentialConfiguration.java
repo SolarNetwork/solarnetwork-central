@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -42,6 +43,7 @@ public class CredentialConfiguration
 		extends BaseUserModifiableEntity<CredentialConfiguration, UserLongCompositePK>
 		implements DatumInputConfigurationEntity<CredentialConfiguration, UserLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = 4246051639093121204L;
 
 	private String username;

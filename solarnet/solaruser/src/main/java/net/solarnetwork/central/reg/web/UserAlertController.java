@@ -1,29 +1,29 @@
 /* ==================================================================
  * UserAlertController.java - 19/05/2015 7:35:10 pm
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -61,14 +61,14 @@ import net.solarnetwork.central.user.domain.UserAlertOptions;
 import net.solarnetwork.central.user.domain.UserAlertSituationStatus;
 import net.solarnetwork.central.user.domain.UserAlertStatus;
 import net.solarnetwork.central.user.domain.UserAlertType;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.util.StringUtils;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for user alerts.
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/alerts")
@@ -91,7 +91,7 @@ public class UserAlertController extends ControllerSupport {
 
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
-		// now now, only one alert type!
+		// now, only one alert type!
 		return Collections.singletonList(UserAlertType.NodeStaleData);
 	}
 
@@ -102,7 +102,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * View the main Alerts screen.
-	 * 
+	 *
 	 * @param model
 	 *        The model object.
 	 * @return The view name.
@@ -112,12 +112,11 @@ public class UserAlertController extends ControllerSupport {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		List<UserAlert> alerts = userAlertBiz.userAlertsForUser(user.getUserId());
 		if ( alerts != null ) {
-			List<UserAlert> nodeDataAlerts = new ArrayList<UserAlert>(alerts.size());
+			List<UserAlert> nodeDataAlerts = new ArrayList<>(alerts.size());
 			for ( UserAlert alert : alerts ) {
-				switch (alert.getType()) {
-					case NodeStaleData:
-						nodeDataAlerts.add(alert);
-						break;
+				if ( alert.getType() == UserAlertType.NodeStaleData ) {
+					nodeDataAlerts.add(alert);
+					break;
 				}
 			}
 			model.addAttribute("nodeDataAlerts", nodeDataAlerts);
@@ -128,7 +127,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * Get all available sources for a given node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        The ID of the node to get all available sources for.
 	 * @param start
@@ -139,7 +138,7 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/node/{nodeId}/sources", method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
+	public Result<List<String>> availableSourcesForNode(@PathVariable("nodeId") Long nodeId,
 			@RequestParam(value = "start", required = false) Instant start,
 			@RequestParam(value = "end", required = false) Instant end) {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
@@ -149,14 +148,14 @@ public class UserAlertController extends ControllerSupport {
 		Set<ObjectDatumStreamMetadataId> data = datumMetadataBiz.findDatumStreamMetadataIds(filter);
 		List<String> sourceIds = data.stream().map(ObjectDatumStreamMetadataId::getSourceId)
 				.collect(Collectors.toList());
-		return response(sourceIds);
+		return success(sourceIds);
 	}
 
 	/**
 	 * Get <em>active</em> situations for a given node.
-	 * 
+	 *
 	 * @param nodeId
-	 *        The ID of the node to get the sitautions for.
+	 *        The ID of the node to get the situations for.
 	 * @param locale
 	 *        The request locale.
 	 * @return The alerts with active situations.
@@ -164,32 +163,32 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/node/{nodeId}/situations", method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<UserAlert>> activeSituationsNode(@PathVariable("nodeId") Long nodeId,
+	public Result<List<UserAlert>> activeSituationsNode(@PathVariable("nodeId") Long nodeId,
 			Locale locale) {
 		List<UserAlert> results = userAlertBiz.alertSituationsForNode(nodeId);
 		for ( UserAlert alert : results ) {
 			populateUsefulAlertOptions(alert, locale);
 		}
-		return response(results);
+		return success(results);
 	}
 
 	/**
 	 * Get a count of <em>active</em> situations for the active user.
-	 * 
+	 *
 	 * @return The count.
 	 * @since 1.1
 	 */
 	@RequestMapping(value = "/user/situation/count", method = RequestMethod.GET)
 	@ResponseBody
-	public Response<Integer> activeSituationCount() {
+	public Result<Integer> activeSituationCount() {
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		Integer count = userAlertBiz.alertSituationCountForUser(userId);
-		return response(count);
+		return success(count);
 	}
 
 	/**
 	 * Get <em>active</em> situations for the active user
-	 * 
+	 *
 	 * @param locale
 	 *        The request locale.
 	 * @return The alerts with active situations.
@@ -197,25 +196,25 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/user/situations", method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<UserAlert>> activeSituations(Locale locale) {
+	public Result<List<UserAlert>> activeSituations(Locale locale) {
 		Long userId = SecurityUtils.getCurrentActorUserId();
 		List<UserAlert> results = userAlertBiz.alertSituationsForUser(userId);
 		for ( UserAlert alert : results ) {
 			populateUsefulAlertOptions(alert, locale);
 		}
-		return response(results);
+		return success(results);
 	}
 
 	/**
 	 * Create or update an alert.
-	 * 
+	 *
 	 * @param model
 	 *        The UserAlert details.
 	 * @return The saved details.
 	 */
 	@RequestMapping(value = "/save", method = RequestMethod.POST)
 	@ResponseBody
-	public Response<UserAlert> addAlert(@RequestBody UserAlert model) {
+	public Result<UserAlert> addAlert(@RequestBody UserAlert model) {
 		final SecurityUser user = SecurityUtils.getCurrentUser();
 		UserAlert alert = new UserAlert();
 		alert.setId(model.getId());
@@ -282,19 +281,19 @@ public class UserAlertController extends ControllerSupport {
 							}
 						}
 					}
-					if ( windowsList.size() > 0 ) {
+					if ( !windowsList.isEmpty() ) {
 						options.put(UserAlertOptions.TIME_WINDOWS, windowsList);
 					}
 				}
 			}
 		}
-		if ( options.size() > 0 ) {
+		if ( !options.isEmpty() ) {
 			alert.setOptions(options);
 		}
 
 		Long id = userAlertBiz.saveAlert(alert);
 		alert.setId(id);
-		return response(alert);
+		return success(alert);
 	}
 
 	private void populateUsefulAlertOptions(UserAlert alert, Locale locale) {
@@ -328,7 +327,7 @@ public class UserAlertController extends ControllerSupport {
 
 	/**
 	 * View an alert with the most recent active situation populated.
-	 * 
+	 *
 	 * @param alertId
 	 *        The ID of the alert to view.
 	 * @param locale
@@ -337,15 +336,15 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/situation/{alertId}", method = RequestMethod.GET)
 	@ResponseBody
-	public Response<UserAlert> viewSituation(@PathVariable("alertId") Long alertId, Locale locale) {
+	public Result<UserAlert> viewSituation(@PathVariable("alertId") Long alertId, Locale locale) {
 		UserAlert alert = userAlertBiz.alertSituation(alertId);
 		populateUsefulAlertOptions(alert, locale);
-		return response(alert);
+		return success(alert);
 	}
 
 	/**
-	 * Update an active alert sitaution's status.
-	 * 
+	 * Update an active alert situation's status.
+	 *
 	 * @param alertId
 	 *        The ID of the alert with the active situation.
 	 * @param status
@@ -356,24 +355,24 @@ public class UserAlertController extends ControllerSupport {
 	 */
 	@RequestMapping(value = "/situation/{alertId}/resolve", method = RequestMethod.POST)
 	@ResponseBody
-	public Response<UserAlert> resolveSituation(@PathVariable("alertId") Long alertId,
+	public Result<UserAlert> resolveSituation(@PathVariable("alertId") Long alertId,
 			@RequestParam("status") UserAlertSituationStatus status, Locale locale) {
 		UserAlert alert = userAlertBiz.updateSituationStatus(alertId, status);
 		populateUsefulAlertOptions(alert, locale);
-		return response(alert);
+		return success(alert);
 	}
 
 	/**
 	 * Delete an alert.
-	 * 
+	 *
 	 * @param alertId
 	 *        The ID of the alert to delete.
 	 * @return The result.
 	 */
 	@RequestMapping(value = "/{alertId}", method = RequestMethod.DELETE)
 	@ResponseBody
-	public Response<Object> deleteAlert(@PathVariable("alertId") Long alertId) {
+	public Result<Object> deleteAlert(@PathVariable("alertId") Long alertId) {
 		userAlertBiz.deleteAlert(alertId);
-		return response(null);
+		return success();
 	}
 }

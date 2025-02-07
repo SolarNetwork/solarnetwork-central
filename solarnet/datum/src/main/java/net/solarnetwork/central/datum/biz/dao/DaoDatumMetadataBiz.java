@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoDatumMetadataBiz.java - Oct 3, 2014 4:02:04 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -59,15 +59,15 @@ import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.support.BasicMailAddress;
 import net.solarnetwork.central.mail.support.ClasspathResourceMessageTemplateDataSource;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.BasicLocation;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
@@ -78,9 +78,9 @@ import net.solarnetwork.util.SearchFilter;
 
 /**
  * DAO-based implementation of {@link DatumMetadataBiz}.
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
@@ -95,7 +95,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param metaDao
 	 *        the metadata DAO to use
 	 * @param locationRequestDao
@@ -138,9 +138,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 		final GeneralDatumMetadata existingMeta = extractGeneralDatumMetadata(metas);
 		GeneralDatumMetadata newMeta = meta;
-		if ( existingMeta == null ) {
-			newMeta = meta;
-		} else if ( existingMeta != null && !existingMeta.equals(meta) ) {
+		if ( existingMeta != null && !existingMeta.equals(meta) ) {
 			newMeta = new GeneralDatumMetadata(existingMeta);
 			newMeta.merge(meta, true);
 		}
@@ -178,8 +176,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Integer offset,
+	public FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
+			GeneralNodeDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max) {
 		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
 				max);
@@ -187,7 +185,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
 		List<GeneralNodeDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
 				.map(DatumUtils::toGeneralNodeDatumMetadataMatch).collect(toList());
-		return new BasicFilterResults<>(matches, (long) matches.size(), 0, matches.size());
+		return new BasicFilterResults<>(matches, (long) matches.size(), 0L, matches.size());
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -219,16 +217,16 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
-	public FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
-			GeneralLocationDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) {
+	public FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
+			GeneralLocationDatumMetadataFilter filter, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max) {
 		BasicDatumCriteria criteria = DatumUtils.criteriaFromFilter(filter, sortDescriptors, offset,
 				max);
 		criteria.setObjectKind(ObjectDatumKind.Location);
 		Iterable<ObjectDatumStreamMetadata> data = metaDao.findDatumStreamMetadata(criteria);
 		List<GeneralLocationDatumMetadataFilterMatch> matches = stream(data.spliterator(), false)
 				.map(DatumUtils::toGeneralLocationDatumMetadataMatch).collect(toList());
-		return new BasicFilterResults<>(matches, (long) matches.size(), 0, matches.size());
+		return new BasicFilterResults<>(matches, (long) matches.size(), 0L, matches.size());
 	}
 
 	private <T extends ObjectSourcePK> Set<T> findMetadataForMetadataFilter(
@@ -246,9 +244,8 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		return StreamSupport.stream(metas.spliterator(), false).filter(m -> {
 			Map<String, Object> map = JsonUtils.getStringMap(m.getMetaJson());
 			return (map != null && MapPathMatcher.matches(map, filter));
-		}).map(m -> {
-			return factory.apply(m.getObjectId(), m.getSourceId());
-		}).collect(Collectors.toCollection(LinkedHashSet::new));
+		}).map(m -> factory.apply(m.getObjectId(), m.getSourceId()))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -298,7 +295,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 	@Override
 	public net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(
 			final Long userId, final LocationRequestCriteria filter,
-			final List<SortDescriptor> sortDescriptors, final Integer offset, final Integer max) {
+			final List<SortDescriptor> sortDescriptors, final Long offset, final Integer max) {
 		requireNonNullArgument(userId, "userId");
 		BasicLocationRequestCriteria criteria = new BasicLocationRequestCriteria(filter);
 		criteria.setUserId(userId);
@@ -315,7 +312,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 		if ( results.isEmpty() ) {
 			throw new EmptyResultDataAccessException(1);
 		}
-		return results.get(0);
+		return results.getFirst();
 	}
 
 	private LocationRequestInfo normalizedInfo(LocationRequestInfo info) {
@@ -408,7 +405,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	/**
 	 * Set the recipient mail address for location request submission alerts.
-	 * 
+	 *
 	 * @param locationRequestSubmittedAlertEmailRecipient
 	 *        the locationRequestSubmittedAlertEmailRecipient to set
 	 */
@@ -419,7 +416,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	/**
 	 * Set a mail service to send emails with.
-	 * 
+	 *
 	 * @param mailService
 	 *        the service to set
 	 */
@@ -429,7 +426,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	/**
 	 * Set a message source.
-	 * 
+	 *
 	 * @param messageSource
 	 *        the source to set
 	 */
@@ -439,7 +436,7 @@ public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 
 	/**
 	 * Set a task executor.
-	 * 
+	 *
 	 * @param taskExecutor
 	 *        the taskExecutor to set
 	 */

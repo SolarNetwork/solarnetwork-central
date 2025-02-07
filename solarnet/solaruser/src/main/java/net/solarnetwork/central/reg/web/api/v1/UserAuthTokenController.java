@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserAuthTokenController.java - 10/10/2016 6:16:41 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -46,7 +46,7 @@ import net.solarnetwork.domain.Result;
 
 /**
  * Web service API for {@link UserAuthToken} management.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -59,7 +59,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userBiz
 	 *        the user service to use
 	 */
@@ -74,11 +74,9 @@ public class UserAuthTokenController {
 		if ( principal instanceof Authentication ) {
 			actor = ((Authentication) principal).getPrincipal();
 		}
-		if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		if ( actor instanceof SecurityToken token ) {
 			return token.getUserId();
-		} else if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		} else if ( actor instanceof SecurityUser user ) {
 			return user.getUserId();
 		}
 		throw new SecurityException("User ID not available.");
@@ -86,7 +84,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Get a list of all available auth tokens for the active user.
-	 * 
+	 *
 	 * @param principal
 	 *        The active user.
 	 * @return the tokens
@@ -100,7 +98,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Create a new auth token.
-	 * 
+	 *
 	 * @param principal
 	 *        The active user.
 	 * @param type
@@ -120,7 +118,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Update token info.
-	 * 
+	 *
 	 * @param principal
 	 *        the actor
 	 * @param tokenId
@@ -146,7 +144,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Delete an existing auth token.
-	 * 
+	 *
 	 * @param principal
 	 *        The active user.
 	 * @param tokenId
@@ -162,7 +160,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Merge policy updates into an auth token.
-	 * 
+	 *
 	 * @param principal
 	 *        The active user.
 	 * @param tokenId
@@ -181,7 +179,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Replace policy updates in an auth token.
-	 * 
+	 *
 	 * @param principal
 	 *        The active user.
 	 * @param tokenId
@@ -200,7 +198,7 @@ public class UserAuthTokenController {
 
 	/**
 	 * Modify an auth token's status.
-	 * 
+	 *
 	 * @param principal
 	 *        The active user.
 	 * @param tokenId

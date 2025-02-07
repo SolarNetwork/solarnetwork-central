@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CredentialConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCredentialConfigurationDao implements CredentialConfigurationDao {
 
@@ -81,9 +81,8 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 		final var sql = new InsertCredentialConfiguration(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
 
-		return pk;
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
@@ -98,7 +97,7 @@ public class JdbcCredentialConfigurationDao implements CredentialConfigurationDa
 
 	@Override
 	public FilterResults<CredentialConfiguration, UserLongCompositePK> findFiltered(
-			CredentialFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			CredentialFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCredentialConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, CredentialConfigurationRowMapper.INSTANCE);

@@ -30,9 +30,9 @@ import java.util.function.Function;
  * <p>
  * The idea for this API is for situations where it is desirable to cache a
  * common value that is expensive to compute, but with potentially different
- * expiration times for different uses. Thus the expensive value can be computed
- * once using a "shared key" but then cached multiple times with different
- * expiration times using a primary key.
+ * expiration times for different uses. Thus, the expensive value can be
+ * computed once using a "shared key" but then cached multiple times with
+ * different expiration times using a primary key.
  * </p>
  *
  * @author matt

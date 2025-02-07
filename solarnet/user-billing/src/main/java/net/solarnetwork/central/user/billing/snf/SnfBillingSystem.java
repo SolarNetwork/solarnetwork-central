@@ -41,10 +41,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -63,13 +61,15 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedNamedCost;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class SnfBillingSystem implements BillingSystem {
 
@@ -201,8 +201,8 @@ public class SnfBillingSystem implements BillingSystem {
 	}
 
 	@Override
-	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
+	public FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) {
 		// get account
 		Account account = accountDao.getForUser(filter.getUserId());
 		if ( account == null ) {
@@ -277,11 +277,10 @@ public class SnfBillingSystem implements BillingSystem {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
 
-		LocalDate start;
-		LocalDate end;
+		final LocalDate start;
+		final LocalDate end;
 		if ( options != null && options.getMonth() != null ) {
 			start = options.getMonth().atDay(1);
-			end = start.plusMonths(1);
 		} else {
 			// find current month in account's time zone
 			ZoneId zone = account.getTimeZone();
@@ -289,16 +288,15 @@ public class SnfBillingSystem implements BillingSystem {
 				zone = ZoneId.systemDefault();
 			}
 			start = LocalDate.now(zone).withDayOfMonth(1);
-			end = start.plusMonths(1);
 		}
+		end = start.plusMonths(1);
 
 		log.debug("Generating preview invoice for account {} (user {}) month {}", account.getId(),
 				account.getUserId(), start);
 
 		SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
-				options != null ? options.isUseAccountCredit() : false);
-		SnfInvoice invoice = invoicingSystem.generateInvoice(userId, start, end, opts);
-		return invoice;
+				options != null && options.isUseAccountCredit());
+		return invoicingSystem.generateInvoice(userId, start, end, opts);
 	}
 
 }

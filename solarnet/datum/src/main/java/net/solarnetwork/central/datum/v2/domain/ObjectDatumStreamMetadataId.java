@@ -1,27 +1,28 @@
 /* ==================================================================
  * ObjectDatumStreamId.java - 13/10/2021 11:29:19 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -32,20 +33,21 @@ import net.solarnetwork.util.ObjectUtils;
  * Extension of
  * {@link net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId} with a
  * stream ID included.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class ObjectDatumStreamMetadataId
 		extends net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId {
 
+	@Serial
 	private static final long serialVersionUID = 5974028952580494428L;
 
 	private final UUID streamId;
 
 	/**
 	 * Create a metadata ID instance from a metadata instance.
-	 * 
+	 *
 	 * @param meta
 	 *        the metadata to create the ID instance for
 	 * @return the ID, never {@literal null}
@@ -61,7 +63,7 @@ public class ObjectDatumStreamMetadataId
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param kind
 	 *        the object kind
 	 * @param objectId
@@ -105,19 +107,15 @@ public class ObjectDatumStreamMetadataId
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof ObjectDatumStreamMetadataId other) ) {
 			return false;
 		}
-		if ( !(obj instanceof ObjectDatumStreamMetadataId) ) {
-			return false;
-		}
-		ObjectDatumStreamMetadataId other = (ObjectDatumStreamMetadataId) obj;
 		return Objects.equals(streamId, other.streamId);
 	}
 
 	/**
 	 * Get the stream ID.
-	 * 
+	 *
 	 * @return the stream ID
 	 */
 	public UUID getStreamId() {

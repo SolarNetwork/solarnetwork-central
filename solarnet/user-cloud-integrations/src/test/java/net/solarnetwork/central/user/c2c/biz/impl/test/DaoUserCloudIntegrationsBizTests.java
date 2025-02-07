@@ -992,7 +992,7 @@ public class DaoUserCloudIntegrationsBizTests {
 	public void saveUserSettigns() {
 		// GIVEN
 		Long userId = randomLong();
-		given(userSettingsDao.store(any())).willReturn(userId);
+		given(userSettingsDao.save(any())).willReturn(userId);
 
 		UserSettingsEntity entity = new UserSettingsEntity(userId, now());
 		given(userSettingsDao.get(userId)).willReturn(entity);
@@ -1005,7 +1005,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		// THEN
 		// @formatter:off
-		then(userSettingsDao).should().store(userSettingsCaptor.capture());
+		then(userSettingsDao).should().save(userSettingsCaptor.capture());
 		and.then(userSettingsCaptor.getValue())
 			.as("User ID as provided")
 			.returns(userId, from(UserSettingsEntity::getUserId))

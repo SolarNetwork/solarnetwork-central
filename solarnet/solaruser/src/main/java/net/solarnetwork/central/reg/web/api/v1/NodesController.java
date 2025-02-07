@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
+import java.io.Serial;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -47,10 +49,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import net.solarnetwork.central.RepeatableTaskException;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.BasicFilterResults;
 import net.solarnetwork.central.user.biz.RegistrationBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
 import net.solarnetwork.central.user.domain.NewNodeRequest;
@@ -60,19 +60,22 @@ import net.solarnetwork.central.user.domain.UserNodeCertificateInstallationStatu
 import net.solarnetwork.central.user.domain.UserNodeCertificateRenewal;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.NetworkCertificate;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
 import net.solarnetwork.service.CertificateService;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for user nodes web service API.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @GlobalExceptionRestController
-@Controller("v1nodesController") // note no @RequestMapping because of getMyNodes() same path with MyNodesController
+@Controller("v1nodesController")
+// note no @RequestMapping because of getMyNodes() same path with MyNodesController
 public class NodesController {
 
 	private final Logger log = LoggerFactory.getLogger(NodesController.class);
@@ -107,11 +110,11 @@ public class NodesController {
 	 */
 	@RequestMapping(value = { "/api/v1/sec/nodes", "/api/v1/sec/nodes/" }, method = RequestMethod.GET)
 	@ResponseBody
-	public Response<FilterResults<UserNode>> getMyNodes() {
+	public Result<FilterResults<UserNode, Long>> getMyNodes() {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentActorUserId());
-		FilterResults<UserNode> result = new BasicFilterResults<UserNode>(nodes, (long) nodes.size(), 0,
+		FilterResults<UserNode, Long> result = new BasicFilterResults<>(nodes, (long) nodes.size(), 0L,
 				nodes.size());
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -119,15 +122,15 @@ public class NodesController {
 	 *
 	 * @return The list of pending node confirmations for the active user.
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/pending",
-			"/api/v1/sec/nodes/pending" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "/u/sec/my-nodes/pending", "/api/v1/sec/nodes/pending" },
+			method = RequestMethod.GET)
 	@ResponseBody
-	public Response<FilterResults<UserNodeConfirmation>> getPendingNodes() {
+	public Result<FilterResults<UserNodeConfirmation, Long>> getPendingNodes() {
 		List<UserNodeConfirmation> pending = userBiz
 				.getPendingUserNodeConfirmations(SecurityUtils.getCurrentActorUserId());
-		FilterResults<UserNodeConfirmation> result = new BasicFilterResults<UserNodeConfirmation>(
-				pending, (long) pending.size(), 0, pending.size());
-		return response(result);
+		FilterResults<UserNodeConfirmation, Long> result = new BasicFilterResults<>(pending,
+				(long) pending.size(), 0L, pending.size());
+		return success(result);
 	}
 
 	/**
@@ -136,12 +139,12 @@ public class NodesController {
 	 * @return All archived nodes.
 	 * @since 1.1
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/archived",
-			"/api/v1/sec/nodes/archived" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "/u/sec/my-nodes/archived", "/api/v1/sec/nodes/archived" },
+			method = RequestMethod.GET)
 	@ResponseBody
-	public Response<List<UserNode>> getArchivedNodes() {
+	public Result<List<UserNode>> getArchivedNodes() {
 		List<UserNode> nodes = userBiz.getArchivedUserNodes(SecurityUtils.getCurrentActorUserId());
-		return response(nodes);
+		return success(nodes);
 	}
 
 	/**
@@ -154,13 +157,13 @@ public class NodesController {
 	 * @return A success response.
 	 * @since 1.1
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/archived",
-			"/api/v1/sec/nodes/archived" }, method = RequestMethod.POST)
+	@RequestMapping(value = { "/u/sec/my-nodes/archived", "/api/v1/sec/nodes/archived" },
+			method = RequestMethod.POST)
 	@ResponseBody
-	public Response<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
+	public Result<Object> updateArchivedStatus(@RequestParam("nodeIds") Long[] nodeIds,
 			@RequestParam("archived") boolean archived) {
 		userBiz.updateUserNodeArchivedStatus(SecurityUtils.getCurrentActorUserId(), nodeIds, archived);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -176,10 +179,10 @@ public class NodesController {
 	 * @return the new node details
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/create-cert",
-			"/api/v1/sec/nodes/create-cert" }, method = RequestMethod.POST)
+	@RequestMapping(value = { "/u/sec/my-nodes/create-cert", "/api/v1/sec/nodes/create-cert" },
+			method = RequestMethod.POST)
 	@ResponseBody
-	public Response<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
+	public Result<UserNode> manuallyCreateNode(@RequestParam("timeZone") String timeZoneId,
 			@RequestParam("country") String countryCode,
 			@RequestParam("keystorePassword") String keystorePassword) {
 		String lang = "en";
@@ -192,7 +195,7 @@ public class NodesController {
 		final TimeZone timeZone = TimeZone.getTimeZone(timeZoneId);
 		NewNodeRequest req = new NewNodeRequest(SecurityUtils.getCurrentActorUserId(), keystorePassword,
 				timeZone, locale);
-		return response(registrationBiz.createNodeManually(req));
+		return success(registrationBiz.createNodeManually(req));
 	}
 
 	/**
@@ -205,10 +208,10 @@ public class NodesController {
 	@ExceptionHandler(CertificateException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Response<?> handleAuthorizationException(CertificateException e) {
+	public Result<Void> handleAuthorizationException(CertificateException e) {
 		log.debug("CertificateException in {} controller: {}", getClass().getSimpleName(),
 				e.getMessage());
-		return new Response<Object>(Boolean.FALSE, null, e.getMessage(), null);
+		return error(null, e.getMessage());
 	}
 
 	/**
@@ -219,8 +222,8 @@ public class NodesController {
 	 * @return the response data
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}",
-			"/api/v1/sec/nodes/cert/{nodeId}" }, method = RequestMethod.GET)
+	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}", "/api/v1/sec/nodes/cert/{nodeId}" },
+			method = RequestMethod.GET)
 	@ResponseBody
 	public ResponseEntity<byte[]> viewCert(@PathVariable("nodeId") Long nodeId) {
 		UserNodeCertificate cert = userBiz.getUserNodeCertificate(SecurityUtils.getCurrentActorUserId(),
@@ -240,7 +243,7 @@ public class NodesController {
 		headers.set("Content-Disposition",
 				"attachment; filename=solarnode-" + cert.getNode().getId() + ".p12");
 
-		return new ResponseEntity<byte[]>(data, headers, HttpStatus.OK);
+		return new ResponseEntity<>(data, headers, HttpStatus.OK);
 	}
 
 	/**
@@ -253,8 +256,8 @@ public class NodesController {
 	 * @return the response data
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}",
-			"/api/v1/sec/nodes/cert/{nodeId}" }, method = RequestMethod.POST)
+	@RequestMapping(value = { "/u/sec/my-nodes/cert/{nodeId}", "/api/v1/sec/nodes/cert/{nodeId}" },
+			method = RequestMethod.POST)
 	@ResponseBody
 	public UserNodeCertificate viewCert(@PathVariable("nodeId") Long nodeId,
 			@RequestParam(value = "password") String password) {
@@ -301,8 +304,9 @@ public class NodesController {
 	 * @return the renewed certificate
 	 * @since 1.2
 	 */
-	@RequestMapping(value = { "/u/sec/my-nodes/cert/renew/{nodeId}",
-			"/api/v1/sec/nodes/cert/renew/{nodeId}" }, method = RequestMethod.POST)
+	@RequestMapping(
+			value = { "/u/sec/my-nodes/cert/renew/{nodeId}", "/api/v1/sec/nodes/cert/renew/{nodeId}" },
+			method = RequestMethod.POST)
 	@ResponseBody
 	public UserNodeCertificate renewCert(@PathVariable("nodeId") final Long nodeId,
 			@RequestParam("password") final String password) {
@@ -319,6 +323,7 @@ public class NodesController {
 
 	public static class UserNodeCertificateDecoded extends UserNodeCertificate {
 
+		@Serial
 		private static final long serialVersionUID = -2314002517991208690L;
 
 		private final UserNodeCertificateInstallationStatus installationStatus;

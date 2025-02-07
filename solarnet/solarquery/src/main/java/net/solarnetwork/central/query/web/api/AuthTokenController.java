@@ -35,21 +35,24 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
 
 /**
  * REST controller for authorization token API.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestController("v1AuthTokenController")
 @RequestMapping(value = "/api/v1/sec/auth-tokens")
+@Tag(name = "auth-tokens", description = "Methods to work with security tokens.")
 @GlobalExceptionRestController
 public class AuthTokenController {
 
@@ -69,16 +72,18 @@ public class AuthTokenController {
 	}
 
 	/**
-	 * Refresh a valid security token.
+	 * Refresh the signing key of a valid security token.
 	 * 
 	 * @param signDate
 	 *        the sign date
 	 * @return a map with a {@literal key} property that is a hex-encoded
 	 *         refreshed signing key
 	 */
+	@Operation(summary = "Generate a new signing key for the active security token",
+			description = "Call this endpoint to generate a new security token signing key, before the key expires.")
 	@ResponseBody
 	@RequestMapping(value = "/refresh/v2", method = RequestMethod.GET)
-	public Response<Map<String, ?>> refreshV2(@RequestParam("date") LocalDate signDate) {
+	public Result<Map<String, ?>> refreshV2(@RequestParam("date") LocalDate signDate) {
 		SecurityToken actor = SecurityUtils.getCurrentToken();
 		Instant date = signDate.atStartOfDay(ZoneOffset.UTC).toInstant();
 		if ( date.isAfter(Instant.now()) ) {
@@ -88,7 +93,7 @@ public class AuthTokenController {
 				Collections.singletonMap(AuthenticationTokenService.SIGN_DATE_PROP, date));
 		Map<String, Object> data = new LinkedHashMap<>(3);
 		data.put("key", HexFormat.of().formatHex(key));
-		return Response.response(data);
+		return Result.success(data);
 	}
 
 }
