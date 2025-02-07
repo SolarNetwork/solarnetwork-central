@@ -28,19 +28,26 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
+import net.solarnetwork.central.domain.PaginationFilter;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.central.query.domain.LocationDatumMetadataSearchFilter;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.Result;
 
 /**
@@ -51,6 +58,7 @@ import net.solarnetwork.domain.Result;
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })
+@Tag(name = "location-meta", description = "Methods to query location datum stream metadata.")
 @GlobalExceptionRestController
 public class LocationMetadataController {
 
@@ -78,40 +86,49 @@ public class LocationMetadataController {
 	 * 
 	 * @param query
 	 *        a general search query
-	 * @param command
+	 * @param criteria
 	 *        specific criteria, such as source ID, sort order, max results,
 	 *        etc.
 	 * @return the results
 	 * @since 1.2
 	 */
+	@Operation(operationId = "locationDatumMetadataList",
+			summary = "List location datum stream metadata matching search criteria",
+			parameters = {
+					@Parameter(name = "query", in = ParameterIn.QUERY, required = false,
+							description = "A general text matching criteria."),
+					@Parameter(name = "criteria", description = """
+							The search and pagination criteria, such as location and source IDs.""",
+							schema = @Schema(implementation = LocationDatumMetadataSearchFilter.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
 	@RequestMapping(value = { "", "/", "/query" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findGeneralLocations(
-			@RequestParam(value = "query", required = false) String query, DatumFilterCommand command) {
+			@RequestParam(value = "query", required = false) String query, DatumFilterCommand criteria) {
 		SolarLocation loc;
-		if ( command != null ) {
-			loc = new SolarLocation(command.getLocation());
+		if ( criteria != null ) {
+			loc = new SolarLocation(criteria.getLocation());
 		} else {
 			loc = new SolarLocation();
 		}
 		if ( query != null ) {
 			loc.setName(query);
 		}
-		DatumFilterCommand criteria = new DatumFilterCommand(loc);
-		if ( command != null ) {
-			if ( command.getLocationIds() != null ) {
-				criteria.setLocationIds(command.getLocationIds());
+		DatumFilterCommand c = new DatumFilterCommand(loc);
+		if ( criteria != null ) {
+			if ( criteria.getLocationIds() != null ) {
+				c.setLocationIds(criteria.getLocationIds());
 			}
-			if ( command.getSourceIds() != null ) {
-				criteria.setSourceIds(command.getSourceIds());
+			if ( criteria.getSourceIds() != null ) {
+				c.setSourceIds(criteria.getSourceIds());
 			}
-			if ( command.getTags() != null ) {
-				criteria.setTags(command.getTags());
+			if ( criteria.getTags() != null ) {
+				c.setTags(criteria.getTags());
 			}
 		}
 		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
-				.findGeneralLocationDatumMetadata(criteria, command.getSortDescriptors(),
-						command.getOffset(), command.getMax());
+				.findGeneralLocationDatumMetadata(c, criteria.getSortDescriptors(), criteria.getOffset(),
+						criteria.getMax());
 		return success(results);
 	}
 
@@ -120,15 +137,30 @@ public class LocationMetadataController {
 	 * 
 	 * @param locationId
 	 *        the location ID
+	 * @param sourceId
+	 *        an optional source ID to match
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
 	 */
+	@Operation(operationId = "locationDatumMetadataListForLocation",
+			summary = "List location datum stream metadata for a location",
+			parameters = {
+					@Parameter(name = "locationId", in = ParameterIn.PATH,
+							description = "The location ID to list metadata for."),
+					@Parameter(name = "sourceId", in = ParameterIn.QUERY, required = false,
+							description = "The source ID to restrict results to."),
+					@Parameter(name = "criteria", description = """
+							The search and pagination criteria, such as location and source IDs.""",
+							schema = @Schema(implementation = PaginationFilter.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
 	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET)
-	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
-			@PathVariable("locationId") Long locationId, DatumFilterCommand criteria) {
-		return findMetadata(locationId, null, criteria);
+	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadataForLocation(
+			@PathVariable("locationId") Long locationId,
+			@RequestParam(name = "sourceId", required = false) String sourceId,
+			DatumFilterCommand criteria) {
+		return success(findForLocationAndSource(locationId, sourceId, criteria));
 	}
 
 	/**
@@ -141,54 +173,39 @@ public class LocationMetadataController {
 	 * @param criteria
 	 *        any sort or limit criteria
 	 * @return the results
+	 * @deprecated use
+	 *             {@link #findMetadataForLocation(Long, String, DatumFilterCommand)}
+	 *             instead
 	 */
+	@Operation(operationId = "datumMetadataListForLocationSource", deprecated = true,
+			summary = "List location datum stream metadata for a location and source",
+			description = """
+					This API accepts the source ID as a URL path parameter, but source IDs often contain slash
+					delimiters, making them unsuitable for URL paths. Instead, provide the source ID as a
+					`sourceId` query parameter.""",
+			parameters = {
+					@Parameter(name = "locationId", in = ParameterIn.PATH,
+							description = "The location ID."),
+					@Parameter(name = "sourceId", in = ParameterIn.PATH, description = "The source ID."),
+					@Parameter(name = "criteria", description = "The pagination criteria.",
+							schema = @Schema(implementation = PaginationFilter.class),
+							style = ParameterStyle.FORM, explode = Explode.TRUE) })
+	@Deprecated
 	@ResponseBody
 	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.GET)
 	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadata(
 			@PathVariable("locationId") Long locationId, @PathVariable("sourceId") String sourceId,
 			DatumFilterCommand criteria) {
+		return success(findForLocationAndSource(locationId, sourceId, criteria));
+	}
+
+	private FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findForLocationAndSource(
+			Long locationId, String sourceId, DatumFilterCommand criteria) {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setLocationId(locationId);
 		filter.setSourceId(sourceId);
-		FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> results = datumMetadataBiz
-				.findGeneralLocationDatumMetadata(filter, criteria.getSortDescriptors(),
-						criteria.getOffset(), criteria.getMax());
-		return success(results);
-	}
-
-	@ResponseBody
-	@RequestMapping(value = "/{locationId}", method = RequestMethod.GET, params = { "sourceId" })
-	public Result<FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK>> findMetadataAlt(
-			@PathVariable("locationId") Long locationId, @RequestParam("sourceId") String sourceId,
-			DatumFilterCommand criteria) {
-		return findMetadata(locationId, sourceId, criteria);
-	}
-
-	/**
-	 * Completely replace the metadata for a given source ID, or create it if it
-	 * doesn't already exist.
-	 * 
-	 * @param locationId
-	 *        the location ID
-	 * @param sourceId
-	 *        the source ID
-	 * @param meta
-	 *        the metadata to store
-	 * @return the results
-	 */
-	@ResponseBody
-	@RequestMapping(value = { "/{locationId}/{sourceId}" }, method = RequestMethod.PUT)
-	public Result<Object> replaceMetadata(@PathVariable("locationId") Long locationId,
-			@PathVariable("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
-		datumMetadataBiz.storeGeneralLocationDatumMetadata(locationId, sourceId, meta);
-		return success();
-	}
-
-	@ResponseBody
-	@RequestMapping(value = "/{locationId}", method = RequestMethod.PUT, params = { "sourceId" })
-	public Result<Object> replaceMetadataAlt(@PathVariable("locationId") Long locationId,
-			@RequestParam("sourceId") String sourceId, @RequestBody GeneralDatumMetadata meta) {
-		return replaceMetadata(locationId, sourceId, meta);
+		return datumMetadataBiz.findGeneralLocationDatumMetadata(filter, criteria.getSortDescriptors(),
+				criteria.getOffset(), criteria.getMax());
 	}
 
 }

@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.datum.domain;
+package net.solarnetwork.central.domain;
 
 import java.util.List;
 import net.solarnetwork.domain.SortDescriptor;

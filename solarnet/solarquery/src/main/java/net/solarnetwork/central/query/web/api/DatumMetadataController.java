@@ -43,7 +43,7 @@ import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
-import net.solarnetwork.central.datum.domain.PaginationFilter;
+import net.solarnetwork.central.domain.PaginationFilter;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Result;

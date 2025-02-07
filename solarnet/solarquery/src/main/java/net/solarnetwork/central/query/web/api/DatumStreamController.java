@@ -189,7 +189,7 @@ public class DatumStreamController {
 	 * @param response
 	 *        the HTTP response
 	 */
-	// @formatter:on
+	// @formatter:off
 	@Operation(operationId = "datumStreamList",
 			summary = "List node stream datum matching filter criteria",
 			description = """
@@ -200,7 +200,7 @@ public class DatumStreamController {
 					style = ParameterStyle.FORM, explode = Explode.TRUE))
 	@ApiResponse(description = "Streaming list of stream datum", responseCode = "200",
 			content = @Content(schema = @Schema(implementation = StreamDatumResult.class)))
-	// @formatter:off
+	// @formatter:on
 	@ResponseBody
 	@RequestMapping(value = "/datum", method = RequestMethod.GET)
 	public void listDatum(final StreamDatumFilterCommand criteria,
