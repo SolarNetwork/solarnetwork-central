@@ -39,14 +39,14 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumMetadataFilterMatch
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.dao.FilterResults;
-import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
  * Controller for datum metadata actions.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1DatumMetadataController")
 @RequestMapping({ "/api/v1/pub/datum/meta/{nodeId}", "/api/v1/sec/datum/meta/{nodeId}" })

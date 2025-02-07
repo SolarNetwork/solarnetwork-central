@@ -22,15 +22,15 @@
 
 package net.solarnetwork.central.user.dao;
 
-import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodePK;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for user node certificates.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserNodeCertificateDao extends GenericDao<UserNodeCertificate, UserNodePK> {
 

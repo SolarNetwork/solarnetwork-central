@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link UserSettingsEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcUserSettingsEntityDao implements UserSettingsEntityDao {
 

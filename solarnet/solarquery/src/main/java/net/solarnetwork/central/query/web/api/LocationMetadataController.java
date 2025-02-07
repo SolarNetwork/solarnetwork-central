@@ -54,7 +54,7 @@ import net.solarnetwork.domain.Result;
  * Controller for location metadata actions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationMetadataController")
 @RequestMapping({ "/api/v1/pub/location/meta", "/api/v1/sec/location/meta" })

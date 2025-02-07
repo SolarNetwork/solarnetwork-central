@@ -32,7 +32,7 @@ import net.solarnetwork.dao.GenericDao;
  * DAO API for {@link SolarNodeMetadata}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.32
  */
 public interface SolarNodeMetadataDao extends GenericDao<SolarNodeMetadata, Long>,

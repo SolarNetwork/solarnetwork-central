@@ -34,7 +34,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
  * Job to claim datum delete jobs for processing and submit them for execution.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DatumDeleteProcessorJob extends JobSupport {
 

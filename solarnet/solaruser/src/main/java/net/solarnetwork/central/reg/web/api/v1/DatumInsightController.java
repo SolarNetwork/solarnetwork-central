@@ -51,7 +51,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Web service API for datum insight.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.30
  */
 @GlobalExceptionRestController

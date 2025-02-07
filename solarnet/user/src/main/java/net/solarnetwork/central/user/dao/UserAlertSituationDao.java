@@ -23,15 +23,15 @@
 package net.solarnetwork.central.user.dao;
 
 import java.time.Instant;
-import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.user.domain.UserAlert;
 import net.solarnetwork.central.user.domain.UserAlertSituation;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for UserAlertSituation objects.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface UserAlertSituationDao extends GenericDao<UserAlertSituation, Long> {
 

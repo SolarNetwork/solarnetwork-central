@@ -26,18 +26,18 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
 import net.solarnetwork.central.dao.EntityMatch;
-import net.solarnetwork.dao.FilterableDao;
-import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
+import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public interface NodeInstructionDao
 		extends GenericDao<NodeInstruction, Long>, FilterableDao<EntityMatch, Long, InstructionFilter> {

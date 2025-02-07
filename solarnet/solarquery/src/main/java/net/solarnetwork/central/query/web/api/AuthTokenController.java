@@ -48,7 +48,7 @@ import net.solarnetwork.web.jakarta.security.AuthenticationScheme;
  * REST controller for authorization token API.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestController("v1AuthTokenController")
 @RequestMapping(value = "/api/v1/sec/auth-tokens")

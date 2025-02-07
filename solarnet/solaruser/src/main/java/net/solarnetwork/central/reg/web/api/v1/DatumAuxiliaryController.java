@@ -49,7 +49,7 @@ import net.solarnetwork.domain.Result;
  * Web controller for datum auxiliary record management.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.35
  */
 @GlobalExceptionRestController

@@ -80,7 +80,7 @@ import net.solarnetwork.web.jakarta.support.MultipartFileResource;
  * Web service API for datum import management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.33
  */
 @GlobalExceptionRestController

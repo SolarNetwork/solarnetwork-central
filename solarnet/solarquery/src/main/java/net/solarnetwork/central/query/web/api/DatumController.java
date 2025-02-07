@@ -64,7 +64,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Controller for querying datum related data.
  *
  * @author matt
- * @version 3.6
+ * @version 3.7
  */
 @Controller("v1DatumController")
 @RequestMapping({ "/api/v1/sec/datum", "/api/v1/pub/datum" })

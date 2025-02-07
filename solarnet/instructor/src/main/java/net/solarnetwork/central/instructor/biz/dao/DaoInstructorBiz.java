@@ -53,7 +53,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO based implementation of {@link InstructorBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoInstructorBiz implements InstructorBiz {
 
@@ -82,7 +82,7 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * Construct without queue hooks.
 	 *
 	 * @param nodeInstructionDao
-	 * 		the DAO to use
+	 *        the DAO to use
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao) {
 		this(nodeInstructionDao, null);
@@ -92,9 +92,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * Constructor.
 	 *
 	 * @param nodeInstructionDao
-	 * 		the DAO to use
+	 *        the DAO to use
 	 * @param queueHooks
-	 * 		the queue hooks to use (may be {@literal null}
+	 *        the queue hooks to use (may be {@literal null}
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
 			List<NodeInstructionQueueHook> queueHooks) {
@@ -105,11 +105,11 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * Constructor.
 	 *
 	 * @param nodeInstructionDao
-	 * 		the DAO to use
+	 *        the DAO to use
 	 * @param queueHooks
-	 * 		the queue hooks to use (may be {@literal null}
+	 *        the queue hooks to use (may be {@literal null}
 	 * @param nodeServiceAuditor
-	 * 		the node service auditor to use (may be {@literal null})
+	 *        the node service auditor to use (may be {@literal null})
 	 * @since 2.2
 	 */
 	public DaoInstructorBiz(NodeInstructionDao nodeInstructionDao,
@@ -227,8 +227,8 @@ public class DaoInstructorBiz implements InstructorBiz {
 		instr.setState(InstructionState.Queued);
 		if ( instruction.getParameters() != null ) {
 			for ( InstructionParameter param : instruction.getParameters() ) {
-				if ( param == null || param.getName() == null || param.getName()
-						.isEmpty() || param.getValue() == null ) {
+				if ( param == null || param.getName() == null || param.getName().isEmpty()
+						|| param.getValue() == null ) {
 					continue;
 				}
 				String v = param.getValue();
@@ -339,9 +339,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 	 * Set the maximum parameter value length.
 	 *
 	 * @param maxParamValueLength
-	 * 		the length to set
+	 *        the length to set
 	 * @throws IllegalArgumentException
-	 * 		if {@code maxParamValueLength} is 0 or less
+	 *         if {@code maxParamValueLength} is 0 or less
 	 * @since 1.8
 	 */
 	public void setMaxParamValueLength(int maxParamValueLength) {

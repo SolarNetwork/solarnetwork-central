@@ -80,7 +80,7 @@ import net.solarnetwork.util.SearchFilter;
  * DAO-based implementation of {@link DatumMetadataBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoDatumMetadataBiz implements DatumMetadataBiz {
 

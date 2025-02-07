@@ -1,29 +1,29 @@
 /* ==================================================================
  * NodeDataController.java - 15/10/2016 7:14:56 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.domain.Result.success;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,9 +41,9 @@ import net.solarnetwork.domain.Result;
 
 /**
  * REST controller to support data queries.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @RestController("v1NodeDataController")
 @RequestMapping(value = "/u/sec/node-data")
@@ -61,7 +61,7 @@ public class NodeDataController {
 	/**
 	 * Get the set of source IDs available for the available GeneralNodeData for
 	 * a single node, optionally constrained within a date range.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @return the available sources

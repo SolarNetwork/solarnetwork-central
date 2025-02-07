@@ -95,7 +95,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 

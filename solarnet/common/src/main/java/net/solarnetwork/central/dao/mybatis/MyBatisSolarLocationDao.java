@@ -34,7 +34,7 @@ import net.solarnetwork.central.domain.SolarLocation;
  * MyBatis implementation of {@link SolarLocationDao}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisSolarLocationDao
 		extends BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long>

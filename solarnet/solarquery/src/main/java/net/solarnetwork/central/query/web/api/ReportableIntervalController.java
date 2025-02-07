@@ -63,7 +63,7 @@ import net.solarnetwork.domain.Result;
  * </p>
  *
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })

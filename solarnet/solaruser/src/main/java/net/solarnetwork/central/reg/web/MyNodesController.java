@@ -67,7 +67,7 @@ import net.solarnetwork.service.CertificateException;
  * Controller for "my nodes".
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/my-nodes")

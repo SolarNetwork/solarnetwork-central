@@ -53,7 +53,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * DAO based implementation of {@link DatumMaintenanceBiz}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.6
  */
 public class DaoDatumMaintenanceBiz implements DatumMaintenanceBiz {

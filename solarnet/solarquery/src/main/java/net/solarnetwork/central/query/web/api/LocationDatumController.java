@@ -58,7 +58,7 @@ import net.solarnetwork.domain.Result;
  * Controller for location-based data.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Controller("v1LocationDatumController")
 @RequestMapping({ "/api/v1/sec/location/datum", "/api/v1/pub/location/datum" })

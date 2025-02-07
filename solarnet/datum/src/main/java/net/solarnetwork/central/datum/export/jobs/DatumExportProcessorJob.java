@@ -34,7 +34,7 @@ import net.solarnetwork.central.scheduler.JobSupport;
  * Job to claim datum export tasks for processing and submit them for execution.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DatumExportProcessorJob extends JobSupport {
 

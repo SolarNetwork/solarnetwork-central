@@ -57,7 +57,7 @@ import net.solarnetwork.domain.Result;
  * Controller for read-only node metadata access.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Controller("v1NodeMetadataController")
 @RequestMapping({ "/api/v1/pub/nodes/meta", "/api/v1/sec/nodes/meta" })

@@ -70,7 +70,7 @@ import net.solarnetwork.domain.Result;
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")

@@ -22,16 +22,16 @@
 
 package net.solarnetwork.central.common.dao;
 
-import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.security.ClientAccessToken;
 import net.solarnetwork.central.security.ClientAccessTokenEntity;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link ClientAccessToken} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ClientAccessTokenDao
 		extends GenericDao<ClientAccessTokenEntity, UserStringStringCompositePK> {

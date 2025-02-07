@@ -52,7 +52,7 @@ import net.solarnetwork.domain.Result;
  * Controller for datum metadata actions.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1DatumMetadataController")
 @RequestMapping({ "/api/v1/pub/datum/meta/{nodeId}", "/api/v1/sec/datum/meta/{nodeId}" })

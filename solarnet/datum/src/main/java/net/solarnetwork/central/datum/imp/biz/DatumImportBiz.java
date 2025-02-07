@@ -41,7 +41,7 @@ import net.solarnetwork.dao.FilterResults;
  * API for a datum import service.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface DatumImportBiz {
 

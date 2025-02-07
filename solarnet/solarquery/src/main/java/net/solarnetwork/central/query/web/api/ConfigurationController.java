@@ -39,7 +39,7 @@ import net.solarnetwork.domain.Result;
  * REST controller for configuration API.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @RestController("v1ConfigurationController")
 @RequestMapping(value = { "/api/v1/pub/config", "/api/v1/sec/config" })

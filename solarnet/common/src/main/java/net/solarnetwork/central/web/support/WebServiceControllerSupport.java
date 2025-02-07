@@ -75,7 +75,7 @@ import net.solarnetwork.util.StringUtils;
  * A base class to support web service style controllers.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 @Order(100)

@@ -49,7 +49,7 @@ import net.solarnetwork.domain.Result;
  * Controller for querying location data.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Controller("v1LocationLookupController")
 @RequestMapping({ "/api/v1/pub/location", "/api/v1/sec/location" })

@@ -32,7 +32,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO API for {@link UserAuthToken} entities.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
 
