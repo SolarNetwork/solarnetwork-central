@@ -34,12 +34,20 @@ import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.query.domain.NodeSourceMetadataSearchFilter;
+import net.solarnetwork.central.query.domain.NodeSourceSearchFilter;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -59,6 +67,7 @@ import net.solarnetwork.domain.Result;
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
+@Tag(name = "range", description = "Methods to query datum stream ranges.")
 @GlobalExceptionRestController
 public class ReportableIntervalController {
 
@@ -140,67 +149,23 @@ public class ReportableIntervalController {
 	 *
 	 * @param req
 	 *        the HTTP request
-	 * @param cmd
+	 * @param criteria
 	 *        the input command
 	 * @return the {@link ReportableInterval}
 	 */
+	@Operation(operationId = "datumStreamTimeRangeView",
+			summary = "List the time range covered by one or more node datum streams",
+			parameters = { @Parameter(name = "criteria", description = """
+					The search criteria, including the node ID and an optional source ID.""",
+					schema = @Schema(implementation = NodeSourceSearchFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
-	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = "!types")
+	@RequestMapping(value = "/interval", method = RequestMethod.GET)
 	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+			final GeneralReportableIntervalCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), cmd.getSourceId());
-			return success(data);
-		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
-	}
-
-	/**
-	 * Get the set of source IDs available for the available GeneralNodeData for
-	 * a single node, optionally constrained within a date range.
-	 *
-	 * <p>
-	 * A <code>sourceId</code> path pattern may also be provided, to restrict
-	 * the resulting source ID set to.
-	 * </p>
-	 *
-	 * <p>
-	 * Example URL: <code>/api/v1/sec/range/sources?nodeId=1</code>
-	 * </p>
-	 *
-	 * <p>
-	 * Example JSON response:
-	 * </p>
-	 *
-	 * <pre>
-	 * {
-	 *   "success": true,
-	 *   "data": [
-	 *     "Main"
-	 *   ]
-	 * }
-	 * </pre>
-	 *
-	 * @param req
-	 *        the HTTP request
-	 * @param cmd
-	 *        the input command
-	 * @return the available sources
-	 */
-	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET,
-			params = { "!types", "!metadataFilter", "!withNodeIds" })
-	public Result<Set<String>> getAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
-		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			DatumFilterCommand f = new DatumFilterCommand();
-			f.setNodeIds(cmd.getNodeIds());
-			f.setStartDate(cmd.getStartDate());
-			f.setEndDate(cmd.getEndDate());
-			Set<String> data = queryBiz.getAvailableSources(f);
-
-			// support filtering based on sourceId path pattern
-			data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
-
+			ReportableInterval data = queryBiz.getReportableInterval(criteria.getNodeId(),
+					criteria.getSourceId());
 			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
@@ -234,94 +199,44 @@ public class ReportableIntervalController {
 	 * </pre>
 	 *
 	 * <p>
-	 * If {@code withNodeIds} is specified as {@literal false} then the result
-	 * will be simply a set of string source ID values.
+	 * If {@code withNodeIds} is specified as {@literal false} and a single
+	 * {@code nodeId} query parameter is provided then the result will be simply
+	 * a set of string source ID values.
 	 * </p>
 	 *
-	 * @param cmd
+	 * @param criteria
 	 *        the criteria
 	 * @return the found source IDs
 	 */
+	@Operation(operationId = "datumStreamSourceList",
+			summary = "List the sources available on one or more node datum streams",
+			parameters = { @Parameter(name = "criteria",
+					description = """
+							The search criteria, including the node ID and an optional source ID and date range.""",
+					schema = @Schema(implementation = NodeSourceMetadataSearchFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET,
-			params = { "!types", "!metadataFilter", "withNodeIds" })
+	@RequestMapping(value = "/sources", method = RequestMethod.GET)
 	public Result<Set<?>> findAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+			final GeneralReportableIntervalCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			DatumFilterCommand f = new DatumFilterCommand();
-			f.setNodeIds(cmd.getNodeIds());
-			f.setStartDate(cmd.getStartDate());
-			f.setEndDate(cmd.getEndDate());
-			Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
-
-			// support filtering based on sourceId path pattern
-			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
-
-			if ( !cmd.isWithNodeIds() ) {
-				Set<String> sourceIds = new LinkedHashSet<>(data.size());
-				for ( NodeSourcePK pk : data ) {
-					sourceIds.add(pk.getSourceId());
-				}
-				return success(sourceIds);
+			Set<NodeSourcePK> data;
+			if ( criteria.getMetadataFilter() == null ) {
+				DatumFilterCommand f = new DatumFilterCommand();
+				f.setNodeIds(criteria.getNodeIds());
+				f.setStartDate(criteria.getStartDate());
+				f.setEndDate(criteria.getEndDate());
+				data = queryBiz.findAvailableSources(f);
+			} else {
+				data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(criteria.getNodeIds(),
+						criteria.getMetadataFilter());
 			}
 
-			return success(data);
-		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
-	}
-
-	/**
-	 * Get all available node+source ID pairs that match a node datum metadata
-	 * search filter.
-	 *
-	 * <p>
-	 * A <code>sourceId</code> path pattern may also be provided, to restrict
-	 * the resulting source ID set to.
-	 * </p>
-	 *
-	 * <p>
-	 * Example URL:
-	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;metadataFilter=(/m/foo=bar)</code>
-	 * </p>
-	 *
-	 * <p>
-	 * Example JSON response:
-	 * </p>
-	 *
-	 * <pre>
-	 * {
-	 *   "success": true,
-	 *   "data": [
-	 *     { nodeId: 1, sourceId: "A" },
-	 *     { nodeId: 2, "sourceId: "B" }
-	 *   ]
-	 * }
-	 * </pre>
-	 *
-	 * <p>
-	 * If only a single node ID is specified, then the results will be
-	 * simplified to just an array of strings for the source IDs, omitting the
-	 * node ID which is redundant.
-	 * </p>
-	 *
-	 * @param req
-	 *        the HTTP request
-	 * @param cmd
-	 *        the criteria
-	 * @return the sources
-	 */
-	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET,
-			params = { "!types", "metadataFilter" })
-	public Result<Set<?>> getMetadataFilteredAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
-		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			Set<NodeSourcePK> data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(
-					cmd.getNodeIds(), cmd.getMetadataFilter());
-
 			// support filtering based on sourceId path pattern
-			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+			data = DatumUtils.filterNodeSources(data, this.pathMatcher, criteria.getSourceId());
 
-			if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
+			if ( !criteria.isWithNodeIds() && criteria.getNodeIds() != null
+					&& criteria.getNodeIds().length < 2 ) {
 				// at most 1 node ID, so simplify results to just source ID values
 				Set<String> sourceIds = new LinkedHashSet<>(data.size());
 				for ( NodeSourcePK pk : data ) {
@@ -329,6 +244,7 @@ public class ReportableIntervalController {
 				}
 				return success(sourceIds);
 			}
+
 			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
