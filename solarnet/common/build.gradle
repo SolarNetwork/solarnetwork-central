@@ -72,8 +72,8 @@ dependencies {
 	implementation "software.amazon.awssdk:ec2:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:secretsmanager:${awsSdk2Version}"
-	implementation 'com.cronutils:cron-utils:9.1.5'
-	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation "com.cronutils:cron-utils:${cronUtilsVersion}"
+	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation 'com.nimbusds:nimbus-jose-jwt:[9.37,10)'
 	implementation 'commons-codec:commons-codec'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
@@ -82,7 +82,7 @@ dependencies {
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.commons:commons-lang3'
-	implementation 'org.apache.commons:commons-text:1.12.0'
+	implementation 'org.apache.commons:commons-text:1.13.0'
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	
@@ -99,9 +99,9 @@ dependencies {
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
 	
 	// SolarNetwork
-	api 'commons-beanutils:commons-beanutils:1.9.4'
-	api 'com.cronutils:cron-utils:9.2.0'
-	api 'org.apache.commons:commons-compress:1.26.0'
+	api 'commons-beanutils:commons-beanutils:1.10.0'
+	api "com.cronutils:cron-utils:${cronUtilsVersion}"
+	api 'org.apache.commons:commons-compress:1.27.1'
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
@@ -113,7 +113,7 @@ dependencies {
 	// Testing
 	testImplementation project(':solarnet-common-test')
     testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation 'org.threeten:threeten-extra:1.7.1'
+    testImplementation "org.threeten:threeten-extra:${threetenExtraVersion}"
     testImplementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
     
 }

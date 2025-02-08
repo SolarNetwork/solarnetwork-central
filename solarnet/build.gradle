@@ -75,10 +75,11 @@ subprojects {
 		batikVersion = '1.18'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.18.0'
+		cronUtilsVersion = '9.2.0'
 		jsonSchemaValidatorVersion = '1.3.2'
-		myBatisStarterVersion = '3.0.3'
+		myBatisStarterVersion = '3.0.4'
 		okhttp3Mockwebserver = '4.12.0'
-		saxonVersion = '12.4'
+		saxonVersion = '12.5'
 		snCommonVersion = '3.29.0'
 		snCommonExprSpelVersion = '3.1.0'
 		snCommonMqttVersion = '5.0.0'
@@ -94,11 +95,13 @@ subprojects {
 		springdocStarterVersion = '2.8.4'
 		superCsvVersion = '2.4.0'
 		swaggerVersion = '2.2.28'
-		xzVersion = '1.9'
+		threetenExtraVersion = '1.8.0'
+		uuidGeneratorVersion = '5.1.0'
+		xzVersion = '1.10'
 
 		libraries = [
 			batik: [
-				'org.jsoup:jsoup:1.18.1',
+				'org.jsoup:jsoup:1.18.3',
 				"org.apache.xmlgraphics:batik-transcoder:${batikVersion}",
 				"org.apache.xmlgraphics:batik-codec:${batikVersion}",
 				"org.apache.xmlgraphics:batik-ext:${batikVersion}"

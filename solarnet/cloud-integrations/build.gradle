@@ -54,7 +54,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'commons-codec:commons-codec'
-	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
