@@ -27,6 +27,15 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 
@@ -34,9 +43,14 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * A general object datum identifier.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class ObjectDatumId implements Cloneable, Serializable {
+@JsonPropertyOrder({ "kind", "streamId", "objectId", "sourceId", "timestamp", "aggregation" })
+@JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "kind")
+@JsonSubTypes({ @Type(names = { "l", "Location" }, value = ObjectDatumId.LocationDatumId.class),
+		@Type(names = { "n", "Node" }, value = ObjectDatumId.NodeDatumId.class) })
+public sealed class ObjectDatumId implements Cloneable, Serializable
+		permits ObjectDatumId.LocationDatumId, ObjectDatumId.NodeDatumId {
 
 	@Serial
 	private static final long serialVersionUID = 7571299682812609193L;
@@ -49,7 +63,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	private final Aggregation aggregation;
 
 	/**
-	 * Create a new node datum stream PK.
+	 * Create a new node datum stream key.
 	 *
 	 * @param streamId
 	 *        the stream ID
@@ -69,7 +83,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	}
 
 	/**
-	 * Create a new location datum stream PK.
+	 * Create a new location datum stream key.
 	 *
 	 * @param streamId
 	 *        the stream ID
@@ -89,9 +103,36 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	}
 
 	/**
+	 * Create a new datum stream key.
+	 *
+	 * @param kind
+	 *        the object kind
+	 * @param streamId
+	 *        the stream ID
+	 * @param objectId
+	 *        the object ID
+	 * @param sourceId
+	 *        the source ID
+	 * @param timestamp
+	 *        the timestamp
+	 * @param aggregation
+	 *        the aggregation
+	 * @return the instance, will be either a {@link LocationDatumId} or
+	 *         {@link NodeDatumId} instance, depending on {@code kind}
+	 * @since 1.2
+	 */
+	public static ObjectDatumId datumId(ObjectDatumKind kind, UUID streamId, Long objectId,
+			String sourceId, Instant timestamp, Aggregation aggregation) {
+		return switch (kind) {
+			case Location -> locationId(streamId, objectId, sourceId, timestamp, aggregation);
+			case Node -> nodeId(streamId, objectId, sourceId, timestamp, aggregation);
+		};
+	}
+
+	/**
 	 * Extension of {@link ObjectDatumId} for node data streams.
 	 */
-	public static class NodeDatumId extends ObjectDatumId {
+	public static final class NodeDatumId extends ObjectDatumId {
 
 		@Serial
 		private static final long serialVersionUID = -851538635627971228L;
@@ -110,8 +151,11 @@ public class ObjectDatumId implements Cloneable, Serializable {
 		 * @param aggregation
 		 *        the aggregation
 		 */
-		public NodeDatumId(UUID streamId, Long nodeId, String sourceId, Instant timestamp,
-				Aggregation aggregation) {
+		@JsonCreator
+		public NodeDatumId(@JsonProperty("streamId") UUID streamId,
+				@JsonProperty("objectId") Long nodeId, @JsonProperty("sourceId") String sourceId,
+				@JsonProperty("timestamp") Instant timestamp,
+				@JsonProperty("aggregation") Aggregation aggregation) {
 			super(ObjectDatumKind.Node, streamId, nodeId, sourceId, timestamp, aggregation);
 		}
 
@@ -125,6 +169,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 		 *
 		 * @return the node ID
 		 */
+		@JsonIgnore
 		public Long getNodeId() {
 			return getObjectId();
 		}
@@ -134,7 +179,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 	/**
 	 * Extension of {@link ObjectDatumId} for location data streams.
 	 */
-	public static class LocationDatumId extends ObjectDatumId {
+	public static final class LocationDatumId extends ObjectDatumId {
 
 		@Serial
 		private static final long serialVersionUID = 2579981391355724098L;
@@ -153,8 +198,11 @@ public class ObjectDatumId implements Cloneable, Serializable {
 		 * @param aggregation
 		 *        the aggregation
 		 */
-		public LocationDatumId(UUID streamId, Long locationId, String sourceId, Instant timestamp,
-				Aggregation aggregation) {
+		@JsonCreator
+		public LocationDatumId(@JsonProperty("streamId") UUID streamId,
+				@JsonProperty("objectId") Long locationId, @JsonProperty("sourceId") String sourceId,
+				@JsonProperty("timestamp") Instant timestamp,
+				@JsonProperty("aggregation") Aggregation aggregation) {
 			super(ObjectDatumKind.Location, streamId, locationId, sourceId, timestamp, aggregation);
 		}
 
@@ -168,6 +216,7 @@ public class ObjectDatumId implements Cloneable, Serializable {
 		 *
 		 * @return the location ID
 		 */
+		@JsonIgnore
 		public Long getLocationId() {
 			return getObjectId();
 		}
