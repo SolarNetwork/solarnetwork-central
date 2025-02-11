@@ -41,6 +41,7 @@ import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -66,8 +67,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -110,7 +111,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 
 	protected DatumEntity lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
@@ -1233,16 +1234,18 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		}
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void find_1min() {
-		// WHEN
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setAggregation(Aggregation.Minute);
-		filter.setSorts(sorts("node", "source", "time"));
-		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
-		execute(filter);
+		thenThrownBy(() -> {
+			// WHEN
+			BasicDatumCriteria filter = new BasicDatumCriteria();
+			filter.setNodeId(1L);
+			filter.setAggregation(Aggregation.Minute);
+			filter.setSorts(sorts("node", "source", "time"));
+			filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+			execute(filter);
+		}).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test

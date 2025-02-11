@@ -29,12 +29,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.PlatformTransactionManager;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 
 /**
  * Base class for datum JDBC test support.
@@ -42,7 +42,7 @@ import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
  * @author matt
  * @version 2.0
  */
-public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSupport {
+public abstract class BaseDatumJdbcTestSupport extends AbstractJUnit5JdbcDaoTestSupport {
 
 	public static final Long TEST_USER_ID = Long.valueOf(-9999);
 	public static final String TEST_USERNAME = "unittest@localhost";
@@ -57,7 +57,7 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 
 	private PasswordEncoder passwordEncoder;
 
-	@Before
+	@BeforeEach
 	public void setupBaseDatumJdbcTestSupport() {
 		passwordEncoder = new BCryptPasswordEncoder(12, new java.security.SecureRandom());
 	}
@@ -76,14 +76,18 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJdbcDaoTestSuppor
 	/**
 	 * Insert a test user into the solaruser.user_user table.
 	 *
+	 * <p>
+	 * The password will be "password".
+	 * </p>
+	 *
 	 * @param id
 	 *        the user ID
 	 * @param username
 	 *        the user username
 	 */
 	@Override
-	protected String setupTestUser(Long id, String username) {
-		return setupTestUser(id, username, passwordEncoder.encode("password"));
+	protected void setupTestUser(Long id, String username) {
+		setupTestUser(id, username, passwordEncoder.encode("password"), null);
 	}
 
 	/**

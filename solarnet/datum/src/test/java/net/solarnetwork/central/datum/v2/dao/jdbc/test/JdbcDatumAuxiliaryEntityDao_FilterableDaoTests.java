@@ -32,8 +32,9 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -59,7 +60,7 @@ public class JdbcDatumAuxiliaryEntityDao_FilterableDaoTests extends BaseDatumJdb
 
 	private JdbcDatumAuxiliaryEntityDao dao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumAuxiliaryEntityDao(jdbcTemplate);
 	}
