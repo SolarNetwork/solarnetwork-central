@@ -206,6 +206,7 @@ public class WebConfig implements WebMvcConfigurer {
 		reg.setFilter(contentCachingFilter());
 		// @formatter:off
 		reg.addUrlPatterns(
+				"/api/v1/sec/datum/auxiliary",
 				"/api/v1/sec/nodes"
 		);
 		// @formatter:on
