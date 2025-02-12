@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Common Test'
-version = '2.6.0'
+version = '2.7.0'
 
 base {
 	archivesName = 'solarnet-common-test'
@@ -39,7 +39,7 @@ dependencies {
 	api 'org.junit.jupiter:junit-jupiter-api'
 	api 'org.springframework.boot:spring-boot-starter-test'
     api 'org.springframework.security:spring-security-test'
-    api 'org.threeten:threeten-extra:1.8.0'
+    api "org.threeten:threeten-extra:${threetenExtraVersion}"
 }
 
 jar.manifest {

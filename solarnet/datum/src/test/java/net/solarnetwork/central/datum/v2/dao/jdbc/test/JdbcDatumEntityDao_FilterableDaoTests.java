@@ -52,8 +52,9 @@ import java.util.SortedSet;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -84,7 +85,7 @@ public class JdbcDatumEntityDao_FilterableDaoTests extends BaseDatumJdbcTestSupp
 
 	protected DatumEntity lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}

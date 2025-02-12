@@ -43,8 +43,9 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.UUID;
 import java.util.function.Function;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
@@ -67,7 +68,7 @@ public class JdbcDatumEntityDao_StreamingFilterResultsTests extends BaseDatumJdb
 
 	protected DatumEntity lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}

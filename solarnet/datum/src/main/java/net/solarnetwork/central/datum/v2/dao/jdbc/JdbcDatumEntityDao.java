@@ -53,6 +53,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -96,6 +97,7 @@ import net.solarnetwork.central.datum.v2.dao.ReadingDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.StreamMetadataCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.MetadataSelectStyle;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatum;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatumById;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.GetDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertDatum;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.InsertStaleAggregateDatumSelect;
@@ -118,6 +120,7 @@ import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumDateInterval;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
@@ -143,7 +146,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -451,6 +454,41 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
+	public Set<ObjectDatumId> deleteForIds(Long userId, Set<ObjectDatumId> ids) {
+		if ( ids == null || ids.isEmpty() ) {
+			return Set.of();
+		}
+
+		List<ObjectDatumId> fullySpecedIds = ids.stream().filter(ObjectDatumId::isFullySpecified)
+				.toList();
+
+		if ( fullySpecedIds.isEmpty() ) {
+			return Set.of();
+		}
+
+		Set<ObjectDatumId> result = new LinkedHashSet<>(fullySpecedIds.size());
+
+		var sql = new DeleteDatumById(userId, fullySpecedIds, false);
+
+		jdbcTemplate.execute(sql, (PreparedStatement ps) -> {
+			for ( int i = 0, len = sql.getBatchSize(); i < len; i++ ) {
+				sql.setValues(ps, i);
+				if ( ps.execute() ) {
+					try (var rs = ps.getResultSet()) {
+						int row = 0;
+						while ( rs.next() ) {
+							result.add(ObjectDatumIdRowMapper.INSTANCE.mapRow(rs, ++row));
+						}
+					}
+				}
+			}
+			return null;
+		});
+
+		return result;
+	}
+
+	@Override
 	public ObjectDatumStreamMetadata findStreamMetadata(StreamMetadataCriteria filter) {
 		if ( filter.getStreamId() == null ) {
 			throw new IllegalArgumentException("A stream ID is required.");
@@ -710,7 +748,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-		
+
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

@@ -22,8 +22,14 @@
 
 package net.solarnetwork.central.user.expire.biz.dao.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumId.nodeId;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.criteriaFromFilter;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.captureDouble;
 import static org.easymock.EasyMock.captureLong;
@@ -38,17 +44,20 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.core.task.support.TaskExecutorAdapter;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -57,6 +66,7 @@ import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.test.CallingThreadExecutorService;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -65,13 +75,14 @@ import net.solarnetwork.central.user.expire.dao.UserDatumDeleteJobInfoDao;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobStatus;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.test.Assertion;
 
 /**
  * Test cases for the {@link DaoUserDatumDeleteBiz} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DaoUserDatumDeleteBizTests {
 
@@ -81,7 +92,7 @@ public class DaoUserDatumDeleteBizTests {
 
 	private DaoUserDatumDeleteBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumMaintenanceDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
@@ -91,7 +102,7 @@ public class DaoUserDatumDeleteBizTests {
 				userNodeDao, datumDao, jobInfoDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(datumDao, userNodeDao, jobInfoDao);
 	}
@@ -143,15 +154,17 @@ public class DaoUserDatumDeleteBizTests {
 				equalTo(criteriaFromFilter(filter)));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void countDatumWithoutUser() {
 		// given
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
-		filter.setNodeId(2L);
-		biz.countDatumRecords(filter);
+		thenThrownBy(() -> {
+			DatumFilterCommand filter = new DatumFilterCommand();
+			filter.setNodeId(2L);
+			biz.countDatumRecords(filter);
+		}).isInstanceOf(AuthorizationException.class);
 	}
 
 	@Test
@@ -308,15 +321,17 @@ public class DaoUserDatumDeleteBizTests {
 		}
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void submitDeleteRequestWithoutUser() {
 		// given
 
 		// when
 		replayAll();
-		DatumFilterCommand filter = new DatumFilterCommand();
-		filter.setNodeId(2L);
-		biz.submitDatumDeleteRequest(filter);
+		thenThrownBy(() -> {
+			DatumFilterCommand filter = new DatumFilterCommand();
+			filter.setNodeId(2L);
+			biz.submitDatumDeleteRequest(filter);
+		}).isInstanceOf(AuthorizationException.class);
 	}
 
 	@Test
@@ -365,6 +380,46 @@ public class DaoUserDatumDeleteBizTests {
 		assertThat("Job state", result.getJobState(), equalTo(DatumDeleteJobState.Queued));
 		assertThat("Node IDs filled in", result.getConfiguration().getNodeIds(),
 				arrayContaining(userNodeIds));
+	}
+
+	@Test
+	public void deleteById() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Set<ObjectDatumId> ids = Set.of(
+				nodeId(UUID.randomUUID(), randomLong(), randomString(),
+						now().truncatedTo(ChronoUnit.MINUTES), Aggregation.None),
+				nodeId(UUID.randomUUID(), randomLong(), randomString(),
+						now().truncatedTo(ChronoUnit.MINUTES), Aggregation.None));
+
+		final Set<ObjectDatumId> idsFromDao = new HashSet<>(ids);
+		expect(datumDao.deleteForIds(userId, ids)).andReturn(idsFromDao);
+
+		// WHEN
+		replayAll();
+		Set<ObjectDatumId> result = biz.deleteDatum(userId, ids);
+
+		// THEN
+		then(result).as("DAO results returned").isSameAs(idsFromDao);
+	}
+
+	@Test
+	public void deleteById_tooMany() {
+		// GIVEN
+		biz.setDeleteDatumByIdMaxCount(1);
+
+		final Long userId = randomLong();
+		final Set<ObjectDatumId> ids = Set.of(
+				nodeId(UUID.randomUUID(), randomLong(), randomString(),
+						now().truncatedTo(ChronoUnit.MINUTES), Aggregation.None),
+				nodeId(UUID.randomUUID(), randomLong(), randomString(),
+						now().truncatedTo(ChronoUnit.MINUTES), Aggregation.None));
+
+		// WHEN
+		replayAll();
+		thenThrownBy(() -> {
+			biz.deleteDatum(userId, ids);
+		}).isInstanceOf(IllegalArgumentException.class);
 	}
 
 }

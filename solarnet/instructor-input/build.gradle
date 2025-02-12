@@ -53,7 +53,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
-	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
 	implementation 'org.apache.commons:commons-lang3'

@@ -36,7 +36,7 @@ import net.solarnetwork.central.user.expire.biz.UserExpireBiz;
  * Security enforcing AOP aspect for {@link UserExpireBiz}
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @Aspect
 @Component
@@ -73,9 +73,18 @@ public class UserExpireSecurityAspect extends AuthorizationSupport {
 
 	}
 
+	@Pointcut("execution(* net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz.deleteDatum(..)) && args(userId,..)")
+	public void deleteDatum(Long userId) {
+	}
+
 	@Before(value = "actionForUser(userId)", argNames = "userId")
 	public void actionForUserCheck(Long userId) {
 		requireUserReadAccess(userId);
+	}
+
+	@Before(value = "deleteDatum(userId)", argNames = "userId")
+	public void writeActionForUserCheck(Long userId) {
+		requireUserWriteAccess(userId);
 	}
 
 	@Before(value = "saveConfiguration(config) || deleteConfiguration(config) || actionForConfiguration(config)",
