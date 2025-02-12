@@ -59,7 +59,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
  * Utilities for Datum JSON processing.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  * @since 2.8
  */
 public final class DatumJsonUtils {

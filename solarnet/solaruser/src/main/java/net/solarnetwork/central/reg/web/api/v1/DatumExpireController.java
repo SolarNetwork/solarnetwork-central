@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.reg.web.domain.DatumExpireFullConfigurations;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.expire.biz.UserDatumDeleteBiz;
@@ -58,7 +59,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for datum expire management.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.29
  */
 @GlobalExceptionRestController
@@ -205,6 +206,24 @@ public class DatumExpireController {
 		if ( datumDeleteBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = datumDeleteBiz.datumDeleteJobForUser(userId, id);
+		}
+		return success(result);
+	}
+
+	/**
+	 * Delete datum matching a set of IDs.
+	 *
+	 * @param ids
+	 *        the IDs to match
+	 * @return the IDds of the datum that were deleted
+	 */
+	@ResponseBody
+	@RequestMapping(value = "/datum-delete/ids", method = RequestMethod.POST)
+	public Result<Set<ObjectDatumId>> confirmDataDelete(@RequestBody Set<ObjectDatumId> ids) {
+		Set<ObjectDatumId> result = null;
+		if ( datumDeleteBiz != null ) {
+			Long userId = SecurityUtils.getCurrentActorUserId();
+			result = datumDeleteBiz.deleteDatum(userId, ids);
 		}
 		return success(result);
 	}

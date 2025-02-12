@@ -46,9 +46,11 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @version 1.2
  */
 @JsonPropertyOrder({ "kind", "streamId", "objectId", "sourceId", "timestamp", "aggregation" })
-@JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "kind")
+@JsonTypeInfo(use = Id.NAME, include = As.EXISTING_PROPERTY, property = "kind",
+		defaultImpl = ObjectDatumId.NodeDatumId.class)
 @JsonSubTypes({ @Type(names = { "l", "Location" }, value = ObjectDatumId.LocationDatumId.class),
-		@Type(names = { "n", "Node" }, value = ObjectDatumId.NodeDatumId.class) })
+		@Type(names = { "n", "Node" }, value = ObjectDatumId.NodeDatumId.class),
+		@Type(value = ObjectDatumId.NodeDatumId.class) })
 public sealed class ObjectDatumId implements Cloneable, Serializable
 		permits ObjectDatumId.LocationDatumId, ObjectDatumId.NodeDatumId {
 
@@ -152,10 +154,11 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 		 *        the aggregation
 		 */
 		@JsonCreator
-		public NodeDatumId(@JsonProperty("streamId") UUID streamId,
-				@JsonProperty("objectId") Long nodeId, @JsonProperty("sourceId") String sourceId,
+		public NodeDatumId(@JsonProperty(value = "streamId", required = false) UUID streamId,
+				@JsonProperty(value = "objectId", required = false) Long nodeId,
+				@JsonProperty(value = "sourceId", required = false) String sourceId,
 				@JsonProperty("timestamp") Instant timestamp,
-				@JsonProperty("aggregation") Aggregation aggregation) {
+				@JsonProperty(value = "aggregation", required = false) Aggregation aggregation) {
 			super(ObjectDatumKind.Node, streamId, nodeId, sourceId, timestamp, aggregation);
 		}
 
@@ -199,10 +202,11 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 		 *        the aggregation
 		 */
 		@JsonCreator
-		public LocationDatumId(@JsonProperty("streamId") UUID streamId,
-				@JsonProperty("objectId") Long locationId, @JsonProperty("sourceId") String sourceId,
+		public LocationDatumId(@JsonProperty(value = "streamId", required = false) UUID streamId,
+				@JsonProperty(value = "objectId", required = false) Long locationId,
+				@JsonProperty(value = "sourceId", required = false) String sourceId,
 				@JsonProperty("timestamp") Instant timestamp,
-				@JsonProperty("aggregation") Aggregation aggregation) {
+				@JsonProperty(value = "aggregation", required = false) Aggregation aggregation) {
 			super(ObjectDatumKind.Location, streamId, locationId, sourceId, timestamp, aggregation);
 		}
 
@@ -299,7 +303,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(aggregation, kind, objectId, sourceId, timestamp);
+		return Objects.hash(aggregation, kind, streamId, objectId, sourceId, timestamp);
 	}
 
 	@Override
@@ -311,7 +315,8 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 			return false;
 		}
 		return aggregation == other.aggregation && kind == other.kind
-				&& Objects.equals(objectId, other.objectId) && Objects.equals(sourceId, other.sourceId)
+				&& Objects.equals(streamId, other.streamId) && Objects.equals(objectId, other.objectId)
+				&& Objects.equals(sourceId, other.sourceId)
 				&& Objects.equals(timestamp, other.timestamp);
 	}
 
@@ -340,6 +345,48 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 */
 	public boolean isValidAggregateObjectId(ObjectDatumKind expectedKind) {
 		return isValidObjectId(expectedKind) && aggregation != null;
+	}
+
+	/**
+	 * Test if this ID is fully specified by having a {@code kind} and
+	 * {@code timestamp} and then either a {@code streamId} or the combination
+	 * of {@code objectId} and {@code sourceId}.
+	 *
+	 * @return {@code true} if the ID is fully specified
+	 */
+	@JsonIgnore
+	public boolean isFullySpecified() {
+		return (kind != null && timestamp != null && (streamId != null || isValidObjectId(kind)));
+	}
+
+	/**
+	 * Compare two IDs for equivalence.
+	 *
+	 * <p>
+	 * Ths is similar to {@link #equals(Object)} however if both this instance
+	 * and {@code other} have a {@code streamId} value then the {@code streamId}
+	 * values of each are compared, ignoring the {@code objectId} and
+	 * {@code sourceId} properties. Conversely, if neither this instance or
+	 * {@code other} has a {@code streamId} then the {@code streamId} properties
+	 * are ignored and the {@code objectId} and {@code sourceId} properties are
+	 * compared.
+	 * </p>
+	 *
+	 * @param other
+	 *        the other ID to compare to this instance
+	 * @return {@code true} if {@code other} is an equivalent ID to this
+	 *         instance
+	 * @since 1.2
+	 */
+	public boolean isEquivalent(ObjectDatumId other) {
+		if ( this == other ) {
+			return true;
+		}
+		return aggregation == other.aggregation && kind == other.kind
+				&& (streamId != null && other.streamId != null ? Objects.equals(streamId, other.streamId)
+						: Objects.equals(objectId, other.objectId)
+								&& Objects.equals(sourceId, other.sourceId))
+				&& Objects.equals(timestamp, other.timestamp);
 	}
 
 	/**

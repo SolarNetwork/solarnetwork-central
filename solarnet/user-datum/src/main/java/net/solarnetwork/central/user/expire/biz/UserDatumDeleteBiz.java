@@ -27,6 +27,7 @@ import java.util.Set;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobInfo;
 import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
 
@@ -39,7 +40,7 @@ import net.solarnetwork.central.user.expire.domain.DatumDeleteJobState;
  * </p>
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface UserDatumDeleteBiz {
 
@@ -115,4 +116,25 @@ public interface UserDatumDeleteBiz {
 	 * @return the job statuses, never {@literal null}
 	 */
 	Collection<DatumDeleteJobInfo> datumDeleteJobsForUser(Long userId, Set<DatumDeleteJobState> states);
+
+	/**
+	 * Delete datum records matching a set of IDs, and return the IDs of those
+	 * records deleted.
+	 * 
+	 * <p>
+	 * Note that the {@code aggregation} values are <b>ignored</b> and always
+	 * assumed to be {@code None}.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the ID of the user to delete datum for
+	 * @param ids
+	 *        the identifiers of datum to delete; only IDs that are fully
+	 *        specified will be considered (those where
+	 *        {@link ObjectDatumId#isFullySpecified()} returns {@code true})
+	 * @return the set of datum IDs that were actually deleted, never
+	 *         {@code null}
+	 * @since 2.1
+	 */
+	Set<ObjectDatumId> deleteDatum(Long userId, Set<ObjectDatumId> ids);
 }

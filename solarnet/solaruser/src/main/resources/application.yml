@@ -231,6 +231,7 @@ app:
     delete:
       completed-task-minimum-cache-time: 14400000
       delete-batch-days: 7
+      delete-datum-by-id-max-count: 100
       parallelism: 1
   user.reg:
     biz:

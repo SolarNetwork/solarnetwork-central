@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -57,6 +58,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -73,7 +75,7 @@ import net.solarnetwork.event.AppEventPublisher;
  * DAO implementation of {@link UserDatumDeleteBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDeleteJobBiz {
 
@@ -82,6 +84,13 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/** The minimum batch delete duration: 1 hour. */
 	public static final Duration MIN_BATCH_DURATION = Duration.ofHours(1);
+
+	/**
+	 * The {@code deleteDatumByIdMaxCount} property default value.
+	 * 
+	 * @since 1.2
+	 */
+	public static final int DEFAULT_DELETE_DATUM_BY_ID_MAX_COUNT = 100;
 
 	private final UserNodeDao userNodeDao;
 	private final DatumMaintenanceDao datumDao;
@@ -95,6 +104,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private AppEventPublisher eventPublisher;
 	private Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
+	private int deleteDatumByIdMaxCount = DEFAULT_DELETE_DATUM_BY_ID_MAX_COUNT;
 
 	private ScheduledFuture<?> taskPurgerTask = null;
 
@@ -241,6 +251,19 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		task.setDelegate(future);
 
 		return task;
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED)
+	public Set<ObjectDatumId> deleteDatum(Long userId, Set<ObjectDatumId> ids) {
+		if ( ids == null || ids.isEmpty() ) {
+			return Collections.emptySet();
+		}
+		if ( ids.size() > deleteDatumByIdMaxCount ) {
+			throw new IllegalArgumentException(
+					"A maximum of %d IDs can be deleted at once.".formatted(deleteDatumByIdMaxCount));
+		}
+		return datumDao.deleteForIds(userId, ids);
 	}
 
 	private DatumDeleteTask taskForId(UserUuidPK id) {
@@ -618,6 +641,27 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	 */
 	public void setDeleteBatchDays(int days) {
 		setDeleteBatchDuration(days > 0 ? Duration.ofDays(days) : null);
+	}
+
+	/**
+	 * Get the maximum number of datum IDs to allow deleting in one call.
+	 * 
+	 * @return the maximum count
+	 * @since 1.2
+	 */
+	public final int getDeleteDatumByIdMaxCount() {
+		return deleteDatumByIdMaxCount;
+	}
+
+	/**
+	 * Set the maximum number of datum IDs to allow deleting in one call.
+	 * 
+	 * @param deleteDatumByIdMaxCount
+	 *        the maximum count to set
+	 * @since 1.2
+	 */
+	public final void setDeleteDatumByIdMaxCount(int deleteDatumByIdMaxCount) {
+		this.deleteDatumByIdMaxCount = deleteDatumByIdMaxCount;
 	}
 
 }
