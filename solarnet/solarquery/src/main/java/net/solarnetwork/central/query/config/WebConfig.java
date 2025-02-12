@@ -46,6 +46,7 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.cbor.MappingJackson2CborHttpMessageConverter;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
@@ -53,6 +54,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.support.GeneralNodeDatumMapPropertySerializer;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
@@ -75,7 +77,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -91,6 +93,10 @@ public class WebConfig implements WebMvcConfigurer {
 	@Autowired(required = false)
 	@Qualifier(QUERY_CACHE)
 	private ContentCachingService contentCachingService;
+
+	@Autowired
+	@Qualifier(JsonConfig.CBOR_MAPPER)
+	private ObjectMapper cborObjectMapper;
 
 	@Bean
 	@Qualifier(SOURCE_ID_PATH_MATCHER)
@@ -179,6 +185,13 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+		// update CBOR with our standard ObjectMapper
+		for ( HttpMessageConverter<?> c : converters ) {
+			if ( c instanceof MappingJackson2CborHttpMessageConverter cbor ) {
+				cbor.setObjectMapper(cborObjectMapper);
+			}
+		}
+
 		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		converters.add(csv);
