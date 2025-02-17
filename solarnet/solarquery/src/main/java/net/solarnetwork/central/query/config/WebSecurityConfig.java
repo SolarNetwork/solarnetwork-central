@@ -60,7 +60,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Configuration
 @EnableWebSecurity
@@ -145,8 +145,11 @@ public class WebSecurityConfig {
 
 					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
 
-					.authorizeHttpRequests((matchers) -> matchers.anyRequest()
-							.hasAnyAuthority(Role.ROLE_OPS.toString()))
+					.authorizeHttpRequests((matchers) -> matchers
+						.requestMatchers(HttpMethod.GET,
+								"/ops/health"
+								).permitAll()		
+						.anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString()))
 
 			;
 			// @formatter:on
