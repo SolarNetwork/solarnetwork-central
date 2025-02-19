@@ -45,7 +45,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 
@@ -256,6 +256,16 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 *  DatumStreamsAccessor
 	 *  ============================= */
 
+	private ObjectDatumKind datumKind() {
+		final Datum d = getDatum();
+		return d != null ? d.getKind() : null;
+	}
+
+	private Long datumObjectId() {
+		final Datum d = getDatum();
+		return d != null ? d.getObjectId() : null;
+	}
+
 	/**
 	 * Get an earlier offset from the latest available datum per source ID.
 	 *
@@ -271,7 +281,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
 			return emptyList();
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
+				datumObjectId(), sourceIdPattern, offset);
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
@@ -294,7 +305,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null ) {
 			return false;
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
+				datumObjectId(), sourceIdPattern, offset);
 		return (found != null && !found.isEmpty());
 	}
 
@@ -318,8 +330,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
 			return emptyList();
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern,
-				timestamp, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
+				datumObjectId(), sourceIdPattern, timestamp, offset);
 		if ( found == null || found.isEmpty() ) {
 			return emptyList();
 		}
@@ -345,8 +357,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceIdPattern == null || timestamp == null ) {
 			return false;
 		}
-		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(sourceIdPattern,
-				timestamp, offset);
+		Collection<? extends Datum> found = datumStreamsAccessor.offsetMatching(datumKind(),
+				datumObjectId(), sourceIdPattern, timestamp, offset);
 		return (found != null && !found.isEmpty());
 	}
 
@@ -440,7 +452,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceId == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.offset(sourceId, offset);
+		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, offset);
 		return (d != null ? copyWith(d) : null);
 	}
 
@@ -459,7 +471,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceId == null ) {
 			return false;
 		}
-		Datum d = datumStreamsAccessor.offset(sourceId, offset);
+		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, offset);
 		return (d != null);
 	}
 
@@ -481,7 +493,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return null;
 		}
-		Datum d = datumStreamsAccessor.offset(sourceId, timestamp, offset);
+		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, timestamp, offset);
 		return (d != null ? copyWith(d) : null);
 	}
 
@@ -503,7 +515,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 		if ( datumStreamsAccessor == null || sourceId == null || timestamp == null ) {
 			return false;
 		}
-		Datum d = datumStreamsAccessor.offset(sourceId, timestamp, offset);
+		Datum d = datumStreamsAccessor.offset(datumKind(), datumObjectId(), sourceId, timestamp, offset);
 		return (d != null);
 	}
 

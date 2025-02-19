@@ -146,6 +146,8 @@ public class DaoUserDatumDeleteBizTests {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(1L);
 		filter.setNodeId(2L);
+		filter.setLocalStartDate(LocalDateTime.now());
+		filter.setLocalEndDate(LocalDateTime.now());
 		net.solarnetwork.central.datum.domain.DatumRecordCounts result = biz.countDatumRecords(filter);
 
 		// then

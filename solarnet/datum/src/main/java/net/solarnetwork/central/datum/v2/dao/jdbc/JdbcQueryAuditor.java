@@ -49,6 +49,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -78,7 +80,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycleObserver {
 
@@ -249,6 +251,14 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	@Override
 	public void resetCurrentAuditResults() {
 		auditResultMap.get().clear();
+	}
+
+	@Override
+	public void auditNodeDatum(Datum datum) {
+		if ( datum == null || datum.getKind() != ObjectDatumKind.Node || datum.getSourceId() == null ) {
+			return;
+		}
+		addNodeSourceCount(nodeDatumKey(clock.instant(), datum.getObjectId(), datum.getSourceId()), 1);
 	}
 
 	private static GeneralNodeDatumPK nodeDatumKey(Instant date, Long nodeId, String sourceId) {

@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
@@ -69,7 +70,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -374,12 +375,50 @@ public final class DatumSqlUtils {
 	public static int whereStreamMetadata(StreamMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getStreamIds() != null ) {
-			buf.append("\tAND s.stream_id = ANY(?)\n");
+			buf.append("\tAND s.stream_id = ");
+			if ( filter.getStreamIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		if ( filter.getSourceIds() != null ) {
-			buf.append(
-					"\tAND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))\n");
+			buf.append("\tAND s.source_id ");
+
+			boolean havePattern = false;
+			for ( String sourceId : filter.getSourceIds() ) {
+				if ( DatumUtils.WILDCARD_PATTERN_MATCHER.isPattern(sourceId) ) {
+					havePattern = true;
+					break;
+				}
+			}
+
+			if ( havePattern ) {
+				buf.append("~ ");
+			} else {
+				buf.append("= ");
+			}
+
+			if ( filter.getSourceIds().length > 1 ) {
+				buf.append("ANY(");
+				if ( havePattern ) {
+					buf.append("ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?)))");
+				} else {
+					buf.append("?");
+				}
+				buf.append(")");
+			} else {
+				if ( havePattern ) {
+					buf.append("solarcommon.ant_pattern_to_regexp(?)");
+				} else {
+					buf.append("?");
+				}
+			}
+			buf.append("\n");
+
 			paramCount += 1;
 		}
 		if ( filter.hasPropertyNameCriteria() ) {
@@ -398,8 +437,14 @@ public final class DatumSqlUtils {
 			buf.append("	AND s.names_s @> ?\n");
 			paramCount += 1;
 		}
-		if ( filter.getUserIds() != null ) {
-			buf.append("\tAND un.user_id = ANY(?)\n");
+		if ( filter.getLocationId() == null && filter.getUserIds() != null ) {
+			buf.append("\tAND un.user_id = ");
+			if ( filter.getUserIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		if ( filter.getTokenIds() != null ) {
@@ -478,7 +523,13 @@ public final class DatumSqlUtils {
 	public static int whereNodeMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getObjectIds() != null ) {
-			buf.append("\tAND s.node_id = ANY(?)\n");
+			buf.append("\tAND s.node_id = ");
+			if ( filter.getObjectIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -503,7 +554,13 @@ public final class DatumSqlUtils {
 	public static int whereLocationMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getObjectIds() != null ) {
-			buf.append("\tAND s.loc_id = ANY(?)\n");
+			buf.append("\tAND s.loc_id = ");
+			if ( filter.getObjectIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -533,10 +590,22 @@ public final class DatumSqlUtils {
 	public static int whereDatumMetadata(DatumStreamCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getLocationId() != null ) {
-			buf.append("\tAND s.loc_id = ANY(?)\n");
+			buf.append("\tAND s.loc_id = ");
+			if ( filter.getNodeIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		} else if ( filter.getNodeId() != null ) {
-			buf.append("\tAND s.node_id = ANY(?)\n");
+			buf.append("\tAND s.node_id = ");
+			if ( filter.getNodeIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -1024,9 +1093,13 @@ public final class DatumSqlUtils {
 			int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getStreamIds() != null ) {
-				Array array = con.createArrayOf("uuid", filter.getStreamIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getStreamIds().length > 1 ) {
+					Array array = con.createArrayOf("uuid", filter.getStreamIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getStreamId());
+				}
 			}
 		}
 		return parameterOffset;
@@ -1054,9 +1127,13 @@ public final class DatumSqlUtils {
 		if ( filter != null ) {
 			parameterOffset = prepareStreamFilter(filter, con, stmt, parameterOffset);
 			if ( filter.getSourceIds() != null ) {
-				Array array = con.createArrayOf("text", filter.getSourceIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getSourceIds().length > 1 ) {
+					Array array = con.createArrayOf("text", filter.getSourceIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setString(++parameterOffset, filter.getSourceId());
+				}
 			}
 			if ( filter.hasPropertyNameCriteria() ) {
 				Array array = con.createArrayOf("text", filter.getPropertyNames());
@@ -1081,9 +1158,13 @@ public final class DatumSqlUtils {
 				array.free();
 			}
 			if ( kind != ObjectDatumKind.Location && filter.getUserIds() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getUserIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getUserIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getUserIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getUserId());
+				}
 			}
 			if ( filter.getTokenIds() != null ) {
 				Array array = con.createArrayOf("text", filter.getTokenIds());
@@ -1149,9 +1230,13 @@ public final class DatumSqlUtils {
 			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getObjectIds() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getObjectIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getObjectIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getObjectIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getObjectId());
+				}
 			}
 			parameterOffset = prepareStreamMetadataFilter(filter,
 					kind != null ? kind : filter.getObjectKind(), con, stmt, parameterOffset);
@@ -1192,9 +1277,8 @@ public final class DatumSqlUtils {
 	 * Prepare a SQL query to find datum metadata.
 	 *
 	 * <p>
-	 * The first parameter set If a location ID is provided on the filter, then
-	 * the filter is assumed to be for location metadata; otherwise node
-	 * metadata is assumed.
+	 * If a location ID is provided on the filter, then the filter is assumed to
+	 * be for location metadata; otherwise node metadata is assumed.
 	 * </p>
 	 *
 	 * @param filter
@@ -1251,13 +1335,21 @@ public final class DatumSqlUtils {
 		}
 		if ( filter != null ) {
 			if ( filter.getLocationId() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getLocationIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getLocationIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getLocationIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getLocationId());
+				}
 			} else if ( filter.getNodeId() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getNodeIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getNodeIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getNodeIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getNodeId());
+				}
 			}
 			parameterOffset = prepareStreamMetadataFilter(filter, filter.getObjectKind(), con, stmt,
 					parameterOffset);

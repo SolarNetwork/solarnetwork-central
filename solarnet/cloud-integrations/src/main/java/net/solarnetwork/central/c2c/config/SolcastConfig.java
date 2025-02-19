@@ -47,6 +47,8 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 
 /**
  * Configuration for the Solcast cloud integration services.
@@ -89,6 +91,12 @@ public class SolcastConfig {
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired(required = false)
+	private QueryAuditor queryAuditor;
+
 	@Bean
 	@Qualifier(SOLCAST)
 	public CloudDatumStreamService solcastIrradiationCloudDatumStreamService() {
@@ -104,6 +112,8 @@ public class SolcastConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
 
 		return service;
 	}

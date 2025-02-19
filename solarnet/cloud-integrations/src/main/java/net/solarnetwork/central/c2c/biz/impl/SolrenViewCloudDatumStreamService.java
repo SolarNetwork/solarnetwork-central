@@ -190,7 +190,7 @@ import net.solarnetwork.util.IntRange;
  * </ul>
  *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -254,8 +254,6 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		}
 	}
 
-	private final Clock clock;
-
 	/**
 	 * Constructor.
 	 *
@@ -287,14 +285,13 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			Clock clock) {
-		super(SERVICE_IDENTIFIER, "SolrenView Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+		super(SERVICE_IDENTIFIER, "SolrenView Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new RestOperationsHelper(
 						LoggerFactory.getLogger(SolrenViewCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolrenViewCloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override

@@ -96,7 +96,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * Test cases for the {@link DaoCloudDatumStreamPollService} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -375,6 +375,112 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.as("Offending node ID provided in error data")
 					.containsEntry(CloudIntegrationsUserEvents.SOURCE_DATA_KEY, datumStream.getObjectId())
 					;
+			})
+			;
+
+		and.then(resultTask)
+			.as("Result task is same as passed to DAO for update")
+			.isSameAs(taskCaptor.getValue())
+			;
+
+		// @formatter:on
+	}
+
+	@Test
+	public void executeTask_produceDatumWithObjectIdDifferentFromConfiguration() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant hour = clock.instant().truncatedTo(ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data BUT return node ID != datumStream.objectId, which should not be allowed
+		final Datum datum1 = new GeneralDatum(
+				nodeId(randomLong(), datumStream.getSourceId(), hour.minusSeconds(300)),
+				new DatumSamples(Map.of("watts", 123), Map.of("wattHours", 23456L), null));
+		given(datumStreamService.datum(same(datumStream), any()))
+				.willReturn(new BasicCloudDatumStreamQueryResult(List.of(datum1)));
+
+		// update task details after object ID check failure
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
+		task.setState(Claimed);
+		task.setExecuteAt(hour);
+		task.setStartAt(hour.minusSeconds(300));
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+		CloudDatumStreamPollTaskEntity resultTask = result.get(1, TimeUnit.MINUTES);
+
+		// THEN
+		// @formatter:off
+		then(datumStreamService).should().datum(same(datumStream), queryFilterCaptor.capture());
+		and.then(queryFilterCaptor.getValue())
+			.as("The query start date is the startAt of the task")
+			.returns(task.getStartAt(), from(CloudDatumStreamQueryFilter::getStartDate))
+			.as("The query end date is the current date")
+			.returns(clock.instant(), from(CloudDatumStreamQueryFilter::getEndDate))
+			;
+
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Completed to signal error")
+			.returns(Completed, from(CloudDatumStreamPollTaskEntity::getState))
+			.as("Task execute date is unchanged")
+			.returns(task.getExecuteAt(), from(CloudDatumStreamPollTaskEntity::getExecuteAt))
+			.as("Task start date is unchanged")
+			.returns(task.getStartAt(), from(CloudDatumStreamPollTaskEntity::getStartAt))
+			.as("Update task with error details")
+			.satisfies(t -> {
+				and.then(t.getMessage())
+					.as("Message generated for ownership failure")
+					.containsIgnoringCase("denied")
+					;
+				and.then(t.getServiceProps())
+					.as("Offending node ID provided in error data")
+					.containsEntry(CloudIntegrationsUserEvents.SOURCE_DATA_KEY, datum1.getObjectId())
+					;
+				and.then(t.getServiceProps())
+					.as("Expected node ID provided in error data")
+					.containsEntry("expected", datumStream.getObjectId())
+				;
 			})
 			;
 

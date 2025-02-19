@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectDatumAvailableTimeRangeTests.java - 30/11/2020 7:18:35 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,8 +30,8 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.sameInstance;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -48,9 +48,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link SelectDatumAvailableTimeRange} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SelectDatumAvailableTimeRangeTests {
 
@@ -60,7 +60,7 @@ public class SelectDatumAvailableTimeRangeTests {
 	public void sql_find_nodes() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 
 		// WHEN
 		String sql = new SelectDatumAvailableTimeRange(filter).getSql();
@@ -75,7 +75,7 @@ public class SelectDatumAvailableTimeRangeTests {
 	public void prep_find_nodes() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 
 		Connection con = EasyMock.createMock(Connection.class);
 		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
@@ -106,8 +106,8 @@ public class SelectDatumAvailableTimeRangeTests {
 	public void sql_find_nodesAndSources() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 
 		// WHEN
 		String sql = new SelectDatumAvailableTimeRange(filter).getSql();
@@ -122,7 +122,7 @@ public class SelectDatumAvailableTimeRangeTests {
 	public void sql_find_locations() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
+		filter.setLocationIds(new Long[] { 1L, 2L });
 		filter.setObjectKind(ObjectDatumKind.Location);
 
 		// WHEN
