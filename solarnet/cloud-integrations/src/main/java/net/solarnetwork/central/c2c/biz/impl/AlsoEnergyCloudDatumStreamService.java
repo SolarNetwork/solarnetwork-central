@@ -34,9 +34,9 @@ import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.InstantSource;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -91,14 +91,13 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
-import net.solarnetwork.util.ObjectUtils;
 import net.solarnetwork.util.StringUtils;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -152,8 +151,6 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	/** The maximum period of time to request data for in one request. */
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
-	private final InstantSource clock;
-
 	/**
 	 * Constructor.
 	 *
@@ -186,9 +183,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
-		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock) {
+		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
@@ -196,7 +193,6 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager),
 				oauthClientManager);
-		this.clock = ObjectUtils.requireNonNullArgument(clock, "clock");
 	}
 
 	@Override

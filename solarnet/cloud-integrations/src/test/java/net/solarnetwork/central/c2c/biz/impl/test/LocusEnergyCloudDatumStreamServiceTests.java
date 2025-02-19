@@ -40,6 +40,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import java.net.URI;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,7 @@ import net.solarnetwork.test.CallingThreadExecutorService;
  * Test cases for the {@link LocusEnergyCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -152,7 +153,8 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
-				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager);
+				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager,
+				Clock.systemUTC());
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),

@@ -31,6 +31,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.util.StringUtils.delimitedListToStringArray;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,7 +58,10 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
+import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -75,10 +79,13 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
+
+	/** A clock to use. */
+	protected final Clock clock;
 
 	/** The integration configuration entity DAO. */
 	protected final CloudIntegrationConfigurationDao integrationDao;
@@ -95,6 +102,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/** The expression service. */
 	protected final CloudIntegrationsExpressionService expressionService;
 
+	private DatumEntityDao datumDao;
+	private QueryAuditor queryAuditor;
+
 	/**
 	 * Constructor.
 	 *
@@ -102,6 +112,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the service identifier
 	 * @param displayName
 	 *        the display name
+	 * @param clock
+	 *        the clock to use
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -121,7 +133,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName,
+	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName, Clock clock,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
@@ -130,6 +142,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
+		this.clock = requireNonNullArgument(clock, "clock");
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
@@ -347,8 +360,14 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return;
 		}
-		final var datumStreamsAccessor = new BasicDatumStreamsAccessor(
-				expressionService.sourceIdPathMatcher(), datum);
+
+		// assume all configurations owned by the same user; extract the user ID from the first one
+		final Long userId = configurations.iterator().next().getUserId();
+
+		final var datumStreamsAccessor = (datumDao != null
+				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum,
+						userId, clock, datumDao, queryAuditor)
+				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum));
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
@@ -643,6 +662,53 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			placeholderSets = Collections.singletonList(Collections.emptyMap());
 		}
 		return placeholderSets;
+	}
+
+	/**
+	 * Get the datum DAO.
+	 *
+	 * @return the datum DAO
+	 * @since 1.11
+	 */
+	public final DatumEntityDao getDatumDao() {
+		return datumDao;
+	}
+
+	/**
+	 * Set the datum DAO.
+	 *
+	 * <p>
+	 * If configured, then {@link QueryingDatumStreamsAccessor} will be used.
+	 * Otherwise {@link BasicDatumStreamsAccessor} will be.
+	 * </p>
+	 *
+	 * @param datumDao
+	 *        the datum DAO to set
+	 * @since 1.11
+	 */
+	public final void setDatumDao(DatumEntityDao datumDao) {
+		this.datumDao = datumDao;
+	}
+
+	/**
+	 * Get the query auditor.
+	 *
+	 * @return the auditor
+	 * @since 1.11
+	 */
+	public final QueryAuditor getQueryAuditor() {
+		return queryAuditor;
+	}
+
+	/**
+	 * Set the query auditor.
+	 *
+	 * @param queryAuditor
+	 *        the auditor to set
+	 * @since 1.11
+	 */
+	public final void setQueryAuditor(QueryAuditor queryAuditor) {
+		this.queryAuditor = queryAuditor;
 	}
 
 }

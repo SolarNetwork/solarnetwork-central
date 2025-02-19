@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
+import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.cache.Cache;
@@ -68,6 +69,8 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
@@ -76,7 +79,7 @@ import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientM
  * Configuration for the Locus Energy cloud integration services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -126,10 +129,16 @@ public class LocusEnergyConfig {
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired(required = false)
+	private QueryAuditor queryAuditor;
+
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
-	public OAuth2AuthorizedClientManager locusEnergyOauthAuthorizedClientManager(
-			@Autowired(required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
+	public OAuth2AuthorizedClientManager locusEnergyOauthAuthorizedClientManager(@Autowired(
+			required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, LocusEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
@@ -179,7 +188,7 @@ public class LocusEnergyConfig {
 		var service = new LocusEnergyCloudDatumStreamService(taskExecutor, userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
-				oauthClientManager);
+				oauthClientManager, Clock.systemUTC());
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName(),
@@ -187,6 +196,8 @@ public class LocusEnergyConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
 
 		return service;
 	}

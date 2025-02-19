@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import java.time.Clock;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -96,8 +97,8 @@ public class BaseCloudDatumStreamServiceTests {
 				CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 				CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 				List<String> supportedPlaceholders) {
-			super("test", "Test", userEventAppenderBiz, encryptor, expressionService, integrationDao,
-					datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao,
+			super("test", "Test", Clock.systemUTC(), userEventAppenderBiz, encryptor, expressionService,
+					integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao,
 					Collections.emptyList());
 			this.supportedPlaceholders = supportedPlaceholders;
 		}

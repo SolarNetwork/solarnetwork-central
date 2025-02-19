@@ -30,7 +30,6 @@ import static net.solarnetwork.codec.JsonUtils.parseBigDecimalAttribute;
 import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.codec.JsonUtils.parseLongAttribute;
 import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -83,7 +82,7 @@ import net.solarnetwork.util.DateUtils;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -108,9 +107,6 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 	/** The units URL query parameter value for metric units. */
 	public static final String UNITS_METRIC_VALUE = "metric";
-
-	/** The clock. */
-	protected final Clock clock;
 
 	/**
 	 * Constructor.
@@ -148,12 +144,11 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new OpenWeatherMapRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
 						HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> OpenWeatherMapCloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
