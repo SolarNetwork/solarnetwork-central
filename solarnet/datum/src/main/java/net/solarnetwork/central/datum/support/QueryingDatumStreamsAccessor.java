@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.support;
 
-import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Duration;
 import java.time.Instant;
@@ -61,6 +60,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	/** The maximum number of datum allowed to be queried from the database. */
 	public static final int DEFAULT_MAX_RESULTS = 100;
 
+	private final Long userId;
 	private final InstantSource clock;
 	private final DatumEntityDao datumDao;
 	private final QueryAuditor auditor;
@@ -75,6 +75,8 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	 *        the path matcher to use
 	 * @param datum
 	 *        the datum list
+	 * @param userId
+	 *        the ID of the user that owns all datum
 	 * @param clock
 	 *        the clock to use
 	 * @param datumDao
@@ -85,8 +87,9 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	 *         if {@code pathMatcher} or {@code datumDao} or {@literal null}
 	 */
 	public QueryingDatumStreamsAccessor(PathMatcher pathMatcher, Collection<? extends Datum> datum,
-			InstantSource clock, DatumEntityDao datumDao, QueryAuditor auditor) {
+			Long userId, InstantSource clock, DatumEntityDao datumDao, QueryAuditor auditor) {
 		super(pathMatcher, datum);
+		this.userId = requireNonNullArgument(userId, "userId");
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.auditor = auditor;
@@ -113,6 +116,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private Datum query(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
 			Datum oldestDatum, int max) {
 		final int maxResults = getMaxResults();
+		final Long userId = kind == ObjectDatumKind.Node ? this.userId : null;
 
 		BasicDatumCriteria c = new BasicDatumCriteria();
 		c.setObjectKind(kind);
@@ -126,23 +130,23 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		c.setStartDate(c.getEndDate().minus(maxStartDateDuration));
 		c.setMax(maxResults > 0 ? Math.min(max, maxResults) : max);
 		c.setSorts(SORT_BY_DATE_DESCENDING);
+		c.setUserId(userId);
 
 		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
 				.findFiltered(c);
 
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
 
-		List<ObjectDatum> data = stream(daoResults.spliterator(), false).map(e -> {
-			ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(e.getStreamId());
-			var d = ObjectDatum.forStreamDatum(e, null,
-					new DatumId(kind, objectId, sourceId, e.getTimestamp()), meta);
+		for ( net.solarnetwork.central.datum.v2.domain.Datum daoDatum : daoResults ) {
+			ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
+			var d = ObjectDatum.forStreamDatum(daoDatum, userId,
+					new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
 			if ( auditor != null ) {
 				auditor.auditNodeDatum(d);
 			}
-			return d;
-		}).toList();
-		list.addAll(data);
-		return (data.size() == max ? data.getLast() : null);
+			list.add(d);
+		}
+		return (daoResults.getReturnedResultCount() == max ? list.getLast() : null);
 	}
 
 	/**
