@@ -28,12 +28,13 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Datum;
 
 /**
  * API for auditing query events in SolarNetwork.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface QueryAuditor {
 
@@ -112,5 +113,14 @@ public interface QueryAuditor {
 	 * @since 1.1
 	 */
 	void addNodeDatumAuditResults(Map<GeneralNodeDatumPK, Integer> results);
+
+	/**
+	 * Audit a single datum.
+	 *
+	 * @param datum
+	 *        the datum to audit
+	 * @since 1.3
+	 */
+	void auditNodeDatum(Datum datum);
 
 }
