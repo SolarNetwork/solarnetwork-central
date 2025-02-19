@@ -58,13 +58,11 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Security configuration.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
-
-	private static final String OPS_AUTHORITY = Role.ROLE_OPS.toString();
 
 	@Value("${app.meta.key}")
 	private String appKey = "";
@@ -161,7 +159,10 @@ public class WebSecurityConfig {
 					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
 
 					.authorizeHttpRequests((matchers) -> matchers
-							.anyRequest().hasAnyAuthority(OPS_AUTHORITY))
+						.requestMatchers(HttpMethod.GET,
+								"/ops/health"
+								).permitAll()
+						.anyRequest().hasAnyAuthority(Role.ROLE_OPS.toString()))
 
 			;
 			// @formatter:on

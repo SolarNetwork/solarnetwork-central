@@ -363,6 +363,11 @@ logging:
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
 
 management:
+  endpoint:
+    health:
+      cache.time-to-live: "59s"
+      show-details: "when_authorized"
+      roles: "ROLE_OPS"
   endpoints:
     web:
       base-path: "/ops"

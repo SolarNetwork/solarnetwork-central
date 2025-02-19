@@ -55,6 +55,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
@@ -75,7 +76,7 @@ import net.solarnetwork.event.AppEventPublisher;
  * DAO implementation of {@link UserDatumDeleteBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDeleteJobBiz {
 
@@ -164,10 +165,13 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	private GeneralNodeDatumFilter prepareFilter(GeneralNodeDatumFilter filter) {
 		if ( filter == null ) {
-			throw new IllegalArgumentException("GeneralNodeDatumFilter is required");
+			throw new IllegalArgumentException("GeneralNodeDatumFilter is required.");
 		}
 		if ( filter.getUserId() == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( filter.getLocalStartDate() == null || filter.getLocalEndDate() == null ) {
+			throw new IllegalArgumentException("A local date range is required.");
 		}
 		DatumFilterCommand f = null;
 		if ( filter.getNodeId() == null ) {
@@ -188,11 +192,10 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public net.solarnetwork.central.datum.domain.DatumRecordCounts countDatumRecords(
-			GeneralNodeDatumFilter filter) {
+	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
 		filter = prepareFilter(filter);
 		if ( filter.getNodeId() == null ) {
-			net.solarnetwork.central.datum.domain.DatumRecordCounts counts = new net.solarnetwork.central.datum.domain.DatumRecordCounts();
+			DatumRecordCounts counts = new DatumRecordCounts();
 			counts.setDate(Instant.now());
 			return counts;
 		}

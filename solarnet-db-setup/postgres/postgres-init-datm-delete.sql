@@ -1,12 +1,12 @@
 /**
- * Delete datum rows matching a set of nodes, sources, and a local date range.
+ * Delete datum rows matching a stream ID and a local date range.
  *
  * The time zones of each node are used to calculate absolute date ranges for each node.
  *
- * @param nodes the list of nodes to resolve absolute dates for
- * @param sources a list of source IDs to include in the results (optional)
- * @param ts_min the starting local date, or the current time if not provided
- * @param ts_max the ending local date, or the current time if not provided
+ * @param sid the datum stream ID
+ * @param ts_min the starting local date
+ * @param ts_max the ending local date
+ * @param tz the time zone of the stream
  */
 CREATE OR REPLACE FUNCTION solardatm.delete_datm(
 	sid			UUID,

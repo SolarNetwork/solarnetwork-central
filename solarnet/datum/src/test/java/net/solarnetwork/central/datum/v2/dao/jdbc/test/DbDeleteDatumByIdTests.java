@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.SqlReturnResultSet;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
@@ -128,8 +127,8 @@ public class DbDeleteDatumByIdTests extends BaseDatumJdbcTestSupport {
 				return stmt;
 			}
 		}, List.of(new SqlReturnResultSet("data", ObjectDatumIdRowMapper.INSTANCE)));
-		if ( result.get("data") instanceof List l ) {
-			return l;
+		if ( result.get("data") instanceof List<?> l ) {
+			return (List<ObjectDatumId>) l;
 		}
 		return Collections.emptyList();
 	}
