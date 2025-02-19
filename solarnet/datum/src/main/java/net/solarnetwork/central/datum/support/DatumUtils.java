@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.support;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
@@ -42,9 +43,26 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Utilities for Datum domain classes.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public final class DatumUtils {
+
+	/**
+	 * A wildcard pattern matcher, suitable for source ID patterns.
+	 *
+	 * <p>
+	 * This matcher has caching disabled.
+	 * </p>
+	 *
+	 * @since 2.3
+	 */
+	public static final PathMatcher WILDCARD_PATTERN_MATCHER;
+	static {
+		AntPathMatcher matcher = new AntPathMatcher();
+		matcher.setCachePatterns(false);
+		matcher.setCaseSensitive(true);
+		WILDCARD_PATTERN_MATCHER = matcher;
+	}
 
 	// can't construct me
 	private DatumUtils() {
