@@ -27,6 +27,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
 import java.time.Instant;
@@ -56,7 +57,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Test cases for the {@link DatumExpressionRoot} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class DatumExpressionRootTests {
@@ -179,7 +180,7 @@ public class DatumExpressionRootTests {
 
 		final GeneralDatum latestDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
-		given(datumStreamsAccessor.offset(sourceId, 0)).willReturn(latestDatum);
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, 0)).willReturn(latestDatum);
 
 		// WHEN
 		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
@@ -207,7 +208,8 @@ public class DatumExpressionRootTests {
 
 		final GeneralDatum latestDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
-		given(datumStreamsAccessor.offset(sourceId, root.getTimestamp(), 0)).willReturn(latestDatum);
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), 0))
+				.willReturn(latestDatum);
 
 		// WHEN
 
@@ -233,7 +235,7 @@ public class DatumExpressionRootTests {
 		final int offset = randomInt();
 		final GeneralDatum offsetDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
-		given(datumStreamsAccessor.offset(sourceId, offset)).willReturn(offsetDatum);
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, offset)).willReturn(offsetDatum);
 
 		// WHEN
 		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
@@ -262,7 +264,7 @@ public class DatumExpressionRootTests {
 		final int offset = randomInt();
 		final GeneralDatum offsetDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
-		given(datumStreamsAccessor.offset(sourceId, root.getTimestamp(), offset))
+		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, root.getTimestamp(), offset))
 				.willReturn(offsetDatum);
 
 		// WHEN
@@ -293,7 +295,7 @@ public class DatumExpressionRootTests {
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
 		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
-		given(datumStreamsAccessor.offsetMatching("*", 0)).willReturn(List.of(d1, d2));
+		given(datumStreamsAccessor.offsetMatching(Node, nodeId, "*", 0)).willReturn(List.of(d1, d2));
 
 		// WHEN
 		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
@@ -324,7 +326,7 @@ public class DatumExpressionRootTests {
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
 		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
-		given(datumStreamsAccessor.offsetMatching("*", root.getTimestamp(), 0))
+		given(datumStreamsAccessor.offsetMatching(Node, nodeId, "*", root.getTimestamp(), 0))
 				.willReturn(List.of(d1, d2));
 
 		// WHEN
@@ -354,7 +356,8 @@ public class DatumExpressionRootTests {
 		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
 		final int offset = randomInt();
-		given(datumStreamsAccessor.offsetMatching("*", offset)).willReturn(List.of(d1, d2));
+		given(datumStreamsAccessor.offsetMatching(Node, nodeId, "*", offset))
+				.willReturn(List.of(d1, d2));
 
 		// WHEN
 		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
@@ -386,7 +389,7 @@ public class DatumExpressionRootTests {
 		final GeneralDatum d2 = GeneralDatum.nodeDatum(nodeId, randomString(), now.minusSeconds(1),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
 		final int offset = randomInt();
-		given(datumStreamsAccessor.offsetMatching("*", root.getTimestamp(), offset))
+		given(datumStreamsAccessor.offsetMatching(Node, nodeId, "*", root.getTimestamp(), offset))
 				.willReturn(List.of(d1, d2));
 
 		// WHEN

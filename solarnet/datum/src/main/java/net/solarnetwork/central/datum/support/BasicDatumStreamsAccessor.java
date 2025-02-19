@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support;
 
+import static java.util.Collections.emptyMap;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.util.Map.Entry;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -43,14 +45,14 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
 	private final PathMatcher pathMatcher;
 	private final Collection<? extends Datum> datum;
 
-	private Map<String, List<Datum>> timeSortedDatumBySource;
+	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> timeSortedDatumBySource;
 
 	/**
 	 * Constructor.
@@ -69,28 +71,43 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	/**
-	 * Get all datum grouped by source ID, sorted by timestamp in reverse
-	 * (newest to oldest).
+	 * Get all datum grouped by kind, object ID, source ID, and then sorted by
+	 * timestamp in reverse (newest to oldest).
 	 *
 	 * @return the sorted datum, never {@code null}
 	 */
-	private Map<String, List<Datum>> sortedDatumStreams() {
+	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> sortedDatumStreams() {
 		if ( timeSortedDatumBySource == null ) {
-			Map<String, List<Datum>> map = new HashMap<>(8);
+			Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> map = new HashMap<>(2);
 			for ( Datum d : datum ) {
-				map.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(8)).add(d);
+				map.computeIfAbsent(d.getKind(), k -> new HashMap<>(2))
+						.computeIfAbsent(d.getObjectId(), k -> new HashMap<>(8))
+						.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(8)).add(d);
 			}
-			for ( List<Datum> list : map.values() ) {
-				list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
+			for ( Map<Long, Map<String, List<Datum>>> nodeMap : map.values() ) {
+				for ( Map<String, List<Datum>> sourceMap : nodeMap.values() ) {
+					for ( List<Datum> list : sourceMap.values() ) {
+						list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
+					}
+				}
 			}
 			timeSortedDatumBySource = map;
 		}
 		return timeSortedDatumBySource;
 	}
 
+	private Map<String, List<Datum>> sortedDatumStreams(ObjectDatumKind kind, Long objectId) {
+		if ( kind == null || objectId == null ) {
+			return emptyMap();
+		}
+		final var maps = sortedDatumStreams();
+		return maps.getOrDefault(kind, emptyMap()).getOrDefault(objectId, emptyMap());
+	}
+
 	@Override
-	public Collection<Datum> offsetMatching(String sourceIdPattern, int offset) {
-		final var map = sortedDatumStreams();
+	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
 		final var result = new ArrayList<Datum>(map.size());
 		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
 			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
@@ -105,8 +122,8 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Datum offset(String sourceId, int offset) {
-		final var map = sortedDatumStreams();
+	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
 		final List<Datum> list = map.get(sourceId);
 		if ( list == null ) {
 			return null;
@@ -115,8 +132,9 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Collection<Datum> offsetMatching(String sourceIdPattern, Instant timestamp, int offset) {
-		final var map = sortedDatumStreams();
+	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant timestamp, int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
 		final var result = new ArrayList<Datum>(map.size());
 		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
 			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
@@ -132,8 +150,9 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Datum offset(String sourceId, Instant timestamp, int offset) {
-		final var map = sortedDatumStreams();
+	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp,
+			int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
 		final List<Datum> list = map.get(sourceId);
 		if ( list == null ) {
 			return null;
