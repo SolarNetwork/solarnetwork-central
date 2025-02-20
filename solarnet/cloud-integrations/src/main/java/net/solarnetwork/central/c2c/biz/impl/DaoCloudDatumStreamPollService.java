@@ -75,7 +75,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -360,6 +360,22 @@ public class DaoCloudDatumStreamPollService
 						polledDatum.size());
 				final DatumProcessor fluxPublisher = getFluxPublisher();
 				for ( var datum : polledDatum ) {
+					// validate that provided datum ID matches that on the configuration
+					if ( !datumStream.getObjectId().equals(datum.getObjectId()) ) {
+						log.warn(
+								"Datum stream {} configured with object ID {} but produced datum with object ID {}: cancelling poll task.",
+								datumStreamIdent, taskInfo.getUserId(), datumStream.getObjectId());
+						var errMsg = "Access denied to datum with object ID different from datum stream configuration.";
+						var errData = Map.of(SOURCE_DATA_KEY, (Object) datum.getObjectId(), "expected",
+								datumStream.getObjectId());
+						taskInfo.setMessage(errMsg);
+						taskInfo.putServiceProps(errData);
+						taskInfo.setState(Completed); // stop processing job
+						userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+								datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+						taskDao.updateTask(taskInfo, Executing);
+						return taskInfo;
+					}
 					if ( datum instanceof DatumEntity d ) {
 						if ( datumStreamSettings.isPublishToSolarIn() ) {
 							datumDao.store(d);

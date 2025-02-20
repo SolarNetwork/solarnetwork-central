@@ -747,4 +747,168 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void requestList_offsetExpression() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String clientId = randomString();
+		final String username = randomString();
+		final String password = randomString();
+		final Long siteId = randomLong();
+		final Long hardwareId = randomLong();
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
+				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
+				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+			));
+		// @formatter:on
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final String fieldName1 = "KW";
+		final CloudDatumStreamPropertyConfiguration prop1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		prop1.setEnabled(true);
+		prop1.setPropertyType(DatumSamplesType.Instantaneous);
+		prop1.setPropertyName("watts");
+		prop1.setValueType(CloudDatumStreamValueType.Reference);
+		prop1.setValueReference(componentValueRef(siteId, hardwareId, fieldName1, Avg.name()));
+
+		final String fieldName2 = "KWh";
+		final CloudDatumStreamPropertyConfiguration prop2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop2.setEnabled(true);
+		prop2.setPropertyType(DatumSamplesType.Accumulating);
+		prop2.setPropertyName("wattHours");
+		prop2.setValueType(CloudDatumStreamValueType.Reference);
+		prop2.setValueReference(componentValueRef(siteId, hardwareId, fieldName2, Last.name()));
+
+		final String fieldName3 = "diff";
+		final CloudDatumStreamPropertyConfiguration prop3 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop3.setEnabled(true);
+		prop3.setPropertyType(DatumSamplesType.Instantaneous);
+		prop3.setPropertyName(fieldName3);
+		prop3.setValueType(CloudDatumStreamValueType.SpelExpression);
+		prop3.setValueReference("""
+				hasOffset(1, timestamp) && offset(1, timestamp).props['diff'] != null
+				? (offset(1, timestamp).diff * 2)
+				: 123""");
+
+		final String fieldName4 = "tdiff";
+		final CloudDatumStreamPropertyConfiguration prop4 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		prop4.setEnabled(true);
+		prop4.setPropertyType(DatumSamplesType.Instantaneous);
+		prop4.setPropertyName(fieldName4);
+		prop4.setValueType(CloudDatumStreamValueType.SpelExpression);
+		prop4.setValueReference("secondsBetween(offset(1, timestamp).timestamp, timestamp)");
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(prop1, prop2, prop3, prop4));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+
+		// @formatter:off
+		@SuppressWarnings("deprecation")
+		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
+				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
+				.clientId(randomString())
+				.clientSecret(randomString())
+				.tokenUri(tokenUri)
+				.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		// request data
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("alsoenergy-bindata-03.json", getClass()), ObjectNode.class);
+		final var res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.POST), any(), eq(JsonNode.class))).willReturn(res);
+
+		// WHEN
+		var filter = new BasicQueryFilter();
+		filter.setStartDate(clock.instant().minus(10, MINUTES));
+		filter.setEndDate(clock.instant());
+		Iterable<Datum> result = service.datum(datumStream, filter);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(3)
+			.satisfies(list -> {
+				DatumSamples expectedSamples1 = new DatumSamples();
+				expectedSamples1.putInstantaneousSampleValue("watts", 123);
+				expectedSamples1.putInstantaneousSampleValue("diff", 123); // expression default outcome
+				// NOTE: no tdiff because no offset(1) available on first datum
+				expectedSamples1.putAccumulatingSampleValue("wattHours", 100);
+
+				and.then(list)
+					.element(0)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:51:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples1, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples2 = new DatumSamples();
+				expectedSamples2.putInstantaneousSampleValue("watts", 124);
+				expectedSamples2.putInstantaneousSampleValue("diff", 246);
+				expectedSamples2.putInstantaneousSampleValue("tdiff", 60);
+				expectedSamples2.putAccumulatingSampleValue("wattHours", 101);
+
+				and.then(list)
+					.element(1)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:52:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples2, from(Datum::asSampleOperations))
+					;
+
+				DatumSamples expectedSamples3 = new DatumSamples();
+				expectedSamples3.putInstantaneousSampleValue("watts", 122);
+				expectedSamples3.putInstantaneousSampleValue("diff", 492);
+				expectedSamples3.putInstantaneousSampleValue("tdiff", 60);
+				expectedSamples3.putAccumulatingSampleValue("wattHours", 102);
+
+				and.then(list)
+					.element(2)
+					.as("Datum timestamp from JSON response")
+					.returns(Instant.parse("2024-12-30T21:53:00+00:00"), from(Datum::getTimestamp))
+					.as("Datum samples from JSON response")
+					.returns(expectedSamples3, from(Datum::asSampleOperations))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
 }

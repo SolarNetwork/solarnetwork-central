@@ -111,7 +111,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -232,8 +232,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	/** The maximum length of time to query for data. */
 	public static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
-	private final Clock clock;
-
 	/**
 	 * A cache of SolarEdge site IDs to associated time zones. This is used
 	 * because the timestamps returned from the API are all in site-local time.
@@ -277,14 +275,13 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			Clock clock) {
-		super(SERVICE_IDENTIFIER, "SolarEdge V1 Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+		super(SERVICE_IDENTIFIER, "SolarEdge V1 Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override

@@ -64,7 +64,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * Test cases for the {@link SelectDatum} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectDatumTests {
 
@@ -83,7 +83,7 @@ public class SelectDatumTests {
 	public void sql_find_mostRecent_agg() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setUserId(1L);
+		filter.setUserIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		for ( Aggregation agg : EnumSet.complementOf(
 				EnumSet.of(Aggregation.None, Aggregation.Hour, Aggregation.Day, Aggregation.Month)) ) {
@@ -102,7 +102,7 @@ public class SelectDatumTests {
 	public void sql_find_mostRecent_users() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setUserId(1L);
+		filter.setUserIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 
 		// WHEN
@@ -118,7 +118,7 @@ public class SelectDatumTests {
 	public void sql_find_mostRecent_nodes() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 
 		// WHEN
@@ -134,7 +134,7 @@ public class SelectDatumTests {
 	public void sql_find_mostRecent_nodes_localStartDate() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalStartDate(LocalDateTime.of(2022, 03, 28, 0, 0));
 
@@ -152,7 +152,7 @@ public class SelectDatumTests {
 	public void sql_find_mostRecent_nodes_localEndDate() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalEndDate(LocalDateTime.of(2022, 03, 28, 0, 0));
 
@@ -169,7 +169,7 @@ public class SelectDatumTests {
 	public void prep_find_mostRecent_nodes_localStartDate() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalStartDate(LocalDateTime.of(2022, 03, 28, 0, 0));
 
@@ -206,7 +206,7 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 
 		// WHEN
@@ -223,7 +223,7 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
 		filter.setEndDate(Instant.now());
@@ -242,7 +242,7 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 
 		Connection con = EasyMock.createMock(Connection.class);
@@ -275,7 +275,7 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
 		filter.setEndDate(Instant.now());
@@ -313,7 +313,7 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
 
@@ -350,7 +350,7 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setMostRecent(true);
 		filter.setLocalStartDate(LocalDateTime.of(2022, 2, 1, 0, 0));
 		filter.setLocalEndDate(LocalDateTime.of(2022, 2, 7, 0, 0));
@@ -389,8 +389,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -408,8 +408,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -428,8 +428,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 		filter.setSorts(sorts("time", "node", "source"));
@@ -449,8 +449,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 		filter.setSorts(sorts("time", "node", "source"));
@@ -471,8 +471,8 @@ public class SelectDatumTests {
 		ZonedDateTime start = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS);
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(1).toInstant());
 
@@ -515,8 +515,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -534,8 +534,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -554,8 +554,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 		filter.setSorts(sorts("time", "node", "source"));
@@ -575,8 +575,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 		filter.setSorts(sorts("time", "node", "source"));
@@ -597,7 +597,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -620,7 +620,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -642,7 +642,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.FifteenMinute);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -767,7 +767,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -790,7 +790,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -815,7 +815,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Day);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(1)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -839,7 +839,7 @@ public class SelectDatumTests {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Week);
 		filter.setNodeIds(new Long[] { 1L, 2L, 3L });
-		filter.setSourceIds(new String[] { "a", "b", "c" });
+		filter.setSourceIds(new String[] { "a/*", "b", "c" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.DAYS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(TimeUnit.DAYS.toSeconds(7)));
 		filter.setCombiningType(CombiningType.Sum);
@@ -861,8 +861,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -881,8 +881,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -925,8 +925,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 
 		// WHEN
 		String sql = new SelectDatum(filter).getSql();
@@ -943,8 +943,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.SeasonalHourOfDay);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 
 		Connection con = EasyMock.createMock(Connection.class);
 		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
@@ -985,8 +985,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.DayOfYear);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 
@@ -1004,8 +1004,8 @@ public class SelectDatumTests {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.HourOfYear);
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
 

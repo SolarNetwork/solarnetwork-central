@@ -51,6 +51,8 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.support.CacheSettings;
 
 /**
@@ -103,6 +105,12 @@ public class SolarEdgeConfig {
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired(required = false)
+	private QueryAuditor queryAuditor;
+
 	@Bean
 	@Qualifier(SOLAREDGE_SITE_TZ)
 	@ConfigurationProperties(prefix = "app.c2c.cache.solaredge-site-tz")
@@ -149,6 +157,8 @@ public class SolarEdgeConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
 		service.setSiteTimeZoneCache(solarEdgeSiteTimeZoneCache);
 		service.setSiteInventoryCache(solarEdgeSiteInventoryCache);
 

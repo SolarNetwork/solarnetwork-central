@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.biz;
 import java.time.Instant;
 import java.util.Collection;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * API for accessing datum streams.
@@ -36,13 +37,17 @@ import net.solarnetwork.domain.datum.Datum;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public interface DatumStreamsAccessor {
 
 	/**
 	 * Get an earlier offset from the latest available datum per source ID.
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by; use
 	 *        {@code null} to return all available sources
@@ -51,7 +56,8 @@ public interface DatumStreamsAccessor {
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, never {@code null}
 	 */
-	Collection<Datum> offsetMatching(String sourceIdPattern, int offset);
+	Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			int offset);
 
 	/**
 	 * Get the latest available datum per source ID.
@@ -60,19 +66,28 @@ public interface DatumStreamsAccessor {
 	 * This is equivalent to calling {@code offsetMatching(sourceIdFilter, 0)}.
 	 * </p>
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @return the matching datum, never {@literal null}
-	 * @see #offsetMatching(String, int)
+	 * @see #offsetMatching(Long, String, int)
 	 */
-	default Collection<Datum> latestMatching(String sourceIdPattern) {
-		return offsetMatching(sourceIdPattern, 0);
+	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId,
+			String sourceIdPattern) {
+		return offsetMatching(kind, objectId, sourceIdPattern, 0);
 	}
 
 	/**
 	 * Get an offset from the latest available datum matching a specific source
 	 * ID.
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceId
 	 *        the source ID to find the offset datum for
 	 * @param offset
@@ -80,7 +95,7 @@ public interface DatumStreamsAccessor {
 	 *        {@code 1} the next later, and so on
 	 * @return the matching datum, or {@literal null} if not available
 	 */
-	Datum offset(String sourceId, int offset);
+	Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset);
 
 	/**
 	 * Get the latest available datum matching a specific source IDs.
@@ -89,19 +104,27 @@ public interface DatumStreamsAccessor {
 	 * This is equivalent to calling {@code offset(sourceId, 0)}.
 	 * </p>
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceId
 	 *        the source ID to find
 	 * @return the matching datum, or {@literal null} if not available
-	 * @see #offset(String, int)
+	 * @see #offset(Long, String, int)
 	 */
-	default Datum latest(String sourceId) {
-		return offset(sourceId, 0);
+	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId) {
+		return offset(kind, objectId, sourceId, 0);
 	}
 
 	/**
 	 * Get a set of datum offset from a given timestamp, optionally matching a
 	 * source ID pattern.
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by; use
 	 *        {@code null} to return all available sources
@@ -113,7 +136,8 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, never {@code null}
 	 * @since 1.1
 	 */
-	Collection<Datum> offsetMatching(String sourceIdPattern, Instant timestamp, int offset);
+	Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant timestamp, int offset);
 
 	/**
 	 * Get the latest available datum offset from a given timestamp, optionally
@@ -124,21 +148,30 @@ public interface DatumStreamsAccessor {
 	 * {@code offsetMatching(sourceIdFilter, timestamp, 0)}.
 	 * </p>
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
 	 * @return the matching datum, never {@literal null}
-	 * @see #offsetMatching(String, int)
+	 * @see #offsetMatching(Long, String, int)
 	 * @since 1.1
 	 */
-	default Collection<Datum> latestMatching(String sourceIdPattern, Instant timestamp) {
-		return offsetMatching(sourceIdPattern, timestamp, 0);
+	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant timestamp) {
+		return offsetMatching(kind, objectId, sourceIdPattern, timestamp, 0);
 	}
 
 	/**
 	 * Get a datum offset from a given timestamp matching a specific source ID.
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceId
 	 *        the source ID to find the offset datum for
 	 * @param timestamp
@@ -149,7 +182,7 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, or {@literal null} if not available
 	 * @since 1.1
 	 */
-	Datum offset(String sourceId, Instant timestamp, int offset);
+	Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp, int offset);
 
 	/**
 	 * Get the latest available datum up to a given timestamp, matching a
@@ -159,6 +192,10 @@ public interface DatumStreamsAccessor {
 	 * This is equivalent to calling {@code offset(sourceId, timestamp, 0)}.
 	 * </p>
 	 *
+	 * @param kind
+	 *        the datum kind
+	 * @param objectId
+	 *        the object ID to find the offset datum for
 	 * @param sourceId
 	 *        the source ID to find the offset datum for
 	 * @param timestamp
@@ -166,8 +203,8 @@ public interface DatumStreamsAccessor {
 	 * @return the matching datum, or {@literal null} if not available
 	 * @since 1.1
 	 */
-	default Datum latest(String sourceId, Instant timestamp) {
-		return offset(sourceId, timestamp, 0);
+	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp) {
+		return offset(kind, objectId, sourceId, timestamp, 0);
 	}
 
 }

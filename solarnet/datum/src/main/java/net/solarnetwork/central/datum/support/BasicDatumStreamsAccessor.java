@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.support;
 
+import static java.util.Collections.emptyMap;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import java.util.Map.Entry;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.util.ObjectUtils;
 
 /**
@@ -43,14 +45,14 @@ import net.solarnetwork.util.ObjectUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 
 	private final PathMatcher pathMatcher;
 	private final Collection<? extends Datum> datum;
 
-	private Map<String, List<Datum>> timeSortedDatumBySource;
+	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> timeSortedDatumBySource;
 
 	/**
 	 * Constructor.
@@ -69,60 +71,49 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	/**
-	 * Get all datum grouped by source ID, sorted by timestamp in reverse
-	 * (newest to oldest).
+	 * Get all datum grouped by kind, object ID, source ID, and then sorted by
+	 * timestamp in reverse (newest to oldest).
 	 *
 	 * @return the sorted datum, never {@code null}
 	 */
-	private Map<String, List<Datum>> sortedDatumStreams() {
+	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> sortedDatumStreams() {
 		if ( timeSortedDatumBySource == null ) {
-			Map<String, List<Datum>> map = new HashMap<>(8);
+			Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> map = new HashMap<>(2);
 			for ( Datum d : datum ) {
-				map.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(8)).add(d);
+				map.computeIfAbsent(d.getKind(), k -> new HashMap<>(2))
+						.computeIfAbsent(d.getObjectId(), k -> new HashMap<>(8))
+						.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(8)).add(d);
 			}
-			for ( List<Datum> list : map.values() ) {
-				list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
+			for ( Map<Long, Map<String, List<Datum>>> nodeMap : map.values() ) {
+				for ( Map<String, List<Datum>> sourceMap : nodeMap.values() ) {
+					for ( List<Datum> list : sourceMap.values() ) {
+						list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
+					}
+				}
 			}
 			timeSortedDatumBySource = map;
 		}
 		return timeSortedDatumBySource;
 	}
 
+	private Map<String, List<Datum>> sortedDatumStreams(ObjectDatumKind kind, Long objectId) {
+		if ( kind == null || objectId == null ) {
+			return emptyMap();
+		}
+		final var maps = sortedDatumStreams();
+		return maps.getOrDefault(kind, new HashMap<>(2)).getOrDefault(objectId, new HashMap<>());
+	}
+
 	@Override
-	public Collection<Datum> offsetMatching(String sourceIdPattern, int offset) {
-		final var map = sortedDatumStreams();
+	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
 		final var result = new ArrayList<Datum>(map.size());
 		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
 			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
 					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
 				List<Datum> list = e.getValue();
-				if ( offset < list.size() ) {
-					result.add(list.get(offset));
-				}
-			}
-		}
-		return result;
-	}
-
-	@Override
-	public Datum offset(String sourceId, int offset) {
-		final var map = sortedDatumStreams();
-		final List<Datum> list = map.get(sourceId);
-		if ( list == null ) {
-			return null;
-		}
-		return (offset < list.size() ? list.get(offset) : null);
-	}
-
-	@Override
-	public Collection<Datum> offsetMatching(String sourceIdPattern, Instant timestamp, int offset) {
-		final var map = sortedDatumStreams();
-		final var result = new ArrayList<Datum>(map.size());
-		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
-			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
-					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
-				List<Datum> list = e.getValue();
-				Datum d = offset(list, timestamp, offset);
+				Datum d = offset(kind, objectId, e.getKey(), list, offset);
 				if ( d != null ) {
 					result.add(d);
 				}
@@ -132,16 +123,100 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	}
 
 	@Override
-	public Datum offset(String sourceId, Instant timestamp, int offset) {
-		final var map = sortedDatumStreams();
-		final List<Datum> list = map.get(sourceId);
-		if ( list == null ) {
-			return null;
-		}
-		return offset(list, timestamp, offset);
+	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
+		final List<Datum> list = map.computeIfAbsent(sourceId, k -> new ArrayList<>(2));
+		return offset(kind, objectId, sourceId, list, offset);
 	}
 
-	private Datum offset(List<Datum> list, Instant timestamp, int offset) {
+	@Override
+	public Collection<Datum> offsetMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
+			Instant timestamp, int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
+		final var result = new ArrayList<Datum>(map.size());
+		for ( Entry<String, List<Datum>> e : map.entrySet() ) {
+			if ( sourceIdPattern == null || sourceIdPattern.isEmpty()
+					|| pathMatcher.match(sourceIdPattern, e.getKey()) ) {
+				List<Datum> list = e.getValue();
+				Datum d = offset(kind, objectId, e.getKey(), list, timestamp, offset);
+				if ( d != null ) {
+					result.add(d);
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, Instant timestamp,
+			int offset) {
+		final var map = sortedDatumStreams(kind, objectId);
+		final List<Datum> list = map.computeIfAbsent(sourceId, k -> new ArrayList<>(2));
+		return offset(kind, objectId, sourceId, list, timestamp, offset);
+	}
+
+	/**
+	 * Hook to handle an indexed offset "miss", to resolve a datum.
+	 *
+	 * @param kind
+	 *        the datum stream kind
+	 * @param objectId
+	 *        the datum object ID
+	 * @param sourceId
+	 *        the datum source ID
+	 * @param list
+	 *        the list of available datum
+	 * @param offset
+	 *        the desired offset (will be higher than {@code list.size()})
+	 * @return the resolved datum, or {@literal null}
+	 * @since 2.0
+	 */
+	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			int offset) {
+		return null;
+	}
+
+	/**
+	 * Hook to handle an indexed offset "miss", to resolve a datum.
+	 *
+	 * @param kind
+	 *        the datum stream kind
+	 * @param objectId
+	 *        the datum object ID
+	 * @param sourceId
+	 *        the datum source ID
+	 * @param list
+	 *        the list of available datum
+	 * @param timestamp
+	 *        the datum timestamp to offset from
+	 * @param offset
+	 *        the desired offset
+	 * @param referenceIndex
+	 *        the index within {@code list} for a datum found already for the
+	 *        given {@code timestamp}, or {@code -1} if not found
+	 * @return the resolved datum, or {@literal null}
+	 * @since 2.0
+	 */
+	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			Instant timestamp, int offset, int referenceIndex) {
+		return null;
+	}
+
+	private Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			int offset) {
+		assert list != null;
+		if ( offset < 0 ) {
+			return null;
+		}
+		if ( offset < list.size() ) {
+			return list.get(offset);
+		}
+		return offsetMiss(kind, objectId, sourceId, list, offset);
+	}
+
+	private Datum offset(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
+			Instant timestamp, int offset) {
+		assert list != null;
 		for ( int idx = 0, len = list.size(); idx < len; idx++ ) {
 			Datum d = list.get(idx);
 			if ( !d.getTimestamp().isAfter(timestamp) ) {
@@ -149,10 +224,13 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 					return d;
 				}
 				idx += offset;
-				return idx < list.size() ? list.get(idx) : null;
+				if ( idx < list.size() ) {
+					return list.get(idx);
+				}
+				return offsetMiss(kind, objectId, sourceId, list, timestamp, offset, idx - offset);
 			}
 		}
-		return null;
+		return offsetMiss(kind, objectId, sourceId, list, timestamp, offset, -1);
 	}
 
 }

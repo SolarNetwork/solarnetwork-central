@@ -52,13 +52,15 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilterMatch;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcQueryAuditor;
 import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.util.StatTracker;
 
 /**
  * Test cases for the {@link JdbcQueryAuditor} class.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class JdbcQueryAuditorTests {
 
@@ -201,6 +203,37 @@ public class JdbcQueryAuditorTests {
 
 		// then
 		//assertMapValueZeroOrMissing(datumCountMap, nodeDatumKey(topOfHour, TEST_NODE_ID, TEST_SOURCE_1));
+	}
+
+	@Test
+	public void auditSingleDatum() throws Exception {
+		// GIVEN
+		expect(dataSource.getConnection()).andReturn(jdbcConnection);
+
+		jdbcConnection.setAutoCommit(true);
+		expectLastCall().anyTimes();
+
+		expect(jdbcConnection.prepareCall(JdbcQueryAuditor.DEFAULT_NODE_SOURCE_INCREMENT_SQL))
+				.andReturn(jdbcStatement);
+
+		jdbcStatement.setObject(1, TEST_NODE_ID);
+		jdbcStatement.setString(2, TEST_SOURCE_1);
+		jdbcStatement.setTimestamp(3, Timestamp.from(testClock.instant()));
+		jdbcStatement.setInt(4, 1);
+		expect(jdbcStatement.execute()).andReturn(false);
+
+		jdbcConnection.close();
+
+		// WHEN
+		replayAll();
+		GeneralDatum datum = GeneralDatum.nodeDatum(TEST_NODE_ID, TEST_SOURCE_1, Instant.now(),
+				new DatumSamples());
+		auditor.auditNodeDatum(datum);
+
+		auditor.enableWriting();
+		stopAuditingAndWaitForFlush();
+
+		// THEN
 	}
 
 }

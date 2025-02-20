@@ -44,6 +44,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -134,7 +135,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -198,6 +199,8 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the REST operations
 	 * @param oauthClientManager
 	 *        the OAuth client manager
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -208,9 +211,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock) {
+		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
