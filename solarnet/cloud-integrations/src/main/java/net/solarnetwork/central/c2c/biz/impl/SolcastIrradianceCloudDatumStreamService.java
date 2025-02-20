@@ -82,7 +82,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -405,6 +405,10 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 						datumStream.getSourceId(), ts), samples));
 			}
 		}
+
+		// Solcast API returns data in reverse time order, so reverse it now
+		result.sort(Identity.sortByIdentity());
+
 		return result;
 	}
 
