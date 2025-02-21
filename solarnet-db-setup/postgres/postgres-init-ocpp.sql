@@ -98,6 +98,8 @@ CREATE TABLE solarev.ocpp_charge_sess (
 
 CREATE INDEX ocpp_charge_sess_tx_idx ON solarev.ocpp_charge_sess (tx_id);
 
+CREATE INDEX ocpp_charge_sess_conn_idx ON solarev.ocpp_charge_sess (cp_id, evse_id, conn_id);
+
 CREATE TABLE solarev.ocpp_charge_sess_reading (
 	sess_id				uuid NOT NULL,
 	ts					TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
