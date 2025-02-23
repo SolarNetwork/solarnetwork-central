@@ -73,7 +73,7 @@ public interface DatumStreamsAccessor {
 	 * @param sourceIdPattern
 	 *        an optional Ant-style source ID pattern to filter by
 	 * @return the matching datum, never {@literal null}
-	 * @see #offsetMatching(Long, String, int)
+	 * @see #offsetMatching(ObjectDatumKind, Long, String, int)
 	 */
 	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId,
 			String sourceIdPattern) {
@@ -111,7 +111,7 @@ public interface DatumStreamsAccessor {
 	 * @param sourceId
 	 *        the source ID to find
 	 * @return the matching datum, or {@literal null} if not available
-	 * @see #offset(Long, String, int)
+	 * @see #offset(ObjectDatumKind, Long, String, int)
 	 */
 	default Datum latest(ObjectDatumKind kind, Long objectId, String sourceId) {
 		return offset(kind, objectId, sourceId, 0);
@@ -157,7 +157,7 @@ public interface DatumStreamsAccessor {
 	 * @param timestamp
 	 *        the timestamp to reference the offset from
 	 * @return the matching datum, never {@literal null}
-	 * @see #offsetMatching(Long, String, int)
+	 * @see #offsetMatching(ObjectDatumKind, Long, String, int)
 	 * @since 1.1
 	 */
 	default Collection<Datum> latestMatching(ObjectDatumKind kind, Long objectId, String sourceIdPattern,
