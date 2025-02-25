@@ -53,7 +53,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseSolcastCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -78,6 +78,27 @@ public abstract class BaseSolcastCloudDatumStreamService
 
 	/** The {@code resolution} default value. */
 	public static final Duration DEFAULT_RESOLUTION = Duration.ofMinutes(5);
+
+	/**
+	 * The setting to disallow use of the historic API.
+	 *
+	 * @since 1.2
+	 */
+	public static final String DISALLOW_HISTORIC_API_SETTING = "noHistoric";
+
+	/**
+	 * An internal query parameter used to indicate the live API should be used.
+	 *
+	 * @since 1.2
+	 */
+	protected static final String QUERY_PARAM_USE_LIVE_DATA = "live";
+
+	/**
+	 * An internal parameter map with just the {@link #USE_LIVE_DATA} value set.
+	 *
+	 * @since 1.2
+	 */
+	protected static final Map<String, Object> USE_LIVE_DATA = Map.of(QUERY_PARAM_USE_LIVE_DATA, true);
 
 	/** The Solcast supported resolutions. */
 	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
