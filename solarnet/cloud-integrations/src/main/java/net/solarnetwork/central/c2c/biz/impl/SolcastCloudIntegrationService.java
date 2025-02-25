@@ -51,7 +51,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Solcast API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -90,6 +90,20 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 	/** The period URL query parameter name. */
 	public static final String PERIOD_PARAM = "period";
+
+	/**
+	 * The start date URL query parameter name.
+	 *
+	 * @since 1.1
+	 */
+	public static final String START_DATE_PARAM = "start";
+
+	/**
+	 * The start date URL query parameter name.
+	 *
+	 * @since 1.1
+	 */
+	public static final String END_DATE_PARAM = "end";
 
 	/**
 	 * The well-known URLs.

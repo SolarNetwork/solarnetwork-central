@@ -76,13 +76,14 @@ import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
 
 /**
  * Solcast implementation of {@link CloudDatumStreamService} using the
  * irradiance API.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -92,16 +93,31 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 	/** The maximum duration allowed for queries. */
 	public static final Duration MAX_QUERY_DURATION = Duration.ofHours(168);
 
+	/**
+	 * The maximum offset from the current time allowed for "live" date range
+	 * queries.
+	 *
+	 * @since 1.2
+	 */
+	public static final Duration MAX_LIVE_API_OFFSET = Duration.ofHours(36);
+
+	/**
+	 * The URL path for historic radiation and weather data.
+	 *
+	 * @since 1.2
+	 */
+	public static final String HISTORIC_RADIATION_URL_PATH = "/data/historic/radiation_and_weather";
+
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
+				new BasicToggleSettingSpecifier(DISALLOW_HISTORIC_API_SETTING, false),
 				new BasicTextFieldSettingSpecifier(LATITUDE_SETTING, null),
 				new BasicTextFieldSettingSpecifier(LONGITUDE_SETTING, null),
 				new BasicTextFieldSettingSpecifier(AZIMUTH_SETTING, null),
 				new BasicTextFieldSettingSpecifier(TILT_SETTING, null),
-				new BasicTextFieldSettingSpecifier(RESOLUTION_SETTING, null),
 				ARRAY_TYPE_SETTTING_SPECIFIER,
 				RESOLUTION_SETTING_SPECIFIER
 				);
@@ -176,6 +192,7 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 		final var filter = new BasicQueryFilter();
 		filter.setStartDate(startDate);
 		filter.setEndDate(endDate);
+		filter.setParameters(USE_LIVE_DATA);
 
 		final var result = datum(datumStream, filter);
 		if ( result == null ) {
@@ -235,10 +252,18 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 			usedQueryFilter.setStartDate(startDate);
 			usedQueryFilter.setEndDate(endDate);
 
+			// use the live API if requested or if query start near current date
+			final boolean useLiveApi = filter.hasParameter(QUERY_PARAM_USE_LIVE_DATA)
+					|| (ds.hasServiceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class)
+							&& ds.serviceProperty(DISALLOW_HISTORIC_API_SETTING, Boolean.class))
+					|| Duration.between(startDate, clock.instant()).compareTo(MAX_LIVE_API_OFFSET) < 0;
+
 			// @formatter:off
 			final UriComponentsBuilder uriBuilder = UriComponentsBuilder
 					.fromUri(resolveBaseUrl(integration, SolcastCloudIntegrationService.BASE_URI))
-					.path(SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH)
+					.path(useLiveApi
+							? SolcastCloudIntegrationService.LIVE_RADIATION_URL_PATH
+							: HISTORIC_RADIATION_URL_PATH)
 					.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
 					.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
 					.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
@@ -248,6 +273,13 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 							resolveOutputParametersValue(refsByFieldName.values()))
 					;
 			// @formatter:on
+
+			if ( !useLiveApi ) {
+				uriBuilder.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM,
+						startDate.toString());
+				uriBuilder.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString());
+			}
+
 			String azimuth = nonEmptyString(ds.serviceProperty(AZIMUTH_SETTING, String.class));
 			if ( azimuth != null ) {
 				uriBuilder.queryParam(SolcastCloudIntegrationService.AZIMUTH_PARAM, azimuth);
