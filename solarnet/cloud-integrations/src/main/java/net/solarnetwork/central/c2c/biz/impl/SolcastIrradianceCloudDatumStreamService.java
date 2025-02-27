@@ -83,7 +83,7 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -266,15 +266,17 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 							: HISTORIC_RADIATION_URL_PATH)
 					.queryParam(SolcastCloudIntegrationService.LATITUDE_PARAM, latitude)
 					.queryParam(SolcastCloudIntegrationService.LONGITUDE_PARAM, longitude)
-					.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
-							resolveHours(startDate, endDate))
+
 					.queryParam(SolcastCloudIntegrationService.PERIOD_PARAM, resolution.toString())
 					.queryParam(SolcastCloudIntegrationService.OUTPUT_PARAMETERS_PARAM,
 							resolveOutputParametersValue(refsByFieldName.values()))
 					;
 			// @formatter:on
 
-			if ( !useLiveApi ) {
+			if ( useLiveApi ) {
+				uriBuilder.queryParam(SolcastCloudIntegrationService.HOURS_PARAM,
+						resolveHours(startDate, endDate));
+			} else {
 				uriBuilder.queryParam(SolcastCloudIntegrationService.START_DATE_PARAM,
 						startDate.toString());
 				uriBuilder.queryParam(SolcastCloudIntegrationService.END_DATE_PARAM, endDate.toString());
