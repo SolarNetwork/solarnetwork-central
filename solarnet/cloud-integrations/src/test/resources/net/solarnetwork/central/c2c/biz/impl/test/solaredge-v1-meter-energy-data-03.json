@@ -1,0 +1,7 @@
+{
+    "meterEnergyDetails": {
+        "timeUnit": "QUARTER_OF_AN_HOUR",
+        "unit": "Wh",
+        "meters": []
+    }
+}
