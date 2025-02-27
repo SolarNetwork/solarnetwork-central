@@ -74,7 +74,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * Test cases for the {@link QueryingDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -773,6 +773,76 @@ public class QueryingDatumStreamsAccessorTests {
 
 		and.then(datumCaptor.getValue())
 			.as("Audit same datum returned")
+			.isSameAs(result)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void latestAvailable_notAfterTimestampOlderThanOldestAvailable() {
+		// GIVEN
+		final int sourceIdCount = 3;
+		final var streamMetas = testStreamMetas(nodeId, sourceIdCount);
+		final var datumFreq = Duration.ofMinutes(5);
+		final var datum = testNodeDatum(nodeId, streamMetas, clock.instant(), datumFreq, 6);
+
+		var randStreamMeta = streamMetas.get(RNG.nextInt(sourceIdCount));
+
+		var accessor = new QueryingDatumStreamsAccessor(new AntPathMatcher(), datum, userId, clock,
+				datumDao, null);
+
+		var datumEntity = new DatumEntity(randStreamMeta.getStreamId(),
+				datum.getLast().getTimestamp().minus(datumFreq), null,
+				propertiesOf(new BigDecimal[] { new BigDecimal(Integer.MAX_VALUE) }, null, null, null));
+		var filterResults = new BasicObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK>(
+				streamMetas.stream().collect(toUnmodifiableMap(m -> m.getStreamId(), identity())),
+				List.of(datumEntity));
+
+		given(datumDao.findFiltered(any())).willReturn(filterResults);
+
+		// WHEN
+		// query for "latest" before a date that is before the oldest available datum, triggering a query for at most 1
+		Datum result = accessor.offset(Node, nodeId, randStreamMeta.getSourceId(),
+				datum.getLast().getTimestamp().minusSeconds(1), 0);
+
+		// try again, to validate the datum from query is cached in accessor
+		Datum result2 = accessor.offset(Node, nodeId, randStreamMeta.getSourceId(),
+				datum.getLast().getTimestamp().minusSeconds(1), 0);
+
+		// THEN
+		then(datumDao).should(times(1)).findFiltered(criteriaCaptor.capture());
+
+		// @formatter:off
+		and.then(criteriaCaptor.getValue())
+			.as("Query for user")
+			.returns(userId, from(DatumCriteria::getUserId))
+			.as("Query for stream node")
+			.returns(nodeId, from(DatumCriteria::getNodeId))
+			.as("Query for stream source")
+			.returns(randStreamMeta.getSourceId(), from(DatumCriteria::getSourceId))
+			.as("Query for at most one datum")
+			.returns(1, from(DatumCriteria::getMax))
+			.as("Query end date is given timestamp")
+			.returns(datum.getLast().getTimestamp(), from(DatumCriteria::getEndDate))
+			.as("Query start date is offset from end date by configured duration")
+			.returns(datum.getLast().getTimestamp().minus(accessor.getMaxStartDateDuration()), DatumCriteria::getStartDate)
+			;
+
+		and.then(result)
+			.as("Datum for node ID returned")
+			.returns(nodeId, from(Datum::getObjectId))
+			.as("Datum for source ID returned")
+			.returns(randStreamMeta.getSourceId(), from(Datum::getSourceId))
+			.as("Datum for timestamp offset from DAO returned")
+			.returns(datumEntity.getTimestamp(), from(Datum::getTimestamp))
+			.as("Returned ObjectDatum for DAO result")
+			.isInstanceOf(ObjectDatum.class)
+			.asInstanceOf(type(ObjectDatum.class))
+			.as("Properties from DAO returned in ObjectDatum")
+			.returns(datumEntity.getProperties(), from(ObjectDatum::getProperties))
+			;
+		and.then(result2)
+			.as("Offset from DAO returned 2nd time")
 			.isSameAs(result)
 			;
 		// @formatter:on

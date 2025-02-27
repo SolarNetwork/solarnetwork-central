@@ -47,7 +47,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * "missing" datum using a {@link DatumEntityDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
@@ -108,7 +108,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	protected Datum offsetMiss(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
 			Instant timestamp, int offset, int referenceIndex) {
 		final Datum oldestDatum = (!list.isEmpty() ? list.getLast() : null);
-		final int max = (referenceIndex >= 0 ? offset - list.size() + referenceIndex + 1 : offset);
+		final int max = 1 + (referenceIndex >= 0 ? offset - list.size() + referenceIndex : offset);
 
 		return query(kind, objectId, sourceId, list, oldestDatum, max);
 	}
