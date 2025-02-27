@@ -456,6 +456,12 @@ public class DaoCloudDatumStreamPollService
 						taskInfo.getExecuteAt(), "startAt", taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+			} else {
+				var msg = "Reset task state.";
+				var data = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent, "executeAt",
+						taskInfo.getExecuteAt(), "startAt", taskInfo.getStartAt());
+				userEventAppenderBiz.addEvent(datumStream.getUserId(),
+						eventForConfiguration(datumStream.getId(), POLL_TAGS, msg, data));
 			}
 			return taskInfo;
 		}

@@ -32,6 +32,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
+import static net.solarnetwork.util.DateUtils.ISO_DATE_TIME_ALT_UTC;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
@@ -85,6 +86,8 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
+import net.solarnetwork.central.domain.LogEventInfo;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
@@ -96,7 +99,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * Test cases for the {@link DaoCloudDatumStreamPollService} class.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -145,6 +148,9 @@ public class DaoCloudDatumStreamPollServiceTests {
 
 	@Captor
 	private ArgumentCaptor<Identity<GeneralNodeDatumPK>> generalNodeDatumCaptor;
+
+	@Captor
+	private ArgumentCaptor<LogEventInfo> logEventCaptor;
 
 	private DaoCloudDatumStreamPollService service;
 
@@ -293,6 +299,21 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getMessage))
 			.as("No service properties generated for successful execution")
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			;
+
+		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		and.then(logEventCaptor.getValue())
+			.as("Task success reset event generated")
+			.isNotNull()
+			.as("Poll tags provided in event")
+			.returns(CloudIntegrationsUserEvents.POLL_TAGS, from(LogEventInfo::getTags))
+			.as("Task dates provided in event data")
+			.returns(Map.of(
+					"configId", datumStream.getConfigId(),
+					"source", "(%d,%d)".formatted(TEST_USER_ID, datumStream.getConfigId()),
+					"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
+					"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp())
+				), from(e -> JsonUtils.getStringMap(e.getData())))
 			;
 
 		and.then(resultTask)

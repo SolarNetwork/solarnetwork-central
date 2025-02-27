@@ -34,7 +34,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CloudIntegrationsUserEvents {
 
@@ -82,6 +82,13 @@ public interface CloudIntegrationsUserEvents {
 
 	/** Tags for an expression error event. */
 	String[] EXPRESSION_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, EXPRESSION_TAG };
+
+	/**
+	 * Tags for a non-error poll event.
+	 *
+	 * @since 1.1
+	 */
+	String[] POLL_TAGS = new String[] { CLOUD_INTEGRATION_TAG, POLL_TAG };
 
 	/** Tags for a poll error event. */
 	String[] POLL_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, POLL_TAG };
