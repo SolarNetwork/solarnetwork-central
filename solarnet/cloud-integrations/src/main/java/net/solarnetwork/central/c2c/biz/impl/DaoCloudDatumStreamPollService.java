@@ -69,6 +69,7 @@ import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.scheduler.SchedulerUtils;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
@@ -219,7 +220,15 @@ public class DaoCloudDatumStreamPollService
 					t = t.getCause();
 				}
 				try {
-					log.warn("Error executing datum stream {} poll task", taskInfo.getId().ident(), e);
+					if ( log.isDebugEnabled() || !(e instanceof RemoteServiceException) ) {
+						// log full stack trace when debug enabled or not a RemoteServiceException
+						log.warn("Error executing datum stream {} poll task", taskInfo.getId().ident(),
+								e);
+					} else {
+						// otherwise just print exception message, to cut down on log clutter
+						log.warn("Error executing datum stream {} poll task: {}",
+								taskInfo.getId().ident(), e.toString());
+					}
 					var errMsg = "Error executing poll task.";
 					var errData = Map.of(MESSAGE_DATA_KEY, (Object) t.getMessage());
 					var oldState = taskInfo.getState();
