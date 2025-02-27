@@ -101,7 +101,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		final Datum oldestDatum = (!list.isEmpty() ? list.getLast() : null);
 		final int max = 1 + (offset > list.size() ? offset - list.size() : offset);
 
-		return query(kind, objectId, sourceId, list, oldestDatum, max);
+		return query(kind, objectId, sourceId, list, oldestDatum, null, max);
 	}
 
 	@Override
@@ -110,12 +110,12 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		final Datum oldestDatum = (!list.isEmpty() ? list.getLast() : null);
 		final int max = 1 + (referenceIndex >= 0 ? offset - list.size() + referenceIndex : offset);
 
-		return query(kind, objectId, sourceId, list, oldestDatum, max);
+		return query(kind, objectId, sourceId, list, oldestDatum, timestamp, max);
 	}
 
 	private Datum query(ObjectDatumKind kind, Long objectId, String sourceId, List<Datum> list,
-			Datum oldestDatum, int max) {
-		final int maxResults = getMaxResults();
+			Datum oldestDatum, Instant timestamp, int max) {
+		final int maxAllowedResults = getMaxResults();
 		final Long userId = kind == ObjectDatumKind.Node ? this.userId : null;
 
 		BasicDatumCriteria c = new BasicDatumCriteria();
@@ -126,18 +126,49 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			c.setLocationId(objectId);
 		}
 		c.setSourceId(sourceId);
-		c.setEndDate(oldestDatum != null ? oldestDatum.getTimestamp() : clock.instant());
-		c.setStartDate(c.getEndDate().minus(maxStartDateDuration));
-		c.setMax(maxResults > 0 ? Math.min(max, maxResults) : max);
 		c.setSorts(SORT_BY_DATE_DESCENDING);
 		c.setUserId(userId);
+
+		if ( oldestDatum != null
+				&& (timestamp == null || !timestamp.isBefore(oldestDatum.getTimestamp())) ) {
+			c.setEndDate(oldestDatum.getTimestamp()); // < existing
+		} else if ( timestamp != null ) {
+			c.setEndDate(timestamp.plusMillis(1)); // <= timestamp
+		} else {
+			c.setEndDate(clock.instant().plusMillis(1)); // <= now
+		}
+		c.setStartDate(c.getEndDate().minus(maxStartDateDuration));
+
+		// set max to 1 < max < maxAllowed
+		c.setMax(Math.max(1, maxAllowedResults > 0 ? Math.min(max, maxAllowedResults) : max));
 
 		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
 				.findFiltered(c);
 
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
 
-		for ( net.solarnetwork.central.datum.v2.domain.Datum daoDatum : daoResults ) {
+		if ( oldestDatum != null && timestamp != null && timestamp.isBefore(oldestDatum.getTimestamp())
+				&& daoResults.getReturnedResultCount() > 0 ) {
+			// gap fill any between oldest existing and timestamp
+			var firstFound = daoResults.iterator().next();
+			BasicDatumCriteria gfc = c.clone();
+			gfc.setEndDate(oldestDatum.getTimestamp());
+			gfc.setStartDate(firstFound.getTimestamp().plusMillis(1));
+			gfc.setMax(maxAllowedResults);
+			var gapFillResults = datumDao.findFiltered(gfc);
+			processQueryResults(userId, kind, objectId, sourceId, list, gapFillResults, auditor);
+		}
+
+		processQueryResults(userId, kind, objectId, sourceId, list, daoResults, auditor);
+
+		return (daoResults.getReturnedResultCount() == max ? list.getLast() : null);
+	}
+
+	private void processQueryResults(final Long userId, ObjectDatumKind kind, Long objectId,
+			String sourceId, List<Datum> list,
+			ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults,
+			final QueryAuditor auditor) {
+		for ( var daoDatum : daoResults ) {
 			ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
 			var d = ObjectDatum.forStreamDatum(daoDatum, userId,
 					new DatumId(kind, objectId, sourceId, daoDatum.getTimestamp()), meta);
@@ -146,7 +177,6 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			}
 			list.add(d);
 		}
-		return (daoResults.getReturnedResultCount() == max ? list.getLast() : null);
 	}
 
 	/**
