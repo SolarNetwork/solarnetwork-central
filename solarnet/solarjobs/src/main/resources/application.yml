@@ -39,9 +39,9 @@ app:
     ds-poll:
       executor:
         thread-name-prefix: "SolarNet-C2C-DsPoll-"
-        core-pool-size: 1
+        core-pool-size: 2
         max-pool-size: 2
-        allow-core-thread-time-out: false
+        allow-core-thread-time-out: true
       service:
         shutdown-max-wait: "1m"
   datasource:
