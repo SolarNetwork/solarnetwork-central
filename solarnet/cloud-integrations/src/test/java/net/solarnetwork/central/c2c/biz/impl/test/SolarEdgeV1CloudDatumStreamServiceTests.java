@@ -997,4 +997,95 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		// @formatter:on
 	}
 
+	@Test
+	public void testDateRangeHandling() throws IOException {
+		// GIVEN
+		final Instant endAt = Instant.parse("2025-02-28T02:00:38.696382784Z");
+		final Instant startAt = Instant.parse("2025-02-28T01:30:00Z");
+		clock.setInstant(endAt);
+
+		final Long siteId = randomLong();
+		final String inverterComponentId = randomString();
+		final ZoneId siteTimeZone = ZoneId.of("America/New_York");
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		c1p1.setEnabled(true);
+		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p1.setPropertyName("watts");
+		c1p1.setValueType(CloudDatumStreamValueType.Reference);
+		c1p1.setValueReference(componentValueRef(siteId, Inverter, inverterComponentId, "W"));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				CloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						"/%s/%s/%s".formatted(siteId, Inverter.getKey(), inverterComponentId), "INV/1"
+				)
+		));
+		// @formatter:on
+
+		// request site time zone info
+		final URI siteDetailsUri = fromUri(BASE_URI)
+				.path(SolarEdgeV1CloudDatumStreamService.SITE_DETAILS_URL_TEMPLATE)
+				.buildAndExpand(siteId).toUri();
+		final JsonNode siteDetailsJson = objectMapper
+				.readTree(utf8StringResource("solaredge-v1-site-details-01.json", getClass()));
+		final var siteDetailsRes = new ResponseEntity<JsonNode>(siteDetailsJson, HttpStatus.OK);
+		given(restOps.exchange(eq(siteDetailsUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+				.willReturn(siteDetailsRes);
+
+		// expected date range is clock-aligned
+		final ZonedDateTime expectedEndDate = endAt.atZone(siteTimeZone).truncatedTo(ChronoUnit.HOURS);
+		final ZonedDateTime expectedStartDate = startAt.atZone(siteTimeZone);
+		final DateTimeFormatter timestampFmt = ISO_DATE_OPT_TIME_ALT.withZone(siteTimeZone);
+
+		// request inverter data
+		final URI inverterDataUri = fromUri(BASE_URI)
+				.path(SolarEdgeV1CloudDatumStreamService.EQUIPMENT_DATA_URL_TEMPLATE)
+				.queryParam("startTime", timestampFmt.format(expectedStartDate.toLocalDateTime()))
+				.queryParam("endTime", timestampFmt.format(expectedEndDate.toLocalDateTime()))
+				.buildAndExpand(siteId, inverterComponentId).toUri();
+		log.info("Expected inverter URI: {}", inverterDataUri);
+		final JsonNode inverterDataJson = objectMapper
+				.readTree(utf8StringResource("solaredge-v1-inverter-data-01.json", getClass()));
+		final var inverterDataRes = new ResponseEntity<JsonNode>(inverterDataJson, HttpStatus.OK);
+		given(restOps.exchange(eq(inverterDataUri), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+				.willReturn(inverterDataRes);
+
+		// WHEN
+		final BasicQueryFilter filter = new BasicQueryFilter();
+		filter.setStartDate(startAt);
+		filter.setEndDate(endAt);
+		service.datum(datumStream, filter);
+
+		// THEN
+
+	}
+
 }
