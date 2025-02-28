@@ -28,6 +28,8 @@ import java.time.Instant;
 import java.time.InstantSource;
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -51,7 +53,9 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  */
 public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
-	private final List<SortDescriptor> SORT_BY_DATE_DESCENDING = List
+	private static final Logger log = LoggerFactory.getLogger(QueryingDatumStreamsAccessor.class);
+
+	private static final List<SortDescriptor> SORT_BY_DATE_DESCENDING = List
 			.of(new SimpleSortDescriptor("date", true));
 
 	/** The maximum start date duration to use when querying. */
@@ -145,6 +149,10 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
 				.findFiltered(c);
 
+		log.trace("Query user {} node {} source [{}] for {} between {} - {} found {}", userId, objectId,
+				sourceId, c.getMax(), c.getStartDate(), c.getEndDate(),
+				daoResults.getReturnedResultCount());
+
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
 
 		if ( oldestDatum != null && timestamp != null && timestamp.isBefore(oldestDatum.getTimestamp())
@@ -156,6 +164,11 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			gfc.setStartDate(firstFound.getTimestamp().plusMillis(1));
 			gfc.setMax(maxAllowedResults);
 			var gapFillResults = datumDao.findFiltered(gfc);
+
+			log.trace("Gap fill query user {} node {} source [{}] for {} between {} - {} found {}",
+					userId, objectId, sourceId, gfc.getMax(), gfc.getStartDate(), gfc.getEndDate(),
+					daoResults.getReturnedResultCount());
+
 			processQueryResults(userId, kind, objectId, sourceId, list, gapFillResults, auditor);
 		}
 
