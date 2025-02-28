@@ -23,6 +23,8 @@
 package net.solarnetwork.central.c2c.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
@@ -67,7 +69,8 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 				break;
 			}
 			count++;
-			service.executeTask(task);
+			Future<?> f = service.executeTask(task);
+			f.get(getMaximumWaitMs(), TimeUnit.MILLISECONDS);
 		}
 		return count;
 	}

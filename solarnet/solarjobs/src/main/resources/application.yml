@@ -104,14 +104,14 @@ app:
         schedule: "0 20 4,20 5,10,15,20 * *"
     c2c:
       ds-poll:
-        maximum-iterations: 1000
+        maximum-iterations: 10
         maximum-wait-ms: 60000
-        parallelism: 1
+        parallelism: 2
         schedule: 5000
       ds-poll-reset-abandoned:
         maximum-wait-ms: 60000
         schedule: 60000
-        minimum-age: "15m"
+        minimum-age: "2h"
     datum:
       agg:
         hourly:

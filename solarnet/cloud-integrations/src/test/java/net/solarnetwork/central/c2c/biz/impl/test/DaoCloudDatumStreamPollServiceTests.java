@@ -29,6 +29,7 @@ import static net.solarnetwork.central.domain.BasicClaimableJobState.Claimed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Executing;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumId.nodeId;
@@ -789,6 +790,19 @@ public class DaoCloudDatumStreamPollServiceTests {
 			;
 
 		// @formatter:on
+	}
+
+	@Test
+	public void resetTasks() {
+		// GIVEN
+		final Instant ts = Instant.now();
+		final int resetCount = RNG.nextInt(Integer.MAX_VALUE);
+		given(taskDao.resetAbandondedExecutingTasks(ts)).willReturn(resetCount);
+
+		// WHEN
+		int result = service.resetAbandondedExecutingTasks(ts);
+
+		and.then(result).as("DAO result returned").isEqualTo(resetCount);
 	}
 
 }

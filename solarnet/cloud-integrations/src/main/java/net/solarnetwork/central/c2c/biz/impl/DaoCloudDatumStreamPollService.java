@@ -495,8 +495,7 @@ public class DaoCloudDatumStreamPollService
 
 	@Override
 	public int resetAbandondedExecutingTasks(Instant olderThan) {
-		// TODO Auto-generated method stub
-		return 0;
+		return taskDao.resetAbandondedExecutingTasks(olderThan);
 	}
 
 	/**
