@@ -167,7 +167,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
 			log.trace("Gap fill query user {} node {} source [{}] for {} between {} - {} found {}",
 					userId, objectId, sourceId, gfc.getMax(), gfc.getStartDate(), gfc.getEndDate(),
-					daoResults.getReturnedResultCount());
+					gapFillResults.getReturnedResultCount());
 
 			processQueryResults(userId, kind, objectId, sourceId, list, gapFillResults, auditor);
 		}
