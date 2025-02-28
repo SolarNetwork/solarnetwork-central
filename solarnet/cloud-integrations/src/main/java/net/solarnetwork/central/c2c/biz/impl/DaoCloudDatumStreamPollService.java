@@ -361,7 +361,7 @@ public class DaoCloudDatumStreamPollService
 			filter.setEndDate(clock.instant());
 
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
-					eventForConfiguration(datumStream.getId(), POLL_TAGS, "Polling for datum.",
+					eventForConfiguration(datumStream.getId(), POLL_TAGS, "Poll for datum",
 							Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 									taskInfo.getStartAt(), "endAt", filter.getEndDate(), "startedAt",
 									execTime)));
@@ -472,7 +472,7 @@ public class DaoCloudDatumStreamPollService
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
 			} else {
-				var msg = "Reset task state.";
+				var msg = "Reset task state";
 				var data = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 						taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
