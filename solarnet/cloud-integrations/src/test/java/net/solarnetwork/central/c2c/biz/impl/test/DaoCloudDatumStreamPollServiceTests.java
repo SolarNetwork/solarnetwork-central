@@ -310,7 +310,6 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.as("Task dates provided in event data")
 			.returns(Map.of(
 					"configId", datumStream.getConfigId(),
-					"source", "(%d,%d)".formatted(TEST_USER_ID, datumStream.getConfigId()),
 					"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
 					"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp())
 				), from(e -> JsonUtils.getStringMap(e.getData())))

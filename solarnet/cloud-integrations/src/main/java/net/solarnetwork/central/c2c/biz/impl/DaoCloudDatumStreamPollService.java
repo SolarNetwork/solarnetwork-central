@@ -461,14 +461,14 @@ public class DaoCloudDatumStreamPollService
 				log.warn("Failed to reset poll task {} to execution @ {} starting @ {}",
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to reset task state.";
-				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent, "executeAt",
-						taskInfo.getExecuteAt(), "startAt", taskInfo.getStartAt());
+				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
+						taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state.";
-				var data = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent, "executeAt",
-						taskInfo.getExecuteAt(), "startAt", taskInfo.getStartAt());
+				var data = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
+						taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
 						eventForConfiguration(datumStream.getId(), POLL_TAGS, msg, data));
 			}
