@@ -271,6 +271,9 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 					errorEventTags, format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(description, e.getMessage()), e);
+		} catch ( RemoteServiceException e ) {
+			// assume already logged
+			throw e;
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
