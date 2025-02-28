@@ -360,6 +360,12 @@ public class DaoCloudDatumStreamPollService
 			filter.setStartDate(taskInfo.getStartAt());
 			filter.setEndDate(clock.instant());
 
+			userEventAppenderBiz.addEvent(datumStream.getUserId(),
+					eventForConfiguration(datumStream.getId(), POLL_TAGS, "Polling for datum.",
+							Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
+									taskInfo.getStartAt(), "endAt", filter.getEndDate(), "startedAt",
+									execTime)));
+
 			log.debug("Polling for {} datum with filter {}", datumStreamIdent, filter);
 			final var polledDatum = datumStreamService.datum(datumStream, filter);
 

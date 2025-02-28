@@ -301,18 +301,39 @@ public class DaoCloudDatumStreamPollServiceTests {
 			.returns(null, from(CloudDatumStreamPollTaskEntity::getServiceProperties))
 			;
 
-		then(userEventAppenderBiz).should().addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
-		and.then(logEventCaptor.getValue())
-			.as("Task success reset event generated")
-			.isNotNull()
-			.as("Poll tags provided in event")
-			.returns(CloudIntegrationsUserEvents.POLL_TAGS, from(LogEventInfo::getTags))
-			.as("Task dates provided in event data")
-			.returns(Map.of(
-					"configId", datumStream.getConfigId(),
-					"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
-					"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp())
-				), from(e -> JsonUtils.getStringMap(e.getData())))
+		then(userEventAppenderBiz).should(times(2)).addEvent(eq(TEST_USER_ID), logEventCaptor.capture());
+		and.then(logEventCaptor.getAllValues())
+			.as("Events for start/reset generated")
+			.hasSize(2)
+			.satisfies(events -> {
+				and.then(events).element(0)
+					.as("Task start event generated")
+					.isNotNull()
+					.as("Poll tags provided in event")
+					.returns(CloudIntegrationsUserEvents.POLL_TAGS, from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							"configId", datumStream.getConfigId(),
+							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt()),
+							"startAt", ISO_DATE_TIME_ALT_UTC.format(task.getStartAt()),
+							"endAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant()),
+							"startedAt", ISO_DATE_TIME_ALT_UTC.format(clock.instant())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+
+				and.then(events).element(1)
+					.as("Task success reset event generated")
+					.isNotNull()
+					.as("Poll tags provided in event")
+					.returns(CloudIntegrationsUserEvents.POLL_TAGS, from(LogEventInfo::getTags))
+					.as("Task dates provided in event data")
+					.returns(Map.of(
+							"configId", datumStream.getConfigId(),
+							"executeAt", ISO_DATE_TIME_ALT_UTC.format(task.getExecuteAt().plusSeconds(300)),
+							"startAt", ISO_DATE_TIME_ALT_UTC.format(datum2.getTimestamp())
+						), from(e -> JsonUtils.getStringMap(e.getData())))
+					;
+			})
 			;
 
 		and.then(resultTask)
