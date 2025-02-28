@@ -35,6 +35,7 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.domain.SimpleSortDescriptor;
@@ -56,7 +57,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private static final Logger log = LoggerFactory.getLogger(QueryingDatumStreamsAccessor.class);
 
 	private static final List<SortDescriptor> SORT_BY_DATE_DESCENDING = List
-			.of(new SimpleSortDescriptor("time", true));
+			.of(new SimpleSortDescriptor(DatumSqlUtils.SORT_BY_TIME, true));
 
 	/** The maximum start date duration to use when querying. */
 	public static final Duration DEFAULT_MAX_START_DATE_DURATION = Duration.ofDays(90);
