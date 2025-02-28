@@ -148,7 +148,7 @@ public interface CloudIntegrationsUserEvents {
 	 * @return the log event
 	 */
 	static LogEventInfo eventForConfiguration(UserRelatedCompositeKey<?> configId, String[] baseTags,
-			String message, Map<String, Object> parameters, String... extraTags) {
+			String message, Map<String, ?> parameters, String... extraTags) {
 		Map<String, Object> data = new LinkedHashMap<>(parameters);
 		populateUserRelatedKeyEventParameters(configId, data);
 		return event(baseTags, message, getJSONString(data, null), extraTags);

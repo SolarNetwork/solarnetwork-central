@@ -45,12 +45,14 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
+import net.solarnetwork.central.scheduler.ThreadPoolTaskExecutorPingTest;
+import net.solarnetwork.service.PingTest;
 
 /**
  * Cloud integrations datum stream poll configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -85,6 +87,20 @@ public class CloudIntegrationsDatumStreamPollConfig implements SolarNetCloudInte
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		executor.setThreadNamePrefix("SolarNet-C2C-Ds-Poll-");
 		return executor;
+	}
+
+	/**
+	 * Expose a ping test for the task scheduler.
+	 *
+	 * @param taskScheduler
+	 *        the scheduler
+	 * @return the ping test
+	 * @since 1.2
+	 */
+	@Bean
+	public PingTest cloudDatumStreamPollExecutorPingTest(
+			@Qualifier(CLOUD_INTEGRATIONS_POLL) ThreadPoolTaskExecutor taskExecutor) {
+		return new ThreadPoolTaskExecutorPingTest(taskExecutor);
 	}
 
 	@ConfigurationProperties(prefix = "app.c2c.ds-poll.service")

@@ -63,7 +63,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudDatumStreamPollTaskDao} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -603,15 +603,18 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 			CloudDatumStreamPollTaskEntity conf = newCloudDatumStreamPollTaskEntity(userId,
 					datumStream.getConfigId(),
 					i == 0 || RNG.nextBoolean() ? BasicClaimableJobState.Executing
-							: BasicClaimableJobState.Queued,
+							: RNG.nextBoolean() ? BasicClaimableJobState.Claimed
+									: BasicClaimableJobState.Queued,
 					start.plusSeconds(60 * i), now().truncatedTo(ChronoUnit.DAYS), randomString(), null);
 			pollTasks.add(dao.get(dao.save(conf)));
 		}
 
-		final List<CloudDatumStreamPollTaskEntity> executingTasks = pollTasks.stream()
-				.filter(e -> e.getState() == BasicClaimableJobState.Executing).toList();
-		final CloudDatumStreamPollTaskEntity randomExecutingTask = executingTasks
-				.get(RNG.nextInt(executingTasks.size()));
+		final List<CloudDatumStreamPollTaskEntity> tasksToReset = pollTasks.stream()
+				.filter(e -> e.getState() == BasicClaimableJobState.Executing
+						|| e.getState() == BasicClaimableJobState.Claimed)
+				.toList();
+		final CloudDatumStreamPollTaskEntity randomExecutingTask = tasksToReset
+				.get(RNG.nextInt(tasksToReset.size()));
 
 		allCloudDatumStreamPollTaskEntityData(jdbcTemplate);
 
@@ -620,7 +623,7 @@ public class JdbcCloudDatumStreamPollTaskDaoTests extends AbstractJUnit5JdbcDaoT
 		int count = dao.resetAbandondedExecutingTasks(minimumDate);
 
 		// THEN
-		final int expectedCount = (int) executingTasks.stream()
+		final int expectedCount = (int) tasksToReset.stream()
 				.filter(e -> e.getExecuteAt().isBefore(minimumDate)).count();
 		// @formatter:off
 		then(count)

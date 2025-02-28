@@ -23,10 +23,15 @@
 package net.solarnetwork.central.c2c.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPollTaskEntity;
 import net.solarnetwork.central.scheduler.JobSupport;
+import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * Job to process ready-to-execute cloud datum stream polling tasks.
@@ -60,6 +65,7 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 
 	@Override
 	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
+		final long maxWaitMs = getMaximumWaitMs();
 		int count = 0;
 		while ( remainingIterations.getAndDecrement() > 0 ) {
 			CloudDatumStreamPollTaskEntity task = service.claimQueuedTask();
@@ -67,7 +73,18 @@ public class CloudDatumStreamPollTaskProcessor extends JobSupport {
 				break;
 			}
 			count++;
-			service.executeTask(task);
+			Future<?> f = service.executeTask(task);
+			try {
+				f.get(maxWaitMs, TimeUnit.MILLISECONDS);
+			} catch ( TimeoutException e ) {
+				log.info("Timeout waiting for task [{}] to complete within {}ms; moving on",
+						task.getId(), maxWaitMs);
+			} catch ( ExecutionException e ) {
+				Throwable t = e.getCause();
+				if ( !(t instanceof RemoteServiceException) ) {
+					log.warn("Exception processing task [{}]; moving on", task.getId(), t);
+				}
+			}
 		}
 		return count;
 	}
