@@ -56,7 +56,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 	private static final Logger log = LoggerFactory.getLogger(QueryingDatumStreamsAccessor.class);
 
 	private static final List<SortDescriptor> SORT_BY_DATE_DESCENDING = List
-			.of(new SimpleSortDescriptor("date", true));
+			.of(new SimpleSortDescriptor("time", true));
 
 	/** The maximum start date duration to use when querying. */
 	public static final Duration DEFAULT_MAX_START_DATE_DURATION = Duration.ofDays(90);
