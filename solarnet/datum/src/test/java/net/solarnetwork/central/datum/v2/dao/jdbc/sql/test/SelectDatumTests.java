@@ -24,6 +24,8 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils.SQL_COMMENT;
 import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
@@ -47,6 +49,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -58,13 +61,15 @@ import org.springframework.jdbc.core.SqlProvider;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectDatum;
+import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link SelectDatum} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SelectDatumTests {
 
@@ -1016,6 +1021,29 @@ public class SelectDatumTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql, equalToTextResource("select-datum-hoy-nodesAndSources-dates.sql",
 				TestSqlResources.class, SQL_COMMENT));
+	}
+
+	@Test
+	public void sql_find_reverse_limit() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Node);
+		filter.setNodeId(randomLong());
+		filter.setSourceId(randomString());
+		filter.setSorts(List.of(new SimpleSortDescriptor("time", true)));
+		filter.setUserId(randomLong());
+		filter.setStartDate(Instant.now().minusSeconds(1));
+		filter.setEndDate(filter.getStartDate().plusSeconds(1));
+		filter.setMax(1);
+
+		// WHEN
+		String sql = new SelectDatum(filter).getSql();
+
+		// THEN
+		log.info("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql,
+				equalToTextResource("select-datum-node-source-user-time-reverse-limit.sql",
+						TestSqlResources.class, SQL_COMMENT));
 	}
 
 }

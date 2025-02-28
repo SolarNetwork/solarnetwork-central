@@ -1,0 +1,49 @@
+{
+    "powerDetails": {
+        "timeUnit": "QUARTER_OF_AN_HOUR",
+        "unit": "W",
+        "meters": [
+            {
+                "type": "Consumption",
+                "values": [
+                    {
+                        "date": "2025-02-27 11:45:00"
+                    }
+                ]
+            },
+            {
+                "type": "FeedIn",
+                "values": [
+                    {
+                        "date": "2025-02-27 11:45:00"
+                    }
+                ]
+            },
+            {
+                "type": "Purchased",
+                "values": [
+                    {
+                        "date": "2025-02-27 11:45:00"
+                    }
+                ]
+            },
+            {
+                "type": "SelfConsumption",
+                "values": [
+                    {
+                        "date": "2025-02-27 11:45:00"
+                    }
+                ]
+            },
+            {
+                "type": "Production",
+                "values": [
+                    {
+                        "date": "2025-02-27 11:45:00",
+                        "value": 11059.199
+                    }
+                ]
+            }
+        ]
+    }
+}

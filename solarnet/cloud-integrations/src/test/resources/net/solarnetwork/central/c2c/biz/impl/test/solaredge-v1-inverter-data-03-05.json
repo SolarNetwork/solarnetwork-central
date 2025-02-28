@@ -1,0 +1,130 @@
+{
+    "data": {
+        "count": 3,
+        "telemetries": [
+            {
+                "date": "2025-02-27 11:46:02",
+                "totalActivePower": 1570,
+                "dcVoltage": 398.812,
+                "groundFaultResistance": 7760.31,
+                "powerLimit": 100,
+                "totalEnergy": 129393000,
+                "temperature": 30.5112,
+                "inverterMode": "MPPT",
+                "operationMode": 0,
+                "vL1To2": 208.969,
+                "vL2To3": 208.625,
+                "vL3To1": 209.156,
+                "L1Data": {
+                    "acCurrent": 4.36719,
+                    "acVoltage": 121.562,
+                    "acFrequency": 60.0022,
+                    "apparentPower": 528,
+                    "activePower": 527,
+                    "reactivePower": -33,
+                    "cosPhi": 1
+                },
+                "L2Data": {
+                    "acCurrent": 4.3125,
+                    "acVoltage": 120.453,
+                    "acFrequency": 60.0027,
+                    "apparentPower": 519,
+                    "activePower": 527,
+                    "reactivePower": -45,
+                    "cosPhi": 1
+                },
+                "L3Data": {
+                    "acCurrent": 4.29688,
+                    "acVoltage": 120.141,
+                    "acFrequency": 60.002,
+                    "apparentPower": 520,
+                    "activePower": 516,
+                    "reactivePower": -55,
+                    "cosPhi": 1
+                }
+            },
+            {
+                "date": "2025-02-27 11:51:02",
+                "totalActivePower": 1560,
+                "dcVoltage": 399.125,
+                "groundFaultResistance": 7760.31,
+                "powerLimit": 100,
+                "totalEnergy": 129393000,
+                "temperature": 30.392,
+                "inverterMode": "MPPT",
+                "operationMode": 0,
+                "vL1To2": 208.812,
+                "vL2To3": 208.25,
+                "vL3To1": 209.031,
+                "L1Data": {
+                    "acCurrent": 4.32812,
+                    "acVoltage": 121.5,
+                    "acFrequency": 59.9786,
+                    "apparentPower": 524,
+                    "activePower": 520,
+                    "reactivePower": -64,
+                    "cosPhi": 1
+                },
+                "L2Data": {
+                    "acCurrent": 4.35938,
+                    "acVoltage": 120.328,
+                    "acFrequency": 59.9808,
+                    "apparentPower": 523,
+                    "activePower": 520,
+                    "reactivePower": -64,
+                    "cosPhi": 1
+                },
+                "L3Data": {
+                    "acCurrent": 4.33594,
+                    "acVoltage": 120.062,
+                    "acFrequency": 59.9803,
+                    "apparentPower": 526,
+                    "activePower": 520,
+                    "reactivePower": -56,
+                    "cosPhi": 1
+                }
+            },
+            {
+                "date": "2025-02-27 11:56:02",
+                "totalActivePower": 1556,
+                "dcVoltage": 398.75,
+                "groundFaultResistance": 7760.31,
+                "powerLimit": 100,
+                "totalEnergy": 129393000,
+                "temperature": 30.4218,
+                "inverterMode": "MPPT",
+                "operationMode": 0,
+                "vL1To2": 208.531,
+                "vL2To3": 208.375,
+                "vL3To1": 208.719,
+                "L1Data": {
+                    "acCurrent": 4.34375,
+                    "acVoltage": 121.453,
+                    "acFrequency": 59.9896,
+                    "apparentPower": 525,
+                    "activePower": 521,
+                    "reactivePower": -64,
+                    "cosPhi": 1
+                },
+                "L2Data": {
+                    "acCurrent": 4.30469,
+                    "acVoltage": 120.188,
+                    "acFrequency": 59.9871,
+                    "apparentPower": 517,
+                    "activePower": 521,
+                    "reactivePower": -45,
+                    "cosPhi": 1
+                },
+                "L3Data": {
+                    "acCurrent": 4.28125,
+                    "acVoltage": 120.047,
+                    "acFrequency": 59.989,
+                    "apparentPower": 519,
+                    "activePower": 514,
+                    "reactivePower": -55,
+                    "cosPhi": 1
+                }
+            }
+        ]
+    }
+}

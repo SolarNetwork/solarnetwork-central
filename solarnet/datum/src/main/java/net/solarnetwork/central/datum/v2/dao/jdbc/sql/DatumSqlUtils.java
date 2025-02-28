@@ -70,7 +70,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -86,6 +86,64 @@ public final class DatumSqlUtils {
 	 * character.
 	 */
 	public static final Pattern SQL_COMMENT = Pattern.compile("^\\s*--");
+
+	/**
+	 * A sort descriptor name for sorting by datum stream kind (node, location).
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_KIND = "kind";
+
+	/**
+	 * A sort descriptor name for sorting by time.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_TIME = "time";
+
+	/**
+	 * A sort descriptor name for sorting by creation date, often an alias for
+	 * {@link #SORT_BY_TIME}.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_CREATED = "created";
+
+	/**
+	 * A sort descriptor name for sorting by node ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_NODE = "node";
+
+	/**
+	 * A sort descriptor name for sorting by location ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_LOCATION = "loc";
+
+	/**
+	 * A sort descriptor name for sorting by object ID (node, location, and so
+	 * on).
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_OBJECT = "obj";
+
+	/**
+	 * A sort descriptor name for sorting by source ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_SOURCE = "source";
+
+	/**
+	 * A sort descriptor name for sorting by datum stream ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_STREAM = "stream";
 
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
@@ -107,9 +165,9 @@ public final class DatumSqlUtils {
 
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("kind", "agg_kind");
-		map.put("stream", "stream_id");
-		map.put("time", "ts_start");
+		map.put(SORT_BY_KIND, "agg_kind");
+		map.put(SORT_BY_STREAM, "stream_id");
+		map.put(SORT_BY_TIME, "ts_start");
 		STALE_AGGREGATE_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -135,11 +193,11 @@ public final class DatumSqlUtils {
 
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("loc", "obj_id");
-		map.put("node", "obj_id");
-		map.put("obj", "obj_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
+		map.put(SORT_BY_LOCATION, "obj_id");
+		map.put(SORT_BY_NODE, "obj_id");
+		map.put(SORT_BY_OBJECT, "obj_id");
+		map.put(SORT_BY_SOURCE, "source_id");
+		map.put(SORT_BY_STREAM, "stream_id");
 		STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -163,9 +221,9 @@ public final class DatumSqlUtils {
 
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("node", "node_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
+		map.put(SORT_BY_NODE, "node_id");
+		map.put(SORT_BY_SOURCE, "source_id");
+		map.put(SORT_BY_STREAM, "stream_id");
 		NODE_STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -190,8 +248,8 @@ public final class DatumSqlUtils {
 	static {
 		Map<String, String> map = new LinkedHashMap<>(5);
 		map.putAll(NODE_STREAM_METADATA_SORT_KEY_MAPPING);
-		map.put("created", "ts");
-		map.put("time", "ts");
+		map.put(SORT_BY_CREATED, "ts");
+		map.put(SORT_BY_TIME, "ts");
 		NODE_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -215,9 +273,9 @@ public final class DatumSqlUtils {
 
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("loc", "loc_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
+		map.put(SORT_BY_LOCATION, "loc_id");
+		map.put(SORT_BY_SOURCE, "source_id");
+		map.put(SORT_BY_STREAM, "stream_id");
 		LOCATION_STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -242,8 +300,8 @@ public final class DatumSqlUtils {
 	static {
 		Map<String, String> map = new LinkedHashMap<>(5);
 		map.putAll(LOCATION_STREAM_METADATA_SORT_KEY_MAPPING);
-		map.put("created", "ts");
-		map.put("time", "ts");
+		map.put(SORT_BY_CREATED, "ts");
+		map.put(SORT_BY_TIME, "ts");
 		LOCATION_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -268,10 +326,10 @@ public final class DatumSqlUtils {
 
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("created", "aud_ts");
-		map.put("node", "aud_node_id");
-		map.put("source", "aud_source_id");
-		map.put("time", "aud_ts");
+		map.put(SORT_BY_CREATED, "aud_ts");
+		map.put(SORT_BY_NODE, "aud_node_id");
+		map.put(SORT_BY_SOURCE, "aud_source_id");
+		map.put(SORT_BY_TIME, "aud_ts");
 		AUDIT_DATUM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
