@@ -149,7 +149,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
 				.findFiltered(c);
 
-		log.trace("Query user {} node {} source [{}] for {} between {} - {} found {}", userId, objectId,
+		log.debug("Query user {} node {} source [{}] for {} between {} - {} found {}", userId, objectId,
 				sourceId, c.getMax(), c.getStartDate(), c.getEndDate(),
 				daoResults.getReturnedResultCount());
 
@@ -165,7 +165,7 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			gfc.setMax(maxAllowedResults);
 			var gapFillResults = datumDao.findFiltered(gfc);
 
-			log.trace("Gap fill query user {} node {} source [{}] for {} between {} - {} found {}",
+			log.debug("Gap fill query user {} node {} source [{}] for {} between {} - {} found {}",
 					userId, objectId, sourceId, gfc.getMax(), gfc.getStartDate(), gfc.getEndDate(),
 					gapFillResults.getReturnedResultCount());
 
