@@ -214,7 +214,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 			uri = setup.apply(headers);
 			userEventAppenderBiz.addEvent(configuration.getUserId(),
 					eventForConfiguration(configuration.getId(), eventTags, description,
-							Map.of("method", method, "uri", uri)));
+							Map.of("method", method.toString(), "uri", uri.toString())));
 
 			final ResponseEntity<R> res = restOps.exchange(uri, method, req, responseType);
 			return handler.apply(res);
