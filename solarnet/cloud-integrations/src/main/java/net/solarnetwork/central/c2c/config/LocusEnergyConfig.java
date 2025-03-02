@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTTP_TRACE;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
 import java.util.Arrays;
@@ -35,7 +36,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.env.Environment;
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -45,15 +48,16 @@ import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2A
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
-import org.springframework.security.oauth2.client.endpoint.DefaultRefreshTokenTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.RestClientRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
-import org.springframework.web.client.RestOperations;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -79,7 +83,7 @@ import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientM
  * Configuration for the Locus Energy cloud integration services.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -110,7 +114,7 @@ public class LocusEnergyConfig {
 	private ClientHttpRequestFactory reqFactory;
 
 	@Autowired
-	private RestOperations restOps;
+	private RestTemplate restOps;
 
 	@Autowired
 	@Qualifier(CLOUD_INTEGRATIONS)
@@ -135,6 +139,9 @@ public class LocusEnergyConfig {
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
+	@Autowired
+	private Environment environment;
+
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
 	public OAuth2AuthorizedClientManager locusEnergyOauthAuthorizedClientManager(@Autowired(
@@ -151,12 +158,17 @@ public class LocusEnergyConfig {
 
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()
-				.requestFactory(() -> reqFactory)
+				.requestFactory(() -> environment.matchesProfiles(HTTP_TRACE)
+						? new BufferingClientHttpRequestFactory(reqFactory)
+						: reqFactory)
 				.messageConverters(Arrays.asList(
 						new FormHttpMessageConverter(),
 						new OAuth2AccessTokenResponseHttpMessageConverter()))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())
+				.interceptors(restOps.getInterceptors())
 				.build();
+
+		var authRestClient = RestClient.create(authRestOps);
 		// @formatter:on
 
 		@SuppressWarnings("deprecation")
@@ -166,12 +178,12 @@ public class LocusEnergyConfig {
 					client.setRestOperations(authRestOps);
 					b.accessTokenResponseClient(client);
 				}).clientCredentials(b -> {
-					var client = new DefaultClientCredentialsTokenResponseClient();
-					client.setRestOperations(authRestOps);
+					var client = new RestClientClientCredentialsTokenResponseClient();
+					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);
 				}).refreshToken(b -> {
-					var client = new DefaultRefreshTokenTokenResponseClient();
-					client.setRestOperations(authRestOps);
+					var client = new RestClientRefreshTokenTokenResponseClient();
+					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);
 				}).build();
 
