@@ -35,6 +35,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -87,6 +89,8 @@ public class JdbcOAuth2AuthorizedClientService
 
 	/** The default SQL table name to use. */
 	public static final String DEFAULT_TABLE_NAME = "solarnet.oauth2_authorized_client";
+
+	private static final Logger log = LoggerFactory.getLogger(JdbcOAuth2AuthorizedClientService.class);
 
 	private static final String LOAD_AUTHORIZED_CLIENT_SQL_TMPL = """
 			SELECT user_id
@@ -421,7 +425,15 @@ public class JdbcOAuth2AuthorizedClientService
 			OAuth2RefreshToken refreshToken = null;
 			byte[] refreshTokenValue = rs.getBytes(9);
 			if ( refreshTokenValue != null ) {
-				tokenValue = new String(encryptor.decrypt(refreshTokenValue), UTF_8);
+				try {
+					tokenValue = new String(encryptor.decrypt(refreshTokenValue), UTF_8);
+				} catch ( Exception e ) {
+					// fall back to unencrypted
+					log.warn(
+							"Exception decrypting user {} OAuth authorized client [{}] refresh token value; will treat as unencrypted: {}",
+							rs.getObject(1, Long.class), clientRegistrationId, e.toString());
+					tokenValue = new String(refreshTokenValue, UTF_8);
+				}
 				issuedAt = getTimestampInstant(rs, 10);
 				refreshToken = new OAuth2RefreshToken(tokenValue, issuedAt);
 			}
@@ -449,7 +461,17 @@ public class JdbcOAuth2AuthorizedClientService
 			result.setAccessTokenScopes(StringUtils.commaDelimitedListToSet(rs.getString(8)));
 			byte[] refreshTokenValue = rs.getBytes(9);
 			if ( refreshTokenValue != null ) {
-				result.setRefreshToken(encryptor.decrypt(refreshTokenValue));
+
+				try {
+					result.setRefreshToken(encryptor.decrypt(refreshTokenValue));
+				} catch ( Exception e ) {
+					// fall back to unencrypted
+					log.warn(
+							"Exception decrypting user {} OAuth authorized client [{}] refresh token value; will treat as unencrypted: {}",
+							userId, clientRegistrationId, e.toString());
+					result.setRefreshToken(refreshTokenValue);
+				}
+
 				result.setRefreshTokenIssuedAt(getTimestampInstant(rs, 10));
 			}
 

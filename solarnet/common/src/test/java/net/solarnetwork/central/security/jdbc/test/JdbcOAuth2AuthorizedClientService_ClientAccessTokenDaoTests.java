@@ -36,9 +36,11 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
@@ -211,6 +213,83 @@ public class JdbcOAuth2AuthorizedClientService_ClientAccessTokenDaoTests
 		then(result)
 			.as("Authorized client not found in database")
 			.isNull()
+			;
+		// @formatter:on
+	}
+
+	/** The INSERT SQL for auth client. */
+	public static final String SAVE_AUTHORIZED_CLIENT_SQL = """
+			INSERT INTO %s (
+				  user_id
+				, client_registration_id
+				, principal_name
+				, access_token_type
+				, access_token_value
+				, access_token_issued_at
+				, access_token_expires_at
+				, access_token_scopes
+				, refresh_token_value
+				, refresh_token_issued_at
+				, created_at
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT (user_id, client_registration_id , principal_name) DO UPDATE
+			SET access_token_type = EXCLUDED.access_token_type
+				, access_token_value = EXCLUDED.access_token_value
+				, access_token_issued_at = EXCLUDED.access_token_issued_at
+				, access_token_expires_at = EXCLUDED.access_token_expires_at
+				, access_token_scopes = EXCLUDED.access_token_scopes
+				, refresh_token_value = EXCLUDED.refresh_token_value
+				, refresh_token_issued_at = EXCLUDED.refresh_token_issued_at
+			""".formatted(JdbcOAuth2AuthorizedClientService.DEFAULT_TABLE_NAME);
+
+	/**
+	 * Save an entity manually.
+	 * 
+	 * <p>
+	 * Note that <b>scopes</b> are not supported.
+	 * </p>
+	 * 
+	 * @param entity
+	 *        the entity to save
+	 */
+	public static void save(JdbcOperations jdbcOps, ClientAccessTokenEntity entity) {
+		jdbcOps.update(SAVE_AUTHORIZED_CLIENT_SQL, entity.getUserId(), entity.getRegistrationId(),
+				entity.getPrincipalName(), entity.getAccessTokenType(), entity.getAccessToken(),
+				Timestamp.from(entity.getAccessTokenIssuedAt()),
+				Timestamp.from(entity.getAccessTokenExpiresAt()), null, entity.getRefreshToken(),
+				Timestamp.from(entity.getRefreshTokenIssuedAt()), Timestamp.from(entity.getCreated()));
+	}
+
+	@Test
+	public void select_unencryptedRefreshToken() {
+		// GIVEN
+		final ClientAccessTokenEntity entity = new ClientAccessTokenEntity(userId, randomString(),
+				randomString(), now().truncatedTo(ChronoUnit.MILLIS));
+		entity.setAccessTokenType(randomString());
+		entity.setAccessToken(randomString().getBytes(UTF_8));
+		entity.setAccessTokenIssuedAt(now().truncatedTo(ChronoUnit.MILLIS));
+		entity.setAccessTokenExpiresAt(entity.getAccessTokenIssuedAt().plusSeconds(3600L));
+		entity.setAccessTokenScopes(Set.of());
+		entity.setRefreshToken(randomString().getBytes(UTF_8));
+		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));
+
+		save(jdbcTemplate, entity);
+
+		// WHEN
+		ClientAccessTokenEntity result = service.get(entity.getId());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Authorized client returned from database")
+			.isNotNull()
+			.as("Identity populated from database")
+			.isEqualTo(entity)
+			.as("Data properties populated from database")
+			.returns(true, from(e -> e.isSameAs(entity)))
+			.as("Creation date populated from database")
+			.returns(entity.getCreated(), from(ClientAccessTokenEntity::getCreated))
 			;
 		// @formatter:on
 	}
