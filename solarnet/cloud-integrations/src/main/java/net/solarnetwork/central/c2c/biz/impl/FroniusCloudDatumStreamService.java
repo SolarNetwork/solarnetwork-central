@@ -34,7 +34,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDat
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
-import java.time.InstantSource;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -94,8 +94,6 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		SETTINGS = List.of();
 	}
 
-	private InstantSource clock;
-
 	/**
 	 * Constructor.
 	 *
@@ -126,15 +124,14 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			InstantSource clock) {
-		super(SERVICE_IDENTIFIER, "Fronius Datum Stream Service", userEventAppenderBiz, encryptor,
+			Clock clock) {
+		super(SERVICE_IDENTIFIER, "Fronius Datum Stream Service", clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new FroniusRestOperationsHelper(
 						LoggerFactory.getLogger(FroniusCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> FroniusCloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
