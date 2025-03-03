@@ -77,6 +77,15 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 	/** The API key query parameter. */
 	public static final String API_KEY_PARAM = "key";
 
+	/** The 1-based page query parameter. */
+	public static final String PAGE_PARAM = "page";
+
+	/** The page size query parameter, between 1 - 100. */
+	public static final String PAGE_SIZE_PARAM = "size";
+
+	/** The maximum page size allowed. */
+	public static final int MAX_PAGE_SIZE = 100;
+
 	/**
 	 * The well-known URLs.
 	 */
@@ -195,8 +204,7 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
 							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL)
 							.queryParam(API_KEY_PARAM,
-									decrypted.serviceProperty(CloudIntegrationService.API_KEY_SETTING,
-											String.class))
+									decrypted.serviceProperty(API_KEY_SETTING, String.class))
 							.buildAndExpand().toUri(),
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);

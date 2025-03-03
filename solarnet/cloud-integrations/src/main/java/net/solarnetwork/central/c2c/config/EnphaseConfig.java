@@ -27,7 +27,7 @@ import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +48,6 @@ import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2A
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
-import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
-import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.RestClientRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -61,9 +59,12 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
+import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService;
+import net.solarnetwork.central.c2c.biz.impl.BaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.EnphaseCloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -176,17 +177,8 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 		var authRestClient = RestClient.create(authRestOps);
 		// @formatter:on
 
-		@SuppressWarnings("deprecation")
 		OAuth2AuthorizedClientProvider provider = OAuth2AuthorizedClientProviderBuilder.builder()
-				.password(b -> {
-					var client = new DefaultPasswordTokenResponseClient();
-					client.setRestOperations(authRestOps);
-					b.accessTokenResponseClient(client);
-				}).clientCredentials(b -> {
-					var client = new RestClientClientCredentialsTokenResponseClient();
-					client.setRestClient(authRestClient);
-					b.accessTokenResponseClient(client);
-				}).refreshToken(b -> {
+				.refreshToken(b -> {
 					var client = new RestClientRefreshTokenTokenResponseClient();
 					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);
@@ -201,10 +193,10 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Bean
 	@Qualifier(ENPHASE)
 	public CloudIntegrationService enphaseCloudIntegrationService(
-			@Qualifier(ENPHASE) OAuth2AuthorizedClientManager oauthClientManager/*- TODO,
-			@Qualifier(ENPHASE) Collection<CloudDatumStreamService> datumStreamServices*/) {
-		var service = new EnphaseCloudIntegrationService(List.of(), userEventAppender, encryptor,
-				restOps, oauthClientManager, Clock.systemUTC(), integrationLocksCache);
+			@Qualifier(ENPHASE) OAuth2AuthorizedClientManager oauthClientManager,
+			@Qualifier(ENPHASE) Collection<CloudDatumStreamService> datumStreamServices) {
+		var service = new EnphaseCloudIntegrationService(datumStreamServices, userEventAppender,
+				encryptor, restOps, oauthClientManager, Clock.systemUTC(), integrationLocksCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(EnphaseCloudIntegrationService.class.getName(),
@@ -216,4 +208,24 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 		return service;
 	}
 
+	@Bean
+	@Qualifier(ENPHASE)
+	public CloudDatumStreamService enphaseCloudDatumStreamService(
+			@Qualifier(ENPHASE) OAuth2AuthorizedClientManager oauthClientManager) {
+		var service = new EnphaseCloudDatumStreamService(userEventAppender, encryptor, expressionService,
+				integrationConfigurationDao, datumStreamConfigurationDao,
+				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
+				oauthClientManager, Clock.systemUTC(), integrationLocksCache);
+
+		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
+		msgSource.setBasenames(EnphaseCloudDatumStreamService.class.getName(),
+				BaseCloudDatumStreamService.class.getName());
+		service.setMessageSource(msgSource);
+
+		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
+
+		return service;
+	}
 }

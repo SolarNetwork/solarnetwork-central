@@ -1,0 +1,54 @@
+{
+  "total": 2,
+  "current_page": 1,
+  "size": 10,
+  "count": 2,
+  "items": "systems",
+  "systems": [
+    {
+      "system_id": 2875,
+      "name": "Site 1",
+      "public_name": "Residential System",
+      "timezone": "US/Eastern",
+      "address": {
+        "city": "Anytown",
+        "state": "MD",
+        "country": "US",
+        "postal_code": "20906"
+      },
+      "connection_type": "cellular",
+      "status": "normal",
+      "last_report_at": 1740976229,
+      "last_energy_at": 1740969000,
+      "operational_at": 1657080000,
+      "attachment_type": "rack_mount",
+      "interconnect_date": 1657080000,
+      "energy_lifetime": -1,
+      "energy_today": -1,
+      "system_size": -1
+    },
+    {
+      "system_id": 5254,
+      "name": "Site 2",
+      "public_name": "Residential System",
+      "timezone": "US/Eastern",
+      "address": {
+        "city": "Greenwich",
+        "state": "CT",
+        "country": "US",
+        "postal_code": "06831"
+      },
+      "connection_type": "cellular",
+      "status": "normal",
+      "last_report_at": 1740978304,
+      "last_energy_at": 1740969900,
+      "operational_at": 1718633764,
+      "attachment_type": "rack_mount",
+      "interconnect_date": null,
+      "energy_lifetime": -1,
+      "energy_today": -1,
+      "system_size": -1,
+      "other_references": ["My House"]
+    }
+  ]
+}
