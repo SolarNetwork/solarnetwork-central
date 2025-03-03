@@ -22,14 +22,22 @@
 
 package net.solarnetwork.central.user.c2c.biz.impl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
 import static java.util.stream.Collectors.toUnmodifiableMap;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.util.CollectionUtils.getMapString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +51,9 @@ import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
@@ -71,11 +82,15 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
+import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
+import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
+import net.solarnetwork.central.domain.UserStringStringCompositePK;
+import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamPollTaskEntityInput;
@@ -95,7 +110,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -103,6 +118,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	public static final CloudDatumStreamSettings DEFAULT_DATUM_STREAM_SETTINGS = new BasicCloudDatumStreamSettings(
 			true, false);
 
+	private final InstantSource clock;
 	private final UserSettingsEntityDao userSettingsDao;
 	private final CloudIntegrationConfigurationDao integrationDao;
 	private final CloudDatumStreamConfigurationDao datumStreamDao;
@@ -110,6 +126,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	private final CloudDatumStreamMappingConfigurationDao datumStreamMappingDao;
 	private final CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao;
 	private final CloudDatumStreamPollTaskDao datumStreamPollTaskDao;
+	private final ClientAccessTokenDao clientAccessTokenDao;
 	private final TextEncryptor textEncryptor;
 	private final Map<String, CloudIntegrationService> integrationServices;
 	private final Map<String, CloudDatumStreamService> datumStreamServices;
@@ -121,6 +138,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	/**
 	 * Constructor.
 	 *
+	 * @param clock
+	 *        the clock
 	 * @param userSettingsDao
 	 *        the user settings DAO
 	 * @param integrationDao
@@ -135,6 +154,8 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 *        the datum stream property DAO
 	 * @param datumStreamPollTaskDao
 	 *        the datum stream poll task DAO
+	 * @param clientAccessTokenDao
+	 *        the client access token DAO
 	 * @param textEncryptor
 	 *        the encryptor to handle sensitive properties with
 	 * @param integrationServices
@@ -142,15 +163,17 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public DaoUserCloudIntegrationsBiz(UserSettingsEntityDao userSettingsDao,
+	public DaoUserCloudIntegrationsBiz(InstantSource clock, UserSettingsEntityDao userSettingsDao,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamSettingsEntityDao datumStreamSettingsDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
-			CloudDatumStreamPollTaskDao datumStreamPollTaskDao, TextEncryptor textEncryptor,
+			CloudDatumStreamPollTaskDao datumStreamPollTaskDao,
+			ClientAccessTokenDao clientAccessTokenDao, TextEncryptor textEncryptor,
 			Collection<CloudIntegrationService> integrationServices) {
 		super();
+		this.clock = requireNonNullArgument(clock, "clock");
 		this.userSettingsDao = requireNonNullArgument(userSettingsDao, "userSettingsDao");
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
@@ -162,6 +185,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 				"datumStreamPropertyDao");
 		this.datumStreamPollTaskDao = requireNonNullArgument(datumStreamPollTaskDao,
 				"datumStreamPollTaskDao");
+		this.clientAccessTokenDao = requireNonNullArgument(clientAccessTokenDao, "clientAccessTokenDao");
 		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
 		this.integrationServices = Collections
 				.unmodifiableMap(requireNonNullArgument(integrationServices, "integrationServices")
@@ -264,14 +288,93 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		C config = input.toEntity(id);
 
+		// handle OAuth raw token values
+		Map<String, Object> oauthTokenProperties = null;
+		if ( config instanceof CloudIntegrationConfiguration integration
+				&& integration.hasServiceProperty(OAUTH_CLIENT_ID_SETTING)
+				&& integration.hasServiceProperty(OAUTH_ACCESS_TOKEN_SETTING)
+				&& integration.hasServiceProperty(OAUTH_REFRESH_TOKEN_SETTING) ) {
+			oauthTokenProperties = new HashMap<>(integration.getServiceProps());
+		}
+
 		// make sensitive properties
 		config.maskSensitiveInformation(serviceSecureKeys::get, textEncryptor);
 
 		@SuppressWarnings("unchecked")
 		GenericDao<C, K> dao = genericDao((Class<C>) config.getClass());
 		K updatedId = requireNonNullObject(dao.save(config), id);
+		C result = requireNonNullObject(dao.get(updatedId), updatedId);
 
-		return requireNonNullObject(dao.get(updatedId), updatedId);
+		if ( oauthTokenProperties != null ) {
+			saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
+		}
+
+		return result;
+	}
+
+	private void saveOAuthTokens(UserIdentifiableSystem config,
+			Map<String, Object> oauthTokenProperties) {
+		final String clientId = getMapString(OAUTH_CLIENT_ID_SETTING, oauthTokenProperties);
+		final String accessTokenValue = getMapString(OAUTH_ACCESS_TOKEN_SETTING, oauthTokenProperties);
+		final String refreshTokenValue = getMapString(OAUTH_REFRESH_TOKEN_SETTING, oauthTokenProperties);
+		if ( clientId == null || accessTokenValue == null || refreshTokenValue == null ) {
+			return;
+		}
+
+		// try to extract expiration date from JWT
+		Instant accessTokenIssuedAt = null;
+		Instant accessTokenExpiresAt = null;
+		try {
+			JWT jwt = JWTParser.parse(accessTokenValue);
+			JWTClaimsSet claims = jwt.getJWTClaimsSet();
+			if ( claims != null ) {
+				Date exp = claims.getExpirationTime();
+				if ( exp != null ) {
+					accessTokenExpiresAt = exp.toInstant();
+				}
+				Date iat = claims.getIssueTime();
+				if ( iat != null ) {
+					accessTokenIssuedAt = iat.toInstant();
+				}
+			}
+		} catch ( Exception e ) {
+			// assume not a JWT, so abort as we have no
+		}
+		if ( accessTokenIssuedAt == null ) {
+			accessTokenIssuedAt = clock.instant();
+		}
+		if ( accessTokenExpiresAt == null ) {
+			accessTokenExpiresAt = accessTokenIssuedAt;
+		}
+
+		// try to extract issue date from JWT
+		Instant refreshTokenIssuedAt = null;
+		try {
+			JWT jwt = JWTParser.parse(refreshTokenValue);
+			JWTClaimsSet claims = jwt.getJWTClaimsSet();
+			if ( claims != null ) {
+				Date iat = claims.getIssueTime();
+				if ( iat != null ) {
+					refreshTokenIssuedAt = iat.toInstant();
+				}
+			}
+		} catch ( Exception e ) {
+			// assume not a JWT, so abort as we have no
+		}
+		if ( refreshTokenIssuedAt == null ) {
+			refreshTokenIssuedAt = clock.instant();
+		}
+
+		var tokenId = new UserStringStringCompositePK(config.getUserId(), config.systemIdentifier(),
+				clientId);
+		var registration = new ClientAccessTokenEntity(tokenId, clock.instant());
+		registration.setAccessTokenType("Bearer");
+		registration.setAccessToken(accessTokenValue.getBytes(UTF_8));
+		registration.setAccessTokenIssuedAt(accessTokenIssuedAt);
+		registration.setAccessTokenExpiresAt(accessTokenExpiresAt);
+		registration.setRefreshToken(refreshTokenValue.getBytes(UTF_8));
+		registration.setRefreshTokenIssuedAt(refreshTokenIssuedAt);
+		clientAccessTokenDao.save(registration);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
