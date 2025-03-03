@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.http;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
@@ -123,6 +124,8 @@ public final class OAuth2Utils {
 				.withClientRegistrationId(config.systemIdentifier());
 		if ( username != null && !username.isEmpty() && password != null && !password.isEmpty() ) {
 			authReq.principal(new UsernamePasswordAuthenticationToken(username, password));
+		} else if ( config.hasServiceProperty(OAUTH_CLIENT_ID_SETTING, String.class) ) {
+			authReq.principal(config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
 		} else {
 			authReq.principal("%s %s".formatted(config.getId().ident(), config.getName()));
 		}
