@@ -80,6 +80,13 @@ public interface CloudIntegrationService
 	String BASE_URL_SETTING = "baseUrl";
 
 	/**
+	 * An API key setting name.
+	 *
+	 * @since 1.3
+	 */
+	String API_KEY_SETTING = "apiKey";
+
+	/**
 	 * The audit service name for content processed (bytes).
 	 *
 	 * @since 1.2

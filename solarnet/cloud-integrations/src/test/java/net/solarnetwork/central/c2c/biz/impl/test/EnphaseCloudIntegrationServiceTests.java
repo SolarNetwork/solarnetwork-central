@@ -24,9 +24,9 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -147,14 +147,14 @@ public class EnphaseCloudIntegrationServiceTests {
 						and.then(errors)
 							.as("Error detail")
 							.element(0)
-							.as("OAuth client ID flagged")
-							.returns(OAUTH_CLIENT_ID_SETTING, from(ErrorDetail::getLocation))
+							.as("API key flagged")
+							.returns(API_KEY_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
 							.element(1)
-							.as("OAuth client secret flagged")
-							.returns(OAUTH_CLIENT_SECRET_SETTING, from(ErrorDetail::getLocation))
+							.as("OAuth client ID flagged")
+							.returns(OAUTH_CLIENT_ID_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
@@ -179,8 +179,8 @@ public class EnphaseCloudIntegrationServiceTests {
 	public void validate_ok() {
 		// GIVEN
 		final String tokenUri = "https://example.com/oauth/token";
+		final String apiKey = randomString();
 		final String clientId = randomString();
-		final String clientSecret = randomString();
 		final String accessToken = randomString();
 		final String refreshToken = randomString();
 
@@ -188,8 +188,8 @@ public class EnphaseCloudIntegrationServiceTests {
 				randomLong(), now());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
+				API_KEY_SETTING, apiKey,
 				OAUTH_CLIENT_ID_SETTING, clientId,
-				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
 				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
 				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
 			));
@@ -213,7 +213,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
 		final URI listSystems = EnphaseCloudIntegrationService.BASE_URI
-				.resolve(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL);
+				.resolve(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL + "?key=" + apiKey);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
 		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class)))
 				.willReturn(res);

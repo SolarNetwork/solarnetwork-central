@@ -44,14 +44,13 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * SolarEdge implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -70,9 +69,6 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	/** The base URL to the SolarEdge API. */
 	public static final URI BASE_URI = URI.create("https://monitoringapi.solaredge.com");
 
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
-
 	/**
 	 * The well-known URLs.
 	 */
@@ -85,7 +81,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
+		SETTINGS = List.of(API_KEY_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */

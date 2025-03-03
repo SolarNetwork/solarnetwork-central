@@ -74,6 +74,9 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 	/** The OAuth token URL. */
 	public static final URI TOKEN_URI = BASE_URI.resolve("/oauth/token");
 
+	/** The API key query parameter. */
+	public static final String API_KEY_PARAM = "key";
+
 	/**
 	 * The well-known URLs.
 	 */
@@ -89,8 +92,8 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
+				API_KEY_SETTING_SPECIFIER,
 				OAUTH_CLIENT_ID_SETTING_SPECIFIER,
-				OAUTH_CLIENT_SECRET_SETTING_SPECIFIER,
 				OAUTH_ACCESS_TOKEN_SETTING_SPECIFIER,
 				OAUTH_REFRESH_TOKEN_SETTING_SPECIFIER,
 				BASE_URL_SETTING_SPECIFIER
@@ -134,7 +137,7 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
-						LoggerFactory.getLogger(AlsoEnergyCloudIntegrationService.class),
+						LoggerFactory.getLogger(EnphaseCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
 						integrationLocksCache),
@@ -147,20 +150,19 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
 		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 
+		final String apiKey = integration.serviceProperty(CloudIntegrationService.API_KEY_SETTING,
+				String.class);
+		if ( apiKey == null || apiKey.isEmpty() ) {
+			String errMsg = ms.getMessage("error.apiKey.missing", null, locale);
+			errorDetails.add(new ErrorDetail(CloudIntegrationService.API_KEY_SETTING, null, errMsg));
+		}
+
 		final String oauthClientId = integration
 				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, String.class);
 		if ( oauthClientId == null || oauthClientId.isEmpty() ) {
 			String errMsg = ms.getMessage("error.oauthClientId.missing", null, locale);
 			errorDetails
 					.add(new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, null, errMsg));
-		}
-
-		final String oauthClientSecret = integration
-				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, String.class);
-		if ( oauthClientSecret == null || oauthClientSecret.isEmpty() ) {
-			String errMsg = ms.getMessage("error.oauthClientSecret.missing", null, locale);
-			errorDetails.add(
-					new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, null, errMsg));
 		}
 
 		final String oauthAccessToken = integration
@@ -186,10 +188,16 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 
 		// validate by requesting the available sites
 		try {
+			final var decrypted = integration.copyWithId(integration.getId());
+			decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
 					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
-							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL).buildAndExpand()
-							.toUri(),
+							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL)
+							.queryParam(API_KEY_PARAM,
+									decrypted.serviceProperty(CloudIntegrationService.API_KEY_SETTING,
+											String.class))
+							.buildAndExpand().toUri(),
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();

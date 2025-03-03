@@ -44,22 +44,18 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * Solcast API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.solcast";
-
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
 
 	/** The base URL to the Solcast API. */
 	public static final URI BASE_URI = URI.create("https://api.solcast.com.au");
@@ -119,7 +115,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
-				new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true),
+				API_KEY_SETTING_SPECIFIER,
 				BASE_URL_SETTING_SPECIFIER
 				);
 		// @formatter:on

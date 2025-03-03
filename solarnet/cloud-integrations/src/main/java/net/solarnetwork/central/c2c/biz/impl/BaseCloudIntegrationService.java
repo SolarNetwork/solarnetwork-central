@@ -109,6 +109,15 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	public static final TextFieldSettingSpecifier OAUTH_REFRESH_TOKEN_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			OAUTH_REFRESH_TOKEN_SETTING, null, true);
 
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#API_KEY_SETTING}.
+	 *
+	 * @since 1.4
+	 */
+	public static final TextFieldSettingSpecifier API_KEY_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			API_KEY_SETTING, null, true);
+
 	/** The supported datum stream services. */
 	protected final Collection<CloudDatumStreamService> datumStreamServices;
 
