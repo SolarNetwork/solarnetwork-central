@@ -154,7 +154,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		service = new LocusEnergyCloudDatumStreamService(new TaskExecutorAdapter(executor),
 				userEventAppenderBiz, encryptor, expressionService, integrationDao, datumStreamDao,
 				datumStreamMappingDao, datumStreamPropertyDao, restOps, oauthClientManager,
-				Clock.systemUTC());
+				Clock.systemUTC(), null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),

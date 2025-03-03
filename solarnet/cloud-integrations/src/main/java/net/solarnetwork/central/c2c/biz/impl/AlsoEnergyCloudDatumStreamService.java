@@ -51,9 +51,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
@@ -97,7 +99,7 @@ import net.solarnetwork.util.StringUtils;
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -174,6 +176,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	 *        the OAuth client manager
 	 * @param clock
 	 *        the instant source to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -183,7 +192,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager, Clock clock) {
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", clock, userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
@@ -191,7 +201,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager),
+						oauthClientManager, clock, integrationLocksCache),
 				oauthClientManager);
 	}
 

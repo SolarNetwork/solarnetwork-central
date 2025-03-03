@@ -30,6 +30,8 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -43,13 +45,14 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.service.RemoteServiceException;
 
 /**
  * OAuth2 utilities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class OAuth2Utils {
 
@@ -100,6 +103,10 @@ public final class OAuth2Utils {
 	 *        the OAuth client manager
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
+	 * @param lockProvided
+	 *        if provided then obtain a lock before acquiring the token; this
+	 *        can be used in prevent concurrent requests using the same
+	 *        {@code config} from making multiple token requests
 	 * @throws RemoteServiceException
 	 *         if authorization fails
 	 * @throws net.solarnetwork.central.security.AuthorizationException
@@ -108,7 +115,8 @@ public final class OAuth2Utils {
 	 */
 	public static void addOAuthBearerAuthorization(CloudIntegrationConfiguration config,
 			HttpHeaders headers, OAuth2AuthorizedClientManager oauthClientManager,
-			UserEventAppenderBiz userEventAppenderBiz) {
+			UserEventAppenderBiz userEventAppenderBiz,
+			Function<UserLongCompositePK, Lock> lockProvider) {
 		final String username = config.serviceProperty(USERNAME_SETTING, String.class);
 		final String password = config.serviceProperty(PASSWORD_SETTING, String.class);
 		final OAuth2AuthorizeRequest.Builder authReq = OAuth2AuthorizeRequest
@@ -118,7 +126,12 @@ public final class OAuth2Utils {
 		} else {
 			authReq.principal("%s %s".formatted(config.getId().ident(), config.getName()));
 		}
+
+		final Lock lock = (lockProvider != null ? lockProvider.apply(config.getId()) : null);
 		try {
+			if ( lock != null ) {
+				lock.lock();
+			}
 			OAuth2AuthorizedClient oauthClient = requireNonNullObject(
 					oauthClientManager.authorize(authReq.build()), "oauthClient");
 			OAuth2AccessToken accessToken = oauthClient.getAccessToken();
@@ -129,6 +142,10 @@ public final class OAuth2Utils {
 							format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("Error authenticating to cloud integration %d: %s"
 					.formatted(config.getConfigId(), e.getMessage()), e);
+		} finally {
+			if ( lock != null ) {
+				lock.unlock();
+			}
 		}
 	}
 

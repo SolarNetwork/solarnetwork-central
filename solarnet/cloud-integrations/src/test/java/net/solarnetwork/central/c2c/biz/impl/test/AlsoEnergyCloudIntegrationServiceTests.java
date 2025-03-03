@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
@@ -35,6 +36,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
@@ -58,6 +61,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.web.client.RestOperations;
+import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
@@ -96,12 +100,14 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 	@Mock
 	private TextEncryptor encryptor;
 
+	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
+
 	private AlsoEnergyCloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
 		service = new AlsoEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
-				userEventAppenderBiz, encryptor, restOps, oauthClientManager);
+				userEventAppenderBiz, encryptor, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),

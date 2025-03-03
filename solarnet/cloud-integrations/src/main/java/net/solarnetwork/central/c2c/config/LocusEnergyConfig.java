@@ -28,6 +28,7 @@ import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -75,6 +76,7 @@ import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepo
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
@@ -87,7 +89,7 @@ import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientM
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class LocusEnergyConfig {
+public class LocusEnergyConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	/** A qualifier for Locus Energy configuration. */
 	public static final String LOCUS_ENERGY = "locus-energy";
@@ -141,6 +143,10 @@ public class LocusEnergyConfig {
 
 	@Autowired
 	private Environment environment;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
+	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
@@ -200,7 +206,7 @@ public class LocusEnergyConfig {
 		var service = new LocusEnergyCloudDatumStreamService(taskExecutor, userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
-				oauthClientManager, Clock.systemUTC());
+				oauthClientManager, Clock.systemUTC(), integrationLocksCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudDatumStreamService.class.getName(),
@@ -220,7 +226,7 @@ public class LocusEnergyConfig {
 			@Qualifier(LOCUS_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
 			@Qualifier(LOCUS_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new LocusEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps, oauthClientManager);
+				encryptor, restOps, oauthClientManager, Clock.systemUTC(), integrationLocksCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(LocusEnergyCloudIntegrationService.class.getName(),
