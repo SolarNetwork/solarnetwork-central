@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -74,7 +75,6 @@ import net.solarnetwork.central.user.inin.domain.TransformConfigurationInput.Res
 import net.solarnetwork.central.user.inin.domain.TransformInstructionResults;
 import net.solarnetwork.central.user.inin.domain.TransformOutput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -83,7 +83,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for Instruction Input (ININ) management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Profile(SolarNetInstructionInputConfiguration.INSTRUCTION_INPUT)
 @GlobalExceptionRestController
@@ -330,20 +330,21 @@ public class UserInstructionInputController {
 	public static record PreviewTransformInput(@JsonProperty("contentType") String contentType,
 			@JsonProperty("data") String data, @JsonProperty("query") String query,
 			@JsonProperty(value = "parameters", required = false) Map<String, Object> parameters,
-			@JsonProperty(value = "instructionResults", required = false) List<TransformInstructionResults> instructionResults) {
+			@JsonProperty(value = "instructionResults",
+					required = false) List<TransformInstructionResults> instructionResults) {
 
 		private Map<String, String> queryParameters() {
 			if ( query != null && !query.isBlank() ) {
 				try {
 					URI uri = new URI("http://localhost/?" + query);
 					var qMap = UriComponentsBuilder.fromUri(uri).build(true).getQueryParams();
-					if ( qMap != null ) {
+					if ( !qMap.isEmpty() ) {
 						Map<String, String> decoded = new HashMap<>(qMap.size());
 						for ( Entry<String, List<String>> entry : qMap.entrySet() ) {
 							List<String> vals = entry.getValue();
 							if ( vals != null && !vals.isEmpty() ) {
 								decoded.put(entry.getKey(),
-										URLDecoder.decode(vals.get(0), StandardCharsets.UTF_8));
+										URLDecoder.decode(vals.getFirst(), StandardCharsets.UTF_8));
 							}
 						}
 						return decoded;
@@ -357,7 +358,8 @@ public class UserInstructionInputController {
 
 	}
 
-	@RequestMapping(value = "/endpoints/{endpointId}/preview", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/endpoints/{endpointId}/preview", method = RequestMethod.POST,
+			consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Result<TransformOutput> previewEndpointTransform(@PathVariable("endpointId") UUID endpointId,
 			@RequestBody PreviewTransformInput previewInput) throws IOException {
 		UserUuidPK id = new UserUuidPK(getCurrentActorUserId(), endpointId);
@@ -365,13 +367,13 @@ public class UserInstructionInputController {
 		MediaType mediaType = MediaType.parseMediaType(previewInput.contentType());
 		Charset encoding = (mediaType.getCharset() != null ? mediaType.getCharset()
 				: StandardCharsets.UTF_8);
-		InputStream input = new MaxUploadSizeInputStream(
+		InputStream input = maxUploadSizeExceededInputStream(
 				new ByteArrayInputStream(previewInput.data().getBytes(encoding)),
 				maxInstructionInputLength);
 
 		Map<String, Object> parameters = null;
 		Map<String, String> queryParameters = previewInput.queryParameters();
-		if ( queryParameters != null ) {
+		if ( !queryParameters.isEmpty() ) {
 			parameters = new HashMap<>(8);
 			parameters.putAll(queryParameters);
 		}
@@ -417,7 +419,8 @@ public class UserInstructionInputController {
 		return success(userInstructionInputBiz.configurationForId(id, EndpointAuthConfiguration.class));
 	}
 
-	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}/enabled/{enabled}", method = RequestMethod.POST)
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}/enabled/{enabled}",
+			method = RequestMethod.POST)
 	public Result<CredentialConfiguration> enableEndpointAuthConfiguration(
 			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
 			@PathVariable("enabled") boolean enabled) {
@@ -427,7 +430,8 @@ public class UserInstructionInputController {
 		return success();
 	}
 
-	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}",
+			method = RequestMethod.DELETE)
 	public Result<Void> deleteEndpointAuthConfiguration(@PathVariable("endpointId") UUID endpointId,
 			@PathVariable("credentialId") Long credentialId) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,

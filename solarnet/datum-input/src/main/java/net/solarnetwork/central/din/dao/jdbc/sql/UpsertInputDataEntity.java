@@ -39,7 +39,7 @@ import net.solarnetwork.central.din.domain.InputDataEntity;
  * @author matt
  * @version 1.0
  */
-public class UpsertInputDataEntity implements PreparedStatementCreator, SqlProvider {
+public final class UpsertInputDataEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.din_input_data (

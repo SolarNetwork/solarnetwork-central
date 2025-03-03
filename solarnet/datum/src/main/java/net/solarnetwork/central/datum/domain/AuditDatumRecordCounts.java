@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -46,6 +47,7 @@ import net.solarnetwork.domain.SerializeIgnore;
 		"datumPostedCount", "datumQueryCount" })
 public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -1393664537620448888L;
 
 	private GeneralNodeDatumPK id = new GeneralNodeDatumPK();
@@ -161,21 +163,14 @@ public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Clone
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		AuditDatumRecordCounts other = (AuditDatumRecordCounts) obj;
 		if ( id == null ) {
-			if ( other.id != null ) {
-				return false;
-			}
-		} else if ( !id.equals(other.id) ) {
-			return false;
+			return other.id == null;
 		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	/**

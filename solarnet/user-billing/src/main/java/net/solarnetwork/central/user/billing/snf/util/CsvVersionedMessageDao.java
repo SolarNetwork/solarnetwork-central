@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvVersionedMessageDao.java - 31/05/2021 12:03:54 PM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.util;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -39,11 +40,11 @@ import net.solarnetwork.central.dao.VersionedMessageDao;
 
 /**
  * Implementation of {@link VersionedMessageDao} that reads from CSV resources.
- * 
+ *
  * <p>
  * Load CSV with the following columns:
  * </p>
- * 
+ *
  * <ol>
  * <li>timestamp</li>
  * <li>bundle name</li>
@@ -51,7 +52,7 @@ import net.solarnetwork.central.dao.VersionedMessageDao;
  * <li>template name</li>
  * <li>template body</li>
  * </ol>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -61,6 +62,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 	 * The timestamp formatter to use.
 	 */
 	public static final DateTimeFormatter TIMESTAMP_FORMATTER;
+
 	static {
 		// @formatter:off
 		TIMESTAMP_FORMATTER = new DateTimeFormatterBuilder()
@@ -77,7 +79,7 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param resources
 	 *        the set of CSV resources to load
 	 * @throws IllegalArgumentException
@@ -110,9 +112,9 @@ public class CsvVersionedMessageDao implements VersionedMessageDao {
 		Map<String, Row> rows = new LinkedHashMap<>(64);
 		for ( Resource r : resources ) {
 			try (ICsvListReader reader = new CsvListReader(
-					new InputStreamReader(r.getInputStream(), "UTF-8"),
+					new InputStreamReader(r.getInputStream(), StandardCharsets.UTF_8),
 					CsvPreference.STANDARD_PREFERENCE)) {
-				List<String> list = null;
+				List<String> list;
 				while ( (list = reader.read()) != null ) {
 					Instant ts = TIMESTAMP_FORMATTER.parse(list.get(0), Instant::from);
 					if ( ts.isAfter(version) ) {

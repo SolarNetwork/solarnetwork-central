@@ -87,9 +87,8 @@ public class DatumInsightOverallStatistics {
 					e.getDatumCount(), e.getDatumHourlyCount(), e.getDatumDailyCount(),
 					e.getDatumMonthlyCount());
 			if ( e.getDatumPropertyCount() != null ) {
-				c.setDatumPropertyPostedCount(
-						e.getDatumPropertyCount().longValue() + (e.getDatumPropertyUpdateCount() != null
-								? e.getDatumPropertyUpdateCount().longValue()
+				c.setDatumPropertyPostedCount(e.getDatumPropertyCount()
+						+ (e.getDatumPropertyUpdateCount() != null ? e.getDatumPropertyUpdateCount()
 								: 0));
 			}
 			c.setDatumQueryCount(e.getDatumQueryCount());
@@ -146,12 +145,12 @@ public class DatumInsightOverallStatistics {
 
 	public Long getAccumulativeTotalDatumCount() {
 		return accumulative.stream().filter(c -> c.getDatumCount() != null)
-				.mapToLong(c -> c.getDatumCount()).sum();
+				.mapToLong(AuditDatumRecordCounts::getDatumCount).sum();
 	}
 
 	public Long getAccumulativeTotalDatumHourlyCount() {
 		return accumulative.stream().filter(c -> c.getDatumHourlyCount() != null)
-				.mapToLong(c -> c.getDatumHourlyCount()).sum();
+				.mapToLong(AuditDatumRecordCounts::getDatumHourlyCount).sum();
 	}
 
 	public Long getAccumulativeTotalDatumDailyCount() {
@@ -161,7 +160,7 @@ public class DatumInsightOverallStatistics {
 
 	public Integer getAccumulativeTotalDatumMonthlyCount() {
 		return accumulative.stream().filter(c -> c.getDatumMonthlyCount() != null)
-				.mapToInt(c -> c.getDatumMonthlyCount()).sum();
+				.mapToInt(AuditDatumRecordCounts::getDatumMonthlyCount).sum();
 	}
 
 	public Long getAccumulativeTotalDatumTotalCount() {

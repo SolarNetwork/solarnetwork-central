@@ -1,27 +1,28 @@
 /* ==================================================================
  * WebServiceControllerSupport.java - Dec 18, 2012 7:29:54 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.web.support;
 
+import static net.solarnetwork.domain.Result.error;
 import java.security.Principal;
 import java.sql.SQLException;
 import java.time.DateTimeException;
@@ -30,10 +31,6 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanInstantiationException;
@@ -63,19 +60,22 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.security.AbstractAuthorizationBuilder;
 import net.solarnetwork.util.StringUtils;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * A base class to support web service style controllers.
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @RestControllerAdvice(annotations = GlobalExceptionRestController.class)
 @Order(100)
@@ -90,7 +90,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * The default format pattern for adate and time property with an explicit
 	 * {@literal Z} time zone.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String DEFAULT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd'T'HH:mm'Z'";
@@ -98,7 +98,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * An alternate format pattern for a date and time property using a space
 	 * delimiter between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm";
@@ -106,7 +106,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * An alternate format pattern for a date and time property with an explicit
 	 * {@literal Z} time zone using a space delimiter between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_DATE_TIME_FORMAT_Z = "yyyy-MM-dd HH:mm'Z'";
@@ -114,7 +114,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * The default format pattern for a millisecond-precise date and time
 	 * property.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String DEFAULT_TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
@@ -122,7 +122,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * The default format pattern for a millisecond-precise date and time
 	 * property with an explicit {@literal Z} time zone.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String DEFAULT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -130,7 +130,7 @@ public final class WebServiceControllerSupport {
 	/**
 	 * An alternate format pattern for a millisecond-precise date and time
 	 * property using a space delimiter between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_TIMESTAMP_FORMAT = "yyyy-MM-dd HH:mm:ss.SSS";
@@ -139,14 +139,14 @@ public final class WebServiceControllerSupport {
 	 * An alternate format pattern for a millisecond-precise date and time
 	 * property with an explicit {@literal Z} time zone using a space delimiter
 	 * between the date and time.
-	 * 
+	 *
 	 * @since 1.12
 	 */
 	public static final String ALT_TIMESTAMP_FORMAT_Z = "yyyy-MM-dd HH:mm:ss.SSS'Z'";
 
 	/**
 	 * A value to use for anonymous users in log messages.
-	 * 
+	 *
 	 * @since 2.1
 	 */
 	public static final String ANONYMOUS_USER_PRINCIPAL = "anonymous";
@@ -162,7 +162,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Get a standardized string description of a request.
-	 * 
+	 *
 	 * @param request
 	 *        the request
 	 * @return the description
@@ -170,7 +170,7 @@ public final class WebServiceControllerSupport {
 	public static String requestDescription(WebRequest request) {
 		StringBuilder buf = new StringBuilder(request.getDescription(false));
 		Map<String, String[]> params = request.getParameterMap();
-		if ( params != null ) {
+		if ( !params.isEmpty() ) {
 			buf.append("?");
 			boolean next = false;
 			for ( Entry<String, String[]> e : params.entrySet() ) {
@@ -201,7 +201,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Get the user principal name of a given request.
-	 * 
+	 *
 	 * @param request
 	 *        the request
 	 * @return the name, or {@link #ANONYMOUS_USER_PRINCIPAL}
@@ -214,7 +214,7 @@ public final class WebServiceControllerSupport {
 		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if ( authHeader != null ) {
 			int idx = authHeader.indexOf(' ');
-			if ( idx > 0 && idx < authHeader.length() ) {
+			if ( idx > 0 && idx + 1 < authHeader.length() ) {
 				String data = authHeader.substring(idx + 1);
 				Map<String, String> dataMap = StringUtils.commaDelimitedStringToMap(data);
 				String name = dataMap
@@ -230,7 +230,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link BeanInstantiationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -241,16 +241,16 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(BeanInstantiationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleBeanInstantiationException(BeanInstantiationException e,
+	public Result<Void> handleBeanInstantiationException(BeanInstantiationException e,
 			WebRequest request) {
 		log.debug("BeanInstantiationException in request {}: {}", requestDescription(request),
 				e.getMessage(), e);
-		return new Response<Object>(Boolean.FALSE, "422", "Malformed request data.", null);
+		return error("422", "Malformed request data.");
 	}
 
 	/**
 	 * Handle an {@link TypeMismatchException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -263,16 +263,16 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(TypeMismatchException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleTypeMismatchException(TypeMismatchException e, WebRequest request,
+	public Result<Void> handleTypeMismatchException(TypeMismatchException e, WebRequest request,
 			HttpServletResponse response) {
 		log.debug("TypeMismatchException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Illegal argument: " + e.getMessage(), null);
+		return error(null, "Illegal argument: " + e.getMessage());
 	}
 
 	/**
 	 * Handle an {@link UnsupportedOperationException} as a {@literal 404} error
 	 * status.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -283,16 +283,16 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(UnsupportedOperationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
-	public Response<?> handleUnsupportedOperationException(UnsupportedOperationException e,
+	public Result<Void> handleUnsupportedOperationException(UnsupportedOperationException e,
 			WebRequest request) {
 		log.debug("UnsupportedOperationException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, "404", e.getMessage(), null);
+		return error("404", e.getMessage());
 	}
 
 	/**
 	 * Handle a {@link JsonProcessingException}, presuming from malformed JSON
 	 * input.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -303,15 +303,14 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(JsonParseException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleJsonParseException(JsonProcessingException e, WebRequest request) {
+	public Result<Void> handleJsonParseException(JsonProcessingException e, WebRequest request) {
 		log.debug("JsonProcessingException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Malformed JSON: " + e.getOriginalMessage(),
-				null);
+		return error(null, "Malformed JSON: " + e.getOriginalMessage());
 	}
 
 	/**
 	 * Handle a {@link DateTimeParseException}, from malformed date input.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -322,15 +321,14 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(DateTimeParseException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
+	public Result<Void> handleDateTimeParseException(DateTimeParseException e, WebRequest request) {
 		log.debug("DateTimeParseException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Malformed date string: " + e.getMessage(),
-				null);
+		return error(null, "Malformed date string: " + e.getMessage());
 	}
 
 	/**
-	 * Handle a general {@Link DateTimeException}.
-	 * 
+	 * Handle a general {@link DateTimeException}.
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -341,15 +339,15 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(DateTimeException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleDateTimeException(DateTimeException e, WebRequest request) {
+	public Result<Void> handleDateTimeException(DateTimeException e, WebRequest request) {
 		log.debug("DateTimeException in request {}", requestDescription(request), e);
-		return new Response<Object>(Boolean.FALSE, null, "Date exception: " + e.getMessage(), null);
+		return error(null, "Date exception: " + e.getMessage());
 	}
 
 	/**
 	 * Handle a {@link HttpMessageNotReadableException}, from malformed JSON
 	 * input.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -360,7 +358,7 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
+	public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
 			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();
 		if ( t instanceof JsonProcessingException ) {
@@ -370,12 +368,12 @@ public final class WebServiceControllerSupport {
 		}
 		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
 				e.toString());
-		return new Response<Object>(Boolean.FALSE, null, "Malformed request: " + e.getMessage(), null);
+		return error(null, "Malformed request: " + e.getMessage());
 	}
 
 	/**
 	 * Handle a {@link DataIntegrityViolationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -388,7 +386,7 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleDataIntegrityViolationException(DataIntegrityViolationException e,
+	public Result<Void> handleDataIntegrityViolationException(DataIntegrityViolationException e,
 			WebRequest request, Locale locale, HttpServletRequest servletRequest) {
 		log.warn("DataIntegrityViolationException in request {}: {}", requestDescription(request),
 				e.toString());
@@ -442,12 +440,12 @@ public final class WebServiceControllerSupport {
 		if ( messageSource != null ) {
 			msg = messageSource.getMessage(msgKey, params, msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
+		return error(code, msg);
 	}
 
 	/**
 	 * Handle a {@link DataRetrievalFailureException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -460,7 +458,7 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(DataRetrievalFailureException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.NOT_FOUND)
-	public Response<?> handleDataRetrievalFailureException(DataRetrievalFailureException e,
+	public Result<Void> handleDataRetrievalFailureException(DataRetrievalFailureException e,
 			WebRequest request, Locale locale) {
 		log.debug("DataRetrievalFailureException in request {}, user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
@@ -474,12 +472,12 @@ public final class WebServiceControllerSupport {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
+		return error(code, msg);
 	}
 
 	/**
 	 * Handle a {@link InvalidDataAccessResourceUsageException} .
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -492,7 +490,7 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(InvalidDataAccessResourceUsageException.class)
 	@ResponseBody
 	@ResponseStatus
-	public Response<?> handleInvalidDataAccessResourceUsageException(
+	public Result<Void> handleInvalidDataAccessResourceUsageException(
 			InvalidDataAccessResourceUsageException e, WebRequest request, Locale locale) {
 		log.error("InvalidDataAccessResourceUsageException in request {}", requestDescription(request),
 				e.getMostSpecificCause());
@@ -503,12 +501,12 @@ public final class WebServiceControllerSupport {
 			msg = messageSource.getMessage(msgKey,
 					new Object[] { e.getMostSpecificCause().getMessage() }, msg, locale);
 		}
-		return new Response<Object>(Boolean.FALSE, code, msg, null);
+		return error(code, msg);
 	}
 
 	/**
 	 * Handle an {@link ConstraintViolationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -528,7 +526,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link BindException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -540,7 +538,7 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(BindException.class)
 	@ResponseBody
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-	public Result<?> handleBindException(BindException e, WebRequest request, Locale locale) {
+	public Result<Void> handleBindException(BindException e, WebRequest request, Locale locale) {
 		log.debug("BindException in request {}: {}", requestDescription(request), e.toString());
 		return ExceptionUtils.generateErrorsResult(e, "VAL.00004", locale, messageSource);
 	}
@@ -551,7 +549,7 @@ public final class WebServiceControllerSupport {
 		if ( msgSrc != null && e.hasErrors() ) {
 			StringBuilder buf = new StringBuilder();
 			for ( ObjectError error : e.getAllErrors() ) {
-				if ( buf.length() > 0 ) {
+				if ( !buf.isEmpty() ) {
 					buf.append(" ");
 				}
 				buf.append(msgSrc.getMessage(error, locale));
@@ -563,7 +561,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Handle an {@link InvalidPropertyException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -575,17 +573,17 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(InvalidPropertyException.class)
 	@ResponseBody
 	@ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-	public Result<?> handleInvalidPropertyException(InvalidPropertyException e, WebRequest request,
+	public Result<Void> handleInvalidPropertyException(InvalidPropertyException e, WebRequest request,
 			Locale locale) {
 		log.info("InvalidPropertyException in request {}: {}", requestDescription(request),
 				e.toString());
-		return Result.error("VAL.00005", messageSource.getMessage("error.invalidProperty",
+		return error("VAL.00005", messageSource.getMessage("error.invalidProperty",
 				new Object[] { e.getMessage() }, "Invalid request syntax", locale));
 	}
 
 	/**
 	 * Handle an {@link ValidationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -597,17 +595,17 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(ValidationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleValidationException(ValidationException e, WebRequest request,
+	public Result<Void> handleValidationException(ValidationException e, WebRequest request,
 			Locale locale) {
 		log.debug("ValidationException in request {}: {}", requestDescription(request), e.toString());
 		String msg = generateErrorsMessage(e.getErrors(), locale,
 				e.getMessageSource() != null ? e.getMessageSource() : messageSource);
-		return new Response<Object>(Boolean.FALSE, null, msg, null);
+		return error(null, msg);
 	}
 
 	/**
 	 * Handle a {@link MultipartException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -618,7 +616,7 @@ public final class WebServiceControllerSupport {
 	@ExceptionHandler(MultipartException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleMultipartException(MultipartException e, WebRequest request) {
+	public Result<Void> handleMultipartException(MultipartException e, WebRequest request) {
 		log.info("MultipartException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.toString());
 		StringBuilder buf = new StringBuilder();
@@ -627,16 +625,16 @@ public final class WebServiceControllerSupport {
 		if ( msg != null && !msg.isEmpty() ) {
 			buf.append(": ").append(msg);
 		}
-		return new Response<Object>(Boolean.FALSE, "422", buf.toString(), null);
+		return error("422", buf.toString());
 	}
 
 	/**
 	 * Add a {@literal Vary} HTTP response header.
-	 * 
+	 *
 	 * <p>
 	 * This is so the responses work well with caching proxies.
 	 * </p>
-	 * 
+	 *
 	 * @param response
 	 *        the response to add the header to
 	 * @since 1.11
@@ -651,7 +649,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Get the message source.
-	 * 
+	 *
 	 * @return the message source
 	 */
 	public MessageSource getMessageSource() {
@@ -660,7 +658,7 @@ public final class WebServiceControllerSupport {
 
 	/**
 	 * Set a message source to use for resolving exception messages.
-	 * 
+	 *
 	 * @param messageSource
 	 *        the message source
 	 */

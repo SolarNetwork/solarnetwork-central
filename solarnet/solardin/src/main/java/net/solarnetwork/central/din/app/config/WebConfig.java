@@ -25,15 +25,20 @@ package net.solarnetwork.central.din.app.config;
 import static java.lang.String.format;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.CacheControl;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.cbor.MappingJackson2CborHttpMessageConverter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
@@ -44,12 +49,16 @@ import net.solarnetwork.service.PingTest;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
 		WebServiceGlobalControllerSupport.class })
 public class WebConfig implements WebMvcConfigurer {
+
+	@Autowired
+	@Qualifier(JsonConfig.CBOR_MAPPER)
+	private ObjectMapper cborObjectMapper;
 
 	@Controller
 	@RequestMapping("/ping")
@@ -59,6 +68,16 @@ public class WebConfig implements WebMvcConfigurer {
 			super(tests);
 		}
 
+	}
+
+	@Override
+	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+		// update CBOR with our standard ObjectMapper
+		for ( HttpMessageConverter<?> c : converters ) {
+			if ( c instanceof MappingJackson2CborHttpMessageConverter cbor ) {
+				cbor.setObjectMapper(cborObjectMapper);
+			}
+		}
 	}
 
 	@Override

@@ -1,27 +1,28 @@
 /* ==================================================================
  * SourceLocationFilter.java - Oct 19, 2011 6:48:11 PM
- * 
+ *
  * Copyright 2007-2011 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.support;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,19 +38,20 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Criteria for location data tied to a source.
- * 
+ *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class SourceLocationFilter implements Serializable, SourceLocation {
 
+	@Serial
 	private static final long serialVersionUID = 5979398734497676907L;
 
 	private Long id;
 	private String source;
 	private SolarLocation location;
 	private List<MutableSortDescriptor> sorts;
-	private Integer offset;
+	private Long offset;
 	private Integer max;
 
 	/**
@@ -61,7 +63,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	/**
 	 * Construct with criteria parameters.
-	 * 
+	 *
 	 * @param source
 	 *        the source name
 	 * @param locationName
@@ -80,7 +82,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	/**
 	 * Change values that are non-null but empty to null.
-	 * 
+	 *
 	 * <p>
 	 * This method is helpful for web form submission, to remove filter values
 	 * that are empty and would otherwise try to match on empty string values.
@@ -98,7 +100,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 	@Override
 	@SerializeIgnore
 	public Map<String, ?> getFilter() {
-		Map<String, Object> filter = new LinkedHashMap<String, Object>();
+		Map<String, Object> filter = new LinkedHashMap<>();
 		if ( source != null ) {
 			filter.put("source", source);
 		}
@@ -151,7 +153,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		if ( sorts == null ) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<SortDescriptor>(sorts);
+		return new ArrayList<>(sorts);
 	}
 
 	public String getTimeZoneId() {
@@ -173,11 +175,11 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		this.sorts = sorts;
 	}
 
-	public Integer getOffset() {
+	public Long getOffset() {
 		return offset;
 	}
 
-	public void setOffset(Integer offset) {
+	public void setOffset(Long offset) {
 		this.offset = offset;
 	}
 
@@ -200,7 +202,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.3
 	 */
 	@Override
@@ -218,7 +220,7 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.3
 	 */
 	@Override
@@ -226,13 +228,9 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
+		if ( (obj == null) || !(obj instanceof SourceLocationFilter other) ) {
 			return false;
 		}
-		if ( !(obj instanceof SourceLocationFilter) ) {
-			return false;
-		}
-		SourceLocationFilter other = (SourceLocationFilter) obj;
 		if ( id == null ) {
 			if ( other.id != null ) {
 				return false;
@@ -269,13 +267,9 @@ public class SourceLocationFilter implements Serializable, SourceLocation {
 			return false;
 		}
 		if ( source == null ) {
-			if ( other.source != null ) {
-				return false;
-			}
-		} else if ( !source.equals(other.source) ) {
-			return false;
+			return other.source == null;
 		}
-		return true;
+		return source.equals(other.source);
 	}
 
 }

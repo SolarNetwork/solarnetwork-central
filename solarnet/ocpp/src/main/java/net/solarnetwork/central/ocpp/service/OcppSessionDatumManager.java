@@ -1,21 +1,21 @@
 /* ==================================================================
  * OcppSessionManager.java - 27/02/2020 7:56:35 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.ocpp.service;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.domain.datum.Datum.REVERSE_ACCUMULATING_SUFFIX_KEY;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -40,7 +41,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +60,7 @@ import net.solarnetwork.domain.datum.AcEnergyDatum;
 import net.solarnetwork.domain.datum.AtmosphericDatum;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.EnergyDatum;
 import net.solarnetwork.ocpp.dao.ChargePointDao;
 import net.solarnetwork.ocpp.dao.PurgePostedChargeSessionsTask;
 import net.solarnetwork.ocpp.domain.AuthorizationInfo;
@@ -87,7 +88,7 @@ import net.solarnetwork.util.StringUtils;
 /**
  * A {@link ChargeSessionManager} that generates datum from charge session
  * transaction data.
- * 
+ *
  * @author matt
  * @version 2.6
  */
@@ -138,7 +139,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 		/**
 		 * Get the property name.
-		 * 
+		 *
 		 * @return the property name
 		 */
 		public String getPropertyName() {
@@ -147,7 +148,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 		/**
 		 * Get the property classification.
-		 * 
+		 *
 		 * @return the classification
 		 */
 		public DatumSamplesType getClassification() {
@@ -177,7 +178,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param authService
 	 *        the authorization service to use
 	 * @param chargePointDao
@@ -288,7 +289,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return cp;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED, noRollbackFor = AuthorizationException.class)
+	@Transactional(propagation = Propagation.REQUIRED, noRollbackFor = AuthorizationException.class)
 	@Override
 	public ChargeSession startChargingSession(ChargeSessionStartInfo info)
 			throws AuthorizationException {
@@ -372,7 +373,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return chargeSessionDao.getIncompleteChargeSessions();
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public AuthorizationInfo endChargingSession(ChargeSessionEndInfo info) {
 		CentralChargePoint cp = chargePoint(info.getChargePointId(), info.getAuthorizationId(),
@@ -425,6 +426,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	/** Class to associate settings with datum. */
 	private static class Datum extends GeneralNodeDatum {
 
+		@Serial
 		private static final long serialVersionUID = 7826346170884900517L;
 
 		private final ChargePointSettings settings;
@@ -498,7 +500,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return chargeSessionDao.findReadingsForSession(sessionId);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void addChargingSessionReadings(ChargePointIdentity chargePointId, Integer evseId,
 			Integer connectorId, Iterable<SampledValue> readings) {
@@ -517,7 +519,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		}
 		Map<UUID, Set<SampledValue>> currentReadings = new HashMap<>(2);
 		List<SampledValue> sorted = StreamSupport.stream(readings.spliterator(), false).sorted()
-				.collect(Collectors.toList());
+				.toList();
 		List<SampledValue> newReadings = new ArrayList<>();
 		for ( SampledValue r : sorted ) {
 			final UUID sessionId = r.getSessionId(); // may be null
@@ -566,16 +568,14 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 					settings.put(cp.getId(), cps);
 				}
 				final String sourceId = sourceId(cps, cp.getInfo().getId(),
-						s != null ? s.getEvseId() : evseId != null ? evseId.intValue() : 0,
-						s != null ? s.getConnectorId()
-								: connectorId != null ? connectorId.intValue() : 0,
+						s != null ? s.getEvseId() : evseId != null ? evseId : 0,
+						s != null ? s.getConnectorId() : connectorId != null ? connectorId : 0,
 						reading.getLocation());
 				Datum d = datumBySourceId.get(sourceId);
 				if ( d == null || !d.getCreated().equals(reading.getTimestamp()) ) {
 					if ( d != null ) {
 						publishDatum(d);
 						datumBySourceId.remove(sourceId);
-						d = null;
 					}
 
 					d = datum(sourceId, cp, cps, s, reading);
@@ -593,7 +593,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Resolve settings for a charge point.
-	 * 
+	 *
 	 * @param id
 	 *        the charge point ID
 	 * @return the settings, never {@literal null}
@@ -610,7 +610,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Get the source ID template to use.
-	 * 
+	 *
 	 * @param chargePointSettings
 	 *        the settings
 	 * @return the template, never {@literal null}
@@ -623,7 +623,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Resolve a datum source ID from configurable properties.
-	 * 
+	 *
 	 * @param chargePointSettings
 	 *        the settings
 	 * @param identifier
@@ -653,7 +653,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		if ( value == null ) {
 			return;
 		}
-		BigDecimal num = null;
+		BigDecimal num;
 		if ( value instanceof Number ) {
 			num = NumberUtils.bigDecimalForNumber((Number) value);
 		} else {
@@ -680,7 +680,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			case Fahrenheit: {
 				// convert to C
 				BigDecimal celsius = num.subtract(new BigDecimal("32")).multiply(new BigDecimal("5"))
-						.divide(new BigDecimal("9"));
+						.divide(new BigDecimal("9"), 6, RoundingMode.HALF_UP);
 				if ( maxTemperatureScale >= 0 && celsius.scale() > maxTemperatureScale ) {
 					celsius = celsius.setScale(maxTemperatureScale, RoundingMode.HALF_UP);
 				}
@@ -708,25 +708,21 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	}
 
 	private DatumSamplesType propertyType(Measurand measurand) {
-		switch (measurand) {
-			case EnergyActiveExportRegister:
-			case EnergyActiveImportRegister:
-			case EnergyReactiveExportRegister:
-			case EnergyReactiveImportRegister:
-			case PowerReactiveExport:
-			case PowerReactiveImport:
-				return DatumSamplesType.Accumulating;
-
-			default:
-				return DatumSamplesType.Instantaneous;
-		}
+		return switch (measurand) {
+			case EnergyActiveExportRegister, EnergyActiveImportRegister, EnergyReactiveExportRegister, EnergyReactiveImportRegister, PowerReactiveExport, PowerReactiveImport -> DatumSamplesType.Accumulating;
+			default -> DatumSamplesType.Instantaneous;
+		};
 	}
 
 	private String propertyName(Measurand measurand, Phase phase) {
 		if ( phase == null || phase == Phase.Unknown ) {
 			return propertyName(measurand);
 		}
-		StringBuilder buf = new StringBuilder(propertyName(measurand));
+		String propName = propertyName(measurand);
+		if ( propName == null ) {
+			return null;
+		}
+		StringBuilder buf = new StringBuilder(propName);
 		buf.append('_');
 		switch (phase) {
 			case N:
@@ -760,89 +756,47 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 				buf.append("ca");
 				break;
 
-			case Unknown:
-				// unreachable
+			default:
 				break;
+
 		}
 		return buf.toString();
 	}
 
 	private String propertyName(Measurand measurand) {
-		switch (measurand) {
-			case CurrentExport:
-				return AcEnergyDatum.CURRENT_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case CurrentImport:
-				return AcEnergyDatum.CURRENT_KEY;
-
-			case CurrentOffered:
-				return AcEnergyDatum.CURRENT_KEY + "Offered";
-
-			case EnergyActiveExportInterval:
-				return AcEnergyDatum.WATT_HOUR_READING_KEY + "Diff" + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case EnergyActiveExportRegister:
-				return AcEnergyDatum.WATT_HOUR_READING_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case EnergyActiveImportInterval:
-				return AcEnergyDatum.WATT_HOUR_READING_KEY + "Diff";
-
-			case EnergyActiveImportRegister:
-				return AcEnergyDatum.WATT_HOUR_READING_KEY;
-
-			case EnergyReactiveExportInterval:
-				return "reactiveEnergyDiff" + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case EnergyReactiveExportRegister:
-				return "reactiveEnergy" + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case EnergyReactiveImportInterval:
-				return "reactiveEnergyDiff";
-
-			case EnergyReactiveImportRegister:
-				return "reactiveEnergy";
-
-			case Frequency:
-				return AcEnergyDatum.FREQUENCY_KEY;
-
-			case PowerActiveExport:
-				return AcEnergyDatum.WATTS_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case PowerActiveImport:
-				return AcEnergyDatum.WATTS_KEY;
-
-			case PowerFactor:
-				return AcEnergyDatum.POWER_FACTOR_KEY;
-
-			case PowerOffered:
-				return AcEnergyDatum.WATTS_KEY + "Offered";
-
-			case PowerReactiveExport:
-				return AcEnergyDatum.REACTIVE_POWER_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
-
-			case PowerReactiveImport:
-				return AcEnergyDatum.REACTIVE_POWER_KEY;
-
-			case RPM:
-				return "rpm";
-
-			case SoC:
-				return "soc";
-
-			case Temperature:
-				return AtmosphericDatum.TEMPERATURE_KEY;
-
-			case Voltage:
-				return AcEnergyDatum.VOLTAGE_KEY;
-
-			default:
-				return null;
-		}
+		return switch (measurand) {
+			case CurrentExport -> AcEnergyDatum.CURRENT_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case CurrentImport -> AcEnergyDatum.CURRENT_KEY;
+			case CurrentOffered -> AcEnergyDatum.CURRENT_KEY + "Offered";
+			case EnergyActiveExportInterval -> EnergyDatum.WATT_HOUR_READING_KEY + "Diff"
+					+ REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case EnergyActiveExportRegister -> EnergyDatum.WATT_HOUR_READING_KEY
+					+ REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case EnergyActiveImportInterval -> EnergyDatum.WATT_HOUR_READING_KEY + "Diff";
+			case EnergyActiveImportRegister -> EnergyDatum.WATT_HOUR_READING_KEY;
+			case EnergyReactiveExportInterval -> "reactiveEnergyDiff" + REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case EnergyReactiveExportRegister -> "reactiveEnergy" + REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case EnergyReactiveImportInterval -> "reactiveEnergyDiff";
+			case EnergyReactiveImportRegister -> "reactiveEnergy";
+			case Frequency -> AcEnergyDatum.FREQUENCY_KEY;
+			case PowerActiveExport -> EnergyDatum.WATTS_KEY + REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case PowerActiveImport -> EnergyDatum.WATTS_KEY;
+			case PowerFactor -> AcEnergyDatum.POWER_FACTOR_KEY;
+			case PowerOffered -> EnergyDatum.WATTS_KEY + "Offered";
+			case PowerReactiveExport -> AcEnergyDatum.REACTIVE_POWER_KEY
+					+ REVERSE_ACCUMULATING_SUFFIX_KEY;
+			case PowerReactiveImport -> AcEnergyDatum.REACTIVE_POWER_KEY;
+			case RPM -> "rpm";
+			case SoC -> "soc";
+			case Temperature -> AtmosphericDatum.TEMPERATURE_KEY;
+			case Voltage -> AcEnergyDatum.VOLTAGE_KEY;
+			default -> null;
+		};
 	}
 
 	/**
 	 * Get the SolarFlux publisher.
-	 * 
+	 *
 	 * @return the publisher, or {@literal null}
 	 */
 	public DatumProcessor getFluxPublisher() {
@@ -851,7 +805,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
@@ -861,7 +815,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Get the source ID template.
-	 * 
+	 *
 	 * @return the template; defaults to
 	 *         {@link UserSettings#DEFAULT_SOURCE_ID_TEMPLATE}
 	 */
@@ -871,11 +825,11 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
@@ -883,7 +837,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * <li><code>{location}</code> - the location (string)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
@@ -893,7 +847,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Get the maximum temperature decimal scale.
-	 * 
+	 *
 	 * @return the maximum scale; defaults to
 	 *         {@link #DEFAULT_MAX_TEMPERATURE_SCALE}
 	 */
@@ -903,12 +857,12 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Set the maximum temperature decimal scale.
-	 * 
+	 *
 	 * <p>
 	 * This sets the maximum number of decimal digits for normalized temperature
 	 * values. Set to {@literal -1} for no maximum.
 	 * </p>
-	 * 
+	 *
 	 * @param maxTemperatureScale
 	 *        the maximum scale to set
 	 */
@@ -918,7 +872,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Get the task scheduler.
-	 * 
+	 *
 	 * @return the task scheduler
 	 */
 	public TaskScheduler getTaskScheduler() {
@@ -927,7 +881,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 
 	/**
 	 * Set the task scheduler.
-	 * 
+	 *
 	 * @param taskScheduler
 	 *        the task scheduler to set
 	 */
@@ -938,7 +892,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	/**
 	 * Get the number of hours after which posted charge sessions may be purged
 	 * (deleted).
-	 * 
+	 *
 	 * @return the posted charge sessions expiration time, in hours
 	 */
 	public int getPurgePostedChargeSessionsExpirationHours() {
@@ -948,7 +902,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 	/**
 	 * Set the number of hours after which posted charge sessions may be purged
 	 * (deleted).
-	 * 
+	 *
 	 * @param hours
 	 *        posted charge sessions expiration time, in hours
 	 */

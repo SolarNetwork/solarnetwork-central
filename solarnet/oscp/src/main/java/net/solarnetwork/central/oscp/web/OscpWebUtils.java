@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpWebUtils.java - 11/08/2022 1:28:12 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,7 +39,7 @@ import net.solarnetwork.security.AuthorizationException.Reason;
 
 /**
  * Web-related utilities for OSCP.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -90,7 +90,7 @@ public final class OscpWebUtils {
 	/**
 	 * Create a new "response sent" condition and save it in
 	 * {@link #RESPONSE_SENT}.
-	 * 
+	 *
 	 * @return the new condition
 	 */
 	public static CompletableFuture<Void> newResponseSentCondition() {
@@ -101,11 +101,11 @@ public final class OscpWebUtils {
 
 	/**
 	 * Get the OSCP or OAuth authorization token used in a request.
-	 * 
+	 *
 	 * <p>
 	 * Note that OAuth tokens are <b>not</b> verified by this method.
 	 * </p>
-	 * 
+	 *
 	 * @param request
 	 *        the request
 	 * @return the token
@@ -137,11 +137,11 @@ public final class OscpWebUtils {
 
 	/**
 	 * Generate a new random token.
-	 * 
+	 *
 	 * <p>
 	 * The token will generated from 48 random bytes and then base 64 encoded.
 	 * </p>
-	 * 
+	 *
 	 * @return the new token value
 	 */
 	public static String generateToken() {
@@ -159,7 +159,7 @@ public final class OscpWebUtils {
 	/**
 	 * HTTP headers customizer that sets an OSCP token authorization header
 	 * value.
-	 * 
+	 *
 	 * @param <T>
 	 *        the consumer type
 	 * @param token
@@ -167,14 +167,13 @@ public final class OscpWebUtils {
 	 * @return the customizer
 	 */
 	public static <T> BiConsumer<T, HttpHeaders> tokenAuthorizer(String token) {
-		return (body, headers) -> {
-			headers.set(HttpHeaders.AUTHORIZATION, tokenAuthorizationHeader(token));
-		};
+		return (body, headers) -> headers.set(HttpHeaders.AUTHORIZATION,
+				tokenAuthorizationHeader(token));
 	}
 
 	/**
 	 * Create a path to the Flexibility Provider API.
-	 * 
+	 *
 	 * @param path
 	 *        the path, relative to the Flexibility Provider base path
 	 * @return the URL path
@@ -185,7 +184,7 @@ public final class OscpWebUtils {
 
 	/**
 	 * Create an OSCP {@code Token} HTTP {@code Authorization} header value.
-	 * 
+	 *
 	 * @param token
 	 *        the token value
 	 * @return the header value
@@ -241,7 +240,7 @@ public final class OscpWebUtils {
 
 		/**
 		 * Create a path to the Capacity Provider API.
-		 * 
+		 *
 		 * @param path
 		 *        the path, relative to the Capacity Provider base path
 		 * @return the URL path
@@ -252,7 +251,7 @@ public final class OscpWebUtils {
 
 		/**
 		 * Create a path to the Flexibility Provider API.
-		 * 
+		 *
 		 * @param path
 		 *        the path, relative to the Flexibility Provider base path
 		 * @return the URL path

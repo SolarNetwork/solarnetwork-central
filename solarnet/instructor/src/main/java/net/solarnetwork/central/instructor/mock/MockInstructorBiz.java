@@ -1,21 +1,21 @@
 /* ==================================================================
  * MockInstructorBiz.java - Mar 1, 2011 2:50:14 PM
- * 
+ *
  * Copyright 2007-2011 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,7 +40,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Mock implementation of {@link InstructorBiz}.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -54,7 +54,7 @@ public class MockInstructorBiz implements InstructorBiz {
 		instr.setId(counter.incrementAndGet());
 		instr.addParameter("test.param.1", "One");
 		instr.addParameter("test.param.2", String.valueOf(55));
-		List<Instruction> result = new ArrayList<Instruction>();
+		List<Instruction> result = new ArrayList<>();
 		result.add(instr);
 		return result;
 	}
@@ -105,7 +105,7 @@ public class MockInstructorBiz implements InstructorBiz {
 
 	@Override
 	public List<NodeInstruction> queueInstructions(Set<Long> nodeIds, Instruction instruction) {
-		List<NodeInstruction> result = new ArrayList<NodeInstruction>(nodeIds.size());
+		List<NodeInstruction> result = new ArrayList<>(nodeIds.size());
 		for ( Long nodeId : nodeIds ) {
 			result.add(queueInstruction(nodeId, instruction));
 		}
@@ -131,7 +131,7 @@ public class MockInstructorBiz implements InstructorBiz {
 	@Override
 	public void findFilteredNodeInstructions(InstructionFilter filter,
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
-		// nothing to do here		
+		// nothing to do here
 	}
 
 }

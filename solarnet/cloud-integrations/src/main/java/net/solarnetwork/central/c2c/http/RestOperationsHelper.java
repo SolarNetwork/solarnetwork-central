@@ -27,6 +27,8 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CONTENT_P
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -55,7 +57,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
@@ -70,6 +72,13 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
 	/** The error event tags. */
 	protected final String[] errorEventTags;
+
+	/**
+	 * The event tags (derived from errorEventTags, minus "error").
+	 *
+	 * @since 1.5
+	 */
+	protected final String[] eventTags;
 
 	/** The sensitive key encryptor. */
 	protected final TextEncryptor encryptor;
@@ -112,15 +121,16 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");
 
+		this.eventTags = Arrays.stream(this.errorEventTags).filter(t -> !ERROR_TAG.equals(t))
+				.toArray(String[]::new);
+
 		// look for a ContentLengthTrackingClientHttpRequestInterceptor to track response body length with
 		ThreadLocal<AtomicLong> tracker = null;
 		if ( restOps instanceof RestTemplate rt ) {
 			var interceptors = rt.getInterceptors();
-			if ( interceptors != null ) {
-				for ( var interceptor : interceptors ) {
-					if ( interceptor instanceof ContentLengthTrackingClientHttpRequestInterceptor t ) {
-						tracker = t.countThreadLocal();
-					}
+			for ( var interceptor : interceptors ) {
+				if ( interceptor instanceof ContentLengthTrackingClientHttpRequestInterceptor t ) {
+					tracker = t.countThreadLocal();
 				}
 			}
 		}
@@ -200,8 +210,12 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		URI uri = null;
 		try {
 			final var headers = new HttpHeaders();
-			final var req = new HttpEntity<B>(body, headers);
+			final var req = new HttpEntity<>(body, headers);
 			uri = setup.apply(headers);
+			userEventAppenderBiz.addEvent(configuration.getUserId(),
+					eventForConfiguration(configuration.getId(), eventTags, description,
+							Map.of("method", method.toString(), "uri", uri.toString())));
+
 			final ResponseEntity<R> res = restOps.exchange(uri, method, req, responseType);
 			return handler.apply(res);
 		} catch ( ResourceAccessException e ) {
@@ -257,12 +271,15 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 					errorEventTags, format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("%s failed because of an authorization error: %s"
 					.formatted(description, e.getMessage()), e);
+		} catch ( RemoteServiceException e ) {
+			// assume already logged
+			throw e;
 		} catch ( RuntimeException e ) {
 			log.warn("[{}] for {} {} failed at [{}] because of an unknown error: {}", description,
 					configuration.getClass().getSimpleName(), configuration.getId().ident(), uri,
 					e.toString(), e);
 			userEventAppenderBiz.addEvent(configuration.getUserId(), eventForConfiguration(configuration,
-					errorEventTags, format("Unknown error: %s", e.toString())));
+					errorEventTags, format("Unknown error: %s", e)));
 			throw e;
 		} finally {
 			if ( responseLengthTracker != null ) {

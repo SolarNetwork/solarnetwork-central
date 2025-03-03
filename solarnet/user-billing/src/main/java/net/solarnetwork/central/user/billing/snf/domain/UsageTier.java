@@ -201,10 +201,9 @@ public class UsageTier implements NamedCost {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UsageTier) ) {
+		if ( !(obj instanceof UsageTier other) ) {
 			return false;
 		}
-		UsageTier other = (UsageTier) obj;
 		return Objects.equals(key, other.key) && Objects.equals(cost, other.cost)
 				&& Objects.equals(quantity, other.quantity);
 	}

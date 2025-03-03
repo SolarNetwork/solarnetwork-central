@@ -37,8 +37,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.transaction.TestTransaction;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -75,10 +76,10 @@ public class JdbcDatumEntityDao_BulkLoadingDaoTests extends BaseDatumJdbcTestSup
 
 	private JdbcDatumEntityDao dao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
-		dao.setBulkLoadDataSource(jdbcTemplate.getDataSource());
+		dao.setBulkLoadDataSource(((JdbcTemplate) jdbcTemplate).getDataSource());
 		dao.setBulkLoadTransactionManager(txManager);
 	}
 

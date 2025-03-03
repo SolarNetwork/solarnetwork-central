@@ -23,8 +23,11 @@
 package net.solarnetwork.central.jobs.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +37,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.expression.Expression;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -43,7 +47,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Cloud integrations general configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -51,6 +55,40 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 
 	@Autowired
 	private CacheManager cacheManager;
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
+	@ConfigurationProperties(prefix = "app.c2c.cache.integration-locks")
+	public CacheSettings cloudIntegrationsIntegrationLockCacheSettings() {
+		CacheSettings settings = new CacheSettings();
+		settings.setLoaderWriter(new CacheLoaderWriter<UserLongCompositePK, Lock>() {
+
+			@Override
+			public Lock load(UserLongCompositePK key) throws Exception {
+				// always return a new lock for any given (missing) key
+				return new ReentrantLock();
+			}
+
+			@Override
+			public void write(UserLongCompositePK key, Lock value) throws Exception {
+				// ignore
+			}
+
+			@Override
+			public void delete(UserLongCompositePK key) throws Exception {
+				// ignore
+			}
+		});
+		return settings;
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
+	public Cache<UserLongCompositePK, Lock> cloudIntegrationsIntegrationLockCache(
+			@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS) CacheSettings settings) {
+		return settings.createCache(cacheManager, UserLongCompositePK.class, Lock.class,
+				CLOUD_INTEGRATIONS_INTEGRATION_LOCKS + "-cache");
+	}
 
 	@Bean
 	@Qualifier(CLOUD_INTEGRATIONS_EXPRESSIONS)

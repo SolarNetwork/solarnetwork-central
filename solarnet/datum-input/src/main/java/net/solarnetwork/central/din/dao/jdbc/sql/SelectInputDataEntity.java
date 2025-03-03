@@ -38,7 +38,7 @@ import net.solarnetwork.util.ObjectUtils;
  * @author matt
  * @version 1.0
  */
-public class SelectInputDataEntity implements PreparedStatementCreator, SqlProvider {
+public final class SelectInputDataEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			SELECT user_id, node_id, source_id, created, input_data

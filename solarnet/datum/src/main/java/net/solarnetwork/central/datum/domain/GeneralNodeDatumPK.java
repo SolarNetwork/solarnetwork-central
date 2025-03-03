@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -35,6 +36,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 		implements Serializable, Cloneable, Comparable<GeneralNodeDatumPK>, GeneralObjectDatumKey {
 
+	@Serial
 	private static final long serialVersionUID = 2663897681819661032L;
 
 	/**
@@ -59,8 +61,13 @@ public class GeneralNodeDatumPK extends BasicNodeSourceDatePK
 		super(nodeId, sourceId, created);
 	}
 
+	@Override
+	public GeneralNodeDatumPK clone() {
+		return (GeneralNodeDatumPK) super.clone();
+	}
+
 	/**
-	 * Compare two {@code GeneralNodeDautumPK} objects.
+	 * Compare two {@code GeneralNodeDatumPK} objects.
 	 *
 	 * <p>
 	 * Keys are ordered based on:

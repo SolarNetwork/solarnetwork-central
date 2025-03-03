@@ -23,13 +23,18 @@
 package net.solarnetwork.central.user.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import java.time.Clock;
 import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.security.crypto.encrypt.BytesEncryptor;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
@@ -38,13 +43,14 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamSettingsEntityDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.dao.UserSettingsEntityDao;
+import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
 
 /**
  * Configuration for user cloud integrations services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -78,11 +84,28 @@ public class UserCloudIntegrationsBizConfig {
 	@Autowired
 	private TextEncryptor textEncryptor;
 
+	@Autowired
+	@Qualifier(CLOUD_INTEGRATIONS)
+	private BytesEncryptor bytesEncryptor;
+
+	@Autowired
+	private JdbcOperations jdbcOperations;
+
 	@Bean
 	public DaoUserCloudIntegrationsBiz userCloudIntegrationsBiz() {
-		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(userSettingsDao,
-				integrationDao, datumStreamDao, datumStreamSettingsDao, datumStreamMappingDao,
-				datumStreamPropertyDao, datumStreamPollTaskDao, textEncryptor, integrationServices);
+		var clientAccessTokenDao = new JdbcOAuth2AuthorizedClientService(bytesEncryptor, jdbcOperations,
+				new ClientRegistrationRepository() {
+
+					@Override
+					public ClientRegistration findByRegistrationId(String registrationId) {
+						// we're not using this API here
+						throw new UnsupportedOperationException();
+					}
+				});
+		DaoUserCloudIntegrationsBiz biz = new DaoUserCloudIntegrationsBiz(Clock.systemUTC(),
+				userSettingsDao, integrationDao, datumStreamDao, datumStreamSettingsDao,
+				datumStreamMappingDao, datumStreamPropertyDao, datumStreamPollTaskDao,
+				clientAccessTokenDao, textEncryptor, integrationServices);
 		return biz;
 	}
 

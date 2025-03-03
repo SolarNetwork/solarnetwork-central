@@ -37,6 +37,8 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.inin.dao.BasicFilter;
 import net.solarnetwork.central.inin.dao.TransformConfigurationDao;
 import net.solarnetwork.central.inin.dao.TransformFilter;
+import net.solarnetwork.central.inin.dao.jdbc.TransformConfigurationRowMapper.RequestTransformConfigurationRowMapper;
+import net.solarnetwork.central.inin.dao.jdbc.TransformConfigurationRowMapper.ResponseTransformConfigurationRowMapper;
 import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration.InsertRequestTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.InsertTransformConfiguration.InsertResponseTransformConfiguration;
 import net.solarnetwork.central.inin.dao.jdbc.sql.SelectTransformConfiguration;
@@ -55,7 +57,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <C>
  *        the transform configuration type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract sealed class JdbcTransformConfigurationDao<C extends TransformConfiguration<C>>
 		implements TransformConfigurationDao<C> {
@@ -86,7 +88,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected RowMapper<RequestTransformConfiguration> rowMapper() {
-			return TransformConfigurationRowMapper.REQ_INSTANCE;
+			return RequestTransformConfigurationRowMapper.INSTANCE;
 		}
 
 		@Override
@@ -132,7 +134,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 		@Override
 		protected RowMapper<ResponseTransformConfiguration> rowMapper() {
-			return TransformConfigurationRowMapper.RES_INSTANCE;
+			return ResponseTransformConfigurationRowMapper.INSTANCE;
 		}
 
 		@Override
@@ -205,9 +207,8 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 		final var sql = createSql(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
 
-		return pk;
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
@@ -221,7 +222,7 @@ public abstract sealed class JdbcTransformConfigurationDao<C extends TransformCo
 
 	@Override
 	public FilterResults<C, UserLongCompositePK> findFiltered(TransformFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(phase, filter);
 		return executeFilterQuery(jdbcOps, filter, sql, rowMapper());

@@ -1,21 +1,21 @@
 /* ==================================================================
  * PingController.java - 25/05/2015 10:19:49 am
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,15 +25,20 @@ package net.solarnetwork.central.web;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.springframework.boot.actuate.health.CompositeHealthContributor;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthContributor;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.ui.Model;
@@ -41,19 +46,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.Hidden;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.PingTestResultDisplay;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A web controller for running a set of {@link PingTest} tests and returning
  * the results.
- * 
+ *
  * @author matt
- * @version 3.1
+ * @version 3.3
  */
-public class PingController {
+@Hidden
+public class PingController implements CompositeHealthContributor {
 
 	private static final ExecutorService EXECUTOR = Executors
 			.newCachedThreadPool(new CustomizableThreadFactory("Ping-"));
@@ -62,7 +70,7 @@ public class PingController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tests
 	 *        the tests
 	 */
@@ -79,34 +87,14 @@ public class PingController {
 			allTests.addAll(tests);
 		}
 		if ( !allTests.isEmpty() ) {
-			results = new TreeMap<String, PingTestResultDisplay>();
+			results = new TreeMap<>();
 			for ( final PingTest t : allTests ) {
 				final Instant start = Instant.now();
 				PingTest.Result pingTestResult = null;
-				Future<PingTest.Result> f = null;
 				try {
-					f = EXECUTOR.submit(new Callable<PingTest.Result>() {
-
-						@Override
-						public PingTest.Result call() throws Exception {
-							return t.performPingTest();
-						}
-					});
-					pingTestResult = f.get(t.getPingTestMaximumExecutionMilliseconds(),
-							TimeUnit.MILLISECONDS);
-				} catch ( TimeoutException e ) {
-					if ( f != null ) {
-						f.cancel(true);
-					}
-					pingTestResult = new PingTestResult(false, "Timeout: no result provided within "
-							+ t.getPingTestMaximumExecutionMilliseconds() + "ms");
-				} catch ( Throwable e ) {
-					Throwable root = e;
-					while ( root.getCause() != null ) {
-						root = root.getCause();
-					}
-					pingTestResult = new PingTestResult(false, "Exception: " + root.toString());
+					pingTestResult = executeTest(t);
 				} finally {
+					assert pingTestResult != null;
 					results.put(t.getPingTestId(), new PingTestResultDisplay(t, pingTestResult, start));
 				}
 			}
@@ -114,10 +102,30 @@ public class PingController {
 		return new PingResults(now, results);
 	}
 
+	private static PingTest.Result executeTest(PingTest t) {
+		PingTest.Result pingTestResult = null;
+		Future<PingTest.Result> f = null;
+		try {
+			f = EXECUTOR.submit(t::performPingTest);
+			pingTestResult = f.get(t.getPingTestMaximumExecutionMilliseconds(), TimeUnit.MILLISECONDS);
+		} catch ( TimeoutException e ) {
+			f.cancel(true);
+			pingTestResult = new PingTestResult(false, "Timeout: no result provided within "
+					+ t.getPingTestMaximumExecutionMilliseconds() + "ms");
+		} catch ( Throwable e ) {
+			Throwable root = e;
+			while ( root.getCause() != null ) {
+				root = root.getCause();
+			}
+			pingTestResult = new PingTestResult(false, "Exception: " + root.toString());
+		}
+		return pingTestResult;
+	}
+
 	@RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public Response<PingResults> executePingTest() {
-		return Response.response(executeTests());
+	public Result<PingResults> executePingTest() {
+		return Result.success(executeTests());
 	}
 
 	@RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
@@ -139,7 +147,7 @@ public class PingController {
 
 		/**
 		 * Construct with values.
-		 * 
+		 *
 		 * @param date
 		 *        The date the tests were executed at.
 		 * @param results
@@ -166,7 +174,7 @@ public class PingController {
 
 		/**
 		 * Get a map of test ID to test results.
-		 * 
+		 *
 		 * @return All test results.
 		 */
 		public Map<String, PingTestResultDisplay> getResults() {
@@ -175,7 +183,7 @@ public class PingController {
 
 		/**
 		 * Get the date the tests were executed.
-		 * 
+		 *
 		 * @return The date.
 		 */
 		public Instant getDate() {
@@ -185,7 +193,7 @@ public class PingController {
 		/**
 		 * Return <em>true</em> if there are test results available and all the
 		 * results return <em>true</em> for {@link PingTestResult#isSuccess()}.
-		 * 
+		 *
 		 * @return Boolean flag.
 		 */
 		public boolean isAllGood() {
@@ -194,9 +202,67 @@ public class PingController {
 
 	}
 
+	@Override
+	public HealthContributor getContributor(String name) {
+		if ( tests != null ) {
+			for ( PingTest t : tests ) {
+				String id = t.getPingTestId();
+				if ( name.equalsIgnoreCase(id) ) {
+					return new PingTestHealthIndicator(t);
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Iterator<NamedContributor<HealthContributor>> iterator() {
+		if ( tests == null || tests.isEmpty() ) {
+			return Collections.emptyIterator();
+		}
+		return tests.stream()
+				.map(t -> (NamedContributor<HealthContributor>) new PingTestHealthIndicator(t))
+				.iterator();
+	}
+
+	private static class PingTestHealthIndicator
+			implements HealthIndicator, NamedContributor<HealthContributor> {
+
+		private final PingTest test;
+
+		private PingTestHealthIndicator(PingTest test) {
+			super();
+			this.test = ObjectUtils.requireNonNullArgument(test, "test");
+		}
+
+		@Override
+		public String getName() {
+			return test.getPingTestId();
+		}
+
+		@Override
+		public HealthContributor getContributor() {
+			return this;
+		}
+
+		@Override
+		public Health health() {
+			PingTest.Result pingTestResult = executeTest(test);
+			Health.Builder b = pingTestResult.isSuccess() ? Health.up() : Health.down();
+			if ( pingTestResult.getMessage() != null ) {
+				b.withDetail("message", pingTestResult.getMessage());
+			}
+			if ( pingTestResult.getProperties() != null ) {
+				b.withDetails(pingTestResult.getProperties());
+			}
+			return b.build();
+		}
+
+	}
+
 	/**
 	 * Get the ping tests.
-	 * 
+	 *
 	 * @return the tests
 	 */
 	public List<PingTest> getTests() {

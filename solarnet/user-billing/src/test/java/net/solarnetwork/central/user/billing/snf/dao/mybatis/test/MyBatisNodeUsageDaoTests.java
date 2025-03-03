@@ -25,7 +25,13 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 import static java.lang.Long.parseLong;
 import static java.lang.String.format;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.dao.AuditUserServiceEntity.dailyAuditUserService;
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
+import static net.solarnetwork.central.user.billing.snf.domain.NamedCost.forTier;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.CLOUD_INTEGRATIONS_DATA_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.UsageTier.tier;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -41,6 +47,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -48,10 +55,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.AuditNodeServiceEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
+import net.solarnetwork.central.domain.AuditUserServiceValue;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
@@ -1384,4 +1393,97 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		}
 
 	}
+
+	@Test
+	public void usageForUser_withCloudIntegrationsData() {
+		// GIVEN
+		final LocalDate month = LocalDate.of(2025, 2, 1);
+
+		// add 10 days worth of audit data
+		final int numDays = 10;
+
+		final var auditUserServiceDaily = new ArrayList<AuditUserServiceValue>(numDays);
+
+		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
+			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
+			// populate Cloud Integrations data audit records
+			auditUserServiceDaily.add(dailyAuditUserService(userId, "ccio", day, 655_250_000L));
+		}
+		DatumDbUtils.insertAuditUserServiceValueDaily(log, jdbcTemplate, auditUserServiceDaily);
+
+		allTableData(log, jdbcTemplate, "solardatm.aud_user_daily", "user_id,service,ts_start");
+		debugQuery(format(
+				"select * from solarbill.billing_usage_tier_details(%d, '%s'::timestamp, '%s'::timestamp, '%s'::date)",
+				userId, month.toString(), month.plusMonths(1).toString(), month.toString()));
+
+		// WHEN
+		UsageTiers tiers = dao.effectiveUsageTiers(month);
+		Map<String, List<UsageTier>> tierMap = tiers.tierMap();
+
+		List<NodeUsage> r1 = dao.findNodeUsageForAccount(userId, month, month.plusMonths(1));
+		List<NodeUsage> r2 = dao.findUsageForAccount(userId, month, month.plusMonths(1));
+
+		// THEN
+		// @formatter:off
+		then(r1).as("No node-level usage for account").isEmpty();
+
+		then(r2)
+			.as("One account-level usage")
+			.hasSize(1)
+			.element(0)
+			.as("No node ID for account-level usage")
+			.returns(null, from(NodeUsage::getId))
+			.as("No datum properties in")
+			.returns(BigInteger.ZERO, from(NodeUsage::getDatumPropertiesIn))
+			.as("No datum out")
+			.returns(BigInteger.ZERO, from(NodeUsage::getDatumOut))
+			.as("No datum days stored")
+			.returns(BigInteger.ZERO, from(NodeUsage::getDatumDaysStored))
+			.as("No instructions issued")
+			.returns(BigInteger.ZERO, from(NodeUsage::getInstructionsIssued))
+			.as("No flux data out")
+			.returns(BigInteger.ZERO, from(NodeUsage::getFluxDataOut))
+			.as("No OSCP capacity groups")
+			.returns(BigInteger.ZERO, from(NodeUsage::getOscpCapacityGroups))
+			.as("No OSCP capacity")
+			.returns(BigInteger.ZERO, from(NodeUsage::getOscpCapacity))
+			.as("No OAuth client credentials")
+			.returns(BigInteger.ZERO, from(NodeUsage::getOauthClientCredentials))
+			.as("Cloud Integrations data aggregated across month")
+			.returns(BigInteger.valueOf(655_250_000L * numDays), from(NodeUsage::getCloudIntegrationsData))
+			.satisfies(u -> {
+				then(u.getTiersCostBreakdown())
+					.as("Has all costs")
+					.hasSize(12)
+					.as("Has cloud integrations costs")
+					.hasEntrySatisfying(CLOUD_INTEGRATIONS_DATA_KEY, tiersCost -> {
+						then(tiersCost)
+							.contains(
+								  forTier(1, "1000000000", new BigDecimal("1000000000").multiply(
+										  tierMap.get(CLOUD_INTEGRATIONS_DATA_KEY).get(0).getCost()).toString())
+								, forTier(1, "5552500000", new BigDecimal("5552500000").multiply(
+										  tierMap.get(CLOUD_INTEGRATIONS_DATA_KEY).get(1).getCost()).toString())
+							)
+							;
+					})
+					.satisfies(tiersCost -> {
+						// verify all OTHER costs are empty
+						var nonCloudIntegrationsTiers = tiersCost.entrySet().stream()
+							.filter(e -> !CLOUD_INTEGRATIONS_DATA_KEY.equals(e.getKey()))
+							.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()))
+							;
+						then(nonCloudIntegrationsTiers)
+							.allSatisfy((k, v) -> {
+								then(v)
+									.as("No costs for %s (only Cloud Integrations data)", k)
+									.isEmpty()
+									;
+							})
+							;
+					})
+					;
+			})
+			;
+	}
+
 }

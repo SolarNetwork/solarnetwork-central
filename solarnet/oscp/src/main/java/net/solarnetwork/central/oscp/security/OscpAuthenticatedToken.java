@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.security;
 import static java.lang.String.format;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.security.core.authority.AuthorityUtils.createAuthorityList;
+import java.io.Serial;
 import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,6 +40,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
  */
 public class OscpAuthenticatedToken implements UserDetails, AuthRoleContainer {
 
+	@Serial
 	private static final long serialVersionUID = -2822991208596742973L;
 
 	private final AuthRoleInfo info;

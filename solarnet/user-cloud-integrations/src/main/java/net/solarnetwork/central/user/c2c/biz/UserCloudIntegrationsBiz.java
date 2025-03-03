@@ -190,6 +190,7 @@ public interface UserCloudIntegrationsBiz {
 	 * @param <C>
 	 *        the configuration type
 	 * @param <K>
+	 *        the entity key type
 	 * @param id
 	 *        the ID of the configuration to save; at a minimum the user ID
 	 *        component must be provided
@@ -244,7 +245,6 @@ public interface UserCloudIntegrationsBiz {
 	 *        to; the available key values come from the identifiers returned by
 	 *        {@link CloudDatumStreamService#dataValueFilters(Locale)}
 	 * @return the available values, never {@literal null}
-	 *
 	 */
 	Iterable<CloudDataValue> listDatumStreamDataValues(UserLongCompositePK integrationId,
 			String datumStreamServiceIdentifier, Map<String, ?> filters);

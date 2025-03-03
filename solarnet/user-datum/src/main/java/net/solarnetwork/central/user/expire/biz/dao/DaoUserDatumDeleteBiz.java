@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserDatumDeleteBiz.java - 24/11/2018 9:55:53 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -54,9 +55,11 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumMaintenanceDao;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
@@ -71,9 +74,9 @@ import net.solarnetwork.event.AppEventPublisher;
 
 /**
  * DAO implementation of {@link UserDatumDeleteBiz}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.3
  */
 public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDeleteJobBiz {
 
@@ -82,6 +85,13 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/** The minimum batch delete duration: 1 hour. */
 	public static final Duration MIN_BATCH_DURATION = Duration.ofHours(1);
+
+	/**
+	 * The {@code deleteDatumByIdMaxCount} property default value.
+	 * 
+	 * @since 1.2
+	 */
+	public static final int DEFAULT_DELETE_DATUM_BY_ID_MAX_COUNT = 100;
 
 	private final UserNodeDao userNodeDao;
 	private final DatumMaintenanceDao datumDao;
@@ -95,6 +105,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 	private AppEventPublisher eventPublisher;
 	private Duration deleteBatchDuration = DEFAULT_DELETE_BATCH_DURATION;
+	private int deleteDatumByIdMaxCount = DEFAULT_DELETE_DATUM_BY_ID_MAX_COUNT;
 
 	private ScheduledFuture<?> taskPurgerTask = null;
 
@@ -102,7 +113,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executor
 	 *        the executor service to use
 	 * @param userNodeDao
@@ -123,7 +134,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Initialize after properties configured.
-	 * 
+	 *
 	 * <p>
 	 * Call this method once all properties have been configured on the
 	 * instance.
@@ -154,16 +165,19 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	private GeneralNodeDatumFilter prepareFilter(GeneralNodeDatumFilter filter) {
 		if ( filter == null ) {
-			throw new IllegalArgumentException("GeneralNodeDatumFilter is required");
+			throw new IllegalArgumentException("GeneralNodeDatumFilter is required.");
 		}
 		if ( filter.getUserId() == null ) {
 			throw new AuthorizationException(Reason.ANONYMOUS_ACCESS_DENIED, null);
+		}
+		if ( filter.getLocalStartDate() == null || filter.getLocalEndDate() == null ) {
+			throw new IllegalArgumentException("A local date range is required.");
 		}
 		DatumFilterCommand f = null;
 		if ( filter.getNodeId() == null ) {
 			f = new DatumFilterCommand(filter);
 			Set<Long> nodes = userNodeDao.findNodeIdsForUser(filter.getUserId());
-			f.setNodeIds(nodes.toArray(new Long[nodes.size()]));
+			f.setNodeIds(nodes.toArray(Long[]::new));
 			filter = f;
 		}
 		if ( filter.getSourceIds() != null && filter.getSourceIds().length < 1 ) {
@@ -178,11 +192,10 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public net.solarnetwork.central.datum.domain.DatumRecordCounts countDatumRecords(
-			GeneralNodeDatumFilter filter) {
+	public DatumRecordCounts countDatumRecords(GeneralNodeDatumFilter filter) {
 		filter = prepareFilter(filter);
 		if ( filter.getNodeId() == null ) {
-			net.solarnetwork.central.datum.domain.DatumRecordCounts counts = new net.solarnetwork.central.datum.domain.DatumRecordCounts();
+			DatumRecordCounts counts = new DatumRecordCounts();
 			counts.setDate(Instant.now());
 			return counts;
 		}
@@ -191,7 +204,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public long purgeOldJobs(Instant olderThanDate) {
 		return jobInfoDao.purgeOldJobs(olderThanDate);
 	}
@@ -210,7 +223,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public DatumDeleteJobInfo submitDatumDeleteRequest(GeneralNodeDatumFilter request) {
 		GeneralNodeDatumFilter f = prepareFilter(request);
 
@@ -222,7 +235,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		info.setConfiguration(f);
 		info.setJobState(DatumDeleteJobState.Queued);
 
-		jobInfoDao.store(info);
+		jobInfoDao.save(info);
 
 		DatumDeleteTask task = taskForId(id);
 
@@ -233,7 +246,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	}
 
 	@Override
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	public DatumDeleteJobStatus performDatumDelete(UserUuidPK id) {
 		DatumDeleteTask task = taskForId(id);
 
@@ -241,6 +254,19 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		task.setDelegate(future);
 
 		return task;
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED)
+	public Set<ObjectDatumId> deleteDatum(Long userId, Set<ObjectDatumId> ids) {
+		if ( ids == null || ids.isEmpty() ) {
+			return Collections.emptySet();
+		}
+		if ( ids.size() > deleteDatumByIdMaxCount ) {
+			throw new IllegalArgumentException(
+					"A maximum of %d IDs can be deleted at once.".formatted(deleteDatumByIdMaxCount));
+		}
+		return datumDao.deleteForIds(userId, ids);
 	}
 
 	private DatumDeleteTask taskForId(UserUuidPK id) {
@@ -276,7 +302,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 		if ( ea == null ) {
 			return;
 		}
-		ea.postEvent(status.asJobStatusChagnedEvent(result));
+		ea.postEvent(status.asJobStatusChangedEvent(result));
 	}
 
 	private class DatumDeleteTask implements Callable<DatumDeleteJobInfo>, DatumDeleteJobStatus {
@@ -287,12 +313,12 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		/**
 		 * Construct from a task info.
-		 * 
+		 *
 		 * <p>
 		 * Once this task has been submitted to an executor, call
 		 * {@link #setDelegate(Future)} with the resulting {@code Future}.
 		 * </p>
-		 * 
+		 *
 		 * @param info
 		 *        the info
 		 */
@@ -367,7 +393,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			if ( completionDate != null ) {
 				info.setCompleted(completionDate);
 			}
-			jobInfoDao.store(info);
+			jobInfoDao.save(info);
 
 			postJobStatusChangedEvent(this, info);
 		}
@@ -386,10 +412,9 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 			final String id = info.getJobId();
 			final GeneralNodeDatumFilter f = info.getConfiguration();
 			final String nodeIds = (f.getNodeIds() != null
-					? stream(f.getNodeIds()).map(n -> n.toString()).collect(Collectors.joining(","))
+					? stream(f.getNodeIds()).map(Object::toString).collect(Collectors.joining(","))
 					: "*");
-			final String sourceIds = (f.getSourceIds() != null
-					? stream(f.getSourceIds()).collect(Collectors.joining(","))
+			final String sourceIds = (f.getSourceIds() != null ? String.join(",", f.getSourceIds())
 					: "*");
 			log.info("Executing user {} datum delete request {}: nodes = {}; sources = {}; {} - {}",
 					f.getUserId(), id, nodeIds, sourceIds, f.getLocalStartDate(), f.getLocalEndDate());
@@ -552,7 +577,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 	/**
 	 * Set the minimum time, in milliseconds, to maintain import job status
 	 * information after the job has completed.
-	 * 
+	 *
 	 * @param completedTaskMinimumCacheTime
 	 *        the time in milliseconds to set
 	 */
@@ -562,7 +587,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Get the event admin service.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public AppEventPublisher getEventPublisher() {
@@ -571,7 +596,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Configure an {@link EventAdmin} service for posting status events.
-	 * 
+	 *
 	 * @param eventPublisher
 	 *        the optional event admin service
 	 */
@@ -581,7 +606,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Configure a scheduler for task maintenance.
-	 * 
+	 *
 	 * @param scheduler
 	 *        the scheduler to use
 	 */
@@ -591,7 +616,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Get the delete batch duration.
-	 * 
+	 *
 	 * @return the duration, or {@literal null} to not perform time-based delete
 	 *         batching; defaults to {@link #DEFAULT_DELETE_BATCH_DURATION}
 	 */
@@ -601,7 +626,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Set the delete batch duration.
-	 * 
+	 *
 	 * @param deleteBatchDuration
 	 *        the duration to set, or {@literal null} to not perform time-based
 	 *        delete batching
@@ -612,13 +637,34 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 	/**
 	 * Set the delete batch duration as a number of days.
-	 * 
+	 *
 	 * @param days
 	 *        the number of days to use for delete batches, or {@literal 0} to
 	 *        disable batching
 	 */
 	public void setDeleteBatchDays(int days) {
 		setDeleteBatchDuration(days > 0 ? Duration.ofDays(days) : null);
+	}
+
+	/**
+	 * Get the maximum number of datum IDs to allow deleting in one call.
+	 * 
+	 * @return the maximum count
+	 * @since 1.2
+	 */
+	public final int getDeleteDatumByIdMaxCount() {
+		return deleteDatumByIdMaxCount;
+	}
+
+	/**
+	 * Set the maximum number of datum IDs to allow deleting in one call.
+	 * 
+	 * @param deleteDatumByIdMaxCount
+	 *        the maximum count to set
+	 * @since 1.2
+	 */
+	public final void setDeleteDatumByIdMaxCount(int deleteDatumByIdMaxCount) {
+		this.deleteDatumByIdMaxCount = deleteDatumByIdMaxCount;
 	}
 
 }

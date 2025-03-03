@@ -1,40 +1,42 @@
 /* ==================================================================
  * BasicNodeSourceDatePK.java - 11/04/2019 9:47:22 am
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
 /**
  * Basic primary key composed of a node ID and source ID and date.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 1.39
  */
 public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializable, Cloneable {
 
+	@Serial
 	private static final long serialVersionUID = 4113556533271163661L;
 
 	private Instant created;
@@ -48,7 +50,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -64,6 +66,11 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	}
 
 	@Override
+	public BasicNodeSourceDatePK clone() {
+		return (BasicNodeSourceDatePK) super.clone();
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
@@ -76,21 +83,13 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicNodeSourceDatePK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicNodeSourceDatePK) ) {
-			return false;
-		}
-		BasicNodeSourceDatePK other = (BasicNodeSourceDatePK) obj;
 		if ( created == null ) {
-			if ( other.created != null ) {
-				return false;
-			}
-		} else if ( !created.equals(other.created) ) {
-			return false;
+			return other.created == null;
 		}
-		return true;
+		return created.equals(other.created);
 	}
 
 	@Override
@@ -104,23 +103,24 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 
 	/**
 	 * Compare two {@code GeneralNodeDautumPK} objects.
-	 * 
+	 *
 	 * <p>
 	 * Keys are ordered based on:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>nodeId</li>
 	 * <li>sourceId</li>
 	 * <li>created</li>
 	 * </ol>
-	 * 
+	 *
 	 * {@literal null} values will be sorted before non-{@literal null} values.
-	 * 
+	 *
 	 * @param o
 	 *        the object to compare to
 	 * @return a negative integer, zero, or a positive integer as this object is
-	 *         less than, equal to, or greater than the specified object.
+	 *         less than, equal to, or l to, or greater than the specified
+	 *         object.
 	 */
 	public int compareTo(BasicNodeSourceDatePK o) {
 		int comparison = super.compareTo(o);
@@ -137,12 +137,12 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 
 	/**
 	 * Populate a string builder with a friendly string value.
-	 * 
+	 *
 	 * <p>
 	 * This method is called from {@link #toString()}. Extending classes can add
 	 * more data as necessary. The buffer will be initially empty when invoked.
 	 * </p>
-	 * 
+	 *
 	 * @param buf
 	 *        the buffer to populate
 	 */
@@ -150,7 +150,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 	protected void populateStringValue(StringBuilder buf) {
 		super.populateStringValue(buf);
 		if ( created != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("created=");
@@ -160,7 +160,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 
 	/**
 	 * Get the creation time stamp.
-	 * 
+	 *
 	 * @return the creation time
 	 */
 	public Instant getCreated() {
@@ -169,7 +169,7 @@ public class BasicNodeSourceDatePK extends BasicNodeSourcePK implements Serializ
 
 	/**
 	 * Set the creation time stamp.
-	 * 
+	 *
 	 * @param created
 	 *        the time
 	 */

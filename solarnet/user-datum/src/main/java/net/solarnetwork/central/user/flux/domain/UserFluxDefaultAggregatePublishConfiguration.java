@@ -1,27 +1,28 @@
 /* ==================================================================
  * UserFluxDefaultAggregatePublishConfiguration.java - 25/06/2024 8:18:12 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.flux.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -32,7 +33,7 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * User SolarFlux default aggregate publish configuration.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -42,6 +43,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 		implements FluxPublishSettings, Differentiable<UserFluxDefaultAggregatePublishConfiguration>,
 		UserRelatedEntity<Long> {
 
+	@Serial
 	private static final long serialVersionUID = -543871871370406533L;
 
 	private Instant modified;
@@ -79,12 +81,12 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Test if this entity has the same property values as another.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id}, {@code created}, and {@code modified} properties are not
 	 * compared.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the entity to compare to
 	 * @return {@literal true} if the properties of this entity are equal to the
@@ -96,7 +98,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Get the modification date.
-	 * 
+	 *
 	 * @return the modified date
 	 */
 	public Instant getModified() {
@@ -105,7 +107,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Set the modification date.
-	 * 
+	 *
 	 * @param modified
 	 *        the modified date to set
 	 */
@@ -115,7 +117,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Get the publish mode.
-	 * 
+	 *
 	 * @return {@code true} to publish messages for matching datum streams
 	 */
 	@Override
@@ -125,7 +127,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Set the publish mode.
-	 * 
+	 *
 	 * @param publish
 	 *        {@code true} to publish messages for matching datum streams
 	 */
@@ -135,7 +137,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Get the message retain flag to use.
-	 * 
+	 *
 	 * @return {@code true} to set the retain flag on published messages
 	 */
 	@Override
@@ -145,7 +147,7 @@ public class UserFluxDefaultAggregatePublishConfiguration extends BasicLongEntit
 
 	/**
 	 * Set the message retain flag to use.
-	 * 
+	 *
 	 * @param retain
 	 *        {@code true} to set the retain flag on published messages
 	 */

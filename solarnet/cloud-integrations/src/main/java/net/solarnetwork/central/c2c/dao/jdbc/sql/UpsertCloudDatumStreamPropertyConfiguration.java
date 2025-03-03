@@ -40,7 +40,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
  * @author matt
  * @version 1.1
  */
-public class UpsertCloudDatumStreamPropertyConfiguration
+public final class UpsertCloudDatumStreamPropertyConfiguration
 		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """

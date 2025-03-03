@@ -61,8 +61,7 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 
 	@Override
 	public String getSql() {
-		StringBuilder buf = new StringBuilder(512);
-		buf.append("""
+		return """
 				SELECT dc.user_id
 					, deac.endpoint_id
 					, dc.username
@@ -80,8 +79,7 @@ public class SelectAuthenticatedEndpointCredentials implements PreparedStatement
 					AND de.id = deac.endpoint_id
 				INNER JOIN solardin.din_credential dc ON dc.user_id = deac.user_id
 				WHERE deac.endpoint_id = ? AND dc.username = ?
-				""");
-		return buf.toString();
+				""";
 	}
 
 	@Override

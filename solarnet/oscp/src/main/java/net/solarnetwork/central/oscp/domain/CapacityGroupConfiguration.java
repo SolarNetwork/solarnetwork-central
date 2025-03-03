@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +36,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  */
 public class CapacityGroupConfiguration extends BaseOscpConfigurationEntity<CapacityGroupConfiguration> {
 
+	@Serial
 	private static final long serialVersionUID = 2002817702265442625L;
 
 	private String identifier;

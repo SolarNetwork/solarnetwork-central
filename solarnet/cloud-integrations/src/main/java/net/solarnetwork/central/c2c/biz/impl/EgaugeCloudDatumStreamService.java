@@ -96,7 +96,7 @@ import net.solarnetwork.util.StringUtils;
  *
  * <p>
  * eGauge integrations actually work on the
- * {@link CloudDatumStreamConfiguration} level, as the usename and password
+ * {@link CloudDatumStreamConfiguration} level, as the username and password
  * required is specific to each eGauge device. The eGauge API is actually just a
  * proxy service that forwards all communication to the physical eGague device
  * for handling all queries. Because of this, each
@@ -115,7 +115,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -163,8 +163,6 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	private static final String REGISTER_INDEX_METADATA = "idx";
 	private static final String REGISTER_TYPE_METADATA = "type";
 
-	private final Clock clock;
-
 	/**
 	 * A cache of eGauge device IDs to associated register information. This is
 	 * used to resolve the register index values for a given reference register
@@ -207,7 +205,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			Clock clock, RandomGenerator rng, ClientAccessTokenDao clientAccessTokenDao) {
-		super(SERVICE_IDENTIFIER, "eGauge Datum Stream Service", userEventAppenderBiz, encryptor,
+		super(SERVICE_IDENTIFIER, "eGauge Datum Stream Service", clock, userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new EgaugeRestOperationsHelper(
@@ -215,7 +213,6 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						datumStreamServiceIdentifier -> SECURE_SETTINGS, clock, rng,
 						clientAccessTokenDao, integrationDao));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
@@ -257,8 +254,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		final String deviceId = requireNonNullArgument(
 				datumStream.serviceProperty(DEVICE_ID_FILTER, String.class),
 				"datumStream.serviceProperties.deviceId");
-		List<CloudDataValue> result = Collections.emptyList();
-		result = deviceRegisters(integration, datumStream, deviceId);
+		List<CloudDataValue> result = deviceRegisters(integration, datumStream, deviceId);
 		Collections.sort(result);
 		return result;
 	}
@@ -361,7 +357,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	}
 
 	private static List<CloudDataValue> parseDeviceRegisters(String deviceId, JsonNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		    "ts": "1729828293",
@@ -591,6 +589,9 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 	private static List<GeneralDatum> parseDatum(JsonNode json,
 			CloudDatumStreamConfiguration datumStream, String deviceId,
 			Map<String, List<ValueRef>> refsByRegisterName) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		List<GeneralDatum> result = new ArrayList<>(32);
 		/*- EXAMPLE JSON:
 		{

@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserEvent.java - 1/08/2022 10:42:46 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,6 +24,7 @@ package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonEmptyArgument;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
@@ -35,19 +36,20 @@ import net.solarnetwork.util.UuidUtils;
 
 /**
  * An application event related to a user.
- * 
+ *
  * <p>
  * Note that time-based UUIDs are assumed for {@link #getCreated()} to work, and
  * microsecond precision time is assumed for V7 UUIDs. See
  * {@link UuidUtils#extractTimestamp(UUID, int)}.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class UserEvent extends BasicIdentity<UserUuidPK>
 		implements Entity<UserUuidPK>, UserRelatedEntity<UserUuidPK>, Serializable, Cloneable {
 
+	@Serial
 	private static final long serialVersionUID = -2418940464038903514L;
 
 	private final String[] tags;
@@ -56,7 +58,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param tags
@@ -77,7 +79,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param eventId
@@ -144,7 +146,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	/**
 	 * Get the event ID.
-	 * 
+	 *
 	 * @return the event ID
 	 */
 	public UUID getEventId() {
@@ -153,7 +155,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	/**
 	 * Get the event tags.
-	 * 
+	 *
 	 * @return the tags
 	 */
 	public String[] getTags() {
@@ -162,7 +164,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	/**
 	 * Get the message.
-	 * 
+	 *
 	 * @return the message
 	 */
 	public String getMessage() {
@@ -171,7 +173,7 @@ public class UserEvent extends BasicIdentity<UserUuidPK>
 
 	/**
 	 * Get the JSON data.
-	 * 
+	 *
 	 * @return the data
 	 */
 	public String getData() {

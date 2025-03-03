@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -42,6 +43,7 @@ public class CredentialConfiguration
 		extends BaseUserModifiableEntity<CredentialConfiguration, UserLongCompositePK>
 		implements InstructionInputConfigurationEntity<CredentialConfiguration, UserLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = 599200829065711466L;
 
 	private String username;

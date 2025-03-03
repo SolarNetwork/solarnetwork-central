@@ -1,27 +1,28 @@
 /* ==================================================================
  * BaseIdentifiableUserModifiableEntity.java - 26/09/2024 1:13:54 pm
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.dao;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -38,7 +39,7 @@ import net.solarnetwork.codec.JsonUtils;
 
 /**
  * A base user-related entity that is also an identifiable configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -46,6 +47,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 		extends BaseUserModifiableEntity<C, K>
 		implements UserRelatedStdIdentifiableConfigurationEntity<C, K> {
 
+	@Serial
 	private static final long serialVersionUID = -7821821709345090306L;
 
 	/** The name. */
@@ -62,7 +64,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -126,7 +128,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 
 	/**
 	 * Set the configuration name.
-	 * 
+	 *
 	 * @param name
 	 *        the name to use
 	 */
@@ -142,7 +144,7 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 	/**
 	 * Set the unique identifier for the service this configuration is
 	 * associated with.
-	 * 
+	 *
 	 * @param serviceIdentifier
 	 *        the identifier of the service to use
 	 */

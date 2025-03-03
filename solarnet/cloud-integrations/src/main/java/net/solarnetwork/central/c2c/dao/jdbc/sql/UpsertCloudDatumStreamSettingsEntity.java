@@ -40,7 +40,8 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
  * @author matt
  * @version 1.0
  */
-public class UpsertCloudDatumStreamSettingsEntity implements PreparedStatementCreator, SqlProvider {
+public final class UpsertCloudDatumStreamSettingsEntity
+		implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.cin_datum_stream_settings (

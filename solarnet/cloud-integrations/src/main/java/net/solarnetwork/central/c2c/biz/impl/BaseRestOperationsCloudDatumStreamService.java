@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.time.Clock;
 import java.util.List;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
@@ -42,7 +43,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public abstract class BaseRestOperationsCloudDatumStreamService extends BaseCloudDatumStreamService {
 
@@ -56,6 +57,8 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *        the service identifier
 	 * @param displayName
 	 *        the display name
+	 * @param clock
+	 *        the clock to use
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -78,14 +81,14 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	 *         if any argument is {@literal null}
 	 */
 	public BaseRestOperationsCloudDatumStreamService(String serviceIdentifier, String displayName,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			Clock clock, UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperationsHelper restOpsHelper) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings);
 		this.restOpsHelper = requireNonNullArgument(restOpsHelper, "restOpsHelper");
 	}

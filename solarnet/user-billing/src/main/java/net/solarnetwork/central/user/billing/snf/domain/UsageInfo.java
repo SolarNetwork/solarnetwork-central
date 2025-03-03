@@ -1,21 +1,21 @@
 /* ==================================================================
  * UsageInfo.java - 22/07/2020 8:48:28 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,7 +32,7 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * Information about resource usage.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -45,7 +45,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 
 	/**
 	 * Get an instance out of a usage Map.
-	 * 
+	 *
 	 * @param usage
 	 *        the usage Map, whose keys match the properties of this class
 	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
@@ -57,7 +57,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 
 	/**
 	 * Get an instance out of a usage Map.
-	 * 
+	 *
 	 * @param usage
 	 *        the usage Map, whose keys match the properties of this class
 	 * @param tiers
@@ -88,11 +88,11 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The {@code cost} will be stored as {@literal 0}.
 	 * </p>
-	 * 
+	 *
 	 * @param unitType
 	 *        the usage unit type
 	 * @param amount
@@ -108,7 +108,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param unitType
 	 *        the usage unit type
 	 * @param amount
@@ -127,7 +127,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param unitType
 	 *        the usage unit type
 	 * @param amount
@@ -178,7 +178,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 
 	/**
 	 * Get a map of metadata from this instance.
-	 * 
+	 *
 	 * @return the usage Map, whose keys match the properties of this class,
 	 *         never {@literal null}
 	 */
@@ -193,12 +193,12 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -223,10 +223,9 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UsageInfo) ) {
+		if ( !(obj instanceof UsageInfo other) ) {
 			return false;
 		}
-		UsageInfo other = (UsageInfo) obj;
 		return Objects.equals(amount, other.amount) && Objects.equals(cost, other.cost)
 				&& Objects.equals(unitType, other.unitType);
 	}

@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectChargePointActionStatus.java - 18/11/2022 6:45:25 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -44,11 +44,11 @@ import net.solarnetwork.central.ocpp.dao.ChargePointActionStatusFilter;
 
 /**
  * Generate dynamic SQL for a "find charge point action status" query.
- * 
+ *
  * @author matt
  * @version 1.1
  */
-public class SelectChargePointActionStatus implements PreparedStatementCreator, SqlProvider {
+public final class SelectChargePointActionStatus implements PreparedStatementCreator, SqlProvider {
 
 	/** The {@code fetchSize} property default value. */
 	public static final int DEFAULT_FETCH_SIZE = 1000;
@@ -56,11 +56,11 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
 	 * by charge point status entities.
-	 * 
+	 *
 	 * <p>
 	 * This map contains the following entries:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>action -&gt; action</li>
 	 * <li>connector -&gt; conn_id</li>
@@ -72,6 +72,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 	 * </ol>
 	 */
 	public static final Map<String, String> SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
 		map.put("action", "action");
@@ -89,7 +90,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
@@ -101,7 +102,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param fetchSize
@@ -115,7 +116,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		this.fetchSize = fetchSize;
 	}
 
-	private void sqlCore(StringBuilder buf, boolean ordered) {
+	private void sqlCore(StringBuilder buf) {
 		buf.append("""
 				SELECT created, user_id, cp_id, evse_id, conn_id, action, msg_id, ts
 				FROM solarev.ocpp_charge_point_action_status
@@ -145,7 +146,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		} else {
 			order.append(", user_id, cp_id, evse_id, conn_id, action");
 		}
-		if ( order.length() > 0 ) {
+		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}
@@ -153,7 +154,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		sqlCore(buf, true);
+		sqlCore(buf);
 		sqlOrderBy(buf);
 		limitOffset(filter, buf);
 		return buf.toString();
@@ -164,7 +165,7 @@ public class SelectChargePointActionStatus implements PreparedStatementCreator, 
 		PreparedStatement stmt = con.prepareStatement(getSql(), ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
 		int p = prepareCore(con, stmt, 0);
-		prepareLimitOffset(filter, con, stmt, p);
+		prepareLimitOffset(filter, stmt, p);
 		if ( fetchSize > 0 ) {
 			stmt.setFetchSize(fetchSize);
 		}

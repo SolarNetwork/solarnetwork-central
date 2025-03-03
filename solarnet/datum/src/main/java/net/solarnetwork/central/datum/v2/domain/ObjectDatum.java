@@ -1,27 +1,28 @@
 /* ==================================================================
  * ObjectDatum.java - 10/08/2023 7:06:39 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -40,7 +41,7 @@ import net.solarnetwork.util.ObjectUtils;
 /**
  * A {@link net.solarnetwork.domain.datum.Datum} that also implements
  * {@link StreamDatum}.
- * 
+ *
  * <p>
  * This entity is designed to support functions that require both (object ID +
  * source ID) and stream ID metadata. <b>Note</b> that the identity of this
@@ -48,12 +49,13 @@ import net.solarnetwork.util.ObjectUtils;
  * stream ID is ignored). This entity also implements {@link UserRelatedEntity}
  * to support functions that require a user ID as well.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public final class ObjectDatum extends GeneralDatum implements StreamDatum, UserRelatedEntity<DatumId> {
 
+	@Serial
 	private static final long serialVersionUID = -7851022673629407913L;
 
 	private final Long userId;
@@ -62,7 +64,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 
 	/**
 	 * Create a new instance from a datum and associated metadata.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to convert
 	 * @param userId
@@ -106,7 +108,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 
 	/**
 	 * Create a new instance from a datum and associated metadata.
-	 * 
+	 *
 	 * @param datum
 	 *        the stream datum to convert
 	 * @param userId
@@ -129,11 +131,11 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The {@code userId} will be unassigned.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param samples
@@ -151,7 +153,7 @@ public final class ObjectDatum extends GeneralDatum implements StreamDatum, User
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param samples

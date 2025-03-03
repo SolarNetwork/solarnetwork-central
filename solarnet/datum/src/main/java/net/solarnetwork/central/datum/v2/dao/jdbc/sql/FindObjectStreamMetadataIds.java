@@ -33,12 +33,13 @@ import net.solarnetwork.util.ObjectUtils;
  * @version 1.0
  * @since 1.3
  */
-public class FindObjectStreamMetadataIds implements SqlProvider {
+public final class FindObjectStreamMetadataIds implements SqlProvider {
 
 	/**
 	 * The SQL for finding metadata ID values for a single stream ID.
 	 */
 	public static final String FIND_METADATA_IDS_FOR_STREAM_ID;
+
 	static {
 		FIND_METADATA_IDS_FOR_STREAM_ID = "SELECT stream_id, obj_id, source_id, kind FROM solardatm.find_metadata_for_stream(?)";
 	}

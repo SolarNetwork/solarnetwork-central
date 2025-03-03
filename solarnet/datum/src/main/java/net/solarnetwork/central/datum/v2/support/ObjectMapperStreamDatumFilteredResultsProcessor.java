@@ -265,8 +265,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 		generator.writeStartArray(d, totalLen);
 		generator.writeNumber(metaIndexMap.get(d.getStreamId()));
-		if ( d instanceof AggregateDatum ) {
-			AggregateDatum rd = (AggregateDatum) d;
+		if ( d instanceof AggregateDatum rd ) {
 			generator.writeStartArray(d, 2);
 			generator.writeNumber(ts);
 			if ( rd instanceof ReadingDatum && ((ReadingDatum) rd).getEndTimestamp() != null ) {
@@ -277,7 +276,7 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 			generator.writeEndArray();
 
 			DatumPropertiesStatistics stats = rd.getStatistics();
-			if ( stats != null ) {
+			if ( stats != null && p != null ) {
 				writeAggregateProperty(generator, DatumSamplesType.Instantaneous, iLen,
 						p.getInstantaneous(), stats.getInstantaneous());
 				writeAggregateProperty(generator, DatumSamplesType.Accumulating, aLen,

@@ -84,7 +84,7 @@ import net.solarnetwork.service.PasswordEncoder;
 import net.solarnetwork.util.StringUtils;
 
 /**
- * DAO based implementation of {@Link UserInstructionInputBiz}.
+ * DAO based implementation of {@link UserInstructionInputBiz}.
  *
  * @author matt
  * @version 1.0
@@ -181,7 +181,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void enableConfiguration(
 			K id, boolean enabled, Class<C> configurationClass) {
@@ -208,7 +208,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		dao.updateEnabledStatus(id.getUserId(), filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <T extends InstructionInputConfigurationInput<C, K>, C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C saveConfiguration(
 			K id, T input) {
@@ -235,7 +235,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends InstructionInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
 			K id, Class<C> configurationClass) {

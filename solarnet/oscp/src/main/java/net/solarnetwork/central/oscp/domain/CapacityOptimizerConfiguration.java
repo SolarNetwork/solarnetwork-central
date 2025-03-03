@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -37,6 +38,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class CapacityOptimizerConfiguration
 		extends BaseOscpExternalSystemConfiguration<CapacityOptimizerConfiguration> {
 
+	@Serial
 	private static final long serialVersionUID = 8184628006786027922L;
 
 	/**

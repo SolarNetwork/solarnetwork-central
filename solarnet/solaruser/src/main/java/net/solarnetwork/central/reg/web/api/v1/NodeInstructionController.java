@@ -24,7 +24,6 @@ package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -66,13 +65,12 @@ import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.domain.InstructionStatus;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.Result;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -136,9 +134,9 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "!ids")
 	@ResponseBody
-	public Response<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
+	public Result<Instruction> viewInstruction(@RequestParam("id") Long instructionId) {
 		Instruction instruction = instructorBiz.getInstruction(instructionId);
-		return response(instruction);
+		return success(instruction);
 	}
 
 	/**
@@ -151,10 +149,9 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "ids")
 	@ResponseBody
-	public Response<List<NodeInstruction>> viewInstruction(
-			@RequestParam("ids") Set<Long> instructionIds) {
+	public Result<List<NodeInstruction>> viewInstruction(@RequestParam("ids") Set<Long> instructionIds) {
 		List<NodeInstruction> results = instructorBiz.getInstructions(instructionIds);
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -166,9 +163,9 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public Response<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
+	public Result<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
 		List<Instruction> instructions = instructorBiz.getActiveInstructionsForNode(nodeId);
-		return response(instructions);
+		return success(instructions);
 	}
 
 	/**
@@ -181,10 +178,9 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public Response<List<NodeInstruction>> activeInstructions(
-			@RequestParam("nodeIds") Set<Long> nodeIds) {
+	public Result<List<NodeInstruction>> activeInstructions(@RequestParam("nodeIds") Set<Long> nodeIds) {
 		List<NodeInstruction> instructions = instructorBiz.getActiveInstructionsForNodes(nodeIds);
-		return response(instructions);
+		return success(instructions);
 	}
 
 	/**
@@ -197,9 +193,9 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public Response<List<Instruction>> pendingInstructions(@RequestParam("nodeId") Long nodeId) {
+	public Result<List<Instruction>> pendingInstructions(@RequestParam("nodeId") Long nodeId) {
 		List<Instruction> instructions = instructorBiz.getPendingInstructionsForNode(nodeId);
-		return response(instructions);
+		return success(instructions);
 	}
 
 	/**
@@ -212,10 +208,10 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public Response<List<NodeInstruction>> pendingInstructions(
+	public Result<List<NodeInstruction>> pendingInstructions(
 			@RequestParam("nodeIds") Set<Long> nodeIds) {
 		List<NodeInstruction> instructions = instructorBiz.getPendingInstructionsForNodes(nodeIds);
-		return response(instructions);
+		return success(instructions);
 	}
 
 	/**
@@ -225,12 +221,13 @@ public class NodeInstructionController {
 	 *        the instruction data to add to the queue
 	 * @return the node instruction
 	 */
-	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "!nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "!nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Response<NodeInstruction> queueInstruction(NodeInstruction input) {
+	public Result<NodeInstruction> queueInstruction(NodeInstruction input) {
 		validateInstruction(input);
 		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
-		return response(instr);
+		return success(instr);
 	}
 
 	/**
@@ -240,12 +237,13 @@ public class NodeInstructionController {
 	 *        the instruction data to add to the queue
 	 * @return the node instruction
 	 */
-	@RequestMapping(value = "/add", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/add", method = RequestMethod.POST,
+			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public Response<NodeInstruction> queueInstructionBody(@RequestBody NodeInstruction input) {
+	public Result<NodeInstruction> queueInstructionBody(@RequestBody NodeInstruction input) {
 		validateInstruction(input);
 		NodeInstruction instr = instructorBiz.queueInstruction(input.getNodeId(), input);
-		return response(instr);
+		return success(instr);
 	}
 
 	/**
@@ -263,9 +261,10 @@ public class NodeInstructionController {
 	 * @return the node instruction
 	 * @since 1.3
 	 */
-	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "!nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Response<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
+	public Result<NodeInstruction> queueInstruction(@PathVariable("topic") String topic,
 			NodeInstruction input) {
 		input.setTopic(topic);
 		return queueInstruction(input);
@@ -286,9 +285,10 @@ public class NodeInstructionController {
 	 * @return the node instruction
 	 * @since 1.4
 	 */
-	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST,
+			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
-	public Response<NodeInstruction> queueInstructionBody(@PathVariable("topic") String topic,
+	public Result<NodeInstruction> queueInstructionBody(@PathVariable("topic") String topic,
 			@RequestBody NodeInstruction input) {
 		input.setTopic(topic);
 		validateInstruction(input);
@@ -305,13 +305,14 @@ public class NodeInstructionController {
 	 * @return the node instructions
 	 * @since 1.2
 	 */
-	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/add", method = RequestMethod.POST, params = "nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Response<List<NodeInstruction>> queueInstruction(@RequestParam("nodeIds") Set<Long> nodeIds,
+	public Result<List<NodeInstruction>> queueInstruction(@RequestParam("nodeIds") Set<Long> nodeIds,
 			NodeInstruction input) {
 		validateInstruction(input, nodeIds);
 		List<NodeInstruction> results = instructorBiz.queueInstructions(nodeIds, input);
-		return response(results);
+		return success(results);
 	}
 
 	/**
@@ -331,9 +332,10 @@ public class NodeInstructionController {
 	 * @return the node instructions
 	 * @since 1.3
 	 */
-	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/add/{topic}", method = RequestMethod.POST, params = "nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
-	public Response<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
+	public Result<List<NodeInstruction>> queueInstruction(@PathVariable("topic") String topic,
 			@RequestParam("nodeIds") Set<Long> nodeIds, NodeInstruction input) {
 		input.setTopic(topic);
 		return queueInstruction(nodeIds, input);
@@ -363,10 +365,10 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = "!ids")
 	@ResponseBody
-	public Response<Void> updateInstructionState(@RequestParam("id") Long instructionId,
+	public Result<Void> updateInstructionState(@RequestParam("id") Long instructionId,
 			@RequestParam("state") InstructionState state) {
 		instructorBiz.updateInstructionState(instructionId, state);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -381,10 +383,10 @@ public class NodeInstructionController {
 	 */
 	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = "ids")
 	@ResponseBody
-	public Response<Void> updateInstructionState(@RequestParam("ids") Set<Long> instructionIds,
+	public Result<Void> updateInstructionState(@RequestParam("ids") Set<Long> instructionIds,
 			@RequestParam("state") InstructionState state) {
 		instructorBiz.updateInstructionsState(instructionIds, state);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -422,7 +424,8 @@ public class NodeInstructionController {
 	 * @return the node instruction
 	 * @since 2.1
 	 */
-	@RequestMapping(value = "/exec", method = RequestMethod.POST, params = "!nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/exec", method = RequestMethod.POST, params = "!nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public DeferredResult<Result<NodeInstruction>> execInstruction(
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
@@ -441,7 +444,8 @@ public class NodeInstructionController {
 	 * @return the node instruction
 	 * @since 2.3
 	 */
-	@RequestMapping(value = "/exec", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/exec", method = RequestMethod.POST,
+			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public DeferredResult<Result<NodeInstruction>> execInstructionBody(
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
@@ -467,7 +471,8 @@ public class NodeInstructionController {
 	 * @return the node instruction
 	 * @since 2.3
 	 */
-	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "!nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "!nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public DeferredResult<Result<NodeInstruction>> execInstruction(@PathVariable("topic") String topic,
 			@RequestParam(name = "resultMaxWait", required = false) Long maxWaitMs,
@@ -493,7 +498,8 @@ public class NodeInstructionController {
 	 * @return the node instruction
 	 * @since 2.3
 	 */
-	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST,
+			consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public DeferredResult<Result<NodeInstruction>> execInstructionBody(
 			@PathVariable("topic") String topic,
@@ -516,7 +522,8 @@ public class NodeInstructionController {
 	 * @return the node instructions
 	 * @since 2.3
 	 */
-	@RequestMapping(value = "/exec", method = RequestMethod.POST, params = "nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/exec", method = RequestMethod.POST, params = "nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(
 			@RequestParam("nodeIds") Set<Long> nodeIds,
@@ -545,7 +552,8 @@ public class NodeInstructionController {
 	 * @return the node instructions
 	 * @since 2.3
 	 */
-	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "nodeIds", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+	@RequestMapping(value = "/exec/{topic}", method = RequestMethod.POST, params = "nodeIds",
+			consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
 	@ResponseBody
 	public DeferredResult<Result<List<NodeInstruction>>> execInstruction(
 			@PathVariable("topic") String topic, @RequestParam("nodeIds") Set<Long> nodeIds,

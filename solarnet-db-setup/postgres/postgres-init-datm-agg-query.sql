@@ -293,11 +293,11 @@ $$
 	SELECT
 		  aux.stream_id
 		, aux.ts
-		, array_agg(p.val::text::numeric ORDER BY array_position(aux.names_a, p.key::text))
-			FILTER (WHERE array_position(aux.names_a, p.key::text) IS NOT NULL)::numeric[] AS data_a
+		, array_agg(val::TEXT::NUMERIC ORDER BY a_idx) AS data_a
 		, min(aux.rr) AS rtype
 	FROM aux
-	INNER JOIN jsonb_each(aux.jdata_a) AS p(key,val) ON TRUE
+	INNER JOIN unnest(aux.names_a) WITH ORDINALITY AS a(a_name, a_idx) ON TRUE
+	LEFT OUTER JOIN jsonb_each(aux.jdata_a) AS p(key,val) ON p.key = a.a_name
 	GROUP BY aux.stream_id, aux.ts, aux.rr
 $$;
 

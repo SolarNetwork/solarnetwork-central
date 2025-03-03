@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.AppSetting;
  * @version 1.0
  * @since 2.0
  */
-public class DeleteAppSetting implements PreparedStatementCreator, SqlProvider {
+public final class DeleteAppSetting implements PreparedStatementCreator, SqlProvider {
 
 	private final String[] keys;
 	private final String[] types;

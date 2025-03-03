@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
  * Marker interface for the common application configuration package.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration
 @ComponentScan
@@ -43,5 +43,19 @@ public class SolarNetCommonConfiguration {
 
 	/** A qualifier for caching support. */
 	public static final String CACHING = "caching";
+
+	/**
+	 * A qualifier for HTTP trace support.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String HTTP_TRACE = "http-trace";
+
+	/**
+	 * A qualifier for disabled HTTP trace support.
+	 * 
+	 * @since 1.2
+	 */
+	public static final String NOT_HTTP_TRACE = "!http-trace";
 
 }

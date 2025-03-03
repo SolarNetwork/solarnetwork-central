@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_DatumStreamMetadataDaoTests.java - 19/11/2020 4:41:41 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,11 +26,16 @@ import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static net.solarnetwork.central.datum.v2.dao.AuditDatumEntity.datumRecordCounts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObjectDatumStreamMetadata;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertDatumRecordCounts;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertStaleAggregateDatum;
+import static net.solarnetwork.central.datum.v2.domain.ObjectDatumId.nodeId;
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -44,14 +49,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
@@ -64,22 +72,23 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.JdbcDatumEntityDao;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
-import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.central.datum.v2.domain.DatumRecordCounts;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatumId;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StreamKindPK;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Aggregation;
+import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class' implementation of
  * {@link DatumMaintenanceDao}.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTestSupport {
 
@@ -89,7 +98,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 
 	private JdbcDatumEntityDao dao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
@@ -125,7 +134,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -164,7 +173,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -203,7 +212,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -244,7 +253,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(0));
 		assertThat("Total result count", results.getTotalResults(), equalTo(0L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 	}
 
 	@Test
@@ -283,7 +292,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(5));
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -330,7 +339,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
 		assertThat("Total result count", results.getTotalResults(), equalTo(2L));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -365,7 +374,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setStartDate(start.toInstant());
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
-		criteria.setOffset(0);
+		criteria.setOffset(0L);
 		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
@@ -378,7 +387,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 		int i = 0;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -413,7 +422,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setStartDate(start.toInstant());
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
-		criteria.setOffset(2);
+		criteria.setOffset(2L);
 		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
@@ -426,7 +435,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(2));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(2L));
 		int i = 2;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -461,7 +470,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		criteria.setStartDate(start.toInstant());
 		criteria.setEndDate(end.toInstant());
 		criteria.setMax(2);
-		criteria.setOffset(4);
+		criteria.setOffset(4L);
 		criteria.setWithoutTotalResultsCount(false);
 		dao.markDatumAggregatesStale(criteria);
 
@@ -474,7 +483,7 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 		assertThat("Results available", results, notNullValue());
 		assertThat("Total result count", results.getTotalResults(), equalTo(5L));
 		assertThat("Returned result count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(4));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(4L));
 		int i = 4;
 		for ( StaleAggregateDatum stale : results ) {
 			assertStaleAggregateDatum("stale hour " + i, stale, new StaleAggregateDatumEntity(
@@ -1131,4 +1140,268 @@ public class JdbcDatumEntityDao_DatumMaintenanceDaoTests extends BaseDatumJdbcTe
 				equalTo(ts.atZone(ZoneId.of(meta.getTimeZoneId())).toInstant()));
 	}
 
+	@Test
+	public void deleteByIds_nodeSourceIds() {
+		// GIVEN
+		setupTestUser();
+		setupTestNode();
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID);
+		final Set<ObjectDatumId> idsToDelete = new LinkedHashSet<>();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			int count = 5;
+			int stepMinutes = 30;
+			Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
+					dayStart.toInstant().toEpochMilli(), count, TimeUnit.MINUTES.toMillis(stepMinutes),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+			for ( Entry<NodeSourcePK, ObjectDatumStreamMetadata> e : metas.entrySet() ) {
+				ObjectDatumStreamMetadata m = e.getValue();
+				// add random IDs to delete from stream
+				for ( int t = 0, len = RNG.nextInt(count - 1) + 1; t < len; t++ ) {
+					idsToDelete.add(nodeId(null, m.getObjectId(), m.getSourceId(),
+							dayStart.plusMinutes(RNG.nextInt(count) * 30).toInstant(),
+							Aggregation.None));
+				}
+			}
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		log.debug("Deleting datum: [{}]",
+				idsToDelete.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		Set<ObjectDatumId> result = dao.deleteForIds(TEST_USER_ID, idsToDelete);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("All IDs to delete returned")
+			.hasSize(idsToDelete.size())
+			.allSatisfy(id -> {
+				then(id)
+					.as("Stream ID populated in result")
+					.doesNotReturn(null, ObjectDatumId::getStreamId)
+					;
+				ObjectDatumId match = idsToDelete.stream().filter(e -> e.isEquivalent(id)).findAny().orElse(null);
+				then(match)
+					.as("Expected ID deleted")
+					.isNotNull()
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteByIds_streamIds() {
+		// GIVEN
+		setupTestUser();
+		setupTestNode();
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID);
+		final Set<ObjectDatumId> idsToDelete = new LinkedHashSet<>();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			int count = 5;
+			int stepMinutes = 30;
+			Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
+					dayStart.toInstant().toEpochMilli(), count, TimeUnit.MINUTES.toMillis(stepMinutes),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+			for ( Entry<NodeSourcePK, ObjectDatumStreamMetadata> e : metas.entrySet() ) {
+				ObjectDatumStreamMetadata m = e.getValue();
+				// add random IDs to delete from stream
+				for ( int t = 0, len = RNG.nextInt(count - 1) + 1; t < len; t++ ) {
+					idsToDelete.add(nodeId(m.getStreamId(), null, null,
+							dayStart.plusMinutes(RNG.nextInt(count) * 30).toInstant(),
+							Aggregation.None));
+				}
+			}
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		List<Map<String, Object>> datumRowsBefore = allTableData(log, jdbcTemplate, "solardatm.da_datm",
+				"stream_id,ts");
+
+		log.debug("Deleting datum: [{}]",
+				idsToDelete.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		Set<ObjectDatumId> result = dao.deleteForIds(TEST_USER_ID, idsToDelete);
+
+		// THEN
+		List<Map<String, Object>> datumRowsAfter = allTableData(log, jdbcTemplate, "solardatm.da_datm",
+				"stream_id,ts");
+
+		// @formatter:off
+		then(result)
+			.as("All IDs to delete returned")
+			.hasSize(idsToDelete.size())
+			.allSatisfy(id -> {
+				then(id)
+					.as("Object ID populated in result")
+					.returns(TEST_NODE_ID, ObjectDatumId::getObjectId)
+					.as("Source ID populated in result")
+					.returns(TEST_SOURCE_ID, ObjectDatumId::getSourceId)
+					;
+				ObjectDatumId match = idsToDelete.stream().filter(e -> e.isEquivalent(id)).findAny().orElse(null);
+				then(match)
+					.as("Expected ID deleted")
+					.isNotNull()
+					;
+			})
+			;
+
+		then(datumRowsAfter)
+			.as("Rows deleted from database table")
+			.hasSize(datumRowsBefore.size() - idsToDelete.size())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteByIds_streamIds_notAll() {
+		// GIVEN
+		setupTestUser();
+		setupTestNode();
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID);
+		final Set<ObjectDatumId> idsToDelete = new LinkedHashSet<>();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			int count = 5;
+			int stepMinutes = 30;
+			Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
+					dayStart.toInstant().toEpochMilli(), count, TimeUnit.MINUTES.toMillis(stepMinutes),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+			for ( Entry<NodeSourcePK, ObjectDatumStreamMetadata> e : metas.entrySet() ) {
+				ObjectDatumStreamMetadata m = e.getValue();
+				// add random IDs to delete from stream
+				for ( int t = 0, len = RNG.nextInt(count - 1) + 1; t < len; t++ ) {
+					idsToDelete.add(nodeId(m.getStreamId(), null, null,
+							dayStart.plusMinutes(RNG.nextInt(count) * 30 + (RNG.nextBoolean() ? 1 : 0))
+									.toInstant(),
+							Aggregation.None));
+				}
+			}
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		List<Map<String, Object>> datumRowsBefore = allTableData(log, jdbcTemplate, "solardatm.da_datm",
+				"stream_id,ts");
+
+		log.debug("Deleting datum: [{}]",
+				idsToDelete.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		Set<ObjectDatumId> result = dao.deleteForIds(TEST_USER_ID, idsToDelete);
+
+		// THEN
+		List<Map<String, Object>> datumRowsAfter = allTableData(log, jdbcTemplate, "solardatm.da_datm",
+				"stream_id,ts");
+
+		// can only match on datum whose date is 0 or 30 minutes after the hour
+		Set<ObjectDatumId> expectedIdsToDelete = idsToDelete.stream()
+				.filter(e -> e.getTimestamp().getEpochSecond() % 1800 == 0).collect(toSet());
+		log.debug("Expected deleted datum: [{}]", expectedIdsToDelete.stream().map(Object::toString)
+				.collect(joining("\n\t", "\n\t", "\n")));
+
+		// @formatter:off
+		then(result)
+			.as("All IDs to delete returned")
+			.hasSize(expectedIdsToDelete.size())
+			.allSatisfy(id -> {
+				then(id)
+					.as("Object ID populated in result")
+					.returns(TEST_NODE_ID, ObjectDatumId::getObjectId)
+					.as("Source ID populated in result")
+					.returns(TEST_SOURCE_ID, ObjectDatumId::getSourceId)
+					;
+				ObjectDatumId match = expectedIdsToDelete.stream().filter(e -> e.isEquivalent(id)).findAny().orElse(null);
+				then(match)
+					.as("Expected ID deleted")
+					.isNotNull()
+					;
+			})
+			;
+
+		then(datumRowsAfter)
+			.as("Rows deleted from database table")
+			.hasSize(datumRowsBefore.size() - expectedIdsToDelete.size())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void deleteByIds_streamIds_wrongUser() {
+		// GIVEN
+		setupTestUser();
+		setupTestNode();
+		setupTestUserNode(TEST_USER_ID, TEST_NODE_ID);
+		final Set<ObjectDatumId> idsToDelete = new LinkedHashSet<>();
+		final ZonedDateTime start = ZonedDateTime.of(2018, 11, 1, 0, 0, 0, 0, ZoneId.of(TEST_TZ));
+		for ( int i = 0; i < 3; i++ ) {
+			ZonedDateTime dayStart = start.plusDays(i);
+			int count = 5;
+			int stepMinutes = 30;
+			Map<NodeSourcePK, ObjectDatumStreamMetadata> metas = populateTestData(
+					dayStart.toInstant().toEpochMilli(), count, TimeUnit.MINUTES.toMillis(stepMinutes),
+					TEST_NODE_ID, TEST_SOURCE_ID);
+			for ( Entry<NodeSourcePK, ObjectDatumStreamMetadata> e : metas.entrySet() ) {
+				ObjectDatumStreamMetadata m = e.getValue();
+				// add random IDs to delete from stream
+				for ( int t = 0, len = RNG.nextInt(count - 1) + 1; t < len; t++ ) {
+					idsToDelete.add(nodeId(m.getStreamId(), null, null,
+							dayStart.plusMinutes(RNG.nextInt(count) * 30).toInstant(),
+							Aggregation.None));
+				}
+			}
+		}
+		DatumDbUtils.processStaleAggregateDatum(log, jdbcTemplate);
+		log.debug("Raw data:\n{}", DatumDbUtils.listDatum(jdbcTemplate).stream().map(Object::toString)
+				.collect(joining("\n")));
+		for ( Aggregation agg : EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month) ) {
+			log.debug(agg + " data:\n{}", DatumDbUtils.listAggregateDatum(jdbcTemplate, agg).stream()
+					.map(Object::toString).collect(joining("\n")));
+		}
+
+		// WHEN
+		List<Map<String, Object>> datumRowsBefore = allTableData(log, jdbcTemplate, "solardatm.da_datm",
+				"stream_id,ts");
+
+		log.debug("Deleting datum: [{}]",
+				idsToDelete.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		Set<ObjectDatumId> result = dao.deleteForIds(TEST_USER_ID - 1L, idsToDelete);
+
+		// THEN
+		List<Map<String, Object>> datumRowsAfter = allTableData(log, jdbcTemplate, "solardatm.da_datm",
+				"stream_id,ts");
+
+		// @formatter:off
+		then(result)
+			.as("No IDs deleted because wrong user")
+			.isEmpty()
+			;
+
+		then(datumRowsAfter)
+			.as("No rows deleted from database table")
+			.hasSize(datumRowsBefore.size())
+			;
+		// @formatter:on
+	}
 }

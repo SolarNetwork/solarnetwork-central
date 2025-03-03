@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicUserEventFilter.java - 3/08/2022 9:23:31 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,7 +33,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Basic implementation of {@link UserEventFilter}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -53,7 +53,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 
 	/**
 	 * Copy constructor.
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 */
@@ -64,8 +64,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 	@Override
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
-		if ( criteria instanceof BasicUserEventFilter ) {
-			BasicUserEventFilter c = (BasicUserEventFilter) criteria;
+		if ( criteria instanceof BasicUserEventFilter c ) {
 			setTags(c.getTags());
 			setStartDate(c.getStartDate());
 			setEndDate(c.getEndDate());
@@ -73,8 +72,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 			if ( criteria instanceof TagCriteria ) {
 				setTags(((TagCriteria) criteria).getTags());
 			}
-			if ( criteria instanceof DateRangeCriteria ) {
-				DateRangeCriteria c = (DateRangeCriteria) criteria;
+			if ( criteria instanceof DateRangeCriteria c ) {
 				setStartDate(c.getStartDate());
 				setEndDate(c.getEndDate());
 			}
@@ -100,13 +98,9 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicUserEventFilter other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserEventFilter) ) {
-			return false;
-		}
-		BasicUserEventFilter other = (BasicUserEventFilter) obj;
 		return Objects.equals(endDate, other.endDate) && Arrays.equals(tags, other.tags)
 				&& Objects.equals(startDate, other.startDate);
 	}
@@ -118,7 +112,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the tags.
-	 * 
+	 *
 	 * @param tags
 	 *        the tags to set
 	 */
@@ -134,7 +128,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 
 	/**
 	 * Set a single tag.
-	 * 
+	 *
 	 * @param tag
 	 *        the tag to set
 	 */
@@ -150,7 +144,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the start date.
-	 * 
+	 *
 	 * @param startDate
 	 *        the start date to set
 	 */
@@ -165,7 +159,7 @@ public class BasicUserEventFilter extends BasicCoreCriteria
 
 	/**
 	 * Set the end date.
-	 * 
+	 *
 	 * @param endDate
 	 *        the end date to set
 	 */

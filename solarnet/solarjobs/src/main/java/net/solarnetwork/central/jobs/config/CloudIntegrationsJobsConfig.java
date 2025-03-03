@@ -28,6 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.task.AsyncTaskExecutor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamPollService;
 import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskProcessor;
 import net.solarnetwork.central.c2c.job.CloudDatumStreamPollTaskResetAbandoned;
@@ -46,10 +47,15 @@ public class CloudIntegrationsJobsConfig {
 	@Autowired
 	private CloudDatumStreamPollService cloudDatumStreamPollService;
 
+	@Autowired
+	private AsyncTaskExecutor taskExecutor;
+
 	@ConfigurationProperties(prefix = "app.job.c2c.ds-poll")
 	@Bean
 	public ManagedJob cloudDatumStreamPollTaskProcessor() {
-		return new CloudDatumStreamPollTaskProcessor(cloudDatumStreamPollService);
+		var job = new CloudDatumStreamPollTaskProcessor(cloudDatumStreamPollService);
+		job.setParallelTaskExecutor(taskExecutor);
+		return job;
 	}
 
 	@ConfigurationProperties(prefix = "app.job.c2c.ds-poll-reset-abandoned")

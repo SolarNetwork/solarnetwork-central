@@ -1,27 +1,28 @@
 /* ==================================================================
  * ReportableIntervalController.java - Dec 18, 2012 9:19:43 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.query.web.api;
 
+import static net.solarnetwork.domain.Result.success;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -33,31 +34,40 @@ import org.springframework.util.PathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import net.solarnetwork.central.datum.biz.DatumMetadataBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.query.biz.QueryBiz;
+import net.solarnetwork.central.query.domain.NodeSourceMetadataSearchFilter;
+import net.solarnetwork.central.query.domain.NodeSourceSearchFilter;
 import net.solarnetwork.central.query.domain.ReportableInterval;
 import net.solarnetwork.central.query.web.domain.GeneralReportableIntervalCommand;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
 import net.solarnetwork.central.web.WebUtils;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for querying for reportable interval values.
- * 
+ *
  * <p>
  * See the {@link ReportableInterval} class for information about what is
  * returned to the view.
  * </p>
- * 
+ *
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 @Controller("v1ReportableIntervalController")
 @RequestMapping({ "/api/v1/sec/range", "/api/v1/pub/range" })
+@Tag(name = "range", description = "Methods to query datum stream ranges.")
 @GlobalExceptionRestController
 public class ReportableIntervalController {
 
@@ -77,7 +87,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param datumMetadataBiz
@@ -89,7 +99,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param queryBiz
 	 *        the QueryBiz to use
 	 * @param datumMetadataBiz
@@ -110,19 +120,19 @@ public class ReportableIntervalController {
 	/**
 	 * Get a date range of available GeneralNodeData for a node and an optional
 	 * source ID.
-	 * 
+	 *
 	 * <p>
 	 * This method returns a start/end date range.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL: <code>/api/v1/sec/range/interval?nodeId=1</code>
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -136,83 +146,39 @@ public class ReportableIntervalController {
 	 *   }
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * @param req
 	 *        the HTTP request
-	 * @param cmd
+	 * @param criteria
 	 *        the input command
 	 * @return the {@link ReportableInterval}
 	 */
+	@Operation(operationId = "datumStreamTimeRangeView",
+			summary = "List the time range covered by one or more node datum streams",
+			parameters = { @Parameter(name = "criteria", description = """
+					The search criteria, including the node ID and an optional source ID.""",
+					schema = @Schema(implementation = NodeSourceSearchFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
-	@RequestMapping(value = "/interval", method = RequestMethod.GET, params = "!types")
-	public Response<ReportableInterval> getReportableInterval(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+	@RequestMapping(value = "/interval", method = RequestMethod.GET)
+	public Result<ReportableInterval> getReportableInterval(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			ReportableInterval data = queryBiz.getReportableInterval(cmd.getNodeId(), cmd.getSourceId());
-			return new Response<ReportableInterval>(data);
-		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
-	}
-
-	/**
-	 * Get the set of source IDs available for the available GeneralNodeData for
-	 * a single node, optionally constrained within a date range.
-	 * 
-	 * <p>
-	 * A <code>sourceId</code> path pattern may also be provided, to restrict
-	 * the resulting source ID set to.
-	 * </p>
-	 * 
-	 * <p>
-	 * Example URL: <code>/api/v1/sec/range/sources?nodeId=1</code>
-	 * </p>
-	 * 
-	 * <p>
-	 * Example JSON response:
-	 * </p>
-	 * 
-	 * <pre>
-	 * {
-	 *   "success": true,
-	 *   "data": [
-	 *     "Main"
-	 *   ]
-	 * }
-	 * </pre>
-	 * 
-	 * @param req
-	 *        the HTTP request
-	 * @param cmd
-	 *        the input command
-	 * @return the available sources
-	 */
-	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"!metadataFilter", "!withNodeIds" })
-	public Response<Set<String>> getAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
-		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			DatumFilterCommand f = new DatumFilterCommand();
-			f.setNodeIds(cmd.getNodeIds());
-			f.setStartDate(cmd.getStartDate());
-			f.setEndDate(cmd.getEndDate());
-			Set<String> data = queryBiz.getAvailableSources(f);
-
-			// support filtering based on sourceId path pattern
-			data = DatumUtils.filterSources(data, this.pathMatcher, cmd.getSourceId());
-
-			return new Response<Set<String>>(data);
+			ReportableInterval data = queryBiz.getReportableInterval(criteria.getNodeId(),
+					criteria.getSourceId());
+			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
 	/**
 	 * Get all available node+source ID pairs.
-	 * 
+	 *
 	 * <p>
 	 * A <code>sourceId</code> path pattern may also be provided, to restrict
 	 * the resulting source ID set to. Also {@code startDate} and
 	 * {@code endDate} values may be provided to restrict the query further.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Example URL:
 	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;withNodeIds=true</code>
@@ -221,7 +187,7 @@ public class ReportableIntervalController {
 	 * <p>
 	 * Example JSON response:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * {
 	 *   "success": true,
@@ -231,110 +197,61 @@ public class ReportableIntervalController {
 	 *   ]
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * <p>
-	 * If {@code withNodeIds} is specifed as {@literal false} then the result
-	 * will be simply a set of string source ID values.
+	 * If {@code withNodeIds} is specified as {@literal false} and a single
+	 * {@code nodeId} query parameter is provided then the result will be simply
+	 * a set of string source ID values.
 	 * </p>
-	 * 
-	 * @param cmd
+	 *
+	 * @param criteria
 	 *        the criteria
 	 * @return the found source IDs
 	 */
+	@Operation(operationId = "datumStreamSourceList",
+			summary = "List the sources available on one or more node datum streams",
+			parameters = { @Parameter(name = "criteria",
+					description = """
+							The search criteria, including the node ID and an optional source ID and date range.""",
+					schema = @Schema(implementation = NodeSourceMetadataSearchFilter.class),
+					style = ParameterStyle.FORM, explode = Explode.TRUE) })
 	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"!metadataFilter", "withNodeIds" })
-	public Response<Set<?>> findAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
+	@RequestMapping(value = "/sources", method = RequestMethod.GET)
+	public Result<Set<?>> findAvailableSources(final HttpServletRequest req,
+			final GeneralReportableIntervalCommand criteria) {
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			DatumFilterCommand f = new DatumFilterCommand();
-			f.setNodeIds(cmd.getNodeIds());
-			f.setStartDate(cmd.getStartDate());
-			f.setEndDate(cmd.getEndDate());
-			Set<NodeSourcePK> data = queryBiz.findAvailableSources(f);
-
-			// support filtering based on sourceId path pattern
-			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
-
-			if ( !cmd.isWithNodeIds() ) {
-				Set<String> sourceIds = new LinkedHashSet<String>(data.size());
-				for ( NodeSourcePK pk : data ) {
-					sourceIds.add(pk.getSourceId());
-				}
-				return new Response<Set<?>>(sourceIds);
+			Set<NodeSourcePK> data;
+			if ( criteria.getMetadataFilter() == null ) {
+				DatumFilterCommand f = new DatumFilterCommand();
+				f.setNodeIds(criteria.getNodeIds());
+				f.setStartDate(criteria.getStartDate());
+				f.setEndDate(criteria.getEndDate());
+				data = queryBiz.findAvailableSources(f);
+			} else {
+				data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(criteria.getNodeIds(),
+						criteria.getMetadataFilter());
 			}
 
-			return new Response<Set<?>>(data);
-		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
-	}
-
-	/**
-	 * Get all available node+source ID pairs that match a node datum metadata
-	 * search filter.
-	 * 
-	 * <p>
-	 * A <code>sourceId</code> path pattern may also be provided, to restrict
-	 * the resulting source ID set to.
-	 * </p>
-	 * 
-	 * <p>
-	 * Example URL:
-	 * <code>/api/v1/sec/range/sources?nodeIds=1,2&amp;metadataFilter=(/m/foo=bar)</code>
-	 * </p>
-	 *
-	 * <p>
-	 * Example JSON response:
-	 * </p>
-	 * 
-	 * <pre>
-	 * {
-	 *   "success": true,
-	 *   "data": [
-	 *     { nodeId: 1, sourceId: "A" },
-	 *     { nodeId: 2, "sourceId: "B" }
-	 *   ]
-	 * }
-	 * </pre>
-	 * 
-	 * <p>
-	 * If only a single node ID is specified, then the results will be
-	 * simplified to just an array of strings for the source IDs, omitting the
-	 * node ID which is redundant.
-	 * </p>
-	 * 
-	 * @param req
-	 *        the HTTP request
-	 * @param cmd
-	 *        the criteria
-	 * @return the sources
-	 */
-	@ResponseBody
-	@RequestMapping(value = "/sources", method = RequestMethod.GET, params = { "!types",
-			"metadataFilter" })
-	public Response<Set<?>> getMetadataFilteredAvailableSources(final HttpServletRequest req,
-			final GeneralReportableIntervalCommand cmd) {
-		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			Set<NodeSourcePK> data = datumMetadataBiz.getGeneralNodeDatumMetadataFilteredSources(
-					cmd.getNodeIds(), cmd.getMetadataFilter());
-
 			// support filtering based on sourceId path pattern
-			data = DatumUtils.filterNodeSources(data, this.pathMatcher, cmd.getSourceId());
+			data = DatumUtils.filterNodeSources(data, this.pathMatcher, criteria.getSourceId());
 
-			if ( !cmd.isWithNodeIds() && cmd.getNodeIds() != null && cmd.getNodeIds().length < 2 ) {
+			if ( !criteria.isWithNodeIds() && criteria.getNodeIds() != null
+					&& criteria.getNodeIds().length < 2 ) {
 				// at most 1 node ID, so simplify results to just source ID values
-				Set<String> sourceIds = new LinkedHashSet<String>(data.size());
+				Set<String> sourceIds = new LinkedHashSet<>(data.size());
 				for ( NodeSourcePK pk : data ) {
 					sourceIds.add(pk.getSourceId());
 				}
-				return new Response<Set<?>>(sourceIds);
+				return success(sourceIds);
 			}
-			return new Response<Set<?>>(data);
+
+			return success(data);
 		}, req, transientExceptionRetryCount, transientExceptionRetryDelay, log);
 	}
 
 	/**
 	 * Get the number of retry attempts for transient DAO exceptions.
-	 * 
+	 *
 	 * @return the retry count; defaults to
 	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_COUNT}.
 	 * @since 2.5
@@ -345,7 +262,7 @@ public class ReportableIntervalController {
 
 	/**
 	 * Set the number of retry attempts for transient DAO exceptions.
-	 * 
+	 *
 	 * @param transientExceptionRetryCount
 	 *        the retry count, or {@literal 0} for no retries
 	 * @since 2.5
@@ -357,7 +274,7 @@ public class ReportableIntervalController {
 	/**
 	 * Get the length of time, in milliseconds, to sleep before retrying a
 	 * request after a transient exception.
-	 * 
+	 *
 	 * @return the delay, in milliseconds; defaults to
 	 *         {@link #DEFAULT_TRANSIENT_EXCEPTION_RETRY_DELAY}
 	 * @since 3.1
@@ -369,7 +286,7 @@ public class ReportableIntervalController {
 	/**
 	 * Set the length of time, in milliseconds, to sleep before retrying a
 	 * request after a transient exception.
-	 * 
+	 *
 	 * @param transientExceptionRetryDelay
 	 *        the delay to set
 	 * @since 3.1

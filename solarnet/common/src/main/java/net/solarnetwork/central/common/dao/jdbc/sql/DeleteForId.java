@@ -35,7 +35,7 @@ import org.springframework.jdbc.core.SqlProvider;
  * @author matt
  * @version 1.0
  */
-public class DeleteForId implements PreparedStatementCreator, SqlProvider {
+public final class DeleteForId implements PreparedStatementCreator, SqlProvider {
 
 	private final Object pk;
 	private final String tableName;

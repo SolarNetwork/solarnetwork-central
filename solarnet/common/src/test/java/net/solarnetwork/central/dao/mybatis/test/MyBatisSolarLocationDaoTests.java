@@ -35,15 +35,15 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisSolarLocationDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -72,7 +72,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		loc.setStateOrProvince("state");
 		loc.setStreet("street");
 		loc.setTimeZoneId("UTC");
-		Long id = solarLocationDao.store(loc);
+		Long id = solarLocationDao.save(loc);
 		assertNotNull(id);
 		loc.setId(id);
 		location = loc;
@@ -118,7 +118,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		storeNew();
 		SolarLocation loc = solarLocationDao.get(location.getId());
 		loc.setName("new name");
-		Long newId = solarLocationDao.store(loc);
+		Long newId = solarLocationDao.save(loc);
 		assertEquals(loc.getId(), newId);
 		SolarLocation loc2 = solarLocationDao.get(location.getId());
 		validate(loc, loc2);
@@ -140,7 +140,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		loc.setName("NZ - Pacific/Auckland");
 		loc.setCountry("NZ");
 		loc.setTimeZoneId("Pacific/Auckland");
-		Long id = solarLocationDao.store(loc);
+		Long id = solarLocationDao.save(loc);
 		assertNotNull(id);
 		loc.setId(id);
 		// should not find this location, because properties other than country and time zone are set
@@ -154,9 +154,10 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 	public void findFilteredNoMatch() {
 		SolarLocation filter = new SolarLocation();
 		filter.setName("does-not-exist");
-		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
+				null);
 		assertNotNull(results);
-		assertEquals(Integer.valueOf(0), results.getReturnedResultCount());
+		assertEquals(0, results.getReturnedResultCount());
 		assertEquals(Long.valueOf(0L), results.getTotalResults());
 	}
 
@@ -165,9 +166,10 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		setupTestLocation();
 		SolarLocation filter = new SolarLocation();
 		filter.setRegion(TEST_LOC_REGION);
-		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
+				null);
 		assertNotNull(results);
-		assertEquals(Integer.valueOf(1), results.getReturnedResultCount());
+		assertEquals(1, results.getReturnedResultCount());
 		assertEquals(Long.valueOf(1L), results.getTotalResults());
 		assertNotNull(results.getResults());
 		LocationMatch match = results.getResults().iterator().next();
@@ -184,7 +186,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		loc2.setCountry(TEST_LOC_COUNTRY);
 		loc2.setPostalCode(TEST_LOC_POSTAL_CODE);
 		loc2.setTimeZoneId(TEST_TZ);
-		Long id2 = solarLocationDao.store(loc2);
+		Long id2 = solarLocationDao.save(loc2);
 
 		SolarLocation loc3 = new SolarLocation();
 		loc3.setCreated(Instant.now());
@@ -192,15 +194,16 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		loc3.setCountry(TEST_LOC_COUNTRY);
 		loc3.setPostalCode(TEST_LOC_POSTAL_CODE);
 		loc3.setTimeZoneId(TEST_TZ);
-		Long id3 = solarLocationDao.store(loc3);
+		Long id3 = solarLocationDao.save(loc3);
 
 		SolarLocation filter = new SolarLocation();
 		filter.setRegion(TEST_LOC_REGION);
 		filter.setPostalCode(TEST_LOC_POSTAL_CODE);
 		filter.setTimeZoneId(TEST_TZ);
-		FilterResults<LocationMatch> results = solarLocationDao.findFiltered(filter, null, null, null);
+		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
+				null);
 		assertNotNull(results);
-		assertEquals(Integer.valueOf(3), results.getReturnedResultCount());
+		assertEquals(3, results.getReturnedResultCount());
 		assertEquals(Long.valueOf(3L), results.getTotalResults());
 		assertNotNull(results.getResults());
 

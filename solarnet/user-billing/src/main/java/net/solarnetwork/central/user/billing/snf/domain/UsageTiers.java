@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A collection of ordered {@link UsageTier} objects.
@@ -94,9 +95,7 @@ public class UsageTiers implements NamedCostTiers {
 	 */
 	public UsageTiers(List<UsageTier> tiers, LocalDate date, Comparator<UsageTier> comparator) {
 		super();
-		if ( tiers == null ) {
-			throw new IllegalArgumentException("The tiers argumnet must be provided.");
-		}
+		ObjectUtils.requireNonNullArgument(tiers, "tiers");
 		if ( comparator != null ) {
 			List<UsageTier> sorted = new ArrayList<>(tiers);
 			sorted.sort(UsageTier.SORT_BY_KEY_QUANTITY);

@@ -46,7 +46,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link TransformConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcTransformConfigurationDao implements TransformConfigurationDao {
 
@@ -80,9 +80,8 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 		final var sql = new InsertTransformConfiguration(userId, entity);
 
 		final Long id = CommonJdbcUtils.updateWithGeneratedLong(jdbcOps, sql, "id");
-		var pk = (id != null ? new UserLongCompositePK(userId, id) : null);
 
-		return pk;
+		return (id != null ? new UserLongCompositePK(userId, id) : null);
 	}
 
 	@Override
@@ -96,7 +95,7 @@ public class JdbcTransformConfigurationDao implements TransformConfigurationDao 
 
 	@Override
 	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			TransformFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectTransformConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, TransformConfigurationRowMapper.INSTANCE);

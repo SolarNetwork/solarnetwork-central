@@ -115,6 +115,7 @@ public interface UserDatumInputBiz {
 	 * @param <C>
 	 *        the configuration type
 	 * @param <K>
+	 *        the primary key type
 	 * @param id
 	 *        the ID of the configuration to save; at a minimum the user ID
 	 *        component must be provided

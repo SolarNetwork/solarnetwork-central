@@ -64,7 +64,7 @@ public class IdentityController {
 	@RequestMapping(value = "/api/v1/datum/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
 	public Result<Map<String, ?>> validateDatum(@PathVariable("endpointId") UUID endpointId) {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
-		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
+		Map<String, Object> data = new LinkedHashMap<>(3);
 		if ( actor instanceof net.solarnetwork.central.din.security.SecurityEndpointCredential user ) {
 			data.put("userId", user.getUserId());
 			data.put("endpointId", user.getEndpointId());
@@ -85,7 +85,7 @@ public class IdentityController {
 	@RequestMapping(value = "/api/v1/instr/endpoint/{endpointId}/whoami", method = RequestMethod.GET)
 	public Result<Map<String, ?>> validateInstruction(@PathVariable("endpointId") UUID endpointId) {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
-		Map<String, Object> data = new LinkedHashMap<String, Object>(3);
+		Map<String, Object> data = new LinkedHashMap<>(3);
 		if ( actor instanceof net.solarnetwork.central.inin.security.SecurityEndpointCredential user ) {
 			data.put("userId", user.getUserId());
 			data.put("endpointId", user.getEndpointId());

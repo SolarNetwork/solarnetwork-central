@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Enumeration of VerneMQ hook types.
- * 
+ *
  * @author matt
  */
 public enum HookType implements HookNames {
@@ -40,7 +40,7 @@ public enum HookType implements HookNames {
   /** The name of the HTTP header that is used to transmit the hook type. */
   public static final String HOOK_HEADER = "vernemq-hook";
 
-  private String key;
+  private final String key;
 
   private HookType(String key) {
     this.key = key;
@@ -48,7 +48,7 @@ public enum HookType implements HookNames {
 
   /**
    * Returns the {@code key} value.
-   * 
+   *
    * @return the key
    */
   @JsonValue
@@ -58,7 +58,7 @@ public enum HookType implements HookNames {
 
   /**
    * Get an enum from a key value.
-   * 
+   *
    * @param key
    *        the key to get the enum for
    * @return the enum

@@ -48,7 +48,9 @@ import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.domain.FilterMatch;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -61,8 +63,7 @@ import net.solarnetwork.util.StatTracker;
  * <p>
  * This class uses a {@link Clock} to determine the "audit date". The default
  * clock uses an hour-based tick settings so that audit counts are grouped into
- * into hour-based time buckets, and thus result in hour-based rows in the
- * database:
+ * hour-based time buckets, and thus result in hour-based rows in the database:
  * </p>
  *
  * <pre>
@@ -79,7 +80,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.3
  */
 public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycleObserver {
 
@@ -92,7 +93,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	/** The default value for the {@code statLogUpdateCount} property. */
 	public static final int DEFAULT_STAT_LOG_UPDATE_COUNT = 500;
 
-	/** The default value for the {@code connecitonRecoveryDelay} property. */
+	/** The default value for the {@code connectionRecoveryDelay} property. */
 	public static final long DEFAULT_CONNECTION_RECOVERY_DELAY = 15000;
 
 	/** The default value for the {@code nodeSourceIncrementSql} property. */
@@ -102,11 +103,11 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 * A regular expression that matches if a JDBC statement is a
 	 * {@link CallableStatement}.
 	 */
-	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*\\}",
+	public static final Pattern CALLABLE_STATEMENT_REGEX = Pattern.compile("^\\{call\\s.*}",
 			Pattern.CASE_INSENSITIVE);
 
 	private static final ThreadLocal<Map<GeneralNodeDatumPK, Integer>> auditResultMap = ThreadLocal
-			.withInitial(() -> new HashMap<>());
+			.withInitial(HashMap::new);
 
 	private static final Logger log = LoggerFactory.getLogger(JdbcQueryAuditor.class);
 
@@ -194,12 +195,10 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 
 	@Override
 	public <T extends FilterMatch<GeneralNodeDatumPK>> void auditNodeDatumFilterResults(
-			GeneralNodeDatumFilter filter, FilterResults<T> results) {
-		final int returnedCount = (results.getReturnedResultCount() != null
-				? results.getReturnedResultCount()
-				: 0);
+			GeneralNodeDatumFilter filter, FilterResults<T, GeneralNodeDatumPK> results) {
+		final int returnedCount = (results != null ? results.getReturnedResultCount() : 0);
 		// if no results, no count
-		if ( results == null || returnedCount < 1 ) {
+		if ( returnedCount < 1 ) {
 			return;
 		}
 
@@ -223,7 +222,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		for ( FilterMatch<GeneralNodeDatumPK> result : results ) {
 			GeneralNodeDatumPK id = result.getId();
 			GeneralNodeDatumPK pk = nodeDatumKey(auditDate, id.getNodeId(), id.getSourceId());
-			counts.compute(pk, (k, v) -> v == null ? 1 : v.intValue() + 1);
+			counts.compute(pk, (k, v) -> v == null ? 1 : v + 1);
 		}
 
 		// insert counts
@@ -252,6 +251,14 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	@Override
 	public void resetCurrentAuditResults() {
 		auditResultMap.get().clear();
+	}
+
+	@Override
+	public void auditNodeDatum(Datum datum) {
+		if ( datum == null || datum.getKind() != ObjectDatumKind.Node || datum.getSourceId() == null ) {
+			return;
+		}
+		addNodeSourceCount(nodeDatumKey(clock.instant(), datum.getObjectId(), datum.getSourceId()), 1);
 	}
 
 	private static GeneralNodeDatumPK nodeDatumKey(Instant date, Long nodeId, String sourceId) {
@@ -372,8 +379,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 		}
 
 		private Boolean execute() throws SQLException {
-			final DataSource ds = dataSource;
-			try (Connection conn = ds.getConnection()) {
+			try (Connection conn = dataSource.getConnection()) {
 				stats.increment(JdbcQueryAuditorCount.ConnectionsCreated);
 				conn.setAutoCommit(true); // we want every execution of our loop to commit immediately
 				PreparedStatement stmt = isCallableStatement(nodeSourceIncrementSql)

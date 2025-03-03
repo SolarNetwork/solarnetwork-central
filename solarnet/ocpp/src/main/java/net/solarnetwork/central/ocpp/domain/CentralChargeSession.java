@@ -1,27 +1,28 @@
 /* ==================================================================
  * CentralChargeSession.java - 26/02/2020 11:40:36 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.ocpp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
 import net.solarnetwork.ocpp.domain.ChargeSession;
@@ -29,17 +30,18 @@ import net.solarnetwork.ocpp.domain.ChargeSession;
 /**
  * An entity for tracking an OCPP transaction, which represents a single
  * charging cycle from authorization to end of charging.
- * 
+ *
  * @author matt
  * @version 1.3
  */
 public class CentralChargeSession extends ChargeSession {
 
+	@Serial
 	private static final long serialVersionUID = -5000462916671943747L;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param authId
 	 *        the authorization ID
 	 * @param chargePointId
@@ -59,7 +61,7 @@ public class CentralChargeSession extends ChargeSession {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -83,7 +85,7 @@ public class CentralChargeSession extends ChargeSession {
 
 	/**
 	 * Create a session filter for a charge point.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the Charge Point ID
 	 * @return the session instance, suitable for using as a filter
@@ -94,7 +96,7 @@ public class CentralChargeSession extends ChargeSession {
 
 	/**
 	 * Create a session filter for a transaction.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the Charge Point ID
 	 * @param transactionId
@@ -108,7 +110,7 @@ public class CentralChargeSession extends ChargeSession {
 
 	/**
 	 * Create a session filter for a connector.
-	 * 
+	 *
 	 * @param chargePointId
 	 *        the Charge Point ID
 	 * @param evseId

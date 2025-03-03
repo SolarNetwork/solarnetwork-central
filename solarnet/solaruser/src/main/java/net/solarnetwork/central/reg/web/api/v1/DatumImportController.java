@@ -23,7 +23,8 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.Collections.singleton;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.error;
+import static net.solarnetwork.domain.Result.success;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,6 +56,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportBiz;
 import net.solarnetwork.central.datum.imp.biz.DatumImportException;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
@@ -66,19 +68,19 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportReceipt;
 import net.solarnetwork.central.datum.imp.domain.DatumImportState;
 import net.solarnetwork.central.datum.imp.domain.DatumImportStatus;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.web.jakarta.support.MultipartFileResource;
 
 /**
  * Web service API for datum import management.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.33
  */
 @GlobalExceptionRestController
@@ -111,7 +113,7 @@ public class DatumImportController {
 	@ExceptionHandler(DatumImportValidationException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	public Response<?> handleDatumImportValidationException(DatumImportValidationException e) {
+	public Result<?> handleDatumImportValidationException(DatumImportValidationException e) {
 		log.debug("DatumImportValidationException in {} controller", getClass().getSimpleName(), e);
 		return datumImportExceptionResponse(e, "DI.00400");
 	}
@@ -125,19 +127,19 @@ public class DatumImportController {
 	 */
 	@ExceptionHandler(DatumImportException.class)
 	@ResponseBody
-	public Response<?> handleDatumImportException(DatumImportException e) {
+	public Result<?> handleDatumImportException(DatumImportException e) {
 		log.debug("DatumImportException in {} controller", getClass().getSimpleName(), e);
 		return datumImportExceptionResponse(e, "DI.00401");
 	}
 
-	private static Response<Object> datumImportExceptionResponse(DatumImportException e, String code) {
+	private static Result<Object> datumImportExceptionResponse(DatumImportException e, String code) {
 		Throwable cause = e;
 		while ( cause.getCause() != null ) {
 			cause = cause.getCause();
 		}
 		StringBuilder buf = new StringBuilder(e.getMessage());
-		if ( cause != null && cause != e ) {
-			buf.append(" Root cause: ").append(cause.toString());
+		if ( cause != e ) {
+			buf.append(" Root cause: ").append(cause);
 		}
 		Map<String, Object> data = new LinkedHashMap<>(4);
 		if ( e.getLoadedCount() != null ) {
@@ -149,7 +151,7 @@ public class DatumImportController {
 		if ( e.getLine() != null ) {
 			data.put("line", e.getLine());
 		}
-		return new Response<Object>(Boolean.FALSE, code, buf.toString(), data);
+		return new Result<>(Boolean.FALSE, code, buf.toString(), data);
 	}
 
 	/**
@@ -161,7 +163,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/services/input", method = RequestMethod.GET)
-	public Response<List<LocalizedServiceInfo>> availableInputFormatServices(Locale locale) {
+	public Result<List<LocalizedServiceInfo>> availableInputFormatServices(Locale locale) {
 		List<LocalizedServiceInfo> result = null;
 		if ( importBiz != null ) {
 			Iterable<DatumImportInputFormatService> services = importBiz.availableInputFormatServices();
@@ -170,7 +172,7 @@ public class DatumImportController {
 				result.add(s.getLocalizedServiceInfo(locale));
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -188,9 +190,9 @@ public class DatumImportController {
 	 * @return a status entity
 	 */
 	@ResponseBody
-	@RequestMapping(value = { "/jobs",
-			"/jobs/" }, method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public Response<DatumImportReceipt> createJob(@RequestPart("config") BasicConfiguration config,
+	@RequestMapping(value = { "/jobs", "/jobs/" }, method = RequestMethod.POST,
+			consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public Result<DatumImportReceipt> createJob(@RequestPart("config") BasicConfiguration config,
 			@RequestPart("data") MultipartFile data) {
 		DatumImportReceipt result = null;
 		if ( importBiz != null ) {
@@ -207,7 +209,7 @@ public class DatumImportController {
 				throw new RuntimeException(e);
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -221,10 +223,10 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/preview", method = RequestMethod.GET)
-	public Callable<Response<FilterResults<GeneralNodeDatumComponents>>> previewStagedImport(
+	public Callable<Result<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>>> previewStagedImport(
 			@PathVariable("id") String jobId,
 			@RequestParam(value = "count", required = false, defaultValue = "100") int count) {
-		final Future<FilterResults<GeneralNodeDatumComponents>> future;
+		final Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> future;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			BasicDatumImportPreviewRequest req = new BasicDatumImportPreviewRequest(userId, jobId,
@@ -234,32 +236,26 @@ public class DatumImportController {
 			future = null;
 		}
 		// we have to wrap our FilterResults response with a Response; hence the Callable result here
-		return new Callable<Response<FilterResults<GeneralNodeDatumComponents>>>() {
-
-			@Override
-			public Response<FilterResults<GeneralNodeDatumComponents>> call() throws Exception {
-				if ( future == null ) {
-					return new Response<FilterResults<GeneralNodeDatumComponents>>(false, null,
-							"Import service not available", null);
-				}
-				try {
-					FilterResults<GeneralNodeDatumComponents> result = future.get();
-					return response(result);
-				} catch ( ExecutionException e ) {
-					Throwable t = e.getCause();
-					if ( t instanceof AuthorizationException ) {
-						AuthorizationException ae = (AuthorizationException) t;
-						if ( ae.getId() instanceof Long ) {
-							// treat as node ID, and re-throw as validation exception for preview
-							throw new DatumImportValidationException(
-									"Import not allowed for node " + ae.getId());
-						}
+		return () -> {
+			if ( future == null ) {
+				return error(null, "Import service not available");
+			}
+			try {
+				FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK> result = future.get();
+				return success(result);
+			} catch ( ExecutionException e ) {
+				Throwable t = e.getCause();
+				if ( t instanceof AuthorizationException ae ) {
+					if ( ae.getId() instanceof Long ) {
+						// treat as node ID, and re-throw as validation exception for preview
+						throw new DatumImportValidationException(
+								"Import not allowed for node " + ae.getId());
 					}
-					if ( t instanceof Exception ) {
-						throw (Exception) t;
-					}
-					throw e;
 				}
+				if ( t instanceof Exception ) {
+					throw (Exception) t;
+				}
+				throw e;
 			}
 		};
 	}
@@ -279,22 +275,20 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs", method = RequestMethod.GET)
-	public Response<Collection<DatumImportStatus>> jobStatusesForUser(
+	public Result<Collection<DatumImportStatus>> jobStatusesForUser(
 			@RequestParam(value = "states", required = false) DatumImportState[] states) {
 		Collection<DatumImportStatus> result = null;
 		if ( importBiz != null ) {
 			Set<DatumImportState> stateFilter = null;
 			if ( states != null && states.length > 0 ) {
 				stateFilter = new HashSet<>(states.length);
-				for ( DatumImportState state : states ) {
-					stateFilter.add(state);
-				}
+				Collections.addAll(stateFilter, states);
 				stateFilter = EnumSet.copyOf(stateFilter);
 			}
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.datumImportJobStatusesForUser(userId, stateFilter);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -311,13 +305,13 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.GET)
-	public Response<DatumImportStatus> jobStatus(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> jobStatus(@PathVariable("id") String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.datumImportJobStatusForUser(userId, id);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -334,14 +328,14 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}/confirm", method = RequestMethod.POST)
-	public Response<DatumImportStatus> confirmStagedJob(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> confirmStagedJob(@PathVariable("id") String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.updateDatumImportJobStateForUser(userId, id, DatumImportState.Queued,
 					Collections.singleton(DatumImportState.Staged));
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -360,14 +354,14 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.POST)
-	public Response<DatumImportStatus> updateJob(@PathVariable("id") String id,
+	public Result<DatumImportStatus> updateJob(@PathVariable("id") String id,
 			@RequestBody BasicConfiguration config) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
 			result = importBiz.updateDatumImportJobConfigurationForUser(userId, id, config);
 		}
-		return response(result);
+		return success(result);
 	}
 
 	/**
@@ -384,7 +378,7 @@ public class DatumImportController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/jobs/{id}", method = RequestMethod.DELETE)
-	public Response<DatumImportStatus> retractJob(@PathVariable("id") String id) {
+	public Result<DatumImportStatus> retractJob(@PathVariable("id") String id) {
 		DatumImportStatus result = null;
 		if ( importBiz != null ) {
 			Long userId = SecurityUtils.getCurrentActorUserId();
@@ -395,6 +389,6 @@ public class DatumImportController {
 				importBiz.deleteDatumImportJobsForUser(userId, singleton(id));
 			}
 		}
-		return response(result);
+		return success(result);
 	}
 }

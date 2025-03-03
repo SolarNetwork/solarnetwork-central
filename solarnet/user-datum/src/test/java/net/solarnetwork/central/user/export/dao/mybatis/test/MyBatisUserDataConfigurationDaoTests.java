@@ -96,7 +96,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		filter.setNodeId(TEST_NODE_ID);
 		conf.setFilter(filter);
 
-		Long id = confDao.store(conf);
+		Long id = confDao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
 		// stash results for other tests to use
@@ -146,7 +146,7 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 		filter.setSourceId("test.source");
 		conf.setFilter(filter); // necessary to clear cached JSON
 
-		Long id = confDao.store(conf);
+		Long id = confDao.save(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
 		UserDataConfiguration updatedConf = confDao.get(id, this.user.getId());

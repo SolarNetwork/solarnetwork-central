@@ -14,7 +14,7 @@ WITH rs AS (
 		, s.names_a
 	FROM solardatm.da_datm_meta s
 	WHERE s.node_id = ANY(?)
-		AND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))
+		AND s.source_id = ANY(?)
 )
 , s AS (
 	SELECT solardatm.virutal_stream_id(node_id, source_id) AS vstream_id

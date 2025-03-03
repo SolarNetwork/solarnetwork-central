@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -43,14 +44,13 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * SolarEdge implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -69,9 +69,6 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	/** The base URL to the SolarEdge API. */
 	public static final URI BASE_URI = URI.create("https://monitoringapi.solaredge.com");
 
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
-
 	/**
 	 * The well-known URLs.
 	 */
@@ -84,9 +81,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(API_KEY_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */
@@ -140,7 +135,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 					(req) -> UriComponentsBuilder.fromUri(SolarEdgeV1CloudIntegrationService.BASE_URI)
 							.path(SolarEdgeV1CloudIntegrationService.SITES_LIST_URL).buildAndExpand()
 							.toUri(),
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

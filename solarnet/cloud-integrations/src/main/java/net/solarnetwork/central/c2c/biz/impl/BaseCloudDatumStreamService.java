@@ -22,15 +22,20 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
+import static org.springframework.util.StringUtils.delimitedListToStringArray;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -53,7 +58,10 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
+import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
@@ -71,10 +79,13 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.8
+ * @version 1.11
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
+
+	/** A clock to use. */
+	protected final Clock clock;
 
 	/** The integration configuration entity DAO. */
 	protected final CloudIntegrationConfigurationDao integrationDao;
@@ -91,6 +102,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/** The expression service. */
 	protected final CloudIntegrationsExpressionService expressionService;
 
+	private DatumEntityDao datumDao;
+	private QueryAuditor queryAuditor;
+
 	/**
 	 * Constructor.
 	 *
@@ -98,6 +112,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the service identifier
 	 * @param displayName
 	 *        the display name
+	 * @param clock
+	 *        the clock to use
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -117,7 +133,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName,
+	public BaseCloudDatumStreamService(String serviceIdentifier, String displayName, Clock clock,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationsExpressionService expressionService,
 			CloudIntegrationConfigurationDao integrationDao,
@@ -126,6 +142,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings) {
 		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, settings);
+		this.clock = requireNonNullArgument(clock, "clock");
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.expressionService = requireNonNullArgument(expressionService, "expressionService");
 		this.datumStreamDao = requireNonNullArgument(datumStreamDao, "datumStreamDao");
@@ -343,8 +360,14 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return;
 		}
-		final var datumStreamsAccessor = new BasicDatumStreamsAccessor(
-				expressionService.sourceIdPathMatcher(), datum);
+
+		// assume all configurations owned by the same user; extract the user ID from the first one
+		final Long userId = configurations.iterator().next().getUserId();
+
+		final var datumStreamsAccessor = (datumDao != null
+				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum,
+						userId, clock, datumDao, queryAuditor)
+				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum));
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
@@ -378,7 +401,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 							if ( val instanceof Number ) {
 								yield val;
 							} else {
-								yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+								try {
+									yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+								} catch ( IllegalArgumentException e ) {
+									yield null;
+								}
 							}
 						}
 						case Status, Tag -> val.toString();
@@ -454,7 +481,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( configuration == null ) {
 			return null;
 		}
-		final Object sourceIdMap = configuration.serviceProperty(SOURCE_ID_MAP_SETTING, Object.class);
+		final Object sourceIdMap = configuration.serviceProperty(key, Object.class);
 		final Map<String, String> componentSourceIdMapping;
 		if ( sourceIdMap instanceof Map<?, ?> ) {
 			componentSourceIdMapping = (Map<String, String>) sourceIdMap;
@@ -495,7 +522,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				} else if ( val.isFloat() ) {
 					yield val.floatValue();
 				} else {
-					yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+					try {
+						yield narrow(parseNumber(val.asText(), BigDecimal.class), 2);
+					} catch ( IllegalArgumentException e ) {
+						yield null;
+					}
 				}
 			}
 			case Status, Tag -> nonEmptyString(val.asText());
@@ -538,6 +569,146 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			}
 		}
 		samples.putSampleValue(propType, propName, val);
+	}
+
+	/**
+	 * Resolve a list of placeholder sets for a collection of source value
+	 * references.
+	 *
+	 * <p>
+	 * This method works with the {@link #supportedPlaceholders()} list of
+	 * placeholder keys, and decodes value references as used in the
+	 * {@code sourceIdMap} service property into a set of placeholder maps. For
+	 * example, imagine {@link #supportedPlaceholders()} returned:
+	 * </p>
+	 *
+	 * <pre>{@code ["siteId", "componentId"]}</pre>
+	 *
+	 * <p>
+	 * and that a configuration entity had a {@code sourceIdMap} service
+	 * property like this:
+	 * </p>
+	 *
+	 * <pre>{@code {
+	 *   "sourceIdMap": {
+	 *     "/123/abc" : "/GEN/1",
+	 *     "/123/def" : "/INV/1"
+	 *   }
+	 * }}</pre>
+	 *
+	 * <p>
+	 * Here the {@code sourceIdMap} keys are partial value references in the
+	 * form
+	 * </p>
+	 *
+	 * <pre>{@code /{siteId}/{componentId}}</pre>
+	 *
+	 * <p>
+	 * Assuming the {@code placeholders} argument is {@code null} or empty, and
+	 * the keys of {@code sourceIdMap} are passed on the {@code sourceValueRefs}
+	 * argument, it would return a list of maps like this:
+	 * </p>
+	 *
+	 * <pre>{@code [
+	 *   {"siteId": "123", "componentId": "abc"},
+	 *   {"siteId": "123", "componentId": "def"}
+	 * ]}</pre>
+	 *
+	 * @param placeholders
+	 *        an optional map of static placeholder values
+	 * @param sourceValueRefs
+	 *        an optional collection of partial value references, which are like
+	 *        URL paths starting with {@code /}, of placeholder values, whose
+	 *        segment offsets equate to the placeholder keys returned by
+	 *        {@link #supportedPlaceholders()}
+	 * @return a list of placeholder sets, never {@code null} but possibly
+	 *         holding a single empty map if no placeholders are provided
+	 * @since 1.9
+	 */
+	protected List<Map<String, ?>> resolvePlaceholderSets(Map<String, ?> placeholders,
+			Collection<String> sourceValueRefs) {
+		final Iterable<String> supportedPlaceholdersIterable = supportedPlaceholders();
+		final List<String> supportedPlaceholders = (supportedPlaceholdersIterable instanceof List<String> l
+				? l
+				: supportedPlaceholdersIterable != null
+						? stream(supportedPlaceholdersIterable.spliterator(), false).toList()
+						: null);
+		List<Map<String, ?>> placeholderSets;
+		if ( sourceValueRefs != null && !sourceValueRefs.isEmpty() && supportedPlaceholders != null
+				&& !supportedPlaceholders.isEmpty() ) {
+			// sourceIdMap provided: generate set of placeholders
+			placeholderSets = new ArrayList<>(sourceValueRefs.size());
+			for ( String sourceValueRef : sourceValueRefs ) {
+				Map<String, Object> ph = new LinkedHashMap<>(4);
+				if ( placeholders != null ) {
+					ph.putAll(placeholders);
+				}
+				if ( sourceValueRef.startsWith("/") ) {
+					String[] components = delimitedListToStringArray(sourceValueRef.substring(1), "/");
+					for ( int i = 0, len = supportedPlaceholders.size(); i < len
+							&& i < components.length; i++ ) {
+						if ( components[i] != null && !components[i].isEmpty() ) {
+							ph.put(supportedPlaceholders.get(i), components[i]);
+						}
+					}
+				}
+				placeholderSets.add(ph);
+			}
+		} else if ( placeholders != null && !placeholders.isEmpty() ) {
+			// no sourceIdMap: provide a single static set of given placeholders
+			placeholderSets = Collections.singletonList(placeholders);
+		} else {
+			// no placeholders: provide a single static (empty) set
+			placeholderSets = Collections.singletonList(Collections.emptyMap());
+		}
+		return placeholderSets;
+	}
+
+	/**
+	 * Get the datum DAO.
+	 *
+	 * @return the datum DAO
+	 * @since 1.11
+	 */
+	public final DatumEntityDao getDatumDao() {
+		return datumDao;
+	}
+
+	/**
+	 * Set the datum DAO.
+	 *
+	 * <p>
+	 * If configured, then {@link QueryingDatumStreamsAccessor} will be used.
+	 * Otherwise {@link BasicDatumStreamsAccessor} will be.
+	 * </p>
+	 *
+	 * @param datumDao
+	 *        the datum DAO to set
+	 * @since 1.11
+	 */
+	public final void setDatumDao(DatumEntityDao datumDao) {
+		this.datumDao = datumDao;
+	}
+
+	/**
+	 * Get the query auditor.
+	 *
+	 * @return the auditor
+	 * @since 1.11
+	 */
+	public final QueryAuditor getQueryAuditor() {
+		return queryAuditor;
+	}
+
+	/**
+	 * Set the query auditor.
+	 *
+	 * @param queryAuditor
+	 *        the auditor to set
+	 * @since 1.11
+	 */
+	public final void setQueryAuditor(QueryAuditor queryAuditor) {
+		this.queryAuditor = queryAuditor;
 	}
 
 }

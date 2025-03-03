@@ -281,7 +281,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 					}
 				}
 				metaColumnCount = (agg ? 5 : 4);
-				columnCount = metaColumnCount + streamColumnIndexes.keySet().size() + 1;
+				columnCount = metaColumnCount + streamColumnIndexes.size() + 1;
 				String[] header = new String[columnCount];
 				int i = 0;
 				if ( agg ) {
@@ -294,7 +294,7 @@ public class CsvStreamDatumFilteredResultsProcessor implements StreamDatumFilter
 				header[i++] = "objectId";
 				header[i++] = "sourceId";
 				header[header.length - 1] = "tags";
-				String[] propNames = streamColumnIndexes.keySet().stream().toArray(String[]::new);
+				String[] propNames = streamColumnIndexes.keySet().toArray(String[]::new);
 				System.arraycopy(propNames, 0, header, metaColumnCount, propNames.length);
 				writer.writeHeader(header);
 			}

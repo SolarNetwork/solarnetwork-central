@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumUtilsTests.java - 24/11/2020 3:04:02 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -77,9 +77,9 @@ import net.solarnetwork.util.DateUtils;
 
 /**
  * Test cases for the {@link DatumUtils} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DatumUtilsTests {
 
@@ -97,13 +97,13 @@ public class DatumUtilsTests {
 	private DatumPropertiesStatistics newStats() {
 		return DatumPropertiesStatistics.statisticsOf(
 		// @formatter:off
-				new BigDecimal[][] { 
-						decimalArray("60", "1.0", "2.0"), 
+				new BigDecimal[][] {
+						decimalArray("60", "1.0", "2.0"),
 						decimalArray("61", "2.0", "3.0"),
-						decimalArray("62", "3.0", "4.0"), 
+						decimalArray("62", "3.0", "4.0"),
 						decimalArray("63", "4.0", "5.0") },
-				new BigDecimal[][] { 
-						decimalArray("10", "0", "10"), 
+				new BigDecimal[][] {
+						decimalArray("10", "0", "10"),
 						decimalArray("20", "10", "30"),
 						decimalArray("30", "30", "60") }
 				// @formatter:on
@@ -129,11 +129,11 @@ public class DatumUtilsTests {
 
 		// @formatter:off
 		assertThat("Instantaneous prop 'a' with stats", s.getI(), allOf(
-				hasEntry("a", new BigDecimal("1.1")), 
+				hasEntry("a", new BigDecimal("1.1")),
 				hasEntry("a_min", new BigDecimal("1.0")),
 				hasEntry("a_max", new BigDecimal("2.0"))));
 		assertThat("Instantaneous prop 'd' with stats", s.getI(), allOf(
-				hasEntry("d", new BigDecimal("1.4")), 
+				hasEntry("d", new BigDecimal("1.4")),
 				hasEntry("d_min", new BigDecimal("4.0")),
 				hasEntry("d_max", new BigDecimal("5.0"))));
 		// @formatter:on
@@ -166,11 +166,11 @@ public class DatumUtilsTests {
 
 		// @formatter:off
 		assertThat("Instantaneous prop 'a' with stats", s.getI(), allOf(
-				hasEntry("a", new BigDecimal("1.1")), 
+				hasEntry("a", new BigDecimal("1.1")),
 				hasEntry("a_min", new BigDecimal("1.0")),
 				hasEntry("a_max", new BigDecimal("2.0"))));
 		assertThat("Instantaneous prop 'd' with stats", s.getI(), allOf(
-				hasEntry("d", new BigDecimal("1.4")), 
+				hasEntry("d", new BigDecimal("1.4")),
 				hasEntry("d_min", new BigDecimal("4.0")),
 				hasEntry("d_max", new BigDecimal("5.0"))));
 		assertThat("Accumluating prop 'e' stats", s.getI(), allOf(
@@ -415,14 +415,14 @@ public class DatumUtilsTests {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();
 		f.setMax(1);
-		f.setOffset(2);
+		f.setOffset(2L);
 
 		// WHEN
 		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f);
 
 		// THEN
 		assertThat("Max copied from filter", c.getMax(), equalTo(1));
-		assertThat("Offset copied from filter", c.getOffset(), equalTo(2));
+		assertThat("Offset copied from filter", c.getOffset(), equalTo(2L));
 	}
 
 	@Test
@@ -430,14 +430,14 @@ public class DatumUtilsTests {
 		// GIVEN
 		DatumFilterCommand f = new DatumFilterCommand();
 		f.setMax(1);
-		f.setOffset(2);
+		f.setOffset(2L);
 
 		// WHEN
-		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f, null, 4, 3);
+		BasicDatumCriteria c = DatumUtils.criteriaFromFilter(f, null, 4L, 3);
 
 		// THEN
 		assertThat("Max copied from args", c.getMax(), equalTo(3));
-		assertThat("Offset copied from args", c.getOffset(), equalTo(4));
+		assertThat("Offset copied from args", c.getOffset(), equalTo(4L));
 	}
 
 	@Test

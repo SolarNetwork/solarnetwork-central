@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -36,6 +37,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  */
 public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 
+	@Serial
 	private static final long serialVersionUID = -6975117953635161471L;
 
 	private final ObjectDatumKind kind;
@@ -65,7 +67,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	}
 
 	@Override
-	protected ObjectDatumPK clone() {
+	public ObjectDatumPK clone() {
 		return (ObjectDatumPK) super.clone();
 	}
 
@@ -75,7 +77,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	 * <p>
 	 * If {@code objectId} is populated, then this compares {@code objectId},
 	 * {@code sourceId}, and then {@code timestamp} values, all in ascending
-	 * order with {@literal null} values ordered first. Otherwise the super
+	 * order with {@literal null} values ordered first. Otherwise, the super
 	 * implementation is invoked.
 	 * </p>
 	 *
@@ -84,11 +86,9 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	@Override
 	public int compareTo(DatumPK o) {
 		if ( o instanceof ObjectDatumPK id && objectId != null ) {
-			int result = 0;
+			int result;
 			if ( objectId != id.objectId ) {
-				if ( objectId == null ) {
-					return 1;
-				} else if ( id.objectId == null ) {
+				if ( id.objectId == null ) {
 					return -1;
 				}
 				result = objectId.compareTo(id.objectId);
@@ -132,13 +132,9 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof ObjectDatumPK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof ObjectDatumPK) ) {
-			return false;
-		}
-		ObjectDatumPK other = (ObjectDatumPK) obj;
 		return kind == other.kind && Objects.equals(objectId, other.objectId)
 				&& Objects.equals(sourceId, other.sourceId);
 	}

@@ -1,27 +1,28 @@
 /* ==================================================================
  * AccountTask.java - 21/07/2020 6:11:22 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -31,12 +32,13 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * An account task entity.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class AccountTask extends BasicUuidEntity implements Differentiable<AccountTask> {
 
+	@Serial
 	private static final long serialVersionUID = -6310585670232356068L;
 
 	/**
@@ -55,7 +57,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Create a new task instance.
-	 * 
+	 *
 	 * @param date
 	 *        the task date
 	 * @param taskType
@@ -70,7 +72,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Create a new task instance.
-	 * 
+	 *
 	 * @param date
 	 *        the task date
 	 * @param taskType
@@ -88,7 +90,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param taskType
 	 *        the task type
 	 * @param accountId
@@ -102,7 +104,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param taskType
 	 *        the task type
 	 * @param accountId
@@ -118,7 +120,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -149,12 +151,12 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -206,7 +208,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Get the task type.
-	 * 
+	 *
 	 * @return the task type, never {@literal null}
 	 */
 	public AccountTaskType getTaskType() {
@@ -215,7 +217,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Get the account ID.
-	 * 
+	 *
 	 * @return the account ID, never {@literal null}
 	 */
 	public Long getAccountId() {
@@ -224,7 +226,7 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 
 	/**
 	 * Get the task data.
-	 * 
+	 *
 	 * @return the task data
 	 */
 	public Map<String, Object> getTaskData() {

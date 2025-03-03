@@ -113,7 +113,7 @@ public class JdbcCloudDatumStreamSettingsEntityDaoTests extends AbstractJUnit5Jd
 	private UserSettingsEntity createUserSettings(Long userId) {
 		UserSettingsEntity conf = CinJdbcTestUtils.newUserSettingsEntity(userId, randomBoolean(),
 				randomBoolean());
-		UserSettingsEntity entity = userSettingsDao.get(userSettingsDao.store(conf));
+		UserSettingsEntity entity = userSettingsDao.get(userSettingsDao.save(conf));
 		return entity;
 	}
 

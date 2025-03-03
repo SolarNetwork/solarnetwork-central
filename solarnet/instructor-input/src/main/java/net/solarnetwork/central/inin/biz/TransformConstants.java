@@ -80,7 +80,7 @@ public final class TransformConstants {
 	/** A parameter key for a SolarNetwork user ID. */
 	public static final String PARAM_USER_ID = "user-id";
 
-	/** A parameter key for a endpoint ID. */
+	/** A parameter key for an endpoint ID. */
 	public static final String PARAM_ENDPOINT_ID = "endpoint-id";
 
 	/** A parameter key for a transform ID. */

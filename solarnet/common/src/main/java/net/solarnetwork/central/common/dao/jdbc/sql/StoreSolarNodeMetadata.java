@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadata;
  * @author matt
  * @version 1.0
  */
-public class StoreSolarNodeMetadata implements CallableStatementCreator, SqlProvider {
+public final class StoreSolarNodeMetadata implements CallableStatementCreator, SqlProvider {
 
 	/** The stored procedure call. */
 	public static final String SQL = "{call solarnet.store_node_meta(?, ?, ?)}";

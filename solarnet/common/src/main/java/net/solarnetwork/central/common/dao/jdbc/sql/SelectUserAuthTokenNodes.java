@@ -45,7 +45,7 @@ import org.springframework.jdbc.core.SqlProvider;
  * @author matt
  * @version 1.0
  */
-public class SelectUserAuthTokenNodes implements PreparedStatementCreator, SqlProvider {
+public final class SelectUserAuthTokenNodes implements PreparedStatementCreator, SqlProvider {
 
 	private final String tokenId;
 

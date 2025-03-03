@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
+import net.solarnetwork.dao.BasicIdentity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
@@ -50,6 +52,7 @@ import net.solarnetwork.domain.Differentiable;
 public class SnfInvoice extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
 
+	@Serial
 	private static final long serialVersionUID = 4095505242827622567L;
 
 	/**
@@ -239,10 +242,8 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 			return false;
 		}
 		if ( address != other.address ) {
-			if ( address == null || other.address == null ) {
-				return false;
-			}
-			if ( !Objects.equals(address.getId(), other.address.getId()) ) {
+			if ( address == null || other.address == null
+					|| !Objects.equals(address.getId(), other.address.getId()) ) {
 				return false;
 			}
 		}
@@ -292,7 +293,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		if ( items == null ) {
 			return Collections.emptyMap();
 		}
-		return items.stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
+		return items.stream().collect(Collectors.toMap(BasicIdentity::getId, e -> e));
 	}
 
 	/**
@@ -468,7 +469,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		if ( usages == null ) {
 			return Collections.emptyMap();
 		}
-		return usages.stream().collect(Collectors.toMap(e -> e.getNodeId(), e -> e));
+		return usages.stream().collect(Collectors.toMap(SnfInvoiceNodeUsage::getNodeId, e -> e));
 	}
 
 }

@@ -283,7 +283,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -344,7 +344,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -404,7 +404,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -465,7 +465,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -522,7 +522,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<UserAlertSituation>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -590,7 +590,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -725,7 +725,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		//		// then save active situation
 		Capture<UserAlertSituation> newSituation = new Capture<>();
-		expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+		expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 				.andReturn(AlertIdCounter.getAndIncrement());
 
 		replayAll();
@@ -794,7 +794,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
-			expect(userAlertSituationDao.store(capture(newSituation)))
+			expect(userAlertSituationDao.save(capture(newSituation)))
 					.andReturn(AlertIdCounter.getAndIncrement());
 		}
 
@@ -818,7 +818,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
-			expect(userAlertSituationDao.store(capture(newSituation)))
+			expect(userAlertSituationDao.save(capture(newSituation)))
 					.andReturn(AlertIdCounter.getAndIncrement());
 		}
 
@@ -842,7 +842,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 			expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 			// then save active situation
-			expect(userAlertSituationDao.store(EasyMock.capture(newSituation)))
+			expect(userAlertSituationDao.save(EasyMock.capture(newSituation)))
 					.andReturn(AlertIdCounter.getAndIncrement());
 		}
 
@@ -915,7 +915,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
 
 		// then save active situation -> resolved
-		expect(userAlertSituationDao.store(activeSituation)).andReturn(activeSituation.getId());
+		expect(userAlertSituationDao.save(activeSituation)).andReturn(activeSituation.getId());
 
 		// and finally save the alert valid date
 		userAlertDao.updateValidTo(eq(pendingAlerts.get(0).getId()), anyObject());

@@ -1,21 +1,21 @@
 /* ==================================================================
  * AsyncDaoUserEventAppenderBiz.java - 1/08/2022 3:26:54 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,7 +48,7 @@ import net.solarnetwork.util.UuidGenerator;
 
 /**
  * Asynchronous {@link UserEventAppenderBiz}.
- * 
+ *
  * @author matt
  * @version 1.4
  */
@@ -64,30 +64,25 @@ public class AsyncDaoUserEventAppenderBiz
 	 * A comparator for {@link UserEvent} that sorts by event ID first, then
 	 * user ID.
 	 */
-	public static Comparator<UserEvent> EVENT_SORT = new Comparator<UserEvent>() {
-
-		@Override
-		public int compare(UserEvent o1, UserEvent o2) {
-			int comparison = UUIDComparator.staticCompare(o1.getEventId(), o2.getEventId());
-			if ( comparison != 0 ) {
-				return comparison;
-			}
-			return o1.getUserId().compareTo(o2.getUserId());
+	public static Comparator<UserEvent> EVENT_SORT = (o1, o2) -> {
+		int comparison = UUIDComparator.staticCompare(o1.getEventId(), o2.getEventId());
+		if ( comparison != 0 ) {
+			return comparison;
 		}
+		return o1.getUserId().compareTo(o2.getUserId());
 	};
 
 	/**
 	 * A function to generate a SolarFlux MQTT topic from a user event.
-	 * 
+	 *
 	 * @since 1.1
 	 */
-	public static Function<UserEvent, String> SOLARFLUX_TOPIC_FN = (event) -> {
-		return "user/" + event.getUserId() + "/event";
-	};
+	public static Function<UserEvent, String> SOLARFLUX_TOPIC_FN = (event) -> "user/" + event.getUserId()
+			+ "/event";
 
 	/**
 	 * A function to generate a SolarFlux MQTT topic from a user event.
-	 * 
+	 *
 	 * @since 1.3
 	 */
 	public static Function<UserEvent, String> SOLARFLUX_TAGGED_TOPIC_FN = (event) -> {
@@ -95,9 +90,9 @@ public class AsyncDaoUserEventAppenderBiz
 		buf.append(event.getUserId()).append("/event");
 
 		final String[] tags = event.getTags();
-		for ( int i = 0, tagLen = tags.length; i < tagLen; i++ ) {
+		for ( String tag : tags ) {
 			buf.append('/');
-			buf.append(tags[i]);
+			buf.append(tag);
 		}
 		return buf.toString();
 	};
@@ -127,7 +122,7 @@ public class AsyncDaoUserEventAppenderBiz
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executorService
 	 *        the executor service
 	 * @param dao
@@ -141,7 +136,7 @@ public class AsyncDaoUserEventAppenderBiz
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executorService
 	 *        the executor service
 	 * @param dao
@@ -237,20 +232,21 @@ public class AsyncDaoUserEventAppenderBiz
 		final Map<String, Long> allStats = stats.allCounts();
 		final Long addCount = allStats.get(UserEventStats.EventsAdded.name());
 		final Long removeCount = allStats.get(UserEventStats.EventsStored.name());
-		final long lagDiff = (addCount != null ? addCount.longValue() : 0L)
-				- (removeCount != null ? removeCount.longValue() : 0L);
+		final long lagDiff = (addCount != null ? addCount : 0L)
+				- (removeCount != null ? removeCount : 0L);
 		if ( lagDiff > queueLagAlertThreshold ) {
 			return new PingTestResult(false,
 					String.format("Queue removal lag %d > %d", lagDiff, queueLagAlertThreshold),
 					allStats);
 		}
-		return new PingTestResult(true, String.format("Processed %d events; lag %d.",
-				addCount != null ? addCount.longValue() : 0L, lagDiff), allStats);
+		return new PingTestResult(true,
+				String.format("Processed %d events; lag %d.", addCount != null ? addCount : 0L, lagDiff),
+				allStats);
 	}
 
 	/**
 	 * Get the minimum queue lag before the ping test will fail.
-	 * 
+	 *
 	 * @return the threshold; defaults to
 	 *         {@link #DEFAULT_QUEUE_LAG_ALERT_THRESHOLD}
 	 */
@@ -260,7 +256,7 @@ public class AsyncDaoUserEventAppenderBiz
 
 	/**
 	 * Set the minimum queue lag before the ping test will fail.
-	 * 
+	 *
 	 * @param queueLagAlertThreshold
 	 *        the threshold to set
 	 */
@@ -270,7 +266,7 @@ public class AsyncDaoUserEventAppenderBiz
 
 	/**
 	 * Get the SolarFlux publisher.
-	 * 
+	 *
 	 * @return the publisher
 	 */
 	public MqttJsonPublisher<UserEvent> getSolarFluxPublisher() {
@@ -279,7 +275,7 @@ public class AsyncDaoUserEventAppenderBiz
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param solarFluxPublisher
 	 *        the publisher to set
 	 */

@@ -1,21 +1,21 @@
 /* ==================================================================
  * WebUtils.java - 15/08/2022 3:24:54 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,6 +24,7 @@ package net.solarnetwork.central.web;
 
 import static java.lang.String.format;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -31,12 +32,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.slf4j.Logger;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,15 +51,15 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
 
 /**
  * Helper utilities for web APIs.
- * 
+ *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public final class WebUtils {
 
 	/**
 	 * The {@literal text/csv} media type value.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final String TEXT_CSV_MEDIA_TYPE_VALUE = "text/csv";
@@ -76,14 +79,14 @@ public final class WebUtils {
 
 	/**
 	 * The media type value for Microsoft XLSX.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final String XLSX_MEDIA_TYPE_VALUE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 	/**
 	 * The media type for Microsoft XLSX.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(XLSX_MEDIA_TYPE_VALUE);
@@ -94,7 +97,7 @@ public final class WebUtils {
 
 	/**
 	 * Build a {@link UriComponents} without any scheme, host, or port.
-	 * 
+	 *
 	 * @param builder
 	 *        the builder
 	 * @param uriVariableValues
@@ -107,7 +110,7 @@ public final class WebUtils {
 
 	/**
 	 * Build a {@link UriComponents} without any scheme, host, or port.
-	 * 
+	 *
 	 * @param builder
 	 *        the builder
 	 * @param uriVariables
@@ -120,7 +123,7 @@ public final class WebUtils {
 
 	/**
 	 * Build a {@link URI} without any scheme, host, or port.
-	 * 
+	 *
 	 * @param builder
 	 *        the builder
 	 * @param uriVariableValues
@@ -133,7 +136,7 @@ public final class WebUtils {
 
 	/**
 	 * Build a {@link URI} without any scheme, host, or port.
-	 * 
+	 *
 	 * @param builder
 	 *        the builder
 	 * @param uriVariables
@@ -145,18 +148,18 @@ public final class WebUtils {
 	}
 
 	/**
-	 * Setup a filtered results processor.
-	 * 
+	 * Set up a filtered results processor.
+	 *
 	 * <p>
 	 * The following types are supported:
 	 * </p>
-	 * 
+	 *
 	 * <ul>
 	 * <li>application/json</li>
 	 * <li>application/cbor</li>
 	 * <li>text/csv</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param <T>
 	 *        the result type
 	 * @param acceptTypes
@@ -201,13 +204,15 @@ public final class WebUtils {
 						format("The [%s] media type is not supported.", acceptType));
 			}
 		}
-		response.setContentType(processor.getMimeType().toString());
+		if ( processor != null ) {
+			response.setContentType(processor.getMimeType().toString());
+		}
 		return processor;
 	}
 
 	/**
 	 * Get the request URI including query parameters as a string.
-	 * 
+	 *
 	 * @param request
 	 *        the servlet request
 	 * @return the request URI with query parameters included
@@ -226,7 +231,7 @@ public final class WebUtils {
 	 * Handle a {@link DataAccessException} by either logging a WARN log message
 	 * if {@code retries} is greater than 0, or re-throwing the exception
 	 * otherwise.
-	 * 
+	 *
 	 * @param req
 	 *        the HTTP request
 	 * @param e
@@ -261,7 +266,7 @@ public final class WebUtils {
 
 	/**
 	 * Perform an action with {@link DataAccessException} retry.
-	 * 
+	 *
 	 * @param <T>
 	 *        the action argument type
 	 * @param action
@@ -275,7 +280,7 @@ public final class WebUtils {
 	 *        greater than 0
 	 * @param log
 	 *        the logger to log a WARN message to
-	 * @return
+	 * @return the action result
 	 */
 	public static <T> T doWithTransientDataAccessExceptionRetry(final Supplier<T> action,
 			final HttpServletRequest req, int tries, final long retryDelay, final Logger log) {
@@ -286,6 +291,27 @@ public final class WebUtils {
 				handleTransientDataAccessExceptionRetry(req, e, --tries, retryDelay, log);
 			}
 		}
+	}
+
+	/**
+	 * Create an input stream that throws a
+	 * {@link MaxUploadSizeExceededException} when the given length is exceeded
+	 * while reading.
+	 *
+	 * @param in
+	 *        the input stream
+	 * @param maxLength
+	 *        the maximum length to allow reading before a
+	 *        {@link MaxUploadSizeExceededException} is thrown
+	 * @return the new input stream
+	 * @since 1.4
+	 */
+	public static InputStream maxUploadSizeExceededInputStream(InputStream in, long maxLength)
+			throws IOException {
+		return BoundedInputStream.builder().setInputStream(in).setMaxCount(maxLength)
+				.setOnMaxCount((m, c) -> {
+					throw new MaxUploadSizeExceededException(maxLength);
+				}).get();
 	}
 
 }

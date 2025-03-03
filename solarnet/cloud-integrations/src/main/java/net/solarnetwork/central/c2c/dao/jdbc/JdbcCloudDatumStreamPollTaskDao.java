@@ -48,7 +48,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudDatumStreamPollTaskDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTaskDao {
 
@@ -105,7 +105,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public FilterResults<CloudDatumStreamPollTaskEntity, UserLongCompositePK> findFiltered(
-			CloudDatumStreamPollTaskFilter filter, List<SortDescriptor> sorts, Integer offset,
+			CloudDatumStreamPollTaskFilter filter, List<SortDescriptor> sorts, Long offset,
 			Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudDatumStreamPollTaskEntity(filter);
@@ -162,7 +162,7 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 			if ( cs.execute() ) {
 				try (var rs = cs.getResultSet()) {
 					if ( rs != null ) {
-						while ( rs.next() ) {
+						if ( rs.next() ) {
 							return CloudDatumStreamPollTaskEntityRowMapper.INSTANCE.mapRow(rs, 1);
 						}
 					}
@@ -200,9 +200,10 @@ public class JdbcCloudDatumStreamPollTaskDao implements CloudDatumStreamPollTask
 
 	@Override
 	public int resetAbandondedExecutingTasks(Instant olderThan) {
-		// reset tasks in Executing older than olderThan to Queued
+		// reset tasks in Executing or Claimed older than olderThan to Queued
 		BasicFilter filter = new BasicFilter();
-		filter.setClaimableJobStates(new BasicClaimableJobState[] { BasicClaimableJobState.Executing });
+		filter.setClaimableJobStates(new BasicClaimableJobState[] { BasicClaimableJobState.Executing,
+				BasicClaimableJobState.Claimed });
 		filter.setEndDate(olderThan);
 		var sql = new UpdateCloudDatumStreamPollTaskEntityState(BasicClaimableJobState.Queued, filter);
 		return jdbcOps.update(sql);

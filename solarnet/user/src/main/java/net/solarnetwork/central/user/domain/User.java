@@ -1,27 +1,28 @@
 /* ==================================================================
  * User.java - Dec 11, 2009 8:27:28 PM
- * 
+ *
  * Copyright 2007-2009 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.Serial;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,12 +36,13 @@ import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A user domain object.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class User extends BaseEntity implements UserInfo {
 
+	@Serial
 	private static final long serialVersionUID = -1968822608256484455L;
 
 	private String name;
@@ -64,7 +66,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Construct with values.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param email
@@ -128,12 +130,12 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Get a {@link TimeZone} instance from this user's location.
-	 * 
+	 *
 	 * <p>
 	 * This will return a {@code TimeZone} for the configured location's
 	 * {@link SolarLocation#getTimeZoneId()}.
 	 * <p>
-	 * 
+	 *
 	 * @return the TimeZone, or {@literal null} if none available
 	 * @since 1.4
 	 */
@@ -145,7 +147,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.4
 	 */
 	@Override
@@ -155,11 +157,11 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Set the user's location ID.
-	 * 
+	 *
 	 * <p>
 	 * If the provided {@code locationId} differs from the configured
 	 * {@code location} ID, {@code location} will be set to {@literal null}.
-	 * 
+	 *
 	 * @param locationId
 	 *        the location ID to set
 	 * @since 1.4
@@ -174,12 +176,12 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Get the user location.
-	 * 
+	 *
 	 * <p>
 	 * This object may not be available, even if {@link #locationId} returns a
 	 * value.
 	 * </p>
-	 * 
+	 *
 	 * @return the location, or {@literal null}
 	 * @since 1.4
 	 */
@@ -191,12 +193,12 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Set the user location.
-	 * 
+	 *
 	 * <p>
 	 * The {@code locationId} property will be replaced by the provided
 	 * location's {@code id} if that is not {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param location
 	 *        the location to set
 	 * @since 1.4
@@ -210,7 +212,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.4
 	 */
 	@Override
@@ -226,7 +228,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Set the internal data.
-	 * 
+	 *
 	 * @param internalData
 	 *        the internal data to set
 	 * @since 1.4
@@ -237,7 +239,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Get an internal data property.
-	 * 
+	 *
 	 * @param key
 	 *        the key of the internal data property to get
 	 * @return the value, or {@literal null} if not available
@@ -250,7 +252,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Add or remove one internal data element.
-	 * 
+	 *
 	 * @param key
 	 *        the key to update
 	 * @param data
@@ -265,7 +267,7 @@ public class User extends BaseEntity implements UserInfo {
 			if ( data == null ) {
 				return null;
 			}
-			map = new LinkedHashMap<String, Object>(4);
+			map = new LinkedHashMap<>(4);
 			setInternalData(map);
 		}
 		if ( data == null ) {
@@ -277,7 +279,7 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Get the internal data as a JSON string.
-	 * 
+	 *
 	 * @return a JSON encoded string, or {@literal null}
 	 * @since 1.4
 	 */
@@ -292,13 +294,13 @@ public class User extends BaseEntity implements UserInfo {
 
 	/**
 	 * Set the internal data object via a JSON string.
-	 * 
+	 *
 	 * <p>
 	 * This method will remove any previously created {@code internalData} value
 	 * and replace it with the values parsed from the provided JSON. The JSON is
 	 * expected to be a JSON object with string keys.
 	 * </p>
-	 * 
+	 *
 	 * @param json
 	 *        the internal data to set
 	 * @since 1.4

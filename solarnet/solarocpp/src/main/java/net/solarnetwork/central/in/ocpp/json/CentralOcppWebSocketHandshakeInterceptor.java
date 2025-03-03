@@ -1,21 +1,21 @@
 /* ==================================================================
  * CentralOcppWebSocketHandshakeInterceptor.java - 2/08/2022 7:02:49 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -46,14 +46,15 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of {@link OcppWebSocketHandshakeInterceptor} for SolarNet.
- * 
+ *
  * @author matt
  * @version 1.5
  */
 public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHandshakeInterceptor
 		implements CentralOcppUserEvents {
 
-	private static final Logger log = LoggerFactory.getLogger(OcppWebSocketHandshakeInterceptor.class);
+	private static final Logger log = LoggerFactory
+			.getLogger(CentralOcppWebSocketHandshakeInterceptor.class);
 
 	/** User event kind for OCPP connection forbidden events. */
 	public static final String[] CHARGE_POINT_AUTHENTICATION_FAILURE_TAGS = new String[] {
@@ -67,7 +68,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param systemUserDao
 	 *        the system user DAO
 	 * @param passwordEncoder
@@ -82,7 +83,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param systemUserDao
 	 *        the system user DAO
 	 * @param passwordEncoder
@@ -103,7 +104,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param systemUserDao
 	 *        the system user DAO
 	 * @param passwordEncoder
@@ -193,7 +194,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 
 	/**
 	 * Get the user event appender service.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public UserEventAppenderBiz getUserEventAppenderBiz() {
@@ -202,7 +203,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 
 	/**
 	 * Set the user event appender service.
-	 * 
+	 *
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */

@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
 import net.solarnetwork.central.datum.imp.dao.DatumImportJobInfoDao;
@@ -115,7 +114,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		params.put("date", olderThanDate);
 		getSqlSession().update(updateDeleteCompletedJobs, params);
 		Long result = (Long) params.get("result");
-		return (result == null ? 0 : result.longValue());
+		return (result == null ? 0 : result);
 	}
 
 	@Override
@@ -126,7 +125,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		params.put("desiredState", desiredState.getKey());
 		if ( expectedStates != null && !expectedStates.isEmpty() ) {
 			String[] array = expectedStates.stream().map(s -> String.valueOf(s.getKey()))
-					.collect(Collectors.toList()).toArray(new String[expectedStates.size()]);
+					.toArray(String[]::new);
 			params.put("expectedStates", array);
 		}
 		int count = getSqlSession().update(updateJobState, params);
@@ -161,8 +160,7 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( states != null && !states.isEmpty() ) {
-			String[] array = states.stream().map(s -> String.valueOf(s.getKey()))
-					.collect(Collectors.toList()).toArray(new String[states.size()]);
+			String[] array = states.stream().map(s -> String.valueOf(s.getKey())).toArray(String[]::new);
 			params.put("states", array);
 		}
 		return selectList(queryForUser, params, null, null);
@@ -173,13 +171,11 @@ public class MyBatisDatumImportJobInfoDao extends BaseMyBatisGenericDao<DatumImp
 		Map<String, Object> params = new HashMap<>(2);
 		params.put("userId", userId);
 		if ( jobIds != null && !jobIds.isEmpty() ) {
-			String[] array = jobIds.stream().map(id -> id.toString()).collect(Collectors.toList())
-					.toArray(new String[jobIds.size()]);
+			String[] array = jobIds.stream().map(UUID::toString).toArray(String[]::new);
 			params.put("ids", array);
 		}
 		if ( states != null && !states.isEmpty() ) {
-			String[] array = states.stream().map(s -> String.valueOf(s.getKey()))
-					.collect(Collectors.toList()).toArray(new String[states.size()]);
+			String[] array = states.stream().map(s -> String.valueOf(s.getKey())).toArray(String[]::new);
 			params.put("states", array);
 		}
 		return getSqlSession().update(updateDeleteForUser, params);

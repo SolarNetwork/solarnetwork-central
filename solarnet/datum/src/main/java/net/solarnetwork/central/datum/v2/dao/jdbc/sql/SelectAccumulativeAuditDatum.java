@@ -37,7 +37,7 @@ import net.solarnetwork.domain.datum.Aggregation;
  * @version 1.2
  * @since 3.8
  */
-public class SelectAccumulativeAuditDatum extends SelectAuditDatum
+public final class SelectAccumulativeAuditDatum extends SelectAuditDatum
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
 
 	/**

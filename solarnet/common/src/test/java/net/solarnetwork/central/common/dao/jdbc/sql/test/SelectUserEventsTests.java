@@ -57,7 +57,7 @@ import net.solarnetwork.util.SearchFilter;
  * Test cases for the {@link SelectUserEvent} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class SelectUserEventsTests {
@@ -118,8 +118,8 @@ public class SelectUserEventsTests {
 		if ( filter.getMax() != null ) {
 			then(result).should().setInt(++p, filter.getMax());
 		}
-		if ( filter.getOffset() != null && filter.getOffset() > 0 ) {
-			then(result).should().setInt(++p, filter.getOffset());
+		if ( filter.getOffset() != null && filter.getOffset() > 0L ) {
+			then(result).should().setLong(++p, filter.getOffset());
 		}
 	}
 
@@ -175,7 +175,7 @@ public class SelectUserEventsTests {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		filter.setMax(100);
-		filter.setOffset(200);
+		filter.setOffset(200L);
 
 		// WHEN
 		String sql = new SelectUserEvent(filter).getSql();
@@ -195,7 +195,7 @@ public class SelectUserEventsTests {
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(filter.getStartDate().plus(1, ChronoUnit.HOURS));
 		filter.setMax(100);
-		filter.setOffset(200);
+		filter.setOffset(200L);
 
 		givenPrepStatement();
 		givenSetTagsArrayParameter(filter.getTags());

@@ -31,13 +31,13 @@ package net.solarnetwork.central.datum.export.dest.ftp;
 public class FtpDestinationProperties {
 
 	/** The {@code dataTls} property default value. */
-	public static final boolean DEFAUT_DATA_TLS = true;
+	public static final boolean DEFAULT_DATA_TLS = true;
 
 	private String url;
 	private String username;
 	private String password;
 	private boolean implicitTls;
-	private boolean dataTls = DEFAUT_DATA_TLS;
+	private boolean dataTls = DEFAULT_DATA_TLS;
 
 	/**
 	 * Constructor.

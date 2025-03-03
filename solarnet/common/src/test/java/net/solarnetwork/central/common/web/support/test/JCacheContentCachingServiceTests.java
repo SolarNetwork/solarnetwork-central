@@ -36,10 +36,10 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HexFormat;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.cache.Cache;
-import org.apache.commons.codec.binary.Hex;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
@@ -58,7 +58,7 @@ import net.solarnetwork.central.web.support.SimpleCachedContent;
  * Test cases for the {@link JCacheContentCachingService} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class JCacheContentCachingServiceTests {
 
@@ -591,7 +591,7 @@ public class JCacheContentCachingServiceTests {
 		assertThat("Response Content-Encoding", content.getContentEncoding(), nullValue());
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
-		assertThat("Cached data", Hex.encodeHexString(cachedBody), equalTo("010203"));
+		assertThat("Cached data", HexFormat.of().formatHex(cachedBody), equalTo("010203"));
 	}
 
 	@Test

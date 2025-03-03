@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisNodeInstructionDao.java - Nov 12, 2014 6:33:35 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDao;
@@ -44,7 +43,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * MyBatis implementation of {@link NodeInstructionDao}.
- * 
+ *
  * @author matt
  * @version 1.9
  */
@@ -56,9 +55,8 @@ public class MyBatisNodeInstructionDao
 	public static final String UPDATE_PURGE_COMPLETED_INSTRUCTIONS = "delete-NodeInstruction-completed";
 
 	/**
-	 * Query name used by
-	 * {@link #updateNodeInstructionState(Long, Long, InstructionState, Map)}.
-	 * 
+	 * Query name used by {@link #updateNodeInstructionState(Long, Long, InstructionState, Map)}.
+	 *
 	 * @since 1.2
 	 */
 	public static final String UPDATE_SET_STATE = "update-NodeInstruction-state";
@@ -66,7 +64,7 @@ public class MyBatisNodeInstructionDao
 	/**
 	 * Query name used by
 	 * {@link #compareAndUpdateInstructionState(Long, Long, InstructionState, InstructionState, Map)}.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final String UPDATE_COMPARE_STATE = "update-NodeInstruction-compare-state";
@@ -74,14 +72,14 @@ public class MyBatisNodeInstructionDao
 	/**
 	 * Query name used by
 	 * {@link #updateStaleInstructionsState(InstructionState, Instant, InstructionState)}.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final String UPDATE_STALE_STATE = "update-NodeInstruction-stale-state";
 
 	/**
 	 * Query name used by {@link #purgeIncompleteInstructions(Instant)}.
-	 * 
+	 *
 	 * @since 1.4
 	 */
 	public static final String UPDATE_PURGE_INCOMPLETE_INSTRUCTIONS = "delete-NodeInstruction-incomplete";
@@ -102,26 +100,26 @@ public class MyBatisNodeInstructionDao
 
 	@Override
 	public long purgeCompletedInstructions(Instant olderThanDate) {
-		Map<String, Object> params = new HashMap<String, Object>(2);
+		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
 		getSqlSession().update(UPDATE_PURGE_COMPLETED_INSTRUCTIONS, params);
 		Long result = (Long) params.get("result");
-		return (result == null ? 0 : result.longValue());
+		return (result == null ? 0 : result);
 	}
 
 	@Override
 	public long purgeIncompleteInstructions(Instant olderThanDate) {
-		Map<String, Object> params = new HashMap<String, Object>(2);
+		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
 		getSqlSession().update(UPDATE_PURGE_INCOMPLETE_INSTRUCTIONS, params);
 		Long result = (Long) params.get("result");
-		return (result == null ? 0 : result.longValue());
+		return (result == null ? 0 : result);
 	}
 
 	@Override
 	public boolean compareAndUpdateInstructionState(Long instructionId, Long nodeId,
 			InstructionState expectedState, InstructionState state, Map<String, ?> resultParameters) {
-		Map<String, Object> params = new HashMap<String, Object>(3);
+		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", instructionId);
 		params.put("nodeId", nodeId);
 		params.put("expectedState", expectedState);
@@ -136,7 +134,7 @@ public class MyBatisNodeInstructionDao
 	@Override
 	public boolean updateNodeInstructionState(Long instructionId, Long nodeId, InstructionState state,
 			Map<String, ?> resultParameters) {
-		Map<String, Object> params = new HashMap<String, Object>(3);
+		Map<String, Object> params = new HashMap<>(3);
 		params.put("id", instructionId);
 		params.put("nodeId", nodeId);
 		params.put("state", state);
@@ -150,7 +148,7 @@ public class MyBatisNodeInstructionDao
 	@Override
 	public long updateStaleInstructionsState(InstructionState currentState, Instant olderThanDate,
 			InstructionState desiredState) {
-		Map<String, Object> params = new HashMap<String, Object>(2);
+		Map<String, Object> params = new HashMap<>(2);
 		params.put("date", olderThanDate);
 		params.put("expectedState", currentState);
 		params.put("state", desiredState);
@@ -170,21 +168,18 @@ public class MyBatisNodeInstructionDao
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
-		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
+		processor.start(null, null, null,
+				Collections.emptyMap()); // TODO: support count total results/offset/max
 		try {
 			getSqlSession().select("findall-NodeInstruction-EntityMatch",
-					singletonMap(FILTER_PROPERTY, filter), new ResultHandler<NodeInstruction>() {
-
-						@Override
-						public void handleResult(
-								ResultContext<? extends NodeInstruction> resultContext) {
-							NodeInstruction instr = resultContext.getResultObject();
-							try {
-								processor.handleResultItem(instr);
-							} catch ( IOException e ) {
-								resultContext.stop();
-								throw new RuntimeException(e);
-							}
+					singletonMap(FILTER_PROPERTY, filter),
+					(ResultHandler<NodeInstruction>) resultContext -> {
+						NodeInstruction instr = resultContext.getResultObject();
+						try {
+							processor.handleResultItem(instr);
+						} catch ( IOException e ) {
+							resultContext.stop();
+							throw new RuntimeException(e);
 						}
 					});
 		} catch ( RuntimeException e ) {

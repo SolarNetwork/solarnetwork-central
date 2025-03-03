@@ -1,21 +1,21 @@
 /* ==================================================================
  * VehicleMacDataTransferDatumPublisher.java - 21/11/2023 8:40:05 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -48,7 +48,7 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
 
 /**
  * Publish Hiconics data transfer vehicle MAC messages as a datum stream.
- * 
+ *
  * <p>
  * The Hiconics chargers publish {@code DataTransfer} messages with vehicle MAC
  * information this processor converts into a datum stream. The datum stream
@@ -56,20 +56,20 @@ import ocpp.v16.jakarta.cs.DataTransferStatus;
  * associated charger configuration entity in SolarNetwork, with
  * {@code /vehicleMac} appended to the end.
  * </p>
- * 
+ *
  * <p>
  * The format of the {@code DataTransfer} data is JSON, structured like this
  * example:
  * </p>
- * 
+ *
  * <pre>
- * {@code{
+ * {@code {
  *     "vehicleId": "xyz123",
  *     "connectorId": 1,
  *     "timestamp": "2023-06-16T19:05:46Z"
  * }}
  * </pre>
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -89,7 +89,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param chargePointDao
 	 *        the charge point DAO
 	 * @param chargePointSettingsDao
@@ -177,7 +177,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 
 	/**
 	 * Set the SolarFlux publisher.
-	 * 
+	 *
 	 * @param fluxPublisher
 	 *        the publisher to set
 	 */
@@ -187,18 +187,18 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 
 	/**
 	 * Set the source ID template.
-	 * 
+	 *
 	 * <p>
 	 * This template string allows for these parameters:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li><code>{chargePointId}</code> - the Charge Point ID (number)</li>
 	 * <li><code>{chargerIdentifier}</code> - the Charge Point info identifier
 	 * (string)</li>
 	 * <li><code>{connectorId}</code> - the connector ID (integer)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sourceIdTemplate
 	 *        the template to set
 	 */
@@ -208,7 +208,7 @@ public class VehicleMacDataTransferDatumPublisher extends DataTransferProcessor 
 
 	/**
 	 * Set a suffix to append to the resolved source ID template.
-	 * 
+	 *
 	 * @param sourceIdSuffix
 	 *        the suffix to add
 	 */

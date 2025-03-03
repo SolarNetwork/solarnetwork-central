@@ -72,7 +72,7 @@ public class DaoSolarNodeMetadataBizTests {
 		Capture<SolarNodeMetadata> metaCap = new Capture<>();
 
 		EasyMock.expect(solarNodeMetadataDao.get(TEST_NODE_ID)).andReturn(null);
-		EasyMock.expect(solarNodeMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
+		EasyMock.expect(solarNodeMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
 
 		replayAll();
 		biz.addSolarNodeMetadata(TEST_NODE_ID, meta);
@@ -94,7 +94,7 @@ public class DaoSolarNodeMetadataBizTests {
 		Capture<SolarNodeMetadata> metaCap = new Capture<>();
 
 		EasyMock.expect(solarNodeMetadataDao.get(TEST_NODE_ID)).andReturn(null);
-		EasyMock.expect(solarNodeMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
+		EasyMock.expect(solarNodeMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
 
 		replayAll();
 		biz.addSolarNodeMetadata(TEST_NODE_ID, meta);
@@ -128,7 +128,7 @@ public class DaoSolarNodeMetadataBizTests {
 		final Capture<SolarNodeMetadata> metaCap = new Capture<SolarNodeMetadata>();
 
 		EasyMock.expect(solarNodeMetadataDao.get(TEST_NODE_ID)).andReturn(null);
-		EasyMock.expect(solarNodeMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
+		EasyMock.expect(solarNodeMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
 
 		GeneralDatumMetadata meta2 = new GeneralDatumMetadata();
 		meta2.putInfoValue("foo", "bam"); // this should replace
@@ -145,7 +145,7 @@ public class DaoSolarNodeMetadataBizTests {
 						return metaCap.getValue();
 					}
 				});
-		EasyMock.expect(solarNodeMetadataDao.store(EasyMock.capture(meta2Cap))).andReturn(TEST_NODE_ID);
+		EasyMock.expect(solarNodeMetadataDao.save(EasyMock.capture(meta2Cap))).andReturn(TEST_NODE_ID);
 
 		replayAll();
 		biz.addSolarNodeMetadata(TEST_NODE_ID, meta);
@@ -170,7 +170,7 @@ public class DaoSolarNodeMetadataBizTests {
 		final Capture<SolarNodeMetadata> metaCap = new Capture<SolarNodeMetadata>();
 
 		EasyMock.expect(solarNodeMetadataDao.get(TEST_NODE_ID)).andReturn(null);
-		EasyMock.expect(solarNodeMetadataDao.store(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
+		EasyMock.expect(solarNodeMetadataDao.save(EasyMock.capture(metaCap))).andReturn(TEST_NODE_ID);
 
 		GeneralDatumMetadata meta2 = new GeneralDatumMetadata();
 		meta2.putInfoValue("foo", "bam"); // this should replace
@@ -189,7 +189,7 @@ public class DaoSolarNodeMetadataBizTests {
 						return metaCap.getValue();
 					}
 				});
-		EasyMock.expect(solarNodeMetadataDao.store(EasyMock.capture(meta2Cap))).andReturn(TEST_NODE_ID);
+		EasyMock.expect(solarNodeMetadataDao.save(EasyMock.capture(meta2Cap))).andReturn(TEST_NODE_ID);
 
 		replayAll();
 		biz.addSolarNodeMetadata(TEST_NODE_ID, meta);

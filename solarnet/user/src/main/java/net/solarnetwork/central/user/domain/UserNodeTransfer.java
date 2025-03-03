@@ -1,46 +1,48 @@
 /* ==================================================================
  * UserNodeTransfer.java - Apr 20, 2015 4:46:53 PM
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
 
 /**
  * A node ownership transfer request. This entity is associated with the node
  * requesting the transfer. The request is sent to the email address provided on
  * this entity.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class UserNodeTransfer
 		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
 
+	@Serial
 	private static final long serialVersionUID = -1316805739552206861L;
 
 	private UserNodePK id = new UserNodePK();
@@ -59,7 +61,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Construct with values.
-	 * 
+	 *
 	 * @param userId
 	 *        The user ID.
 	 * @param nodeId
@@ -76,7 +78,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Get the email of the requested new owner of the node.
-	 * 
+	 *
 	 * @return The email address.
 	 */
 	public String getEmail() {
@@ -85,7 +87,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Set the email of the requested new owner of the node.
-	 * 
+	 *
 	 * @param email
 	 *        The email address to set.
 	 */
@@ -104,7 +106,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Convenience getter for {@link UserNodePK#getNodeId()}.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
@@ -113,7 +115,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Convenience setter for {@link UserNodePK#setNodeId(Long)}.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
@@ -126,7 +128,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Convenience getter for {@link UserNodePK#getUserId()}.
-	 * 
+	 *
 	 * @return the userId
 	 */
 	@Override
@@ -136,7 +138,7 @@ public class UserNodeTransfer
 
 	/**
 	 * Convenience setter for {@link UserNodePK#setUserId(Long)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the userId to set
 	 */
@@ -164,9 +166,9 @@ public class UserNodeTransfer
 	}
 
 	@Override
-	protected Object clone() {
+	public UserNodeTransfer clone() {
 		try {
-			return super.clone();
+			return (UserNodeTransfer) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should not get here
 			return null;
@@ -186,21 +188,14 @@ public class UserNodeTransfer
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		UserNodeTransfer other = (UserNodeTransfer) obj;
 		if ( id == null ) {
-			if ( other.id != null ) {
-				return false;
-			}
-		} else if ( !id.equals(other.id) ) {
-			return false;
+			return other.id == null;
 		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	@Override

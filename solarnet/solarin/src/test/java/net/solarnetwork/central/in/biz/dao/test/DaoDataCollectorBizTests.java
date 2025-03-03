@@ -66,7 +66,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.dao.DaoDataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityUtils;
-import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.dao.BasicFilterResults;
 import net.solarnetwork.domain.Location;
 import net.solarnetwork.domain.datum.BasicStreamDatum;
 import net.solarnetwork.domain.datum.DatumProperties;
@@ -79,7 +79,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public class DaoDataCollectorBizTests {
 
@@ -128,9 +128,9 @@ public class DaoDataCollectorBizTests {
 		filter.setPostalCode("6011");
 
 		SolarLocation l = new SolarLocation();
-		BasicFilterResults<LocationMatch> filterResults = new BasicFilterResults<>(singleton(l), 1L, 0,
-				1);
-		expect(locationDao.findFiltered(eq(filter), isNull(), eq(0), anyObject()))
+		BasicFilterResults<LocationMatch, Long> filterResults = new BasicFilterResults<>(singleton(l),
+				1L, 0L, 1);
+		expect(locationDao.findFiltered(eq(filter), isNull(), eq(0L), anyObject()))
 				.andReturn(filterResults);
 
 		// WHEN
@@ -369,7 +369,7 @@ public class DaoDataCollectorBizTests {
 		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
 
 		Capture<SolarLocation> locCaptor = new Capture<>();
-		expect(locationDao.store(capture(locCaptor))).andReturn(curr.getId());
+		expect(locationDao.save(capture(locCaptor))).andReturn(curr.getId());
 
 		// WHEN
 		replayAll();
@@ -382,7 +382,7 @@ public class DaoDataCollectorBizTests {
 
 		// THEN
 		SolarLocation update = locCaptor.getValue();
-		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		SolarLocation expectedUpdate = curr.clone();
 		expectedUpdate.setElevation(loc.getElevation());
 		expectedUpdate.setLatitude(loc.getLatitude());
 		expectedUpdate.setLongitude(loc.getLongitude());
@@ -403,7 +403,7 @@ public class DaoDataCollectorBizTests {
 		expect(locationDao.getSolarLocationForNode(nodeId)).andReturn(curr);
 
 		Capture<SolarLocation> locCaptor = new Capture<>();
-		expect(locationDao.store(capture(locCaptor))).andReturn(curr.getId());
+		expect(locationDao.save(capture(locCaptor))).andReturn(curr.getId());
 
 		// WHEN
 		replayAll();
@@ -416,7 +416,7 @@ public class DaoDataCollectorBizTests {
 
 		// THEN
 		SolarLocation update = locCaptor.getValue();
-		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		SolarLocation expectedUpdate = curr.clone();
 		expectedUpdate.setElevation(loc.getElevation());
 		expectedUpdate.setLatitude(loc.getLatitude());
 		expectedUpdate.setLongitude(loc.getLongitude());
@@ -443,13 +443,13 @@ public class DaoDataCollectorBizTests {
 		// save new non-shared instance
 		final Long newLocId = 234L;
 		Capture<SolarLocation> locCaptor = new Capture<>(CaptureType.ALL);
-		expect(locationDao.store(capture(locCaptor))).andReturn(newLocId);
+		expect(locationDao.save(capture(locCaptor))).andReturn(newLocId);
 
 		// re-assign node to new location
 		SolarNode node = new SolarNode(nodeId, curr.getId());
 		expect(nodeDao.get(nodeId)).andReturn(node);
 
-		expect(nodeDao.store(assertWith(new Assertion<SolarNode>() {
+		expect(nodeDao.save(assertWith(new Assertion<SolarNode>() {
 
 			@Override
 			public void check(SolarNode argument) throws Throwable {
@@ -472,7 +472,7 @@ public class DaoDataCollectorBizTests {
 		// THEN
 		assertThat("Saved new location", locCaptor.getValues(), hasSize(1));
 		SolarLocation update = locCaptor.getValues().get(0);
-		SolarLocation expectedUpdate = (SolarLocation) curr.clone();
+		SolarLocation expectedUpdate = curr.clone();
 		expectedUpdate.setId(null);
 		expectedUpdate.setPostalCode(curr.getPostalCode().toUpperCase());
 		expectedUpdate.setElevation(loc.getElevation());

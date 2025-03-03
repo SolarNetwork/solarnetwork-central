@@ -42,10 +42,10 @@ public interface TransformService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
 
 	/** The JSON MIME type. */
-	public static final MimeType JSON_TYPE = MimeType.valueOf("application/json");
+	MimeType JSON_TYPE = MimeType.valueOf("application/json");
 
 	/** The XML MIME type. */
-	public static final MimeType XML_TYPE = MimeType.valueOf("text/xml");
+	MimeType XML_TYPE = MimeType.valueOf("text/xml");
 
 	/**
 	 * A parameter key for a transform instance cache key.
@@ -56,7 +56,7 @@ public interface TransformService
 	 * uniquely identify the transform configuration.
 	 * </p>
 	 */
-	public static final String PARAM_CONFIGURATION_CACHE_KEY = "cache-key";
+	String PARAM_CONFIGURATION_CACHE_KEY = "cache-key";
 
 	/**
 	 * A parameter key for a transform debug output {@link Appendable}.
@@ -66,19 +66,19 @@ public interface TransformService
 	 * appended.
 	 * </p>
 	 */
-	public static final String PARAM_XSLT_OUTPUT = "xslt-output";
+	String PARAM_XSLT_OUTPUT = "xslt-output";
 
 	/** A parameter key for a SolarNetwork user ID. */
-	public static final String PARAM_USER_ID = "user-id";
+	String PARAM_USER_ID = "user-id";
 
-	/** A parameter key for a endpoint ID. */
-	public static final String PARAM_ENDPOINT_ID = "endpoint-id";
+	/** A parameter key for an endpoint ID. */
+	String PARAM_ENDPOINT_ID = "endpoint-id";
 
 	/** A parameter key for a transform ID. */
-	public static final String PARAM_TRANSFORM_ID = "transform-id";
+	String PARAM_TRANSFORM_ID = "transform-id";
 
 	/** A parameter key for a preview boolean flag. */
-	public static final String PARAM_PREVIEW = "preview";
+	String PARAM_PREVIEW = "preview";
 
 	/**
 	 * A parameter key for the previous transform input data, as an
@@ -86,7 +86,7 @@ public interface TransformService
 	 *
 	 * @since 1.1
 	 */
-	public static final String PARAM_PREVIOUS_INPUT = "previous-input";
+	String PARAM_PREVIOUS_INPUT = "previous-input";
 
 	/**
 	 * Test if the service supports a given input object.

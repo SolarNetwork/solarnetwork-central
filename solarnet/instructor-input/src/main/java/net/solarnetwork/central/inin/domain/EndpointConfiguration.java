@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Set;
@@ -44,6 +45,7 @@ import net.solarnetwork.central.domain.UserUuidPK;
 public class EndpointConfiguration extends BaseUserModifiableEntity<EndpointConfiguration, UserUuidPK>
 		implements InstructionInputConfigurationEntity<EndpointConfiguration, UserUuidPK> {
 
+	@Serial
 	private static final long serialVersionUID = 2868500125327336304L;
 
 	/** The {@code maxExecutionSeconds} property default value. */

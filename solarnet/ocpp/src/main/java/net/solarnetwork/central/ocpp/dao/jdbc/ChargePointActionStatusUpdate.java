@@ -1,21 +1,21 @@
 /* ==================================================================
  * ChargePointActionStatusUpdate.java - 15/05/2024 8:14:01 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.dao.jdbc;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -30,17 +31,18 @@ import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Entity for charge point action status update process.
- * 
+ *
  * <p>
  * The {@code messageId} and {@code date} properties are not considered when
  * comparing for equality.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class ChargePointActionStatusUpdate extends BasePK implements Serializable, Cloneable {
 
+	@Serial
 	private static final long serialVersionUID = -8964521616468244046L;
 
 	/** The user ID. */
@@ -64,7 +66,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointIdentifier
@@ -129,10 +131,9 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof ChargePointActionStatusUpdate) ) {
+		if ( !(obj instanceof ChargePointActionStatusUpdate other) ) {
 			return false;
 		}
-		ChargePointActionStatusUpdate other = (ChargePointActionStatusUpdate) obj;
 		return userId == other.userId && chargePointIdentifier.equals(other.chargePointIdentifier)
 				&& evseId == other.evseId && connectorId == other.connectorId
 				&& action.equals(other.action);
@@ -140,7 +141,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the user ID.
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	public long getUserId() {
@@ -149,7 +150,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the Charge Point identifier.
-	 * 
+	 *
 	 * @return the Charge Point identifier
 	 */
 	public String getChargePointIdentifier() {
@@ -158,7 +159,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the EVSE ID.
-	 * 
+	 *
 	 * @return the EVSE ID, or {@literal 0} for the charger itself
 	 */
 	public int getEvseId() {
@@ -167,7 +168,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the connector ID.
-	 * 
+	 *
 	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
 	public int getConnectorId() {
@@ -176,7 +177,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the action.
-	 * 
+	 *
 	 * @return the action, never {@literal null}
 	 */
 	public String getAction() {
@@ -185,7 +186,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the message ID.
-	 * 
+	 *
 	 * @return the message ID
 	 */
 	public String getMessageId() {
@@ -194,7 +195,7 @@ public class ChargePointActionStatusUpdate extends BasePK implements Serializabl
 
 	/**
 	 * Get the date.
-	 * 
+	 *
 	 * @return the date
 	 */
 	public Instant getDate() {

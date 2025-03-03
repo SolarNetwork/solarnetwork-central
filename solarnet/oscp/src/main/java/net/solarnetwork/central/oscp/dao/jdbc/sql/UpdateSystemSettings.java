@@ -43,7 +43,7 @@ import net.solarnetwork.central.oscp.domain.SystemSettings;
  * @author matt
  * @version 1.0
  */
-public class UpdateSystemSettings implements PreparedStatementCreator, SqlProvider {
+public final class UpdateSystemSettings implements PreparedStatementCreator, SqlProvider {
 
 	private final OscpRole type;
 	private final UserLongCompositePK id;

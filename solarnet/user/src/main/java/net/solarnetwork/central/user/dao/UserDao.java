@@ -24,17 +24,17 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.Map;
 import java.util.Set;
-import net.solarnetwork.central.dao.FilterableDao;
-import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserFilterMatch;
+import net.solarnetwork.dao.FilterableDao;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for User objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface UserDao
 		extends GenericDao<User, Long>, FilterableDao<UserFilterMatch, Long, UserFilter> {

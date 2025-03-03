@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcSolarNodeOwnershipDao.java - 28/02/2020 2:57:32 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,7 +32,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 
 /**
  * JDBC implementation of {@link SolarNodeOwnershipDao}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -43,7 +43,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcOps
 	 *        the JDBC operations to use
 	 */
@@ -68,8 +68,8 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 		List<SolarNodeOwnership> results = getJdbcOps().query(
 				SelectSolarNodeOwnership.selectForNode(nodeId),
 				BasicSolarNodeOwnershipRowMapper.INSTANCE);
-		if ( results != null && !results.isEmpty() ) {
-			result = results.get(0);
+		if ( !results.isEmpty() ) {
+			result = results.getFirst();
 			if ( result != null && cache != null ) {
 				cache.put(nodeId, result);
 			}
@@ -86,8 +86,8 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 		List<SolarNodeOwnership> results = getJdbcOps().query(
 				SelectSolarNodeOwnership.selectForUser(userId),
 				BasicSolarNodeOwnershipRowMapper.INSTANCE);
-		if ( results != null && !results.isEmpty() ) {
-			result = results.toArray(new SolarNodeOwnership[results.size()]);
+		if ( !results.isEmpty() ) {
+			result = results.toArray(SolarNodeOwnership[]::new);
 		}
 		return result;
 	}
@@ -99,12 +99,12 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 		}
 		List<Long> results = getJdbcOps().query(new SelectUserAuthTokenNodes(tokenId),
 				new ColumnRowMapper<>(2, Long.class));
-		return (results != null ? results.toArray(Long[]::new) : new Long[0]);
+		return results.toArray(Long[]::new);
 	}
 
 	/**
 	 * Get the JDBC operations.
-	 * 
+	 *
 	 * @return the ops
 	 */
 	public JdbcOperations getJdbcOps() {
@@ -113,7 +113,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 
 	/**
 	 * Get the cache of node IDs to associated node ownership.
-	 * 
+	 *
 	 * @return the cache, or {@literal null} if not available
 	 */
 	public Cache<Long, SolarNodeOwnership> getNodeOwnershipCache() {
@@ -122,7 +122,7 @@ public class JdbcSolarNodeOwnershipDao implements SolarNodeOwnershipDao {
 
 	/**
 	 * Set the cache of node IDs to associated node ownership.
-	 * 
+	 *
 	 * @param nodeOwnershipCache
 	 *        the cache to set
 	 */

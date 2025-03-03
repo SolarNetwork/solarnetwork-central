@@ -142,9 +142,7 @@ public class SolarUserApp {
 	 */
 	@Bean
 	public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-		return args -> {
-			ApplicationContextUtils.traceBeanNames(ctx, LOG);
-		};
+		return args -> ApplicationContextUtils.traceBeanNames(ctx, LOG);
 	}
 
 }

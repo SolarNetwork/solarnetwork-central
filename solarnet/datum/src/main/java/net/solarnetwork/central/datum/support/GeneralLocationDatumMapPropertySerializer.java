@@ -1,21 +1,21 @@
 /* ==================================================================
  * GeneralLocationDatumMapPropertySerializer.java - Oct 17, 2014 2:31:27 PM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,7 +35,7 @@ import net.solarnetwork.util.StringUtils;
  * {@link ReportingDatum} API is also supported (those properties will be added
  * to the output if a {@link GeneralLocationDatum} subclass implements that
  * interface).
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -44,10 +44,9 @@ public class GeneralLocationDatumMapPropertySerializer implements PropertySerial
 	@Override
 	public Object serialize(Object data, String propertyName, Object propertyValue) {
 		GeneralLocationDatum datum = (GeneralLocationDatum) propertyValue;
-		Map<String, Object> props = new LinkedHashMap<String, Object>(8);
+		Map<String, Object> props = new LinkedHashMap<>(8);
 		props.put("created", datum.getCreated());
-		if ( datum instanceof ReportingDatum ) {
-			ReportingDatum rd = (ReportingDatum) datum;
+		if ( datum instanceof ReportingDatum rd ) {
 			props.put("localDate", rd.getLocalDate());
 			props.put("localTime", rd.getLocalTime());
 		}

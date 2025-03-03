@@ -1,37 +1,39 @@
 /* ==================================================================
  * UserNodePK.java - Oct 3, 2014 6:47:25 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
  * Primary key based on a user ID and node ID.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodePK> {
 
+	@Serial
 	private static final long serialVersionUID = -2661140310545544324L;
 
 	private Long nodeId;
@@ -46,7 +48,7 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 
 	/**
 	 * Construct with values.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param nodeId
@@ -60,12 +62,12 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 
 	/**
 	 * Compare two {@code UserNodePK} objects. Keys are ordered based on:
-	 * 
+	 *
 	 * <ol>
 	 * <li>userId</li>
 	 * <li>nodeId</li>
 	 * </ol>
-	 * 
+	 *
 	 * <em>Null</em> values will be sorted before non-<em>null</em> values.
 	 */
 	@Override
@@ -121,10 +123,7 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		UserNodePK other = (UserNodePK) obj;
@@ -136,19 +135,15 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 			return false;
 		}
 		if ( userId == null ) {
-			if ( other.userId != null ) {
-				return false;
-			}
-		} else if ( !userId.equals(other.userId) ) {
-			return false;
+			return other.userId == null;
 		}
-		return true;
+		return userId.equals(other.userId);
 	}
 
 	@Override
-	protected Object clone() {
+	public UserNodePK clone() {
 		try {
-			return super.clone();
+			return (UserNodePK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// shouldn't get here
 			throw new RuntimeException(e);

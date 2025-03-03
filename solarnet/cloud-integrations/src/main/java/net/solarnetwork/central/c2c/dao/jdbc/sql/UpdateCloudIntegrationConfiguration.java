@@ -40,7 +40,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public class UpdateCloudIntegrationConfiguration implements PreparedStatementCreator, SqlProvider {
+public final class UpdateCloudIntegrationConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			UPDATE solardin.cin_integration

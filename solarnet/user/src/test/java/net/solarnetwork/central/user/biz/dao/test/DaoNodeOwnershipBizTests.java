@@ -29,6 +29,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.easymock.EasyMock;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -43,10 +47,6 @@ import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
-import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Unit tests for the {@link NodeOwnershipBiz} implementation of
@@ -146,7 +146,7 @@ public class DaoNodeOwnershipBizTests {
 		expect(userDao.getUserByEmail(newOwner.getEmail())).andReturn(newOwner);
 
 		// delete the xfer record
-		userNodeDao.deleteUserNodeTrasnfer(xfer);
+		userNodeDao.deleteUserNodeTransfer(xfer);
 
 		// remove alerts associated with node
 		expect(userAlertDao.deleteAllAlertsForNode(testUser.getId(), testNode.getId())).andReturn(0);
@@ -155,7 +155,7 @@ public class DaoNodeOwnershipBizTests {
 		expect(userAuthTokenDao.findUserAuthTokensForUser(testUser.getId())).andReturn(authTokens);
 
 		// and finally update the UserNode to the new owner
-		expect(userNodeDao.store(newUserNode)).andReturn(testNode.getId());
+		expect(userNodeDao.save(newUserNode)).andReturn(testNode.getId());
 
 		replayAll();
 		UserNodeTransfer result = userBiz.confirmNodeOwnershipTransfer(testUser.getId(),

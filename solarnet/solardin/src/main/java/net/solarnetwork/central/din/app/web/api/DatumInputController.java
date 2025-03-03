@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.app.web.api;
 
+import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
 import static net.solarnetwork.domain.Result.success;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +44,6 @@ import org.springframework.web.context.request.WebRequest;
 import net.solarnetwork.central.din.biz.DatumInputEndpointBiz;
 import net.solarnetwork.central.din.security.SecurityEndpointCredential;
 import net.solarnetwork.central.din.security.SecurityUtils;
-import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.util.ObjectUtils;
@@ -52,7 +52,7 @@ import net.solarnetwork.util.ObjectUtils;
  * Datum input controller.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @RestController("v1DatumInputController")
 @RequestMapping("/api/v1/datum/endpoint/{endpointId}")
@@ -119,9 +119,9 @@ public class DatumInputController {
 		}
 
 		// limit input size
-		input = new MaxUploadSizeInputStream(input, maxDatumInputLength);
-		try {
-			var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, input, params);
+		try (InputStream maxSizeIn = maxUploadSizeExceededInputStream(input, maxDatumInputLength)) {
+			var result = inputBiz.importDatum(actor.getUserId(), endpointId, mediaType, maxSizeIn,
+					params);
 			return ResponseEntity.ok(result != null ? success(result) : null);
 		} catch ( IOException e ) {
 			return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)

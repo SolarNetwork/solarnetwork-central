@@ -1,27 +1,28 @@
 /* ==================================================================
  * FilterSupport.java - 11/11/2016 12:47:05 PM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.support;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,7 +33,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 
 /**
  * Supporting base class for {@link Filter} implementations.
- * 
+ *
  * @author matt
  * @version 1.4
  * @since 1.32
@@ -40,6 +41,7 @@ import net.solarnetwork.central.domain.SolarNodeMetadataFilter;
 public class FilterSupport extends BaseFilterSupport
 		implements SolarNodeFilter, SolarNodeMetadataFilter {
 
+	@Serial
 	private static final long serialVersionUID = -4826724231965486643L;
 
 	private Long[] locationIds;
@@ -101,7 +103,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Set a single node ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single node ID at a
 	 * time. The node ID is still stored on the {@code nodeIds} array, just as
@@ -109,7 +111,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * {@code nodeIds} value with a new array containing just the ID passed into
 	 * this method.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node
 	 */
@@ -131,7 +133,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Set a list of node IDs to filter on.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        The nodeIds IDs to filter on.
 	 */
@@ -141,7 +143,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Set a single source ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single source ID at
 	 * a time. The source ID is still stored on the {@code sourceIds} array,
@@ -149,7 +151,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * {@code sourceIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID
 	 */
@@ -160,12 +162,12 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Get the first source ID.
-	 * 
+	 *
 	 * <p>
 	 * This returns the first available source ID from the {@code sourceIds}
 	 * array, or {@literal null} if not available.
 	 * </p>
-	 * 
+	 *
 	 * @return the first source ID, or {@literal null}
 	 */
 	@JsonIgnore
@@ -175,7 +177,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Get all source IDs to filter on.
-	 * 
+	 *
 	 * @return The source IDs, or {@literal null}.
 	 */
 	public String[] getSourceIds() {
@@ -184,7 +186,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Set a list of source IDs to filter on.
-	 * 
+	 *
 	 * @param sourceIds
 	 *        The source IDs to filter on.
 	 */
@@ -194,7 +196,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Set a single location ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single location ID
 	 * at a time. The location ID is still stored on the {@code locationIds}
@@ -202,7 +204,7 @@ public class FilterSupport extends BaseFilterSupport
 	 * {@code locationIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param locationId
 	 *        the ID of the location
 	 */
@@ -213,10 +215,12 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Get the first location ID.
-	 * 
+	 *
+	 * <p>
 	 * This returns the first available location ID from the {@code locationIds}
 	 * array, or {@literal null} if not available.
-	 * 
+	 * </p>
+	 *
 	 * @return the first location ID, or {@literal null}
 	 */
 	@JsonIgnore
@@ -226,7 +230,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Get all location IDs to filter on.
-	 * 
+	 *
 	 * @return The location IDs, or {@literal null}.
 	 */
 	public Long[] getLocationIds() {
@@ -235,7 +239,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * Set a list of location IDs to filter on.
-	 * 
+	 *
 	 * @param locationIds
 	 *        The location IDs to filter on.
 	 */
@@ -245,7 +249,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
@@ -260,7 +264,7 @@ public class FilterSupport extends BaseFilterSupport
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
@@ -268,13 +272,9 @@ public class FilterSupport extends BaseFilterSupport
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof FilterSupport other) ) {
 			return false;
 		}
-		if ( !(obj instanceof FilterSupport) ) {
-			return false;
-		}
-		FilterSupport other = (FilterSupport) obj;
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
 				&& Arrays.equals(sourceIds, other.sourceIds);
 	}

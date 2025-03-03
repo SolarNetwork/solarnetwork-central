@@ -1,21 +1,21 @@
 /* ==================================================================
  * Measurement.java - 5/09/2022 3:05:50 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,7 @@ import oscp.v20.InstantaneousMeasurement;
 
 /**
  * A measurement record.
- * 
+ *
  * @param value
  *        the measured value
  * @param phase
@@ -54,7 +54,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 
 	/**
 	 * Get an instantaneous measurement instance.
-	 * 
+	 *
 	 * @param value
 	 *        the measured value
 	 * @param phase
@@ -72,7 +72,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 
 	/**
 	 * Get an energy measurement instance.
-	 * 
+	 *
 	 * @param value
 	 *        the measured value
 	 * @param phase
@@ -87,7 +87,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 	 *        the energy direction
 	 * @param startMeasureTime
 	 *        the start of the measurement period
-	 * @return
+	 * @return the measurement
 	 */
 	public static Measurement energyMeasurement(BigDecimal value, Phase phase, MeasurementUnit unit,
 			Instant measureTime, EnergyType energyType, EnergyDirection energyDirection,
@@ -98,19 +98,18 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 
 	/**
 	 * Get an OSCP 2.0 instantaneous value for this instance.
-	 * 
+	 *
 	 * @return the OSCP 2.0 instantaneous value
 	 */
 	public InstantaneousMeasurement toOscp20InstantaneousValue() {
-		InstantaneousMeasurement result = new InstantaneousMeasurement(
-				value != null ? value.doubleValue() : null, phase != null ? phase.toOscp20Value() : null,
+		return new InstantaneousMeasurement(value != null ? value.doubleValue() : null,
+				phase != null ? phase.toOscp20Value() : null,
 				unit != null ? unit.toOscp20InstantaneousValue() : null, measureTime);
-		return result;
 	}
 
 	/**
 	 * Get an OSCP 2.0 energy value for this instance.
-	 * 
+	 *
 	 * @return the OSCP 2.0 energy value
 	 */
 	public EnergyMeasurement toOscp20EnergyValue() {
@@ -125,11 +124,11 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 
 	/**
 	 * Test if this instance represents an energy measurement.
-	 * 
+	 *
 	 * <p>
 	 * This only checks for a non-null {@code energyType} property value.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if {@code energyType} is not {@literal null}
 	 */
 	public boolean isEnergyMeasurement() {
@@ -138,7 +137,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 
 	/**
 	 * Get an instance for an OSCP 2.0 instantaneous value.
-	 * 
+	 *
 	 * @param measurement
 	 *        the OSCP 2.0 value to get an instance for
 	 * @return the instance
@@ -155,7 +154,7 @@ public record Measurement(BigDecimal value, Phase phase, MeasurementUnit unit, I
 
 	/**
 	 * Get an instance for an OSCP 2.0 energy value.
-	 * 
+	 *
 	 * @param measurement
 	 *        the OSCP 2.0 value to get an instance for
 	 * @return the instance

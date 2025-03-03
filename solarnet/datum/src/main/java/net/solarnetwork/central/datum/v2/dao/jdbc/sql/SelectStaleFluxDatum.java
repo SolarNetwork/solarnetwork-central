@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectStaleFluxDatum.java - 24/11/2020 7:16:07 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,15 +39,16 @@ import net.solarnetwork.domain.datum.Aggregation;
 /**
  * Select for {@link StaleFluxDatum} instances via a {@link DatumStreamCriteria}
  * filter.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 3.8
  */
-public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvider {
+public final class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvider {
 
 	/** A specialized instance for selecting any one row for update. */
 	public static final SelectStaleFluxDatum ANY_ONE_FOR_UPDATE;
+
 	static {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setMax(1);
@@ -60,7 +61,7 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @throws IllegalArgumentException
@@ -72,7 +73,7 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the search criteria
 	 * @param forUpdate
@@ -137,7 +138,7 @@ public class SelectStaleFluxDatum implements PreparedStatementCreator, SqlProvid
 		if ( filter.hasSorts() ) {
 			idx = orderBySorts(filter.getSorts(), DatumSqlUtils.STALE_AGGREGATE_SORT_KEY_MAPPING, order);
 		}
-		if ( order.length() > 0 ) {
+		if ( !order.isEmpty() ) {
 			buf.append("ORDER BY ").append(order.substring(idx));
 		}
 	}

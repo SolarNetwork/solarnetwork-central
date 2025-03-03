@@ -1,21 +1,21 @@
 /* ==================================================================
  * JobSupport.java - Jun 30, 2011 5:09:59 PM
- * 
+ *
  * Copyright 2007-2011 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,7 +35,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
 
 /**
  * Base helper class for a scheduled job.
- * 
+ *
  * <p>
  * This job supports running a set of tasks in parallel by configuring the
  * {@link #setParallelism(int)} property to something greater than {@literal 1}.
@@ -44,8 +44,7 @@ import org.springframework.core.task.AsyncTaskExecutor;
  * like batch processing a queue, where the job is designed to process up to a
  * maximum number of queued items each time it runs using parallel workers.
  * </p>
- * 
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -88,7 +87,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Execute the job in parallel via multiple threads.
-	 * 
+	 *
 	 * <p>
 	 * This method can be invoked by extending classes from their {@link #run()}
 	 * method. When invoked, this method will create {@code parallelism} tasks
@@ -101,20 +100,20 @@ public abstract class JobSupport implements ManagedJob {
 	 * of iterations they process, and stop processing iterations when the count
 	 * reaches {@literal 0} or less.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note that this method does not track the iteration count. It merely waits
 	 * for each task to complete, by returning or throwing an exception, for up
 	 * to {@code maximumWaitMs} milliseconds.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If {@code parallelism} is {@literal 1} then the
 	 * {@link #executeJobTask(AtomicInteger)} method is called directly from
 	 * this method, without submitting the task to the configured
 	 * {@code executorService}.
 	 * </p>
-	 * 
+	 *
 	 * @param taskName
 	 *        a descriptive name for the job task, to use in logging
 	 * @return the {@literal true} if all tasks were completed
@@ -210,35 +209,35 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Execute a parallel job task.
-	 * 
+	 *
 	 * <p>
 	 * This method is called from the {@link #executeParallelJob(String)} method
 	 * by each thread. This method is supposed to execute up to
-	 * {@code remainingIterataions} of the job's task, updating
-	 * {@code remainingIterataions} as each iteration is processed. Keep in mind
+	 * {@code remainingIterations} of the job's task, updating
+	 * {@code remainingIterations} as each iteration is processed. Keep in mind
 	 * that each job task thread will be mutating (competing for)
-	 * {@code remainingIterataions}.
+	 * {@code remainingIterations}.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method throws a {@link UnsupportedOperationException} and must be
 	 * overridden by extending classes.
 	 * </p>
-	 * 
-	 * @param remainingIterataions
+	 *
+	 * @param remainingIterations
 	 *        the number of iterations left to perform
 	 * @return the number of iterations performed
 	 * @throws Exception
 	 *         if any error occurs
 	 * @since 1.7
 	 */
-	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		throw new UnsupportedOperationException("Extending class must implement.");
 	}
 
 	/**
 	 * Get the unique ID of the job to schedule.
-	 * 
+	 *
 	 * @return the job ID
 	 */
 	@Override
@@ -248,7 +247,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Set the unique ID of the job to schedule.
-	 * 
+	 *
 	 * @param jobId
 	 *        the job ID
 	 */
@@ -259,7 +258,7 @@ public abstract class JobSupport implements ManagedJob {
 	/**
 	 * Get the maximum time, in milliseconds, to allow for the job to execute
 	 * before it is considered a failed job.
-	 * 
+	 *
 	 * @return the maximum wait, in milliseconds; defaults to <b>15 minutes</b>
 	 */
 	public long getMaximumWaitMs() {
@@ -269,7 +268,7 @@ public abstract class JobSupport implements ManagedJob {
 	/**
 	 * Set the maximum time, in milliseconds, to allow for the job to execute
 	 * before it is considered a failed job.
-	 * 
+	 *
 	 * @param maximumWaitMs
 	 *        the maximum wait
 	 */
@@ -279,7 +278,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Get the job cron expression to use for scheduling this job.
-	 * 
+	 *
 	 * @return the cron expression; defaults to {@literal 0 0/1 * * * ?} (once
 	 *         per minute)
 	 */
@@ -290,7 +289,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Set the job cron expression to use for scheduling this job.
-	 * 
+	 *
 	 * @param schedule
 	 *        the cron expression
 	 */
@@ -300,7 +299,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Get the job group ID to use.
-	 * 
+	 *
 	 * @return the job group
 	 */
 	@Override
@@ -310,7 +309,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Set the job group ID to use.
-	 * 
+	 *
 	 * @param groupId
 	 *        the job group
 	 */
@@ -320,7 +319,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Get the executor to handle parallel job tasks with.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public AsyncTaskExecutor getParallelTaskExecutor() {
@@ -329,7 +328,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Set the executor to handle parallel job tasks with.
-	 * 
+	 *
 	 * @param parallelTaskExecutorService
 	 *        the service to set
 	 */
@@ -339,7 +338,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Get the maximum number of iterations of the job task to run.
-	 * 
+	 *
 	 * @return the maximum iterations; defaults to {@literal 1}
 	 * @since 1.7
 	 */
@@ -349,7 +348,7 @@ public abstract class JobSupport implements ManagedJob {
 
 	/**
 	 * Set the maximum number of claims to acquire per execution of this job.
-	 * 
+	 *
 	 * @param maximumIterations
 	 *        the maximum iterations
 	 * @since 1.7
@@ -361,7 +360,7 @@ public abstract class JobSupport implements ManagedJob {
 	/**
 	 * Get the number of parallel threads to use while processing task
 	 * iterations.
-	 * 
+	 *
 	 * @return the parallelism; defaults to {@literal 1}
 	 * @since 1.7
 	 */
@@ -372,7 +371,7 @@ public abstract class JobSupport implements ManagedJob {
 	/**
 	 * Set the number of parallel threads to use while processing task
 	 * iterations.
-	 * 
+	 *
 	 * @param parallelism
 	 *        the parallelism to set; will be forced to {@literal 1} if &lt; 1
 	 * @since 1.7
@@ -388,7 +387,7 @@ public abstract class JobSupport implements ManagedJob {
 	 * Get a maximum amount of time, in milliseconds, to randomly add to the
 	 * start of parallel tasks so they don't all try to start so closely
 	 * together.
-	 * 
+	 *
 	 * @return the jitter, in milliseconds; defaults to {@link #DEFAULT_JITTER}
 	 */
 	public long getJitter() {
@@ -399,14 +398,14 @@ public abstract class JobSupport implements ManagedJob {
 	 * Set et a maximum amount of time, in milliseconds, to randomly add to the
 	 * start of parallel tasks so they don't all try to start so closely
 	 * together.
-	 * 
+	 *
 	 * <p>
 	 * This time is added to tasks started by the
 	 * {@link #executeParallelJob(String)} method, and only when
 	 * {@link #getParallelism()} is greater than {@literal 1}. Set to
 	 * {@literal 0} to disable adding any random jitter to the start of tasks.
 	 * </p>
-	 * 
+	 *
 	 * @param jitter
 	 *        the jitter to set, in milliseconds
 	 */

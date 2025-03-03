@@ -1,21 +1,21 @@
 /* ==================================================================
  * InstructorSecurityAspect.java - Nov 27, 2012 8:57:43 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,7 +39,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
 
 /**
  * Security aspect for {@link InstructorBiz}.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -51,11 +51,11 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
-	 *        the ownership DAO to use
+	 * 		the ownership DAO to use
 	 * @param nodeInstructionDao
-	 *        the instruction DAO to use
+	 * 		the instruction DAO to use
 	 */
 	public InstructorSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
 			NodeInstructionDao nodeInstructionDao) {
@@ -101,11 +101,11 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Allow the current user (or current node) access to node instructions.
-	 * 
+	 *
 	 * @param nodeId
-	 *        the ID of the node to verify
+	 * 		the ID of the node to verify
 	 */
-	@Before("instructionsForNode(nodeId) || queueInstruction(nodeId)")
+	@Before(value = "instructionsForNode(nodeId) || queueInstruction(nodeId)", argNames = "nodeId")
 	public void instructionsForNodeCheck(Long nodeId) {
 		if ( nodeId == null ) {
 			return;
@@ -115,11 +115,11 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Allow the current user (or current node) access to node instructions.
-	 * 
+	 *
 	 * @param nodeIds
-	 *        the IDs of the nodes to verify
+	 * 		the IDs of the nodes to verify
 	 */
-	@Before("instructionsForNodes(nodeIds) || queueInstructions(nodeIds)")
+	@Before(value = "instructionsForNodes(nodeIds) || queueInstructions(nodeIds)", argNames = "nodeIds")
 	public void instructionsForNodesCheck(Set<Long> nodeIds) {
 		if ( nodeIds == null ) {
 			return;
@@ -131,11 +131,11 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Allow the current user to filter instructions.
-	 * 
+	 *
 	 * @param filter
-	 *        the filter
+	 * 		the filter
 	 */
-	@Before("findFilteredInstructions(filter)")
+	@Before(value = "findFilteredInstructions(filter)", argNames = "filter")
 	public void findFilteredInstructionsCheck(InstructionFilter filter) {
 		if ( filter == null || filter.getNodeId() == null ) {
 			log.warn("Access DENIED; no node ID provided");
@@ -152,15 +152,14 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to viewing instructions
-	 * by ID.
-	 * 
+	 * Allow the current user (or current node) access to viewing instructions by ID.
+	 *
 	 * @param instructionId
-	 *        the instruction ID
+	 * 		the instruction ID
 	 * @param instruction
-	 *        the instruction
+	 * 		the instruction
 	 */
-	@AfterReturning(pointcut = "viewInstruction(instructionId)", returning = "instruction")
+	@AfterReturning(pointcut = "viewInstruction(instructionId)", returning = "instruction", argNames = "instructionId,instruction")
 	public void viewInstructionAccessCheck(Long instructionId, NodeInstruction instruction) {
 		if ( instructionId == null ) {
 			return;
@@ -173,15 +172,14 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to viewing instructions
-	 * by IDs.
-	 * 
+	 * Allow the current user (or current node) access to viewing instructions by IDs.
+	 *
 	 * @param instructionIds
-	 *        the instruction IDs
+	 * 		the instruction IDs
 	 * @param instructions
-	 *        the instructions
+	 * 		the instructions
 	 */
-	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions")
+	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions", argNames = "instructionIds,instructions")
 	public void viewInstructionsAccessCheck(Set<Long> instructionIds,
 			List<NodeInstruction> instructions) {
 		if ( instructionIds == null || instructions == null ) {
@@ -193,13 +191,12 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to updating instructions
-	 * by ID.
-	 * 
+	 * Allow the current user (or current node) access to updating instructions by ID.
+	 *
 	 * @param instructionId
-	 *        the ID of the instruction being updated
+	 * 		the ID of the instruction being updated
 	 */
-	@Before("updateInstructionState(instructionId)")
+	@Before(value = "updateInstructionState(instructionId)", argNames = "instructionId")
 	public void updateInstructionAccessCheck(Long instructionId) {
 		if ( instructionId == null ) {
 			return;
@@ -216,13 +213,12 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to updating instructions
-	 * by ID.
-	 * 
+	 * Allow the current user (or current node) access to updating instructions by ID.
+	 *
 	 * @param instructionIds
-	 *        the IDs of the instructions being updated
+	 * 		the IDs of the instructions being updated
 	 */
-	@Before("updateInstructionsState(instructionIds)")
+	@Before(value = "updateInstructionsState(instructionIds)", argNames = "instructionIds")
 	public void updateInstructionsAccessCheck(Set<Long> instructionIds) {
 		if ( instructionIds == null ) {
 			return;

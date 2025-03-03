@@ -23,6 +23,7 @@
 package net.solarnetwork.central.inin.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -51,6 +52,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 		permits TransformConfiguration.RequestTransformConfiguration,
 		TransformConfiguration.ResponseTransformConfiguration {
 
+	@Serial
 	private static final long serialVersionUID = -2206409216936875018L;
 
 	private final TransformPhase phase;
@@ -106,6 +108,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	public static final class RequestTransformConfiguration
 			extends TransformConfiguration<RequestTransformConfiguration> {
 
+		@Serial
 		private static final long serialVersionUID = -2376857425680066351L;
 
 		/**
@@ -156,6 +159,7 @@ public abstract sealed class TransformConfiguration<C extends TransformConfigura
 	public static final class ResponseTransformConfiguration
 			extends TransformConfiguration<ResponseTransformConfiguration> {
 
+		@Serial
 		private static final long serialVersionUID = -7774474475322183244L;
 
 		/**

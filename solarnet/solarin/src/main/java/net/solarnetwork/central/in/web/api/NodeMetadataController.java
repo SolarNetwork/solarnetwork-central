@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.in.web.api;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.WebDataBinder;
@@ -33,15 +33,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Controller for node metadata actions.
@@ -76,14 +76,14 @@ public class NodeMetadataController {
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
-	public Response<SolarNodeMetadataFilterMatch> findMetadata(DatumFilterCommand criteria) {
+	public Result<SolarNodeMetadataFilterMatch> findMetadata(DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return findMetadata(nodeId, criteria);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.GET)
-	public Response<SolarNodeMetadataFilterMatch> findMetadata(
+	public Result<SolarNodeMetadataFilterMatch> findMetadata(
 			@PathVariable("nodeId") Long requestNodeId, DatumFilterCommand criteria) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
@@ -91,33 +91,33 @@ public class NodeMetadataController {
 		}
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setNodeId(nodeId);
-		FilterResults<SolarNodeMetadataFilterMatch> results = dataCollectorBiz
+		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dataCollectorBiz
 				.findSolarNodeMetadata(filter, null, null, null);
 		SolarNodeMetadataFilterMatch result = null;
 		for ( SolarNodeMetadataFilterMatch m : results ) {
 			result = m;
 			break;
 		}
-		return response(result);
+		return success(result);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@RequestBody GeneralDatumMetadata meta) {
+	public Result<Object> addMetadata(@RequestBody GeneralDatumMetadata meta) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		return addMetadata(nodeId, meta);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = { "/{nodeId}" }, method = RequestMethod.POST)
-	public Response<Object> addMetadata(@PathVariable("nodeId") Long requestNodeId,
+	public Result<Object> addMetadata(@PathVariable("nodeId") Long requestNodeId,
 			@RequestBody GeneralDatumMetadata meta) {
 		final Long nodeId = SecurityUtils.getCurrentNode().getNodeId();
 		if ( !nodeId.equals(requestNodeId) ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, requestNodeId);
 		}
 		dataCollectorBiz.addSolarNodeMetadata(nodeId, meta);
-		return response(null);
+		return success();
 	}
 
 }

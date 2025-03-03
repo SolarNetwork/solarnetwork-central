@@ -123,7 +123,6 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 
 	private class DatumStreamImportContext extends BaseDatumImportInputFormatServiceImportContext {
 
-		private final Long datumStreamId;
 		private final Instant startDate;
 		private final Instant endDate;
 
@@ -147,7 +146,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 				ProgressListener<DatumImportService> progressListener) {
 			super(config, resource, progressListener);
 
-			this.datumStreamId = requireNonNullArgument(
+			Long datumStreamId = requireNonNullArgument(
 					config.serviceProperty(DATUM_STREAM_ID_SETTING, Long.class),
 					DATUM_STREAM_ID_SETTING);
 
@@ -205,7 +204,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 				while ( !batchItr.hasNext() && filter != null ) {
 					batchItr = listDatumForBatchRange();
 				}
-				return (batchItr != null && batchItr.hasNext());
+				return batchItr.hasNext();
 			}
 
 			@Override

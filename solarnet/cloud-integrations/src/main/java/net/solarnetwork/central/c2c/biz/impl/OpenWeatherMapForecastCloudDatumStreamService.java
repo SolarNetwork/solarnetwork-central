@@ -140,6 +140,9 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 	}
 
 	private List<GeneralDatum> parseDatum(JsonNode json, CloudDatumStreamConfiguration datumStream) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		List<GeneralDatum> result = new ArrayList<>(40);
 		for ( JsonNode forecastNode : json.path("list") ) {
 			GeneralDatum d = parseWeatherData(forecastNode, datumStream.getKind(),

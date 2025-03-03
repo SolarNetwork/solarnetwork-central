@@ -80,7 +80,7 @@ public abstract class BaseDatumExportOutputFormatService
 	 */
 	protected File createTemporaryResource(OutputConfiguration config) throws IOException {
 		String ext = getExportFilenameExtension();
-		String compExt = (config.getCompressionType() != null
+		String compExt = (config != null && config.getCompressionType() != null
 				? config.getCompressionType().getFilenameExtension()
 				: "");
 		if ( !compExt.isEmpty() ) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import net.solarnetwork.flux.vernemq.webhook.domain.ActorType;
 
 /**
  * {@link RowMapper} for {@link ActorDetails}.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -72,7 +72,7 @@ public class ActorDetailsRowMapper implements RowMapper<Actor> {
 
   /**
    * Constructor with default settings.
-   * 
+   *
    * @param tokenId
    *        the token ID
    */
@@ -83,7 +83,7 @@ public class ActorDetailsRowMapper implements RowMapper<Actor> {
 
   /**
    * Constructor.
-   * 
+   *
    * @param tokenId
    *        the token ID
    * @param userIdCol
@@ -125,8 +125,7 @@ public class ActorDetailsRowMapper implements RowMapper<Actor> {
       if (data != null && data.getClass().isArray()) {
         Object[] arrayData = (Object[]) data;
         nodeIds = new LinkedHashSet<>(arrayData.length);
-        for (int i = 0; i < arrayData.length; i++) {
-          Object val = arrayData[i];
+        for (Object val : arrayData) {
           if (val instanceof Long) {
             nodeIds.add((Long) val);
           } else if (val instanceof Number) {

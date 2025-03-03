@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisSnfInvoiceDaoTests.java - 21/07/2020 3:28:34 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,10 +33,10 @@ import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Credit;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -67,9 +67,9 @@ import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisSnfInvoiceDao} class.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -270,8 +270,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
 
 		for ( int offset = 0; offset < 6; offset += 2 ) {
-			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, offset,
-					2);
+			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null,
+					(long) offset, 2);
 
 			// THEN
 			final int expectedCount = (offset < 4 ? 2 : 0);
@@ -340,8 +340,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 
 		for ( int offset = 0; offset < 6; offset += 2 ) {
-			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, offset,
-					2);
+			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null,
+					(long) offset, 2);
 
 			// THEN
 			final int expectedCount = (offset < 4 ? 2 : 0);
@@ -377,7 +377,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
-				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
@@ -413,7 +413,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
-				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
@@ -449,7 +449,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setIgnoreCreditOnly(true);
 		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
-				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
@@ -522,7 +522,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		filter.setUnpaidOnly(Boolean.TRUE);
 		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
-				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());
@@ -564,7 +564,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// WHEN
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
 		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
-				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0L, 1);
 
 		// THEN
 		assertThat("Result returned", result, notNullValue());

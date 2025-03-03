@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -43,13 +44,14 @@ import net.solarnetwork.domain.datum.Aggregation;
 public class AuditDatumEntityRollup extends AuditDatumEntity
 		implements AuditDatumRollup, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -1564122596119213768L;
 
 	private final Long nodeId;
 	private final String sourceId;
 
 	/**
-	 * Create a hourly audit datum.
+	 * Create an hourly audit datum.
 	 *
 	 * @param nodeId
 	 *        the node ID
@@ -78,7 +80,7 @@ public class AuditDatumEntityRollup extends AuditDatumEntity
 	}
 
 	/**
-	 * Create a hourly audit datum.
+	 * Create an hourly audit datum.
 	 *
 	 * @param nodeId
 	 *        the node ID

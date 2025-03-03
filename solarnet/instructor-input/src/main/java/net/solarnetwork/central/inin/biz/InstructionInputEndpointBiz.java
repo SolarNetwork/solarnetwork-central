@@ -32,7 +32,7 @@ import org.springframework.util.MimeType;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 
 /**
- * API for a instruction input endpoint service.
+ * API for an instruction input endpoint service.
  *
  * @author matt
  * @version 1.0

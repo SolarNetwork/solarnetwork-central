@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -43,22 +44,18 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * OpenWeatherMap API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.owm";
-
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
 
 	/** The base URL to the OpenWeatherMap API. */
 	public static final URI BASE_URI = URI.create("https://api.openweathermap.org");
@@ -90,10 +87,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
-		settings.add(BASE_URL_SETTING_SPECIFIER);
-		SETTINGS = Collections.unmodifiableList(settings);
+		SETTINGS = List.of(API_KEY_SETTING_SPECIFIER, BASE_URL_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */
@@ -116,7 +110,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	 */
 	public OpenWeatherMapCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps) {
-		super(SERVICE_IDENTIFIER, "Solcast", datumStreamServices, userEventAppenderBiz, encryptor,
+		super(SERVICE_IDENTIFIER, "OpenWeatherMap", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
 				new OpenWeatherMapRestOperationsHelper(
 						LoggerFactory.getLogger(OpenWeatherMapCloudIntegrationService.class),
@@ -153,7 +147,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 							.build()
 							.toUri(),
 					// @formatter:on
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

@@ -74,7 +74,7 @@ import net.solarnetwork.service.LocalizedServiceInfoProvider;
 import net.solarnetwork.service.PasswordEncoder;
 
 /**
- * DAO based implementation of {@Link UserDatumInputBiz}.
+ * DAO based implementation of {@link UserDatumInputBiz}.
  *
  * @author matt
  * @version 1.0
@@ -154,7 +154,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void enableConfiguration(
 			K id, boolean enabled, Class<C> configurationClass) {
@@ -181,7 +181,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		dao.updateEnabledStatus(id.getUserId(), filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <T extends DatumInputConfigurationInput<C, K>, C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> C saveConfiguration(
 			K id, T input) {
@@ -208,7 +208,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public <C extends DatumInputConfigurationEntity<C, K>, K extends CompositeKey & Comparable<K> & Serializable & UserIdRelated> void deleteConfiguration(
 			K id, Class<C> configurationClass) {
@@ -221,7 +221,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	}
 
 	private static Long nodeId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
-		Long nodeId = endpoint.getNodeId();
+		Long nodeId = (endpoint != null ? endpoint.getNodeId() : null);
 		if ( parameters != null && parameters.containsKey(PARAM_NODE_ID) ) {
 			try {
 				nodeId = Long.valueOf(parameters.get(PARAM_NODE_ID).toString());
@@ -233,7 +233,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	}
 
 	private static String sourceId(EndpointConfiguration endpoint, Map<String, ?> parameters) {
-		String sourceId = endpoint.getSourceId();
+		String sourceId = (endpoint != null ? endpoint.getSourceId() : null);
 		if ( parameters != null && parameters.containsKey(PARAM_SOURCE_ID) ) {
 			sourceId = parameters.get(PARAM_SOURCE_ID).toString();
 		}

@@ -45,8 +45,8 @@ import net.solarnetwork.domain.datum.Aggregation;
  * @version 1.3
  * @since 3.8
  */
-public class SelectAuditDatum
-		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
+public sealed class SelectAuditDatum implements PreparedStatementCreator, SqlProvider,
+		CountPreparedStatementCreatorProvider permits SelectAccumulativeAuditDatum {
 
 	protected final AuditDatumCriteria filter;
 	protected final Aggregation aggregation;

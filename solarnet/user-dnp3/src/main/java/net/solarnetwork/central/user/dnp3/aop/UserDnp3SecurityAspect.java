@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserDnp3SecurityAspect.java - 7/08/2023 10:03:12 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,7 +32,7 @@ import net.solarnetwork.central.user.dnp3.biz.UserDnp3Biz;
 
 /**
  * Security enforcing AOP aspect for {@link UserDnp3Biz}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -42,7 +42,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
 	 */
@@ -52,7 +52,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code *ForUser(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -62,7 +62,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code create*(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -72,7 +72,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code save*(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -82,7 +82,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code update*(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -92,7 +92,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code delete*(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -102,7 +102,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code update*(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -112,7 +112,7 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 
 	/**
 	 * Match methods like {@code update*(userId, ...)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 */
@@ -120,18 +120,18 @@ public class UserDnp3SecurityAspect extends AuthorizationSupport {
 	public void exportUserRelatedEntity(Long userId) {
 	}
 
-	@Before("readForUser(userId) || exportUserRelatedEntity(userId)")
+	@Before(value = "readForUser(userId) || exportUserRelatedEntity(userId)", argNames = "userId")
 	public void userReadAccessCheck(Long userId) {
 		requireUserReadAccess(userId);
 	}
 
-	@Before("""
+	@Before(value = """
 			createUserRelatedEntity(userId)
 			|| saveUserRelatedEntity(userId)
 			|| updateUserRelatedEntity(userId)
 			|| deleteUserRelatedEntity(userId)
 			|| importUserRelatedEntity(userId)
-			""")
+			""", argNames = "userId")
 	public void userWriteAccessCheck(Long userId) {
 		requireUserWriteAccess(userId);
 	}

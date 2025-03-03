@@ -55,6 +55,8 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.support.CacheSettings;
 
@@ -62,7 +64,7 @@ import net.solarnetwork.central.support.CacheSettings;
  * Configuration for the eGauge cloud integration services.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -115,6 +117,12 @@ public class EgaugeConfig {
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired(required = false)
+	private QueryAuditor queryAuditor;
+
 	@Bean
 	@Qualifier(EGAUGE_DEVICE_REGISTERS)
 	@ConfigurationProperties(prefix = "app.c2c.cache.egague-device-registers")
@@ -156,6 +164,8 @@ public class EgaugeConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
 		service.setDeviceRegistersCache(deviceRegistersCache);
 
 		return service;

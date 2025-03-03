@@ -1,21 +1,21 @@
 /* ==================================================================
  * SimpleCsvDatumImportInputFormatService.java - 2/04/2022 4:37:58 PM
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.datum.imp.standard;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -52,7 +53,7 @@ import net.solarnetwork.util.StringUtils;
  * CSV import format that supports arbitrary columns for the instantaneous,
  * accumulating, status, and tag sample properties of datum by way of
  * classification mapping settings.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -83,8 +84,8 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 			return null;
 		}
 		Map<String, Number> result = new LinkedHashMap<>(4);
-		for ( Iterator<Integer> itr = columns.iterator(); itr.hasNext(); ) {
-			final int i = itr.next() - 1;
+		for ( Integer column : columns ) {
+			final int i = column - 1;
 			String val = (i < row.size() ? row.get(i) : null);
 			Number n = StringUtils.numberValue(val);
 			if ( n instanceof BigInteger ) {
@@ -103,8 +104,7 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 			return null;
 		}
 		Map<String, Object> result = new LinkedHashMap<>(4);
-		for ( Iterator<Integer> itr = columns.iterator(); itr.hasNext(); ) {
-			final int i = itr.next();
+		for ( final int i : columns ) {
 			String val = (i < row.size() ? row.get(i) : null);
 			Number n = StringUtils.numberValue(val);
 			if ( n != null || val != null ) {
@@ -120,14 +120,11 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 			return null;
 		}
 		Set<String> result = new LinkedHashSet<>(4);
-		for ( Iterator<Integer> itr = columns.iterator(); itr.hasNext(); ) {
-			final int i = itr.next();
+		for ( final int i : columns ) {
 			String val = (i < row.size() ? row.get(i) : null);
 			if ( val != null ) {
 				String[] tags = val.trim().split("\\s*,\\s*");
-				for ( String tag : tags ) {
-					result.add(tag);
-				}
+				Collections.addAll(result, tags);
 			}
 		}
 		return (result.isEmpty() ? null : result);
@@ -136,14 +133,14 @@ public class SimpleCsvDatumImportInputFormatService extends CsvDatumImportInputF
 	private class CsvImportContext extends BaseDatumImportInputFormatServiceImportContext {
 
 		private final SimpleCsvDatumImportInputProperties props;
-		private IntRangeSet instantaneousColumns;
-		private IntRangeSet accumulatingColumns;
-		private IntRangeSet statusColumns;
-		private IntRangeSet tagColumns;
+		private final IntRangeSet instantaneousColumns;
+		private final IntRangeSet accumulatingColumns;
+		private final IntRangeSet statusColumns;
+		private final IntRangeSet tagColumns;
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param config
 		 *        the configuration
 		 * @param resource

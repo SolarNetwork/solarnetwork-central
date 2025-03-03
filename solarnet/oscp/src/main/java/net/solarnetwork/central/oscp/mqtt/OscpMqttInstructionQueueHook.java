@@ -31,6 +31,7 @@ import static net.solarnetwork.domain.InstructionStatus.InstructionState.Decline
 import static net.solarnetwork.domain.InstructionStatus.InstructionState.Queuing;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -328,6 +329,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 
 	private static class OscpNodeInstruction extends NodeInstruction {
 
+		@Serial
 		private static final long serialVersionUID = 2907749503777764999L;
 
 		private final Long userId;
@@ -335,7 +337,7 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		private final CapacityProviderConfiguration cp;
 		private final Map<String, Object> eventData;
 		private final String action;
-		private Object msg;
+		private final Object msg;
 
 		private OscpNodeInstruction(NodeInstruction instruction, InstructionState state, Long userId,
 				CapacityGroupConfiguration cg, CapacityProviderConfiguration cp,

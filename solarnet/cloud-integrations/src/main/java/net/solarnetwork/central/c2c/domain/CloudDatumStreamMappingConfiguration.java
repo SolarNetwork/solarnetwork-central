@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -50,10 +51,11 @@ import net.solarnetwork.codec.JsonUtils;
 @JsonIgnoreProperties({ "id", "enabled", "fullyConfigured" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "name", "integrationId",
 		"serviceProperties" })
-public class CloudDatumStreamMappingConfiguration extends
+public final class CloudDatumStreamMappingConfiguration extends
 		BaseUserModifiableEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamMappingConfiguration, UserLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = -5099340175851992871L;
 
 	/** The cloud integration ID. */
@@ -196,7 +198,7 @@ public class CloudDatumStreamMappingConfiguration extends
 	 *
 	 * @return the integration ID
 	 */
-	public final Long getIntegrationId() {
+	public Long getIntegrationId() {
 		return integrationId;
 	}
 
@@ -207,7 +209,7 @@ public class CloudDatumStreamMappingConfiguration extends
 	 * @param integrationId
 	 *        the integration ID to set
 	 */
-	public final void setIntegrationId(Long integrationId) {
+	public void setIntegrationId(Long integrationId) {
 		this.integrationId = integrationId;
 	}
 

@@ -141,7 +141,7 @@ public enum MeasurementPeriod implements CodedValue {
 	 */
 	@JsonCreator
 	public static MeasurementPeriod fromValue(String value) {
-		if ( value != null && value.length() > 0 ) {
+		if ( value != null && !value.isEmpty() ) {
 			final boolean coded = (value.length() == 1);
 			final char code = value.charAt(0);
 			for ( MeasurementPeriod e : MeasurementPeriod.values() ) {

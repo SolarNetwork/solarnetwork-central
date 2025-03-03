@@ -1,21 +1,21 @@
 /* ==================================================================
  * VersionedMessageDaoMessageSource.java - 25/07/2020 10:06:54 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,7 +36,7 @@ import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
 /**
  * {@link MessageSource} implementation that uses a {@link VersionedMessageDao}
  * to load messages.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.6
@@ -50,7 +50,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dao
 	 *        the DAO to use
 	 * @param bundleNames
@@ -99,7 +99,7 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 	/**
 	 * Get a {@link Properties} object of all available messages for a given
 	 * locale.
-	 * 
+	 *
 	 * @param locale
 	 *        the locale of the messages to get
 	 * @return the properties or {@literal null} if none available
@@ -110,17 +110,14 @@ public class VersionedMessageDaoMessageSource extends AbstractMessageSource {
 		Properties props = null;
 
 		// try lang
-		if ( locale.getLanguage() != null ) {
-			String localeCode = locale.getLanguage();
-			if ( !localeCode.equals(origLocaleCode) ) {
-				props = getPropsForLocale(localeCode);
-			}
+		String localeCode = locale.getLanguage();
+		if ( !localeCode.equals(origLocaleCode) ) {
+			props = getPropsForLocale(localeCode);
 		}
 
 		// try lang/country
-		if ( locale.getLanguage() != null && locale.getCountry() != null
-				&& !locale.getCountry().isEmpty() ) {
-			String localeCode = locale.getLanguage() + "_" + locale.getCountry();
+		if ( !locale.getCountry().isEmpty() ) {
+			localeCode = locale.getLanguage() + "_" + locale.getCountry();
 			if ( !localeCode.equals(origLocaleCode) ) {
 				Properties countryLangProps = getPropsForLocale(localeCode);
 				if ( props == null ) {

@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisSolarLocationDao.java - Nov 10, 2014 8:57:24 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -32,9 +32,9 @@ import net.solarnetwork.central.domain.SolarLocation;
 
 /**
  * MyBatis implementation of {@link SolarLocationDao}.
- * 
+ *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class MyBatisSolarLocationDao
 		extends BaseMyBatisFilterableDao<SolarLocation, LocationMatch, Location, Long>
@@ -53,7 +53,7 @@ public class MyBatisSolarLocationDao
 
 	/**
 	 * The query name used for {@link #getSolarLocationForNode(Long)}.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	public static final String QUERY_FOR_NODE = "find-SolarLocation-for-node";
@@ -66,7 +66,7 @@ public class MyBatisSolarLocationDao
 	}
 
 	@Override
-	public Long store(SolarLocation datum) {
+	public Long save(SolarLocation datum) {
 		if ( log.isTraceEnabled() ) {
 			// this added to help troubleshoot excess location storing
 			try {
@@ -75,12 +75,12 @@ public class MyBatisSolarLocationDao
 				log.trace("Storing solar location {} with data {}", datum, datum.getFilter(), e);
 			}
 		}
-		return super.store(datum);
+		return super.save(datum);
 	}
 
 	@Override
 	public SolarLocation getSolarLocationForTimeZone(String country, String timeZoneId) {
-		Map<String, String> params = new HashMap<String, String>(2);
+		Map<String, String> params = new HashMap<>(2);
 		params.put("country", country);
 		params.put("timeZoneId", timeZoneId);
 		return selectFirst(QUERY_FOR_COUNTRY_TIME_ZONE, params);
@@ -100,7 +100,7 @@ public class MyBatisSolarLocationDao
 		spaceAppend(filter.getStateOrProvince(), fts);
 		spaceAppend(filter.getLocality(), fts);
 		spaceAppend(filter.getPostalCode(), fts);
-		if ( fts.length() > 0 ) {
+		if ( !fts.isEmpty() ) {
 			sqlProps.put("fts", fts.toString());
 		}
 	}

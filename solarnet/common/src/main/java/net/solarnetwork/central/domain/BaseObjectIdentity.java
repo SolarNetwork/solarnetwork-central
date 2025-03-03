@@ -1,34 +1,35 @@
 /* ==================================================================
  * BaseObjectIdentity.java - 27/08/2017 2:40:20 PM
- * 
+ *
  * Copyright 2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import net.solarnetwork.domain.Identity;
 
 /**
  * Base implementation of {@link net.solarnetwork.domain.Identity} using a
  * Comparable, Serializable primary key.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 1.34
@@ -36,14 +37,16 @@ import net.solarnetwork.domain.Identity;
 public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 		implements Cloneable, Serializable, Identity<PK> {
 
+	@Serial
 	private static final long serialVersionUID = -2183771061512318513L;
 
 	private PK id = null;
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Object clone() {
+	public BaseObjectIdentity<PK> clone() {
 		try {
-			return super.clone();
+			return (BaseObjectIdentity<PK>) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should never get here
 			throw new RuntimeException(e);
@@ -67,22 +70,15 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		@SuppressWarnings("unchecked")
 		BaseObjectIdentity<PK> other = (BaseObjectIdentity<PK>) obj;
 		if ( id == null ) {
-			if ( other.id != null ) {
-				return false;
-			}
-		} else if ( !id.equals(other.id) ) {
-			return false;
+			return other.id == null;
 		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	/**
@@ -105,7 +101,7 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 
 	/**
 	 * Get the primary key.
-	 * 
+	 *
 	 * @return the id
 	 */
 	@Override
@@ -115,7 +111,7 @@ public class BaseObjectIdentity<PK extends Comparable<PK> & Serializable>
 
 	/**
 	 * Set the primary key.
-	 * 
+	 *
 	 * @param id
 	 *        the id to set
 	 */

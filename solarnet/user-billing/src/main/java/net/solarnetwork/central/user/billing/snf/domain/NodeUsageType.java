@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
  * Enumeration of node usage types.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 1.3
  */
 public enum NodeUsageType implements NodeUsages {
@@ -64,7 +64,8 @@ public enum NodeUsageType implements NodeUsages {
 	/** OAuth client credentials usage. */
 	OAuthClientCredentials(11, OAUTH_CLIENT_CREDENTIALS_KEY),
 
-	;
+	/** Cloud Integrations data usage. */
+	CloudIntegrationsData(12, CLOUD_INTEGRATIONS_DATA_KEY),;
 
 	private final int order;
 	private final String key;
@@ -114,6 +115,7 @@ public enum NodeUsageType implements NodeUsages {
 			case FLUX_DATA_IN_KEY -> FluxDataIn;
 			case FLUX_DATA_OUT_KEY -> FluxDataOut;
 			case OAUTH_CLIENT_CREDENTIALS_KEY -> OAuthClientCredentials;
+			case CLOUD_INTEGRATIONS_DATA_KEY -> CloudIntegrationsData;
 			default -> throw new IllegalArgumentException("Unknown NodeUsageType key value: " + key);
 		};
 	}

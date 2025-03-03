@@ -1,28 +1,27 @@
 /* ==================================================================
  * SimpleProxyConfigurationProvider.java - 3/08/2023 6:13:18 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.net.proxy.service.impl;
 
-import static java.util.stream.Collectors.joining;
 import static net.solarnetwork.central.security.CertificateUtils.canonicalSubjectDn;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
@@ -33,7 +32,6 @@ import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -52,7 +50,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Simple proxy configuration provider designed for testing.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -60,19 +58,19 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 
 	/**
 	 * The default external server command.
-	 * 
+	 *
 	 * <p>
 	 * The default command is equivalent to:
 	 * </p>
-	 * 
+	 *
 	 * <pre>{@code
 	 * /usr/local/bin/ncat -l {port} -k -c '/usr/bin/xargs -n1 echo'
 	 * }</pre>
-	 * 
+	 *
 	 * @see #setExternalServerCommand(String[])
 	 */
-	public static List<String> DEFAULT_EXTERNAL_SERVER_COMMAND = Collections.unmodifiableList(
-			Arrays.asList("/usr/local/bin/ncat", "-l", "{port}", "-k", "-c", "/usr/bin/xargs -n1 echo"));
+	public static List<String> DEFAULT_EXTERNAL_SERVER_COMMAND = List.of("/usr/local/bin/ncat", "-l",
+			"{port}", "-k", "-c", "/usr/bin/xargs -n1 echo");
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleProxyConfigurationProvider.class);
 
@@ -82,7 +80,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param portRegistrar
 	 *        the port registrar to use
 	 * @param userMappings
@@ -129,11 +127,9 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	}
 
 	private String requestIdentity(ProxyConnectionRequest request) {
-		final String ident = request.principalIdentity() != null
-				&& request.principalIdentity().length > 0
-						? canonicalSubjectDn(request.principalIdentity()[0])
-						: request.principal();
-		return ident;
+		return request.principalIdentity() != null && request.principalIdentity().length > 0
+				? canonicalSubjectDn(request.principalIdentity()[0])
+				: request.principal();
 	}
 
 	@Override
@@ -219,7 +215,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 				serverCommand = cmd;
 				server = pb.start();
 				log.info("Started dynamic external server {} with command: {}", server.pid(),
-						Arrays.stream(cmd).collect(joining(" ")));
+						String.join(" ", cmd));
 				try {
 					Thread.sleep(200); // give server a chance to start listening; could make time configurable
 				} catch ( InterruptedException e ) {
@@ -236,7 +232,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 		public synchronized void serviceDidShutdown() {
 			if ( server != null && server.isAlive() ) {
 				log.info("Stopping dynamic external server {} [{}]", server.pid(),
-						Arrays.stream(serverCommand).collect(joining(" ")));
+						String.join(" ", serverCommand));
 				server.destroy();
 				server = null;
 				serverCommand = null;
@@ -252,7 +248,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 
 	/**
 	 * Get the external server command.
-	 * 
+	 *
 	 * @return the command
 	 */
 	public String[] getExternalServerCommand() {
@@ -267,7 +263,7 @@ public class SimpleProxyConfigurationProvider implements ProxyConfigurationProvi
 	 * placeholder that will be replaced with a dynamically allocated port for
 	 * the server to bind to.
 	 * </p>
-	 * 
+	 *
 	 * @param externalServerCommand
 	 *        the command to set
 	 */

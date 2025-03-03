@@ -1,21 +1,21 @@
 /* ==================================================================
  * DelayQueueSet.java - 30/05/2024 10:22:31 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,33 +39,33 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A combination of {@link BlockingQueue} and {@link Set}.
- * 
+ *
  * <p>
- * Adapted from {@linkjava.util.concurrent.DelayQueue}
+ * Adapted from {@link java.util.concurrent.DelayQueue}
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implements BlockingQueue<E> {
 
 	private final transient ReentrantLock lock = new ReentrantLock();
-	private final PriorityQueue<E> q = new PriorityQueue<E>();
+	private final PriorityQueue<E> q = new PriorityQueue<>();
 	private final Set<E> s;
 
 	/**
 	 * Thread designated to wait for the element at the head of the queue. This
-	 * variant of the Leader-Follower pattern
-	 * (http://www.cs.wustl.edu/~schmidt/POSA/POSA2/) serves to minimize
-	 * unnecessary timed waiting. When a thread becomes the leader, it waits
-	 * only for the next delay to elapse, but other threads await indefinitely.
-	 * The leader thread must signal some other thread before returning from
-	 * take() or poll(...), unless some other thread becomes leader in the
-	 * interim. Whenever the head of the queue is replaced with an element with
-	 * an earlier expiration time, the leader field is invalidated by being
-	 * reset to null, and some waiting thread, but not necessarily the current
-	 * leader, is signalled. So waiting threads must be prepared to acquire and
-	 * lose leadership while waiting.
+	 * variant of the
+	 * <a href="http://www.cs.wustl.edu/~schmidt/POSA/POSA2/">Leader-Follower
+	 * pattern</a> serves to minimize unnecessary timed waiting. When a thread
+	 * becomes the leader, it waits only for the next delay to elapse, but other
+	 * threads await indefinitely. The leader thread must signal some other
+	 * thread before returning from take() or poll(...), unless some other
+	 * thread becomes leader in the interim. Whenever the head of the queue is
+	 * replaced with an element with an earlier expiration time, the leader
+	 * field is invalidated by being reset to null, and some waiting thread, but
+	 * not necessarily the current leader, is signalled. So waiting threads must
+	 * be prepared to acquire and lose leadership while waiting.
 	 */
 	private Thread leader;
 
@@ -84,7 +84,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 
 	/**
 	 * Creates a new {@code DelayQueue} that is initially empty.
-	 * 
+	 *
 	 * @param capacity
 	 *        an initial estimated capacity
 	 */
@@ -94,7 +94,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 
 	/**
 	 * Creates a new {@code DelayQueue} that is initially empty.
-	 * 
+	 *
 	 * @param delegateSet
 	 *        a specific set instance to use
 	 */
@@ -160,7 +160,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 
 	/**
 	 * Inserts the specified element into this delay queue. As the queue is
-	 * unbounded this method will never block.
+	 * unbounded this method will never block
 	 *
 	 * {@inheritDoc}
 	 */
@@ -227,30 +227,33 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		try {
 			for ( ;; ) {
 				E first = q.peek();
-				if ( first == null )
+				if ( first == null ) {
 					available.await();
-				else {
+				} else {
 					long delay = first.getDelay(NANOSECONDS);
-					if ( delay <= 0L )
+					if ( delay <= 0L ) {
 						return removed(q.poll());
+					}
 					first = null; // don't retain ref while waiting
-					if ( leader != null )
+					if ( leader != null ) {
 						available.await();
-					else {
+					} else {
 						Thread thisThread = Thread.currentThread();
 						leader = thisThread;
 						try {
 							available.awaitNanos(delay);
 						} finally {
-							if ( leader == thisThread )
+							if ( leader == thisThread ) {
 								leader = null;
+							}
 						}
 					}
 				}
 			}
 		} finally {
-			if ( leader == null && q.peek() != null )
+			if ( leader == null && q.peek() != null ) {
 				available.signal();
+			}
 			lock.unlock();
 		}
 	}
@@ -276,35 +279,40 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 			for ( ;; ) {
 				E first = q.peek();
 				if ( first == null ) {
-					if ( nanos <= 0L )
+					if ( nanos <= 0L ) {
 						return null;
-					else
+					} else {
 						nanos = available.awaitNanos(nanos);
+					}
 				} else {
 					long delay = first.getDelay(NANOSECONDS);
-					if ( delay <= 0L )
+					if ( delay <= 0L ) {
 						return removed(q.poll());
-					if ( nanos <= 0L )
+					}
+					if ( nanos <= 0L ) {
 						return null;
+					}
 					first = null; // don't retain ref while waiting
-					if ( nanos < delay || leader != null )
+					if ( nanos < delay || leader != null ) {
 						nanos = available.awaitNanos(nanos);
-					else {
+					} else {
 						Thread thisThread = Thread.currentThread();
 						leader = thisThread;
 						try {
 							long timeLeft = available.awaitNanos(delay);
 							nanos -= delay - timeLeft;
 						} finally {
-							if ( leader == thisThread )
+							if ( leader == thisThread ) {
 								leader = null;
+							}
 						}
 					}
 				}
 			}
 		} finally {
-			if ( leader == null && q.peek() != null )
+			if ( leader == null && q.peek() != null ) {
 				available.signal();
+			}
 			lock.unlock();
 		}
 	}
@@ -362,10 +370,12 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	@Override
 	public int drainTo(Collection<? super E> c, int maxElements) {
 		Objects.requireNonNull(c);
-		if ( c == this )
+		if ( c == this ) {
 			throw new IllegalArgumentException();
-		if ( maxElements <= 0 )
+		}
+		if ( maxElements <= 0 ) {
 			return 0;
+		}
 		final ReentrantLock lock = this.lock;
 		lock.lock();
 		try {
@@ -459,7 +469,7 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 	 * allocated array of {@code Delayed}:
 	 *
 	 * <pre> {@code
-	 * 
+	 *
 	 * Delayed[] a = q.toArray(new Delayed[0]);
 	 * }</pre>
 	 *
@@ -563,15 +573,17 @@ public class DelayQueueSet<E extends Delayed> extends AbstractQueue<E> implement
 		@Override
 		@SuppressWarnings("unchecked")
 		public E next() {
-			if ( cursor >= array.length )
+			if ( cursor >= array.length ) {
 				throw new NoSuchElementException();
+			}
 			return (E) array[lastRet = cursor++];
 		}
 
 		@Override
 		public void remove() {
-			if ( lastRet < 0 )
+			if ( lastRet < 0 ) {
 				throw new IllegalStateException();
+			}
 			removeEQ(array[lastRet]);
 			lastRet = -1;
 		}

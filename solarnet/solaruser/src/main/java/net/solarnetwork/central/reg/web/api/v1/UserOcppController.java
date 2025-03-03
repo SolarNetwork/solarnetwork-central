@@ -25,8 +25,8 @@ package net.solarnetwork.central.reg.web.api.v1;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_ACTION_STATUS_FILTER;
 import static net.solarnetwork.central.user.ocpp.config.UserOcppBizConfig.CHARGE_POINT_STATUS_FILTER;
+import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import static net.solarnetwork.web.jakarta.domain.Response.response;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -74,16 +74,16 @@ import net.solarnetwork.central.web.WebUtils;
 import net.solarnetwork.codec.PropertySerializerRegistrar;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.ocpp.domain.ChargePointConnectorKey;
 import net.solarnetwork.ocpp.domain.ChargeSession;
 import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController
@@ -147,9 +147,9 @@ public class UserOcppController {
 	 *         {@code in} has a {@literal null} primary key or
 	 *         {@link HttpStatus#OK} otherwise
 	 */
-	private <T extends Entity<?>> ResponseEntity<Response<T>> responseForSave(Object id, T out) {
+	private <T extends Entity<?>> ResponseEntity<Result<T>> responseForSave(Object id, T out) {
 		HttpStatus status = id == null ? HttpStatus.CREATED : HttpStatus.OK;
-		return new ResponseEntity<Response<T>>(response(out), status);
+		return new ResponseEntity<>(success(out), status);
 	}
 
 	/**
@@ -158,10 +158,10 @@ public class UserOcppController {
 	 * @return the charge points
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/authorizations")
-	public Response<Collection<CentralAuthorization>> availableAuthorizations() {
+	public Result<Collection<CentralAuthorization>> availableAuthorizations() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralAuthorization> list = userOcppBiz().authorizationsForUser(userId);
-		return response(list);
+		return success(list);
 	}
 
 	/**
@@ -172,7 +172,7 @@ public class UserOcppController {
 	 * @return the saved authorization
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/authorizations")
-	public ResponseEntity<Response<CentralAuthorization>> saveAuthorization(
+	public ResponseEntity<Result<CentralAuthorization>> saveAuthorization(
 			@RequestBody CentralAuthorization authorization) {
 		return responseForSave(authorization.getId(), userOcppBiz().saveAuthorization(authorization));
 	}
@@ -185,9 +185,9 @@ public class UserOcppController {
 	 * @return the authorization
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/authorizations/{id}")
-	public Response<CentralAuthorization> viewAuthorization(@PathVariable("id") Long id) {
+	public Result<CentralAuthorization> viewAuthorization(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().authorizationForUser(userId, id));
+		return success(userOcppBiz().authorizationForUser(userId, id));
 	}
 
 	/**
@@ -198,10 +198,10 @@ public class UserOcppController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/authorizations/{id}")
-	public Response<Void> deleteAuthorization(@PathVariable("id") Long id) {
+	public Result<Void> deleteAuthorization(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserAuthorization(userId, id);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -210,10 +210,10 @@ public class UserOcppController {
 	 * @return the charge points
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers")
-	public Response<Collection<CentralChargePoint>> availableChargePoints() {
+	public Result<Collection<CentralChargePoint>> availableChargePoints() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePoint> list = userOcppBiz().chargePointsForUser(userId);
-		return response(list);
+		return success(list);
 	}
 
 	/**
@@ -224,7 +224,7 @@ public class UserOcppController {
 	 * @return the saved charge point
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/chargers")
-	public ResponseEntity<Response<CentralChargePoint>> saveChargePoint(
+	public ResponseEntity<Result<CentralChargePoint>> saveChargePoint(
 			@RequestBody CentralChargePoint chargePoint) {
 		return responseForSave(chargePoint.getId(), userOcppBiz().saveChargePoint(chargePoint));
 	}
@@ -237,9 +237,9 @@ public class UserOcppController {
 	 * @return the system user
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/{id}")
-	public Response<CentralChargePoint> viewChargePoint(@PathVariable("id") Long id) {
+	public Result<CentralChargePoint> viewChargePoint(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().chargePointForUser(userId, id));
+		return success(userOcppBiz().chargePointForUser(userId, id));
 	}
 
 	/**
@@ -250,10 +250,10 @@ public class UserOcppController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/chargers/{id}")
-	public Response<Void> deleteChargePoint(@PathVariable("id") Long id) {
+	public Result<Void> deleteChargePoint(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePoint(userId, id);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -262,10 +262,10 @@ public class UserOcppController {
 	 * @return the charge point settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/settings")
-	public Response<Collection<ChargePointSettings>> availableChargePointSettings() {
+	public Result<Collection<ChargePointSettings>> availableChargePointSettings() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<ChargePointSettings> list = userOcppBiz().chargePointSettingsForUser(userId);
-		return response(list);
+		return success(list);
 	}
 
 	/**
@@ -276,7 +276,7 @@ public class UserOcppController {
 	 * @return the saved charge point settings
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/chargers/settings")
-	public ResponseEntity<Response<ChargePointSettings>> saveChargePointSettings(
+	public ResponseEntity<Result<ChargePointSettings>> saveChargePointSettings(
 			@RequestBody ChargePointSettings chargePointSettings) {
 		return responseForSave(chargePointSettings.getId(),
 				userOcppBiz().saveChargePointSettings(chargePointSettings));
@@ -290,9 +290,9 @@ public class UserOcppController {
 	 * @return the settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/chargers/{id}/settings")
-	public Response<ChargePointSettings> viewChargePointSettings(@PathVariable("id") Long id) {
+	public Result<ChargePointSettings> viewChargePointSettings(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().chargePointSettingsForUser(userId, id));
+		return success(userOcppBiz().chargePointSettingsForUser(userId, id));
 	}
 
 	/**
@@ -303,10 +303,10 @@ public class UserOcppController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/chargers/{id}/settings")
-	public Response<Void> deleteChargePointSettings(@PathVariable("id") Long id) {
+	public Result<Void> deleteChargePointSettings(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePointSettings(userId, id);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -390,11 +390,11 @@ public class UserOcppController {
 	 * @return the connectors
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/connectors")
-	public Response<Collection<CentralChargePointConnector>> availableConnectors() {
+	public Result<Collection<CentralChargePointConnector>> availableConnectors() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralChargePointConnector> list = userOcppBiz()
 				.chargePointConnectorsForUser(userId);
-		return response(list);
+		return success(list);
 	}
 
 	/**
@@ -405,7 +405,7 @@ public class UserOcppController {
 	 * @return the saved connector
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/connectors")
-	public ResponseEntity<Response<CentralChargePointConnector>> saveConnector(
+	public ResponseEntity<Result<CentralChargePointConnector>> saveConnector(
 			@RequestBody CentralChargePointConnector connector) {
 		ChargePointConnectorKey id = connector.getId();
 		if ( id == null ) {
@@ -427,11 +427,11 @@ public class UserOcppController {
 	 * @return the system user
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/connectors/{chargePointId}/{connectorId}")
-	public Response<CentralChargePointConnector> viewConnector(
+	public Result<CentralChargePointConnector> viewConnector(
 			@PathVariable("chargePointId") long chargePointId,
 			@PathVariable("connectorId") int connectorId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().chargePointConnectorForUser(userId,
+		return success(userOcppBiz().chargePointConnectorForUser(userId,
 				new ChargePointConnectorKey(chargePointId, connectorId)));
 	}
 
@@ -445,12 +445,12 @@ public class UserOcppController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/connectors/{chargePointId}/{connectorId}")
-	public Response<Void> deleteConnector(@PathVariable("chargePointId") long chargePointId,
+	public Result<Void> deleteConnector(@PathVariable("chargePointId") long chargePointId,
 			@PathVariable("connectorId") int connectorId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePointConnector(userId,
 				new ChargePointConnectorKey(chargePointId, connectorId));
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -459,10 +459,10 @@ public class UserOcppController {
 	 * @return the system users
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/credentials", params = "!username")
-	public Response<Collection<CentralSystemUser>> availableSystemUsers() {
+	public Result<Collection<CentralSystemUser>> availableSystemUsers() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<CentralSystemUser> list = userOcppBiz().systemUsersForUser(userId);
-		return response(list);
+		return success(list);
 	}
 
 	/**
@@ -473,9 +473,9 @@ public class UserOcppController {
 	 * @return the system user
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/credentials", params = "username")
-	public Response<CentralSystemUser> viewSystemUser(@RequestParam("username") String username) {
+	public Result<CentralSystemUser> viewSystemUser(@RequestParam("username") String username) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().systemUserForUser(userId, username));
+		return success(userOcppBiz().systemUserForUser(userId, username));
 	}
 
 	/**
@@ -486,7 +486,7 @@ public class UserOcppController {
 	 * @return the saved system user
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/credentials")
-	public ResponseEntity<Response<CentralSystemUser>> saveSystemUser(
+	public ResponseEntity<Result<CentralSystemUser>> saveSystemUser(
 			@RequestBody CentralSystemUser systemUser) {
 		return responseForSave(systemUser.getId(), userOcppBiz().saveSystemUser(systemUser));
 	}
@@ -499,9 +499,9 @@ public class UserOcppController {
 	 * @return the system user
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/credentials/{id}")
-	public Response<CentralSystemUser> viewSystemUser(@PathVariable("id") Long id) {
+	public Result<CentralSystemUser> viewSystemUser(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().systemUserForUser(userId, id));
+		return success(userOcppBiz().systemUserForUser(userId, id));
 	}
 
 	/**
@@ -512,10 +512,10 @@ public class UserOcppController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/credentials/{id}")
-	public Response<Void> deleteSystemUser(@PathVariable("id") Long id) {
+	public Result<Void> deleteSystemUser(@PathVariable("id") Long id) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserSystemUser(userId, id);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -526,7 +526,7 @@ public class UserOcppController {
 	 * @return the saved settings
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/settings")
-	public ResponseEntity<Response<UserSettings>> saveSettings(@RequestBody UserSettings userSettings) {
+	public ResponseEntity<Result<UserSettings>> saveSettings(@RequestBody UserSettings userSettings) {
 		return responseForSave(userSettings.getId(), userOcppBiz().saveSettings(userSettings));
 	}
 
@@ -536,9 +536,9 @@ public class UserOcppController {
 	 * @return the user settings
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/settings")
-	public Response<UserSettings> viewSettings() {
+	public Result<UserSettings> viewSettings() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().settingsForUser(userId));
+		return success(userOcppBiz().settingsForUser(userId));
 	}
 
 	/**
@@ -547,10 +547,10 @@ public class UserOcppController {
 	 * @return the result
 	 */
 	@RequestMapping(method = RequestMethod.DELETE, value = "/settings")
-	public Response<Void> deleteSettings() {
+	public Result<Void> deleteSettings() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserSettings(userId);
-		return response(null);
+		return success();
 	}
 
 	/**
@@ -562,11 +562,11 @@ public class UserOcppController {
 	 * @since 2.2
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/sessions")
-	public Response<FilterResults<ChargeSession, UUID>> findFilteredChargeSessions(
+	public Result<FilterResults<ChargeSession, UUID>> findFilteredChargeSessions(
 			BasicOcppCriteria filter) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		filter.setUserId(userId);
-		return response(userOcppBiz().findFilteredChargeSessions(filter));
+		return success(userOcppBiz().findFilteredChargeSessions(filter));
 	}
 
 	/**
@@ -583,11 +583,11 @@ public class UserOcppController {
 	 * @since 2.2
 	 */
 	@RequestMapping(method = RequestMethod.POST, value = "/sessions/end")
-	public Response<Boolean> endChargeSession(@RequestParam("id") UUID sessionId,
+	public Result<Boolean> endChargeSession(@RequestParam("id") UUID sessionId,
 			@RequestParam("endReason") ChargeSessionEndReason endReason,
 			@RequestParam(name = "endAuthId", required = false) String endAuthId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		return response(userOcppBiz().endChargeSession(userId, sessionId, endReason, endAuthId));
+		return success(userOcppBiz().endChargeSession(userId, sessionId, endReason, endAuthId));
 	}
 
 	/**
@@ -598,10 +598,10 @@ public class UserOcppController {
 	 * @return the session
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/sessions/{id}")
-	public Response<ChargeSession> viewSession(@PathVariable("id") UUID sessionId) {
+	public Result<ChargeSession> viewSession(@PathVariable("id") UUID sessionId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		ChargeSession sess = userOcppBiz().chargeSessionForUser(userId, sessionId);
-		return response(sess);
+		return success(sess);
 	}
 
 	/**
@@ -612,12 +612,12 @@ public class UserOcppController {
 	 * @return the charge points
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/sessions/incomplete/{chargePointId}")
-	public Response<Collection<ChargeSession>> incompleteSessionsForChargePoint(
+	public Result<Collection<ChargeSession>> incompleteSessionsForChargePoint(
 			@PathVariable("chargePointId") long chargePointId) {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		Collection<ChargeSession> list = userOcppBiz().incompleteChargeSessionsForChargePoint(userId,
 				chargePointId);
-		return response(list);
+		return success(list);
 	}
 
 	/**

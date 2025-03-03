@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicCoreCriteria.java - 27/10/2020 7:43:38 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,7 +35,7 @@ import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * Basic implementation of some core criteria APIs.
- * 
+ *
  * @author matt
  * @version 1.5
  */
@@ -99,13 +99,9 @@ public class BasicCoreCriteria extends SimplePagination
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicCoreCriteria other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicCoreCriteria) ) {
-			return false;
-		}
-		BasicCoreCriteria other = (BasicCoreCriteria) obj;
 		return Arrays.equals(locationIds, other.locationIds) && Arrays.equals(nodeIds, other.nodeIds)
 				&& Arrays.equals(sourceIds, other.sourceIds) && Arrays.equals(tokenIds, other.tokenIds)
 				&& Arrays.equals(userIds, other.userIds) && Objects.equals(location, other.location)
@@ -116,12 +112,12 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Copy the properties of another criteria into this instance.
-	 * 
+	 *
 	 * <p>
 	 * This method will test for conformance to all the various criteria
 	 * interfaces implemented by this class, and copy those properties as well.
 	 * </p>
-	 * 
+	 *
 	 * @param criteria
 	 *        the criteria to copy
 	 */
@@ -173,7 +169,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set a single location ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single location ID
 	 * at a time. The location ID is still stored on the {@code locationIds}
@@ -181,7 +177,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * {@code locationIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param locationId
 	 *        the ID of the location
 	 */
@@ -203,7 +199,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the location IDs.
-	 * 
+	 *
 	 * @param locationIds
 	 *        the location IDs to set
 	 */
@@ -213,14 +209,14 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set a single node ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single node ID at a
 	 * time. The node ID is still stored on the {@code nodeIds} array, as the
 	 * first value. Calling this method replaces any existing {@code nodeIds}
 	 * value with a new array containing just the ID passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeId
 	 *        the ID of the node
 	 */
@@ -242,7 +238,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the node IDs.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        the nodeIds to set
 	 */
@@ -252,7 +248,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set a single source ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single source ID at
 	 * a time. The source ID is still stored on the {@code sourceIds} array, as
@@ -260,7 +256,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * {@code sourceIds} value with a new array containing just the ID passed
 	 * into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID
 	 */
@@ -282,7 +278,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the source IDs.
-	 * 
+	 *
 	 * @param sourceIds
 	 *        the sourceIds to set
 	 */
@@ -292,7 +288,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set a single user ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single user ID at a
 	 * time. The user ID is still stored on the {@code userIds} array, just as
@@ -300,7 +296,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * {@code userIds} value with a new array containing just the ID passed into
 	 * this method.
 	 * </p>
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user
 	 */
@@ -322,7 +318,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set a list of user IDs to filter on.
-	 * 
+	 *
 	 * @param userIds
 	 *        The user IDs to filter on.
 	 */
@@ -332,14 +328,14 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set a single token ID.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience method for requests that use a single token ID at a
 	 * time. The token ID is still stored on the {@code tokenIds} array, as the
 	 * first value. Calling this method replaces any existing {@code tokenIds}
 	 * value with a new array containing just the ID passed into this method.
 	 * </p>
-	 * 
+	 *
 	 * @param tokenId
 	 *        the token ID
 	 */
@@ -361,7 +357,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the token IDs.
-	 * 
+	 *
 	 * @param tokenIds
 	 *        the tokenIds to set
 	 */
@@ -376,7 +372,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the location geographic criteria.
-	 * 
+	 *
 	 * @param location
 	 *        the location to set
 	 */
@@ -391,7 +387,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the search filter.
-	 * 
+	 *
 	 * @param searchFilter
 	 *        the filter to set
 	 */
@@ -401,7 +397,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Get the order-by list.
-	 * 
+	 *
 	 * <p>
 	 * This is derived from the {@link #getSorts()} list. The returned list will
 	 * contain all the {@link SortDescriptor#getSortKey()} values. Any
@@ -409,7 +405,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * {@literal true} will cause a {@literal ~} character to be added to the
 	 * end of the associated sort key value.
 	 * </p>
-	 * 
+	 *
 	 * @return the order-by list
 	 * @since 1.2
 	 */
@@ -418,21 +414,20 @@ public class BasicCoreCriteria extends SimplePagination
 		if ( sorts == null || sorts.isEmpty() ) {
 			return null;
 		}
-		return sorts.stream().map(s -> {
-			return s.isDescending() ? s.getSortKey().concat("~") : s.getSortKey();
-		}).toList();
+		return sorts.stream().map(s -> s.isDescending() ? s.getSortKey().concat("~") : s.getSortKey())
+				.toList();
 	}
 
 	/**
 	 * Set the order-by list.
-	 * 
+	 *
 	 * <p>
 	 * This creates the {@link #getSorts()} list. The values of the
 	 * {@code orderBys} list represent the sort descriptor key values. If the
 	 * value ends with a {@literal ~} character the descriptor will be set to
 	 * descending order.
 	 * </p>
-	 * 
+	 *
 	 * @param orderBys
 	 *        the order-by list
 	 * @see #getOrderBy()
@@ -441,6 +436,7 @@ public class BasicCoreCriteria extends SimplePagination
 	public void setOrderBy(List<String> orderBys) {
 		if ( orderBys == null || orderBys.isEmpty() ) {
 			setSorts(null);
+			return;
 		}
 		List<SortDescriptor> sorts = orderBys.stream().map(o -> {
 			boolean desc = o.endsWith("~");
@@ -457,7 +453,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the enabled flag.
-	 * 
+	 *
 	 * @param enabled
 	 *        the enabled to set
 	 * @since 1.3
@@ -473,7 +469,7 @@ public class BasicCoreCriteria extends SimplePagination
 
 	/**
 	 * Set the valid node ownership flag.
-	 * 
+	 *
 	 * @param validNodeOwnership
 	 *        the flag to set
 	 * @since 1.3

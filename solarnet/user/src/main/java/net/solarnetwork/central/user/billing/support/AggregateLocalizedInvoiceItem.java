@@ -1,21 +1,21 @@
 /* ==================================================================
  * AggregateLocalizedInvoiceItem.java - 22/09/2017 11:50:46 AM
- * 
+ *
  * Copyright 2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -34,20 +34,20 @@ import net.solarnetwork.central.user.billing.domain.LocalizedInvoiceItemUsageRec
 
 /**
  * An aggregate invoice item that sums the item amount for a group of items.
- * 
+ *
  * <p>
  * This class is designed to support combining similar invoice items into a
  * single logical value, for example to combine all tax items into a single
  * value.
  * </p>
- * 
+ *
  * <p>
  * Unless otherwise documented, the methods of this class delegate to the
  * <b>first</b> invoice item added via {@link #addItem(InvoiceItem)}. Documented
  * methods like {@link #getAmount()} return an aggregate value derived from all
  * invoice items added.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 0.2
@@ -60,7 +60,7 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param locale
 	 *        the desired locale
 	 */
@@ -71,7 +71,7 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	/**
 	 * Add an invoice item.
-	 * 
+	 *
 	 * @param item
 	 *        the item to add
 	 * @return this object
@@ -86,7 +86,7 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	/**
 	 * Get the ID of the first item added.
-	 * 
+	 *
 	 * @return the id
 	 */
 	public String getId() {
@@ -95,25 +95,18 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	/**
 	 * Get a supplier of aggregate items for a specific locale.
-	 * 
+	 *
 	 * @param locale
 	 *        the locale to use for all supplied items
 	 * @return the supplier
 	 */
 	public static Supplier<AggregateLocalizedInvoiceItem> itemOfLocale(Locale locale) {
-		return new Supplier<AggregateLocalizedInvoiceItem>() {
-
-			@Override
-			public AggregateLocalizedInvoiceItem get() {
-				return new AggregateLocalizedInvoiceItem(locale);
-			}
-
-		};
+		return () -> new AggregateLocalizedInvoiceItem(locale);
 	}
 
 	/**
 	 * Add items from another aggregate.
-	 * 
+	 *
 	 * @param agg
 	 *        the aggregate
 	 * @return this object
@@ -125,22 +118,22 @@ public class AggregateLocalizedInvoiceItem implements LocalizedInvoiceItemInfo {
 
 	/**
 	 * Get an aggregate amount of all configured invoice items.
-	 * 
+	 *
 	 * <p>
 	 * This will return the sum of the amount of all invoice items configured
 	 * via {@link #addItem(InvoiceItem)}.
 	 * </p>
-	 * 
+	 *
 	 * @return the aggregate amount
 	 */
 	public BigDecimal getAmount() {
-		return items.stream().map(item -> item.getAmount()).reduce(BigDecimal.ZERO, (l, r) -> l.add(r));
+		return items.stream().map(InvoiceItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	/**
 	 * Get a formatted and localized aggregate amount of all configured invoice
 	 * items.
-	 * 
+	 *
 	 * <p>
 	 * This will return a formatted value of {@link #getAmount()}.
 	 * </p>

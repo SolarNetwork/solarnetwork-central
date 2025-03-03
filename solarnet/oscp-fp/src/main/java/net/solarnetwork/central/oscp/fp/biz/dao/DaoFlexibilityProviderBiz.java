@@ -176,7 +176,6 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 	 *        the group settings DAo
 	 * @param nodeOwnershipDao
 	 *        the node ownership DAO
-	 * @capacityGroupSettingsDao the capacity group settings DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -223,7 +222,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		return role;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void register(AuthRoleInfo authInfo, String externalSystemToken, KeyValuePair versionUrl,
 			Future<?> externalSystemReady) throws AuthorizationException {
@@ -235,8 +234,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 				versionUrl);
 
 		ExternalSystemConfigurationDao<?> dao = configurationDaoForRole(systemRole);
-		BaseOscpExternalSystemConfiguration<?> conf = handleRegistration(authInfo, externalSystemToken,
-				versionUrl, dao);
+		BaseOscpExternalSystemConfiguration<?> conf = AuthorizationException.requireNonNullObject(
+				handleRegistration(authInfo, externalSystemToken, versionUrl, dao), externalSystemToken);
 
 		// generate new FP token for the system to use, and return it
 		var fpId = new UserLongCompositePK(authInfo.userId(), conf.getFlexibilityProviderId());
@@ -258,6 +257,9 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			throw new AuthorizationException(Reason.REGISTRATION_NOT_CONFIRMED, authInfo);
 		}
 		C conf = stream(filterResults.spliterator(), false).findFirst().orElse(null);
+		if ( conf == null ) {
+			return null;
+		}
 		conf.setOscpVersion(versionUrl.getKey());
 		conf.setBaseUrl(versionUrl.getValue());
 		if ( conf.getRegistrationStatus() != RegistrationStatus.Pending ) {
@@ -275,7 +277,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		return conf;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void handshake(AuthRoleInfo authInfo, SystemSettings settings, String requestIdentifier,
 			Future<?> externalSystemReady) {
@@ -293,8 +295,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		if ( filterResults.getReturnedResultCount() < 1 ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
 		}
-		BaseOscpExternalSystemConfiguration<?> conf = stream(filterResults.spliterator(), false)
-				.findFirst().orElse(null);
+		BaseOscpExternalSystemConfiguration<?> conf = AuthorizationException.requireNonNullObject(
+				stream(filterResults.spliterator(), false).findFirst().orElse(null), requestIdentifier);
 		dao.saveSettings(conf.getId(), settings);
 
 		SystemSettings ackSettings = new SystemSettings(null, null);
@@ -303,7 +305,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		executor.execute(task);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void handshakeAcknowledge(AuthRoleInfo authInfo, SystemSettings settings,
 			String requestIdentifier) {
@@ -321,12 +323,12 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		if ( filterResults.getReturnedResultCount() < 1 ) {
 			throw new AuthorizationException(Reason.ACCESS_DENIED, authInfo);
 		}
-		BaseOscpExternalSystemConfiguration<?> conf = stream(filterResults.spliterator(), false)
-				.findFirst().orElse(null);
+		BaseOscpExternalSystemConfiguration<?> conf = AuthorizationException.requireNonNullObject(
+				stream(filterResults.spliterator(), false).findFirst().orElse(null), requestIdentifier);
 		dao.saveSettings(conf.getId(), settings);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void heartbeat(AuthRoleInfo authInfo, Instant expiresDate) {
 		OscpRole systemRole = verifyRole(authInfo, EnumSet.of(CapacityProvider, CapacityOptimizer));
@@ -348,7 +350,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
 			String forecastIdentifier, CapacityForecast forecast) {
@@ -375,7 +377,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		executor.execute(task);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void adjustGroupCapacityForecast(AuthRoleInfo authInfo, String groupIdentifier,
 			String requestIdentifier, CapacityForecast forecast) {
@@ -405,7 +407,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		executor.execute(task);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void groupCapacityComplianceError(AuthRoleInfo authInfo, String groupIdentifier,
 			String forecastIdentifier, String message, List<TimeBlockAmount> blocks) {
@@ -507,7 +509,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		 *        the datum supplier
 		 * @param sourceIdParameters
 		 *        additional source ID template parameters
-		 * @returns the published event, or {@literal null} if not published
+		 * @return the published event, or {@literal null} if not published
 		 */
 		protected DatumPublishEvent publish(String action, String sourceIdSuffix,
 				BaseOscpExternalSystemConfiguration<?> src, BaseOscpExternalSystemConfiguration<?> dest,
@@ -697,9 +699,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 						evt.sourceId() + "/".concat(forecast.type().getAlias()));
 				pubParams.put(ExternalSystemServiceProperties.EXTRA_HTTP_HEADERS, pubHeaders);
 
-				ctx = new SystemTaskContext<CapacityOptimizerConfiguration>(ctx.name(), ctx.role(),
-						ctx.config(), ctx.errorEventTags(), ctx.successEventTags(), ctx.dao(),
-						pubParams);
+				ctx = new SystemTaskContext<>(ctx.name(), ctx.role(), ctx.config(), ctx.errorEventTags(),
+						ctx.successEventTags(), ctx.dao(), pubParams);
 			}
 
 			return ctx;

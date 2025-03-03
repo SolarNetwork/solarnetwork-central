@@ -31,8 +31,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryEntity;
@@ -58,7 +59,7 @@ public class JdbcDatumAuxiliaryEntityDao_GenericDaoTests extends BaseDatumJdbcTe
 
 	protected DatumAuxiliaryEntity lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumAuxiliaryEntityDao(jdbcTemplate);
 	}

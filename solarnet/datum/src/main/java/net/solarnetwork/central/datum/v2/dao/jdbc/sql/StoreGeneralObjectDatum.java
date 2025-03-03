@@ -42,7 +42,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * @author matt
  * @version 1.0
  */
-public class StoreGeneralObjectDatum implements CallableStatementCreator, SqlProvider {
+public final class StoreGeneralObjectDatum implements CallableStatementCreator, SqlProvider {
 
 	/** The SQL to store node datum. */
 	public static final String STORE_NODE_DATUM_SQL = "{? = call solardatm.store_datum(?,?,?,?,?)}";

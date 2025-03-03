@@ -1,21 +1,21 @@
 /* ==================================================================
- * AuditingStreamDatumFilterdResultsProcessor.java - 2/05/2022 7:03:16 am
- * 
+ * AuditingStreamDatumFilteredResultsProcessor.java - 2/05/2022 7:03:16 am
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -44,18 +44,18 @@ import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * {@link StreamDatumFilteredResultsProcessor} that audits the filtered results.
- * 
+ *
  * <p>
  * <b>Note</b> this class extends {@link AbstractMap} only as an optimization to
  * reduce the amount of garbage generated while auditing results. This class is
  * not meant to be used as a {@link Map} outside its own implementation.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.2
  */
-public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<GeneralNodeDatumPK, Integer>
+public class AuditingStreamDatumFilteredResultsProcessor extends AbstractMap<GeneralNodeDatumPK, Integer>
 		implements StreamDatumFilteredResultsProcessor, Entry<GeneralNodeDatumPK, Integer> {
 
 	private final StreamDatumFilteredResultsProcessor delegate;
@@ -71,7 +71,7 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param delegate
 	 *        the delegate
 	 * @param auditor
@@ -79,18 +79,18 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public AuditingStreamDatumFilterdResultsProcessor(StreamDatumFilteredResultsProcessor delegate,
+	public AuditingStreamDatumFilteredResultsProcessor(StreamDatumFilteredResultsProcessor delegate,
 			QueryAuditor auditor) {
 		super();
 		this.delegate = requireNonNullArgument(delegate, "delegate");
 		this.auditor = requireNonNullArgument(auditor, "auditor");
 		this.auditDatumKeys = new HashMap<>(16);
 		this.auditDate = Instant.now(auditor.getAuditClock());
-		this.keySet = new AbstractSet<Map.Entry<GeneralNodeDatumPK, Integer>>() {
+		this.keySet = new AbstractSet<>() {
 
 			@Override
 			public Iterator<Entry<GeneralNodeDatumPK, Integer>> iterator() {
-				return new Iterator<Map.Entry<GeneralNodeDatumPK, Integer>>() {
+				return new Iterator<>() {
 
 					private boolean hasNext = true;
 
@@ -102,7 +102,7 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 					@Override
 					public Entry<GeneralNodeDatumPK, Integer> next() {
 						hasNext = false;
-						return AuditingStreamDatumFilterdResultsProcessor.this;
+						return AuditingStreamDatumFilteredResultsProcessor.this;
 					}
 				};
 			}
@@ -145,9 +145,8 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 		if ( metadataProvider != null && d != null && d.getStreamId() != null ) {
 			ObjectDatumStreamMetadata meta = metadataProvider.metadataForStreamId(d.getStreamId());
 			if ( meta != null && meta.getKind() == ObjectDatumKind.Node ) {
-				currentKey = auditDatumKeys.computeIfAbsent(d.getStreamId(), k -> {
-					return new GeneralNodeDatumPK(meta.getObjectId(), auditDate, meta.getSourceId());
-				});
+				currentKey = auditDatumKeys.computeIfAbsent(d.getStreamId(),
+						k -> new GeneralNodeDatumPK(meta.getObjectId(), auditDate, meta.getSourceId()));
 				auditor.addNodeDatumAuditResults(this);
 			}
 		}
@@ -170,7 +169,7 @@ public class AuditingStreamDatumFilterdResultsProcessor extends AbstractMap<Gene
 
 	@Override
 	public Integer getValue() {
-		return Integer.valueOf(1);
+		return 1;
 	}
 
 	@Override

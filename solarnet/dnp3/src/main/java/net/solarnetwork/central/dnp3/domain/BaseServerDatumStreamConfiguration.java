@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseServerDatumStreamConfiguration.java - 12/08/2023 7:04:24 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.dnp3.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
@@ -32,17 +33,18 @@ import net.solarnetwork.domain.CodedValue;
 
 /**
  * Base entity for datum stream related configuration.
- * 
+ *
  * @param <C>
- *        the configuration type
+ * 		the configuration type
  * @param <T>
- *        the type type
+ * 		the enum type
  * @author matt
  * @version 1.0
  */
 public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDatumStreamConfiguration<C, T>, T extends Enum<? extends CodedValue>>
 		extends BaseUserModifiableEntity<C, UserLongIntegerCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = 659642643824344175L;
 
 	private Long nodeId;
@@ -55,13 +57,13 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
-	 *        the ID
+	 * 		the ID
 	 * @param created
-	 *        the creation date
+	 * 		the creation date
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 * 		if any argument is {@literal null}
 	 */
 	public BaseServerDatumStreamConfiguration(UserLongIntegerCompositePK id, Instant created) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
@@ -81,16 +83,14 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Test if this entity has the same property values as another.
-	 * 
+	 *
 	 * <p>
-	 * The {@code id}, {@code created}, and {@code modified} properties are not
-	 * compared.
+	 * The {@code id}, {@code created}, and {@code modified} properties are not compared.
 	 * </p>
-	 * 
+	 *
 	 * @param other
-	 *        the entity to compare to
-	 * @return {@literal true} if the properties of this entity are equal to the
-	 *         other's
+	 * 		the entity to compare to
+	 * @return {@literal true} if the properties of this entity are equal to the other's
 	 */
 	@Override
 	public boolean isSameAs(C other) {
@@ -112,12 +112,11 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Test if this configuration is valid.
-	 * 
+	 *
 	 * <p>
-	 * This only checks the existence and non-blankness of the fields necessary
-	 * to configure in DNP3.
+	 * This only checks the existence and non-blankness of the fields necessary to configure in DNP3.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if the configuration is valid
 	 */
 	public boolean isValid() {
@@ -125,8 +124,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 		final String sourceId = getSourceId();
 		final String property = getProperty();
 		final T type = getType();
-		return (nodeId != null && sourceId != null && property != null && type != null
-				&& !sourceId.isBlank() && !property.isBlank());
+		return (nodeId != null && sourceId != null && property != null && type != null && !sourceId.isBlank() && !property.isBlank());
 	}
 
 	@Override
@@ -192,7 +190,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the server ID.
-	 * 
+	 *
 	 * @return the server ID
 	 */
 	public Long getServerId() {
@@ -202,7 +200,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the index.
-	 * 
+	 *
 	 * @return the index
 	 */
 	public Integer getIndex() {
@@ -212,7 +210,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the datum node ID.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
@@ -221,9 +219,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the datum node ID.
-	 * 
+	 *
 	 * @param nodeId
-	 *        the nodeId to set
+	 * 		the nodeId to set
 	 */
 	public void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
@@ -231,7 +229,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the datum source ID.
-	 * 
+	 *
 	 * @return the sourceId
 	 */
 	public String getSourceId() {
@@ -240,9 +238,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the datum source ID.
-	 * 
+	 *
 	 * @param sourceId
-	 *        the sourceId to set
+	 * 		the sourceId to set
 	 */
 	public void setSourceId(String sourceId) {
 		this.sourceId = sourceId;
@@ -250,7 +248,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the datum property name.
-	 * 
+	 *
 	 * @return the property
 	 */
 	public String getProperty() {
@@ -259,9 +257,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the datum property name.
-	 * 
+	 *
 	 * @param property
-	 *        the property to set
+	 * 		the property to set
 	 */
 	public void setProperty(String property) {
 		this.property = property;
@@ -269,7 +267,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public T getType() {
@@ -278,9 +276,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the type.
-	 * 
+	 *
 	 * @param type
-	 *        the type to set
+	 * 		the type to set
 	 */
 	public void setType(T type) {
 		this.type = type;
@@ -288,7 +286,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the decimal multiplier.
-	 * 
+	 *
 	 * @return the multiplier
 	 */
 	public BigDecimal getMultiplier() {
@@ -297,9 +295,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the decimal multiplier.
-	 * 
+	 *
 	 * @param multiplier
-	 *        the multiplier to set
+	 * 		the multiplier to set
 	 */
 	public void setMultiplier(BigDecimal multiplier) {
 		this.multiplier = multiplier;
@@ -307,7 +305,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the decimal offset.
-	 * 
+	 *
 	 * @return the offset
 	 */
 	public BigDecimal getOffset() {
@@ -316,9 +314,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the decimal offset.
-	 * 
+	 *
 	 * @param offset
-	 *        the offset to set
+	 * 		the offset to set
 	 */
 	public void setOffset(BigDecimal offset) {
 		this.offset = offset;
@@ -326,7 +324,7 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Get the decimal scale
-	 * 
+	 *
 	 * @return the scale
 	 */
 	public Integer getScale() {
@@ -335,9 +333,9 @@ public abstract class BaseServerDatumStreamConfiguration<C extends BaseServerDat
 
 	/**
 	 * Set the decimal scale.
-	 * 
+	 *
 	 * @param scale
-	 *        the scale to set
+	 * 		the scale to set
 	 */
 	public void setScale(Integer scale) {
 		this.scale = scale;

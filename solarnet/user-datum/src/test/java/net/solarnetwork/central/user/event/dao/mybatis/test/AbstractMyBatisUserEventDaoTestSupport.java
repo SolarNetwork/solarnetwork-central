@@ -89,7 +89,7 @@ public abstract class AbstractMyBatisUserEventDaoTestSupport extends AbstractCen
 		newUser.setName(email);
 		newUser.setPassword(UUID.randomUUID().toString());
 		newUser.setEnabled(Boolean.TRUE);
-		Long id = userDao.store(newUser);
+		Long id = userDao.save(newUser);
 		assertThat("User ID returned", id, notNullValue());
 		return id;
 	}
@@ -104,7 +104,7 @@ public abstract class AbstractMyBatisUserEventDaoTestSupport extends AbstractCen
 	 */
 	protected void setupUserNode(Long userId, Long nodeId) {
 		UserNode un = new UserNode(userDao.get(userId), new SolarNode(nodeId, TEST_LOC_ID));
-		userNodeDao.store(un);
+		userNodeDao.save(un);
 	}
 
 	public SqlSessionFactory getSqlSessionFactory() {

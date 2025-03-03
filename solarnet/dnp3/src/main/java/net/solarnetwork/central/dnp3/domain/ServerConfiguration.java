@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.dnp3.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -40,6 +41,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 public class ServerConfiguration
 		extends BaseUserModifiableEntity<ServerConfiguration, UserLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = 1355493183891139157L;
 
 	private String name;

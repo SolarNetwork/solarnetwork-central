@@ -23,7 +23,7 @@
 package net.solarnetwork.central.user.expire.jobs;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.util.List;
+import java.util.Collection;
 import net.solarnetwork.central.scheduler.JobSupport;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
@@ -32,7 +32,7 @@ import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
  * Job to delete datum for user defined expire policies.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class ExpireDatumJob extends JobSupport {
 
@@ -54,7 +54,7 @@ public class ExpireDatumJob extends JobSupport {
 
 	@Override
 	public void run() {
-		List<ExpireUserDataConfiguration> configs = configDao.getAll(null);
+		Collection<ExpireUserDataConfiguration> configs = configDao.getAll(null);
 		if ( configs == null ) {
 			return;
 		}

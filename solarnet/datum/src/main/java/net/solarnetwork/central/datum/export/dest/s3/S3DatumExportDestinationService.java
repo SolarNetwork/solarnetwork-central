@@ -211,8 +211,7 @@ public class S3DatumExportDestinationService extends BaseDatumExportDestinationS
 		}
 		String accessKey = props.getAccessKey();
 		String secretKey = props.getSecretKey();
-		if ( accessKey != null && accessKey.length() > 0 && secretKey != null
-				&& secretKey.length() > 0 ) {
+		if ( accessKey != null && !accessKey.isEmpty() && secretKey != null && !secretKey.isEmpty() ) {
 			builder = builder.credentialsProvider(
 					StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
 		}

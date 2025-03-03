@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -60,14 +60,14 @@ import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
 import net.solarnetwork.domain.NetworkAssociation;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.CertificateException;
-import net.solarnetwork.web.jakarta.domain.Response;
 
 /**
  * Controller for "my nodes".
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/my-nodes")
@@ -125,7 +125,7 @@ public class MyNodesController extends ControllerSupport {
 
 	@ModelAttribute("nodeDataAlertTypes")
 	public List<UserAlertType> nodeDataAlertTypes() {
-		// now now, only one alert type!
+		// now, only one alert type!
 		return Collections.singletonList(UserAlertType.NodeStaleData);
 	}
 
@@ -145,7 +145,7 @@ public class MyNodesController extends ControllerSupport {
 		List<UserNode> nodes = userBiz.getUserNodes(SecurityUtils.getCurrentUser().getUserId());
 
 		// move any nodes with pending transfer into own list
-		List<UserNode> pendingTransferNodes = new ArrayList<UserNode>(nodes == null ? 0 : nodes.size());
+		List<UserNode> pendingTransferNodes = new ArrayList<>(nodes == null ? 0 : nodes.size());
 		if ( nodes != null ) {
 			for ( Iterator<UserNode> itr = nodes.iterator(); itr.hasNext(); ) {
 				UserNode node = itr.next();
@@ -241,9 +241,9 @@ public class MyNodesController extends ControllerSupport {
 
 	@ResponseBody
 	@RequestMapping(value = "/node", method = RequestMethod.GET)
-	public Response<UserNode> getUserNode(@RequestParam("userId") Long userId,
+	public Result<UserNode> getUserNode(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId) {
-		return response(userBiz.getUserNode(userId, nodeId));
+		return success(userBiz.getUserNode(userId, nodeId));
 	}
 
 	@ResponseBody
@@ -269,7 +269,7 @@ public class MyNodesController extends ControllerSupport {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/requestNodeTransfer", method = RequestMethod.POST)
-	public Response<Boolean> requestNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+	public Result<Boolean> requestNodeOwnershipTransfer(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("recipient") String email, Locale locale,
 			UriComponentsBuilder uriBuilder) {
 		nodeOwnershipBiz.requestNodeOwnershipTransfer(userId, nodeId, email);
@@ -279,7 +279,7 @@ public class MyNodesController extends ControllerSupport {
 
 				uriBuilder.pathSegment("u", "sec", "my-nodes");
 
-				Map<String, Object> mailModel = new HashMap<String, Object>(2);
+				Map<String, Object> mailModel = new HashMap<>(2);
 				mailModel.put("actor", actor);
 				mailModel.put("recipient", email);
 				mailModel.put("nodeId", nodeId);
@@ -296,12 +296,12 @@ public class MyNodesController extends ControllerSupport {
 						e.getMessage(), e);
 			}
 		}
-		return response(Boolean.TRUE);
+		return success(Boolean.TRUE);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/cancelNodeTransferRequest", method = RequestMethod.POST)
-	public Response<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+	public Result<Boolean> cancelNodeOwnershipTransfer(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId, Locale locale) {
 		UserNodeTransfer xfer = nodeOwnershipBiz.getNodeOwnershipTransfer(userId, nodeId);
 		if ( xfer != null ) {
@@ -311,7 +311,7 @@ public class MyNodesController extends ControllerSupport {
 				try {
 					User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
 
-					Map<String, Object> mailModel = new HashMap<String, Object>(2);
+					Map<String, Object> mailModel = new HashMap<>(2);
 					mailModel.put("actor", actor);
 					mailModel.put("transfer", xfer);
 
@@ -329,12 +329,12 @@ public class MyNodesController extends ControllerSupport {
 				}
 			}
 		}
-		return response(Boolean.TRUE);
+		return success(Boolean.TRUE);
 	}
 
 	@ResponseBody
 	@RequestMapping(value = "/confirmNodeTransferRequest", method = RequestMethod.POST)
-	public Response<Boolean> confirmNodeOwnershipTransfer(@RequestParam("userId") Long userId,
+	public Result<Boolean> confirmNodeOwnershipTransfer(@RequestParam("userId") Long userId,
 			@RequestParam("nodeId") Long nodeId, @RequestParam("accept") boolean accept, Locale locale) {
 		UserNodeTransfer xfer = nodeOwnershipBiz.confirmNodeOwnershipTransfer(userId, nodeId, accept);
 		if ( xfer != null ) {
@@ -343,7 +343,7 @@ public class MyNodesController extends ControllerSupport {
 				try {
 					User actor = userBiz.getUser(SecurityUtils.getCurrentActorUserId());
 
-					Map<String, Object> mailModel = new HashMap<String, Object>(2);
+					Map<String, Object> mailModel = new HashMap<>(2);
 					mailModel.put("actor", actor);
 					mailModel.put("transfer", xfer);
 
@@ -364,7 +364,7 @@ public class MyNodesController extends ControllerSupport {
 				}
 			}
 		}
-		return response(Boolean.TRUE);
+		return success(Boolean.TRUE);
 	}
 
 }

@@ -1,21 +1,21 @@
 /* ==================================================================
  * AggregateUpdatedEventInfo.java - 4/06/2020 8:42:04 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -33,9 +33,8 @@ import net.solarnetwork.domain.datum.Aggregation;
 /**
  * {@link DatumAppEvent} properties object for {@link DatumAppEvent} aggregate
  * updates.
- * 
+ *
  * @author matt
- * 
  * @version 1.1
  */
 @JsonPropertyOrder({ "aggregationKey", "timestamp" })
@@ -44,7 +43,7 @@ public class AggregateUpdatedEventInfo {
 	/**
 	 * A {@link DatumAppEvent} topic for when a datum aggregate has been
 	 * updated.
-	 * 
+	 *
 	 * <p>
 	 * The event properties shall be the same as those produced by serializing
 	 * this class as a JSON object.
@@ -64,7 +63,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation
 	 * @param timeStart
@@ -78,7 +77,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Get this object as an event property map.
-	 * 
+	 *
 	 * @return the event property map, never {@literal null}
 	 */
 	public Map<String, Object> toEventProperties() {
@@ -98,16 +97,15 @@ public class AggregateUpdatedEventInfo {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof AggregateUpdatedEventInfo) ) {
+		if ( !(obj instanceof AggregateUpdatedEventInfo other) ) {
 			return false;
 		}
-		AggregateUpdatedEventInfo other = (AggregateUpdatedEventInfo) obj;
 		return aggregation == other.aggregation && Objects.equals(timeStart, other.timeStart);
 	}
 
 	/**
 	 * Get the aggregation.
-	 * 
+	 *
 	 * @return the aggregation
 	 */
 	@JsonIgnore
@@ -117,7 +115,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Set the aggregation.
-	 * 
+	 *
 	 * @param aggregation
 	 *        the aggregation to set
 	 */
@@ -127,7 +125,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Get the aggregation key value.
-	 * 
+	 *
 	 * @return the aggregation key, never {@literal null}
 	 */
 	public String getAggregationKey() {
@@ -137,7 +135,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Set the aggregation key value.
-	 * 
+	 *
 	 * @param key
 	 *        the aggregation key to set
 	 */
@@ -153,7 +151,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Get the aggregate time window starting instant.
-	 * 
+	 *
 	 * @return the time
 	 */
 	@JsonIgnore
@@ -163,7 +161,7 @@ public class AggregateUpdatedEventInfo {
 
 	/**
 	 * Set the aggregate time window starting instant.
-	 * 
+	 *
 	 * @param timeStart
 	 *        the time to set
 	 */
@@ -174,7 +172,7 @@ public class AggregateUpdatedEventInfo {
 	/**
 	 * Get the aggregate time window starting instant as milliseconds since the
 	 * epoch.
-	 * 
+	 *
 	 * @return the time
 	 */
 	public long getTimestamp() {
@@ -185,7 +183,7 @@ public class AggregateUpdatedEventInfo {
 	/**
 	 * Set the aggregate time window starting instant as milliseconds since the
 	 * epoch.
-	 * 
+	 *
 	 * @param ts
 	 *        the time
 	 */

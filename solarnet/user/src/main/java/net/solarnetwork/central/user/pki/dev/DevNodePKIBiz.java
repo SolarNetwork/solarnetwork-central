@@ -1,21 +1,21 @@
 /* ==================================================================
  * DevNodePKIBiz.java - Jan 23, 2015 5:31:54 PM
- * 
+ *
  * Copyright 2007-2015 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -59,7 +60,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Developer implementation of {@link NodePKIBiz}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -81,7 +82,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 
 	/**
 	 * Initialize this service after all properties are configured.
-	 * 
+	 *
 	 * <p>
 	 * This method will generate a new certification authority (CA) certificate
 	 * if one does not already exist in the configured {@code baseDir}
@@ -90,7 +91,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 	 * be configured with your development webserver to support SolarIn
 	 * development.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Also, if a new CA certificate is generated, a {@code central-trust.jks}
 	 * keystore will be created with a password {@code dev123} that contains
@@ -237,7 +238,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		}
 		final File csrFile = new File(csrDir, csrID);
 		try {
-			FileCopyUtils.copy(csr.getBytes("US-ASCII"), csrFile);
+			FileCopyUtils.copy(csr.getBytes(StandardCharsets.US_ASCII), csrFile);
 		} catch ( UnsupportedEncodingException e ) {
 			throw new CertificateException("Error saving CSR: " + e.getMessage());
 		} catch ( IOException e ) {
@@ -258,7 +259,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		}
 		final File csrFile = new File(csrDir, csrID);
 		try {
-			FileCopyUtils.copy(csr.getBytes("US-ASCII"), csrFile);
+			FileCopyUtils.copy(csr.getBytes(StandardCharsets.US_ASCII), csrFile);
 		} catch ( UnsupportedEncodingException e ) {
 			throw new CertificateException("Error saving CSR: " + e.getMessage());
 		} catch ( IOException e ) {
@@ -276,7 +277,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		}
 		String csr;
 		try {
-			csr = new String(FileCopyUtils.copyToByteArray(csrFile), "US-ASCII");
+			csr = new String(FileCopyUtils.copyToByteArray(csrFile), StandardCharsets.US_ASCII);
 		} catch ( UnsupportedEncodingException e ) {
 			throw new CertificateException("Error reading CSR: " + e.getMessage());
 		} catch ( IOException e ) {
@@ -329,11 +330,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 	private PrivateKey getPrivateKey(KeyStore keyStore, String alias) {
 		try {
 			return (PrivateKey) keyStore.getKey(alias, getKeyStorePassword().toCharArray());
-		} catch ( UnrecoverableKeyException e ) {
-			throw new CertificateException("Error opening node certificate", e);
-		} catch ( KeyStoreException e ) {
-			throw new CertificateException("Error opening node certificate", e);
-		} catch ( NoSuchAlgorithmException e ) {
+		} catch ( UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException e ) {
 			throw new CertificateException("Error opening node certificate", e);
 		}
 	}
@@ -346,15 +343,13 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 			PublicKey publicKey = keypair.getPublic();
 			PrivateKey privateKey = keypair.getPrivate();
 
-			Certificate cert = caService.generateCertificationAuthorityCertificate(dn, publicKey,
+			X509Certificate cert = caService.generateCertificationAuthorityCertificate(dn, publicKey,
 					privateKey);
 			keyStore.setKeyEntry(alias, privateKey, getKeyStorePassword().toCharArray(),
 					new Certificate[] { cert });
 			saveKeyStore(keyStore);
-			return (X509Certificate) cert;
-		} catch ( NoSuchAlgorithmException e ) {
-			throw new CertificateException("Error setting up node key pair", e);
-		} catch ( KeyStoreException e ) {
+			return cert;
+		} catch ( NoSuchAlgorithmException | KeyStoreException e ) {
 			throw new CertificateException("Error setting up node key pair", e);
 		}
 	}
@@ -363,7 +358,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		File pwFile = new File(baseDir, PASSWORD_FILE);
 		if ( pwFile.canRead() ) {
 			try {
-				return new String(FileCopyUtils.copyToByteArray(pwFile), "US-ASCII");
+				return new String(FileCopyUtils.copyToByteArray(pwFile), StandardCharsets.US_ASCII);
 			} catch ( UnsupportedEncodingException e ) {
 				throw new CertificateException(
 						"Error decoding keystore secret file " + pwFile.getAbsolutePath(), e);
@@ -409,7 +404,7 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		if ( password == null ) {
 			password = "";
 		}
-		KeyStore keyStore = null;
+		KeyStore keyStore;
 		try {
 			keyStore = KeyStore.getInstance(type);
 			keyStore.load(in, password.toCharArray());
@@ -444,29 +439,12 @@ public class DevNodePKIBiz implements NodePKIBiz, ServiceLifecycleObserver {
 		if ( !ksDir.isDirectory() && !ksDir.mkdirs() ) {
 			throw new RuntimeException("Unable to create KeyStore directory: " + ksFile.getParent());
 		}
-		OutputStream out = null;
-		try {
+		try (OutputStream out = new BufferedOutputStream(new FileOutputStream(ksFile))) {
 			String passwd = getKeyStorePassword();
-			out = new BufferedOutputStream(new FileOutputStream(ksFile));
 			keyStore.store(out, passwd.toCharArray());
-		} catch ( KeyStoreException e ) {
+		} catch ( KeyStoreException | IOException | java.security.cert.CertificateException
+				| NoSuchAlgorithmException e ) {
 			throw new CertificateException("Error saving certificate key store", e);
-		} catch ( NoSuchAlgorithmException e ) {
-			throw new CertificateException("Error saving certificate key store", e);
-		} catch ( java.security.cert.CertificateException e ) {
-			throw new CertificateException("Error saving certificate key store", e);
-		} catch ( IOException e ) {
-			throw new CertificateException("Error saving certificate key store", e);
-		} finally {
-			if ( out != null ) {
-				try {
-					out.flush();
-					out.close();
-				} catch ( IOException e ) {
-					throw new CertificateException("Error closing KeyStore file: " + ksFile.getPath(),
-							e);
-				}
-			}
 		}
 	}
 

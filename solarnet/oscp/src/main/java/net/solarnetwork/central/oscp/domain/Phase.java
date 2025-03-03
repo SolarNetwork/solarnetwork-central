@@ -48,9 +48,7 @@ public enum Phase implements CodedValue {
 	C('c'),
 
 	/** Represents the sum of all phases (1, 2, and 3). */
-	All('z')
-
-	;
+	All('z');
 
 	private final char code;
 
@@ -130,7 +128,7 @@ public enum Phase implements CodedValue {
 	 */
 	@JsonCreator
 	public static Phase fromValue(String value) {
-		if ( value != null && value.length() > 0 ) {
+		if ( value != null && !value.isEmpty() ) {
 			final boolean coded = (value.length() == 1);
 			final char code = value.charAt(0);
 			for ( Phase e : Phase.values() ) {

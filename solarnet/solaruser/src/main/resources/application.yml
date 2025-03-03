@@ -11,6 +11,11 @@ app:
   cache.persistence.path: "var/cache"
   c2c:
     cache:
+      integration-locks:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
       egague-device-registers:
         ttl: 3600
         heap-max-entries: 1000
@@ -231,6 +236,7 @@ app:
     delete:
       completed-task-minimum-cache-time: 14400000
       delete-batch-days: 7
+      delete-datum-by-id-max-count: 100
       parallelism: 1
   user.reg:
     biz:
@@ -261,6 +267,11 @@ logging:
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
 
 management:
+  endpoint:
+    health:
+      cache.time-to-live: "59s"
+      show-details: "when_authorized"
+      roles: "ROLE_OPS"
   endpoints:
     web:
       base-path: "/ops"

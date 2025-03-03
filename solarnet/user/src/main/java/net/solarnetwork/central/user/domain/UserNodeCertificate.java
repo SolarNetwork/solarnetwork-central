@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserNodeCertificate.java - Nov 29, 2012 8:19:09 PM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.domain;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -34,21 +35,22 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.SerializeIgnore;
 import net.solarnetwork.service.CertificateException;
 
 /**
  * A user node certificate. The certificate is expected to be in X.509 format.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class UserNodeCertificate
 		implements Entity<UserNodePK>, Cloneable, Serializable, UserRelatedEntity<UserNodePK> {
 
+	@Serial
 	private static final long serialVersionUID = 3070315335910395052L;
 
 	/** The expected format of the keystore data. */
@@ -69,7 +71,7 @@ public class UserNodeCertificate
 	/**
 	 * Get the node certificate from a keystore. The certificate is expected to
 	 * be available on the {@link #KEYSTORE_NODE_ALIAS} alias.
-	 * 
+	 *
 	 * @param keyStore
 	 *        the keystore
 	 * @return the certificate, or <em>null</em> if not available
@@ -85,9 +87,9 @@ public class UserNodeCertificate
 	}
 
 	/**
-	 * Get the node certificate chain from a keystoer. The certificate is
+	 * Get the node certificate chain from a keystore. The certificate is
 	 * expected to be available on the {@link #KEYSTORE_NODE_ALIAS} alias.
-	 * 
+	 *
 	 * @param keyStore
 	 *        the keystore
 	 * @return the certificate chain, or <em>null</em> if not available
@@ -112,13 +114,13 @@ public class UserNodeCertificate
 
 	/**
 	 * Open the key store from {@link #getKeystoreData()}.
-	 * 
+	 *
 	 * @param password
 	 *        the password to use to open, or <em>null</em> for no password
 	 * @return the KeyStore
 	 */
 	public KeyStore getKeyStore(String password) {
-		KeyStore keyStore = null;
+		KeyStore keyStore;
 		InputStream in = null;
 		if ( keystoreData != null ) {
 			in = new ByteArrayInputStream(keystoreData);
@@ -127,11 +129,8 @@ public class UserNodeCertificate
 			keyStore = KeyStore.getInstance(KEYSTORE_TYPE);
 			keyStore.load(in, (password == null ? null : password.toCharArray()));
 			return keyStore;
-		} catch ( KeyStoreException e ) {
-			throw new CertificateException("Error loading certificate key store", e);
-		} catch ( NoSuchAlgorithmException e ) {
-			throw new CertificateException("Error loading certificate key store", e);
-		} catch ( java.security.cert.CertificateException e ) {
+		} catch ( KeyStoreException | NoSuchAlgorithmException
+				| java.security.cert.CertificateException e ) {
 			throw new CertificateException("Error loading certificate key store", e);
 		} catch ( IOException e ) {
 			String msg;
@@ -154,7 +153,7 @@ public class UserNodeCertificate
 
 	/**
 	 * Convenience getter for {@link UserNodePK#getNodeId()}.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
@@ -163,7 +162,7 @@ public class UserNodeCertificate
 
 	/**
 	 * Convenience setter for {@link UserNodePK#setNodeId(Long)}.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
@@ -176,7 +175,7 @@ public class UserNodeCertificate
 
 	/**
 	 * Convenience getter for {@link UserNodePK#getUserId()}.
-	 * 
+	 *
 	 * @return the userId
 	 */
 	@Override
@@ -186,7 +185,7 @@ public class UserNodeCertificate
 
 	/**
 	 * Convenience setter for {@link UserNodePK#setUserId(Long)}.
-	 * 
+	 *
 	 * @param userId
 	 *        the userId to set
 	 */
@@ -214,9 +213,9 @@ public class UserNodeCertificate
 	}
 
 	@Override
-	protected Object clone() {
+	public UserNodeCertificate clone() {
 		try {
-			return super.clone();
+			return (UserNodeCertificate) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// should not get here
 			return null;
@@ -236,21 +235,14 @@ public class UserNodeCertificate
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		UserNodeCertificate other = (UserNodeCertificate) obj;
 		if ( id == null ) {
-			if ( other.id != null ) {
-				return false;
-			}
-		} else if ( !id.equals(other.id) ) {
-			return false;
+			return other.id == null;
 		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	@Override
@@ -299,7 +291,7 @@ public class UserNodeCertificate
 	/**
 	 * Get an external certificate request ID, to be used when a certificate
 	 * status is pending.
-	 * 
+	 *
 	 * @return the request ID
 	 * @since 1.1
 	 */

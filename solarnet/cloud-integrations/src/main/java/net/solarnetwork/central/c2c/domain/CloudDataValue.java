@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -42,8 +43,9 @@ import net.solarnetwork.util.StringUtils;
  * @version 1.4
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
-public class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
+public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
 
+	@Serial
 	private static final long serialVersionUID = 782616385882360558L;
 
 	/** Standard metadata key for a street address. */
@@ -316,7 +318,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	public int compareTo(CloudDataValue o) {
 		final int lenLeft = identifiers.size();
 		final int lenRight = o.identifiers.size();
-		for ( int i = 0, len = Math.min(lenRight, lenRight); i < len; i++ ) {
+		for ( int i = 0, len = Math.min(lenLeft, lenRight); i < len; i++ ) {
 			int result = StringUtils.naturalSortCompare(identifiers.get(i), o.identifiers.get(i), true);
 			if ( result != 0 ) {
 				return result;
@@ -336,7 +338,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 * @return the identifiers, unique within the overall hierarchy, never
 	 *         {@literal null}
 	 */
-	public final List<String> getIdentifiers() {
+	public List<String> getIdentifiers() {
 		return identifiers;
 	}
 
@@ -345,7 +347,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 *
 	 * @return the name, never {@literal null}
 	 */
-	public final String getName() {
+	public String getName() {
 		return name;
 	}
 
@@ -354,7 +356,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 *
 	 * @return the reference, or {@literal null}
 	 */
-	public final String getReference() {
+	public String getReference() {
 		return reference;
 	}
 
@@ -363,7 +365,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 *
 	 * @return the metadata, or {@literal null}
 	 */
-	public final Map<String, ?> getMetadata() {
+	public Map<String, ?> getMetadata() {
 		return metadata;
 	}
 
@@ -372,7 +374,7 @@ public class CloudDataValue implements Serializable, Comparable<CloudDataValue> 
 	 *
 	 * @return the children
 	 */
-	public final Collection<CloudDataValue> getChildren() {
+	public Collection<CloudDataValue> getChildren() {
 		return children;
 	}
 

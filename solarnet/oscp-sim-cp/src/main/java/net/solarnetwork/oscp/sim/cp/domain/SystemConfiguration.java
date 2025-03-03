@@ -1,27 +1,28 @@
 /* ==================================================================
  * SystemConfiguration.java - 23/08/2022 11:58:07 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.oscp.sim.cp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,13 +35,14 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A system configuration entity.
- * 
+ *
  * @author matt
  * @version 1.0
  */
 public class SystemConfiguration extends BasicUuidEntity
 		implements Cloneable, CopyingIdentity<UUID, SystemConfiguration> {
 
+	@Serial
 	private static final long serialVersionUID = 7911753153368818260L;
 
 	private String inToken;
@@ -53,7 +55,7 @@ public class SystemConfiguration extends BasicUuidEntity
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -66,7 +68,7 @@ public class SystemConfiguration extends BasicUuidEntity
 
 	/**
 	 * Test if the heartbeat date is expired now.
-	 * 
+	 *
 	 * @return {@literal true} if {@code heartbeatSecs} is configured and
 	 *         {@code heartbeatDate} is {@literal null} or expired right now
 	 */
@@ -77,7 +79,7 @@ public class SystemConfiguration extends BasicUuidEntity
 
 	/**
 	 * Test if the heartbeat date is expired.
-	 * 
+	 *
 	 * @param at
 	 *        the date at which to test if the heartbeat has expired
 	 * @return {@literal true} if {@code heartbeatSecs} is configured and
@@ -99,7 +101,7 @@ public class SystemConfiguration extends BasicUuidEntity
 
 	/**
 	 * Test if the offline date is expired now.
-	 * 
+	 *
 	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and
 	 *         expired right now
 	 */
@@ -110,7 +112,7 @@ public class SystemConfiguration extends BasicUuidEntity
 
 	/**
 	 * Test if the offline date is expired.
-	 * 
+	 *
 	 * @param at
 	 *        the date at which to test if the offline date has expired
 	 * @return {@literal true} if {@code offlineDate} is not {@literal null} and

@@ -51,7 +51,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link CommonJdbcUtils} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CommonJdbcUtilsTests {
 
@@ -83,14 +83,14 @@ public class CommonJdbcUtilsTests {
 		replay(jdbcTemplate, sql, mapper, countSql);
 		BasicCoreCriteria filter = new BasicCoreCriteria();
 		filter.setMax(1);
-		filter.setOffset(1);
+		filter.setOffset(1L);
 		FilterResults<LocationRequest, Long> results = CommonJdbcUtils.executeFilterQuery(jdbcTemplate,
 				filter, sql, mapper);
 
 		// THEN
 		assertThat("Result returned", results, notNullValue());
 		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
-		assertThat("Result offset from criteria", results.getStartingOffset(), equalTo(1));
+		assertThat("Result offset from criteria", results.getStartingOffset(), equalTo(1L));
 		assertThat("Result total available with CountPreparedStatementCreatorProvider implementation",
 				results.getTotalResults(), equalTo(123L));
 		assertThat("Result results is data", results.getResults(), sameInstance(data));
@@ -113,14 +113,14 @@ public class CommonJdbcUtilsTests {
 		replay(jdbcTemplate, sql, mapper);
 		BasicCoreCriteria filter = new BasicCoreCriteria();
 		filter.setMax(1);
-		filter.setOffset(1);
+		filter.setOffset(1L);
 		FilterResults<LocationRequest, Long> results = CommonJdbcUtils.executeFilterQuery(jdbcTemplate,
 				filter, sql, mapper);
 
 		// THEN
 		assertThat("Result returned", results, notNullValue());
 		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
-		assertThat("Result offset from criteria", results.getStartingOffset(), equalTo(1));
+		assertThat("Result offset from criteria", results.getStartingOffset(), equalTo(1L));
 		assertThat(
 				"Result total not available without CountPreparedStatementCreatorProvider implementation",
 				results.getTotalResults(), nullValue());
@@ -150,7 +150,7 @@ public class CommonJdbcUtilsTests {
 		// THEN
 		assertThat("Result returned", results, notNullValue());
 		assertThat("Result count from data", results.getReturnedResultCount(), equalTo(data.size()));
-		assertThat("Result offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Result offset", results.getStartingOffset(), equalTo(0L));
 		assertThat("Result total not set given withoutTotalResultsCount", results.getTotalResults(),
 				nullValue());
 		assertThat("Result results is data", results.getResults(), sameInstance(data));

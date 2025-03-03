@@ -36,7 +36,7 @@ import net.solarnetwork.domain.Identity;
  * @param <F>
  *        the filter type
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 2.7
  */
 @FunctionalInterface
@@ -60,6 +60,6 @@ public interface FilterResultsFactory<M extends Identity<K>, K, F> {
 	 * @return the result instance
 	 */
 	FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps, Iterable<M> rows,
-			Long totalCount, Integer offset, Integer returnedCount);
+			Long totalCount, Long offset, Integer returnedCount);
 
 }

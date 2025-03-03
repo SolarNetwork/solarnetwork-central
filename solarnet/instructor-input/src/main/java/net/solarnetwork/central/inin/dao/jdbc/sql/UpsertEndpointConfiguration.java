@@ -42,7 +42,7 @@ import net.solarnetwork.central.inin.domain.EndpointConfiguration;
  * @author matt
  * @version 1.2
  */
-public class UpsertEndpointConfiguration implements PreparedStatementCreator, SqlProvider {
+public final class UpsertEndpointConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.inin_endpoint (

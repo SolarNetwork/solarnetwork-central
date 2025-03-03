@@ -36,7 +36,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Caching proxy for {@link TransformConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CachingTransformConfigurationDao
 		extends CachingGenericDao<TransformConfiguration, UserLongCompositePK, TransformConfigurationDao>
@@ -61,7 +61,7 @@ public class CachingTransformConfigurationDao
 
 	@Override
 	public FilterResults<TransformConfiguration, UserLongCompositePK> findFiltered(
-			TransformFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			TransformFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 

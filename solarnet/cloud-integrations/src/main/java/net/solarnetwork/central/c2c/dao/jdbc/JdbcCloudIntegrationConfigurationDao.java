@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudIntegrationConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationConfigurationDao {
 
@@ -95,7 +95,7 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 
 	@Override
 	public FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> findFiltered(
-			CloudIntegrationFilter filter, List<SortDescriptor> sorts, Integer offset, Integer max) {
+			CloudIntegrationFilter filter, List<SortDescriptor> sorts, Long offset, Integer max) {
 		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
 		var sql = new SelectCloudIntegrationConfiguration(filter);
 		return executeFilterQuery(jdbcOps, filter, sql, CloudIntegrationConfigurationRowMapper.INSTANCE);

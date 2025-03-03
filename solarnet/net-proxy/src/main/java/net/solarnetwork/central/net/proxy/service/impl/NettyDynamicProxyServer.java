@@ -40,12 +40,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collectors;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
@@ -206,17 +204,13 @@ public class NettyDynamicProxyServer
 				.childOption(ChannelOption.AUTO_READ, false);
 			for ( SocketAddress bindAddress : bindAddresses ) {
 				b.bind(bindAddress).sync()
-				.addListener((f) -> {
-					log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
-							Arrays.stream(tlsProtocols).collect(Collectors.joining(", ")));
-				})
-				.channel().closeFuture().addListener((f) -> {
-					log.info("Proxy server stopped on {}", bindAddress);
-				});
+				.addListener((f) -> log.info("Proxy server started on {} supporting TLS protocols [{}]", bindAddress,
+						String.join(", ",tlsProtocols)))
+				.channel().closeFuture().addListener((f) -> log.info("Proxy server stopped on {}", bindAddress));
 			}
 			// @formatter:on
 		} catch ( InterruptedException e ) {
-			log.warn("Proxy server ineterrupted: shutting down.");
+			log.warn("Proxy server interrupted: shutting down.");
 		} catch ( SSLException e ) {
 			log.error("Proxy server SSL error: {}", e.toString(), e);
 		}
@@ -279,8 +273,8 @@ public class NettyDynamicProxyServer
 				return null;
 			}
 			List<X509Certificate> result = new ArrayList<>(certs.length);
-			for ( int i = 0, len = certs.length; i < len; i++ ) {
-				X509Certificate cert = (X509Certificate) certs[i];
+			for ( Certificate certificate : certs ) {
+				X509Certificate cert = (X509Certificate) certificate;
 				// skip any self-signed (CA) certs
 				if ( !cert.getIssuerX500Principal().equals(cert.getSubjectX500Principal()) ) {
 					result.add(cert);

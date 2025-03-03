@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpUserEvents.java - 18/08/2022 4:27:28 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,7 +31,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Constants and helpers for OSCP user event handling.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -103,7 +103,7 @@ public interface OscpUserEvents {
 	/** A user event data key for an instruction ID. */
 	String INSTRUCTION_ID_DATA_KEY = "instructionId";
 
-	/** A user event data key for an correlation ID. */
+	/** A user event data key for a correlation ID. */
 	String CORRELATION_ID_DATA_KEY = "correlationId";
 
 	/** A user event data key for an OSCP capacity optimizer ID. */
@@ -117,7 +117,7 @@ public interface OscpUserEvents {
 
 	/**
 	 * Get a user log event for a configuration ID.
-	 * 
+	 *
 	 * @param configId
 	 *        the configuration ID
 	 * @param baseTags
@@ -137,7 +137,7 @@ public interface OscpUserEvents {
 
 	/**
 	 * Get a user log event for a configuration.
-	 * 
+	 *
 	 * @param config
 	 *        the configuration
 	 * @param baseTags
@@ -151,10 +151,12 @@ public interface OscpUserEvents {
 	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
 			String[] baseTags, String message, String... extraTags) {
 		Map<String, Object> data = new HashMap<>(4);
-		data.put(CONFIG_ID_DATA_KEY, config.getEntityId());
-		data.put(REGISTRATION_STATUS_DATA_KEY, (char) config.getRegistrationStatus().getCode());
-		data.put(VERSION_DATA_KEY, config.getOscpVersion());
-		data.put(URL_DATA_KEY, config.getBaseUrl());
+		if ( config != null ) {
+			data.put(CONFIG_ID_DATA_KEY, config.getEntityId());
+			data.put(REGISTRATION_STATUS_DATA_KEY, (char) config.getRegistrationStatus().getCode());
+			data.put(VERSION_DATA_KEY, config.getOscpVersion());
+			data.put(URL_DATA_KEY, config.getBaseUrl());
+		}
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}
 

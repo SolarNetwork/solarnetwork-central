@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -43,22 +44,18 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * Solcast API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.solcast";
-
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
 
 	/** The base URL to the Solcast API. */
 	public static final URI BASE_URI = URI.create("https://api.solcast.com.au");
@@ -91,6 +88,20 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	public static final String PERIOD_PARAM = "period";
 
 	/**
+	 * The start date URL query parameter name.
+	 *
+	 * @since 1.1
+	 */
+	public static final String START_DATE_PARAM = "start";
+
+	/**
+	 * The start date URL query parameter name.
+	 *
+	 * @since 1.1
+	 */
+	public static final String END_DATE_PARAM = "end";
+
+	/**
 	 * The well-known URLs.
 	 */
 	// @formatter:off
@@ -102,10 +113,12 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var settings = new ArrayList<SettingSpecifier>(1);
-		settings.add(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true));
-		settings.add(BASE_URL_SETTING_SPECIFIER);
-		SETTINGS = Collections.unmodifiableList(settings);
+		// @formatter:off
+		SETTINGS = List.of(
+				API_KEY_SETTING_SPECIFIER,
+				BASE_URL_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/** The service secure setting keys. */
@@ -166,7 +179,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 							.build()
 							.toUri(),
 					// @formatter:on
-					res -> res.getBody());
+					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {

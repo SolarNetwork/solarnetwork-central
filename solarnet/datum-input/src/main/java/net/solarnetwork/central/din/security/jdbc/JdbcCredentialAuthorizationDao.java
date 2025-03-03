@@ -55,7 +55,7 @@ public class JdbcCredentialAuthorizationDao implements CredentialAuthorizationDa
 	public EndpointUserDetails credentialsForEndpoint(UUID endpointId, String username) {
 		var sql = new SelectAuthenticatedEndpointCredentials(endpointId, username);
 		var results = jdbcOps.query(sql, AuthenticatedEndpointCredentialsRowMapper.INSTANCE);
-		return (!results.isEmpty() ? results.get(0) : null);
+		return (!results.isEmpty() ? results.getFirst() : null);
 	}
 
 }

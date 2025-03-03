@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -110,7 +111,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -231,8 +232,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	/** The maximum length of time to query for data. */
 	public static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
-	private final Clock clock;
-
 	/**
 	 * A cache of SolarEdge site IDs to associated time zones. This is used
 	 * because the timestamps returned from the API are all in site-local time.
@@ -276,14 +275,13 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
 			Clock clock) {
-		super(SERVICE_IDENTIFIER, "SolarEdge V1 Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+		super(SERVICE_IDENTIFIER, "SolarEdge V1 Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
@@ -319,11 +317,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(DEVICE_TYPE_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
-			result = components(integration, filters);
+			result = components(filters);
 		} else if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			result = siteInventory(integration, filters);
 		} else {
@@ -350,8 +348,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				res -> parseSiteInventory(res.getBody(), filters));
 	}
 
-	private List<CloudDataValue> components(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters) {
+	private List<CloudDataValue> components(Map<String, ?> filters) {
 		final String siteId = filters.get(SITE_ID_FILTER).toString();
 		final SolarEdgeDeviceType deviceType = SolarEdgeDeviceType
 				.fromValue(filters.get(DEVICE_TYPE_FILTER).toString());
@@ -365,7 +362,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private static List<CloudDataValue> parseSites(JsonNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "sites": {
@@ -437,8 +436,10 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	}
 
 	private static List<CloudDataValue> parseSiteInventory(JsonNode json, Map<String, ?> filters) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		final String siteId = filters.get(SITE_ID_FILTER).toString();
-		assert json != null;
 		/*- EXAMPLE JSON:
 		{
 		  "Inventory": {
@@ -777,7 +778,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
 					"filter.startDate");
 
-			final SolarEdgeResolution resolution = resolveResolution(ds, null);
+			final SolarEdgeResolution resolution = resolveResolution(ds, filter.getParameters());
 
 			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
@@ -846,7 +847,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							res -> res.getBody());
+							HttpEntity::getBody);
 					JsonNode meterEnergy = restOpsHelper.httpGet("List meter energy data", integration,
 							JsonNode.class,
 							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
@@ -856,7 +857,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 									.queryParam("timeUnit", resolution.getKey())
 									.buildAndExpand(queryPlan.siteId)
 									.toUri(),
-							res -> res.getBody());
+							HttpEntity::getBody);
 					// @formatter:on
 					Collection<GeneralDatum> datum = parseMeterDatum(meterPower, meterEnergy, queryPlan,
 							ds, sourceIdMap, timestampFmt, resolution);
@@ -1105,6 +1106,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	private static List<GeneralDatum> parseBatteryDatum(JsonNode json, SiteQueryPlan queryPlan,
 			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
 			DateTimeFormatter timestampFmt) {
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "storageData": {
@@ -1193,7 +1197,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			return false;
 		}
 		Boolean ibSourceId = datumStream.serviceProperty(INDEX_BASED_SOURCE_ID_SETTING, Boolean.class);
-		return (ibSourceId != null && ibSourceId.booleanValue());
+		return (ibSourceId != null && ibSourceId);
 	}
 
 	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream,
@@ -1206,15 +1210,15 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 
 		String devType = deviceType.getKey();
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
-		if ( ucSourceId != null && ucSourceId.booleanValue() ) {
+		if ( ucSourceId != null && ucSourceId ) {
 			devType = devType.toUpperCase();
 		}
 
 		String compId = componentId;
-		if ( useIndexBasedSourceIds(datumStream, sourceIdMap) ) {
+		if ( useIndexBasedSourceIds(datumStream, null) ) {
 			Integer idx = sitePlan.componentIndex(deviceType, componentId);
 			if ( idx != null ) {
-				compId = String.valueOf(idx.intValue() + 1);
+				compId = String.valueOf(idx + 1);
 			}
 		}
 
@@ -1302,7 +1306,9 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				}, res -> {
 					ZoneId zone = ZoneOffset.UTC;
 					var json = res.getBody();
-					String zoneId = StringUtils.nonEmptyString(json.findValue("timeZone").asText());
+					String zoneId = json != null
+							? StringUtils.nonEmptyString(json.findValue("timeZone").asText())
+							: null;
 					if ( zoneId != null ) {
 						try {
 							zone = ZoneId.of(zoneId);
@@ -1366,9 +1372,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	/**
 	 * A site-specific query plan.
 	 *
+	 * <p>
 	 * This plan is constructed from a set of
 	 * {@link CloudDatumStreamPropertyConfiguration}, and used to determine
 	 * which SolarEdge APIs are necessary to satisfy those configurations.
+	 * </p>
 	 */
 	private static class SiteQueryPlan {
 

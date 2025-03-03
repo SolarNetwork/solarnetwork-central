@@ -67,6 +67,7 @@ import net.solarnetwork.central.domain.UserLongStringCompositePK;
 import net.solarnetwork.central.domain.UserUuidPK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.domain.Identity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumId;
 
@@ -116,7 +117,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.previousInputDataDao = requireNonNullArgument(previousInputDataDao, "previousInputDataDao");
 		this.transformServices = requireNonNullArgument(transformServices, "transformServices").stream()
-				.collect(Collectors.toMap(s -> s.getId(), Function.identity()));
+				.collect(Collectors.toMap(Identity::getId, Function.identity()));
 	}
 
 	private static final MimeType JSON_TYPE = MimeType.valueOf("application/json");
@@ -151,7 +152,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 		if ( content == null ) {
 			return null;
 		}
-		String value = null;
+		String value;
 		if ( JSON_TYPE.isCompatibleWith(contentType) || TEXT_TYPE.isCompatibleWith(contentType) ) {
 			value = new String(content, contentType.getCharset() != null ? contentType.getCharset()
 					: StandardCharsets.UTF_8);
@@ -215,7 +216,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 			final InputDataEntityDao previousInputDao = (endpoint.isPreviousInputTracking()
 					? this.previousInputDataDao
 					: null);
-			if ( previousInputDao != null && parameters.containsKey(PARAM_NODE_ID)
+			if ( previousInputDao != null && parameters != null && parameters.containsKey(PARAM_NODE_ID)
 					&& parameters.containsKey(PARAM_SOURCE_ID) ) {
 				// track previous input using user/node/source key; node and source MUST
 				// be provided as input parameters; if no previous input has been cached
@@ -223,7 +224,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				try {
 					Long nodeId = Long.valueOf(parameters.get(PARAM_NODE_ID));
 					String sourceId = parameters.get(PARAM_SOURCE_ID);
-					if ( nodeId != null && sourceId != null ) {
+					if ( sourceId != null ) {
 						UserLongStringCompositePK key = new UserLongStringCompositePK(userId, nodeId,
 								sourceId);
 						prevInputData = previousInputDao.getAndPut(key, inputData);
@@ -280,7 +281,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				// use the endpoint's node/source IDs if provided
 				if ( endpoint.getNodeId() != null ) {
 					gnd.setNodeId(endpoint.getNodeId());
-				} else if ( parameters.containsKey(PARAM_NODE_ID) ) {
+				} else if ( parameters != null && parameters.containsKey(PARAM_NODE_ID) ) {
 					try {
 						gnd.setNodeId(Long.valueOf(parameters.get(PARAM_NODE_ID)));
 					} catch ( IllegalArgumentException e ) {
@@ -289,7 +290,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				}
 				if ( endpoint.getSourceId() != null ) {
 					gnd.setSourceId(endpoint.getSourceId());
-				} else if ( parameters.containsKey(PARAM_SOURCE_ID) ) {
+				} else if ( parameters != null && parameters.containsKey(PARAM_SOURCE_ID) ) {
 					gnd.setSourceId(parameters.get(PARAM_SOURCE_ID));
 				}
 
@@ -315,7 +316,7 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 						fluxPublisher.processDatum(gnd);
 					}
 				} catch ( Exception e ) {
-					log.warn("Error publishing endpoint %s datum %s: %s", endpoint.getId(), gnd,
+					log.warn("Error publishing endpoint {} datum {}: {}", endpoint.getId(), gnd,
 							e.toString(), e);
 				}
 			}

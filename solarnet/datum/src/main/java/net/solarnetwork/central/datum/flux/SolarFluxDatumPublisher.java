@@ -138,8 +138,7 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 
 				Long nodeId = d.getId().getNodeId();
 				String sourceId = d.getId().getSourceId();
-				if ( ownership.getUserId() == null || nodeId == null || sourceId == null
-						|| sourceId.isEmpty() ) {
+				if ( nodeId == null || sourceId == null || sourceId.isEmpty() ) {
 					continue;
 				}
 
@@ -209,22 +208,13 @@ public class SolarFluxDatumPublisher extends MqttJsonPublisher<Identity<GeneralN
 	}
 
 	private static SolarFluxDatumPublishCountStat publishStat(Aggregation aggregation) {
-		switch (aggregation) {
-			case None:
-				return SolarFluxDatumPublishCountStat.RawDatumPublished;
-
-			case Hour:
-				return SolarFluxDatumPublishCountStat.HourlyDatumPublished;
-
-			case Day:
-				return SolarFluxDatumPublishCountStat.DailyDatumPublished;
-
-			case Month:
-				return SolarFluxDatumPublishCountStat.MonthlyDatumPublished;
-
-			default:
-				return null;
-		}
+		return switch (aggregation) {
+			case None -> SolarFluxDatumPublishCountStat.RawDatumPublished;
+			case Hour -> SolarFluxDatumPublishCountStat.HourlyDatumPublished;
+			case Day -> SolarFluxDatumPublishCountStat.DailyDatumPublished;
+			case Month -> SolarFluxDatumPublishCountStat.MonthlyDatumPublished;
+			default -> null;
+		};
 	}
 
 	/**

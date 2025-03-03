@@ -38,7 +38,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <C>
  *        the configuration type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CachingTransformConfigurationDao<C extends TransformConfiguration<C>>
 		extends CachingGenericDao<C, UserLongCompositePK, TransformConfigurationDao<C>>
@@ -63,7 +63,7 @@ public class CachingTransformConfigurationDao<C extends TransformConfiguration<C
 
 	@Override
 	public FilterResults<C, UserLongCompositePK> findFiltered(TransformFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 

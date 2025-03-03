@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
-import static net.solarnetwork.web.jakarta.domain.Response.response;
+import static net.solarnetwork.domain.Result.success;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,16 +30,17 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.biz.DatumMaintenanceBiz;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumKindPK;
 import net.solarnetwork.central.datum.domain.StaleAggregateDatum;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web controller for datum maintenance functions.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.39
  */
 @GlobalExceptionRestController
@@ -62,7 +63,7 @@ public class DatumMaintenanceController {
 	}
 
 	/**
-	 * Find datum aggregates maarked as "stale".
+	 * Find datum aggregates marked as "stale".
 	 *
 	 * <p>
 	 * The following criteria should be specified at a minimum:
@@ -82,11 +83,12 @@ public class DatumMaintenanceController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = "/agg/stale", method = RequestMethod.GET)
-	public Response<FilterResults<StaleAggregateDatum>> findStaleAggregatesDatum(
+	public Result<FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK>> findStaleAggregatesDatum(
 			DatumFilterCommand criteria) {
-		FilterResults<StaleAggregateDatum> results = datumMaintenanceBiz.findStaleAggregateDatum(
-				criteria, criteria.getSortDescriptors(), criteria.getOffset(), criteria.getMax());
-		return response(results);
+		FilterResults<StaleAggregateDatum, GeneralNodeDatumKindPK> results = datumMaintenanceBiz
+				.findStaleAggregateDatum(criteria, criteria.getSortDescriptors(), criteria.getOffset(),
+						criteria.getMax());
+		return success(results);
 	}
 
 	/**
@@ -109,8 +111,8 @@ public class DatumMaintenanceController {
 	 */
 	@ResponseBody
 	@RequestMapping(value = { "/agg/stale", "/agg/mark-stale" }, method = RequestMethod.POST)
-	public Response<Void> markDatumAggregatesStale(DatumFilterCommand criteria) {
+	public Result<Void> markDatumAggregatesStale(DatumFilterCommand criteria) {
 		datumMaintenanceBiz.markDatumAggregatesStale(criteria);
-		return response(null);
+		return success();
 	}
 }

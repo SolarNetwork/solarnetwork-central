@@ -1,21 +1,21 @@
 /* ==================================================================
  * ProxyFrontendHandler.java - 4/08/2023 9:58:56 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
 
 /**
  * Proxy frontend handler.
- * 
+ *
  * <p>
  * This handler expects a {@link SslHandler} to be available in the channel
  * context's pipeline, and for that handler's engine's {@code SSLSession} to
@@ -56,7 +56,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * {@link ServiceLifecycleObserver#serviceDidShutdown() serviceDidShutdown()}
  * method will be called <b>after</b> the connection is closed.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -94,20 +94,14 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 			}
 			ChannelFuture f = b.connect(settings.destinationHost(), settings.destinationPort());
 			outboundChannel = f.channel();
-			f.addListener(new ChannelFutureListener() {
-
-				@Override
-				public void operationComplete(ChannelFuture future) {
-					if ( !future.isSuccess() ) {
-						// Close the connection if the destination connection attempt failed
-						inboundChannel.close();
-					}
+			f.addListener((ChannelFutureListener) future -> {
+				if ( !future.isSuccess() ) {
+					// Close the connection if the destination connection attempt failed
+					inboundChannel.close();
 				}
 			});
 			if ( settings instanceof ServiceLifecycleObserver obs ) {
-				outboundChannel.closeFuture().addListener((close) -> {
-					obs.serviceDidShutdown();
-				});
+				outboundChannel.closeFuture().addListener((close) -> obs.serviceDidShutdown());
 			}
 		}
 		super.userEventTriggered(ctx, evt);
@@ -124,23 +118,19 @@ public class ProxyFrontendHandler extends ChannelInboundHandlerAdapter {
 			.handler(new ProxyBackendHandler(inboundChannel))
 			.option(ChannelOption.AUTO_READ, false);
 		// @formatter:off
-		
+
 		inboundChannel.read(); // to start TLS handshake
 	}
 
 	@Override
 	public void channelRead(final ChannelHandlerContext ctx, Object msg) {
 		if ( outboundChannel != null && outboundChannel.isActive() ) {
-			outboundChannel.writeAndFlush(msg).addListener(new ChannelFutureListener() {
-
-				@Override
-				public void operationComplete(ChannelFuture future) {
-					if ( future.isSuccess() ) {
-						// was able to flush out data, start to read the next chunk
-						ctx.channel().read();
-					} else {
-						future.channel().close();
-					}
+			outboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener)future-> {
+				if ( future.isSuccess() ) {
+					// was able to flush out data, start to read the next chunk
+					ctx.channel().read();
+				} else {
+					future.channel().close();
 				}
 			});
 		}

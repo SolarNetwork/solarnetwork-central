@@ -1,21 +1,21 @@
 /* ==================================================================
  * StreamMetadataPreparedStatementCreatorTests.java - 19/11/2020 3:51:12 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -54,9 +54,9 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * Test cases for the {@link SelectObjectStreamMetadata} class.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SelectObjectStreamMetadataTests {
 
@@ -66,8 +66,8 @@ public class SelectObjectStreamMetadataTests {
 	public void sql_streamMeta_nodesAndSources() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 
 		// WHEN
 		String sql = new SelectObjectStreamMetadata(filter).getSql();
@@ -81,8 +81,8 @@ public class SelectObjectStreamMetadataTests {
 	public void sql_streamMeta_nodesAndSources_minimum() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 
 		// WHEN
 		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node,
@@ -94,10 +94,10 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
-	public void sql_streamMeta_nodesAndSources_absoluteDates() {
+	public void sql_streamMeta_nodes_absoluteDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(Instant.now());
 
@@ -110,10 +110,10 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
-	public void prep_streamMeta_nodesAndSources_absoluteDates() throws SQLException {
+	public void prep_streamMeta_nodes_absoluteDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setEndDate(Instant.now());
 
@@ -145,10 +145,10 @@ public class SelectObjectStreamMetadataTests {
 	}
 
 	@Test
-	public void sql_streamMeta_nodesAndSources_localDates() {
+	public void sql_streamMeta_nodes_localDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
 		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS));
 		filter.setLocalEndDate(LocalDateTime.now());
 
@@ -164,9 +164,9 @@ public class SelectObjectStreamMetadataTests {
 	public void sql_streamMeta_nodesAndSourcesAndUsers() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
-		filter.setUserId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
+		filter.setUserIds(new Long[] { 2L, 3L });
 
 		// WHEN
 		String sql = new SelectObjectStreamMetadata(filter).getSql();
@@ -180,9 +180,9 @@ public class SelectObjectStreamMetadataTests {
 	public void prep_streamMeta_nodesAndSourcesAndUsers() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
-		filter.setUserId(1L);
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
+		filter.setUserIds(new Long[] { 2L, 3L });
 
 		Connection con = EasyMock.createMock(Connection.class);
 		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
@@ -222,8 +222,8 @@ public class SelectObjectStreamMetadataTests {
 	public void sql_streamMeta_nodesAndSourcesAndTokens() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setTokenId("foobar");
 
 		// WHEN
@@ -238,8 +238,8 @@ public class SelectObjectStreamMetadataTests {
 	public void prep_streamMeta_nodesAndSourcesAndTokens() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setTokenId("foobar");
 
 		Connection con = EasyMock.createMock(Connection.class);
@@ -365,8 +365,8 @@ public class SelectObjectStreamMetadataTests {
 	public void sql_loc_streamMeta_locsAndSources() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
-		filter.setSourceId("a");
+		filter.setLocationIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 
 		// WHEN
 		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Location).getSql();
@@ -380,8 +380,8 @@ public class SelectObjectStreamMetadataTests {
 	public void sql_loc_streamMeta_locsAndSourcesAndUsers() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
-		filter.setSourceId("a");
+		filter.setLocationIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setUserId(1L); // ignored for location query
 
 		// WHEN
@@ -396,8 +396,8 @@ public class SelectObjectStreamMetadataTests {
 	public void prep_loc_streamMeta_locsAndSourcesAndUsers() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setLocationId(1L);
-		filter.setSourceId("a");
+		filter.setLocationIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setUserId(1L); // ignored for location query
 
 		Connection con = EasyMock.createMock(Connection.class);

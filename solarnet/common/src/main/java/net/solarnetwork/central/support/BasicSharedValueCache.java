@@ -98,16 +98,9 @@ public class BasicSharedValueCache<K, V, S> implements SharedValueCache<K, V, S>
 				continue;
 			}
 			V value = entry.getResult();
-			if ( !inUse.contains(value) ) {
-				inUse.add(value);
-			}
+			inUse.add(value);
 		}
-		for ( Iterator<V> sharedValueItr = sharedCache.values().iterator(); sharedValueItr.hasNext(); ) {
-			V value = sharedValueItr.next();
-			if ( !inUse.contains(value) ) {
-				sharedValueItr.remove();
-			}
-		}
+		sharedCache.values().removeIf(value -> !inUse.contains(value));
 	}
 
 }

@@ -1,21 +1,21 @@
 /* ==================================================================
  * StoreNodeDatum.java - 21/11/2020 3:24:05 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -40,19 +40,19 @@ import net.solarnetwork.domain.datum.DatumProperties;
 /**
  * Store a {@link GeneralNodeDatum} via the {@code solardatm.store_datum} stored
  * procedure.
- * 
+ *
  * <p>
  * The statement registers an output parameter of type {@code OTHER} at index
  * {@literal 1}, representing the stream ID of the stored datum. The JDBC driver
  * should return an actual {@link java.util.UUID} object on the
  * {@code CallableStatement}.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 1.2
  */
-public class StoreDatum implements CallableStatementCreator, SqlProvider {
+public final class StoreDatum implements CallableStatementCreator, SqlProvider {
 
 	private final DatumEntity datum;
 	private final UUID streamId;
@@ -61,7 +61,7 @@ public class StoreDatum implements CallableStatementCreator, SqlProvider {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param datum
 	 *        the datum to store
 	 */
@@ -124,7 +124,7 @@ public class StoreDatum implements CallableStatementCreator, SqlProvider {
 
 	/**
 	 * Get the datum timestamp.
-	 * 
+	 *
 	 * @return the timestamp computed for the datum
 	 */
 	public Instant getTimestamp() {
@@ -133,7 +133,7 @@ public class StoreDatum implements CallableStatementCreator, SqlProvider {
 
 	/**
 	 * Get the datum received timestamp.
-	 * 
+	 *
 	 * @return the received timestamp computed for the datum
 	 */
 	public Instant getReceived() {

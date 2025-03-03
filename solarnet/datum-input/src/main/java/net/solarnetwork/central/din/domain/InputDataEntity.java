@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.din.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
 import net.solarnetwork.central.domain.UserLongStringCompositePK;
@@ -37,6 +38,7 @@ import net.solarnetwork.domain.Differentiable;
 public class InputDataEntity extends BasicEntity<UserLongStringCompositePK>
 		implements Differentiable<InputDataEntity> {
 
+	@Serial
 	private static final long serialVersionUID = -8181765903228308150L;
 
 	private final byte[] data;

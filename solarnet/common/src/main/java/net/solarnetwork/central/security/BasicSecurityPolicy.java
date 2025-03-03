@@ -1,27 +1,28 @@
 /* ==================================================================
  * BasicSecurityPolicy.java - 9/10/2016 8:01:18 AM
- * 
+ *
  * Copyright 2007-2016 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.security;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collections;
@@ -38,7 +39,7 @@ import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Basic implementation of {@link SecurityPolicy}.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -46,19 +47,22 @@ import net.solarnetwork.domain.datum.Aggregation;
 @JsonSerialize(using = SecurityPolicySerializer.class)
 public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 2178988304971356373L;
 
 	/**
 	 * A builder for {@link BasicSecurityPolicy} instances.
-	 * 
+	 *
+	 * <p>
 	 * Configure properties on instances of this class, then call
 	 * {@link #build()} to get a {@link BasicSecurityPolicy} instance.
+	 * </p>
 	 */
 	public static class Builder {
 
-		private static final Map<Aggregation, Set<Aggregation>> MAX_AGGREGATION_CACHE = new HashMap<Aggregation, Set<Aggregation>>(
+		private static final Map<Aggregation, Set<Aggregation>> MAX_AGGREGATION_CACHE = new HashMap<>(
 				16);
-		private static final Map<LocationPrecision, Set<LocationPrecision>> MAX_LOCATION_PRECISION_CACHE = new HashMap<LocationPrecision, Set<LocationPrecision>>(
+		private static final Map<LocationPrecision, Set<LocationPrecision>> MAX_LOCATION_PRECISION_CACHE = new HashMap<>(
 				16);
 
 		private Set<Long> nodeIds;
@@ -157,7 +161,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		public Builder withMergedNodeIds(Set<Long> nodeIds) {
 			Set<Long> set = nodeIds;
 			if ( this.nodeIds != null && !this.nodeIds.isEmpty() ) {
-				set = new LinkedHashSet<Long>(this.nodeIds);
+				set = new LinkedHashSet<>(this.nodeIds);
 				if ( nodeIds != null ) {
 					set.addAll(nodeIds);
 				}
@@ -168,7 +172,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		public Builder withMergedNodeMetadataPaths(Set<String> nodeMetadataPaths) {
 			Set<String> set = nodeMetadataPaths;
 			if ( this.nodeMetadataPaths != null && !this.nodeMetadataPaths.isEmpty() ) {
-				set = new LinkedHashSet<String>(this.nodeMetadataPaths);
+				set = new LinkedHashSet<>(this.nodeMetadataPaths);
 				if ( nodeMetadataPaths != null ) {
 					set.addAll(nodeMetadataPaths);
 				}
@@ -179,7 +183,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		public Builder withMergedUserMetadataPaths(Set<String> userMetadataPaths) {
 			Set<String> set = userMetadataPaths;
 			if ( this.userMetadataPaths != null && !this.userMetadataPaths.isEmpty() ) {
-				set = new LinkedHashSet<String>(this.userMetadataPaths);
+				set = new LinkedHashSet<>(this.userMetadataPaths);
 				if ( userMetadataPaths != null ) {
 					set.addAll(userMetadataPaths);
 				}
@@ -190,7 +194,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		public Builder withMergedApiPaths(Set<String> apiPaths) {
 			Set<String> set = apiPaths;
 			if ( this.apiPaths != null && !this.apiPaths.isEmpty() ) {
-				set = new LinkedHashSet<String>(this.apiPaths);
+				set = new LinkedHashSet<>(this.apiPaths);
 				if ( apiPaths != null ) {
 					set.addAll(apiPaths);
 				}
@@ -201,7 +205,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		public Builder withMergedSourceIds(Set<String> sourceIds) {
 			Set<String> set = sourceIds;
 			if ( this.sourceIds != null && !this.sourceIds.isEmpty() ) {
-				set = new LinkedHashSet<String>(this.sourceIds);
+				set = new LinkedHashSet<>(this.sourceIds);
 				if ( sourceIds != null ) {
 					set.addAll(sourceIds);
 				}
@@ -213,7 +217,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			Set<Aggregation> set = aggregations;
 			if ( this.aggregations != null && !this.aggregations.isEmpty() ) {
 				if ( aggregations != null ) {
-					set = new LinkedHashSet<Aggregation>(this.aggregations);
+					set = new LinkedHashSet<>(this.aggregations);
 					set.addAll(aggregations);
 				} else {
 					set = this.aggregations;
@@ -226,7 +230,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			Set<LocationPrecision> set = locationPrecisions;
 			if ( this.locationPrecisions != null && !this.locationPrecisions.isEmpty() ) {
 				if ( locationPrecisions != null ) {
-					set = new LinkedHashSet<LocationPrecision>(this.locationPrecisions);
+					set = new LinkedHashSet<>(this.locationPrecisions);
 					set.addAll(locationPrecisions);
 				} else {
 					set = this.locationPrecisions;
@@ -250,7 +254,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			if ( result != null ) {
 				return result;
 			}
-			result = new HashSet<Aggregation>(16);
+			result = new HashSet<>(16);
 			for ( Aggregation agg : Aggregation.values() ) {
 				if ( agg.compareLevel(minAggregation) > -1 ) {
 					result.add(agg);
@@ -264,8 +268,9 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		/**
 		 * Treat the configured {@code locationPrecisions} set as a single
 		 * minimum value or a list of exact values.
-		 * 
-		 * By default if {@code locationPrecisions} is configured with a single
+		 *
+		 * <p>
+		 * By default, if {@code locationPrecisions} is configured with a single
 		 * value it will be treated as a <em>minimum</em> value, and any
 		 * {@link LocationPrecision} with a
 		 * {@link LocationPrecision#getPrecision()} equal to or higher than that
@@ -274,7 +279,8 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		 * {@code false} to disable that behavior and treat
 		 * {@code locationPrecisions} as the exact values to include in the
 		 * generated {@link BasicSecurityPolicy#getLocationPrecisions()} set.
-		 * 
+		 * </p>
+		 *
 		 * @param minLocationPrecision
 		 *        {@code false} to treat configured location precision values
 		 *        as-is, {@code true} to treat as a minimum threshold
@@ -296,7 +302,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			if ( result != null ) {
 				return result;
 			}
-			result = new HashSet<LocationPrecision>(16);
+			result = new HashSet<>(16);
 			for ( LocationPrecision agg : LocationPrecision.values() ) {
 				if ( agg.comparePrecision(minLocationPrecision) > -1 ) {
 					result.add(agg);
@@ -327,7 +333,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
 	/**
 	 * Get a new builder instance.
-	 * 
+	 *
 	 * @return the new builder
 	 * @since 2.0
 	 */
@@ -349,12 +355,12 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The {@code notAfter} property will be set to {@literal null} (for no
 	 * expiration date) and {@code refreshable} to {@literal false}.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeIds
 	 *        The node IDs to restrict to, or {@literal null} for no
 	 *        restriction.
@@ -388,7 +394,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        The node IDs to restrict to, or {@literal null} for no
 	 *        restriction.
@@ -428,7 +434,7 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param nodeIds
 	 *        The node IDs to restrict to, or {@literal null} for no
 	 *        restriction.
@@ -563,13 +569,9 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
+		if ( (obj == null) || !(obj instanceof BasicSecurityPolicy other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicSecurityPolicy) ) {
-			return false;
-		}
-		BasicSecurityPolicy other = (BasicSecurityPolicy) obj;
 		if ( aggregations == null ) {
 			if ( other.aggregations != null ) {
 				return false;
@@ -633,13 +635,9 @@ public class BasicSecurityPolicy implements SecurityPolicy, Serializable {
 			return false;
 		}
 		if ( refreshAllowed == null ) {
-			if ( other.refreshAllowed != null ) {
-				return false;
-			}
-		} else if ( !refreshAllowed.equals(other.refreshAllowed) ) {
-			return false;
+			return other.refreshAllowed == null;
 		}
-		return true;
+		return refreshAllowed.equals(other.refreshAllowed);
 	}
 
 	@Override

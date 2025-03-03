@@ -11,6 +11,11 @@ app:
   cache.persistence.path: "var/cache"
   c2c:
     cache:
+      integration-locks:
+        tti: 3600
+        ttl: 0
+        heap-max-entries: 5000
+        disk-max-size-mb: 0
       egague-device-registers:
         ttl: 3600
         heap-max-entries: 1000
@@ -39,9 +44,9 @@ app:
     ds-poll:
       executor:
         thread-name-prefix: "SolarNet-C2C-DsPoll-"
-        core-pool-size: 1
+        core-pool-size: 2
         max-pool-size: 2
-        allow-core-thread-time-out: false
+        allow-core-thread-time-out: true
       service:
         shutdown-max-wait: "1m"
   datasource:
@@ -104,14 +109,14 @@ app:
         schedule: "0 20 4,20 5,10,15,20 * *"
     c2c:
       ds-poll:
-        maximum-iterations: 1000
+        maximum-iterations: 10
         maximum-wait-ms: 60000
-        parallelism: 1
+        parallelism: 2
         schedule: 5000
       ds-poll-reset-abandoned:
         maximum-wait-ms: 60000
         schedule: 60000
-        minimum-age: "15m"
+        minimum-age: "2h"
     datum:
       agg:
         hourly:
@@ -363,6 +368,11 @@ logging:
     file:  "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%5p} %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
 
 management:
+  endpoint:
+    health:
+      cache.time-to-live: "59s"
+      show-details: "when_authorized"
+      roles: "ROLE_OPS"
   endpoints:
     web:
       base-path: "/ops"

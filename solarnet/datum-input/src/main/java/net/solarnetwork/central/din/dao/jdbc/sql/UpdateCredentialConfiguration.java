@@ -40,7 +40,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * @author matt
  * @version 1.0
  */
-public class UpdateCredentialConfiguration implements PreparedStatementCreator, SqlProvider {
+public final class UpdateCredentialConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			UPDATE solardin.din_credential

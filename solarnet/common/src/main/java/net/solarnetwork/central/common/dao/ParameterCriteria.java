@@ -28,7 +28,7 @@ import java.util.Map;
  * Search criteria for arbitrary parameters.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface ParameterCriteria {
 
@@ -42,11 +42,24 @@ public interface ParameterCriteria {
 	/**
 	 * Test if this filter has any parameter criteria.
 	 * 
-	 * @return {@literal true} if the parameters map is non-empty
+	 * @return {@code true} if the parameters map is non-empty
 	 */
 	default boolean hasParameterCriteria() {
 		final var params = getParameters();
 		return params != null && !params.isEmpty();
+	}
+
+	/**
+	 * Test if a parameter key is present.
+	 * 
+	 * @param key
+	 *        the key to test
+	 * @return {@code true} if the parameters map contains the key {@code key}
+	 * @since 1.1
+	 */
+	default boolean hasParameter(String key) {
+		final var params = getParameters();
+		return params != null && params.containsKey(key);
 	}
 
 }

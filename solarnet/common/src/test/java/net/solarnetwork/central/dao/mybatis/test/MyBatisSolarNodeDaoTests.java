@@ -43,13 +43,13 @@ import org.junit.Test;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.domain.SolarNodeFilterMatch;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
-import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.central.support.FilterSupport;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 
 /**
@@ -99,7 +99,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		SolarNode node = new SolarNode();
 		node.setLocationId(TEST_LOC_ID);
 
-		Long id = dao.store(node);
+		Long id = dao.save(node);
 		assertNotNull(id);
 	}
 
@@ -108,12 +108,12 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		SolarNode node = new SolarNode();
 		node.setLocationId(TEST_LOC_ID);
 
-		Long id = dao.store(node);
+		Long id = dao.save(node);
 		assertNotNull(id);
 		node = dao.get(id);
 		assertEquals(id, node.getId());
 		node.setName("myname");
-		Long id2 = dao.store(node);
+		Long id2 = dao.save(node);
 		assertEquals(id, id2);
 		node = dao.get(id);
 		assertEquals("myname", node.getName());
@@ -129,7 +129,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		FilterSupport filter = new FilterSupport();
 		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID - 1, TEST_NODE_ID - 2 });
 
-		FilterResults<SolarNodeFilterMatch> results = dao.findFiltered(filter, null, null, -1);
+		FilterResults<SolarNodeFilterMatch, Long> results = dao.findFiltered(filter, null, null, -1);
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(3));
 		Iterator<SolarNodeFilterMatch> itr = results.iterator();
 		for ( int i = 0; i < 3; i++ ) {
@@ -156,7 +156,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 			msgs.put("foo", i);
 			samples.setInfo(msgs);
 
-			metadataDao.store(datum);
+			metadataDao.save(datum);
 
 		}
 
@@ -165,7 +165,8 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		criteria.setMetadataFilter("(&(/m/foo>100)(/m/foo<102))");
 
 		List<SortDescriptor> sorts = asList(new SimpleSortDescriptor("node", false));
-		FilterResults<SolarNodeFilterMatch> results = dao.findFiltered(criteria, sorts, null, null);
+		FilterResults<SolarNodeFilterMatch, Long> results = dao.findFiltered(criteria, sorts, null,
+				null);
 		assertThat("Result available", results, notNullValue());
 		assertThat("Result count", results.getReturnedResultCount(), equalTo(1));
 		assertThat("Result node IDs",

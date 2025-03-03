@@ -1,27 +1,28 @@
 /* ==================================================================
  * UserNodeEventTask.java - 3/06/2020 3:37:11 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.event.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,12 +33,13 @@ import net.solarnetwork.dao.BasicUuidEntity;
 
 /**
  * Entity for a user node event task.
- * 
+ *
  * @author matt
  * @version 1.2
  */
 public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelatedEntity<UUID> {
 
+	@Serial
 	private static final long serialVersionUID = -71612276091455732L;
 
 	private Long userId;
@@ -59,7 +61,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -71,7 +73,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get this event data as a map, suitable for posting as a message body.
-	 * 
+	 *
 	 * @param topic
 	 *        the topic to include, or {@literal null} to omit
 	 * @return the message data, never {@literal null}
@@ -106,7 +108,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the user ID.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to set
 	 */
@@ -121,7 +123,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the node ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID to set
 	 */
@@ -131,11 +133,11 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the source ID.
-	 * 
+	 *
 	 * <p>
 	 * A single source ID or source ID Ant-style pattern is allowed.
 	 * </p>
-	 * 
+	 *
 	 * @return the source ID
 	 */
 	public String getSourceId() {
@@ -144,7 +146,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the source ID.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the source ID or source ID Ant-style pattern to set
 	 */
@@ -154,7 +156,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the ID of the related {@link UserNodeEventHookConfiguration} entity.
-	 * 
+	 *
 	 * @return the hook ID
 	 */
 	public Long getHookId() {
@@ -163,7 +165,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the ID of the related {@link UserNodeEventHookConfiguration} entity.
-	 * 
+	 *
 	 * @param hookId
 	 *        the hook ID to set
 	 */
@@ -173,7 +175,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the task properties.
-	 * 
+	 *
 	 * @return the taskProperties
 	 */
 	public Map<String, Object> getTaskProperties() {
@@ -182,7 +184,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the task properties.
-	 * 
+	 *
 	 * @param taskProperties
 	 *        the taskProperties to set
 	 */
@@ -192,7 +194,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the task status.
-	 * 
+	 *
 	 * @return the status
 	 */
 	public UserNodeEventTaskState getStatus() {
@@ -201,7 +203,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the task status.
-	 * 
+	 *
 	 * @param status
 	 *        the status to set
 	 */
@@ -211,7 +213,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the task status as a key value.
-	 * 
+	 *
 	 * @return the task status key
 	 */
 	public char getStatusKey() {
@@ -221,7 +223,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the task status as a key value.
-	 * 
+	 *
 	 * @param key
 	 *        the task status key to set
 	 */
@@ -237,7 +239,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the success flag.
-	 * 
+	 *
 	 * @return the success
 	 */
 	public Boolean getSuccess() {
@@ -246,7 +248,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the success flag.
-	 * 
+	 *
 	 * @param success
 	 *        the success to set
 	 */
@@ -256,7 +258,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the task message.
-	 * 
+	 *
 	 * @return the message
 	 */
 	public String getMessage() {
@@ -265,7 +267,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the task message.
-	 * 
+	 *
 	 * @param message
 	 *        the message to set
 	 */
@@ -275,7 +277,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Get the completed flag.
-	 * 
+	 *
 	 * @return the completed
 	 */
 	public Instant getCompleted() {
@@ -284,7 +286,7 @@ public class UserNodeEventTask extends BasicUuidEntity implements UserNodeRelate
 
 	/**
 	 * Set the completed flag.
-	 * 
+	 *
 	 * @param completed
 	 *        the completed to set
 	 */

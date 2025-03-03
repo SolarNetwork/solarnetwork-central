@@ -33,10 +33,10 @@ import net.solarnetwork.central.datum.domain.LocationSourcePK;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumStreamMetadataId;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.LocationRequest;
 import net.solarnetwork.central.domain.LocationRequestInfo;
 import net.solarnetwork.central.domain.LocationRequestStatus;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * API for manipulating general datum metadata.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public interface DatumMetadataBiz {
 
@@ -100,9 +100,9 @@ public interface DatumMetadataBiz {
 	 *        an optional maximum number of returned results
 	 * @return the results, never <em>null</em>
 	 */
-	FilterResults<GeneralNodeDatumMetadataFilterMatch> findGeneralNodeDatumMetadata(
-			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+	FilterResults<GeneralNodeDatumMetadataFilterMatch, NodeSourcePK> findGeneralNodeDatumMetadata(
+			GeneralNodeDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors, Long offset,
+			Integer max);
 
 	/**
 	 * Add metadata to a specific location and source. If metadata already
@@ -158,16 +158,18 @@ public interface DatumMetadataBiz {
 	 * @return the results, never <em>null</em>
 	 * @since 1.1
 	 */
-	FilterResults<GeneralLocationDatumMetadataFilterMatch> findGeneralLocationDatumMetadata(
+	FilterResults<GeneralLocationDatumMetadataFilterMatch, LocationSourcePK> findGeneralLocationDatumMetadata(
 			GeneralLocationDatumMetadataFilter criteria, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max);
+			Long offset, Integer max);
 
 	/**
 	 * Find available datum source IDs that match a datum metadata filter.
 	 *
+	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
 	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * </p>
 	 *
 	 * @param nodeIds
 	 *        the node IDs to search for
@@ -182,9 +184,11 @@ public interface DatumMetadataBiz {
 	/**
 	 * Find available location source IDs that match a location metadata filter.
 	 *
+	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
 	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * </p>
 	 *
 	 * @param locationIds
 	 *        the node IDs to search for
@@ -248,7 +252,7 @@ public interface DatumMetadataBiz {
 	 * @since 2.1
 	 */
 	net.solarnetwork.dao.FilterResults<LocationRequest, Long> findLocationRequests(Long userId,
-			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Integer offset,
+			LocationRequestCriteria filter, List<SortDescriptor> sortDescriptors, Long offset,
 			Integer max);
 
 	/**

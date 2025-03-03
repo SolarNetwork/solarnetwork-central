@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.4.0' apply false
+	id 'org.springframework.boot' version '3.4.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OSCP'
-version = '2.3.0'
+version = '2.4.0'
 
 base {
 	archivesName = 'solarnet-oscp'
@@ -56,7 +56,7 @@ dependencies {
 	implementation 'org.ehcache:ehcache'
 	
 	// Utilities
-	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation 'org.apache.commons:commons-lang3'

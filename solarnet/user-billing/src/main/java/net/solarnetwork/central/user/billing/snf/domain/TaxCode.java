@@ -1,27 +1,28 @@
 /* ==================================================================
  * TaxCode.java - 24/07/2020 6:13:23 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
@@ -30,12 +31,13 @@ import net.solarnetwork.domain.Differentiable;
 
 /**
  * Tax code entity, which defines a tax rate to apply to a given item key.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> {
 
+	@Serial
 	private static final long serialVersionUID = 3366589227496726636L;
 
 	private final String zone;
@@ -47,7 +49,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param zone
 	 *        the tax zone the tax applies to, e.g. "NZ"
 	 * @param itemKey
@@ -71,7 +73,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param created
@@ -141,12 +143,12 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	/**
 	 * Test if the properties of another entity are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@code id} and {@code created} properties are not compared by this
 	 * method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other entity to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -172,7 +174,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Get the tax zone.
-	 * 
+	 *
 	 * @return the zone, never {@literal null}
 	 */
 	public String getZone() {
@@ -181,7 +183,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Get the item key.
-	 * 
+	 *
 	 * @return the item key, never {@literal null}
 	 */
 	public String getItemKey() {
@@ -190,7 +192,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Get the tax code.
-	 * 
+	 *
 	 * @return the code, never {@literal null}
 	 */
 	public String getCode() {
@@ -199,7 +201,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Get the tax rate.
-	 * 
+	 *
 	 * @return the rate, never {@literal null}
 	 */
 	public BigDecimal getRate() {
@@ -208,7 +210,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Get the minimum date from which this tax code is applicable.
-	 * 
+	 *
 	 * @return the date, never {@literal null}
 	 */
 	public Instant getValidFrom() {
@@ -217,7 +219,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 
 	/**
 	 * Get the maximum date to which this tax code is applicable.
-	 * 
+	 *
 	 * @return the date, or {@literal null} if the tax code is applicable
 	 *         "forever"
 	 */

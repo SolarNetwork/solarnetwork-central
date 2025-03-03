@@ -29,7 +29,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
+import io.swagger.v3.oas.annotations.enums.ParameterStyle;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import net.solarnetwork.central.datum.domain.DatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.NodeSourcePK;
 import net.solarnetwork.central.query.biz.QueryBiz;
@@ -48,6 +55,7 @@ import net.solarnetwork.domain.Result;
  */
 @Controller("v1NodesController")
 @RequestMapping("/api/v1/sec/nodes")
+@Tag(name = "node", description = "Methods to query nodes.")
 @GlobalExceptionRestController
 public class NodesController extends BaseTransientDataAccessRetryController {
 
@@ -72,6 +80,7 @@ public class NodesController extends BaseTransientDataAccessRetryController {
 	 *        the HTTP request
 	 * @return The list of nodes available to the active user.
 	 */
+	@Operation(operationId = "nodeList", summary = "List the node IDs allowed for the active user")
 	@RequestMapping(value = { "", "/" }, method = RequestMethod.GET)
 	@ResponseBody
 	public Result<Set<Long>> getAvailableNodes(final HttpServletRequest req) {
@@ -87,18 +96,24 @@ public class NodesController extends BaseTransientDataAccessRetryController {
 	 * 
 	 * @param req
 	 *        the HTTP request
-	 * @param filter
+	 * @param criteria
 	 *        the search criteria
 	 * @return the matching set of node sources
 	 * @since 1.1
 	 */
+	@Operation(operationId = "nodeSourceList",
+			summary = "List the node and source ID combinations allowed for the active user",
+			parameters = { @Parameter(name = "criteria", description = """
+					The search and pagination criteria.""",
+					schema = @Schema(implementation = DatumFilter.class), style = ParameterStyle.FORM,
+					explode = Explode.TRUE) })
 	@ResponseBody
 	@RequestMapping(value = "/sources", method = RequestMethod.GET)
 	public Result<Set<NodeSourcePK>> findAvailableSources(final HttpServletRequest req,
-			final DatumFilterCommand filter) {
+			final DatumFilterCommand criteria) {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
 		return WebUtils.doWithTransientDataAccessExceptionRetry(() -> {
-			Set<NodeSourcePK> result = queryBiz.findAvailableSources(actor, filter);
+			Set<NodeSourcePK> result = queryBiz.findAvailableSources(actor, criteria);
 			return success(result);
 		}, req, getTransientExceptionRetryCount(), getTransientExceptionRetryDelay(), log);
 	}

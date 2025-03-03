@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumEntityDao_Aggregate.java - 24/11/2020 2:59:31 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,12 +35,13 @@ import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.insertObje
 import static net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils.loadJsonAggregateDatumResource;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.assertAggregateDatum;
 import static net.solarnetwork.central.datum.v2.dao.jdbc.test.DatumTestUtils.remapStream;
-import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
 import static net.solarnetwork.central.datum.v2.support.DatumUtils.toGeneralNodeDatum;
-import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
+import static net.solarnetwork.domain.datum.DatumPropertiesStatistics.statisticsOf;
+import static net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider.staticProvider;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -66,8 +67,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.CombiningType;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
@@ -83,21 +84,21 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.SimpleSortDescriptor;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Test cases for the {@link JdbcDatumEntityDao} class implementation of
  * aggregate queries.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport {
 
@@ -110,7 +111,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 
 	protected DatumEntity lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcDatumEntityDao(jdbcTemplate);
 	}
@@ -298,7 +299,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
-		assertThat("Offset for first page", results.getStartingOffset(), equalTo(0));
+		assertThat("Offset for first page", results.getStartingOffset(), equalTo(0L));
 		assertThat("Results count for first page", results.getReturnedResultCount(), equalTo(3));
 
 		Instant ts = start.toInstant();
@@ -329,7 +330,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
-		filter.setOffset(3);
+		filter.setOffset(3L);
 		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
@@ -338,7 +339,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
-		assertThat("Offset for middle page", results.getStartingOffset(), equalTo(3));
+		assertThat("Offset for middle page", results.getStartingOffset(), equalTo(3L));
 		assertThat("Results count for middle page", results.getReturnedResultCount(), equalTo(3));
 
 		Instant ts = start.plusHours(9).toInstant();
@@ -369,7 +370,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
-		filter.setOffset(6);
+		filter.setOffset(6L);
 		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
@@ -378,7 +379,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
-		assertThat("Offset for last page", results.getStartingOffset(), equalTo(6));
+		assertThat("Offset for last page", results.getStartingOffset(), equalTo(6L));
 		assertThat("Results count for last page", results.getReturnedResultCount(), equalTo(2));
 
 		Instant ts = start.plusHours(18).toInstant();
@@ -409,7 +410,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setStartDate(start.toInstant());
 		filter.setEndDate(start.plusHours(24).toInstant());
 		filter.setMax(3);
-		filter.setOffset(8);
+		filter.setOffset(8L);
 		filter.setWithoutTotalResultsCount(false);
 		ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
@@ -418,7 +419,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Metadata is for node", resultMeta.getKind(), equalTo(ObjectDatumKind.Node));
 		assertThat("Node ID", resultMeta.getObjectId(), equalTo(meta.getObjectId()));
 		assertThat("Total result count", results.getTotalResults(), equalTo(8L));
-		assertThat("Offset for last page", results.getStartingOffset(), equalTo(8));
+		assertThat("Offset for last page", results.getStartingOffset(), equalTo(8L));
 		assertThat("Results count for last page", results.getReturnedResultCount(), equalTo(0));
 	}
 
@@ -794,7 +795,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(2));
@@ -830,7 +831,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(1));
@@ -859,7 +860,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 						new String[] {"_v2"},
 						null),
 				DatumPropertiesStatistics.statisticsOf(
-						new BigDecimal[][] { 
+						new BigDecimal[][] {
 							decimalArray("12","833","17305"),
 							decimalArray("12","-33.023814","56.901104"),
 							decimalArray("12","225.10013","234.99686"),
@@ -870,8 +871,8 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 							decimalArray("12","3485","10181"),
 							decimalArray("12","0","4"),
 							decimalArray("12","11","11"),
-							}, 
-						new BigDecimal[][] { 
+							},
+						new BigDecimal[][] {
 							decimalArray("1195","5983591","5984786"),
 							decimalArray("13.145","-182.25348","-169.10848"),
 						}));
@@ -890,7 +891,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(1));
@@ -937,7 +938,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(2));
@@ -983,7 +984,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(2));
@@ -1022,7 +1023,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(1));
@@ -1056,7 +1057,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<Datum> datumList = StreamSupport.stream(results.spliterator(), false).collect(toList());
 		assertThat("Result list size matches", datumList, hasSize(1));
@@ -1087,7 +1088,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1121,7 +1122,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(1L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(1));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1157,7 +1158,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1210,7 +1211,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(2L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(2));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = StreamSupport.stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1233,16 +1234,18 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		}
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void find_1min() {
-		// WHEN
-		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setAggregation(Aggregation.Minute);
-		filter.setSorts(sorts("node", "source", "time"));
-		filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		filter.setEndDate(filter.getStartDate().plusSeconds(3600));
-		execute(filter);
+		thenThrownBy(() -> {
+			// WHEN
+			BasicDatumCriteria filter = new BasicDatumCriteria();
+			filter.setNodeId(1L);
+			filter.setAggregation(Aggregation.Minute);
+			filter.setSorts(sorts("node", "source", "time"));
+			filter.setStartDate(Instant.now().truncatedTo(ChronoUnit.HOURS));
+			filter.setEndDate(filter.getStartDate().plusSeconds(3600));
+			execute(filter);
+		}).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
@@ -1275,7 +1278,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(12L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(12));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1321,7 +1324,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(6));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1365,7 +1368,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(6L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(6));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());
@@ -1409,13 +1412,13 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		filter.setWithoutTotalResultsCount(false);
 
 		for ( int i = 0; i < 3; i++ ) {
-			filter.setOffset(i * 5);
+			filter.setOffset(i * 5L);
 			ObjectDatumStreamFilterResults<Datum, DatumPK> results = execute(filter);
 
 			assertThat("Results returned " + i, results, notNullValue());
 			assertThat("Result total count " + i, results.getTotalResults(), equalTo(12L));
 			assertThat("Returned count " + i, results.getReturnedResultCount(), equalTo(i == 2 ? 2 : 5));
-			assertThat("Starting offset " + i, results.getStartingOffset(), equalTo(i * 5));
+			assertThat("Starting offset " + i, results.getStartingOffset(), equalTo(i * 5L));
 
 			List<AggregateDatum> datumList = stream(results.spliterator(), false)
 					.map(AggregateDatum.class::cast).collect(toList());
@@ -1457,7 +1460,7 @@ public class JdbcDatumEntityDao_AggregateTests extends BaseDatumJdbcTestSupport 
 		assertThat("Results returned", results, notNullValue());
 		assertThat("Result total count", results.getTotalResults(), equalTo(4L));
 		assertThat("Returned count", results.getReturnedResultCount(), equalTo(4));
-		assertThat("Starting offset", results.getStartingOffset(), equalTo(0));
+		assertThat("Starting offset", results.getStartingOffset(), equalTo(0L));
 
 		List<AggregateDatum> datumList = stream(results.spliterator(), false)
 				.map(AggregateDatum.class::cast).collect(toList());

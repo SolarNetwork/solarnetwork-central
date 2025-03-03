@@ -167,7 +167,7 @@ public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		Long instructionId = null;
 		Long nodeId = null;
 		Long userId = null;
-		String correlationId = null;
+		String correlationId;
 		try {
 			final JsonNode json = objectMapper.readTree(message.getPayload());
 			log.info("Received OSCP instruction {}", json);

@@ -1,27 +1,28 @@
 /* ==================================================================
  * DatumAuxiliaryEntity.java - 4/11/2020 2:07:44 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -36,7 +37,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 /**
  * An auxiliary datum that is part of a datum stream but managed outside the
  * stream itself.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 2.8
@@ -44,6 +45,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 		implements DatumAuxiliary, Entity<DatumAuxiliaryPK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = -3932363566089537924L;
 
 	private final Instant updated;
@@ -54,7 +56,7 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param updated
@@ -80,7 +82,7 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID
 	 * @param timestamp
@@ -147,7 +149,7 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 
 	/**
 	 * Get the last updated date.
-	 * 
+	 *
 	 * @return the updated date
 	 */
 	public Instant getUpdated() {
@@ -156,11 +158,11 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 
 	/**
 	 * Get the datum stream ID.
-	 * 
+	 *
 	 * <p>
 	 * This method is a shortcut for {@code getId().getStreamId()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the stream ID
 	 */
 	@Override
@@ -171,12 +173,12 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 
 	/**
 	 * Get the datum timestamp.
-	 * 
+	 *
 	 * <p>
 	 * The {@link #getCreated()} method is an alias for this method. This method
 	 * is a shortcut for {@code getId().getTimestamp()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the datum timestamp
 	 */
 	@Override
@@ -187,11 +189,11 @@ public class DatumAuxiliaryEntity extends BasicIdentity<DatumAuxiliaryPK>
 
 	/**
 	 * Get the datum auxiliary type.
-	 * 
+	 *
 	 * <p>
 	 * This method is a shortcut for {@code getId().getKind()}.
 	 * </p>
-	 * 
+	 *
 	 * @return the datum auxiliary type
 	 */
 	@Override

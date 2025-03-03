@@ -1,0 +1,40 @@
+{
+    "details": {
+        "id": 2883,
+        "name": "Example Elementary",
+        "accountId": 12345,
+        "status": "Active",
+        "peakPower": 132.3,
+        "lastUpdateTime": "2025-02-27",
+        "installationDate": "2018-06-07",
+        "ptoDate": "2018-11-28",
+        "notes": "",
+        "type": "Optimizers & Inverters",
+        "location": {
+            "country": "United States",
+            "state": "Connecticut",
+            "city": "Anytown",
+            "address": "123 Main Street",
+            "address2": "",
+            "zip": "06460",
+            "timeZone": "America/New_York",
+            "countryCode": "US",
+            "stateCode": "CT"
+        },
+        "primaryModule": {
+            "manufacturerName": "Jinko Solar",
+            "modelName": "JKM350M-72-V",
+            "maximumPower": 350,
+            "temperatureCoef": -0.39
+        },
+        "uris": {
+            "DATA_PERIOD": "/site/2883/dataPeriod",
+            "INSTALLER_IMAGE": "/site/2883/installerImage/image.jpg",
+            "DETAILS": "/site/2883/details",
+            "OVERVIEW": "/site/2883/overview"
+        },
+        "publicSettings": {
+            "isPublic": false
+        }
+    }
+}

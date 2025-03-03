@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -44,7 +45,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 @JsonIgnoreProperties({ "id", "fullyConfigured" })
 @JsonPropertyOrder({ "userId", "configId", "created", "modified", "enabled", "name", "serviceIdentifier",
 		"serviceProperties" })
-public class CloudIntegrationConfiguration
+public final class CloudIntegrationConfiguration
 		extends BaseIdentifiableUserModifiableEntity<CloudIntegrationConfiguration, UserLongCompositePK>
 		implements
 		CloudIntegrationsConfigurationEntity<CloudIntegrationConfiguration, UserLongCompositePK>,
@@ -56,6 +57,7 @@ public class CloudIntegrationConfiguration
 	 */
 	public static final String CLOUD_INTEGRATION_SYSTEM_IDENTIFIER = "c2c-i9n";
 
+	@Serial
 	private static final long serialVersionUID = 9018138639840148323L;
 
 	/**

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DeleteDatumTests.java - 6/12/2020 8:21:25 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,8 +30,8 @@ import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.sameInstance;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -48,9 +48,9 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.DeleteDatum;
 
 /**
  * Test cases for the {@link DeleteDatum} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class DeleteDatumTests {
 
@@ -60,8 +60,8 @@ public class DeleteDatumTests {
 	public void sql_drc_nodesAndSources_localDates() {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setLocalStartDate(LocalDateTime.of(2020, 1, 1, 0, 0));
 		filter.setLocalEndDate(LocalDateTime.of(2021, 1, 1, 0, 0));
 
@@ -78,8 +78,8 @@ public class DeleteDatumTests {
 	public void prep_drc_nodesAndSources_localDates() throws SQLException {
 		// GIVEN
 		BasicDatumCriteria filter = new BasicDatumCriteria();
-		filter.setNodeId(1L);
-		filter.setSourceId("a");
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setSourceIds(new String[] { "a/*", "b" });
 		filter.setLocalStartDate(LocalDateTime.of(2020, 1, 1, 0, 0));
 		filter.setLocalEndDate(LocalDateTime.of(2021, 1, 1, 0, 0));
 

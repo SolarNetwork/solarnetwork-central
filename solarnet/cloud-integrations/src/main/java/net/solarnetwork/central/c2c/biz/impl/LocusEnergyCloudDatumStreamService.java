@@ -44,6 +44,7 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -60,12 +61,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
+import org.springframework.http.HttpEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.validation.BindException;
@@ -133,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.10
+ * @version 1.12
  */
 public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -172,7 +176,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SITE_ID_FILTER,
 			COMPONENT_ID_FILTER);
 
-	private AsyncTaskExecutor executor;
+	private final AsyncTaskExecutor executor;
 
 	/**
 	 * Constructor.
@@ -197,6 +201,15 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the REST operations
 	 * @param oauthClientManager
 	 *        the OAuth client manager
+	 * @param clock
+	 *        the clock to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -207,15 +220,16 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager) {
-		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager),
+						oauthClientManager, clock, integrationLocksCache),
 				oauthClientManager);
 		this.executor = requireNonNullArgument(executor, "executor");
 	}
@@ -243,7 +257,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null
 				&& filters.get(COMPONENT_ID_FILTER) != null ) {
 			result = nodesForComponent(integration, filters);
@@ -265,7 +279,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	private static List<CloudDataValue> parseSites(ObjectNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "statusCode": 200,
@@ -325,7 +341,9 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	private static List<CloudDataValue> parseComponents(ObjectNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "statusCode": 200,
@@ -387,9 +405,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	}
 
 	private static List<CloudDataValue> parseNodes(ObjectNode json, Map<String, ?> filters) {
-		assert json != null;
 		assert filters != null && filters.containsKey(SITE_ID_FILTER)
 				&& filters.containsKey(COMPONENT_ID_FILTER);
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "statusCode": 200,
@@ -453,8 +473,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 					}
 					final String aggName = name + ' ' + agg;
 					final var aggMeta = Map.of("aggregation", agg);
-					children.add(dataValue(List.of(siteId, compId, id, aggId), aggName,
-							aggMeta.isEmpty() ? null : aggMeta));
+					children.add(dataValue(List.of(siteId, compId, id, aggId), aggName, aggMeta));
 				}
 			}
 			result.add(dataValue(List.of(siteId, compId, id), name, meta.isEmpty() ? null : meta,
@@ -503,7 +522,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 		}
 		LocusEnergyGranularity granularity = null;
 		try {
-			String granSetting = null;
+			String granSetting;
 			if ( filter.hasParameterCriteria()
 					&& filter.getParameters().get(GRANULARITY_SETTING) instanceof String s ) {
 				granSetting = s;
@@ -522,13 +541,11 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	/**
 	 * Query for datum.
 	 *
-	 * @param ds
+	 * @param datumStream
 	 *        the stream to query
 	 * @param filter
 	 *        an optional filter; if not provided then query for the latest
 	 *        datum only
-	 * @param locale
-	 *        the locale for messages
 	 * @return the results
 	 */
 	private CloudDatumStreamQueryResult queryForDatum(CloudDatumStreamConfiguration datumStream,
@@ -579,7 +596,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 				// groups: 1 = siteId, 2 = componentId, 3 = baseField, 4 = field
 				String componentId = m.group(2);
 				String fieldName = m.group(4);
-				fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<String>(8))
+				fieldNamesByComponent.computeIfAbsent(componentId, k -> new LinkedHashSet<>(8))
 						.add(fieldName);
 				fieldNamesByProperty.put(config.getId(), fieldName);
 			}
@@ -618,7 +635,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 									return b.buildAndExpand(
 											Map.of(COMPONENT_ID_FILTER, reqEntry.getKey())).toUri();
 
-								}, (res) -> res.getBody());
+								}, HttpEntity::getBody);
 						List<Map<String, JsonNode>> datumValuesList = new ArrayList<>();
 						for ( JsonNode dataNode : json.path("data") ) {
 							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {

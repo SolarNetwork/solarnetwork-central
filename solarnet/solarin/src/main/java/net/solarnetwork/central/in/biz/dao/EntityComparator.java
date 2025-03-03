@@ -1,21 +1,21 @@
 /* ==================================================================
  * EntityComparator.java - 25/03/2020 6:49:14 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,7 @@ import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Compare entities by date, key, source.
- * 
+ *
  * @author matt
  * @version 2.0
  * @since 2.1
@@ -45,8 +45,7 @@ public final class EntityComparator implements Comparator<BasePK> {
 		Long key2;
 		String s1;
 		String s2;
-		if ( o1 instanceof GeneralNodeDatumPK ) {
-			GeneralNodeDatumPK pk1 = (GeneralNodeDatumPK) o1;
+		if ( o1 instanceof GeneralNodeDatumPK pk1 ) {
 			ts1 = pk1.getCreated();
 			key1 = pk1.getNodeId();
 			s1 = pk1.getSourceId();
@@ -56,8 +55,7 @@ public final class EntityComparator implements Comparator<BasePK> {
 			key1 = pk1.getLocationId();
 			s1 = pk1.getSourceId();
 		}
-		if ( o2 instanceof GeneralNodeDatumPK ) {
-			GeneralNodeDatumPK pk2 = (GeneralNodeDatumPK) o2;
+		if ( o2 instanceof GeneralNodeDatumPK pk2 ) {
 			ts2 = pk2.getCreated();
 			key2 = pk2.getNodeId();
 			s2 = pk2.getSourceId();

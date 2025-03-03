@@ -1,21 +1,21 @@
 /* ==================================================================
  * InvoiceImpl.java - 24/07/2020 3:14:15 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -40,12 +41,13 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 /**
  * Wrap a {@link SnfInvoiceItem} as an
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
- * 
+ *
  * @author matt
  * @version 2.0
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
+	@Serial
 	private static final long serialVersionUID = 6864680090286557577L;
 
 	private final SnfInvoice invoice;
@@ -53,7 +55,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param invoice
 	 *        the invoice to wrap
 	 * @throws IllegalArgumentException
@@ -65,7 +67,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param invoice
 	 *        the invoice to wrap
 	 * @param items
@@ -124,7 +126,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 			items = Collections.emptySet();
 		}
 		return items.stream().filter(e -> InvoiceItemType.Tax.equals(e.getItemType()))
-				.map(e -> e.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+				.map(SnfInvoiceItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	@Override
@@ -134,7 +136,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 			items = Collections.emptySet();
 		}
 		BigDecimal sum = items.stream().filter(e -> InvoiceItemType.Credit.equals(e.getItemType()))
-				.map(e -> e.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+				.map(SnfInvoiceItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 		return (!sum.equals(BigDecimal.ZERO) ? sum : null);
 	}
 

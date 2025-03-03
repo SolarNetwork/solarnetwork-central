@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.4.0' apply false
+	id 'org.springframework.boot' version '3.4.3' apply false
 }
 
 apply plugin: 'java-library'
@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Cloud Integrations'
-version = '1.13.2'
+version = '1.18.0'
 
 base {
 	archivesName = 'solarnet-cloud-integrations'
@@ -54,7 +54,7 @@ dependencies {
 	
 	// Utilities
 	implementation 'commons-codec:commons-codec'
-	implementation 'com.fasterxml.uuid:java-uuid-generator:4.0.1'
+	implementation "com.fasterxml.uuid:java-uuid-generator:${uuidGeneratorVersion}"
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
 	implementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"

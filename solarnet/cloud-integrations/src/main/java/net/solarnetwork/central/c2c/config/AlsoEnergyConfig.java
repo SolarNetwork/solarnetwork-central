@@ -23,10 +23,12 @@
 package net.solarnetwork.central.c2c.config;
 
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.HTTP_TRACE;
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.OAUTH_CLIENT_REGISTRATION;
 import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,6 +37,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.core.env.Environment;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -44,16 +48,17 @@ import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2A
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProvider;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
-import org.springframework.security.oauth2.client.endpoint.DefaultClientCredentialsTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.DefaultPasswordTokenResponseClient;
-import org.springframework.security.oauth2.client.endpoint.DefaultRefreshTokenTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.RestClientClientCredentialsTokenResponseClient;
+import org.springframework.security.oauth2.client.endpoint.RestClientRefreshTokenTokenResponseClient;
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.DefaultMapOAuth2AccessTokenResponseConverter;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
-import org.springframework.web.client.RestOperations;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
@@ -69,6 +74,9 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
+import net.solarnetwork.central.datum.biz.QueryAuditor;
+import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.JwtOAuth2AccessTokenResponseConverter;
@@ -78,11 +86,11 @@ import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientM
  * Configuration for the AlsoEnergy cloud integration services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class AlsoEnergyConfig {
+public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	/** A qualifier for AlsoEnergy configuration. */
 	public static final String ALSO_ENERGY = "also-energy";
@@ -109,7 +117,7 @@ public class AlsoEnergyConfig {
 	private ClientHttpRequestFactory reqFactory;
 
 	@Autowired
-	private RestOperations restOps;
+	private RestTemplate restOps;
 
 	@Autowired
 	@Qualifier(CLOUD_INTEGRATIONS)
@@ -125,10 +133,23 @@ public class AlsoEnergyConfig {
 	@Autowired(required = false)
 	private UserServiceAuditor userServiceAuditor;
 
+	@Autowired
+	private DatumEntityDao datumDao;
+
+	@Autowired(required = false)
+	private QueryAuditor queryAuditor;
+
+	@Autowired
+	private Environment environment;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
+	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
+
 	@Bean
 	@Qualifier(ALSO_ENERGY)
-	public OAuth2AuthorizedClientManager alsoEnergyOauthAuthorizedClientManager(
-			@Autowired(required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
+	public OAuth2AuthorizedClientManager alsoEnergyOauthAuthorizedClientManager(@Autowired(
+			required = false) @Qualifier(OAUTH_CLIENT_REGISTRATION) Cache<String, ClientRegistration> cache) {
 		ClientRegistrationRepository repo = new ClientCredentialsClientRegistrationRepository(
 				integrationConfigurationDao, AlsoEnergyCloudIntegrationService.TOKEN_URI,
 				ClientAuthenticationMethod.CLIENT_SECRET_POST, encryptor,
@@ -146,12 +167,17 @@ public class AlsoEnergyConfig {
 
 		// @formatter:off
 		var authRestOps = new RestTemplateBuilder()
-				.requestFactory(() -> reqFactory)
+				.requestFactory(() -> environment.matchesProfiles(HTTP_TRACE)
+						? new BufferingClientHttpRequestFactory(reqFactory)
+						: reqFactory)
 				.messageConverters(Arrays.asList(
 						new FormHttpMessageConverter(),
 						tokenResponseConverter))
 				.errorHandler(new OAuth2ErrorResponseErrorHandler())
+				.interceptors(restOps.getInterceptors())
 				.build();
+
+		var authRestClient = RestClient.create(authRestOps);
 		// @formatter:on
 
 		@SuppressWarnings("deprecation")
@@ -161,12 +187,12 @@ public class AlsoEnergyConfig {
 					client.setRestOperations(authRestOps);
 					b.accessTokenResponseClient(client);
 				}).clientCredentials(b -> {
-					var client = new DefaultClientCredentialsTokenResponseClient();
-					client.setRestOperations(authRestOps);
+					var client = new RestClientClientCredentialsTokenResponseClient();
+					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);
 				}).refreshToken(b -> {
-					var client = new DefaultRefreshTokenTokenResponseClient();
-					client.setRestOperations(authRestOps);
+					var client = new RestClientRefreshTokenTokenResponseClient();
+					client.setRestClient(authRestClient);
 					b.accessTokenResponseClient(client);
 				}).build();
 
@@ -183,7 +209,7 @@ public class AlsoEnergyConfig {
 		var service = new AlsoEnergyCloudDatumStreamService(userEventAppender, encryptor,
 				expressionService, integrationConfigurationDao, datumStreamConfigurationDao,
 				datumStreamMappingConfigurationDao, datumStreamPropertyConfigurationDao, restOps,
-				oauthClientManager, Clock.systemUTC());
+				oauthClientManager, Clock.systemUTC(), integrationLocksCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(AlsoEnergyCloudDatumStreamService.class.getName(),
@@ -191,6 +217,8 @@ public class AlsoEnergyConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
 
 		return service;
 	}
@@ -201,7 +229,7 @@ public class AlsoEnergyConfig {
 			@Qualifier(ALSO_ENERGY) OAuth2AuthorizedClientManager oauthClientManager,
 			@Qualifier(ALSO_ENERGY) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new AlsoEnergyCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps, oauthClientManager);
+				encryptor, restOps, oauthClientManager, Clock.systemUTC(), integrationLocksCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),

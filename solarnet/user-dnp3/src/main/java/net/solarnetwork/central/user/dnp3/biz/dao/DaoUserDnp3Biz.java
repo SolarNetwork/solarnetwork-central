@@ -1,21 +1,21 @@
 /* ==================================================================
  * DaoUserDnp3Biz.java - 7/08/2023 8:52:07 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -39,8 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Validator;
 import org.springframework.context.MessageSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.io.InputStreamSource;
@@ -54,6 +52,8 @@ import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListReader;
 import org.supercsv.io.ICsvListWriter;
 import org.supercsv.prefs.CsvPreference;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import net.solarnetwork.central.dnp3.dao.BasicFilter;
 import net.solarnetwork.central.dnp3.dao.CertificateFilter;
 import net.solarnetwork.central.dnp3.dao.ServerAuthConfigurationDao;
@@ -86,7 +86,7 @@ import net.solarnetwork.dao.FilterResults;
 
 /**
  * DAO-based implementation of {@link UserDnp3Biz}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -105,7 +105,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param trustedCertDao
 	 *        the trusted certificate DAO to use
 	 * @param serverDao
@@ -145,7 +145,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		this.csvImportExampleResources = importExampleMapping;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public Collection<TrustedIssuerCertificate> saveTrustedIssuerCertificates(Long userId,
 			X509Certificate[] certificates) {
@@ -162,7 +162,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteTrustedIssuerCertificate(Long userId, String subjectDn) {
 		trustedCertDao.delete(new TrustedIssuerCertificate(userId, subjectDn, Instant.now()));
@@ -177,7 +177,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return trustedCertDao.findFiltered(userFilter);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ServerConfiguration createServer(Long userId, ServerConfigurationInput input) {
 		UserLongCompositePK unassignedId = unassignedEntityIdKey(userId);
@@ -187,7 +187,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ServerConfiguration updateServer(Long userId, Long serverId, ServerConfigurationInput input) {
 		ServerConfiguration conf = requireNonNullArgument(input, "input")
@@ -197,7 +197,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServer(Long userId, Long serverId) {
 		serverDao.delete(new ServerConfiguration(userId, serverId, Instant.EPOCH));
@@ -212,7 +212,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverDao.findFiltered(userFilter);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ServerAuthConfiguration saveServerAuth(Long userId, Long serverId, String identity,
 			ServerAuthConfigurationInput input) {
@@ -223,7 +223,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverAuthDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerAuth(Long userId, Long serverId, String identifier) {
 		serverAuthDao.delete(new ServerAuthConfiguration(userId, serverId, identifier, Instant.EPOCH));
@@ -238,7 +238,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverAuthDao.findFiltered(userFilter);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ServerMeasurementConfiguration saveServerMeasurement(Long userId, Long serverId,
 			Integer index, ServerMeasurementConfigurationInput input) {
@@ -249,7 +249,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverMeasurementDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerMeasurement(Long userId, Long serverId, Integer index) {
 		serverMeasurementDao
@@ -265,7 +265,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverMeasurementDao.findFiltered(userFilter);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ServerControlConfiguration saveServerControl(Long userId, Long serverId, Integer index,
 			ServerControlConfigurationInput input) {
@@ -276,7 +276,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverControlDao.get(pk);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteServerControl(Long userId, Long serverId, Integer index) {
 		serverControlDao.delete(new ServerControlConfiguration(userId, serverId, index, Instant.EPOCH));
@@ -291,33 +291,33 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return serverControlDao.findFiltered(userFilter);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateTrustedIssuerCertificateEnabledStatus(Long userId, CertificateFilter filter,
 			boolean enabled) {
 		trustedCertDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateServerEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
 		serverDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateServerAuthEnabledStatus(Long userId, ServerFilter filter, boolean enabled) {
 		serverAuthDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateServerMeasurementEnabledStatus(Long userId, ServerDataPointFilter filter,
 			boolean enabled) {
 		serverMeasurementDao.updateEnabledStatus(userId, filter, enabled);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateServerControlEnabledStatus(Long userId, ServerDataPointFilter filter,
 			boolean enabled) {
@@ -340,12 +340,12 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 		return result;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ServerConfigurations importServerConfigurationsCsv(Long userId, Long serverId,
 			InputStreamSource csv, Locale locale) throws IOException {
 		final Instant date = Instant.now();
-		ServerConfigurationsInput result = null;
+		ServerConfigurationsInput result;
 		try (ICsvListReader in = new CsvListReader(new InputStreamReader(csv.getInputStream(), UTF_8),
 				CsvPreference.STANDARD_PREFERENCE)) {
 			result = new ServerConfigurationsCsvParser(csvImportMessageSource,
@@ -406,7 +406,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	/**
 	 * Get the validator.
-	 * 
+	 *
 	 * @return the validator
 	 */
 	public Validator getValidator() {
@@ -415,7 +415,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 
 	/**
 	 * Set the validator.
-	 * 
+	 *
 	 * @param validator
 	 *        the validator to set
 	 */
@@ -426,7 +426,7 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	/**
 	 * Get the CSV import example resource mapping of MIME types to resource
 	 * paths.
-	 * 
+	 *
 	 * @return the resources
 	 */
 	public Map<String, String> getCsvImportExampleResources() {
@@ -436,12 +436,12 @@ public class DaoUserDnp3Biz implements UserDnp3Biz {
 	/**
 	 * Set the CSV import example resource mapping of MIME types to resource
 	 * paths.
-	 * 
+	 *
 	 * <p>
 	 * The values are assumed to be file system paths, unless prefixed with
 	 * {@code classpath:} in which case it is treated as a classpath resource.
 	 * </p>
-	 * 
+	 *
 	 * @param csvImportExampleResources
 	 *        the resource mapping to set
 	 * @throws IllegalArgumentException

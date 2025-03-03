@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisUserNodeDao.java - Nov 11, 2014 7:29:04 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
 
 /**
  * MyBatis implementation of {@link UserNodeDao}.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -48,7 +48,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 
 	/**
 	 * The query name used for {@link #findArchivedUserNodesForUser(Long)}.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	public static final String QUERY_FOR_USER_ARCHIVED = "find-archived-UserNode-for-User";
@@ -56,7 +56,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	/**
 	 * The query name used for
 	 * {@link #updateUserNodeArchivedStatus(Long, Long[], boolean)}.
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	public static final String UPDATE_ARCHIVED_STATUS = "update-archived-UserNode-status";
@@ -73,7 +73,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	 */
 	public static final String CALL_STORE_USER_NODE_TRANSFER = "store-UserNodeTransfer";
 
-	/** The query name for {@link #deleteUserNodeTrasnfer(UserNodeTransfer)}. */
+	/** The query name for {@link #deleteUserNodeTransfer(UserNodeTransfer)}. */
 	public static final String DELETE_USER_NODE_TRANSFER = "delete-UserNodeTransfer";
 
 	/**
@@ -89,14 +89,14 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 
 	/**
 	 * The query name used for {@link #findNodeIdsForUser(Long)}.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final String QUERY_NODE_IDS_FOR_USER = "find-node-ids-for-user-id";
 
 	/**
 	 * The query name used for {@link #findNodeIdsForToken(String)}.
-	 * 
+	 *
 	 * @since 1.3
 	 */
 	public static final String QUERY_NODE_IDS_FOR_TOKEN = "find-node-ids-for-token-id";
@@ -141,7 +141,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 	}
 
 	@Override
-	public void deleteUserNodeTrasnfer(UserNodeTransfer transfer) {
+	public void deleteUserNodeTransfer(UserNodeTransfer transfer) {
 		int count = getSqlSession().delete(DELETE_USER_NODE_TRANSFER, transfer.getId());
 		log.debug("Deleted {} UserNodeTransfer entities for ID {}", count, transfer.getId());
 	}
@@ -153,7 +153,7 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
@@ -163,12 +163,12 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.1
 	 */
 	@Override
 	public void updateUserNodeArchivedStatus(Long userId, Long[] nodeIds, boolean archived) {
-		Map<String, Object> sqlProperties = new HashMap<String, Object>(3);
+		Map<String, Object> sqlProperties = new HashMap<>(3);
 		sqlProperties.put("userId", userId);
 		sqlProperties.put("nodeIds", nodeIds);
 		sqlProperties.put("archived", archived);
@@ -177,26 +177,24 @@ public class MyBatisUserNodeDao extends BaseMyBatisGenericDao<UserNode, Long> im
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	@Override
 	public Set<Long> findNodeIdsForUser(Long userId) {
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_USER, userId, null, null);
-		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
-				: new LinkedHashSet<Long>(ids));
+		return (ids == null || ids.isEmpty() ? Collections.emptySet() : new LinkedHashSet<>(ids));
 	}
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.3
 	 */
 	@Override
 	public Set<Long> findNodeIdsForToken(String tokenId) {
 		List<Long> ids = selectList(QUERY_NODE_IDS_FOR_TOKEN, tokenId, null, null);
-		return (ids == null || ids.isEmpty() ? Collections.<Long> emptySet()
-				: new LinkedHashSet<Long>(ids));
+		return (ids == null || ids.isEmpty() ? Collections.emptySet() : new LinkedHashSet<>(ids));
 	}
 
 }

@@ -1,27 +1,28 @@
 /* ==================================================================
  * ChargePointActionStatusKey.java - 16/11/2022 5:08:46 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.ocpp.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import net.solarnetwork.central.domain.BasePK;
@@ -29,13 +30,14 @@ import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A primary key for a Charge Point action status.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class ChargePointActionStatusKey extends BasePK
 		implements Serializable, Cloneable, Comparable<ChargePointActionStatusKey> {
 
+	@Serial
 	private static final long serialVersionUID = -5822582739610295086L;
 
 	/** The user ID. */
@@ -55,7 +57,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Create a new key instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointId
@@ -75,7 +77,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Create a new key instance.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointId
@@ -98,7 +100,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointId
@@ -116,7 +118,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param chargePointId
@@ -195,17 +197,16 @@ public class ChargePointActionStatusKey extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof ChargePointActionStatusKey) ) {
+		if ( !(obj instanceof ChargePointActionStatusKey other) ) {
 			return false;
 		}
-		ChargePointActionStatusKey other = (ChargePointActionStatusKey) obj;
 		return userId == other.userId && chargePointId == other.chargePointId && evseId == other.evseId
 				&& connectorId == other.connectorId && action.equals(other.action);
 	}
 
 	/**
 	 * Get the user ID.
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	public long getUserId() {
@@ -214,7 +215,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Get the Charge Point ID.
-	 * 
+	 *
 	 * @return the Charge Point ID
 	 */
 	public long getChargePointId() {
@@ -223,7 +224,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Get the EVSE ID.
-	 * 
+	 *
 	 * @return the EVSE ID, or {@literal 0} for the charger itself
 	 */
 	public int getEvseId() {
@@ -232,7 +233,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Get the connector ID.
-	 * 
+	 *
 	 * @return the connector ID, or {@literal 0} for the EVSE itself
 	 */
 	public int getConnectorId() {
@@ -241,7 +242,7 @@ public class ChargePointActionStatusKey extends BasePK
 
 	/**
 	 * Get the action.
-	 * 
+	 *
 	 * @return the action, never {@literal null}
 	 */
 	public String getAction() {

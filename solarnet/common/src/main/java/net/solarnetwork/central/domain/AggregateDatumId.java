@@ -1,27 +1,28 @@
 /* ==================================================================
  * ObjectDatumId.java - 22/11/2020 9:50:39 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -31,13 +32,14 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 
 /**
  * A general aggregate datum identifier.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class AggregateDatumId extends BaseId
 		implements Cloneable, Serializable, Comparable<AggregateDatumId> {
 
+	@Serial
 	private static final long serialVersionUID = 182649624035421355L;
 
 	private final ObjectDatumKind kind;
@@ -48,7 +50,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Create a new node aggregate datum ID.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -66,7 +68,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Create a new location datum stream ID.
-	 * 
+	 *
 	 * @param locationId
 	 *        the node ID
 	 * @param sourceId
@@ -85,7 +87,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param kind
 	 *        the kind
 	 * @param objectId
@@ -139,35 +141,35 @@ public class AggregateDatumId extends BaseId
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		if ( kind != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("kind=");
 			buf.append(kind);
 		}
 		if ( objectId != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("objectId=");
 			buf.append(objectId);
 		}
 		if ( sourceId != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("sourceId=");
 			buf.append(sourceId);
 		}
 		if ( timestamp != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("timestamp=");
 			buf.append(timestamp);
 		}
 		if ( aggregation != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("aggregation=");
@@ -183,7 +185,7 @@ public class AggregateDatumId extends BaseId
 		if ( o == null ) {
 			return -1;
 		}
-		int result = 0;
+		int result;
 		if ( kind != o.kind ) {
 			if ( kind == null ) {
 				return 1;
@@ -248,10 +250,9 @@ public class AggregateDatumId extends BaseId
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof AggregateDatumId) ) {
+		if ( !(obj instanceof AggregateDatumId other) ) {
 			return false;
 		}
-		AggregateDatumId other = (AggregateDatumId) obj;
 		return Objects.equals(kind, other.kind) && Objects.equals(objectId, other.objectId)
 				&& Objects.equals(sourceId, other.sourceId) && Objects.equals(timestamp, other.timestamp)
 				&& Objects.equals(aggregation, other.aggregation);
@@ -259,7 +260,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Test if this object ID is fully specified.
-	 * 
+	 *
 	 * @param expectedKind
 	 *        the kind to match
 	 * @return {@literal true} if {@code expectedKind} is the same as this
@@ -273,7 +274,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Test if this object ID is fully specified as an aggregate.
-	 * 
+	 *
 	 * @param expectedKind
 	 *        the kind to match
 	 * @return {@literal true} if {@link #isValidObjectId(ObjectDatumKind)}
@@ -281,12 +282,12 @@ public class AggregateDatumId extends BaseId
 	 * @see #isValidObjectId(ObjectDatumKind)
 	 */
 	public boolean isValidAggregateObjectId(ObjectDatumKind expectedKind) {
-		return isValidObjectId(kind) && aggregation != null;
+		return isValidObjectId(expectedKind) && aggregation != null;
 	}
 
 	/**
 	 * Get the kind.
-	 * 
+	 *
 	 * @return the kind
 	 */
 	public ObjectDatumKind getKind() {
@@ -295,7 +296,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Get the object ID.
-	 * 
+	 *
 	 * @return the object ID
 	 */
 	public Long getObjectId() {
@@ -304,7 +305,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Get the source ID.
-	 * 
+	 *
 	 * @return the source ID
 	 */
 	public String getSourceId() {
@@ -313,7 +314,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Get the timestamp.
-	 * 
+	 *
 	 * @return the timestamp
 	 */
 	public Instant getTimestamp() {
@@ -322,7 +323,7 @@ public class AggregateDatumId extends BaseId
 
 	/**
 	 * Get the aggregation.
-	 * 
+	 *
 	 * @return the aggregation
 	 */
 	public Aggregation getAggregation() {

@@ -61,7 +61,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Test cases for the {@link AsyncChargePointStatusDao} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -95,7 +95,7 @@ public class AsyncChargePointStatusDaoTests {
 		// GIVEN
 		final var filter = new BasicOcppCriteria();
 		final List<SortDescriptor> sorts = Collections.emptyList();
-		final Integer offset = 0;
+		final Long offset = 0L;
 		final Integer max = 1;
 
 		final var daoResults = new BasicFilterResults<ChargePointStatus, UserLongCompositePK>(
@@ -114,7 +114,7 @@ public class AsyncChargePointStatusDaoTests {
 		// GIVEN
 		var filter = new BasicOcppCriteria();
 		final List<SortDescriptor> sorts = Collections.emptyList();
-		final Integer offset = 0;
+		final Long offset = 0L;
 		final Integer max = 1;
 
 		// WHEN

@@ -48,7 +48,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Service API for SolarUser OCPP support.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface UserOcppBiz {
 
@@ -306,7 +306,7 @@ public interface UserOcppBiz {
 	 */
 	void findFilteredChargePointStatus(ChargePointStatusFilter filter,
 			FilteredResultsProcessor<ChargePointStatus> processor, List<SortDescriptor> sortDescriptors,
-			Integer offset, Integer max) throws IOException;
+			Long offset, Integer max) throws IOException;
 
 	/**
 	 * API for querying for a filtered set of charger point action statuses,
@@ -328,7 +328,7 @@ public interface UserOcppBiz {
 	 */
 	void findFilteredChargePointActionStatus(ChargePointActionStatusFilter filter,
 			FilteredResultsProcessor<ChargePointActionStatus> processor,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) throws IOException;
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max) throws IOException;
 
 	/**
 	 * Get the available settings entities for a given user.

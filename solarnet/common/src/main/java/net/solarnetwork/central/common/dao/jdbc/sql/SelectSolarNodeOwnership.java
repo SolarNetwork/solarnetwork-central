@@ -51,7 +51,7 @@ import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
  * @author matt
  * @version 1.0
  */
-public class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlProvider {
+public final class SelectSolarNodeOwnership implements PreparedStatementCreator, SqlProvider {
 
 	private final Long[] nodeIds;
 	private final Long[] userIds;

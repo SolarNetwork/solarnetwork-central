@@ -1,21 +1,21 @@
 /* ==================================================================
  * ObjectSearchFilters.java - Aug 8, 2010 8:15:35 PM
- * 
+ *
  * Copyright 2007 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -29,7 +29,7 @@ import net.solarnetwork.central.domain.Filter;
 
 /**
  * Collection of object search filters.
- * 
+ *
  * @param <T>
  *        the object to filter on
  * @author matt
@@ -37,15 +37,15 @@ import net.solarnetwork.central.domain.Filter;
  */
 public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectCriteria<T> {
 
-	private JoinType joinType = JoinType.AND;
-	private List<ObjectSearchFilter<T>> filters = new LinkedList<ObjectSearchFilter<T>>();
-	private List<ObjectSearchFilters<T>> nestedFilters = new LinkedList<ObjectSearchFilters<T>>();
+	private JoinType joinType;
+	private List<ObjectSearchFilter<T>> filters = new LinkedList<>();
+	private List<ObjectSearchFilters<T>> nestedFilters = new LinkedList<>();
 	private Integer resultOffset;
 	private Integer resultMax;
 
 	/**
 	 * Construct a new ObjectSearchFilters object with a join type.
-	 * 
+	 *
 	 * @param joinType
 	 *        the logical join type
 	 */
@@ -56,7 +56,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Construct a search filters object out of a single filter, using
 	 * {@link JoinType#AND} and {@link MatchType#EQUAL}.
-	 * 
+	 *
 	 * @param filter
 	 *        the object to filter on
 	 */
@@ -67,7 +67,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Construct a search filters object out of a single filter, using
 	 * {@link MatchType#EQUAL}.
-	 * 
+	 *
 	 * @param joinType
 	 *        the logical join type, used for nested join and the given filter
 	 * @param filter
@@ -80,7 +80,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	/**
 	 * Construct a search filters object out of a single filter, using
 	 * {@link MatchType#EQUAL}.
-	 * 
+	 *
 	 * @param joinType
 	 *        the logical join type
 	 * @param filter
@@ -90,7 +90,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	 */
 	public ObjectSearchFilters(JoinType joinType, T filter, JoinType filterJoinType) {
 		this.joinType = joinType;
-		filters.add(new ObjectSearchFilter<T>(filter, MatchType.EQUAL, filterJoinType));
+		filters.add(new ObjectSearchFilter<>(filter, MatchType.EQUAL, filterJoinType));
 	}
 
 	/**
@@ -100,20 +100,20 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	 * This allows for creating complex logical filters. See the class
 	 * description for an example of this.
 	 * </p>
-	 * 
-	 * @return the new nested ObjectSearchFilters object
+	 *
 	 * @param nestedJoinType
 	 *        the logical join type
+	 * @return the new nested ObjectSearchFilters object
 	 */
 	public ObjectSearchFilters<T> addNestedFilters(JoinType nestedJoinType) {
-		ObjectSearchFilters<T> sf = new ObjectSearchFilters<T>(nestedJoinType);
+		ObjectSearchFilters<T> sf = new ObjectSearchFilters<>(nestedJoinType);
 		nestedFilters.add(sf);
 		return sf;
 	}
 
 	/**
 	 * Add a new ObjectSearchFilter to this object.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 */
@@ -123,7 +123,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 
 	/**
 	 * Add a new ObjectSearchFilter to this object.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter to add
 	 * @param mode
@@ -132,14 +132,14 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	 *        the join type
 	 */
 	public void addObjectSearchFilter(T filter, MatchType mode, JoinType joinType) {
-		ObjectSearchFilter<T> osf = new ObjectSearchFilter<T>(filter, mode, joinType);
+		ObjectSearchFilter<T> osf = new ObjectSearchFilter<>(filter, mode, joinType);
 		filters.add(osf);
 	}
 
 	/**
 	 * Generate a complete search filter string of this object into a
 	 * StringBuffer.
-	 * 
+	 *
 	 * @param buf
 	 *        buffer to append to
 	 */
@@ -167,7 +167,7 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 
 	/**
 	 * Generate a complete LDAP search filter string of this object.
-	 * 
+	 *
 	 * @return String
 	 */
 	public String asLdapSearchFilterString() {
@@ -178,16 +178,16 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Object clone() {
+	public ObjectSearchFilters<T> clone() {
 		try {
 			ObjectSearchFilters<T> clone = (ObjectSearchFilters<T>) super.clone();
-			clone.filters = new LinkedList<ObjectSearchFilter<T>>();
+			clone.filters = new LinkedList<>();
 			for ( ObjectSearchFilter<T> aFilter : filters ) {
-				clone.filters.add((ObjectSearchFilter<T>) aFilter.clone());
+				clone.filters.add(aFilter.clone());
 			}
-			clone.nestedFilters = new LinkedList<ObjectSearchFilters<T>>();
+			clone.nestedFilters = new LinkedList<>();
 			for ( ObjectSearchFilters<T> aFilter : nestedFilters ) {
-				clone.nestedFilters.add((ObjectSearchFilters<T>) aFilter.clone());
+				clone.nestedFilters.add(aFilter.clone());
 			}
 			return clone;
 		} catch ( CloneNotSupportedException e ) {
@@ -197,11 +197,11 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 
 	/**
 	 * Return an LDAP search filter string.
-	 * 
+	 *
 	 * <p>
 	 * This simply calls {@link #asLdapSearchFilterString()}.
 	 * </p>
-	 * 
+	 *
 	 * @return String
 	 */
 	@Override
@@ -210,10 +210,10 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	}
 
 	private ObjectSearchFilter<T> getSimpleSearchFilter() {
-		if ( filters == null || filters.size() < 1 ) {
+		if ( filters == null || filters.isEmpty() ) {
 			return null;
 		}
-		return filters.get(0);
+		return filters.getFirst();
 	}
 
 	@Override

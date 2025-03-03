@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -37,11 +38,12 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 @JsonIgnoreProperties({ "id", "enabled" })
 @JsonPropertyOrder({ "userId", "datumStreamId", "created", "modified", "publishToSolarIn",
 		"publishToSolarFlux" })
-public class CloudDatumStreamSettingsEntity
+public final class CloudDatumStreamSettingsEntity
 		extends BaseUserModifiableEntity<CloudDatumStreamSettingsEntity, UserLongCompositePK> implements
 		CloudIntegrationsConfigurationEntity<CloudDatumStreamSettingsEntity, UserLongCompositePK>,
 		CloudDatumStreamSettings {
 
+	@Serial
 	private static final long serialVersionUID = -5768166630955664067L;
 
 	private boolean publishToSolarIn = true;

@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumImportStatus.java - 7/11/2018 7:21:45 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -31,12 +31,12 @@ import net.solarnetwork.event.BasicAppEvent;
 
 /**
  * The status of a datum import job.
- * 
+ *
  * <p>
  * This API is also a {@link Future} so you can get the results of the import
  * when it finishes.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -67,35 +67,35 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 
 	/**
 	 * Get the owner ID of the import task.
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	Long getUserId();
 
 	/**
 	 * Get a percentage complete for the job overall.
-	 * 
+	 *
 	 * @return a percentage complete, or {@literal -1} if not known
 	 */
 	double getPercentComplete();
 
 	/**
 	 * Get the date the import job was submitted.
-	 * 
+	 *
 	 * @return the date the job was submitted, as milliseconds since the epoch.
 	 */
 	long getSubmitDate();
 
 	/**
 	 * Get the configured import date.
-	 * 
+	 *
 	 * @return the import date, as milliseconds since the epoch.
 	 */
 	long getImportDate();
 
 	/**
 	 * Get the date the import task started.
-	 * 
+	 *
 	 * @return the started date, as milliseconds since the epoch, or
 	 *         {@literal 0} if not started
 	 */
@@ -103,7 +103,7 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 
 	/**
 	 * Get the completion date.
-	 * 
+	 *
 	 * @return the completion date, as milliseconds since the epoch, or
 	 *         {@literal 0} if not complete
 	 */
@@ -111,78 +111,78 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 
 	/**
 	 * Get a success flag.
-	 * 
+	 *
 	 * @return the success flag
 	 */
 	boolean isSuccess();
 
 	/**
 	 * Get a message about the result.
-	 * 
+	 *
 	 * <p>
 	 * If {@link #isSuccess()} returns {@literal false}, this method will return
 	 * a message about the error.
 	 * </p>
-	 * 
+	 *
 	 * @return a message
 	 */
 	String getMessage();
 
 	/**
 	 * Get the number of datum successfully loaded.
-	 * 
+	 *
 	 * <p>
 	 * Note that even if {@link #isSuccess()} is {@literal false} this method
 	 * can return a value greater than {@literal 0}, if partial results are
 	 * supported by the transaction mode of the import process.
 	 * </p>
-	 * 
+	 *
 	 * @return the number of successfully loaded datum
 	 */
 	long getLoadedCount();
 
 	/**
 	 * Get the configuration associated with this job.
-	 * 
+	 *
 	 * @return the configuration
 	 */
 	Configuration getConfiguration();
 
 	/**
 	 * Create a job status changed event out of this instance.
-	 * 
+	 *
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumImportStatus)
+	 * @see #createJobStatusChangedEvent(DatumImportStatus)
 	 */
-	default AppEvent asJobStatusChagnedEvent() {
-		return createJobStatusChagnedEvent(this);
+	default AppEvent asJobStatusChangedEvent() {
+		return createJobStatusChangedEvent(this);
 	}
 
 	/**
 	 * Create a job status changed event out of this instance.
-	 * 
+	 *
 	 * @param result
 	 *        a specific result to use
 	 * @return the event, never {@literal null}
-	 * @see #createJobStatusChagnedEvent(DatumImportStatus, DatumImportResult)
+	 * @see #createJobStatusChangedEvent(DatumImportStatus, DatumImportResult)
 	 */
-	default AppEvent asJobStatusChagnedEvent(DatumImportResult result) {
-		return createJobStatusChagnedEvent(this, result);
+	default AppEvent asJobStatusChangedEvent(DatumImportResult result) {
+		return createJobStatusChangedEvent(this, result);
 	}
 
 	/**
 	 * Create an event out of a status instance.
-	 * 
+	 *
 	 * <p>
 	 * The event will be populated with the property constants defined on this
 	 * interface, using values from {@code status}.
 	 * </p>
-	 * 
+	 *
 	 * @param status
 	 *        the status instance to create the event for
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumImportStatus status) {
+	static AppEvent createJobStatusChangedEvent(DatumImportStatus status) {
 		DatumImportResult result = null;
 		if ( status.isDone() ) {
 			try {
@@ -191,25 +191,25 @@ public interface DatumImportStatus extends DatumImportReceipt, Future<DatumImpor
 				// ignore
 			}
 		}
-		return createJobStatusChagnedEvent(status, result);
+		return createJobStatusChangedEvent(status, result);
 	}
 
 	/**
 	 * Create an event out of a status instance.
-	 * 
+	 *
 	 * <p>
 	 * The event will be populated with the property constants defined on this
 	 * interface, using values from {@code status}.
 	 * </p>
-	 * 
+	 *
 	 * @param status
 	 *        the status instance to create the event for
 	 * @param result
 	 *        the import result
 	 * @return the event, never {@literal null}
 	 */
-	static AppEvent createJobStatusChagnedEvent(DatumImportStatus status, DatumImportResult result) {
-		Map<String, Object> props = new HashMap<String, Object>(4);
+	static AppEvent createJobStatusChangedEvent(DatumImportStatus status, DatumImportResult result) {
+		Map<String, Object> props = new HashMap<>(4);
 		if ( status != null ) {
 			props.put(EVENT_PROP_JOB_ID, status.getJobId());
 			props.put(EVENT_PROP_JOB_STATE, status.getJobState() != null ? status.getJobState().getKey()

@@ -1,21 +1,21 @@
 /* ==================================================================
  * SimpleCache.java - 9/08/2023 6:15:04 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,7 +47,7 @@ import net.solarnetwork.util.CachedResult;
 /**
  * A very loose and basic implementation of {@link Cache}, using a
  * {@link ConcurrentMap} to store the data.
- * 
+ *
  * <p>
  * This class does not support any of the cache listener methods, configuration,
  * or the cache manager. Entries are not automatically released from memory, but
@@ -55,7 +55,7 @@ import net.solarnetwork.util.CachedResult;
  * release expired entries during iteration, so can be used to free memory as
  * needed.
  * </p>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -72,11 +72,11 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * A {@link ConcurrentHashMap} will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param name
 	 *        the name to use
 	 */
@@ -86,7 +86,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param data
 	 *        the map to use to store the cached data in
 	 * @throws IllegalArgumentException
@@ -330,7 +330,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public Iterator<Entry<K, V>> iterator() {
-		return new Iterator<Entry<K, V>>() {
+		return new Iterator<>() {
 
 			private final Iterator<Map.Entry<K, CachedValue>> itr = data.entrySet().iterator();
 			private Map.Entry<K, CachedValue> e;
@@ -364,7 +364,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Get the time-to-live.
-	 * 
+	 *
 	 * @return the time to live
 	 */
 	public long getTtl() {
@@ -373,7 +373,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Set the time to live.
-	 * 
+	 *
 	 * @param ttl
 	 *        the time to live to set
 	 */
@@ -383,7 +383,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Get the TTL time unit.
-	 * 
+	 *
 	 * @return the TTL time unit
 	 */
 	public TimeUnit getTimeUnit() {
@@ -392,7 +392,7 @@ public class SimpleCache<K, V> implements Cache<K, V> {
 
 	/**
 	 * Set the TTL time unit.
-	 * 
+	 *
 	 * @param timeUnit
 	 *        the TTL time unit to set
 	 */

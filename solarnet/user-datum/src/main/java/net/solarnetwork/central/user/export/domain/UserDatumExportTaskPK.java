@@ -1,40 +1,42 @@
 /* ==================================================================
  * UserDatumExportTaskPK.java - 18/04/2018 9:15:15 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.export.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 
 /**
  * Primary key for a user export task.
- * 
+ *
  * @author matt
  * @version .0
  */
 public class UserDatumExportTaskPK
 		implements Serializable, Cloneable, Comparable<UserDatumExportTaskPK> {
 
+	@Serial
 	private static final long serialVersionUID = -517540846705509888L;
 
 	private Long userId;
@@ -50,7 +52,7 @@ public class UserDatumExportTaskPK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param scheduleType
@@ -86,13 +88,9 @@ public class UserDatumExportTaskPK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
+		if ( (obj == null) || !(obj instanceof UserDatumExportTaskPK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof UserDatumExportTaskPK) ) {
-			return false;
-		}
-		UserDatumExportTaskPK other = (UserDatumExportTaskPK) obj;
 
 		// compare dates ignoring time zone differences here
 		if ( date == null ) {
@@ -109,28 +107,24 @@ public class UserDatumExportTaskPK
 			return false;
 		}
 		if ( userId == null ) {
-			if ( other.userId != null ) {
-				return false;
-			}
-		} else if ( !userId.equals(other.userId) ) {
-			return false;
+			return other.userId == null;
 		}
-		return true;
+		return userId.equals(other.userId);
 	}
 
 	/**
-	 * Compare two {@code GeneralNodeDautumPK} objects.
-	 * 
+	 * Compare two {@code GeneralNodeDatumPK} objects.
+	 *
 	 * <p>
 	 * Keys are ordered based on:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>userId</li>
 	 * <li>scheduleType</li>
 	 * <li>date</li>
 	 * </ol>
-	 * 
+	 *
 	 * <p>
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 * </p>
@@ -167,9 +161,9 @@ public class UserDatumExportTaskPK
 	}
 
 	@Override
-	protected Object clone() {
+	public UserDatumExportTaskPK clone() {
 		try {
-			return super.clone();
+			return (UserDatumExportTaskPK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
 			// shouldn't get here
 			throw new RuntimeException(e);

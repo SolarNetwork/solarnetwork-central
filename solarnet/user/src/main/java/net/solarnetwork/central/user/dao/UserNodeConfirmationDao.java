@@ -23,15 +23,15 @@
 package net.solarnetwork.central.user.dao;
 
 import java.util.List;
-import net.solarnetwork.central.dao.GenericDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for UserNodeConfirmation entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserNodeConfirmationDao extends GenericDao<UserNodeConfirmation, Long> {
 

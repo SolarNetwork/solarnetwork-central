@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.oscp.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +42,7 @@ import net.solarnetwork.util.StringUtils;
 public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExternalSystemConfiguration<C>>
 		extends BaseOscpConfigurationEntity<C> implements ExternalSystemConfiguration {
 
+	@Serial
 	private static final long serialVersionUID = 2484734886666757050L;
 
 	private String token;
@@ -123,7 +125,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 		Object v = (props != null ? props.get(ExternalSystemServiceProperties.ASSET_MEAESUREMENT)
 				: null);
 		if ( v instanceof Boolean b ) {
-			return b.booleanValue();
+			return b;
 		} else if ( v instanceof Number n ) {
 			return n.intValue() != 0;
 		} else if ( v != null ) {
@@ -147,7 +149,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	 * afterwards the token is omitted.
 	 * </p>
 	 *
-	 * @return the token the token
+	 * @return the token
 	 */
 	public String getToken() {
 		return token;
@@ -283,7 +285,7 @@ public abstract class BaseOscpExternalSystemConfiguration<C extends BaseOscpExte
 	/**
 	 * Get the date after which the system should be considered "offline".
 	 *
-	 * @return the the offline date
+	 * @return the offline date
 	 */
 	public Instant getOfflineDate() {
 		return offlineDate;

@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvDatumImportInputProperties.java - 7/11/2018 1:43:29 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import net.solarnetwork.util.StringUtils;
 
 /**
  * Service properties for CSV based datum import.
- * 
+ *
  * @author matt
  * @version 1.1
  */
@@ -72,7 +72,7 @@ public class CsvDatumImportInputProperties {
 	/**
 	 * Get a set of {@link SettingSpecifier} instances suitable for configuring
 	 * an instance of this class.
-	 * 
+	 *
 	 * @return the setting specifiers
 	 */
 	public static List<SettingSpecifier> getCsvSettingSpecifiers() {
@@ -91,22 +91,22 @@ public class CsvDatumImportInputProperties {
 
 	/**
 	 * Test if the configuration appears valid.
-	 * 
+	 *
 	 * <p>
 	 * This simply tests for non-null property values.
 	 * </p>
-	 * 
+	 *
 	 * @return {@literal true} if the configuration appears valid
 	 */
 	public boolean isValid() {
 		return (isValidColumnsReference(dateColumns) && dateFormat != null
-				&& dateFormat.trim().length() > 0 && isValidColumnsReference(nodeIdColumn)
+				&& !dateFormat.trim().isEmpty() && isValidColumnsReference(nodeIdColumn)
 				&& isValidColumnsReference(sourceIdColumn));
 	}
 
 	/**
 	 * Test if a value is a valid columns reference.
-	 * 
+	 *
 	 * @param value
 	 *        the value to test
 	 * @return {@literal true} if {@code value} is a valid columns reference
@@ -117,7 +117,7 @@ public class CsvDatumImportInputProperties {
 
 	/**
 	 * Create a map of service properties from this instance.
-	 * 
+	 *
 	 * @return a map of service properties, never {@literal null}
 	 */
 	public Map<String, Object> toServiceProperties() {
@@ -150,7 +150,7 @@ public class CsvDatumImportInputProperties {
 
 	public List<Integer> getDateColumns() {
 		Set<String> set = StringUtils.commaDelimitedStringToSet(dateColumns);
-		List<Integer> cols = null;
+		List<Integer> cols;
 		try {
 			cols = set.stream().flatMap(s -> parseColumnsReference(s).stream()).collect(toList());
 		} catch ( NumberFormatException e ) {

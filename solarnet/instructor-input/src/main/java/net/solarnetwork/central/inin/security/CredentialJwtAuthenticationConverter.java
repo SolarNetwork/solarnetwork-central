@@ -24,6 +24,7 @@ package net.solarnetwork.central.inin.security;
 
 import static net.solarnetwork.central.inin.security.SecurityUtils.jwtTokenIdentifier;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.UUID;
 import org.springframework.core.convert.converter.Converter;
@@ -90,6 +91,7 @@ public class CredentialJwtAuthenticationConverter
 	private static class EndpointJwtAuthenticatedToken extends JwtAuthenticationToken
 			implements SecurityEndpointCredential {
 
+		@Serial
 		private static final long serialVersionUID = 4692483558955660840L;
 
 		private final EndpointUserDetails info;

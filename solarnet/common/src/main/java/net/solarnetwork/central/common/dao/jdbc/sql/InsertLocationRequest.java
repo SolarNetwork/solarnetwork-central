@@ -41,7 +41,7 @@ import net.solarnetwork.central.domain.LocationRequest;
  * @author matt
  * @version 1.0
  */
-public class InsertLocationRequest
+public final class InsertLocationRequest
 		implements PreparedStatementCreator, SqlProvider, BatchPreparedStatementSetter {
 
 	private final List<LocationRequest> requests;

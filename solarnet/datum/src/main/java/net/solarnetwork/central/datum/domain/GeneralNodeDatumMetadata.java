@@ -1,27 +1,28 @@
 /* ==================================================================
  * GeneralDatumMetadata.java - Oct 3, 2014 6:52:09 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,18 +37,19 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 /**
  * Metadata about the {@link GeneralNodeDatum} associated with a specific node
  * and source.
- * 
+ *
  * <p>
  * <b>Note</b> that {@link DatumUtils#getObjectFromJSON(String, Class)} is used
  * to manage the JSON value passed to {@link #setMetaJson(String)}.
  * </p>
- * 
+ *
  * @author matt
  * @version 2.0
  */
 @JsonPropertyOrder({ "created", "updated", "nodeId", "sourceId", "m", "t" })
 public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 646376244092193165L;
 
 	private NodeSourcePK id = new NodeSourcePK();
@@ -55,6 +57,15 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	private Instant updated;
 	private GeneralDatumMetadata meta;
 	private String metaJson;
+
+	@Override
+	public GeneralNodeDatumMetadata clone() {
+		try {
+			return (GeneralNodeDatumMetadata) super.clone();
+		} catch ( CloneNotSupportedException e ) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	@Override
 	public int compareTo(NodeSourcePK o) {
@@ -83,26 +94,19 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
-			return false;
-		}
-		if ( getClass() != obj.getClass() ) {
+		if ( (obj == null) || (getClass() != obj.getClass()) ) {
 			return false;
 		}
 		GeneralNodeDatumMetadata other = (GeneralNodeDatumMetadata) obj;
 		if ( id == null ) {
-			if ( other.id != null ) {
-				return false;
-			}
-		} else if ( !id.equals(other.id) ) {
-			return false;
+			return other.id == null;
 		}
-		return true;
+		return id.equals(other.id);
 	}
 
 	/**
 	 * Convenience getter for {@link NodeSourcePK#getNodeId()}.
-	 * 
+	 *
 	 * @return the nodeId
 	 */
 	public Long getNodeId() {
@@ -111,7 +115,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 
 	/**
 	 * Convenience setter for {@link NodeSourcePK#setNodeId(Long)}.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the nodeId to set
 	 */
@@ -124,7 +128,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 
 	/**
 	 * Convenience getter for {@link NodeSourcePK#getSourceId()}.
-	 * 
+	 *
 	 * @return the sourceId
 	 */
 	public String getSourceId() {
@@ -133,7 +137,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 
 	/**
 	 * Convenience setter for {@link NodeSourcePK#setSourceId(String)}.
-	 * 
+	 *
 	 * @param sourceId
 	 *        the sourceId to set
 	 */
@@ -149,7 +153,7 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 	 * configure {@code @JsonUnwrapped} on our {@link GeneralDatumMetadata} but
 	 * still support setting it in a normal, wrapped fashion via
 	 * {@link #setMeta(GeneralDatumMetadata)}.
-	 * 
+	 *
 	 * @return GeneralDatumMetadata
 	 */
 	@JsonUnwrapped

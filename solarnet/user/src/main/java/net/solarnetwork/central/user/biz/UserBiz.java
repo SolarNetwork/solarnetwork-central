@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserBiz.java - Jan 11, 2010 5:18:04 PM
- * 
+ *
  * Copyright 2007-2010 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -38,7 +38,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * API for registered user tasks.
- * 
+ *
  * @author matt
  * @version 3.1
  */
@@ -46,7 +46,7 @@ public interface UserBiz {
 
 	/**
 	 * Get a User object by its ID.
-	 * 
+	 *
 	 * @param id
 	 *        the ID of the User to get
 	 * @return the User, or <em>null</em> if not found
@@ -55,10 +55,12 @@ public interface UserBiz {
 
 	/**
 	 * Get a list of nodes belonging to a specific user.
-	 * 
+	 *
+	 * <p>
 	 * Archived nodes will not be returned (see
 	 * {@link #getArchivedUserNodes(Long)} for that).
-	 * 
+	 * </p>
+	 *
 	 * @param userId
 	 *        the ID of the user to get the nodes for
 	 * @return list of UserNode objects, or an empty list if none found
@@ -67,7 +69,7 @@ public interface UserBiz {
 
 	/**
 	 * Get a specific node belonging to a specific user.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the node for
 	 * @param nodeId
@@ -80,12 +82,12 @@ public interface UserBiz {
 
 	/**
 	 * Update a specific node belonging to a specific user.
-	 * 
+	 *
 	 * <p>
 	 * The {@link SolarNode#getId()} and {@link User#getId()} values are
 	 * expected to be set on the entry object.
 	 * </p>
-	 * 
+	 *
 	 * @param userNodeEntry
 	 *        the UserNode data to save
 	 * @return the updated UserNode object
@@ -96,11 +98,13 @@ public interface UserBiz {
 
 	/**
 	 * Archive, or un-archive a user node.
-	 * 
+	 *
+	 * <p>
 	 * An archived node will not be returned from {@link #getUserNodes(Long)}.
 	 * Its data will remain intact and the node can be un-archived at a future
 	 * date.
-	 * 
+	 * </p>
+	 *
 	 * @param userId
 	 *        the ID of the user to update the node for
 	 * @param nodeIds
@@ -116,7 +120,7 @@ public interface UserBiz {
 
 	/**
 	 * Get a list of archived nodes belonging to a specific user.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to get the nodes for
 	 * @return list of UserNode objects, or an empty list if none found
@@ -126,7 +130,7 @@ public interface UserBiz {
 
 	/**
 	 * Get a list of pending node confirmations belonging to a specific user.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to get the nodes for
 	 * @return list of UserNodeConfirmation objects, or an empty list if none
@@ -136,7 +140,7 @@ public interface UserBiz {
 
 	/**
 	 * Get a specific pending confirmation.
-	 * 
+	 *
 	 * @param userNodeConfirmationId
 	 *        the ID of the pending confirmation
 	 * @return the pending confirmation, or <em>null</em> if not found
@@ -145,7 +149,7 @@ public interface UserBiz {
 
 	/**
 	 * Get a specific UserNodeCertificate object.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param nodeId
@@ -156,7 +160,7 @@ public interface UserBiz {
 
 	/**
 	 * Generate a new, unique {@link UserAuthToken} entity and return it.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to generate the token for
 	 * @param type
@@ -170,7 +174,7 @@ public interface UserBiz {
 
 	/**
 	 * Get all {@link UserAuthToken} entities for a given user.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID to get the tokens for
 	 * @return the tokens, or an empty list if none available
@@ -179,7 +183,7 @@ public interface UserBiz {
 
 	/**
 	 * Delete a user auth token.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param tokenId
@@ -189,7 +193,7 @@ public interface UserBiz {
 
 	/**
 	 * Update the status of a UserAuthToken.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param tokenId
@@ -202,7 +206,7 @@ public interface UserBiz {
 
 	/**
 	 * Update the policy of a UserAuthToken.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param tokenId
@@ -220,7 +224,7 @@ public interface UserBiz {
 
 	/**
 	 * Update the info (name, description) of a token.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID of the token owner
 	 * @param tokenId
@@ -236,12 +240,12 @@ public interface UserBiz {
 	/**
 	 * Create an authorization builder object with a populated signing key for a
 	 * specific token.
-	 * 
+	 *
 	 * <p>
 	 * Use this method to create a new builder with a signing key populated for
 	 * generating signed SNWS2 {@code Authorization} HTTP header values.
 	 * </p>
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param tokenId

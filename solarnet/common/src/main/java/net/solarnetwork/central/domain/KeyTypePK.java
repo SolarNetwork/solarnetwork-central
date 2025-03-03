@@ -1,21 +1,21 @@
 /* ==================================================================
  * KeyTypePK.java - 10/11/2021 8:24:15 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,18 +23,20 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Primary key based on a key/type string tuple.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.0
  */
 public class KeyTypePK extends BasePK implements Cloneable, Serializable, Comparable<KeyTypePK> {
 
+	@Serial
 	private static final long serialVersionUID = -8662588990798009764L;
 
 	private final String key;
@@ -42,7 +44,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 
 	/**
 	 * Create a new key instance.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param type
@@ -57,7 +59,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param key
 	 *        the key
 	 * @param type
@@ -69,6 +71,11 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 		super();
 		this.key = requireNonNullArgument(key, "key");
 		this.type = requireNonNullArgument(type, "type");
+	}
+
+	@Override
+	public KeyTypePK clone() {
+		return (KeyTypePK) super.clone();
 	}
 
 	@Override
@@ -86,14 +93,14 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		if ( key != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("key=");
 			buf.append(key);
 		}
 		if ( type != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("type=");
@@ -111,32 +118,29 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 		if ( this == obj ) {
 			return true;
 		}
-		if ( obj == null ) {
+		if ( (obj == null) || !(obj instanceof KeyTypePK other) ) {
 			return false;
 		}
-		if ( !(obj instanceof KeyTypePK) ) {
-			return false;
-		}
-		KeyTypePK other = (KeyTypePK) obj;
 		return Objects.equals(key, other.key) && Objects.equals(type, other.type);
 	}
 
 	/**
 	 * Compare two {@code KeyTypePK} objects.
-	 * 
+	 *
 	 * <p>
 	 * Keys are ordered based on:
 	 * </p>
-	 * 
+	 *
 	 * <ol>
 	 * <li>key</li>
 	 * <li>type</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param o
 	 *        the object to compare to
 	 * @return a negative integer, zero, or a positive integer as this object is
-	 *         less than, equal to, or greater than the specified object.
+	 *         less than, equal to, or l to, or greater than the specified
+	 *         object.
 	 */
 	@Override
 	public int compareTo(KeyTypePK o) {
@@ -152,7 +156,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 
 	/**
 	 * Get the key.
-	 * 
+	 *
 	 * @return the key
 	 */
 	public String getKey() {
@@ -161,7 +165,7 @@ public class KeyTypePK extends BasePK implements Cloneable, Serializable, Compar
 
 	/**
 	 * Get the type.
-	 * 
+	 *
 	 * @return the type
 	 */
 	public String getType() {

@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.time.Clock;
 import java.time.Duration;
@@ -54,7 +53,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public abstract class BaseSolcastCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -79,6 +78,27 @@ public abstract class BaseSolcastCloudDatumStreamService
 
 	/** The {@code resolution} default value. */
 	public static final Duration DEFAULT_RESOLUTION = Duration.ofMinutes(5);
+
+	/**
+	 * The setting to disallow use of the historic API.
+	 *
+	 * @since 1.2
+	 */
+	public static final String DISALLOW_HISTORIC_API_SETTING = "noHistoric";
+
+	/**
+	 * An internal query parameter used to indicate the live API should be used.
+	 *
+	 * @since 1.2
+	 */
+	protected static final String QUERY_PARAM_USE_LIVE_DATA = "live";
+
+	/**
+	 * An internal parameter map with just the {@link #USE_LIVE_DATA} value set.
+	 *
+	 * @since 1.2
+	 */
+	protected static final Map<String, Object> USE_LIVE_DATA = Map.of(QUERY_PARAM_USE_LIVE_DATA, true);
 
 	/** The Solcast supported resolutions. */
 	public static final Set<Duration> SUPPORTED_RESOLUTIONS;
@@ -123,14 +143,13 @@ public abstract class BaseSolcastCloudDatumStreamService
 
 	}
 
-	/** The clock. */
-	protected final Clock clock;
-
 	/**
 	 * Constructor.
 	 *
 	 * @param serviceIdentifier
 	 *        the service identifier
+	 * @param displayName
+	 *        the display name
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
 	 * @param encryptor
@@ -162,12 +181,11 @@ public abstract class BaseSolcastCloudDatumStreamService
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new SolcastRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
 						HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolcastCloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	/**

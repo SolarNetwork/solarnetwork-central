@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectNodeStreamMetadata.java - 19/11/2020 3:21:24 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -38,12 +38,12 @@ import net.solarnetwork.util.SearchFilter;
 
 /**
  * Generate dynamic SQL for a "find stream metadata" query.
- * 
+ *
  * @author matt
  * @version 2.1
  * @since 3.8
  */
-public class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
+public final class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL_AT_LOCATION_TIME_ZONE = "AT TIME ZONE COALESCE(l.time_zone, 'UTC')";
 
@@ -54,12 +54,12 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * <p>
 	 * The {@code filter.getObjectKind()} value will be used if available,
 	 * otherwise the {@code Node} kind will be used.
 	 * </p>
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @throws IllegalArgumentException
@@ -71,7 +71,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param kind
@@ -85,7 +85,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param filter
 	 *        the filter
 	 * @param kind
@@ -109,7 +109,7 @@ public class SelectObjectStreamMetadata implements PreparedStatementCreator, Sql
 	@Override
 	public String getSql() {
 		StringBuilder buf = new StringBuilder();
-		int idx = 0;
+		int idx;
 		if ( kind == ObjectDatumKind.Location ) {
 			idx = DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
 					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);

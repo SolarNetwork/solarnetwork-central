@@ -1,21 +1,21 @@
 /* ==================================================================
  * BaseOcppController.java - 18/02/2024 2:15:33 pm
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -71,7 +71,7 @@ import net.solarnetwork.service.support.BasicIdentifiable;
 
 /**
  * Base OCPP controller support.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -114,11 +114,11 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executor
 	 *        a task runner
 	 * @param chargePointRouter
-	 *        the broker router to push messages to Charge Points with with
+	 *        the broker router to push messages to Charge Points with
 	 * @param userNodeDao
 	 *        the user node DAO to use
 	 * @param instructionDao
@@ -148,7 +148,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 		this.initialRegistrationStatus = DEFAULT_INITIAL_REGISTRATION_STATUS;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePoint registerChargePoint(ChargePointIdentity identity, ChargePointInfo info) {
 		log.info("Charge Point registration received: {}", info);
@@ -170,7 +170,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Update a charge point from info.
-	 * 
+	 *
 	 * @param cp
 	 *        the charge point to update
 	 * @param info
@@ -189,14 +189,14 @@ public abstract class BaseOcppController extends BasicIdentifiable
 		return cp;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public boolean isChargePointRegistrationAccepted(long chargePointId) {
 		ChargePoint cp = chargePointDao.get(chargePointId);
 		return cp != null && cp.isEnabled() && cp.getRegistrationStatus() == RegistrationStatus.Accepted;
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void updateChargePointStatus(ChargePointIdentity identity, StatusNotification info) {
 		final CentralChargePoint chargePoint = (CentralChargePoint) chargePointDao
@@ -246,7 +246,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	protected final <T, R> void sendToChargePoint(ChargePointIdentity identity, Action action, T payload,
 			ActionMessageResultHandler<T, R> handler, ErrorCode noClientError) {
 		executor.execute(() -> {
-			ActionMessage<T> msg = new BasicActionMessage<T>(identity, UUID.randomUUID().toString(),
+			ActionMessage<T> msg = new BasicActionMessage<>(identity, UUID.randomUUID().toString(),
 					action, payload);
 			ChargePointBroker broker = chargePointRouter.brokerForChargePoint(identity);
 			if ( broker != null ) {
@@ -274,7 +274,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	/**
 	 * Get the initial {@link RegistrationStatus} to use for newly registered
 	 * charge points.
-	 * 
+	 *
 	 * @return the status, never {@literal null}
 	 */
 	public RegistrationStatus getInitialRegistrationStatus() {
@@ -284,7 +284,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 	/**
 	 * Set the initial {@link RegistrationStatus} to use for newly registered
 	 * charge points.
-	 * 
+	 *
 	 * @param initialRegistrationStatus
 	 *        the status to set
 	 * @throws IllegalArgumentException
@@ -300,7 +300,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Get the configured transaction template.
-	 * 
+	 *
 	 * @return the transaction template
 	 */
 	public TransactionTemplate getTransactionTemplate() {
@@ -309,7 +309,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Set the transaction template to use.
-	 * 
+	 *
 	 * @param transactionTemplate
 	 *        the transaction template to set
 	 */
@@ -319,7 +319,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Get the ChargePoint action payload decoder.
-	 * 
+	 *
 	 * @return the decoder
 	 */
 	public ActionPayloadDecoder getChargePointActionPayloadDecoder() {
@@ -328,7 +328,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Set the ChargePoint action payload decoder.
-	 * 
+	 *
 	 * @param chargePointActionPayloadDecoder
 	 *        the decoder
 	 */
@@ -339,7 +339,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Get the {@link ObjectMapper}.
-	 * 
+	 *
 	 * @return the mapper
 	 */
 	public ObjectMapper getObjectMapper() {
@@ -348,7 +348,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Get the configured datum publisher for status notification updates.
-	 * 
+	 *
 	 * @return the datum publisher
 	 */
 	public ConnectorStatusDatumPublisher getDatumPublisher() {
@@ -357,7 +357,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Set a datum publisher for status notification updates.
-	 * 
+	 *
 	 * @param datumPublisher
 	 *        the datum publisher
 	 */
@@ -367,7 +367,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Get an action processor to handle instructions with.
-	 * 
+	 *
 	 * @return the action processor
 	 */
 	public ActionMessageProcessor<JsonNode, Void> getInstructionHandler() {
@@ -376,12 +376,12 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Set an action processor to handle instructions with.
-	 * 
+	 *
 	 * <p>
 	 * If this is configured, then instruction handling will be delegated to
 	 * this service.
 	 * </p>
-	 * 
+	 *
 	 * @param instructionHandler
 	 *        the handler
 	 */
@@ -391,7 +391,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Get the user event appender service.
-	 * 
+	 *
 	 * @return the service
 	 */
 	public UserEventAppenderBiz getUserEventAppenderBiz() {
@@ -400,7 +400,7 @@ public abstract class BaseOcppController extends BasicIdentifiable
 
 	/**
 	 * Set the user event appender service.
-	 * 
+	 *
 	 * @param userEventAppenderBiz
 	 *        the service to set
 	 */

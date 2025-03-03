@@ -49,12 +49,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.support.DelayQueueSet;
-import net.solarnetwork.central.support.DelayedOcassionalProcessor;
+import net.solarnetwork.central.support.DelayedOccasionalProcessor;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
 import net.solarnetwork.util.StatTracker;
 
 /**
- * Test cases for the {@link DelayedOcassionalProcessor} class.
+ * Test cases for the {@link DelayedOccasionalProcessor} class.
  * 
  * @author matt
  * @version 1.0
@@ -63,7 +63,7 @@ import net.solarnetwork.util.StatTracker;
 @ExtendWith(MockitoExtension.class)
 public class DelayedOcassionalProcessorTests {
 
-	private final static Logger log = LoggerFactory.getLogger(DelayedOcassionalProcessor.class);
+	private final static Logger log = LoggerFactory.getLogger(DelayedOccasionalProcessor.class);
 
 	@Mock
 	private TaskScheduler scheduler;
@@ -87,7 +87,7 @@ public class DelayedOcassionalProcessorTests {
 		// GIVEN
 		final var queue = new LinkedHashSetBlockingQueue<Integer>(8);
 		final var processed = new ArrayList<>(8);
-		final var processor = new DelayedOcassionalProcessor<Integer>(clock, stats, scheduler, queue) {
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
 
 			@Override
 			protected void processItemInternal(Integer item) {
@@ -112,7 +112,7 @@ public class DelayedOcassionalProcessorTests {
 		// @formatter:off
 		and.then(stats.allCounts())
 			.as("Add count incremented for each call")
-			.containsEntry(DelayedOcassionalProcessor.Stats.ItemsAdded.name(), 3L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsAdded.name(), 3L)
 			.as("No other counts created")
 			.hasSize(1)
 			;
@@ -136,7 +136,7 @@ public class DelayedOcassionalProcessorTests {
 		queue.add(3);
 
 		final var processed = new ArrayList<>(8);
-		final var processor = new DelayedOcassionalProcessor<Integer>(clock, stats, scheduler, queue) {
+		final var processor = new DelayedOccasionalProcessor<Integer>(clock, stats, scheduler, queue) {
 
 			@Override
 			protected void processItemInternal(Integer item) {
@@ -157,11 +157,11 @@ public class DelayedOcassionalProcessorTests {
 		// @formatter:off
 		and.then(stats.allCounts())
 			.as("Batch count incremented")
-			.containsEntry(DelayedOcassionalProcessor.Stats.Batches.name(), 1L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.Batches.name(), 1L)
 			.as("Remove count incremted for each item processed")
-			.containsEntry(DelayedOcassionalProcessor.Stats.ItemsRemoved.name(), 3L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsRemoved.name(), 3L)
 			.as("Process count incremted for each item processed")
-			.containsEntry(DelayedOcassionalProcessor.Stats.ItemsProcessed.name(), 3L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsProcessed.name(), 3L)
 			.as("No other counts created")
 			.hasSize(3)
 			;
@@ -218,7 +218,7 @@ public class DelayedOcassionalProcessorTests {
 		queue.addAll(Arrays.asList(i1, i2, i3));
 
 		final var processed = new ArrayList<DelayedInteger>(8);
-		final var processor = new DelayedOcassionalProcessor<DelayedInteger>(clock, stats, scheduler,
+		final var processor = new DelayedOccasionalProcessor<DelayedInteger>(clock, stats, scheduler,
 				queue) {
 
 			@Override
@@ -244,11 +244,11 @@ public class DelayedOcassionalProcessorTests {
 		// @formatter:off
 		and.then(stats.allCounts())
 			.as("Batch count incremented")
-			.containsEntry(DelayedOcassionalProcessor.Stats.Batches.name(), 1L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.Batches.name(), 1L)
 			.as("Remove count incremted for each item processed")
-			.containsEntry(DelayedOcassionalProcessor.Stats.ItemsRemoved.name(), 2L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsRemoved.name(), 2L)
 			.as("Process count incremted for each item processed")
-			.containsEntry(DelayedOcassionalProcessor.Stats.ItemsProcessed.name(), 2L)
+			.containsEntry(DelayedOccasionalProcessor.Stats.ItemsProcessed.name(), 2L)
 			.as("No other counts created")
 			.hasSize(3)
 			;

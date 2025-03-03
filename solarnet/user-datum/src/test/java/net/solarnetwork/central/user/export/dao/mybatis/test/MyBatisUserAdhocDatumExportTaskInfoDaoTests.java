@@ -98,7 +98,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
 		info.setUserId(this.user.getId());
 		info.setConfig(createNewUserDatumExportConfig());
-		return dao.store(info);
+		return dao.save(info);
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		info.setConfig(createNewUserDatumExportConfig());
 		info.setUserId(this.user.getId());
 
-		UUID id = dao.store(info);
+		UUID id = dao.save(info);
 		assertThat("Primary key assigned", id, notNullValue());
 		assertThat("Primary key matches", id, equalTo(info.getId()));
 
@@ -125,7 +125,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		info.setTokenId(randomString());
 
 		// WHEN
-		UUID id = dao.store(info);
+		UUID id = dao.save(info);
 
 		// THEN
 		then(id).as("Primary key assigned").isNotNull();
@@ -212,7 +212,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		info.setCreated(Instant.now());
 		((BasicConfiguration) info.getConfig()).setHourDelayOffset(1);
 
-		dao.store(info);
+		dao.save(info);
 	}
 
 	@Test
@@ -237,16 +237,16 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
 		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.MINUTES));
-		datumTaskDao.store(datumTask);
+		datumTaskDao.save(datumTask);
 
 		UserAdhocDatumExportTaskInfo info = new UserAdhocDatumExportTaskInfo();
 		info.setUserId(this.info.getUserId());
 		info.setConfig(createNewUserDatumExportConfig());
-		info = dao.get(dao.store(info), this.user.getId());
+		info = dao.get(dao.save(info), this.user.getId());
 		datumTask = datumTaskDao.get(info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
 		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
-		datumTaskDao.store(datumTask);
+		datumTaskDao.save(datumTask);
 
 		long result = dao.purgeCompletedTasks(
 				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));

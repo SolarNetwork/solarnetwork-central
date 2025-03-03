@@ -1,21 +1,21 @@
 /* ==================================================================
  * OcppController.java - 27/02/2020 11:52:28 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive;
 import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,7 +74,7 @@ import ocpp.v16.jakarta.cp.KeyValue;
 
 /**
  * Manage OCPP 1.6 interactions.
- * 
+ *
  * @author matt
  * @version 2.9
  */
@@ -81,11 +82,11 @@ public class OcppController extends BaseOcppController {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param executor
 	 *        a task runner
 	 * @param chargePointRouter
-	 *        the broker router to push messages to Charge Points with with
+	 *        the broker router to push messages to Charge Points with
 	 * @param userNodeDao
 	 *        the user node DAO to use
 	 * @param instructionDao
@@ -107,7 +108,7 @@ public class OcppController extends BaseOcppController {
 				chargePointConnectorDao, objectMapper);
 	}
 
-	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public ChargePoint registerChargePoint(ChargePointIdentity identity, ChargePointInfo info) {
 		ChargePoint cp = super.registerChargePoint(identity, info);
@@ -170,7 +171,7 @@ public class OcppController extends BaseOcppController {
 						for ( Iterator<Entry<Integer, ChargePointConnector>> itr = existing.entrySet()
 								.iterator(); itr.hasNext(); ) {
 							Entry<Integer, ChargePointConnector> e = itr.next();
-							int connId = e.getKey().intValue();
+							int connId = e.getKey();
 							if ( connId < 0 || connId > cp.getConnectorCount() ) {
 								log.info("Deleting excess ChargePointConnector {} from Charge Point {}",
 										connId, cp.getId());
@@ -239,10 +240,9 @@ public class OcppController extends BaseOcppController {
 
 	@Override
 	public void didQueueNodeInstruction(NodeInstruction instruction, Long instructionId) {
-		if ( !(instruction instanceof OcppNodeInstruction) ) {
+		if ( !(instruction instanceof OcppNodeInstruction instr) ) {
 			return;
 		}
-		final OcppNodeInstruction instr = (OcppNodeInstruction) instruction;
 		final Long userId = (instr.chargePointIdentity.getUserIdentifier() instanceof Long
 				? (Long) instr.chargePointIdentity.getUserIdentifier()
 				: null);
@@ -330,6 +330,7 @@ public class OcppController extends BaseOcppController {
 
 	private static final class OcppNodeInstruction extends NodeInstruction {
 
+		@Serial
 		private static final long serialVersionUID = -100774686071322459L;
 
 		private final ChargePointIdentity chargePointIdentity;

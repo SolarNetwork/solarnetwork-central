@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -99,7 +100,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	/** The {@code queueSize} property default value. */
 	public static final int DEFAULT_QUEUE_SIZE = 200;
 
-	/** The {@code shtudownWaitSecs} default value. */
+	/** The {@code shutdownWaitSecs} default value. */
 	public static final int DEFAULT_SHUTDOWN_WAIT_SECS = 30;
 
 	/** The {@code datumCacheRemovalAlertThreshold} default value. */
@@ -221,7 +222,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		this.stats = requireNonNullArgument(stats, "stats");
 		this.concurrency = DEFAULT_CONCURRENCY;
 		this.shutdownWaitSecs = DEFAULT_SHUTDOWN_WAIT_SECS;
-		this.listenerConfiguration = new MutableCacheEntryListenerConfiguration<Serializable, Serializable>(
+		this.listenerConfiguration = new MutableCacheEntryListenerConfiguration<>(
 				new SingletonFactory<CacheEntryListener<Serializable, Serializable>>(this), null, false,
 				false);
 		setQueueSize(DEFAULT_QUEUE_SIZE);
@@ -317,8 +318,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 		for ( BasicCount s : BasicCount.values() ) {
 			statMap.put(s.toString(), stats.get(s));
 		}
-		if ( datumCache instanceof BufferingDelegatingCache ) {
-			BufferingDelegatingCache<Serializable, Serializable> buf = (BufferingDelegatingCache<Serializable, Serializable>) datumCache;
+		if ( datumCache instanceof BufferingDelegatingCache<Serializable, Serializable> buf ) {
 			statMap.put("BufferSize", buf.getInternalSize());
 			statMap.put("BufferCapacity", buf.getInternalCapacity());
 			statMap.put("BufferWatermark", buf.getInternalSizeWatermark());
@@ -504,7 +504,7 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 				long c = stats.get(BasicCount.BufferRemovals);
 				if ( stats.getLogFrequency() > 0 && ((c % stats.getLogFrequency()) == 0) ) {
 					Set<Serializable> allKeys = StreamSupport.stream(datumCache.spliterator(), false)
-							.filter(e -> e != null).map(e -> e.getKey()).collect(Collectors.toSet());
+							.filter(Objects::nonNull).map(Entry::getKey).collect(Collectors.toSet());
 					log.trace("Datum cache keys: {}", allKeys);
 				}
 			}

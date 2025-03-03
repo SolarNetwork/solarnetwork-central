@@ -37,7 +37,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * Caching proxy for {@link EndpointConfigurationDao}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CachingEndpointConfigurationDao
 		extends CachingGenericDao<EndpointConfiguration, UserUuidPK, EndpointConfigurationDao>
@@ -62,7 +62,7 @@ public class CachingEndpointConfigurationDao
 
 	@Override
 	public FilterResults<EndpointConfiguration, UserUuidPK> findFiltered(EndpointFilter filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return delegate.findFiltered(filter, sorts, offset, max);
 	}
 

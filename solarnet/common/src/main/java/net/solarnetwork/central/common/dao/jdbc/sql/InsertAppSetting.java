@@ -39,7 +39,7 @@ import net.solarnetwork.central.domain.AppSetting;
  * @version 1.1
  * @since 2.0
  */
-public class InsertAppSetting implements PreparedStatementCreator, SqlProvider {
+public final class InsertAppSetting implements PreparedStatementCreator, SqlProvider {
 
 	private final AppSetting setting;
 	private final boolean upsert;

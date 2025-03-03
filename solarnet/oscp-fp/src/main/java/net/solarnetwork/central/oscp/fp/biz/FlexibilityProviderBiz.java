@@ -1,21 +1,21 @@
 /* ==================================================================
  * FlexibilityProviderBiz.java - 16/08/2022 5:17:58 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -35,7 +35,7 @@ import net.solarnetwork.domain.KeyValuePair;
 
 /**
  * Business service API for Flexibility Provider.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -110,7 +110,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 
 	/**
 	 * User event tags for Capacity Optimizer group capacity compliance error
-	 * error events.
+	 * events.
 	 */
 	String[] CAPACITY_OPTIMIZER_GROUP_CAPACITY_COMPLIANCE_TAGS_ERROR_TAGS = new String[] { OSCP_TAG,
 			CAPACITY_OPTIMIZER_TAG, GROUP_CAPACITY_COMPLIANCE_ERROR_TAG, ERROR_TAG };
@@ -119,14 +119,14 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	 * Register an external system using an authorization token created in
 	 * SolarNetwork and shared with the system through an external process (e.g.
 	 * email, phone, etc).
-	 * 
+	 *
 	 * <p>
 	 * The {@code externalSystemReady} parameter allows the calling code to
 	 * signal to the registration process that the external system is ready to
 	 * receive the corresponding registration callback to complete the
 	 * registration process.
 	 * </p>
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param externalSystemToken
@@ -148,7 +148,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 
 	/**
 	 * Initiate a handshake to provide desired system settings.
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param settings
@@ -168,7 +168,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 
 	/**
 	 * Handle a handshake acknowledgement to provide desired system settings.
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param settings
@@ -184,7 +184,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 
 	/**
 	 * Handle a heartbeat from an external system.
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param expiresDate
@@ -200,7 +200,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	/**
 	 * Process an update group capacity forecast from a Capacity Provider, by
 	 * forwarding the request to associated Capacity Optimizer.
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param groupIdentifier
@@ -222,7 +222,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	/**
 	 * Process an adjust group capacity forecast from a Capacity Optimizer, by
 	 * forwarding the message to the associated Capacity Provider.
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param groupIdentifier
@@ -242,7 +242,7 @@ public interface FlexibilityProviderBiz extends OscpUserEvents {
 	/**
 	 * Process a group capacity compliance error from a Capacity Optimizer, by
 	 * forwarding the message to the associated Capacity Provider.
-	 * 
+	 *
 	 * @param authInfo
 	 *        the authorization info of the external system
 	 * @param groupIdentifier

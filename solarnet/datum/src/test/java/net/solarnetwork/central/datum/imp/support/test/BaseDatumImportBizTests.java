@@ -44,6 +44,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.util.FileCopyUtils;
 import net.solarnetwork.central.dao.UserUuidPK;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumComponents;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatumPK;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.biz.DatumImportService;
 import net.solarnetwork.central.datum.imp.domain.BasicInputConfiguration;
@@ -57,7 +58,7 @@ import net.solarnetwork.central.datum.imp.domain.InputConfiguration;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportBiz;
 import net.solarnetwork.central.datum.imp.support.BaseDatumImportInputFormatService;
 import net.solarnetwork.central.datum.imp.support.BasicDatumImportResource;
-import net.solarnetwork.central.domain.FilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.io.TransferrableResource;
 import net.solarnetwork.service.IdentifiableConfiguration;
@@ -93,7 +94,7 @@ public class BaseDatumImportBizTests {
 		}
 
 		@Override
-		public Future<FilterResults<GeneralNodeDatumComponents>> previewStagedImportRequest(
+		public Future<FilterResults<GeneralNodeDatumComponents, GeneralNodeDatumPK>> previewStagedImportRequest(
 				DatumImportPreviewRequest request) {
 			return null;
 		}

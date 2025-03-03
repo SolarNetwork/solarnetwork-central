@@ -1,21 +1,21 @@
 /* ==================================================================
  * DogtagPKIBiz.java - Oct 14, 2014 6:58:50 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -65,14 +65,14 @@ import net.solarnetwork.util.CachedResult;
 
 /**
  * Dogtag implementation of {@link NodePKIBiz}.
- * 
+ *
  * <p>
  * For proper support with different Dogtag versions, you must call
  * {@link #setDogtagVersionValue(String)} to configure the expected server
  * minimum version, or call {@link #performPingTest()} to attempt to
  * automatically detect the version.
  * </p>
- * 
+ *
  * @author matt
  * @version 3.0
  */
@@ -121,17 +121,17 @@ public class DogtagPKIBiz
 
 	private final int[] dogtagVersion = new int[] { 0, 0, 0 };
 
-	private final Map<String, XPathExpression> xpathCache = new HashMap<String, XPathExpression>();
+	private final Map<String, XPathExpression> xpathCache = new HashMap<>();
 	private CachedResult<PingTestResult> cachedResult;
 
 	/**
 	 * Call to setup the Dogtag client.
-	 * 
+	 *
 	 * <p>
 	 * This will attempt to detect the Dogtag version, unless one has already
 	 * been configured via {@link #setDogtagVersionValue(String)}.
 	 * </p>
-	 * 
+	 *
 	 * @since 2.1
 	 */
 	@Override
@@ -180,7 +180,7 @@ public class DogtagPKIBiz
 		final SecurityUser requestor = SecurityUtils.getCurrentUser();
 		String csr = certificateService.generatePKCS10CertificateRequestString(certificate, privateKey);
 
-		MultiValueMap<String, Object> params = new LinkedMultiValueMap<String, Object>(6);
+		MultiValueMap<String, Object> params = new LinkedMultiValueMap<>(6);
 		params.add("xmlOutput", "true");
 		params.add("profileId", dogtagProfileId);
 		params.add("requestor_name", requestor.getDisplayName());
@@ -193,6 +193,11 @@ public class DogtagPKIBiz
 		DOMSource xmlResult = result.getBody();
 		if ( log.isDebugEnabled() ) {
 			log.debug("Got XML response: {}", xmlSupport.getXmlAsString(xmlResult, true));
+		}
+		if ( xmlResult == null ) {
+			log.error("Request for CSR request ID did not return XML result");
+			throw new CertificateException(
+					"No certificate request ID could be extracted from CA CSR submit response");
 		}
 		String certReqId = xmlSupport.extractStringFromXml(xmlResult.getNode(),
 				getCsrRequestIdXPathExpression());
@@ -209,8 +214,7 @@ public class DogtagPKIBiz
 		if ( dogtagVersion[0] == 0 ) {
 			return false;
 		}
-		return (dogtagVersion[0] > major ? true
-				: dogtagVersion[1] > minor ? true : dogtagVersion[2] >= patch ? true : false);
+		return (dogtagVersion[0] > major || dogtagVersion[1] > minor || dogtagVersion[2] >= patch);
 	}
 
 	@SuppressWarnings("deprecation")
@@ -218,7 +222,7 @@ public class DogtagPKIBiz
 	public String submitRenewalRequest(X509Certificate certificate) throws SecurityException {
 		BigInteger serialNumber = certificate.getSerialNumber();
 
-		Object req = null;
+		Object req;
 		if ( isVersionAtLeast(10, 6, 0) ) {
 			Map<String, Object> params = new LinkedHashMap<>(6);
 			params.put("ProfileID", dogtagRenewalProfileId);
@@ -226,10 +230,10 @@ public class DogtagPKIBiz
 			params.put("SerialNumber", serialNumber.toString());
 			HttpHeaders reqHeaders = new HttpHeaders();
 			reqHeaders.setContentType(MediaType.APPLICATION_JSON_UTF8);
-			req = new HttpEntity<Map<String, Object>>(params, reqHeaders);
+			req = new HttpEntity<>(params, reqHeaders);
 		} else {
 			// Dogtag 10.0
-			MultiValueMap<String, Object> params = new LinkedMultiValueMap<String, Object>(6);
+			MultiValueMap<String, Object> params = new LinkedMultiValueMap<>(6);
 			params.add("profileId", dogtagRenewalProfileId);
 			params.add("renewal", "true");
 			params.add("serial_num", serialNumber.toString());
@@ -297,7 +301,7 @@ public class DogtagPKIBiz
 		}
 
 		// in Dogtag 10.0 for some reason the certURL returned is missing the "/certs" path element, so we have to insert that
-		String certURL = null;
+		String certURL;
 		if ( !info.getCertURL().getPath().contains("/certs/") ) {
 			certURL = info.getCertURL().toExternalForm().replaceFirst("(/[^/]+)$", "/certs$1");
 		} else {
@@ -342,7 +346,7 @@ public class DogtagPKIBiz
 	private Map<String, XPathExpression> getRenewalInfoMapping() {
 		Map<String, XPathExpression> result = this.renewalInfoMapping;
 		if ( result == null ) {
-			Map<String, String> map = new LinkedHashMap<String, String>(3);
+			Map<String, String> map = new LinkedHashMap<>(3);
 			map.put("requestURL", "//CertRequestInfo[1]/requestURL");
 			map.put("requestStatus", "//CertRequestInfo[1]/requestStatus");
 			result = xmlSupport.getXPathExpressionMap(map);
@@ -354,7 +358,7 @@ public class DogtagPKIBiz
 	private Map<String, XPathExpression> getCsrInfoMapping() {
 		Map<String, XPathExpression> result = this.csrInfoMapping;
 		if ( result == null ) {
-			Map<String, String> map = new LinkedHashMap<String, String>(3);
+			Map<String, String> map = new LinkedHashMap<>(3);
 			map.put("certURL", "/CertRequestInfo/certURL");
 			map.put("requestURL", "/CertRequestInfo/certURL");
 			map.put("requestStatus", "/CertRequestInfo/requestStatus");
@@ -367,7 +371,7 @@ public class DogtagPKIBiz
 	private Map<String, XPathExpression> getCertDetailMapping() {
 		Map<String, XPathExpression> result = this.certDetailMapping;
 		if ( result == null ) {
-			Map<String, String> map = new LinkedHashMap<String, String>(3);
+			Map<String, String> map = new LinkedHashMap<>(3);
 			map.put("id", "/CertData/@id");
 			map.put("pkcs7Chain", "/CertData/PKCS7CertChain");
 			result = xmlSupport.getXPathExpressionMap(map);
@@ -443,7 +447,7 @@ public class DogtagPKIBiz
 			detectDogtagVersion();
 		}
 
-		PingTestResult result = null;
+		PingTestResult result;
 		ResponseEntity<DOMSource> response = null;
 		boolean certReqMethod = true;
 		try {
@@ -468,8 +472,8 @@ public class DogtagPKIBiz
 			result = new PingTestResult(false, "HTTP response has no content");
 		} else {
 			Node doc = response.getBody().getNode();
-			boolean enabled = false;
-			String resultId = null;
+			boolean enabled;
+			String resultId;
 			if ( certReqMethod ) {
 				resultId = xmlSupport.extractStringFromXml(doc,
 						xpathForString(DOGTAG_10_CERTREQ_PROFILE_ID_XPATH));
@@ -489,8 +493,8 @@ public class DogtagPKIBiz
 				result = new PingTestResult(true, "Profile " + dogtagProfileId + " available.");
 			}
 		}
-		CachedResult<PingTestResult> cached = new CachedResult<PingTestResult>(result,
-				pingResultsCacheSeconds, TimeUnit.SECONDS);
+		CachedResult<PingTestResult> cached = new CachedResult<>(result, pingResultsCacheSeconds,
+				TimeUnit.SECONDS);
 		cachedResult = cached;
 		return result;
 	}
@@ -570,12 +574,12 @@ public class DogtagPKIBiz
 
 	/**
 	 * Set the Dogtag server version.
-	 * 
+	 *
 	 * <p>
 	 * The version will be automatically detected when
 	 * {@link #performPingTest()} is invoked, if not configured manually here.
 	 * </p>
-	 * 
+	 *
 	 * @param version
 	 *        the version string, which must be in the form
 	 *        <code>major.minor.patch</code> where <em>major</em>,

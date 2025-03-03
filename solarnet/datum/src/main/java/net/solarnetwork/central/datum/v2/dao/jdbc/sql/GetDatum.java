@@ -1,21 +1,21 @@
 /* ==================================================================
  * SelectDatum.java - 19/11/2020 8:23:34 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,19 +36,19 @@ import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Get for {@link DatumEntity} instances via a {@link DatumPK} ID.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 3.8
  */
-public class GetDatum implements PreparedStatementCreator, SqlProvider {
+public final class GetDatum implements PreparedStatementCreator, SqlProvider {
 
 	private final DatumPK id;
 	private final Aggregation aggregation;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @throws IllegalArgumentException
@@ -60,7 +60,7 @@ public class GetDatum implements PreparedStatementCreator, SqlProvider {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the primary key
 	 * @param aggregation
@@ -150,7 +150,7 @@ public class GetDatum implements PreparedStatementCreator, SqlProvider {
 		return buf.toString();
 	}
 
-	private int prepareCore(Connection con, PreparedStatement stmt, int p) throws SQLException {
+	private int prepareCore(PreparedStatement stmt, int p) throws SQLException {
 		stmt.setObject(++p, id.getStreamId(), Types.OTHER);
 		stmt.setTimestamp(++p, Timestamp.from(id.getTimestamp()));
 		return p;
@@ -159,7 +159,7 @@ public class GetDatum implements PreparedStatementCreator, SqlProvider {
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(getSql());
-		prepareCore(con, stmt, 0);
+		prepareCore(stmt, 0);
 		return stmt;
 	}
 

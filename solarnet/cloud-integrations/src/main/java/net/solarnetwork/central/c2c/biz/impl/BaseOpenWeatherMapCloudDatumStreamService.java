@@ -30,7 +30,6 @@ import static net.solarnetwork.codec.JsonUtils.parseBigDecimalAttribute;
 import static net.solarnetwork.codec.JsonUtils.parseIntegerAttribute;
 import static net.solarnetwork.codec.JsonUtils.parseLongAttribute;
 import static net.solarnetwork.util.NumberUtils.bigDecimalForNumber;
-import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -83,7 +82,7 @@ import net.solarnetwork.util.DateUtils;
  * {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		extends BaseRestOperationsCloudDatumStreamService {
@@ -108,9 +107,6 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 
 	/** The units URL query parameter value for metric units. */
 	public static final String UNITS_METRIC_VALUE = "metric";
-
-	/** The clock. */
-	protected final Clock clock;
 
 	/**
 	 * Constructor.
@@ -148,12 +144,11 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao,
 			List<SettingSpecifier> settings, RestOperations restOps, Logger restOpsLogger, Clock clock) {
-		super(serviceIdentifier, displayName, userEventAppenderBiz, encryptor, expressionService,
+		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new OpenWeatherMapRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
 						HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> OpenWeatherMapCloudIntegrationService.SECURE_SETTINGS));
-		this.clock = requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
@@ -187,9 +182,9 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 	 * <p>
 	 * This method will look for a {@link #LOCATION_ID_SETTING} service property
 	 * on the given {@code datumStream} and include that in the returned URI
-	 * builder. Otherwise it will look for {@link #LATITUDE_SETTING} and
+	 * builder. Otherwise, it will look for {@link #LATITUDE_SETTING} and
 	 * {@link #LONGITUDE_SETTING} service properties and include those.
-	 * Otherwise a {@link ValidationException} will be thrown with a
+	 * Otherwise, a {@link ValidationException} will be thrown with a
 	 * {@code error.datumStream.missingLocation} message key.
 	 * </p>
 	 *
@@ -328,7 +323,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 				AtmosphericDatum.HUMIDITY_KEY, samples);
 
 		JsonNode weather = json.path("weather");
-		if ( weather.isArray() && weather.size() > 0 ) {
+		if ( weather.isArray() && !weather.isEmpty() ) {
 			weather = weather.iterator().next();
 			populateJsonDatumPropertyValue(weather, "main", DatumSamplesType.Status,
 					AtmosphericDatum.SKY_CONDITIONS_KEY, samples);

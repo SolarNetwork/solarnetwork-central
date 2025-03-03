@@ -1,21 +1,21 @@
 /* ==================================================================
  * MyBatisUserDao.java - Nov 11, 2014 6:15:26 AM
- * 
+ *
  * Copyright 2007-2014 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -37,7 +37,7 @@ import net.solarnetwork.codec.JsonUtils;
 
 /**
  * MyBatis implementation of {@link UserDao}.
- * 
+ *
  * @author matt
  * @version 2.1
  */
@@ -58,25 +58,29 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 
 	/**
 	 * The select query name used in {@link #getInternalData(Long)}.
-	 * 
+	 *
+	 * <p>
 	 * The statement is passed a {@code userId} parameter.
-	 * 
+	 * </p>
+	 *
 	 * @since 1.2
 	 */
 	public static final String QUERY_INTERNAL_DATA = "get-User-internal-data";
 
 	/**
 	 * The update query name used in {@link #storeInternalData(Long, Map)}.
-	 * 
+	 *
+	 * <p>
 	 * The statement is passed {@code userId} and {@code dataJson} parameters.
-	 * 
+	 * </p>
+	 *
 	 * @since 1.2
 	 */
 	public static final String UPDATE_INTERNAL_DATA = "update-internal-data";
 
 	/**
 	 * The query parameter for a general filter object value.
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	public static final String PARAM_FILTER = "filter";
@@ -96,14 +100,14 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 	@Override
 	public Set<String> getUserRoles(User user) {
 		final List<String> results = getSqlSession().selectList(QUERY_FOR_ROLES, user);
-		return new TreeSet<String>(results);
+		return new TreeSet<>(results);
 	}
 
 	@Override
 	public void storeUserRoles(final User user, final Set<String> roles) {
 		getSqlSession().delete(DELETE_ROLES, user);
 		if ( roles != null ) {
-			Map<String, Object> params = new HashMap<String, Object>();
+			Map<String, Object> params = new HashMap<>();
 			params.put("userId", user.getId());
 			for ( String role : roles ) {
 				params.put("role", role);
@@ -114,7 +118,7 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	@Override
@@ -125,12 +129,12 @@ public class MyBatisUserDao extends BaseMyBatisFilterableDao<User, UserFilterMat
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @since 1.2
 	 */
 	@Override
 	public void storeInternalData(Long userId, Map<String, Object> data) {
-		Map<String, Object> sqlParams = new HashMap<String, Object>(3);
+		Map<String, Object> sqlParams = new HashMap<>(3);
 		sqlParams.put("userId", userId);
 		sqlParams.put("dataJson", JsonUtils.getJSONString(data, "{}"));
 		getSqlSession().update(UPDATE_INTERNAL_DATA, sqlParams);

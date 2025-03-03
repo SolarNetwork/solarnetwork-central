@@ -1,27 +1,28 @@
 /* ==================================================================
  * ServerAuthConfiguration.java - 6/08/2023 10:26:04 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.dnp3.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -31,7 +32,7 @@ import net.solarnetwork.central.domain.UserLongStringCompositePK;
 
 /**
  * DNP3 server authorization configuration.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -40,13 +41,14 @@ import net.solarnetwork.central.domain.UserLongStringCompositePK;
 public class ServerAuthConfiguration
 		extends BaseUserModifiableEntity<ServerAuthConfiguration, UserLongStringCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = -2954822894884485056L;
 
 	private String name;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param id
 	 *        the ID
 	 * @param created
@@ -60,7 +62,7 @@ public class ServerAuthConfiguration
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param serverId
@@ -130,7 +132,7 @@ public class ServerAuthConfiguration
 
 	/**
 	 * Get the server ID.
-	 * 
+	 *
 	 * @return the server ID
 	 */
 	public Long getServerId() {
@@ -140,7 +142,7 @@ public class ServerAuthConfiguration
 
 	/**
 	 * Get the identifier.
-	 * 
+	 *
 	 * @return the identifier
 	 */
 	public String getIdentifier() {
@@ -150,7 +152,7 @@ public class ServerAuthConfiguration
 
 	/**
 	 * Get the name.
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -159,7 +161,7 @@ public class ServerAuthConfiguration
 
 	/**
 	 * Set the name
-	 * 
+	 *
 	 * @param name
 	 *        the name to set
 	 */

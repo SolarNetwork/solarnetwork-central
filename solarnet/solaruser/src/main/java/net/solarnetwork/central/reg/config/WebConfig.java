@@ -47,6 +47,7 @@ import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.cbor.MappingJackson2CborHttpMessageConverter;
 import org.springframework.session.config.SessionRepositoryCustomizer;
 import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
 import org.springframework.session.jdbc.PostgreSqlJdbcIndexedSessionRepositoryCustomizer;
@@ -58,6 +59,7 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
@@ -81,7 +83,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -97,6 +99,10 @@ public class WebConfig implements WebMvcConfigurer {
 	@Autowired(required = false)
 	@Qualifier(QUERY_CACHE)
 	private ContentCachingService contentCachingService;
+
+	@Autowired
+	@Qualifier(JsonConfig.CBOR_MAPPER)
+	private ObjectMapper cborObjectMapper;
 
 	@Override
 	public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
@@ -176,6 +182,13 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+		// update CBOR with our standard ObjectMapper
+		for ( HttpMessageConverter<?> c : converters ) {
+			if ( c instanceof MappingJackson2CborHttpMessageConverter cbor ) {
+				cbor.setObjectMapper(cborObjectMapper);
+			}
+		}
+
 		SimpleCsvHttpMessageConverter csv = new SimpleCsvHttpMessageConverter();
 		csv.setPropertySerializerRegistrar(propertySerializerRegistrar());
 		converters.add(csv);
@@ -206,6 +219,7 @@ public class WebConfig implements WebMvcConfigurer {
 		reg.setFilter(contentCachingFilter());
 		// @formatter:off
 		reg.addUrlPatterns(
+				"/api/v1/sec/datum/auxiliary",
 				"/api/v1/sec/nodes"
 		);
 		// @formatter:on

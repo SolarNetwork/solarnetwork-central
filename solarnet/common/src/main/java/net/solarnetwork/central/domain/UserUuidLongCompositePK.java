@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserUuidLongCompositePK.java - 21/02/2024 6:43:23 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,18 +23,20 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.util.Objects;
 import java.util.UUID;
 
 /**
  * Basic implementation of a Long, UUID, Long composite key.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public class UserUuidLongCompositePK extends BasePK
 		implements UserRelatedCompositeKey<UserUuidLongCompositePK>, CompositeKey3<Long, UUID, Long> {
 
+	@Serial
 	private static final long serialVersionUID = 5569471640101762323L;
 
 	/**
@@ -57,7 +59,7 @@ public class UserUuidLongCompositePK extends BasePK
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to use
 	 * @return the new key instance
@@ -68,7 +70,7 @@ public class UserUuidLongCompositePK extends BasePK
 
 	/**
 	 * Create a new instance using the "unassigned" entity ID value.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID to use
 	 * @param groupId
@@ -85,7 +87,7 @@ public class UserUuidLongCompositePK extends BasePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param groupId
@@ -136,8 +138,8 @@ public class UserUuidLongCompositePK extends BasePK
 	}
 
 	@Override
-	protected UserLongCompositePK clone() {
-		return (UserLongCompositePK) super.clone();
+	public UserUuidLongCompositePK clone() {
+		return (UserUuidLongCompositePK) super.clone();
 	}
 
 	@Override
@@ -150,12 +152,11 @@ public class UserUuidLongCompositePK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserUuidLongCompositePK) ) {
+		if ( !(obj instanceof UserUuidLongCompositePK other) ) {
 			return false;
 		}
-		UserUuidLongCompositePK other = (UserUuidLongCompositePK) obj;
 		// @formatter:off
-		return Objects.equals(userId, other.userId) 
+		return Objects.equals(userId, other.userId)
 				&& Objects.equals(groupId, other.groupId)
 				&& Objects.equals(entityId, other.entityId)
 				;
@@ -164,7 +165,7 @@ public class UserUuidLongCompositePK extends BasePK
 
 	/**
 	 * Get the group ID.
-	 * 
+	 *
 	 * @return the user ID
 	 */
 	public final UUID getGroupId() {
@@ -173,7 +174,7 @@ public class UserUuidLongCompositePK extends BasePK
 
 	/**
 	 * Get the entity ID.
-	 * 
+	 *
 	 * @return the entity ID
 	 */
 	public final Long getEntityId() {
@@ -197,19 +198,17 @@ public class UserUuidLongCompositePK extends BasePK
 
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 0 ) {
-			return userId != UNASSIGNED_USER_ID;
-		} else if ( index == 1 ) {
-			return groupId != UNASSIGNED_GROUP_ID;
-		} else if ( index == 2 ) {
-			return entityId != UNASSIGNED_ENTITY_ID;
-		}
-		return CompositeKey3.super.keyComponentIsAssigned(index);
+		return switch (index) {
+			case 0 -> userId != UNASSIGNED_USER_ID;
+			case 1 -> groupId != UNASSIGNED_GROUP_ID;
+			case 2 -> entityId != UNASSIGNED_ENTITY_ID;
+			default -> CompositeKey3.super.keyComponentIsAssigned(index);
+		};
 	}
 
 	/**
 	 * Test if the group ID is assigned.
-	 * 
+	 *
 	 * @return {@literal true} if the group ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
@@ -219,7 +218,7 @@ public class UserUuidLongCompositePK extends BasePK
 
 	/**
 	 * Test if the entity ID is assigned.
-	 * 
+	 *
 	 * @return {@literal true} if the entity ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
@@ -232,23 +231,18 @@ public class UserUuidLongCompositePK extends BasePK
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
 			if ( index == 0 || index == 2 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_USER_ID;
-				} else if ( val instanceof Long n ) {
-					return (T) n;
-				} else if ( val instanceof Number n ) {
-					return (T) Long.valueOf(n.longValue());
-				} else {
-					return (T) Long.valueOf(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_USER_ID;
+					case Long n -> (T) n;
+					case Number n -> (T) Long.valueOf(n.longValue());
+					default -> (T) Long.valueOf(val.toString());
+				};
 			} else if ( index == 1 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_GROUP_ID;
-				} else if ( val instanceof UUID u ) {
-					return (T) u;
-				} else {
-					return (T) UUID.fromString(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_GROUP_ID;
+					case UUID u -> (T) u;
+					default -> (T) UUID.fromString(val.toString());
+				};
 			}
 		} catch ( NumberFormatException e ) {
 			throw new IllegalArgumentException(

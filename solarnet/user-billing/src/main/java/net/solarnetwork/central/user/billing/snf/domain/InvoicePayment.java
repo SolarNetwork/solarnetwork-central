@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
@@ -41,6 +42,7 @@ import net.solarnetwork.domain.Differentiable;
 public class InvoicePayment extends BasicEntity<UserUuidPK>
 		implements Differentiable<InvoicePayment>, UserRelatedEntity<UserUuidPK> {
 
+	@Serial
 	private static final long serialVersionUID = -8828483045770314273L;
 
 	/**

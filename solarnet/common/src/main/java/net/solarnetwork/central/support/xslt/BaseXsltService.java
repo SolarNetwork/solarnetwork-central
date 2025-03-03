@@ -154,11 +154,11 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 
 	/**
 	 * Get a new document builder.
-	 * 
+	 *
 	 * <p>
 	 * This instance will be configured as the {@link EntityResolver}.
 	 * </p>
-	 * 
+	 *
 	 * @return the new document builder
 	 * @throws ParserConfigurationException
 	 *         if an XML error occurs
@@ -171,7 +171,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 
 	/**
 	 * Get a {@link Templates} instance.
-	 * 
+	 *
 	 * @param xslt
 	 *        the XSLT to parse
 	 * @param config
@@ -190,7 +190,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 
 		String xsltCacheKey = null;
 		String xsltSharedKey = null;
-		Templates t = null;
+		Templates t;
 
 		if ( cacheTtlSeconds > 0 ) {
 			if ( cacheKey != null ) {
@@ -235,7 +235,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 
 	/**
 	 * Get the templates cache TTL seconds.
-	 * 
+	 *
 	 * @param config
 	 *        the optional settings
 	 * @return the TTL, in seconds
@@ -259,11 +259,12 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 	/**
 	 * A regular expression matching the start of an XML {@literal DOCTYPE}
 	 * declaration.
-	 * 
+	 *
 	 * <p>
 	 * Note to work around the potential "polynomial regex" issue reported in
-	 * https://github.com/SolarNetwork/solarnetwork-central/security/code-scanning/62
-	 * this pattern changed from matching the entire tag like
+	 * <a href=
+	 * "https://github.com/SolarNetwork/solarnetwork-central/security/code-scanning/62">code
+	 * scanning</a> this pattern changed from matching the entire tag like
 	 * {@literal <!DOCTYPE[^>]*>} to just the start, and stripping the remainder
 	 * of the element is handled manually.
 	 * </p>
@@ -272,7 +273,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 
 	/**
 	 * Get textual input.
-	 * 
+	 *
 	 * @param input
 	 *        the input, can be an {@link InputStream}, {@link Reader}, or
 	 *        anything else will have {@link Object#toString()} invoked; UTF-8
@@ -301,7 +302,7 @@ public abstract class BaseXsltService extends BaseSettingsSpecifierLocalizedServ
 				buf = new StringBuilder(result.length());
 			}
 			if ( m.start() > 0 ) {
-				buf.append(result.substring(0, m.start()));
+				buf.append(result, 0, m.start());
 			}
 			int end = result.indexOf('>', m.end());
 			if ( end > 0 && end < result.length() ) {

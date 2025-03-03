@@ -1,27 +1,28 @@
 /* ==================================================================
  * ObjectDatumStreamPK.java - 21/11/2020 9:40:24 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
@@ -29,7 +30,7 @@ import net.solarnetwork.central.domain.BasePK;
 
 /**
  * Primary key for a datum based on object/source/timestamp values.
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 2.8
@@ -37,6 +38,7 @@ import net.solarnetwork.central.domain.BasePK;
 public class ObjectDatumStreamPK extends BasePK
 		implements Serializable, Cloneable, Comparable<ObjectDatumStreamPK> {
 
+	@Serial
 	private static final long serialVersionUID = -5549743564570744068L;
 
 	private final Long objectId;
@@ -45,7 +47,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 	/**
 	 * Create a new node datum stream PK.
-	 * 
+	 *
 	 * @param nodeId
 	 *        the node ID
 	 * @param sourceId
@@ -60,7 +62,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 	/**
 	 * Create a new location datum stream PK.
-	 * 
+	 *
 	 * @param locationId
 	 *        the node ID
 	 * @param sourceId
@@ -78,11 +80,12 @@ public class ObjectDatumStreamPK extends BasePK
 	 */
 	public static class NodeDatumStreamPK extends ObjectDatumStreamPK {
 
+		@Serial
 		private static final long serialVersionUID = 1842938618226898862L;
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param nodeId
 		 *        the node ID
 		 * @param sourceId
@@ -101,7 +104,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 		/**
 		 * Alias for {@link #getObjectId()}.
-		 * 
+		 *
 		 * @return the node ID
 		 */
 		public Long getNodeId() {
@@ -115,11 +118,12 @@ public class ObjectDatumStreamPK extends BasePK
 	 */
 	public static class LocationDatumStreamPK extends ObjectDatumStreamPK {
 
+		@Serial
 		private static final long serialVersionUID = 3614436622439831647L;
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param locationId
 		 *        the location ID
 		 * @param sourceId
@@ -138,7 +142,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 		/**
 		 * Alias for {@link #getObjectId()}.
-		 * 
+		 *
 		 * @return the location ID
 		 */
 		public Long getLocationId() {
@@ -149,7 +153,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param objectId
 	 *        the stream object ID
 	 * @param sourceId
@@ -188,21 +192,21 @@ public class ObjectDatumStreamPK extends BasePK
 	@Override
 	protected void populateStringValue(StringBuilder buf) {
 		if ( objectId != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("objectId=");
 			buf.append(objectId);
 		}
 		if ( sourceId != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("sourceId=");
 			buf.append(sourceId);
 		}
 		if ( timestamp != null ) {
-			if ( buf.length() > 0 ) {
+			if ( !buf.isEmpty() ) {
 				buf.append(", ");
 			}
 			buf.append("timestamp=");
@@ -218,7 +222,7 @@ public class ObjectDatumStreamPK extends BasePK
 		if ( o == null ) {
 			return -1;
 		}
-		int result = 0;
+		int result;
 		if ( objectId != o.objectId ) {
 			if ( objectId == null ) {
 				return 1;
@@ -261,17 +265,16 @@ public class ObjectDatumStreamPK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof ObjectDatumStreamPK) ) {
+		if ( !(obj instanceof ObjectDatumStreamPK other) ) {
 			return false;
 		}
-		ObjectDatumStreamPK other = (ObjectDatumStreamPK) obj;
 		return Objects.equals(objectId, other.objectId) && Objects.equals(sourceId, other.sourceId)
 				&& Objects.equals(timestamp, other.timestamp);
 	}
 
 	/**
 	 * Get the object ID.
-	 * 
+	 *
 	 * @return the object ID
 	 */
 	public Long getObjectId() {
@@ -280,7 +283,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 	/**
 	 * Get the source ID.
-	 * 
+	 *
 	 * @return the source ID
 	 */
 	public String getSourceId() {
@@ -289,7 +292,7 @@ public class ObjectDatumStreamPK extends BasePK
 
 	/**
 	 * Get the timestamp.
-	 * 
+	 *
 	 * @return the timestamp
 	 */
 	public Instant getTimestamp() {

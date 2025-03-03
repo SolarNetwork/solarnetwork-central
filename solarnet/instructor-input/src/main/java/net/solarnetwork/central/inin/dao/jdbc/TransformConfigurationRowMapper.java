@@ -54,17 +54,14 @@ import net.solarnetwork.central.inin.domain.TransformConfiguration.ResponseTrans
 public abstract sealed class TransformConfigurationRowMapper<C extends TransformConfiguration<C>>
 		implements RowMapper<C> {
 
-	/** A default request instance. */
-	public static final RowMapper<RequestTransformConfiguration> REQ_INSTANCE = new RequestTransformConfigurationRowMapper();
-
-	/** A default request instance. */
-	public static final RowMapper<ResponseTransformConfiguration> RES_INSTANCE = new ResponseTransformConfigurationRowMapper();
-
 	/**
 	 * Row mapper for {@link RequestTransformConfiguration} entities.
 	 */
 	public static final class RequestTransformConfigurationRowMapper
 			extends TransformConfigurationRowMapper<RequestTransformConfiguration> {
+
+		/** A default request instance. */
+		public static final RowMapper<RequestTransformConfiguration> INSTANCE = new TransformConfigurationRowMapper.RequestTransformConfigurationRowMapper();
 
 		/**
 		 * Constructor.
@@ -86,6 +83,9 @@ public abstract sealed class TransformConfigurationRowMapper<C extends Transform
 	 */
 	public static final class ResponseTransformConfigurationRowMapper
 			extends TransformConfigurationRowMapper<ResponseTransformConfiguration> {
+
+		/** A default request instance. */
+		public static final RowMapper<ResponseTransformConfiguration> INSTANCE = new TransformConfigurationRowMapper.ResponseTransformConfigurationRowMapper();
 
 		/**
 		 * Constructor.

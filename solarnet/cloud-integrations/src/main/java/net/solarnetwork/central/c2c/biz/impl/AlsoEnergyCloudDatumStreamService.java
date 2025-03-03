@@ -28,21 +28,22 @@ import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
-import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.resolvePlaceholders;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_OPT_MILLIS_UTC;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.InstantSource;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,9 +51,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
@@ -90,13 +93,13 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
-import net.solarnetwork.util.ObjectUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.3
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
 
@@ -150,8 +153,6 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	/** The maximum period of time to request data for in one request. */
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
-	private final InstantSource clock;
-
 	/**
 	 * Constructor.
 	 *
@@ -175,6 +176,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	 *        the OAuth client manager
 	 * @param clock
 	 *        the instant source to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -184,17 +192,17 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
-		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", userEventAppenderBiz, encryptor,
-				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", clock, userEventAppenderBiz,
+				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager),
+						oauthClientManager, clock, integrationLocksCache),
 				oauthClientManager);
-		this.clock = ObjectUtils.requireNonNullArgument(clock, "clock");
 	}
 
 	@Override
@@ -220,7 +228,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		final CloudIntegrationConfiguration integration = requireNonNullObject(
 				integrationDao.get(requireNonNullArgument(integrationId, "integrationId")),
 				"integration");
-		List<CloudDataValue> result = Collections.emptyList();
+		List<CloudDataValue> result;
 		if ( filters != null && filters.get(SITE_ID_FILTER) != null ) {
 			result = siteHardware(integration, filters);
 		} else {
@@ -277,15 +285,15 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
 					"filter.startDate");
 
-			final ZoneId zone = resolveTimeZone(datumStream, null);
+			final ZoneId zone = resolveTimeZone(datumStream, filter.getParameters());
 
-			final AlsoEnergyGranularity resolution = resolveGranularity(ds, null);
+			final AlsoEnergyGranularity resolution = resolveGranularity(ds, filter.getParameters());
 
 			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
 			// construct (siteId, hardwareId) to ValueRef[] mapping
-			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(
-					integration, ds, valueProps);
+			final Map<UserLongCompositePK, List<ValueRef>> hardwareGroups = resolveHardwareGroups(ds,
+					sourceIdMap != null ? sourceIdMap.keySet() : null, valueProps);
 
 			BasicQueryFilter nextQueryFilter = null;
 
@@ -381,7 +389,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
-		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
+		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
 				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(SITE_HARDWARE_URL_TEMPLATE)
@@ -393,7 +401,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	}
 
 	private static List<CloudDataValue> parseSites(JsonNode json) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "items": [
@@ -416,7 +426,9 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	}
 
 	private static List<CloudDataValue> parseSiteHardware(JsonNode json, Map<String, ?> filters) {
-		assert json != null;
+		if ( json == null ) {
+			return Collections.emptyList();
+		}
 		/*- EXAMPLE JSON:
 		{
 		  "hardware": [
@@ -477,7 +489,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode deviceNode : json.path("hardware") ) {
 			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
-			if ( !(fieldsNode.isArray() && fieldsNode.size() > 0) ) {
+			if ( !fieldsNode.isArray() || fieldsNode.isEmpty() ) {
 				continue;
 			}
 			final String id = deviceNode.path("id").asText().trim();
@@ -574,28 +586,37 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	}
 
 	private Map<UserLongCompositePK, List<ValueRef>> resolveHardwareGroups(
-			CloudIntegrationConfiguration integration, CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamConfiguration datumStream, Collection<String> sourceValueRefs,
 			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
-		var result = new LinkedHashMap<UserLongCompositePK, List<ValueRef>>(16);
+		@SuppressWarnings("unchecked")
+		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
+				datumStream.serviceProperty(PLACEHOLDERS_SERVICE_PROPERTY, Map.class), sourceValueRefs);
+		final var result = new LinkedHashMap<UserLongCompositePK, List<ValueRef>>(16);
 		for ( CloudDatumStreamPropertyConfiguration config : propConfigs ) {
-			String ref = resolvePlaceholders(config.getValueReference(), datumStream);
-			Matcher m = VALUE_REF_PATTERN.matcher(ref);
-			if ( !m.matches() ) {
-				continue;
-			}
-			// groups: 1 = siteId, 2 = hardwareId, 3 = field, 4 = function
-			Long siteId = Long.valueOf(m.group(1));
-			Long hardwareId = Long.valueOf(m.group(2));
-			String fieldName = m.group(3);
-			AlsoEnergyFieldFunction fn;
-			try {
-				fn = AlsoEnergyFieldFunction.valueOf(m.group(4));
-			} catch ( IllegalArgumentException e ) {
-				fn = AlsoEnergyFieldFunction.Last;
-			}
+			for ( Map<String, ?> ph : placeholderSets ) {
+				String ref = StringUtils.expandTemplateString(config.getValueReference(), ph);
+				Matcher m = VALUE_REF_PATTERN.matcher(ref);
+				if ( !m.matches() ) {
+					continue;
+				}
+				// groups: 1 = siteId, 2 = hardwareId, 3 = field, 4 = function
+				Long siteId = Long.valueOf(m.group(1));
+				Long hardwareId = Long.valueOf(m.group(2));
+				String fieldName = m.group(3);
+				AlsoEnergyFieldFunction fn;
+				try {
+					fn = AlsoEnergyFieldFunction.valueOf(m.group(4));
+				} catch ( IllegalArgumentException e ) {
+					fn = AlsoEnergyFieldFunction.Last;
+				}
 
-			result.computeIfAbsent(new UserLongCompositePK(siteId, hardwareId), k -> new ArrayList<>(8))
-					.add(new ValueRef(siteId, hardwareId, fieldName, fn, config));
+				var valueRef = new ValueRef(siteId, hardwareId, fieldName, fn, config);
+				List<ValueRef> valueRefs = result.computeIfAbsent(
+						new UserLongCompositePK(siteId, hardwareId), k -> new ArrayList<>(8));
+				if ( !valueRefs.contains(valueRef) ) {
+					valueRefs.add(valueRef);
+				}
+			}
 		}
 		return result;
 	}

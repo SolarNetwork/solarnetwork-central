@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -42,6 +43,7 @@ import net.solarnetwork.domain.Differentiable;
 public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		implements Differentiable<SnfInvoiceNodeUsage>, InvoiceUsageRecord<Long> {
 
+	@Serial
 	private static final long serialVersionUID = -3504454077400331557L;
 
 	private final String description;

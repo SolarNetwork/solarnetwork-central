@@ -1,21 +1,21 @@
 /* ==================================================================
  * MeasurementsController.java - 9/09/2022 12:04:12 pm
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,7 +42,7 @@ import oscp.v20.UpdateGroupMeasurements;
 
 /**
  * Measurements API support.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -57,7 +57,7 @@ public class MeasurementsController {
 	public static final String UAM_20_URL_PATH = CAPACITY_OPTIMIZER_V20_URL_PATH
 			+ UPDATE_ASSET_MEASUREMENTS_URL_PATH;
 
-	private static final Logger log = LoggerFactory.getLogger(RegistrationController.class);
+	private static final Logger log = LoggerFactory.getLogger(MeasurementsController.class);
 
 	private final CapacityProviderDao capacityProviderDao;
 
@@ -66,8 +66,8 @@ public class MeasurementsController {
 		this.capacityProviderDao = requireNonNullArgument(capacityProviderDao, "capacityProviderDao");
 	}
 
-	@PostMapping(path = { UGM_20_URL_PATH,
-			"/alt/oscp-update-group-measurements" }, consumes = APPLICATION_JSON_VALUE)
+	@PostMapping(path = { UGM_20_URL_PATH, "/alt/oscp-update-group-measurements" },
+			consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> updateGroupMeasurements20(@RequestBody UpdateGroupMeasurements input,
 			WebRequest request) {
 		log.info("Processing {} request: {}", UGM_20_URL_PATH, input);
@@ -79,8 +79,8 @@ public class MeasurementsController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@PostMapping(path = { UAM_20_URL_PATH,
-			"/alt/oscp-update-asset-measurements" }, consumes = APPLICATION_JSON_VALUE)
+	@PostMapping(path = { UAM_20_URL_PATH, "/alt/oscp-update-asset-measurements" },
+			consumes = APPLICATION_JSON_VALUE)
 	public ResponseEntity<Void> updateAssetMeasurements20(@RequestBody UpdateAssetMeasurement input,
 			WebRequest request) {
 		log.info("Processing {} request: {}", UAM_20_URL_PATH, input);

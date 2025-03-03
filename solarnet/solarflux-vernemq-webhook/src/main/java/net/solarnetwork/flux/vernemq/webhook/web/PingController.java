@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import net.solarnetwork.web.jakarta.domain.Response;
+import net.solarnetwork.domain.Result;
 
 /**
  * Web controller for "are you there" type requests.
@@ -41,10 +41,10 @@ public class PingController {
    * @return map of properties
    */
   @RequestMapping("/ping")
-  public Response<Map<String, ?>> ping() {
+  public Result<Map<String, ?>> ping() {
     Map<String, Object> data = new LinkedHashMap<>();
     data.put("allGood", true);
-    return Response.response(data);
+    return Result.success(data);
   }
 
 }

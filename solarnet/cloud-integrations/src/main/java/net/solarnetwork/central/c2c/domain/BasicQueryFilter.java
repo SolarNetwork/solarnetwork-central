@@ -153,7 +153,7 @@ public final class BasicQueryFilter implements CloudDatumStreamQueryFilter {
 	}
 
 	@Override
-	public final Map<String, ?> getParameters() {
+	public Map<String, ?> getParameters() {
 		return parameters;
 	}
 
@@ -163,7 +163,7 @@ public final class BasicQueryFilter implements CloudDatumStreamQueryFilter {
 	 * @param parameters
 	 *        the parameters to set
 	 */
-	public final void setParameters(Map<String, ?> parameters) {
+	public void setParameters(Map<String, ?> parameters) {
 		this.parameters = parameters;
 	}
 

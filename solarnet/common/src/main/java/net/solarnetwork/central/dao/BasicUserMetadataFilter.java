@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicUserMetadataFilter.java - 5/04/2024 9:31:54 am
- * 
+ *
  * Copyright 2024 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 
 /**
  * Basic implementation of {@link UserMetadataFilter}.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -47,8 +47,9 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param criteria
+	 *        the search criteria
 	 */
 	public BasicUserMetadataFilter(PaginationCriteria criteria) {
 		super(criteria);
@@ -80,13 +81,9 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !super.equals(obj) ) {
+		if ( !super.equals(obj) || !(obj instanceof BasicUserMetadataFilter other) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserMetadataFilter) ) {
-			return false;
-		}
-		BasicUserMetadataFilter other = (BasicUserMetadataFilter) obj;
 		return Arrays.equals(tags, other.tags);
 	}
 
@@ -97,7 +94,7 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 
 	/**
 	 * Set a tag.
-	 * 
+	 *
 	 * @param tag
 	 *        the tag to set
 	 */
@@ -107,7 +104,7 @@ public class BasicUserMetadataFilter extends BasicCoreCriteria implements UserMe
 
 	/**
 	 * Set the tags.
-	 * 
+	 *
 	 * @param tags
 	 *        the tags to set
 	 */

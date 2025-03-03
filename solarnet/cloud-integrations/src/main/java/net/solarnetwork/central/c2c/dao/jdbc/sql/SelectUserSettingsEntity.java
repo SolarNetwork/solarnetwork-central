@@ -37,7 +37,7 @@ import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
  * @author matt
  * @version 1.0
  */
-public class SelectUserSettingsEntity implements PreparedStatementCreator, SqlProvider {
+public final class SelectUserSettingsEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			SELECT user_id,created,modified,pub_in,pub_flux

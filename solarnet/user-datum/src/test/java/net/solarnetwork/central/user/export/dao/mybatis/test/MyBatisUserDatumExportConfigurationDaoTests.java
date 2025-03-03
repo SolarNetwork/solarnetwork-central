@@ -93,7 +93,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		this.user = createNewUser(TEST_EMAIL);
 		assertThat("Test user created", this.user, notNullValue());
 		this.user.setLocationId(TEST_LOC_ID);
-		userDao.store(this.user);
+		userDao.save(this.user);
 
 		conf = null;
 	}
@@ -121,7 +121,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		filter.setNodeId(TEST_NODE_ID);
 		conf.setFilter(filter);
 
-		Long id = dataConfDao.store(conf);
+		Long id = dataConfDao.save(conf);
 		conf.setId(id);
 		return conf;
 	}
@@ -144,7 +144,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 
 		conf.setServiceProps(sprops);
 
-		Long id = destConfDao.store(conf);
+		Long id = destConfDao.save(conf);
 		conf.setId(id);
 		return conf;
 	}
@@ -168,7 +168,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 
 		conf.setServiceProps(sprops);
 
-		Long id = outpConfDao.store(conf);
+		Long id = outpConfDao.save(conf);
 		conf.setId(id);
 		return conf;
 	}
@@ -182,7 +182,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);
 
-		Long id = dao.store(conf);
+		Long id = dao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
 		// stash results for other tests to use
@@ -200,7 +200,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		conf.setSchedule(ScheduleType.Weekly);
 		conf.setTokenId(randomString());
 
-		Long id = dao.store(conf);
+		Long id = dao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
 		// stash results for other tests to use
@@ -225,7 +225,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		conf.setUserDestinationConfiguration(destConf);
 		conf.setUserOutputConfiguration(outpConf);
 
-		Long id = dao.store(conf);
+		Long id = dao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
 		// stash results for other tests to use
@@ -329,7 +329,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		conf.setSchedule(ScheduleType.Monthly);
 		conf.setMinimumExportDate(TEST_DATE);
 
-		Long id = dao.store(conf);
+		Long id = dao.save(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
 		UserDatumExportConfiguration updatedConf = dao.get(id, this.user.getId());
@@ -359,7 +359,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		conf.setSchedule(ScheduleType.Weekly);
 		conf.setMinimumExportDate(null);
 
-		Long id = dao.store(conf);
+		Long id = dao.save(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
 		UserDatumExportConfiguration updatedConf = dao.get(id, this.user.getId());
@@ -416,7 +416,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 		conf.setSchedule(ScheduleType.Hourly);
 		conf.setMinimumExportDate(exportDate);
 
-		Long id = dao.store(conf);
+		Long id = dao.save(conf);
 		conf.setId(id);
 
 		List<UserDatumExportConfiguration> found = dao
@@ -445,7 +445,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 			conf.setUserDestinationConfiguration(destConf);
 			conf.setUserOutputConfiguration(outpConf);
 
-			Long id = dao.store(conf);
+			Long id = dao.save(conf);
 			conf.setId(id);
 			confs.add(conf);
 		}

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.central.web.WebUtils.maxUploadSizeExceededInputStream;
 import static net.solarnetwork.central.web.WebUtils.uriWithoutHost;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
@@ -73,7 +74,6 @@ import net.solarnetwork.central.user.din.domain.EndpointConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformConfigurationInput;
 import net.solarnetwork.central.user.din.domain.TransformOutput;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
-import net.solarnetwork.central.web.MaxUploadSizeInputStream;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.Result;
@@ -82,7 +82,7 @@ import net.solarnetwork.domain.Result;
  * Web service API for DIN management.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Profile(SolarNetDatumInputConfiguration.DATUM_INPUT)
 @GlobalExceptionRestController
@@ -211,8 +211,8 @@ public class UserDatumInputController {
 		return success();
 	}
 
-	@RequestMapping(value = "/transforms/{transformId}/preview", method = RequestMethod.POST, consumes = {
-			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
+	@RequestMapping(value = "/transforms/{transformId}/preview", method = RequestMethod.POST,
+			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
 	public Result<TransformOutput> previewTransform(@PathVariable("transformId") Long transformId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
 			@RequestHeader(value = "Content-Encoding", required = false) String encoding, InputStream in)
@@ -220,8 +220,9 @@ public class UserDatumInputController {
 		return previewEndpointTransform(transformId, null, contentType, encoding, in);
 	}
 
-	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}", method = RequestMethod.POST, consumes = {
-			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
+	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}",
+			method = RequestMethod.POST,
+			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
 	public Result<TransformOutput> previewEndpointTransform(
 			@PathVariable("transformId") Long transformId, @PathVariable("endpointId") UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
@@ -253,13 +254,13 @@ public class UserDatumInputController {
 				try {
 					URI uri = new URI("http://localhost/?" + query);
 					var qMap = UriComponentsBuilder.fromUri(uri).build(true).getQueryParams();
-					if ( qMap != null ) {
+					if ( !qMap.isEmpty() ) {
 						Map<String, String> decoded = new HashMap<>(qMap.size());
 						for ( Entry<String, List<String>> entry : qMap.entrySet() ) {
 							List<String> vals = entry.getValue();
 							if ( vals != null && !vals.isEmpty() ) {
 								decoded.put(entry.getKey(),
-										URLDecoder.decode(vals.get(0), StandardCharsets.UTF_8));
+										URLDecoder.decode(vals.getFirst(), StandardCharsets.UTF_8));
 							}
 						}
 						return decoded;
@@ -273,7 +274,8 @@ public class UserDatumInputController {
 
 	}
 
-	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}/params", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/transforms/{transformId}/preview/{endpointId}/params",
+			method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Result<TransformOutput> previewEndpointTransform(
 			@PathVariable("transformId") Long transformId, @PathVariable("endpointId") UUID endpointId,
 			@RequestBody PreviewTransformInput previewInput) throws IOException {
@@ -282,12 +284,12 @@ public class UserDatumInputController {
 		MediaType mediaType = MediaType.parseMediaType(previewInput.contentType());
 		Charset encoding = (mediaType.getCharset() != null ? mediaType.getCharset()
 				: StandardCharsets.UTF_8);
-		InputStream input = new MaxUploadSizeInputStream(
+		InputStream input = maxUploadSizeExceededInputStream(
 				new ByteArrayInputStream(previewInput.data().getBytes(encoding)), maxDatumInputLength);
 
 		Map<String, Object> parameters = null;
 		Map<String, String> queryParameters = previewInput.queryParameters();
-		if ( queryParameters != null ) {
+		if ( !queryParameters.isEmpty() ) {
 			parameters = new HashMap<>(8);
 			parameters.putAll(queryParameters);
 		}
@@ -380,7 +382,8 @@ public class UserDatumInputController {
 		return success(userDatumInputBiz.configurationForId(id, EndpointAuthConfiguration.class));
 	}
 
-	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}/enabled/{enabled}", method = RequestMethod.POST)
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}/enabled/{enabled}",
+			method = RequestMethod.POST)
 	public Result<CredentialConfiguration> enableEndpointAuthConfiguration(
 			@PathVariable("endpointId") UUID endpointId, @PathVariable("credentialId") Long credentialId,
 			@PathVariable("enabled") boolean enabled) {
@@ -390,7 +393,8 @@ public class UserDatumInputController {
 		return success();
 	}
 
-	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/endpoints/{endpointId}/auths/{credentialId}",
+			method = RequestMethod.DELETE)
 	public Result<Void> deleteEndpointAuthConfiguration(@PathVariable("endpointId") UUID endpointId,
 			@PathVariable("credentialId") Long credentialId) {
 		UserUuidLongCompositePK id = new UserUuidLongCompositePK(getCurrentActorUserId(), endpointId,

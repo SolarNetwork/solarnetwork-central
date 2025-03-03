@@ -1,21 +1,21 @@
 /* ==================================================================
  * CertificateUtils.java - 3/08/2023 11:29:23 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -46,8 +46,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -56,7 +54,7 @@ import net.solarnetwork.service.CertificateException;
 
 /**
  * Certificate utilities.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -72,10 +70,9 @@ public final class CertificateUtils {
 	public static final String X509_CERTIFICATE_TYPE = "X.509";
 
 	private static final Map<String, String> CANONICAL_DN_MAPPING;
+
 	static {
-		Map<String, String> m = new HashMap<>(4);
-		m.put("1.2.840.113549.1.9.1", "emailAddress");
-		CANONICAL_DN_MAPPING = Collections.unmodifiableMap(m);
+		CANONICAL_DN_MAPPING = Map.of("1.2.840.113549.1.9.1", "emailAddress");
 	}
 
 	private static final CertificateFactory X509_CERT_FACTORY = defaultX509CertificateFactory();
@@ -91,7 +88,7 @@ public final class CertificateUtils {
 
 	/**
 	 * Get a certificate factory for X.509 certificates.
-	 * 
+	 *
 	 * @return the factory
 	 * @throws CertificateException
 	 *         if unable to instantiate the factory
@@ -110,7 +107,7 @@ public final class CertificateUtils {
 	/**
 	 * Extract the first available RFC 822 (email) value from the Subject
 	 * Alternative Name e
-	 * 
+	 *
 	 * @param cert
 	 *        the certificate to extract the email from
 	 * @return the extracted email, or {@literal null} if none available
@@ -138,7 +135,7 @@ public final class CertificateUtils {
 
 	/**
 	 * Get the canonical subject DN value of a certificate.
-	 * 
+	 *
 	 * @param cert
 	 *        the certificate to extract the canonical subject DN value from
 	 * @return the canonical subject DN
@@ -152,7 +149,7 @@ public final class CertificateUtils {
 
 	/**
 	 * Parse PEM certificate data.
-	 * 
+	 *
 	 * @param pemData
 	 *        the PEM data to parse
 	 * @return the parsed certificates
@@ -183,7 +180,7 @@ public final class CertificateUtils {
 
 	/**
 	 * Create a new key store from TLS server settings.
-	 * 
+	 *
 	 * @param certificatePath
 	 *        the path to the PEM encoded certificate file
 	 * @param certificateKey
@@ -215,7 +212,7 @@ public final class CertificateUtils {
 
 			// load private key, and associate with certificate chain
 			KeyFactory factory = KeyFactory.getInstance("RSA");
-			PrivateKey privateKey = null;
+			PrivateKey privateKey;
 			PemObject pemObject = pemReader.readPemObject();
 			byte[] content = pemObject.getContent();
 			PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
@@ -230,7 +227,7 @@ public final class CertificateUtils {
 
 	/**
 	 * Validate a certificate chain.
-	 * 
+	 *
 	 * @param trustStore
 	 *        the trust store containing all available trusted CA certificates
 	 * @param chain

@@ -77,6 +77,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 
 	/** A random number generator to use. */
 	private static final SecureRandom RNG;
+
 	static {
 		SecureRandom r;
 		try {
@@ -312,9 +313,8 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 					userEventAppenderBiz.addEvent(configId.getUserId(), event);
 				}
 				if ( taskScheduler != null && retryDelay > 0 ) {
-					taskScheduler.schedule(() -> {
-						executor.execute(DeferredSystemTask.this);
-					}, Instant.now().plusMillis(tries * retryDelay));
+					taskScheduler.schedule(() -> executor.execute(DeferredSystemTask.this),
+							Instant.now().plusMillis(tries * retryDelay));
 				} else {
 					executor.execute(this);
 				}
@@ -409,7 +409,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 		if ( !supportedStatuses.contains(config.getRegistrationStatus()) ) {
 			String statusList = supportedStatuses.stream().map(Object::toString)
 					.collect(Collectors.joining(" or "));
-			var msg = "[%s] task with {} {} failed because the registration status is not %s."
+			var msg = "[%s] task with %s %s failed because the registration status is not %s."
 					.formatted(name, role, configId.ident(), statusList);
 			log.info(msg);
 			userEventAppenderBiz.addEvent(config.getUserId(),
@@ -442,7 +442,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	}
 
 	/**
-	 * Make a HTTP post to the external system.
+	 * Make an HTTP post to the external system.
 	 *
 	 * @param path
 	 *        the URL path
@@ -453,9 +453,7 @@ public abstract class DeferredSystemTask<C extends BaseOscpExternalSystemConfigu
 	 */
 	protected void post(String path, Object body, String... extraErrorTags) {
 		SystemTaskContext<C> ctx = context(extraErrorTags);
-		client.systemExchange(ctx, HttpMethod.POST, () -> {
-			return ctx.config().customUrlPath(name, path);
-		}, body);
+		client.systemExchange(ctx, HttpMethod.POST, () -> ctx.config().customUrlPath(name, path), body);
 	}
 
 }

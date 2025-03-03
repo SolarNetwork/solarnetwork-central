@@ -24,7 +24,7 @@ package net.solarnetwork.central.datum.v2.dao.jdbc.sql;
 
 import static java.lang.String.format;
 import java.math.RoundingMode;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Array;
@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
+import net.solarnetwork.central.datum.support.DatumUtils;
 import net.solarnetwork.central.datum.v2.dao.CombiningConfig;
 import net.solarnetwork.central.datum.v2.dao.CombiningIdsConfig;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamCriteria;
@@ -69,7 +70,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.4
+ * @version 2.6
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -85,6 +86,64 @@ public final class DatumSqlUtils {
 	 * character.
 	 */
 	public static final Pattern SQL_COMMENT = Pattern.compile("^\\s*--");
+
+	/**
+	 * A sort descriptor name for sorting by datum stream kind (node, location).
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_KIND = "kind";
+
+	/**
+	 * A sort descriptor name for sorting by time.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_TIME = "time";
+
+	/**
+	 * A sort descriptor name for sorting by creation date, often an alias for
+	 * {@link #SORT_BY_TIME}.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_CREATED = "created";
+
+	/**
+	 * A sort descriptor name for sorting by node ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_NODE = "node";
+
+	/**
+	 * A sort descriptor name for sorting by location ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_LOCATION = "loc";
+
+	/**
+	 * A sort descriptor name for sorting by object ID (node, location, and so
+	 * on).
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_OBJECT = "obj";
+
+	/**
+	 * A sort descriptor name for sorting by source ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_SOURCE = "source";
+
+	/**
+	 * A sort descriptor name for sorting by datum stream ID.
+	 *
+	 * @since 2.6
+	 */
+	public static final String SORT_BY_STREAM = "stream";
 
 	/**
 	 * A standard mapping of sort keys to SQL column names suitable for ordering
@@ -103,11 +162,12 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> STALE_AGGREGATE_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("kind", "agg_kind");
-		map.put("stream", "stream_id");
-		map.put("time", "ts_start");
+		map.put(SORT_BY_KIND, "agg_kind");
+		map.put(SORT_BY_STREAM, "stream_id");
+		map.put(SORT_BY_TIME, "ts_start");
 		STALE_AGGREGATE_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -130,13 +190,14 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> STREAM_METADATA_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("loc", "obj_id");
-		map.put("node", "obj_id");
-		map.put("obj", "obj_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
+		map.put(SORT_BY_LOCATION, "obj_id");
+		map.put(SORT_BY_NODE, "obj_id");
+		map.put(SORT_BY_OBJECT, "obj_id");
+		map.put(SORT_BY_SOURCE, "source_id");
+		map.put(SORT_BY_STREAM, "stream_id");
 		STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -157,11 +218,12 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> NODE_STREAM_METADATA_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("node", "node_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
+		map.put(SORT_BY_NODE, "node_id");
+		map.put(SORT_BY_SOURCE, "source_id");
+		map.put(SORT_BY_STREAM, "stream_id");
 		NODE_STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -182,11 +244,12 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> NODE_STREAM_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(5);
 		map.putAll(NODE_STREAM_METADATA_SORT_KEY_MAPPING);
-		map.put("created", "ts");
-		map.put("time", "ts");
+		map.put(SORT_BY_CREATED, "ts");
+		map.put(SORT_BY_TIME, "ts");
 		NODE_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -207,11 +270,12 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> LOCATION_STREAM_METADATA_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("loc", "loc_id");
-		map.put("source", "source_id");
-		map.put("stream", "stream_id");
+		map.put(SORT_BY_LOCATION, "loc_id");
+		map.put(SORT_BY_SOURCE, "source_id");
+		map.put(SORT_BY_STREAM, "stream_id");
 		LOCATION_STREAM_METADATA_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -232,11 +296,12 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> LOCATION_STREAM_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(5);
 		map.putAll(LOCATION_STREAM_METADATA_SORT_KEY_MAPPING);
-		map.put("created", "ts");
-		map.put("time", "ts");
+		map.put(SORT_BY_CREATED, "ts");
+		map.put(SORT_BY_TIME, "ts");
 		LOCATION_STREAM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -258,12 +323,13 @@ public final class DatumSqlUtils {
 	 * @see #orderBySorts(Iterable, Map, StringBuilder)
 	 */
 	public static final Map<String, String> AUDIT_DATUM_SORT_KEY_MAPPING;
+
 	static {
 		Map<String, String> map = new LinkedHashMap<>(4);
-		map.put("created", "aud_ts");
-		map.put("node", "aud_node_id");
-		map.put("source", "aud_source_id");
-		map.put("time", "aud_ts");
+		map.put(SORT_BY_CREATED, "aud_ts");
+		map.put(SORT_BY_NODE, "aud_node_id");
+		map.put(SORT_BY_SOURCE, "aud_source_id");
+		map.put(SORT_BY_TIME, "aud_ts");
 		AUDIT_DATUM_SORT_KEY_MAPPING = Collections.unmodifiableMap(map);
 	}
 
@@ -292,7 +358,7 @@ public final class DatumSqlUtils {
 		return CommonSqlUtils.orderBySorts(sorts, sortKeyMapping, buf);
 	}
 
-	private static String[] DEFAULT_METADATA_SORT_KEYS = new String[] { "loc", "node", "source" };
+	private static final String[] DEFAULT_METADATA_SORT_KEYS = new String[] { "loc", "node", "source" };
 
 	/**
 	 * Test if a default stream metadata sort key is present in a list of sort
@@ -311,7 +377,7 @@ public final class DatumSqlUtils {
 	 * @param sorts
 	 *        the sort descriptors to search for metadata keys in
 	 * @return {@literal true} if some sort descriptor in {@code sorts} is also
-	 *         in the default list of metadata sort keys
+	 *         in the default list of list of metadata sort keys
 	 */
 	public static boolean hasMetadataSortKey(Iterable<SortDescriptor> sorts) {
 		return hasMetadataSortKey(sorts, DEFAULT_METADATA_SORT_KEYS);
@@ -367,19 +433,57 @@ public final class DatumSqlUtils {
 	public static int whereStreamMetadata(StreamMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getStreamIds() != null ) {
-			buf.append("\tAND s.stream_id = ANY(?)\n");
+			buf.append("\tAND s.stream_id = ");
+			if ( filter.getStreamIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		if ( filter.getSourceIds() != null ) {
-			buf.append(
-					"\tAND s.source_id ~ ANY(ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?))))\n");
+			buf.append("\tAND s.source_id ");
+
+			boolean havePattern = false;
+			for ( String sourceId : filter.getSourceIds() ) {
+				if ( DatumUtils.WILDCARD_PATTERN_MATCHER.isPattern(sourceId) ) {
+					havePattern = true;
+					break;
+				}
+			}
+
+			if ( havePattern ) {
+				buf.append("~ ");
+			} else {
+				buf.append("= ");
+			}
+
+			if ( filter.getSourceIds().length > 1 ) {
+				buf.append("ANY(");
+				if ( havePattern ) {
+					buf.append("ARRAY(SELECT solarcommon.ant_pattern_to_regexp(unnest(?)))");
+				} else {
+					buf.append("?");
+				}
+				buf.append(")");
+			} else {
+				if ( havePattern ) {
+					buf.append("solarcommon.ant_pattern_to_regexp(?)");
+				} else {
+					buf.append("?");
+				}
+			}
+			buf.append("\n");
+
 			paramCount += 1;
 		}
 		if ( filter.hasPropertyNameCriteria() ) {
 			buf.append("	AND (s.names_i && ? OR s.names_a && ? OR s.names_s && ?)\n");
 			paramCount += 3;
 		}
-		if ( filter.hasInstantatneousPropertyNameCriteria() ) {
+		if ( filter.hasInstantaneousPropertyNameCriteria() ) {
 			buf.append("	AND s.names_i @> ?\n");
 			paramCount += 1;
 		}
@@ -391,8 +495,14 @@ public final class DatumSqlUtils {
 			buf.append("	AND s.names_s @> ?\n");
 			paramCount += 1;
 		}
-		if ( filter.getUserIds() != null ) {
-			buf.append("\tAND un.user_id = ANY(?)\n");
+		if ( filter.getLocationId() == null && filter.getUserIds() != null ) {
+			buf.append("\tAND un.user_id = ");
+			if ( filter.getUserIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		if ( filter.getTokenIds() != null ) {
@@ -471,7 +581,13 @@ public final class DatumSqlUtils {
 	public static int whereNodeMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getObjectIds() != null ) {
-			buf.append("\tAND s.node_id = ANY(?)\n");
+			buf.append("\tAND s.node_id = ");
+			if ( filter.getObjectIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -496,7 +612,13 @@ public final class DatumSqlUtils {
 	public static int whereLocationMetadata(ObjectMetadataCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getObjectIds() != null ) {
-			buf.append("\tAND s.loc_id = ANY(?)\n");
+			buf.append("\tAND s.loc_id = ");
+			if ( filter.getObjectIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -526,10 +648,22 @@ public final class DatumSqlUtils {
 	public static int whereDatumMetadata(DatumStreamCriteria filter, StringBuilder buf) {
 		int paramCount = 0;
 		if ( filter.getLocationId() != null ) {
-			buf.append("\tAND s.loc_id = ANY(?)\n");
+			buf.append("\tAND s.loc_id = ");
+			if ( filter.getNodeIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		} else if ( filter.getNodeId() != null ) {
-			buf.append("\tAND s.node_id = ANY(?)\n");
+			buf.append("\tAND s.node_id = ");
+			if ( filter.getNodeIds().length > 1 ) {
+				buf.append("ANY(?)");
+			} else {
+				buf.append("?");
+			}
+			buf.append("\n");
 			paramCount += 1;
 		}
 		paramCount += whereStreamMetadata(filter, buf);
@@ -627,8 +761,8 @@ public final class DatumSqlUtils {
 	 * @param buf
 	 *        the buffer to append the SQL to
 	 * @return the number of JDBC query parameters generated
-	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria,
-	 *      MetadataSelectStyle,StringBuilder)
+	 * @see #nodeMetadataFilterSql(ObjectMetadataCriteria, MetadataSelectStyle,
+	 *      StringBuilder)
 	 */
 	public static int nodeMetadataFilterSql(ObjectMetadataCriteria filter, StringBuilder buf) {
 		return nodeMetadataFilterSql(filter, MetadataSelectStyle.Full, buf);
@@ -809,7 +943,7 @@ public final class DatumSqlUtils {
 			if ( filter != null ) {
 				paramCount += whereNodeMetadata(filter, where);
 			}
-			if ( where.length() > 0 ) {
+			if ( !where.isEmpty() ) {
 				buf.append("WHERE");
 				buf.append(where.substring(4));
 			}
@@ -990,7 +1124,7 @@ public final class DatumSqlUtils {
 			if ( filter != null ) {
 				paramCount += whereLocationMetadata(filter, where);
 			}
-			if ( where.length() > 0 ) {
+			if ( !where.isEmpty() ) {
 				buf.append("WHERE");
 				buf.append(where.substring(4));
 			}
@@ -1017,9 +1151,13 @@ public final class DatumSqlUtils {
 			int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getStreamIds() != null ) {
-				Array array = con.createArrayOf("uuid", filter.getStreamIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getStreamIds().length > 1 ) {
+					Array array = con.createArrayOf("uuid", filter.getStreamIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getStreamId());
+				}
 			}
 		}
 		return parameterOffset;
@@ -1047,9 +1185,13 @@ public final class DatumSqlUtils {
 		if ( filter != null ) {
 			parameterOffset = prepareStreamFilter(filter, con, stmt, parameterOffset);
 			if ( filter.getSourceIds() != null ) {
-				Array array = con.createArrayOf("text", filter.getSourceIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getSourceIds().length > 1 ) {
+					Array array = con.createArrayOf("text", filter.getSourceIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setString(++parameterOffset, filter.getSourceId());
+				}
 			}
 			if ( filter.hasPropertyNameCriteria() ) {
 				Array array = con.createArrayOf("text", filter.getPropertyNames());
@@ -1058,7 +1200,7 @@ public final class DatumSqlUtils {
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 			}
-			if ( filter.hasInstantatneousPropertyNameCriteria() ) {
+			if ( filter.hasInstantaneousPropertyNameCriteria() ) {
 				Array array = con.createArrayOf("text", filter.getInstantaneousPropertyNames());
 				stmt.setArray(++parameterOffset, array);
 				array.free();
@@ -1074,9 +1216,13 @@ public final class DatumSqlUtils {
 				array.free();
 			}
 			if ( kind != ObjectDatumKind.Location && filter.getUserIds() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getUserIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getUserIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getUserIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getUserId());
+				}
 			}
 			if ( filter.getTokenIds() != null ) {
 				Array array = con.createArrayOf("text", filter.getTokenIds());
@@ -1142,9 +1288,13 @@ public final class DatumSqlUtils {
 			Connection con, PreparedStatement stmt, int parameterOffset) throws SQLException {
 		if ( filter != null ) {
 			if ( filter.getObjectIds() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getObjectIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getObjectIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getObjectIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getObjectId());
+				}
 			}
 			parameterOffset = prepareStreamMetadataFilter(filter,
 					kind != null ? kind : filter.getObjectKind(), con, stmt, parameterOffset);
@@ -1185,9 +1335,8 @@ public final class DatumSqlUtils {
 	 * Prepare a SQL query to find datum metadata.
 	 *
 	 * <p>
-	 * The first parameter set If a location ID is provided on the filter, then
-	 * the filter is assumed to be for location metadata; otherwise node
-	 * metadata is assumed.
+	 * If a location ID is provided on the filter, then the filter is assumed to
+	 * be for location metadata; otherwise node metadata is assumed.
 	 * </p>
 	 *
 	 * @param filter
@@ -1216,13 +1365,13 @@ public final class DatumSqlUtils {
 			List<Long> allIds = new ArrayList<>();
 			for ( Map.Entry<Long, Set<Long>> me : objIdConfig.getIdSets().entrySet() ) {
 				allIds.addAll(me.getValue());
-				Long[] ids = me.getValue().toArray(new Long[me.getValue().size()]);
+				Long[] ids = me.getValue().toArray(Long[]::new);
 				Array array = con.createArrayOf("bigint", ids);
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 				stmt.setObject(++parameterOffset, me.getKey());
 			}
-			Array array = con.createArrayOf("bigint", allIds.toArray(new Long[allIds.size()]));
+			Array array = con.createArrayOf("bigint", allIds.toArray(Long[]::new));
 			stmt.setArray(++parameterOffset, array);
 			array.free();
 		}
@@ -1232,25 +1381,33 @@ public final class DatumSqlUtils {
 			List<String> allIds = new ArrayList<>();
 			for ( Map.Entry<String, Set<String>> me : sourceIdConfig.getIdSets().entrySet() ) {
 				allIds.addAll(me.getValue());
-				String[] ids = me.getValue().toArray(new String[me.getValue().size()]);
+				String[] ids = me.getValue().toArray(String[]::new);
 				Array array = con.createArrayOf("text", ids);
 				stmt.setArray(++parameterOffset, array);
 				array.free();
 				stmt.setString(++parameterOffset, me.getKey());
 			}
-			Array array = con.createArrayOf("text", allIds.toArray(new String[allIds.size()]));
+			Array array = con.createArrayOf("text", allIds.toArray(String[]::new));
 			stmt.setArray(++parameterOffset, array);
 			array.free();
 		}
 		if ( filter != null ) {
 			if ( filter.getLocationId() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getLocationIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getLocationIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getLocationIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getLocationId());
+				}
 			} else if ( filter.getNodeId() != null ) {
-				Array array = con.createArrayOf("bigint", filter.getNodeIds());
-				stmt.setArray(++parameterOffset, array);
-				array.free();
+				if ( filter.getNodeIds().length > 1 ) {
+					Array array = con.createArrayOf("bigint", filter.getNodeIds());
+					stmt.setArray(++parameterOffset, array);
+					array.free();
+				} else {
+					stmt.setObject(++parameterOffset, filter.getNodeId());
+				}
 			}
 			parameterOffset = prepareStreamMetadataFilter(filter, filter.getObjectKind(), con, stmt,
 					parameterOffset);
@@ -1542,26 +1699,14 @@ public final class DatumSqlUtils {
 	 *         if {@code aggregation} is {@literal null} or not supported
 	 */
 	public static String sqlDateRoundingInterval(Aggregation aggregation) {
-		if ( aggregation != null ) {
-			switch (aggregation) {
-				case Hour:
-					return "hour";
-
-				case Day:
-					return "day";
-
-				case Month:
-					return "month";
-
-				case Year:
-					return "year";
-
-				default:
-					// fall through to exception
-			}
-		}
-		throw new IllegalArgumentException(
-				format("The aggregation %s cannot be converted to a SQL interval."));
+		return switch (aggregation) {
+			case Hour -> "hour";
+			case Day -> "day";
+			case Month -> "month";
+			case Year -> "year";
+			default -> throw new IllegalArgumentException(
+					format("The aggregation %s cannot be converted to a SQL interval.", aggregation));
+		};
 	}
 
 	/**
@@ -1624,12 +1769,12 @@ public final class DatumSqlUtils {
 	 * @return the new JDBC statement parameter offset
 	 * @throws SQLException
 	 *         if any SQL error occurs
-	 * @see CommonSqlUtils#prepareLimitOffset(PaginationCriteria, Connection,
+	 * @see CommonSqlUtils#prepareLimitOffset(PaginationCriteria,
 	 *      PreparedStatement, int)
 	 */
 	public static int preparePaginationFilter(PaginationCriteria filter, Connection con,
 			PreparedStatement stmt, int parameterOffset) throws SQLException {
-		return CommonSqlUtils.prepareLimitOffset(filter, con, stmt, parameterOffset);
+		return CommonSqlUtils.prepareLimitOffset(filter, stmt, parameterOffset);
 	}
 
 	/**
@@ -1677,12 +1822,10 @@ public final class DatumSqlUtils {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-1");
 			byte[] buf = new byte[8];
-			if ( streamIds.length > 1 ) {
-				// for >1 stream ID, sort them for a stable cache key
-				streamIds = new UUID[filter.getStreamIds().length];
-				System.arraycopy(filter.getStreamIds(), 0, streamIds, 0, streamIds.length);
-				Arrays.sort(streamIds);
-			}
+			// for >1 stream ID, sort them for a stable cache key
+			streamIds = new UUID[filter.getStreamIds().length];
+			System.arraycopy(filter.getStreamIds(), 0, streamIds, 0, streamIds.length);
+			Arrays.sort(streamIds);
 			for ( UUID uuid : streamIds ) {
 				ByteUtils.encodeUnsignedInt64(uuid.getMostSignificantBits(), buf, 0,
 						ByteOrdering.BigEndian);
@@ -1694,7 +1837,7 @@ public final class DatumSqlUtils {
 			if ( filter.getSorts() != null && !filter.getSorts().isEmpty() ) {
 				StringBuilder order = new StringBuilder();
 				orderBySorts(filter.getSorts(), sortKeyMapping, order);
-				digest.update(order.toString().getBytes(Charset.forName("UTF-8")));
+				digest.update(order.toString().getBytes(StandardCharsets.UTF_8));
 			}
 			return ByteUtils.encodeHexString(digest.digest(), 0, digest.getDigestLength(), false, true);
 		} catch ( NoSuchAlgorithmException e ) {
@@ -1853,7 +1996,7 @@ public final class DatumSqlUtils {
 			throw e;
 		}
 		if ( !tags.isEmpty() ) {
-			Array array = con.createArrayOf("text", tags.toArray(new String[tags.size()]));
+			Array array = con.createArrayOf("text", tags.toArray(String[]::new));
 			stmt.setArray(++offset[0], array);
 			array.free();
 		}

@@ -53,6 +53,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -63,8 +64,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Base64InputStream;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -114,7 +113,7 @@ import net.solarnetwork.service.PasswordEncoder;
  * Unit tests for the {@link DaoRegistrationBiz}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class DaoRegistrationBizTests {
 
@@ -207,7 +206,7 @@ public class DaoRegistrationBizTests {
 		expect(passwordEncoder.isPasswordEncrypted(testUser.getPassword())).andReturn(Boolean.FALSE);
 		expect(passwordEncoder.encode(testUser.getPassword())).andReturn(encodedPass);
 		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(null);
-		expect(userDao.store(EasyMock.anyObject(User.class))).andReturn(newUser.getId());
+		expect(userDao.save(EasyMock.anyObject(User.class))).andReturn(newUser.getId());
 		expect(userDao.get(newUser.getId())).andReturn(newUser);
 		replayAll();
 
@@ -246,7 +245,7 @@ public class DaoRegistrationBizTests {
 	public void createNodeAssociation() throws IOException {
 		expect(networkIdentityBiz.getNetworkIdentity()).andReturn(networkIdentity);
 		expect(userDao.get(TEST_USER_ID)).andReturn(testUser);
-		expect(userNodeConfirmationDao.store(EasyMock.anyObject(UserNodeConfirmation.class)))
+		expect(userNodeConfirmationDao.save(EasyMock.anyObject(UserNodeConfirmation.class)))
 				.andReturn(TEST_CONF_ID);
 		replayAll();
 
@@ -306,10 +305,10 @@ public class DaoRegistrationBizTests {
 				.andReturn(loc);
 
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(nodeDao.save(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
 
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
 
 		final String nodeSubjectDN = String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString());
 
@@ -323,7 +322,7 @@ public class DaoRegistrationBizTests {
 				anyObject(PrivateKey.class))).andReturn(certificate);
 		expect(nodePKIBiz.submitCSR(EasyMock.eq(certificate), EasyMock.anyObject(PrivateKey.class)))
 				.andReturn(TEST_CERT_REQ_ID);
-		expect(userNodeCertificateDao.store(anyObject(UserNodeCertificate.class)))
+		expect(userNodeCertificateDao.save(anyObject(UserNodeCertificate.class)))
 				.andReturn(TEST_CERT_ID);
 
 		final UserNodeCertificate userNodeCertificate = new UserNodeCertificate();
@@ -399,10 +398,10 @@ public class DaoRegistrationBizTests {
 				.andReturn(loc);
 		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(nodeDao.save(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
-		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.save(conf)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 
@@ -452,15 +451,15 @@ public class DaoRegistrationBizTests {
 		// here SolarLocation doesn't exist for the requested country+time zone, so we create it now
 		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(null);
-		expect(solarLocationDao.store(EasyMock.anyObject(SolarLocation.class))).andReturn(TEST_LOC_ID);
+		expect(solarLocationDao.save(EasyMock.anyObject(SolarLocation.class))).andReturn(TEST_LOC_ID);
 		expect(solarLocationDao.get(TEST_LOC_ID)).andReturn(loc);
 
 		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(nodeDao.save(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
-		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.save(conf)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 
@@ -508,10 +507,10 @@ public class DaoRegistrationBizTests {
 		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(loc);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(nodeDao.save(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
-		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.save(conf)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 
@@ -562,8 +561,8 @@ public class DaoRegistrationBizTests {
 				.andReturn(loc);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
-		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.save(conf)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 
@@ -614,7 +613,7 @@ public class DaoRegistrationBizTests {
 				.andReturn(loc);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(node);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(userNode);
-		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.save(conf)).andReturn(TEST_NODE_ID);
 
 		replayAll();
 
@@ -686,7 +685,8 @@ public class DaoRegistrationBizTests {
 		InputStream in = null;
 		Map<String, Object> associationData = null;
 		try {
-			in = new GZIPInputStream(new Base64InputStream(new ByteArrayInputStream(code.getBytes())));
+			in = new GZIPInputStream(
+					Base64.getMimeDecoder().wrap(new ByteArrayInputStream(code.getBytes())));
 			associationData = xmlHelper.parseXml(in);
 		} finally {
 			if ( in != null ) {
@@ -726,7 +726,7 @@ public class DaoRegistrationBizTests {
 		expect(passwordEncoder.encode(pass.getPassword())).andReturn(encodedPass);
 
 		// then must save the updated user
-		expect(userDao.store(testUser)).andReturn(testUser.getId());
+		expect(userDao.save(testUser)).andReturn(testUser.getId());
 
 		replayAll();
 
@@ -781,21 +781,21 @@ public class DaoRegistrationBizTests {
 		// here SolarLocation doesn't exist for the requested country+time zone, so we create it now
 		expect(solarLocationDao.getSolarLocationForTimeZone(conf.getCountry(), conf.getTimeZoneId()))
 				.andReturn(null);
-		expect(solarLocationDao.store(EasyMock.anyObject(SolarLocation.class))).andReturn(TEST_LOC_ID);
+		expect(solarLocationDao.save(EasyMock.anyObject(SolarLocation.class))).andReturn(TEST_LOC_ID);
 		expect(solarLocationDao.get(TEST_LOC_ID)).andReturn(loc);
 
 		expect(nodeDao.getUnusedNodeId()).andReturn(TEST_NODE_ID);
 		expect(nodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(nodeDao.store(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
+		expect(nodeDao.save(EasyMock.anyObject(SolarNode.class))).andReturn(TEST_NODE_ID);
 		expect(userNodeDao.get(TEST_NODE_ID)).andReturn(null);
-		expect(userNodeDao.store(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
-		expect(userNodeConfirmationDao.store(conf)).andReturn(TEST_NODE_ID);
+		expect(userNodeDao.save(EasyMock.anyObject(UserNode.class))).andReturn(TEST_NODE_ID);
+		expect(userNodeConfirmationDao.save(conf)).andReturn(TEST_NODE_ID);
 		expect(nodePKIBiz.generateCertificate(EasyMock.eq(nodeSubjectDN),
 				EasyMock.anyObject(PublicKey.class), EasyMock.anyObject(PrivateKey.class)))
 						.andReturn(certificate);
 		expect(nodePKIBiz.submitCSR(EasyMock.eq(certificate), EasyMock.anyObject(PrivateKey.class)))
 				.andReturn(TEST_CERT_REQ_ID);
-		expect(userNodeCertificateDao.store(EasyMock.anyObject(UserNodeCertificate.class)))
+		expect(userNodeCertificateDao.save(EasyMock.anyObject(UserNodeCertificate.class)))
 				.andReturn(TEST_CERT_ID);
 		expect(executorService.submit(EasyMock.anyObject(Callable.class)))
 				.andReturn(new Future<UserNodeCertificate>() {
@@ -1021,7 +1021,7 @@ public class DaoRegistrationBizTests {
 					}
 				});
 
-		expect(userNodeCertificateDao.store(originalCertificate)).andReturn(TEST_CERT_ID);
+		expect(userNodeCertificateDao.save(originalCertificate)).andReturn(TEST_CERT_ID);
 
 		Capture<Instruction> instrCap = new Capture<Instruction>();
 		NodeInstruction nodeInstr = new NodeInstruction();
@@ -1042,7 +1042,7 @@ public class DaoRegistrationBizTests {
 				cert.getNetworkCertificateSubjectDN());
 		assertEquals(UserNodeCertificateStatus.v.getValue(), cert.getNetworkCertificateStatus());
 		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertEquals(Base64.encodeBase64String(renewedCertificate.getKeystoreData()),
+		assertEquals(Base64.getEncoder().encodeToString(renewedCertificate.getKeystoreData()),
 				cert.getNetworkCertificate());
 
 		Instruction instr = instrCap.getValue();
@@ -1134,7 +1134,7 @@ public class DaoRegistrationBizTests {
 				});
 
 		Capture<UserNodeCertificate> userNodeCertCap = new Capture<UserNodeCertificate>();
-		expect(userNodeCertificateDao.store(EasyMock.capture(userNodeCertCap))).andReturn(TEST_CERT_ID);
+		expect(userNodeCertificateDao.save(EasyMock.capture(userNodeCertCap))).andReturn(TEST_CERT_ID);
 
 		Capture<Instruction> instrCap = new Capture<Instruction>();
 		NodeInstruction nodeInstr = new NodeInstruction();

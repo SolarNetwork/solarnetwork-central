@@ -167,7 +167,7 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 		if ( ea == null ) {
 			return;
 		}
-		ea.postEvent(status.asJobStatusChagnedEvent(result));
+		ea.postEvent(status.asJobStatusChangedEvent(result));
 	}
 
 	/**

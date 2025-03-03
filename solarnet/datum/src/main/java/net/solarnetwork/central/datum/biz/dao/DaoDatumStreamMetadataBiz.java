@@ -118,14 +118,11 @@ public class DaoDatumStreamMetadataBiz implements DatumStreamMetadataBiz {
 	}
 
 	private void restrictCriteriaToActor(SecurityActor actor, BasicDatumCriteria c) {
-		if ( actor instanceof SecurityNode ) {
-			SecurityNode node = (SecurityNode) actor;
+		if ( actor instanceof SecurityNode node ) {
 			c.setNodeId(node.getNodeId());
-		} else if ( actor instanceof SecurityUser ) {
-			SecurityUser user = (SecurityUser) actor;
+		} else if ( actor instanceof SecurityUser user ) {
 			c.setUserId(user.getUserId());
-		} else if ( actor instanceof SecurityToken ) {
-			SecurityToken token = (SecurityToken) actor;
+		} else if ( actor instanceof SecurityToken token ) {
 			c.setTokenId(token.getToken());
 		}
 	}

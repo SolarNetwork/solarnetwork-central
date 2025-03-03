@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.support.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -43,7 +44,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link BasicDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.2
  */
 public class BasicDatumStreamsAccessorTests {
 
@@ -92,13 +93,13 @@ public class BasicDatumStreamsAccessorTests {
 		final int sourceIdx = RNG.nextInt(sourceCount);
 		final String sourceId = testSource(sourceIdx);
 		final int offset = RNG.nextInt(datumCount);
-		Datum result = accessor.offset(sourceId, offset);
+		Datum result = accessor.offset(Node, nodeId, sourceId, offset);
 
 		// THEN
 		// @formatter:off
 		then(result)
 			.as("Offset %d for source returned", offset)
-			.isSameAs(data.get((sourceIdx * sourceCount) + (datumCount - offset- 1)))
+			.isSameAs(data.get((sourceIdx * sourceCount) + (datumCount - offset - 1)))
 			;
 		// @formatter:on
 	}
@@ -115,16 +116,124 @@ public class BasicDatumStreamsAccessorTests {
 		// WHEN
 		final String sourceIdPath = "test/*";
 		final int offset = RNG.nextInt(datumCount);
-		Collection<Datum> result = accessor.offsetMatching(sourceIdPath, offset);
+		Collection<Datum> result = accessor.offsetMatching(Node, nodeId, sourceIdPath, offset);
 
 		// THEN
 		// @formatter:off
 		List<Datum> expected = new ArrayList<>(sourceCount);
 		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
-			expected.add(data.get((sourceIdx * sourceCount) + (datumCount - offset- 1)));
+			expected.add(data.get((sourceIdx * sourceCount) + (datumCount - offset - 1)));
 		}
 		then(result)
 			.as("Offset %d for source returned", offset)
+			.hasSameElementsAs(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void latest_time() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int sourceIdx = RNG.nextInt(sourceCount);
+		final String sourceId = testSource(sourceIdx);
+		final int offset = RNG.nextInt(datumCount);
+		Datum result = accessor.latest(Node, nodeId, sourceId, now.minusSeconds(offset));
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Latest from %s (offset %d) for source returned", now.minusSeconds(offset), offset)
+			.isSameAs(data.get((sourceIdx * sourceCount) + (datumCount - offset - 1)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void latestMatching_time() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final String sourceIdPath = "test/*";
+		final int offset = RNG.nextInt(datumCount);
+		Collection<Datum> result = accessor.latestMatching(Node, nodeId, sourceIdPath,
+				now.minusSeconds(offset));
+
+		// THEN
+		// @formatter:off
+		List<Datum> expected = new ArrayList<>(sourceCount);
+		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
+			expected.add(data.get((sourceIdx * sourceCount) + (datumCount - offset - 1)));
+		}
+		then(result)
+			.as("Latest from %s (offset %d) for source returned", now.minusSeconds(offset), offset)
+			.hasSameElementsAs(expected)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void offset_time() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final int sourceIdx = RNG.nextInt(sourceCount);
+		final String sourceId = testSource(sourceIdx);
+		final int timeOffset = RNG.nextInt(datumCount);
+		final int offset = datumCount - timeOffset - 1 > 0 ? RNG.nextInt(datumCount - timeOffset - 1)
+				: 0;
+		Datum result = accessor.offset(Node, nodeId, sourceId, now.minusSeconds(timeOffset), offset);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Offset %d from %s for source returned", offset, now.minusSeconds(timeOffset))
+			.isSameAs(data.get((sourceIdx * sourceCount) + (datumCount - timeOffset - offset - 1)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void offsetMatching_time() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+
+		// WHEN
+		final String sourceIdPath = "test/*";
+		final int timeOffset = RNG.nextInt(datumCount);
+		final int offset = datumCount - timeOffset - 1 > 0 ? RNG.nextInt(datumCount - timeOffset - 1)
+				: 0;
+		Collection<Datum> result = accessor.offsetMatching(Node, nodeId, sourceIdPath,
+				now.minusSeconds(timeOffset), offset);
+
+		// THEN
+		// @formatter:off
+		List<Datum> expected = new ArrayList<>(sourceCount);
+		for ( int sourceIdx = 0; sourceIdx < sourceCount; sourceIdx++)  {
+			expected.add(data.get((sourceIdx * sourceCount) + (datumCount - timeOffset - offset - 1)));
+		}
+		then(result)
+			.as("Offset %d from %s for source returned", offset, now.minusSeconds(offset))
 			.hasSameElementsAs(expected)
 			;
 		// @formatter:on

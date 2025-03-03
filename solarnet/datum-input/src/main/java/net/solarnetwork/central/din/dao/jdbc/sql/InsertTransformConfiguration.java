@@ -39,7 +39,7 @@ import net.solarnetwork.central.din.domain.TransformConfiguration;
  * @author matt
  * @version 1.0
  */
-public class InsertTransformConfiguration implements PreparedStatementCreator, SqlProvider {
+public final class InsertTransformConfiguration implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
 			INSERT INTO solardin.din_xform (

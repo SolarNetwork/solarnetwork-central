@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import net.solarnetwork.central.dao.UserRelatedEntity;
@@ -42,6 +43,7 @@ import net.solarnetwork.domain.Differentiable;
 public class AccountBalance extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<AccountBalance> {
 
+	@Serial
 	private static final long serialVersionUID = -7116991858593931605L;
 
 	/** A key to use for credit used in an invoice. */

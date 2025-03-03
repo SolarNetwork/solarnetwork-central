@@ -46,8 +46,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.DatumRollupType;
 import net.solarnetwork.central.datum.v2.dao.AuditDatumEntityRollup;
@@ -72,12 +73,12 @@ public class JdbcAuditDatumEntityDaoTests extends BaseDatumJdbcTestSupport {
 
 	private JdbcAuditDatumEntityDao dao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new JdbcAuditDatumEntityDao(jdbcTemplate);
 	}
 
-	@Before
+	@BeforeEach
 	public void setupInTransaction() {
 		setupTestNode();
 		setupTestUser();

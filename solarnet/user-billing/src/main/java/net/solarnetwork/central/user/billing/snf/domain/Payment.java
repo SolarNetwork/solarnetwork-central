@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
@@ -41,6 +42,7 @@ import net.solarnetwork.domain.Differentiable;
 public class Payment extends BasicEntity<UserUuidPK>
 		implements Differentiable<Payment>, UserRelatedEntity<UserUuidPK> {
 
+	@Serial
 	private static final long serialVersionUID = 3181781610133454160L;
 
 	/**
@@ -252,8 +254,8 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * Get the external key.
 	 *
 	 * <p>
-	 * This refers to a payment identifier in some external system, for cross
-	 * referencing.
+	 * This refers to a payment identifier in some external system, for
+	 * cross-referencing.
 	 * </p>
 	 *
 	 * @return the external key

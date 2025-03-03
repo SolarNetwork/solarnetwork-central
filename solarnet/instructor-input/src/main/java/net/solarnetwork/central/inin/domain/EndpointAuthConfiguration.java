@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import java.io.Serial;
 import java.time.Instant;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -41,6 +42,7 @@ public class EndpointAuthConfiguration
 		extends BaseUserModifiableEntity<EndpointAuthConfiguration, UserUuidLongCompositePK> implements
 		InstructionInputConfigurationEntity<EndpointAuthConfiguration, UserUuidLongCompositePK> {
 
+	@Serial
 	private static final long serialVersionUID = -3093710975249328607L;
 
 	/**

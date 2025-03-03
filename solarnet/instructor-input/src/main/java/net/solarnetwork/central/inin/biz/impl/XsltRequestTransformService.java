@@ -165,7 +165,7 @@ public class XsltRequestTransformService extends BaseXsltService implements Requ
 			xform.setOutputProperty(OutputKeys.MEDIA_TYPE, JSON_TYPE.toString());
 
 			// get XML input for XSLT transform
-			Source inputSource = null;
+			Source inputSource;
 			if ( JSON_TYPE.isCompatibleWith(type) || JSON_PLUS_TYPE.isCompatibleWith(type) ) {
 				// pass JSON as input parameter
 				xform.setParameter(XSLT_PARAM_JSON, inputText);

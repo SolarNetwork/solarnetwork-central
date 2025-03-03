@@ -37,7 +37,7 @@ import net.solarnetwork.central.domain.UserEvent;
  * @author matt
  * @version 1.0
  */
-public class InsertUserEvent implements PreparedStatementCreator, SqlProvider {
+public final class InsertUserEvent implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL;
 	static {

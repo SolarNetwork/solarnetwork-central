@@ -1,21 +1,21 @@
 /* ==================================================================
  * MqttDataCollector.java - 10/06/2018 12:57:43 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -62,7 +62,7 @@ import net.solarnetwork.util.StatTracker;
 
 /**
  * MQTT implementation of upload service.
- * 
+ *
  * @author matt
  * @version 3.1
  */
@@ -73,7 +73,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 
 	/**
 	 * The default MQTT topic template for node data subscription.
-	 * 
+	 *
 	 * <p>
 	 * This template will be passed a single node ID (or {@literal +} wildcard)
 	 * parameter.
@@ -104,7 +104,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 
 	/**
 	 * The JSON field name for an instruction ID on a {@link Instruction} value.
-	 * 
+	 *
 	 * @since 1.8
 	 */
 	public static final String INSTRUCTION_ID_FIELD = "instructionId";
@@ -116,7 +116,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param objectMapper
 	 *        object mapper for messages
 	 * @param dataCollectorBiz
@@ -157,7 +157,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 		try {
 			Matcher m = NODE_TOPIC_REGEX.matcher(topic);
 			if ( !m.matches() ) {
-				log.info("Unknown topic: {}" + topic);
+				log.info("Unknown topic: {}", topic);
 				return;
 			}
 			final Long nodeId = Long.valueOf(m.group(1));
@@ -277,8 +277,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 					}
 					for ( Entry<String, Object> e : m.entrySet() ) {
 						Object v = e.getValue();
-						if ( v instanceof BigDecimal ) {
-							BigDecimal n = (BigDecimal) v;
+						if ( v instanceof BigDecimal n ) {
 							if ( n.scale() != 0 ) {
 								BigDecimal swapped = new BigDecimal(n.unscaledValue(), -n.scale());
 								e.setValue(swapped);
@@ -342,12 +341,12 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 
 	/**
 	 * Set the node datum topic template.
-	 * 
+	 *
 	 * <p>
 	 * This topic template will be used to subscribe to node datum topics, using
 	 * a {@literal +} wildcard parameter.
 	 * </p>
-	 * 
+	 *
 	 * @param nodeDatumTopicTemplate
 	 *        the template to use; defaults to
 	 *        {@link #DEFAULT_NODE_DATUM_TOPIC_TEMPLATE}

@@ -23,7 +23,7 @@
 package net.solarnetwork.central.c2c.dao;
 
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
-import net.solarnetwork.central.dao.GenericDao;
+import net.solarnetwork.dao.GenericDao;
 
 /**
  * DAO API for {@link UserSettingsEntity} entities.

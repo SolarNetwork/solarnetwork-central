@@ -1,21 +1,21 @@
 /* ==================================================================
  * UserUuidPK.java - 1/08/2022 10:20:13 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,19 +23,21 @@
 package net.solarnetwork.central.domain;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.util.Objects;
 import java.util.UUID;
 import com.fasterxml.uuid.UUIDComparator;
 
 /**
  * Immutable primary key for user-related entities using a UUID primary key.
- * 
+ *
  * @author matt
  * @version 1.1
  */
 public final class UserUuidPK extends BasePK
 		implements UserRelatedCompositeKey<UserUuidPK>, CompositeKey2<Long, UUID> {
 
+	@Serial
 	private static final long serialVersionUID = 417842772182618447L;
 
 	/**
@@ -53,7 +55,7 @@ public final class UserUuidPK extends BasePK
 
 	/**
 	 * Create a new instance using the "unassigned" UUID value.
-	 * 
+	 *
 	 * @param userId
 	 *        the ID of the user to use
 	 * @return the new key instance
@@ -67,7 +69,7 @@ public final class UserUuidPK extends BasePK
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param userId
 	 *        the user ID
 	 * @param uuid
@@ -109,7 +111,7 @@ public final class UserUuidPK extends BasePK
 	}
 
 	@Override
-	protected UserUuidPK clone() {
+	public UserUuidPK clone() {
 		return (UserUuidPK) super.clone();
 	}
 
@@ -132,40 +134,39 @@ public final class UserUuidPK extends BasePK
 
 	/**
 	 * Get the UUID.
-	 * 
+	 *
 	 * @return the UUID
 	 */
-	public final UUID getUuid() {
+	public UUID getUuid() {
 		return uuid;
 	}
 
 	@Override
-	public final Long keyComponent1() {
+	public Long keyComponent1() {
 		return userId;
 	}
 
 	@Override
-	public final UUID keyComponent2() {
+	public UUID keyComponent2() {
 		return uuid;
 	}
 
 	@Override
-	public final boolean keyComponentIsAssigned(int index) {
-		if ( index == 0 ) {
-			return userId != UNASSIGNED_USER_ID;
-		} else if ( index == 1 ) {
-			return uuid != UNASSIGNED_UUID_ID;
-		}
-		return CompositeKey2.super.keyComponentIsAssigned(index);
+	public boolean keyComponentIsAssigned(int index) {
+		return switch (index) {
+			case 0 -> userId != UNASSIGNED_USER_ID;
+			case 1 -> uuid != UNASSIGNED_UUID_ID;
+			default -> CompositeKey2.super.keyComponentIsAssigned(index);
+		};
 	}
 
 	/**
 	 * Test if the UUID is assigned.
-	 * 
+	 *
 	 * @return {@literal true} if the entity ID value is assigned,
 	 *         {@literal false} if it is considered "not a value"
 	 */
-	public final boolean uuidIsAssigned() {
+	public boolean uuidIsAssigned() {
 		return keyComponentIsAssigned(1);
 	}
 
@@ -174,23 +175,18 @@ public final class UserUuidPK extends BasePK
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
 			if ( index == 0 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_USER_ID;
-				} else if ( val instanceof Long n ) {
-					return (T) n;
-				} else if ( val instanceof Number n ) {
-					return (T) Long.valueOf(n.longValue());
-				} else {
-					return (T) Long.valueOf(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_USER_ID;
+					case Long n -> (T) n;
+					case Number n -> (T) Long.valueOf(n.longValue());
+					default -> (T) Long.valueOf(val.toString());
+				};
 			} else if ( index == 1 ) {
-				if ( val == null ) {
-					return (T) UNASSIGNED_UUID_ID;
-				} else if ( val instanceof UUID u ) {
-					return (T) u;
-				} else {
-					return (T) UUID.fromString(val.toString());
-				}
+				return switch (val) {
+					case null -> (T) UNASSIGNED_UUID_ID;
+					case UUID u -> (T) u;
+					default -> (T) UUID.fromString(val.toString());
+				};
 			}
 		} catch ( IllegalArgumentException e ) {
 			throw new IllegalArgumentException(

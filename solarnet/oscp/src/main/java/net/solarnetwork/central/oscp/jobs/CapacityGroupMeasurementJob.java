@@ -124,7 +124,7 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 	}
 
 	@Override
-	protected int executeJobTask(AtomicInteger remainingIterataions) throws Exception {
+	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		int totalProcessedCount = 0;
 		Set<String> supportedOscpVersions = singleton(V20);
 		final TransactionTemplate txTemplate = this.txTemplate;
@@ -133,15 +133,15 @@ public class CapacityGroupMeasurementJob extends JobSupport {
 			processed = false;
 			if ( txTemplate != null ) {
 				processed = txTemplate.execute((tx) -> {
-					return exchange(supportedOscpVersions, remainingIterataions);
+					return exchange(supportedOscpVersions, remainingIterations);
 				});
 			} else {
-				processed = exchange(supportedOscpVersions, remainingIterataions);
+				processed = exchange(supportedOscpVersions, remainingIterations);
 			}
 			if ( processed ) {
 				totalProcessedCount += 1;
 			}
-		} while ( processed && remainingIterataions.get() > 0 );
+		} while ( processed && remainingIterations.get() > 0 );
 		return totalProcessedCount;
 	}
 

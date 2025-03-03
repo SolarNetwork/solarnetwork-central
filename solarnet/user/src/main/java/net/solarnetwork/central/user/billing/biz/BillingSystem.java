@@ -26,20 +26,20 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
-import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.domain.NamedCostTiers;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * API for interacting with a billing system.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface BillingSystem {
 
@@ -92,8 +92,8 @@ public interface BillingSystem {
 	 *        an optional maximum number of returned results
 	 * @return the results, never {@literal null}
 	 */
-	FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
-			List<SortDescriptor> sortDescriptors, Integer offset, Integer max);
+	FilterResults<InvoiceMatch, String> findFilteredInvoices(InvoiceFilter filter,
+			List<SortDescriptor> sortDescriptors, Long offset, Integer max);
 
 	/**
 	 * Get an invoice by ID.

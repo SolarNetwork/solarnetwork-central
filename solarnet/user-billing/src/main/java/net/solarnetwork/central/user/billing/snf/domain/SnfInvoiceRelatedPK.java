@@ -1,39 +1,41 @@
 /* ==================================================================
  * SnfInvoiceRelatedPK.java - 28/05/2021 6:42:18 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A primary key for an object related to an invoice.
- * 
+ *
  * @author matt
  * @version 1.0
  * @since 2.0
  */
 public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<SnfInvoiceRelatedPK> {
 
+	@Serial
 	private static final long serialVersionUID = -8685042516164424904L;
 
 	private final Long id;
@@ -41,7 +43,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 
 	/**
 	 * Construct with values.
-	 * 
+	 *
 	 * @param invoiceId
 	 *        the user ID
 	 * @param id
@@ -56,12 +58,12 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	/**
 	 * Compare two {@code SnfInvoiceRelatedPK} objects. Keys are ordered based
 	 * on:
-	 * 
+	 *
 	 * <ol>
 	 * <li>invoiceId</li>
 	 * <li>id</li>
 	 * </ol>
-	 * 
+	 *
 	 * {@literal null} values will be sorted before non-{@literal null} values.
 	 */
 	@Override
@@ -104,7 +106,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 	}
 
 	@Override
-	protected SnfInvoiceRelatedPK clone() {
+	public SnfInvoiceRelatedPK clone() {
 		try {
 			return (SnfInvoiceRelatedPK) super.clone();
 		} catch ( CloneNotSupportedException e ) {
@@ -123,16 +125,15 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof SnfInvoiceRelatedPK) ) {
+		if ( !(obj instanceof SnfInvoiceRelatedPK other) ) {
 			return false;
 		}
-		SnfInvoiceRelatedPK other = (SnfInvoiceRelatedPK) obj;
 		return Objects.equals(id, other.id) && Objects.equals(invoiceId, other.invoiceId);
 	}
 
 	/**
 	 * Get the related ID.
-	 * 
+	 *
 	 * @return the related ID
 	 */
 	public Long getId() {
@@ -141,7 +142,7 @@ public class SnfInvoiceRelatedPK implements Serializable, Cloneable, Comparable<
 
 	/**
 	 * Get the invoice ID.
-	 * 
+	 *
 	 * @return the invoice ID
 	 */
 	public Long getInvoiceId() {

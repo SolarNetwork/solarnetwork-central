@@ -37,7 +37,7 @@ import net.solarnetwork.central.common.dao.LocationRequestCriteria;
  * @version 1.0
  * @since 1.3
  */
-public class DeleteLocationRequest implements PreparedStatementCreator, SqlProvider {
+public final class DeleteLocationRequest implements PreparedStatementCreator, SqlProvider {
 
 	private final Long id;
 	private final LocationRequestCriteria filter;

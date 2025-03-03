@@ -99,7 +99,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setAuthToken(TEST_TOKEN);
 		authToken.setStatus(SecurityTokenStatus.Active);
 		authToken.setType(SecurityTokenType.User);
-		String id = userAuthTokenDao.store(authToken);
+		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
@@ -115,7 +115,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(Collections.singleton(node.getId())).build());
-		String id = userAuthTokenDao.store(authToken);
+		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
@@ -133,7 +133,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setType(SecurityTokenType.ReadNodeData);
 		authToken.setPolicy(new BasicSecurityPolicy.Builder()
 				.withNodeIds(new HashSet<Long>(Arrays.asList(node.getId(), nodeId2))).build());
-		String id = userAuthTokenDao.store(authToken);
+		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
@@ -149,7 +149,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		authToken.setType(SecurityTokenType.User);
 		authToken.setName(UUID.randomUUID().toString());
 		authToken.setDescription(UUID.randomUUID().toString());
-		String id = userAuthTokenDao.store(authToken);
+		String id = userAuthTokenDao.save(authToken);
 		assertThat("ID returned", id, is(notNullValue()));
 		this.userAuthToken = authToken;
 	}
@@ -235,7 +235,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		storeNew();
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		token.setStatus(SecurityTokenStatus.Disabled);
-		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
+		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.save(token));
 		assertEqual(updated, token);
 	}
 
@@ -245,7 +245,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		UserAuthToken token = userAuthTokenDao.get(userAuthToken.getId());
 		token.setName(UUID.randomUUID().toString());
 		token.setDescription(UUID.randomUUID().toString());
-		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.store(token));
+		UserAuthToken updated = userAuthTokenDao.get(userAuthTokenDao.save(token));
 		assertEqual(updated, token);
 	}
 
@@ -263,11 +263,11 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		storeNew();
 		UserAuthToken authToken2 = new UserAuthToken(TEST_TOKEN2, this.user.getId(), TEST_SECRET,
 				SecurityTokenType.User);
-		userAuthTokenDao.store(authToken2);
+		userAuthTokenDao.save(authToken2);
 		User user2 = createNewUser(TEST_EMAIL + "2");
 		UserAuthToken authToken3 = new UserAuthToken(TEST_TOKEN3, user2.getId(), TEST_SECRET,
 				SecurityTokenType.User);
-		userAuthTokenDao.store(authToken3);
+		userAuthTokenDao.save(authToken3);
 
 		List<UserAuthToken> results = userAuthTokenDao.findUserAuthTokensForUser(this.user.getId());
 		assertThat("Results available", results, is(notNullValue()));

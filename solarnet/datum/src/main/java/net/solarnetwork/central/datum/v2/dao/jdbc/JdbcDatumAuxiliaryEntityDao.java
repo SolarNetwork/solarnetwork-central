@@ -1,21 +1,21 @@
 /* ==================================================================
  * JdbcDatumAuxiliaryEntityDao.java - 28/11/2020 8:54:23 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -24,11 +24,8 @@ package net.solarnetwork.central.datum.v2.dao.jdbc;
 
 import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.executeFilterQuery;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
-import java.sql.CallableStatement;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
-import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.CallableStatementCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.datum.v2.dao.DatumAuxiliaryCriteria;
@@ -47,9 +44,9 @@ import net.solarnetwork.domain.SortDescriptor;
 /**
  * {@link JdbcOperations} based implementation of
  * {@link DatumAuxiliaryEntityDao}.
- * 
+ *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 3.8
  */
 public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
@@ -58,7 +55,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @throws IllegalArgumentException
@@ -79,14 +76,9 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 		if ( entity.getTimestamp() == null ) {
 			throw new IllegalArgumentException("The timestamp property is required.");
 		}
-		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), new CallableStatementCallback<Void>() {
-
-			@Override
-			public Void doInCallableStatement(CallableStatement cs)
-					throws SQLException, DataAccessException {
-				cs.execute();
-				return null;
-			}
+		jdbcTemplate.execute(new StoreDatumAuxiliary(entity), (CallableStatementCallback<Void>) cs -> {
+			cs.execute();
+			return null;
 		});
 		return entity.getId();
 	}
@@ -95,7 +87,7 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 	public DatumAuxiliaryEntity get(DatumAuxiliaryPK id) {
 		List<DatumAuxiliary> result = jdbcTemplate.query(new GetDatumAuxiliary(id),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
-		return (!result.isEmpty() ? (DatumAuxiliaryEntity) result.get(0) : null);
+		return (!result.isEmpty() ? (DatumAuxiliaryEntity) result.getFirst() : null);
 	}
 
 	@Override
@@ -106,34 +98,23 @@ public class JdbcDatumAuxiliaryEntityDao implements DatumAuxiliaryEntityDao {
 	@Override
 	public void delete(DatumAuxiliaryEntity entity) {
 		jdbcTemplate.execute(new DeleteDatumAuxiliary(entity.getId()),
-				new CallableStatementCallback<Void>() {
-
-					@Override
-					public Void doInCallableStatement(CallableStatement cs)
-							throws SQLException, DataAccessException {
-						cs.execute();
-						return null;
-					}
+				(CallableStatementCallback<Void>) cs -> {
+					cs.execute();
+					return null;
 				});
 	}
 
 	@Override
 	public boolean move(DatumAuxiliaryPK from, DatumAuxiliaryEntity to) {
-		return jdbcTemplate.execute(new MoveDatumAuxiliary(from, to),
-				new CallableStatementCallback<Boolean>() {
-
-					@Override
-					public Boolean doInCallableStatement(CallableStatement cs)
-							throws SQLException, DataAccessException {
-						cs.execute();
-						return cs.getBoolean(1);
-					}
-				});
+		return jdbcTemplate.execute(new MoveDatumAuxiliary(from, to), cs -> {
+			cs.execute();
+			return cs.getBoolean(1);
+		});
 	}
 
 	@Override
 	public FilterResults<DatumAuxiliary, DatumAuxiliaryPK> findFiltered(DatumAuxiliaryCriteria filter,
-			List<SortDescriptor> sorts, Integer offset, Integer max) {
+			List<SortDescriptor> sorts, Long offset, Integer max) {
 		return executeFilterQuery(jdbcTemplate, filter, new SelectDatumAuxiliary(filter),
 				DatumAuxiliaryEntityRowMapper.INSTANCE);
 	}

@@ -1,21 +1,21 @@
 /* ==================================================================
  * ServerConfigurationsCsvParser.java - 12/08/2023 8:54:26 am
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,11 +49,11 @@ import net.solarnetwork.domain.CodedValue;
 
 /**
  * Parse a CSV resource of server measurement and control configurations.
- * 
+ *
  * <p>
  * The expected structure of the CSV is:
  * </p>
- * 
+ *
  * <ol>
  * <li><b>Node ID</b> - a datum stream node ID</li>
  * <li><b>Source ID</b> - a datum stream source ID, or control ID for control
@@ -68,7 +68,7 @@ import net.solarnetwork.domain.CodedValue;
  * <li><b>Decimal Scale</b> - an optional integer decimal scale to round
  * decimals to; empty or -1 for no rounding</li>
  * </ol>
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -82,7 +82,7 @@ public class ServerConfigurationsCsvParser {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param messageSource
 	 *        the message source
 	 * @param locale
@@ -98,7 +98,7 @@ public class ServerConfigurationsCsvParser {
 
 	/**
 	 * Parse CSV.
-	 * 
+	 *
 	 * @param csv
 	 *        the CSV to parse
 	 * @throws IOException
@@ -111,10 +111,10 @@ public class ServerConfigurationsCsvParser {
 			return null;
 		}
 		csv.getHeader(true); // skip header
-		List<String> row = null;
+		List<String> row;
 		while ( (row = csv.read()) != null ) {
 			if ( row.isEmpty() || row.size() < 4
-					|| (row.get(0) != null && row.get(0).startsWith("#")) ) {
+					|| (row.getFirst() != null && row.getFirst().startsWith("#")) ) {
 				continue;
 			}
 			final int rowLen = row.size();
@@ -130,7 +130,7 @@ public class ServerConfigurationsCsvParser {
 			final BigDecimal offset = parseBigDecimalValue(row, rowLen, rowNum, OFFSET, false);
 			final Integer scale = parseIntegerValue(row, rowLen, rowNum, DECIMAL_SCALE, false);
 
-			BaseServerDatumStreamConfigurationInput<?, ?> config = null;
+			BaseServerDatumStreamConfigurationInput<?, ?> config;
 			if ( type instanceof MeasurementType t ) {
 				ServerMeasurementConfigurationInput c = new ServerMeasurementConfigurationInput();
 				c.setType(t);
@@ -255,7 +255,7 @@ public class ServerConfigurationsCsvParser {
 				// keep trying
 			}
 		}
-		CodedValue result = null;
+		CodedValue result;
 		if ( s.length() < 2 ) {
 			result = CodedValue.forCodeValue(s.charAt(0), MeasurementType.class, null);
 		} else {

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.v2.dao;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
@@ -48,6 +49,7 @@ import net.solarnetwork.domain.datum.Aggregation;
 public class AuditDatumEntity extends BasicIdentity<DatumPK>
 		implements AuditDatum, Cloneable, Serializable {
 
+	@Serial
 	private static final long serialVersionUID = 8810831398503917185L;
 
 	private final Aggregation aggregation;
@@ -82,7 +84,7 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	}
 
 	/**
-	 * Create a hourly audit datum.
+	 * Create an hourly audit datum.
 	 *
 	 * @param streamId
 	 *        the stream ID
@@ -108,7 +110,7 @@ public class AuditDatumEntity extends BasicIdentity<DatumPK>
 	}
 
 	/**
-	 * Create a hourly audit datum.
+	 * Create an hourly audit datum.
 	 *
 	 * @param streamId
 	 *        the stream ID
