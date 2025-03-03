@@ -389,7 +389,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
-		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
+		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
 				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(SITE_HARDWARE_URL_TEMPLATE)
