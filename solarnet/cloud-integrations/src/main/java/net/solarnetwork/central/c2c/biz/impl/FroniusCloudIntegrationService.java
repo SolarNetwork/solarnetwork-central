@@ -66,9 +66,6 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The base URL to the AlsoEnergy API. */
 	public static final URI BASE_URI = URI.create("https://api.solarweb.com");
 
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
-
 	/** An API secret setting name. */
 	public static final String API_SECRET_SETTING = "apiSecret";
 
@@ -90,9 +87,8 @@ public class FroniusCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var apiKey = new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null);
 		var apiSecret = new BasicTextFieldSettingSpecifier(API_SECRET_SETTING, null, true);
-		SETTINGS = List.of(apiKey, apiSecret, BASE_URL_SETTING_SPECIFIER);
+		SETTINGS = List.of(API_KEY_SETTING_SPECIFIER, apiSecret, BASE_URL_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */
