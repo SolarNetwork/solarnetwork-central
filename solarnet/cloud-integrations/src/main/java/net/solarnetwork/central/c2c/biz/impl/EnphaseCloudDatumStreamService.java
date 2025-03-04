@@ -30,7 +30,8 @@ import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService.PAGE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService.PAGE_SIZE_PARAM;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService.SECURE_SETTINGS;
-import static net.solarnetwork.central.c2c.domain.CloudDataValue.DEVICE_SERIAL_NUMBER_METADATA;
+import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Inverter;
+import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Meter;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
@@ -39,6 +40,8 @@ import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,6 +95,18 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 	/** The data value filter key for a device ID. */
 	public static final String DEVICE_ID_FILTER = "deviceId";
 
+	/** Constant device ID value for site-level data. */
+	public static final String SITE_DEVICE_ID = "site";
+
+	/**
+	 * The URI path to view a given system.
+	 *
+	 * <p>
+	 * Accepts a single {@code {systemId}} parameter.
+	 * </p>
+	 */
+	public static final String SYSTEM_VIEW_URL_TEMPLATE = "/api/v4/systems/{systemId}";
+
 	/**
 	 * The URI path to list the devices for a given system.
 	 *
@@ -99,7 +114,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 	 * Accepts a single {@code {systemId}} parameter.
 	 * </p>
 	 */
-	public static final String SYSTEM_DEVICES_URL_TEMPLATE = "/systems/{systemId}/devices";
+	public static final String SYSTEM_DEVICES_URL_TEMPLATE = "/api/v4/systems/{systemId}/devices";
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -188,7 +203,8 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 				"integration");
 		List<CloudDataValue> result = null;
 		if ( filters != null && filters.get(SYSTEM_ID_FILTER) != null ) {
-			result = systemDevices(integration, filters);
+			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
+			result = systemDevices(integration, systemId, filters);
 		} else {
 			// list available sites
 			result = systems(integration);
@@ -257,7 +273,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 					res -> {
 						var json = res.getBody();
 						pagination.parseJson(json);
-						return parseSystems(json);
+						return parseSystems(json, null);
 					});
 			if ( pageResults != null ) {
 				if ( result == null ) {
@@ -271,8 +287,31 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		return result;
 	}
 
-	private List<CloudDataValue> systemDevices(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters) {
+	private List<CloudDataValue> system(CloudIntegrationConfiguration integration,
+			Map<String, ?> filters, List<CloudDataValue> children) {
+		final var decryp = integration.copyWithId(integration.getId());
+		decryp.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+
+		// first get system details, will then add site-level children
+		List<CloudDataValue> result = restOpsHelper.httpGet("View system", integration, JsonNode.class,
+		// @formatter:off
+				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
+						.path(SYSTEM_VIEW_URL_TEMPLATE)
+						.queryParam(API_KEY_PARAM, decryp.serviceProperty(API_KEY_SETTING, String.class))
+						.buildAndExpand(filters).toUri(),
+						// @formatter:on
+				res -> parseSystem(res.getBody(), filters, children));
+
+		// add site-level children
+		if ( children != null ) {
+			// TODO
+		}
+
+		return result;
+	}
+
+	private List<CloudDataValue> systemDevices(final CloudIntegrationConfiguration integration,
+			final String systemId, Map<String, ?> filters) {
 		final var decryp = integration.copyWithId(integration.getId());
 		decryp.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
 
@@ -283,7 +322,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 						.queryParam(API_KEY_PARAM, decryp.serviceProperty(API_KEY_SETTING, String.class))
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
-				res -> parseSystemDevices(res.getBody(), filters));
+				res -> parseSystemDevices(res.getBody(), systemId));
 	}
 
 	private static class Pagination {
@@ -316,7 +355,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		}
 	}
 
-	private static List<CloudDataValue> parseSystems(JsonNode json) {
+	private static List<CloudDataValue> parseSystems(JsonNode json, Map<String, ?> filters) {
 		if ( json == null ) {
 			return Collections.emptyList();
 		}
@@ -353,122 +392,177 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		*/
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode sysNode : json.path("systems") ) {
-			final String id = sysNode.path("system_id").asText();
-			final String name = sysNode.path("name").asText().trim();
-
-			final var meta = new LinkedHashMap<String, Object>(4);
-			populateNonEmptyValue(sysNode, "timezone", CloudDataValue.TIME_ZONE_METADATA, meta);
-
-			JsonNode addrNode = sysNode.path("address");
-			populateNonEmptyValue(addrNode, "city", CloudDataValue.LOCALITY_METADATA, meta);
-			populateNonEmptyValue(addrNode, "state", CloudDataValue.STATE_PROVINCE_METADATA, meta);
-			populateNonEmptyValue(addrNode, "country", CloudDataValue.COUNTRY_METADATA, meta);
-			populateNonEmptyValue(addrNode, "postal_code", CloudDataValue.POSTAL_CODE_METADATA, meta);
-
-			long lastSeen = sysNode.path("last_report_at").longValue();
-			if ( lastSeen > 0 ) {
-				meta.put("lastSeenAt", Instant.ofEpochSecond(lastSeen));
-			}
-
-			result.add(intermediateDataValue(List.of(id), name, meta));
+			result.addAll(parseSystem(sysNode, filters, null));
 		}
 		return result;
 	}
 
-	private static List<CloudDataValue> parseSystemDevices(JsonNode json, Map<String, ?> filters) {
-		if ( json == null ) {
-			return Collections.emptyList();
-		}
+	private static List<CloudDataValue> parseSystem(JsonNode json, Map<String, ?> filters,
+			Collection<CloudDataValue> children) {
 		/*- EXAMPLE JSON:
-		{
-		  "hardware": [
 		    {
-		      "id": 12345,
-		      "stringId": "C12345_S12345_PM0",
-		      "functionCode": "PM",
-		      "flags": [
-		        "IsEnabled"
-		      ],
-		      "fieldsArchived": [
-		        "KWHnet",
-		        "KW",
-		        "KVAR",
-		        "PowerFactor",
-		        "KWHrec",
-		        "KWHdel",
-		        "Frequency",
-		        "VacA",
-		        "VacB",
-		        "VacC",
-		        "VacAB",
-		        "VacBC",
-		        "VacCA",
-		        "IacA",
-		        "IacB",
-		        "IacC"
-		      ],
-		      "name": "Elkor Production Meter - A",
-		      "lastUpdate": "2024-11-21T17:19:02.4069164-05:00",
-		      "lastUpload": "2024-11-21T17:17:00-05:00",
-		      "iconUrl": "https://alsoenergy.com/Pub/Images/device/7855.png",
-		      "config": {
-		        "deviceType": "ProductionPowerMeter",
-		        "hardwareStrId": "C12345_S12345_PM0",
-		        "hardwareId": 12345,
-		        "address": 1,
-		        "portNumber": 1,
-		        "baudRate": 9600,
-		        "comType": "Rs485_2Wire",
-		        "serialNumber": "12345",
-		        "name": "Elkor Production Meter - A",
-		        "outputHardwareId": 0,
-		        "weatherStationId": 0,
-		        "meterConfig": {
-		          "scaleFactor": 0.0,
-		          "isReversed": false,
-		          "grossEnergy": "None",
-		          "maxPowerKw": 58444.96,
-		          "maxVoltage": 480.0,
-		          "maxAmperage": 12200.0,
-		          "acPhase": "Wye"
-		        }
-		      }
+		      "system_id": 2875,
+		      "name": "Site 1",
+		      "public_name": "Residential System",
+		      "timezone": "US/Eastern",
+		      "address": {
+		        "city": "Anytown",
+		        "state": "MD",
+		        "country": "US",
+		        "postal_code": "20906"
+		      },
+		      "connection_type": "cellular",
+		      "status": "normal",
+		      "last_report_at": 1740976229,
+		      "last_energy_at": 1740969000,
+		      "operational_at": 1657080000,
+		      "attachment_type": "rack_mount",
+		      "interconnect_date": 1657080000,
+		      "energy_lifetime": -1,
+		      "energy_today": -1,
+		      "system_size": -1
 		    },
 		*/
-		final String siteId = filters.get(SYSTEM_ID_FILTER).toString();
-		final var result = new ArrayList<CloudDataValue>(4);
-		for ( JsonNode deviceNode : json.path("hardware") ) {
-			final JsonNode fieldsNode = deviceNode.path("fieldsArchived");
-			if ( !fieldsNode.isArray() || fieldsNode.isEmpty() ) {
-				continue;
-			}
-			final String id = deviceNode.path("id").asText().trim();
-			if ( id.isEmpty() ) {
-				continue;
-			}
-			final String name = deviceNode.path("name").asText().trim();
-			final var meta = new LinkedHashMap<String, Object>(4);
-			populateNonEmptyValue(deviceNode, "functionCode", "functionCode", meta);
-			JsonNode configNode = deviceNode.path("config");
-			populateNonEmptyValue(configNode, "serialNumber", DEVICE_SERIAL_NUMBER_METADATA, meta);
-			populateNonEmptyValue(configNode, "deviceType", "deviceType", meta);
-
-			List<CloudDataValue> fields = new ArrayList<>(fieldsNode.size());
-			for ( JsonNode fieldNode : fieldsNode ) {
-				final String fieldName = fieldNode.asText();
-
-				List<CloudDataValue> aggs = new ArrayList<>(AlsoEnergyFieldFunction.values().length);
-				for ( AlsoEnergyFieldFunction fn : AlsoEnergyFieldFunction.values() ) {
-					aggs.add(dataValue(List.of(siteId, id, fieldName, fn.name()),
-							fieldName + " " + fn.name()));
-				}
-
-				fields.add(intermediateDataValue(List.of(siteId, id, fieldName), fieldName, null, aggs));
-			}
-
-			result.add(intermediateDataValue(List.of(siteId, id), name, meta, fields));
+		if ( json == null ) {
+			return List.of();
 		}
+		final String id = json.path("system_id").asText();
+		final String name = json.path("name").asText().trim();
+
+		final var meta = new LinkedHashMap<String, Object>(4);
+		populateNonEmptyValue(json, "timezone", CloudDataValue.TIME_ZONE_METADATA, meta);
+
+		JsonNode addrNode = json.path("address");
+		populateNonEmptyValue(addrNode, "city", CloudDataValue.LOCALITY_METADATA, meta);
+		populateNonEmptyValue(addrNode, "state", CloudDataValue.STATE_PROVINCE_METADATA, meta);
+		populateNonEmptyValue(addrNode, "country", CloudDataValue.COUNTRY_METADATA, meta);
+		populateNonEmptyValue(addrNode, "postal_code", CloudDataValue.POSTAL_CODE_METADATA, meta);
+
+		long lastSeen = json.path("last_report_at").longValue();
+		if ( lastSeen > 0 ) {
+			meta.put("lastSeenAt", Instant.ofEpochSecond(lastSeen));
+		}
+
+		return List.of(intermediateDataValue(List.of(id), name, meta, children));
+	}
+
+	private static List<CloudDataValue> parseSystemDevices(final JsonNode json, final String systemId) {
+		/*- EXAMPLE JSON:
+		{
+		  "system_id": 2875,
+		  "total_devices": 3,
+		  "items": "devices",
+		  "devices": {
+		    "micros": [
+		      {
+		        "id": 57389303,
+		        "last_report_at": 1741011543,
+		        "name": "Microinverter 000000000699",
+		        "serial_number": "000000000699",
+		        "part_number": "800-01731-r02",
+		        "sku": "IQ7PLUS-72-M-US",
+		        "model": "IQ7+",
+		        "status": "normal",
+		        "active": true,
+		        "product_name": "IQ7+"
+		      }
+		    ],
+		    "meters": [
+		      {
+		        "id": 57387732,
+		        "last_report_at": 1741012200,
+		        "name": "production",
+		        "serial_number": "000000058195EIM1",
+		        "part_number": "800-00655-r09",
+		        "sku": null,
+		        "model": "Envoy S",
+		        "status": "normal",
+		        "active": true,
+		        "state": "enabled",
+		        "config_type": "Production",
+		        "product_name": "IQ Gateway"
+		      }
+		    ]
+		  }
+		}
+		*/
+		if ( json == null ) {
+			return List.of();
+		}
+
+		final List<CloudDataValue> result = new ArrayList<>(8);
+
+		final JsonNode devices = json.path("devices");
+
+		final JsonNode inverters = devices.path("micros");
+		if ( !(inverters.isMissingNode() || inverters.isEmpty()) ) {
+			result.addAll(siteInverterDataValues(systemId));
+			// TODO: add device-level values
+		}
+
+		final JsonNode meters = devices.path("meters");
+		if ( !(meters.isMissingNode() || meters.isEmpty()) ) {
+			result.addAll(siteMeterDataValues(systemId));
+			// TODO: add device-level values
+		}
+
 		return result;
+	}
+
+	private static List<CloudDataValue> siteInverterDataValues(final String systemId) {
+		/*- EXAMPLE JSON /systems/{systemId}/telemetry/production_micro
+		{
+		  "end_at": 1738321500,
+		  "devices_reporting": 16,
+		  "powr": 0,
+		  "enwh": 0
+		},
+		 */
+		// @formatter:off
+		return Arrays.asList(
+				// site-level
+				dataValue(List.of(systemId, Inverter.getKey(), SITE_DEVICE_ID, "W"), "Active power"),
+				dataValue(List.of(systemId, Inverter.getKey(), SITE_DEVICE_ID, "Wh"), "Active energy")
+				);
+		// @formatter:on
+	}
+
+	private static List<CloudDataValue> siteMeterDataValues(final String systemId) {
+		/*- EXAMPLE JSON /systems/{systemId}/rgm_stats
+		{
+		  "system_id": 2875299,
+		  "total_devices": 1,
+		  "intervals": [
+		    {
+		      "end_at": 1741065300,
+		      "devices_reporting": 1,
+		      "wh_del": 0
+		    }
+		  ],
+		  "meta": {
+		    "status": "normal",
+		    "last_report_at": 1741108110,
+		    "last_energy_at": 1741104000,
+		    "operational_at": 1657080000
+		  },
+		  "meter_intervals": [
+		    {
+		      "meter_serial_number": "202125058195EIM1",
+		      "envoy_serial_number": "202125058195",
+		      "intervals": [
+		        {
+		          "channel": 1,
+		          "wh_del": 0.0,
+		          "curr_w": 0,
+		          "end_at": 1741065300
+		        },
+		 */
+		// @formatter:off
+		return Arrays.asList(
+				dataValue(List.of(systemId, Meter.getKey(), SITE_DEVICE_ID, "W"), "Active power"),
+				dataValue(List.of(systemId, Meter.getKey(), SITE_DEVICE_ID, "WhExp"), "Active energy exported")
+				);
+		// @formatter:on
 	}
 
 }

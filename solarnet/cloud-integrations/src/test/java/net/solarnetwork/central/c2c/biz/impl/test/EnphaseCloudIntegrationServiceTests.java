@@ -27,6 +27,7 @@ import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -142,7 +143,7 @@ public class EnphaseCloudIntegrationServiceTests {
 			.satisfies(r -> {
 				and.then(r.getErrors())
 					.as("Error details provided for missing authentication settings")
-					.hasSize(4)
+					.hasSize(5)
 					.satisfies(errors -> {
 						and.then(errors)
 							.as("Error detail")
@@ -159,12 +160,18 @@ public class EnphaseCloudIntegrationServiceTests {
 						and.then(errors)
 							.as("Error detail")
 							.element(2)
+							.as("OAuth client secret flagged")
+							.returns(OAUTH_CLIENT_SECRET_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(3)
 							.as("OAuth access token flagged")
 							.returns(OAUTH_ACCESS_TOKEN_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
-							.element(3)
+							.element(4)
 							.as("OAuth refresh token flagged")
 							.returns(OAUTH_REFRESH_TOKEN_SETTING, from(ErrorDetail::getLocation))
 							;
@@ -181,6 +188,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		final String tokenUri = "https://example.com/oauth/token";
 		final String apiKey = randomString();
 		final String clientId = randomString();
+		final String clientSecret = randomString();
 		final String accessToken = randomString();
 		final String refreshToken = randomString();
 
@@ -190,6 +198,7 @@ public class EnphaseCloudIntegrationServiceTests {
 		conf.setServiceProps(Map.of(
 				API_KEY_SETTING, apiKey,
 				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
 				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
 				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
 			));
@@ -198,8 +207,8 @@ public class EnphaseCloudIntegrationServiceTests {
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
 			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.clientId(randomString())
-			.clientSecret(randomString())
+			.clientId(clientId)
+			.clientSecret(clientSecret)
 			.tokenUri(tokenUri)
 			.build();
 		// @formatter:on

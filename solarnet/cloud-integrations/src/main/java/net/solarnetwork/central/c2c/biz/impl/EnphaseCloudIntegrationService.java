@@ -103,6 +103,7 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 		SETTINGS = List.of(
 				API_KEY_SETTING_SPECIFIER,
 				OAUTH_CLIENT_ID_SETTING_SPECIFIER,
+				OAUTH_CLIENT_SECRET_SETTING_SPECIFIER,
 				OAUTH_ACCESS_TOKEN_SETTING_SPECIFIER,
 				OAUTH_REFRESH_TOKEN_SETTING_SPECIFIER,
 				BASE_URL_SETTING_SPECIFIER
@@ -172,6 +173,14 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 			String errMsg = ms.getMessage("error.oauthClientId.missing", null, locale);
 			errorDetails
 					.add(new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, null, errMsg));
+		}
+
+		final String oauthClientSecret = integration
+				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, String.class);
+		if ( oauthClientSecret == null || oauthClientSecret.isEmpty() ) {
+			String errMsg = ms.getMessage("error.oauthClientSecret.missing", null, locale);
+			errorDetails.add(
+					new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, null, errMsg));
 		}
 
 		final String oauthAccessToken = integration

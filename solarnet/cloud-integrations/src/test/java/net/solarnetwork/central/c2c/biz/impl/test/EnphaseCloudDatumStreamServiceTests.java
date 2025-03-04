@@ -28,7 +28,10 @@ import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_S
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
+import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudDatumStreamService.SITE_DEVICE_ID;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService.MAX_PAGE_SIZE;
+import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Inverter;
+import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Meter;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.central.test.CommonTestUtils.utf8StringResource;
@@ -45,6 +48,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -152,7 +156,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 	}
 
 	@Test
-	public void dataValues_systems() {
+	public void dataValues_root() {
 		// GIVEN
 		final String tokenUri = "https://example.com/oauth/token";
 		final String apiKey = randomString();
@@ -263,6 +267,141 @@ public class EnphaseCloudDatumStreamServiceTests {
 							"c", "US",
 							"lastSeenAt", Instant.ofEpochSecond(1740978304)
 							))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	private String refValue(List<String> idents) {
+		return idents.stream().collect(Collectors.joining("/", "/", ""));
+	}
+
+	@Test
+	public void dataValues_system() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String apiKey = randomString();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+		final String systemId = randomLong().toString();
+
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		integration.setServiceProps(Map.of(
+				API_KEY_SETTING, apiKey,
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId(integration.systemIdentifier())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final URI listSystemDevices = UriComponentsBuilder
+				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
+				.path(EnphaseCloudDatumStreamService.SYSTEM_DEVICES_URL_TEMPLATE)
+				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
+				.buildAndExpand(systemId).toUri();
+
+		final JsonNode resJson = getObjectFromJSON(
+				utf8StringResource("enphase-system-devices-01.json", getClass()), ObjectNode.class);
+		final ResponseEntity<JsonNode> res = new ResponseEntity<JsonNode>(resJson, HttpStatus.OK);
+		given(restOps.exchange(eq(listSystemDevices), eq(HttpMethod.GET), any(), eq(JsonNode.class)))
+				.willReturn(res);
+
+		// WHEN
+		Iterable<CloudDataValue> results = service.dataValues(integration.getId(),
+				Map.of(EnphaseCloudDatumStreamService.SYSTEM_ID_FILTER, systemId));
+
+		// THEN
+		// @formatter:off
+		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		and.then(authRequestCaptor.getValue())
+			.as("OAuth request provided")
+			.isNotNull()
+			.as("No OAuth2AuthorizedClient provided")
+			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
+			.as("Client registration ID is configuration system identifier")
+			.returns(integration.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		and.then(results)
+			.as("Result generated for system")
+			.hasSize(4)
+			.satisfies(l -> {
+				var siteInvWIdents = List.of(systemId, Inverter.getKey(), SITE_DEVICE_ID, "W");
+				and.then(l).element(0)
+					.as("Inverter power")
+					.returns("Active power", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(siteInvWIdents, from(CloudDataValue::getIdentifiers))
+					.as("Reference provided")
+					.returns(refValue(siteInvWIdents), from(CloudDataValue::getReference))
+					.as("No metadata provided")
+					.returns(null, from(CloudDataValue::getMetadata))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					;
+				var siteInvWhIdents = List.of(systemId, Inverter.getKey(), SITE_DEVICE_ID, "Wh");
+				and.then(l).element(1)
+					.as("Inverter energy")
+					.returns("Active energy", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(siteInvWhIdents, from(CloudDataValue::getIdentifiers))
+					.as("Reference provided")
+					.returns(refValue(siteInvWhIdents), from(CloudDataValue::getReference))
+					.as("No metadata provided")
+					.returns(null, from(CloudDataValue::getMetadata))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					;
+				var siteMetWIdents = List.of(systemId, Meter.getKey(), SITE_DEVICE_ID, "W");
+				and.then(l).element(2)
+					.as("Meter power")
+					.returns("Active power", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(siteMetWIdents, from(CloudDataValue::getIdentifiers))
+					.as("Reference provided")
+					.returns(refValue(siteMetWIdents), from(CloudDataValue::getReference))
+					.as("No metadata provided")
+					.returns(null, from(CloudDataValue::getMetadata))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
+					;
+				var siteMetWhExpIdents = List.of(systemId, Meter.getKey(), SITE_DEVICE_ID, "WhExp");
+				and.then(l).element(3)
+					.as("Meter energy")
+					.returns("Active energy exported", from(CloudDataValue::getName))
+					.as("Identifiers provided")
+					.returns(siteMetWhExpIdents, from(CloudDataValue::getIdentifiers))
+					.as("Reference provided")
+					.returns(refValue(siteMetWhExpIdents), from(CloudDataValue::getReference))
+					.as("No metadata provided")
+					.returns(null, from(CloudDataValue::getMetadata))
+					.as("No children provided")
+					.returns(null, from(CloudDataValue::getChildren))
 					;
 			})
 			;

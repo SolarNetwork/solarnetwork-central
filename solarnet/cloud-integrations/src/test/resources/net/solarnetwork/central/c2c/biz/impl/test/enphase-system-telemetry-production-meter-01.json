@@ -1,0 +1,25 @@
+{
+  "system_id": 2875,
+  "granularity": "day",
+  "total_devices": 1,
+  "start_at": 1738321200,
+  "end_at": 1738407600,
+  "items": "intervals",
+  "intervals": [
+    {
+      "end_at": 1738421100,
+      "devices_reporting": 1,
+      "wh_del": 123
+    },
+    {
+      "end_at": 1738422000,
+      "devices_reporting": 1,
+      "wh_del": 190
+    },
+    {
+      "end_at": 1738422900,
+      "devices_reporting": 1,
+      "wh_del": 471
+    }
+  ]
+}
