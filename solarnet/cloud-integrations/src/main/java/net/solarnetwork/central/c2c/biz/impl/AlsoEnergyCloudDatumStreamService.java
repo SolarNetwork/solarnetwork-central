@@ -93,6 +93,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -129,6 +130,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 	/** The URI path to query for data. */
 	public static final String BIN_DATA_URL = "/v2/data/bindata";
+
+	/**
+	 * The data value identifier levels source ID range.
+	 *
+	 * @since 1.3
+	 */
+	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(0, 2);
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -207,6 +215,11 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 	@Override
 	protected Iterable<String> supportedPlaceholders() {
 		return SUPPORTED_PLACEHOLDERS;
+	}
+
+	@Override
+	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
+		return DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE;
 	}
 
 	@Override
