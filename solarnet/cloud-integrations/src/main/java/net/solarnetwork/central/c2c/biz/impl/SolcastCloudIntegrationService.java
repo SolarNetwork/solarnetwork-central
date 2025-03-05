@@ -145,7 +145,7 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 				SETTINGS, WELL_KNOWN_URLS,
 				new SolcastRestOperationsHelper(
 						LoggerFactory.getLogger(SolcastCloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS));
 	}
 

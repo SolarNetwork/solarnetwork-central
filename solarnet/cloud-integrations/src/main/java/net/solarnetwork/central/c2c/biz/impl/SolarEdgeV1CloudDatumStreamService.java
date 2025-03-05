@@ -277,7 +277,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				datumStreamPropertyDao, SETTINGS,
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));
 	}
 

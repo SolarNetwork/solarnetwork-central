@@ -252,8 +252,8 @@ public class DaoCloudDatumStreamPollService
 								taskInfo.getId().ident(), oldState, Completed, e.toString());
 						taskInfo.setState(Completed);
 					}
-					userEventAppenderBiz.addEvent(taskInfo.getUserId(),
-							eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg, errData));
+					userEventAppenderBiz.addEvent(taskInfo.getUserId(), eventForConfiguration(
+							taskInfo.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 					if ( !taskDao.updateTask(taskInfo, oldState) ) {
 						log.warn(
 								"Unable to update datum stream {} poll task info with expected state {} with details: {}",
@@ -285,11 +285,11 @@ public class DaoCloudDatumStreamPollService
 			if ( !datumStream.isFullyConfigured() ) {
 				var errMsg = "Datum stream not fully configured.";
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg));
+						eventForConfiguration(datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskInfo.setMessage(errMsg);
 				taskInfo.setState(Completed); // stop processing job
 				userEventAppenderBiz.addEvent(taskInfo.getUserId(),
-						eventForConfiguration(taskInfo.getId(), POLL_ERROR_TAGS, errMsg));
+						eventForConfiguration(taskInfo.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg));
 				taskDao.updateTask(taskInfo, startState);
 				return taskInfo;
 			}
@@ -307,7 +307,7 @@ public class DaoCloudDatumStreamPollService
 					taskInfo.putServiceProps(errData);
 					taskInfo.setState(Completed); // stop processing job
 					userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
-							datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+							datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 					taskDao.updateTask(taskInfo, startState);
 					return taskInfo;
 				}
@@ -319,8 +319,8 @@ public class DaoCloudDatumStreamPollService
 						datumStreamIdent, taskInfo.getExecuteAt(), taskInfo.getStartAt());
 				var errMsg = "Failed to update task state from Claimed to Executing.";
 				var errData = Map.of(SOURCE_DATA_KEY, (Object) datumStreamIdent);
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 				return taskInfo;
 			}
 			taskInfo.setState(Executing);
@@ -332,8 +332,8 @@ public class DaoCloudDatumStreamPollService
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 				taskDao.updateTask(taskInfo, Executing);
 				return taskInfo;
 			}
@@ -350,8 +350,8 @@ public class DaoCloudDatumStreamPollService
 				taskInfo.setMessage(errMsg);
 				taskInfo.putServiceProps(errData);
 				taskInfo.setState(Completed); // stop processing job
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 				taskDao.updateTask(taskInfo, Executing);
 				return taskInfo;
 			}
@@ -361,7 +361,7 @@ public class DaoCloudDatumStreamPollService
 			filter.setEndDate(clock.instant());
 
 			userEventAppenderBiz.addEvent(datumStream.getUserId(),
-					eventForConfiguration(datumStream.getId(), POLL_TAGS, "Poll for datum",
+					eventForConfiguration(datumStream.getId(), INTEGRATION_POLL_TAGS, "Poll for datum",
 							Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 									taskInfo.getStartAt(), "endAt", filter.getEndDate(), "startedAt",
 									execTime)));
@@ -387,7 +387,7 @@ public class DaoCloudDatumStreamPollService
 						taskInfo.putServiceProps(errData);
 						taskInfo.setState(Completed); // stop processing job
 						userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
-								datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+								datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 						taskDao.updateTask(taskInfo, Executing);
 						return taskInfo;
 					}
@@ -469,14 +469,14 @@ public class DaoCloudDatumStreamPollService
 				var errMsg = "Failed to reset task state.";
 				var errData = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 						taskInfo.getStartAt());
-				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), POLL_ERROR_TAGS, errMsg, errData));
+				userEventAppenderBiz.addEvent(datumStream.getUserId(), eventForConfiguration(
+						datumStream.getId(), INTEGRATION_POLL_ERROR_TAGS, errMsg, errData));
 			} else {
 				var msg = "Reset task state";
 				var data = Map.of("executeAt", taskInfo.getExecuteAt(), "startAt",
 						taskInfo.getStartAt());
 				userEventAppenderBiz.addEvent(datumStream.getUserId(),
-						eventForConfiguration(datumStream.getId(), POLL_TAGS, msg, data));
+						eventForConfiguration(datumStream.getId(), INTEGRATION_POLL_TAGS, msg, data));
 			}
 			return taskInfo;
 		}

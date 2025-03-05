@@ -148,7 +148,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 				SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(EnphaseCloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
 						integrationLocksCache));
 	}

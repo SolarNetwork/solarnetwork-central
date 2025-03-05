@@ -399,7 +399,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					String exMsg = (t.getMessage() != null ? t.getMessage()
 							: t.getClass().getSimpleName());
 					userEventAppenderBiz.addEvent(config.getUserId(),
-							eventForConfiguration(config.getId(), EXPRESSION_ERROR_TAGS,
+							eventForConfiguration(config.getId(), DATUM_STREAM_EXPRESSION_ERROR_TAGS,
 									"Error evaluating datum stream property expression.",
 									Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY,
 											config.getValueReference())));

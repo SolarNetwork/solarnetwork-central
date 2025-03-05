@@ -207,7 +207,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager, clock, integrationLocksCache));
 	}
