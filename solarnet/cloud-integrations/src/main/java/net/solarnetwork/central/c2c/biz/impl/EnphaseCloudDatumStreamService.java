@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.0
  */
-public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
+public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.enphase";
@@ -224,8 +224,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 						LoggerFactory.getLogger(EnphaseCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> EnphaseCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache),
-				oauthClientManager);
+						oauthClientManager, clock, integrationLocksCache));
 	}
 
 	@Override

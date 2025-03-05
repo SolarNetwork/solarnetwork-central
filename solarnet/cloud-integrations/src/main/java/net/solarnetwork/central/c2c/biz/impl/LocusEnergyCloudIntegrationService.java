@@ -59,7 +59,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * @author matt
  * @version 1.2
  */
-public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudIntegrationService {
+public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
@@ -152,8 +152,7 @@ public class LocusEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInt
 						LoggerFactory.getLogger(LocusEnergyCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache),
-				oauthClientManager);
+						integrationLocksCache));
 	}
 
 	@Override

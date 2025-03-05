@@ -139,7 +139,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  * @author matt
  * @version 1.12
  */
-public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
+public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.locus";
@@ -229,8 +229,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache),
-				oauthClientManager);
+						oauthClientManager, clock, integrationLocksCache));
 		this.executor = requireNonNullArgument(executor, "executor");
 	}
 

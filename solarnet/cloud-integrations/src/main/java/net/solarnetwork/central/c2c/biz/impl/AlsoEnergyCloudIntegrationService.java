@@ -58,7 +58,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * @author matt
  * @version 1.1
  */
-public class AlsoEnergyCloudIntegrationService extends BaseOAuth2ClientCloudIntegrationService {
+public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.also";
@@ -130,8 +130,7 @@ public class AlsoEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInte
 						LoggerFactory.getLogger(AlsoEnergyCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache),
-				oauthClientManager);
+						integrationLocksCache));
 	}
 
 	@Override

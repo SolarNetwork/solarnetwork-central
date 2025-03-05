@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.3
  */
-public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
+public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.also";
@@ -201,8 +201,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager, clock, integrationLocksCache),
-				oauthClientManager);
+						oauthClientManager, clock, integrationLocksCache));
 	}
 
 	@Override

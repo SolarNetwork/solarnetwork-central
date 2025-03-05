@@ -58,7 +58,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * @author matt
  * @version 1.0
  */
-public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegrationService {
+public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.enphase";
@@ -150,8 +150,7 @@ public class EnphaseCloudIntegrationService extends BaseOAuth2ClientCloudIntegra
 						LoggerFactory.getLogger(EnphaseCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
-						integrationLocksCache),
-				oauthClientManager);
+						integrationLocksCache));
 	}
 
 	@Override
