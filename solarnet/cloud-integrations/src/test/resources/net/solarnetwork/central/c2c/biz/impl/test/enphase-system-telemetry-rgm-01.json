@@ -606,8 +606,8 @@
         },
         {
           "channel": 3,
-          "wh_del": null,
-          "curr_w": null,
+          "wh_del": 0,
+          "curr_w": 45,
           "end_at": 1741090500
         },
         {

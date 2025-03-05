@@ -154,6 +154,15 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 	 */
 	public static final String RGM_TELEMETRY_URL_TEMPLATE = "/api/v4/systems/{systemId}/rgm_stats";
 
+	/** The epoch end date query parameter name. */
+	public static final String END_AT_PARAM = "end_at";
+
+	/** The epoch start date query parameter name. */
+	public static final String START_AT_PARAM = "start_at";
+
+	/** The epoch end date query parameter name. */
+	public static final String GRANULARITY_PARAM = "granularity";
+
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
@@ -572,8 +581,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		}
 
 		private boolean isMeterPhaseField() {
-			return deviceType == EnphaseDeviceType.Meter
-					&& ("W".equals(fieldName) || fieldName.startsWith("PW"));
+			return deviceType == Meter && ("W".equals(fieldName) || fieldName.startsWith("PW"));
 		}
 
 	}
@@ -707,14 +715,14 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 									.queryParam(API_KEY_PARAM,
 											decryptedIntegration.serviceProperty(API_KEY_SETTING,
 													String.class))
-									.queryParam("start_at", startDate.getEpochSecond())
-									.queryParam("granularity",
+									.queryParam(START_AT_PARAM, startDate.getEpochSecond())
+									.queryParam(GRANULARITY_PARAM,
 											EnphaseGranularity.forQueryDateRange(filter.getStartDate(),
 													filter.getEndDate()).getKey())
 									.buildAndExpand(queryPlan.systemId).toUri(),
 							res -> {
 								var result = parseSiteInverterDatum(res.getBody(), queryPlan.systemId,
-										systemInvRefs, ds, sourceIdMap);
+										systemInvRefs, ds, sourceIdMap, usedQueryFilter);
 								updateLastReportDate(lastReportDate, res.getBody());
 								return result;
 							});
@@ -724,6 +732,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 				}
 
 				// system meter data
+
 				List<ValueRef> systemMetRefs = queryPlan.systemValueRefs(Meter);
 				if ( systemMetRefs != null && !systemMetRefs.isEmpty() ) {
 					List<GeneralDatum> datum = restOpsHelper.httpGet("List system meter data",
@@ -733,7 +742,9 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 									.queryParam(API_KEY_PARAM,
 											decryptedIntegration.serviceProperty(API_KEY_SETTING,
 													String.class))
-									.queryParam("start_at", startDate.getEpochSecond())
+									.queryParam(START_AT_PARAM, startDate.getEpochSecond())
+									.queryParam(END_AT_PARAM,
+											usedQueryFilter.getEndDate().getEpochSecond())
 									.buildAndExpand(queryPlan.systemId).toUri(),
 							res -> {
 								var result = parseSiteMeterDatum(res.getBody(), queryPlan.systemId,
@@ -827,7 +838,8 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 	}
 
 	private List<GeneralDatum> parseSiteInverterDatum(JsonNode json, Long systemId, List<ValueRef> refs,
-			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap) {
+			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap,
+			CloudDatumStreamQueryFilter filter) {
 		/*- EXAMPLE JSON:
 			{
 			  "system_id": 2875,
@@ -856,8 +868,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 			return List.of();
 		}
 
-		final String sourceId = resolveSourceId(ds, systemId, EnphaseDeviceType.Inverter,
-				SYSTEM_DEVICE_ID, sourceIdMap);
+		final String sourceId = resolveSourceId(ds, systemId, Inverter, SYSTEM_DEVICE_ID, sourceIdMap);
 		if ( sourceId == null ) {
 			return List.of();
 		}
@@ -865,9 +876,12 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		final List<GeneralDatum> result = new ArrayList<>(16);
 
 		for ( JsonNode telem : json.path("intervals") ) {
-			long ts = telem.path("end_at").longValue();
+			long ts = telem.path(END_AT_PARAM).longValue();
 			if ( ts < 1 ) {
 				continue;
+			} else if ( ts > filter.getEndDate().getEpochSecond() ) {
+				// inverter query does not use end date, so abort once get to filter end date
+				break;
 			}
 
 			DatumSamples s = new DatumSamples();
@@ -963,8 +977,7 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 			return List.of();
 		}
 
-		final String sourceId = resolveSourceId(ds, systemId, EnphaseDeviceType.Inverter,
-				SYSTEM_DEVICE_ID, sourceIdMap);
+		final String sourceId = resolveSourceId(ds, systemId, Meter, SYSTEM_DEVICE_ID, sourceIdMap);
 		if ( sourceId == null ) {
 			return List.of();
 		}
@@ -974,17 +987,19 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		// first gather up phase-level readings
 		final Map<Instant, List<JsonNode>> phaseReadings = hasPhaseRef(refs) ? new HashMap<>(8) : null;
 		if ( phaseReadings != null ) {
-			for ( JsonNode telem : json.path("meter_intervals") ) {
-				long ts = telem.path("end_at").longValue();
-				if ( ts < 1 ) {
-					continue;
+			for ( JsonNode meter : json.path("meter_intervals") ) {
+				for ( JsonNode telem : meter.path("intervals") ) {
+					long ts = telem.path(END_AT_PARAM).longValue();
+					if ( ts < 1 ) {
+						continue;
+					}
+					phaseReadings.computeIfAbsent(ofEpochSecond(ts), k -> new ArrayList<>(3)).add(telem);
 				}
-				phaseReadings.computeIfAbsent(ofEpochSecond(ts), k -> new ArrayList<>(3)).add(telem);
 			}
 		}
 
 		for ( JsonNode telem : json.path("intervals") ) {
-			long ts = telem.path("end_at").longValue();
+			long ts = telem.path(END_AT_PARAM).longValue();
 			if ( ts < 1 ) {
 				continue;
 			}
