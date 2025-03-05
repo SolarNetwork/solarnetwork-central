@@ -40,6 +40,7 @@ import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDat
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -93,6 +94,7 @@ import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
 
 /**
@@ -173,6 +175,9 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SYSTEM_ID_FILTER,
 			DEVICE_ID_FILTER);
 
+	/** The data value identifier levels source ID range. */
+	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(0, 2);
+
 	/** The maximum period of time to request data for in one request. */
 	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
@@ -230,6 +235,11 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	@Override
 	protected Iterable<String> supportedPlaceholders() {
 		return SUPPORTED_PLACEHOLDERS;
+	}
+
+	@Override
+	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
+		return DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE;
 	}
 
 	@Override
@@ -572,8 +582,14 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 */
 	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
 
-	private static record ValueRef(Object systemId, EnphaseDeviceType deviceType, String deviceId,
-			String fieldName, CloudDatumStreamPropertyConfiguration property) {
+	private static record ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId,
+			String fieldName, CloudDatumStreamPropertyConfiguration property, String sourceId) {
+
+		private ValueRef(Long systemId, EnphaseDeviceType deviceType, String deviceId, String fieldName,
+				CloudDatumStreamPropertyConfiguration property) {
+			this(systemId, deviceType, deviceId, fieldName, property,
+					"/%d/%s/%s".formatted(systemId, deviceType.getKey(), deviceId));
+		}
 
 		private boolean isSystemDevice() {
 			return SYSTEM_DEVICE_ID.equals(deviceId);
@@ -817,23 +833,20 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream, Long systemId,
-			EnphaseDeviceType deviceType, String deviceId, Map<String, String> sourceIdMap) {
+	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream, ValueRef ref,
+			Map<String, String> sourceIdMap) {
 		if ( sourceIdMap != null ) {
-			String key = "/%d/%s/%s".formatted(systemId, deviceType.getKey(), deviceId);
-			return sourceIdMap.get(key);
+			return sourceIdMap.get(ref.sourceId);
 		}
 
-		String devType = deviceType.getKey();
+		String result = datumStream.getSourceId() + ref.sourceId;
+
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			devType = devType.toUpperCase();
+			result = result.toUpperCase();
 		}
 
-		if ( SYSTEM_DEVICE_ID.equals(deviceId) ) {
-			return "%s/%s/%s".formatted(datumStream.getSourceId(), systemId, devType);
-		}
-		return "%s/%s/%s/%s".formatted(datumStream.getSourceId(), systemId, devType, deviceId);
+		return result;
 	}
 
 	private List<GeneralDatum> parseSiteInverterDatum(JsonNode json, Long systemId, List<ValueRef> refs,
@@ -867,12 +880,10 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
-		final String sourceId = resolveSourceId(ds, systemId, Inverter, SYSTEM_DEVICE_ID, sourceIdMap);
-		if ( sourceId == null ) {
-			return List.of();
-		}
-
 		final List<GeneralDatum> result = new ArrayList<>(16);
+
+		// only need to compute the source ID once, as the same for all site inverter data
+		String sourceId = null;
 
 		for ( JsonNode telem : json.path("intervals") ) {
 			long ts = telem.path(END_AT_PARAM).longValue();
@@ -885,6 +896,12 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 			DatumSamples s = new DatumSamples();
 			for ( ValueRef ref : refs ) {
+				if ( sourceId == null ) {
+					sourceId = nonEmptyString(resolveSourceId(ds, ref, sourceIdMap));
+					if ( sourceId == null ) {
+						return List.of();
+					}
+				}
 				JsonNode fieldNode = switch (ref.fieldName) {
 					case "W" -> telem.path("powr");
 					case "Wh" -> telem.path("enwh");
@@ -976,12 +993,10 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			return List.of();
 		}
 
-		final String sourceId = resolveSourceId(ds, systemId, Meter, SYSTEM_DEVICE_ID, sourceIdMap);
-		if ( sourceId == null ) {
-			return List.of();
-		}
-
 		final List<GeneralDatum> result = new ArrayList<>(16);
+
+		// only need to compute the source ID once, as the same for all site meter data
+		String sourceId = null;
 
 		// first gather up phase-level readings
 		final Map<Instant, List<JsonNode>> phaseReadings = hasPhaseRef(refs) ? new HashMap<>(8) : null;
@@ -1006,6 +1021,12 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			Instant date = ofEpochSecond(ts);
 			DatumSamples s = new DatumSamples();
 			for ( ValueRef ref : refs ) {
+				if ( sourceId == null ) {
+					sourceId = nonEmptyString(resolveSourceId(ds, ref, sourceIdMap));
+					if ( sourceId == null ) {
+						return List.of();
+					}
+				}
 				Object propVal = null;
 				if ( "WhExp".equals(ref.fieldName) ) {
 					JsonNode fieldNode = telem.path("wh_del");
