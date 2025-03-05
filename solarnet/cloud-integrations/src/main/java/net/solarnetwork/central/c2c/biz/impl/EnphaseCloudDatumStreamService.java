@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.Instant.ofEpochSecond;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService.API_KEY_PARAM;
@@ -32,23 +34,32 @@ import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationServi
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService.SECURE_SETTINGS;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Inverter;
 import static net.solarnetwork.central.c2c.biz.impl.EnphaseDeviceType.Meter;
+import static net.solarnetwork.central.c2c.biz.impl.EnphaseGranularity.FifteenMinute;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.dataValue;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.intermediateDataValue;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.util.UriComponentsBuilder.fromUri;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.cache.Cache;
+import org.apache.commons.lang3.mutable.MutableLong;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -65,9 +76,11 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.BasicQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryResult;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -76,7 +89,11 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.BasicLocalizedServiceInfo;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
+import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * Enphase implementation of {@link CloudDatumStreamService}.
@@ -95,8 +112,11 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 	/** The data value filter key for a device ID. */
 	public static final String DEVICE_ID_FILTER = "deviceId";
 
-	/** Constant device ID value for site-level data. */
-	public static final String SITE_DEVICE_ID = "site";
+	/** Constant device ID value for system-level data. */
+	public static final String SYSTEM_DEVICE_ID = "sys";
+
+	/** The setting to upper-case source ID values. */
+	public static final String UPPER_CASE_SOURCE_ID_SETTING = "upperCaseSourceId";
 
 	/**
 	 * The URI path to view a given system.
@@ -116,15 +136,36 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 	 */
 	public static final String SYSTEM_DEVICES_URL_TEMPLATE = "/api/v4/systems/{systemId}/devices";
 
+	/**
+	 * The URI path to list inverter telemetry a given system.
+	 *
+	 * <p>
+	 * Accepts a single {@code {systemId}} parameter.
+	 * </p>
+	 */
+	public static final String INVERTER_TELEMETRY_URL_TEMPLATE = "/api/v4/systems/{systemId}/telemetry/production_micro";
+
+	/**
+	 * The URI path to list revenue grade meter telemetry a given system.
+	 *
+	 * <p>
+	 * Accepts a single {@code {systemId}} parameter.
+	 * </p>
+	 */
+	public static final String RGM_TELEMETRY_URL_TEMPLATE = "/api/v4/systems/{systemId}/rgm_stats";
+
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of();
+		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER);
 	}
 
 	/** The supported placeholder keys. */
 	public static final List<String> SUPPORTED_PLACEHOLDERS = List.of(SYSTEM_ID_FILTER,
 			DEVICE_ID_FILTER);
+
+	/** The maximum period of time to request data for in one request. */
+	private static final Duration MAX_QUERY_TIME_RANGE = Duration.ofDays(7);
 
 	/**
 	 * Constructor.
@@ -206,51 +247,10 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 			String systemId = filters.get(SYSTEM_ID_FILTER).toString();
 			result = systemDevices(integration, systemId, filters);
 		} else {
-			// list available sites
+			// list available systems
 			result = systems(integration);
 		}
 		return result;
-	}
-
-	@Override
-	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
-		requireNonNullArgument(datumStream, "datumStream");
-
-		final Instant endDate = null;
-		final Instant startDate = null;
-
-		final var filter = new BasicQueryFilter();
-		filter.setStartDate(startDate);
-		filter.setEndDate(endDate);
-
-		final var result = datum(datumStream, filter);
-		if ( result == null ) {
-			return Collections.emptyList();
-		}
-		return result.getResults();
-	}
-
-	@Override
-	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
-			CloudDatumStreamQueryFilter filter) {
-		requireNonNullArgument(datumStream, "datumStream");
-		requireNonNullArgument(filter, "filter");
-		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
-
-			if ( valueProps.isEmpty() ) {
-				String msg = "Datum stream has no properties.";
-				Errors errors = new BindException(ds, "datumStream");
-				errors.reject("error.datumStream.noProperties", null, msg);
-				throw new ValidationException(msg, errors, ms);
-			}
-
-			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
-					"filter.startDate");
-			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
-					"filter.startDate");
-
-			return null;
-		});
 	}
 
 	private List<CloudDataValue> systems(CloudIntegrationConfiguration integration) {
@@ -282,29 +282,6 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 					result.addAll(pageResults);
 				}
 			}
-		}
-
-		return result;
-	}
-
-	private List<CloudDataValue> system(CloudIntegrationConfiguration integration,
-			Map<String, ?> filters, List<CloudDataValue> children) {
-		final var decryp = integration.copyWithId(integration.getId());
-		decryp.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
-
-		// first get system details, will then add site-level children
-		List<CloudDataValue> result = restOpsHelper.httpGet("View system", integration, JsonNode.class,
-		// @formatter:off
-				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
-						.path(SYSTEM_VIEW_URL_TEMPLATE)
-						.queryParam(API_KEY_PARAM, decryp.serviceProperty(API_KEY_SETTING, String.class))
-						.buildAndExpand(filters).toUri(),
-						// @formatter:on
-				res -> parseSystem(res.getBody(), filters, children));
-
-		// add site-level children
-		if ( children != null ) {
-			// TODO
 		}
 
 		return result;
@@ -496,20 +473,20 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 
 		final JsonNode inverters = devices.path("micros");
 		if ( !(inverters.isMissingNode() || inverters.isEmpty()) ) {
-			result.addAll(siteInverterDataValues(systemId));
+			result.addAll(systemInverterDataValues(systemId));
 			// TODO: add device-level values
 		}
 
 		final JsonNode meters = devices.path("meters");
 		if ( !(meters.isMissingNode() || meters.isEmpty()) ) {
-			result.addAll(siteMeterDataValues(systemId));
+			result.addAll(systemMeterDataValues(systemId));
 			// TODO: add device-level values
 		}
 
 		return result;
 	}
 
-	private static List<CloudDataValue> siteInverterDataValues(final String systemId) {
+	private static List<CloudDataValue> systemInverterDataValues(final String systemId) {
 		/*- EXAMPLE JSON /systems/{systemId}/telemetry/production_micro
 		{
 		  "end_at": 1738321500,
@@ -520,14 +497,13 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		 */
 		// @formatter:off
 		return Arrays.asList(
-				// site-level
-				dataValue(List.of(systemId, Inverter.getKey(), SITE_DEVICE_ID, "W"), "Active power"),
-				dataValue(List.of(systemId, Inverter.getKey(), SITE_DEVICE_ID, "Wh"), "Active energy")
+				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "W"), "Active power"),
+				dataValue(List.of(systemId, Inverter.getKey(), SYSTEM_DEVICE_ID, "Wh"), "Active energy")
 				);
 		// @formatter:on
 	}
 
-	private static List<CloudDataValue> siteMeterDataValues(final String systemId) {
+	private static List<CloudDataValue> systemMeterDataValues(final String systemId) {
 		/*- EXAMPLE JSON /systems/{systemId}/rgm_stats
 		{
 		  "system_id": 2875299,
@@ -559,10 +535,526 @@ public class EnphaseCloudDatumStreamService extends BaseOAuth2ClientCloudDatumSt
 		 */
 		// @formatter:off
 		return Arrays.asList(
-				dataValue(List.of(systemId, Meter.getKey(), SITE_DEVICE_ID, "W"), "Active power"),
-				dataValue(List.of(systemId, Meter.getKey(), SITE_DEVICE_ID, "WhExp"), "Active energy exported")
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "W"), "Active power"),
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "WhExp"), "Active energy exported"),
+
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "PWA"), "Phase active power - A"),
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "PWB"), "Phase active power - B"),
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "PWC"), "Phase active power - C"),
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "PWhExpA"), "Phase active energy exported - A"),
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "PWhExpB"), "Phase active energy exported - B"),
+				dataValue(List.of(systemId, Meter.getKey(), SYSTEM_DEVICE_ID, "PWhExpC"), "Phase active energy exported - C")
 				);
 		// @formatter:on
+	}
+
+	/**
+	 * Value reference pattern, with component matching groups.
+	 *
+	 * <p>
+	 * The matching groups are
+	 * </p>
+	 *
+	 * <ol>
+	 * <li>systemId</li>
+	 * <li>deviceType</li>
+	 * <li>deviceId</li>
+	 * <li>field</li>
+	 * </ol>
+	 */
+	private static final Pattern VALUE_REF_PATTERN = Pattern.compile("/([^/]+)/([^/]+)/([^/]+)/(.+)");
+
+	private static record ValueRef(Object systemId, EnphaseDeviceType deviceType, String deviceId,
+			String fieldName, CloudDatumStreamPropertyConfiguration property) {
+
+		private boolean isSystemDevice() {
+			return SYSTEM_DEVICE_ID.equals(deviceId);
+		}
+
+		private boolean isMeterPhaseField() {
+			return deviceType == EnphaseDeviceType.Meter
+					&& ("W".equals(fieldName) || fieldName.startsWith("PW"));
+		}
+
+	}
+
+	/**
+	 * A system-specific query plan.
+	 *
+	 * <p>
+	 * This plan is constructed from a set of
+	 * {@link CloudDatumStreamPropertyConfiguration}, and used to determine
+	 * which Enphase APIs are necessary to satisfy those configurations.
+	 * </p>
+	 */
+	private static class SystemQueryPlan {
+
+		/** The Enhpase system ID. */
+		private final Long systemId;
+
+		private final Map<EnphaseDeviceType, List<ValueRef>> systemValueRefs = new LinkedHashMap<>(2);;
+		private final Map<EnphaseDeviceType, Map<String, List<ValueRef>>> deviceValueRefs = new LinkedHashMap<>(
+				2);
+
+		private SystemQueryPlan(Long systemId) {
+			super();
+			this.systemId = requireNonNullArgument(systemId, "systemId");
+		}
+
+		private void addValueRef(ValueRef ref) {
+			if ( ref.isSystemDevice() ) {
+				systemValueRefs.computeIfAbsent(ref.deviceType, k -> new ArrayList<>(4)).add(ref);
+			} else {
+				deviceValueRefs.computeIfAbsent(ref.deviceType, k -> new LinkedHashMap<>(2))
+						.computeIfAbsent(ref.deviceId, k -> new ArrayList<>(4)).add(ref);
+			}
+		}
+
+		private List<ValueRef> systemValueRefs(EnphaseDeviceType type) {
+			return systemValueRefs.get(type);
+		}
+
+	}
+
+	@Override
+	public Iterable<Datum> latestDatum(CloudDatumStreamConfiguration datumStream) {
+		requireNonNullArgument(datumStream, "datumStream");
+
+		final Instant endDate = FifteenMinute.tickStart(clock.instant(), UTC);
+		final Instant startDate = endDate.minus(FifteenMinute.getTickAmount());
+
+		final var filter = new BasicQueryFilter();
+		filter.setStartDate(startDate);
+		filter.setEndDate(endDate);
+
+		final var result = datum(datumStream, filter);
+		if ( result == null ) {
+			return Collections.emptyList();
+		}
+		return result.getResults();
+	}
+
+	private static void updateLastReportDate(MutableLong date, JsonNode json) {
+		// track the minimum "last report date" value in a response, to adjust "next start" query value
+		long jsonLastReportAt = json.path("meta").path("last_report_at").longValue();
+		if ( jsonLastReportAt > 0 ) {
+			if ( jsonLastReportAt < date.getValue() ) {
+				date.setValue(jsonLastReportAt);
+			}
+		}
+	}
+
+	@Override
+	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter) {
+		requireNonNullArgument(datumStream, "datumStream");
+		requireNonNullArgument(filter, "filter");
+		return performAction(datumStream, (ms, ds, mapping, integration, valueProps, exprProps) -> {
+
+			if ( valueProps.isEmpty() ) {
+				String msg = "Datum stream has no properties.";
+				Errors errors = new BindException(ds, "datumStream");
+				errors.reject("error.datumStream.noProperties", null, msg);
+				throw new ValidationException(msg, errors, ms);
+			}
+
+			final var decryptedIntegration = integration.copyWithId(integration.getId());
+			decryptedIntegration.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+
+			final Instant filterStartDate = requireNonNullArgument(filter.getStartDate(),
+					"filter.startDate");
+			final Instant filterEndDate = requireNonNullArgument(filter.getEndDate(),
+					"filter.startDate");
+
+			BasicQueryFilter nextQueryFilter = null;
+
+			Instant startDate = FifteenMinute.tickStart(filterStartDate, UTC);
+			Instant endDate = FifteenMinute.tickStart(filterEndDate, UTC);
+			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
+				Instant nextEndDate = FifteenMinute
+						.tickStart(startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2)), UTC);
+				if ( nextEndDate.isAfter(endDate) ) {
+					nextEndDate = endDate;
+				}
+
+				endDate = FifteenMinute.tickStart(startDate.plus(MAX_QUERY_TIME_RANGE), UTC);
+
+				nextQueryFilter = new BasicQueryFilter();
+				nextQueryFilter.setStartDate(endDate);
+				nextQueryFilter.setEndDate(nextEndDate);
+			}
+
+			final BasicQueryFilter usedQueryFilter = new BasicQueryFilter();
+			usedQueryFilter.setStartDate(startDate);
+			usedQueryFilter.setEndDate(endDate);
+
+			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
+
+			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
+			final Map<Long, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
+					sourceIdMap, valueProps);
+
+			final var lastReportDate = new MutableLong(endDate.getEpochSecond());
+
+			for ( SystemQueryPlan queryPlan : queryPlans.values() ) {
+				// system inverter data
+				List<ValueRef> systemInvRefs = queryPlan.systemValueRefs(Inverter);
+				if ( systemInvRefs != null && !systemInvRefs.isEmpty() ) {
+					List<GeneralDatum> datum = restOpsHelper.httpGet("List system inverter data",
+							integration, JsonNode.class,
+							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+									.path(INVERTER_TELEMETRY_URL_TEMPLATE)
+									.queryParam(API_KEY_PARAM,
+											decryptedIntegration.serviceProperty(API_KEY_SETTING,
+													String.class))
+									.queryParam("start_at", startDate.getEpochSecond())
+									.queryParam("granularity",
+											EnphaseGranularity.forQueryDateRange(filter.getStartDate(),
+													filter.getEndDate()).getKey())
+									.buildAndExpand(queryPlan.systemId).toUri(),
+							res -> {
+								var result = parseSiteInverterDatum(res.getBody(), queryPlan.systemId,
+										systemInvRefs, ds, sourceIdMap);
+								updateLastReportDate(lastReportDate, res.getBody());
+								return result;
+							});
+					if ( datum != null ) {
+						resultDatum.addAll(datum);
+					}
+				}
+
+				// system meter data
+				List<ValueRef> systemMetRefs = queryPlan.systemValueRefs(Meter);
+				if ( systemMetRefs != null && !systemMetRefs.isEmpty() ) {
+					List<GeneralDatum> datum = restOpsHelper.httpGet("List system meter data",
+							integration, JsonNode.class,
+							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
+									.path(RGM_TELEMETRY_URL_TEMPLATE)
+									.queryParam(API_KEY_PARAM,
+											decryptedIntegration.serviceProperty(API_KEY_SETTING,
+													String.class))
+									.queryParam("start_at", startDate.getEpochSecond())
+									.buildAndExpand(queryPlan.systemId).toUri(),
+							res -> {
+								var result = parseSiteMeterDatum(res.getBody(), queryPlan.systemId,
+										systemMetRefs, ds, sourceIdMap);
+								updateLastReportDate(lastReportDate, res.getBody());
+								return result;
+							});
+					if ( datum != null ) {
+						resultDatum.addAll(datum);
+					}
+				}
+			}
+
+			if ( lastReportDate.getValue() < endDate.getEpochSecond() ) {
+				// data drop out? adjust next start date
+				if ( nextQueryFilter == null ) {
+					nextQueryFilter = new BasicQueryFilter();
+				}
+				nextQueryFilter.setStartDate(Instant.ofEpochSecond(lastReportDate.getValue()));
+			}
+
+			// evaluate expressions on merged datum
+			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
+
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
+					resultDatum.stream().map(Datum.class::cast).toList());
+		});
+	}
+
+	private Map<Long, SystemQueryPlan> resolveSystemQueryPlans(CloudIntegrationConfiguration integration,
+			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
+			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
+		final var result = new LinkedHashMap<Long, SystemQueryPlan>(2);
+		@SuppressWarnings("unchecked")
+		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
+				datumStream.serviceProperty(PLACEHOLDERS_SERVICE_PROPERTY, Map.class),
+				(sourceIdMap != null ? sourceIdMap.values() : null));
+		for ( CloudDatumStreamPropertyConfiguration config : propConfigs ) {
+			for ( Map<String, ?> ph : placeholderSets ) {
+				String ref = StringUtils.expandTemplateString(config.getValueReference(), ph);
+				Matcher m = VALUE_REF_PATTERN.matcher(ref);
+				if ( !m.matches() ) {
+					continue;
+				}
+				// groups: 1 = systemId, 2 = deviceType, 3 = deviceId, 4 = field
+				Long systemId = Long.valueOf(m.group(1));
+				String deviceTypeKey = m.group(2);
+				String deviceId = m.group(3);
+				String fieldName = m.group(4);
+
+				EnphaseDeviceType deviceType;
+				try {
+					deviceType = EnphaseDeviceType.fromValue(deviceTypeKey);
+				} catch ( IllegalArgumentException e ) {
+					// ignore and continue
+					continue;
+				}
+
+				SystemQueryPlan plan = result.computeIfAbsent(systemId, id -> {
+					return new SystemQueryPlan(systemId);
+				});
+
+				ValueRef valueRef = new ValueRef(systemId, deviceType, deviceId, fieldName, config);
+				plan.addValueRef(valueRef);
+			}
+		}
+
+		// TODO: resolve wildcard inverter component IDs
+
+		return result;
+	}
+
+	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream, Long systemId,
+			EnphaseDeviceType deviceType, String deviceId, Map<String, String> sourceIdMap) {
+		if ( sourceIdMap != null ) {
+			String key = "/%d/%s/%s".formatted(systemId, deviceType.getKey(), deviceId);
+			return sourceIdMap.get(key);
+		}
+
+		String devType = deviceType.getKey();
+		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
+		if ( ucSourceId != null && ucSourceId ) {
+			devType = devType.toUpperCase();
+		}
+
+		if ( SYSTEM_DEVICE_ID.equals(deviceId) ) {
+			return "%s/%s/%s".formatted(datumStream.getSourceId(), systemId, devType);
+		}
+		return "%s/%s/%s/%s".formatted(datumStream.getSourceId(), systemId, devType, deviceId);
+	}
+
+	private List<GeneralDatum> parseSiteInverterDatum(JsonNode json, Long systemId, List<ValueRef> refs,
+			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap) {
+		/*- EXAMPLE JSON:
+			{
+			  "system_id": 2875,
+			  "granularity": "day",
+			  "total_devices": 16,
+			  "start_at": 1738321200,
+			  "end_at": 1738407600,
+			  "items": "intervals",
+			  "intervals": [
+			    {
+			      "end_at": 1738321500,
+			      "devices_reporting": 16,
+			      "powr": 0,
+			      "enwh": 0
+			    }
+			  ],
+			  "meta": {
+			    "status": "normal",
+			    "last_report_at": 1741059029,
+			    "last_energy_at": 1741055400,
+			    "operational_at": 1657080000
+			  }
+			}
+		 */
+		if ( json == null ) {
+			return List.of();
+		}
+
+		final String sourceId = resolveSourceId(ds, systemId, EnphaseDeviceType.Inverter,
+				SYSTEM_DEVICE_ID, sourceIdMap);
+		if ( sourceId == null ) {
+			return List.of();
+		}
+
+		final List<GeneralDatum> result = new ArrayList<>(16);
+
+		for ( JsonNode telem : json.path("intervals") ) {
+			long ts = telem.path("end_at").longValue();
+			if ( ts < 1 ) {
+				continue;
+			}
+
+			DatumSamples s = new DatumSamples();
+			for ( ValueRef ref : refs ) {
+				JsonNode fieldNode = switch (ref.fieldName) {
+					case "W" -> telem.path("powr");
+					case "Wh" -> telem.path("enwh");
+					default -> null;
+				};
+				if ( fieldNode == null || fieldNode.isNull() || fieldNode.isMissingNode() ) {
+					continue;
+				}
+
+				Object propVal = parseJsonDatumPropertyValue(fieldNode, ref.property.getPropertyType());
+				propVal = ref.property.applyValueTransforms(propVal);
+				if ( propVal != null ) {
+					s.putSampleValue(ref.property.getPropertyType(), ref.property.getPropertyName(),
+							propVal);
+				}
+			}
+
+			if ( s.isEmpty() ) {
+				continue;
+			}
+
+			result.add(new GeneralDatum(
+					new DatumId(ds.getKind(), ds.getObjectId(), sourceId, ofEpochSecond(ts)), s));
+		}
+
+		return result;
+	}
+
+	private static boolean hasPhaseRef(List<ValueRef> refs) {
+		if ( refs == null ) {
+			return false;
+		}
+		for ( ValueRef ref : refs ) {
+			if ( ref.isMeterPhaseField() ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<GeneralDatum> parseSiteMeterDatum(JsonNode json, Long systemId, List<ValueRef> refs,
+			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap) {
+		/*- EXAMPLE JSON:
+			{
+			  "system_id": 2875,
+			  "total_devices": 1,
+			  "intervals": [
+			    {
+			      "end_at": 1741088700,
+			      "devices_reporting": 1,
+			      "wh_del": 0
+			    }
+			  ],
+			  "meta": {
+			    "status": "normal",
+			    "last_report_at": 1741118911,
+			    "last_energy_at": 1741118400,
+			    "operational_at": 1657080000
+			  },
+			  "meter_intervals": [
+			    {
+			      "meter_serial_number": "000005058195EIM1",
+			      "envoy_serial_number": "000005058195",
+			      "intervals": [
+			        {
+			          "channel": 1,
+			          "wh_del": 0.0,
+			          "curr_w": 0,
+			          "end_at": 1741088700
+			        },
+			        {
+			          "channel": 2,
+			          "wh_del": 0.0,
+			          "curr_w": 0,
+			          "end_at": 1741088700
+			        },
+			        {
+			          "channel": 3,
+			          "wh_del": null,
+			          "curr_w": null,
+			          "end_at": 1741088700
+			        }
+			      ]
+			    }
+			  ]
+			}
+		 */
+		if ( json == null ) {
+			return List.of();
+		}
+
+		final String sourceId = resolveSourceId(ds, systemId, EnphaseDeviceType.Inverter,
+				SYSTEM_DEVICE_ID, sourceIdMap);
+		if ( sourceId == null ) {
+			return List.of();
+		}
+
+		final List<GeneralDatum> result = new ArrayList<>(16);
+
+		// first gather up phase-level readings
+		final Map<Instant, List<JsonNode>> phaseReadings = hasPhaseRef(refs) ? new HashMap<>(8) : null;
+		if ( phaseReadings != null ) {
+			for ( JsonNode telem : json.path("meter_intervals") ) {
+				long ts = telem.path("end_at").longValue();
+				if ( ts < 1 ) {
+					continue;
+				}
+				phaseReadings.computeIfAbsent(ofEpochSecond(ts), k -> new ArrayList<>(3)).add(telem);
+			}
+		}
+
+		for ( JsonNode telem : json.path("intervals") ) {
+			long ts = telem.path("end_at").longValue();
+			if ( ts < 1 ) {
+				continue;
+			}
+
+			Instant date = ofEpochSecond(ts);
+			DatumSamples s = new DatumSamples();
+			for ( ValueRef ref : refs ) {
+				Object propVal = null;
+				if ( "WhExp".equals(ref.fieldName) ) {
+					JsonNode fieldNode = telem.path("wh_del");
+					if ( fieldNode == null || fieldNode.isNull() || fieldNode.isMissingNode() ) {
+						continue;
+					}
+					propVal = parseJsonDatumPropertyValue(fieldNode, ref.property.getPropertyType());
+				} else if ( phaseReadings != null ) {
+					// phase data required
+					List<JsonNode> phaseNodes = phaseReadings.get(date);
+					if ( phaseNodes == null ) {
+						continue;
+					}
+					if ( "W".equals(ref.fieldName) ) {
+						// average of available phases
+						BigDecimal totPower = BigDecimal.ZERO;
+						int count = 0;
+						for ( JsonNode phaseNode : phaseNodes ) {
+							JsonNode powerNode = phaseNode.path("curr_w");
+							if ( powerNode.isNumber() ) {
+								totPower = totPower.add(powerNode.decimalValue());
+								count++;
+							}
+						}
+						propVal = totPower.divide(new BigDecimal(count), RoundingMode.DOWN);
+					} else {
+						String fieldName = ref.fieldName.substring(0, ref.fieldName.length() - 1);
+						int desiredChannel = switch (ref.fieldName.charAt(fieldName.length())) {
+							case 'A' -> 1;
+							case 'B' -> 2;
+							case 'C' -> 3;
+							default -> -1;
+						};
+						JsonNode phaseTelem = phaseNodes.stream()
+								.filter(n -> desiredChannel == n.path("channel").intValue()).findFirst()
+								.orElse(null);
+						JsonNode fieldNode = switch (fieldName) {
+							case "PW" -> phaseTelem.path("curr_w");
+							case "PWhExp" -> phaseTelem.path("wh_del");
+							default -> null;
+						};
+						if ( fieldNode == null || fieldNode.isNull() || fieldNode.isMissingNode() ) {
+							continue;
+						}
+
+						propVal = parseJsonDatumPropertyValue(fieldNode, ref.property.getPropertyType());
+					}
+				}
+				propVal = ref.property.applyValueTransforms(propVal);
+				if ( propVal != null ) {
+					s.putSampleValue(ref.property.getPropertyType(), ref.property.getPropertyName(),
+							propVal);
+				}
+			}
+
+			if ( s.isEmpty() ) {
+				continue;
+			}
+
+			result.add(new GeneralDatum(new DatumId(ds.getKind(), ds.getObjectId(), sourceId, date), s));
+		}
+
+		return result;
 	}
 
 }

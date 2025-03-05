@@ -71,6 +71,8 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.ToggleSettingSpecifier;
+import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.NumberUtils;
 import net.solarnetwork.util.StringUtils;
@@ -79,10 +81,18 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
+
+	/**
+	 * A setting specifier for the {@code UPPER_CASE_SOURCE_ID_SETTING}.
+	 *
+	 * @since 1.12
+	 */
+	public static final ToggleSettingSpecifier UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER = new BasicToggleSettingSpecifier(
+			UPPER_CASE_SOURCE_ID_SETTING, Boolean.FALSE);
 
 	/** A clock to use. */
 	protected final Clock clock;

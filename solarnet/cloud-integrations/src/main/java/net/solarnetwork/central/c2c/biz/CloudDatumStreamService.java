@@ -40,7 +40,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -56,6 +56,13 @@ public interface CloudDatumStreamService
 	 * </p>
 	 */
 	String SOURCE_ID_MAP_SETTING = "sourceIdMap";
+
+	/**
+	 * The setting to upper-case source ID values.
+	 *
+	 * @since 1.4
+	 */
+	String UPPER_CASE_SOURCE_ID_SETTING = "upperCaseSourceId";
 
 	/**
 	 * A standard data value filter key for a datum stream ID.

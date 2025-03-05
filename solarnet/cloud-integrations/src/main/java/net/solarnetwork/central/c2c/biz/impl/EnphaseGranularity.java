@@ -26,7 +26,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAmount;
+import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
@@ -36,12 +38,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * @version 1.0
  */
 public enum EnphaseGranularity {
-
-	/** Raw data. */
-	Raw("Raw", Duration.ofMinutes(1)),
-
-	/** Five minutes. */
-	FiveMinute("5mins", Duration.ofMinutes(5)),
 
 	/** Fifteen minutes. */
 	FifteenMinute("15mins", Duration.ofMinutes(15)),
@@ -133,14 +129,14 @@ public enum EnphaseGranularity {
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
 	 * @return the enum; if {@code value} is {@literal null} or empty then
-	 *         {@link #Raw} is returned
+	 *         {@link #FifteenMinute} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
 	public static EnphaseGranularity fromValue(String value) {
 		if ( value == null || value.isEmpty() ) {
-			return Raw;
+			return FifteenMinute;
 		}
 		for ( EnphaseGranularity e : EnphaseGranularity.values() ) {
 			if ( value.equalsIgnoreCase(e.key) || value.equalsIgnoreCase(e.name()) ) {
@@ -148,6 +144,27 @@ public enum EnphaseGranularity {
 			}
 		}
 		throw new IllegalArgumentException("Unknown EnphaseGranularity value [" + value + "]");
+	}
+
+	/**
+	 * Get the best-fit granularity for querying a given date range.
+	 *
+	 * @param from
+	 *        the starting date
+	 * @param to
+	 *        the ending date
+	 * @return the granularity to use, never {@code null}
+	 */
+	public static EnphaseGranularity forQueryDateRange(Instant from, Instant to) {
+		final long mins = Duration.between(from, to).get(ChronoUnit.SECONDS);
+		for ( EnphaseGranularity g : EnphaseGranularity.values() ) {
+			final long secs = (g.tickAmount instanceof Period p ? TimeUnit.DAYS.toMinutes(p.getDays())
+					: g.tickAmount.get(ChronoUnit.SECONDS));
+			if ( mins <= secs ) {
+				return g;
+			}
+		}
+		return EnphaseGranularity.Week;
 	}
 
 }
