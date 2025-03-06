@@ -227,7 +227,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
 						oauthClientManager, clock, integrationLocksCache));
 		this.executor = requireNonNullArgument(executor, "executor");

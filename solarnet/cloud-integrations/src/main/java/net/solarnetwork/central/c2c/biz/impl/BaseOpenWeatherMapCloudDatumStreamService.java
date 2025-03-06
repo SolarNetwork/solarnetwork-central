@@ -147,7 +147,7 @@ public abstract class BaseOpenWeatherMapCloudDatumStreamService
 		super(serviceIdentifier, displayName, clock, userEventAppenderBiz, encryptor, expressionService,
 				integrationDao, datumStreamDao, datumStreamMappingDao, datumStreamPropertyDao, settings,
 				new OpenWeatherMapRestOperationsHelper(restOpsLogger, userEventAppenderBiz, restOps,
-						HTTP_ERROR_TAGS, encryptor,
+						INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> OpenWeatherMapCloudIntegrationService.SECURE_SETTINGS));
 	}
 

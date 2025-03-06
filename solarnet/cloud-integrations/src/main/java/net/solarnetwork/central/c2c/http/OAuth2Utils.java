@@ -148,7 +148,7 @@ public final class OAuth2Utils {
 			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
 		} catch ( OAuth2AuthorizationException e ) {
 			userEventAppenderBiz.addEvent(config.getUserId(),
-					eventForConfiguration(config.getId(), CloudIntegrationsUserEvents.AUTH_ERROR_TAGS,
+					eventForConfiguration(config.getId(), CloudIntegrationsUserEvents.INTEGRATION_AUTH_ERROR_TAGS,
 							format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("Error authenticating to cloud integration %d: %s"
 					.formatted(config.getConfigId(), e.getMessage()), e);

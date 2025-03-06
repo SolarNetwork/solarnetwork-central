@@ -311,7 +311,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.as("Task start event generated")
 					.isNotNull()
 					.as("Poll tags provided in event")
-					.returns(CloudIntegrationsUserEvents.POLL_TAGS, from(LogEventInfo::getTags))
+					.returns(CloudIntegrationsUserEvents.INTEGRATION_POLL_TAGS, from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							"configId", datumStream.getConfigId(),
@@ -326,7 +326,7 @@ public class DaoCloudDatumStreamPollServiceTests {
 					.as("Task success reset event generated")
 					.isNotNull()
 					.as("Poll tags provided in event")
-					.returns(CloudIntegrationsUserEvents.POLL_TAGS, from(LogEventInfo::getTags))
+					.returns(CloudIntegrationsUserEvents.INTEGRATION_POLL_TAGS, from(LogEventInfo::getTags))
 					.as("Task dates provided in event data")
 					.returns(Map.of(
 							"configId", datumStream.getConfigId(),

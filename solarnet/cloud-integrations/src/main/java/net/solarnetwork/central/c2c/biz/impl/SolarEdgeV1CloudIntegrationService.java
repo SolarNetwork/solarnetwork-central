@@ -108,7 +108,7 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 				SETTINGS, WELL_KNOWN_URLS,
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS));
 	}
 

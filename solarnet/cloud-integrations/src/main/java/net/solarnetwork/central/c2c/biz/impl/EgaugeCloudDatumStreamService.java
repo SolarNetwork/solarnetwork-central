@@ -210,7 +210,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				datumStreamPropertyDao, SETTINGS,
 				new EgaugeRestOperationsHelper(
 						LoggerFactory.getLogger(EgaugeCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						datumStreamServiceIdentifier -> SECURE_SETTINGS, clock, rng,
 						clientAccessTokenDao, integrationDao));
 	}
