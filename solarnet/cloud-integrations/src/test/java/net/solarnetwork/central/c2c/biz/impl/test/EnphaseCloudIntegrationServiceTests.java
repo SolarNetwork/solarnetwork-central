@@ -1,7 +1,7 @@
 /* ==================================================================
- * AlsoEnergyCloudIntegrationServiceTests.java - 22/11/2024 9:27:18 am
+ * EnphaseCloudIntegrationServiceTests.java - 3/03/2025 3:11:43 pm
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,9 +24,11 @@ package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.PASSWORD_SETTING;
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.USERNAME_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
@@ -64,21 +66,21 @@ import org.springframework.web.client.RestOperations;
 import org.threeten.extra.MutableClock;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
-import net.solarnetwork.central.c2c.biz.impl.AlsoEnergyCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
 /**
- * Test cases for the {@link AlsoEnergyCloudIntegrationService} class.
+ * Test cases for the {@link EnphaseCloudIntegrationService} class.
  *
  * @author matt
  * @version 1.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class AlsoEnergyCloudIntegrationServiceTests {
+public class EnphaseCloudIntegrationServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
 
@@ -102,15 +104,15 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
-	private AlsoEnergyCloudIntegrationService service;
+	private EnphaseCloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
-		service = new AlsoEnergyCloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new EnphaseCloudIntegrationService(Collections.singleton(datumStreamService),
 				userEventAppenderBiz, encryptor, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),
+		msg.setBasenames(EnphaseCloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msg);
 	}
@@ -141,25 +143,37 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 			.satisfies(r -> {
 				and.then(r.getErrors())
 					.as("Error details provided for missing authentication settings")
-					.hasSize(3)
+					.hasSize(5)
 					.satisfies(errors -> {
 						and.then(errors)
 							.as("Error detail")
 							.element(0)
+							.as("API key flagged")
+							.returns(API_KEY_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(1)
 							.as("OAuth client ID flagged")
 							.returns(OAUTH_CLIENT_ID_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
-							.element(1)
-							.as("Username flagged")
-							.returns(USERNAME_SETTING, from(ErrorDetail::getLocation))
+							.element(2)
+							.as("OAuth client secret flagged")
+							.returns(OAUTH_CLIENT_SECRET_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
-							.element(2)
-							.as("Password flagged")
-							.returns(PASSWORD_SETTING, from(ErrorDetail::getLocation))
+							.element(3)
+							.as("OAuth access token flagged")
+							.returns(OAUTH_ACCESS_TOKEN_SETTING, from(ErrorDetail::getLocation))
+							;
+						and.then(errors)
+							.as("Error detail")
+							.element(4)
+							.as("OAuth refresh token flagged")
+							.returns(OAUTH_REFRESH_TOKEN_SETTING, from(ErrorDetail::getLocation))
 							;
 					})
 					;
@@ -172,25 +186,29 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 	public void validate_ok() {
 		// GIVEN
 		final String tokenUri = "https://example.com/oauth/token";
+		final String apiKey = randomString();
 		final String clientId = randomString();
-		final String username = randomString();
-		final String password = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
 				randomLong(), now());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
-				AlsoEnergyCloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId,
-				AlsoEnergyCloudIntegrationService.USERNAME_SETTING, username,
-				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
+				API_KEY_SETTING, apiKey,
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
 			));
 
-		@SuppressWarnings("deprecation")
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
-			.authorizationGrantType(AuthorizationGrantType.PASSWORD)
-			.clientId(randomString())
-			.clientSecret(randomString())
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
 			.tokenUri(tokenUri)
 			.build();
 		// @formatter:on
@@ -203,10 +221,10 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI sitesForPartnerId = AlsoEnergyCloudIntegrationService.BASE_URI
-				.resolve(AlsoEnergyCloudIntegrationService.LIST_SITES_URL);
+		final URI listSystems = EnphaseCloudIntegrationService.BASE_URI
+				.resolve(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL + "?key=" + apiKey);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
-		given(restOps.exchange(eq(sitesForPartnerId), eq(HttpMethod.GET), any(), eq(String.class)))
+		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class)))
 				.willReturn(res);
 
 		// WHEN

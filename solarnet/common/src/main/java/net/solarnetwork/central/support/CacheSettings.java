@@ -31,12 +31,13 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.ehcache.jsr107.Eh107Configuration;
+import org.ehcache.spi.loaderwriter.CacheLoaderWriter;
 
 /**
  * A standardized cache settings bean.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CacheSettings {
 
@@ -60,6 +61,7 @@ public class CacheSettings {
 	private long heapMaxEntries = DEFAULT_HEAP_MAX_ENTRIES;
 	private long diskMaxSizeMb = DEFAULT_DISK_MAX_SIZE_MB;
 	private boolean diskPersistent = DEFAULT_DISK_PERSISTENT;
+	private CacheLoaderWriter<?, ?> loaderWriter;
 
 	/**
 	 * Create a cache.
@@ -78,6 +80,7 @@ public class CacheSettings {
 	 *        the name
 	 * @return the new cache instance
 	 */
+	@SuppressWarnings("unchecked")
 	public <K, V> Cache<K, V> createCache(CacheManager cacheManager, Class<K> keyType,
 			Class<V> valueType, String name) {
 		CacheConfigurationBuilder<K, V> cacheConfigBuilder = CacheConfigurationBuilder
@@ -98,6 +101,10 @@ public class CacheSettings {
 		if ( ttl > 0 ) {
 			cacheConfigBuilder = cacheConfigBuilder
 					.withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(ttl)));
+		}
+		if ( loaderWriter != null ) {
+			cacheConfigBuilder = cacheConfigBuilder
+					.withLoaderWriter((CacheLoaderWriter<K, V>) loaderWriter);
 		}
 		return cacheManager.createCache(name,
 				Eh107Configuration.fromEhcacheCacheConfiguration(cacheConfigBuilder));
@@ -201,6 +208,27 @@ public class CacheSettings {
 	 */
 	public void setDiskPersistent(boolean diskPersistent) {
 		this.diskPersistent = diskPersistent;
+	}
+
+	/**
+	 * Get the loader writer.
+	 * 
+	 * @return the instance
+	 * @since 1.1
+	 */
+	public final CacheLoaderWriter<?, ?> getLoaderWriter() {
+		return loaderWriter;
+	}
+
+	/**
+	 * Set the loader writer.
+	 * 
+	 * @param loaderWriter
+	 *        the instance to set
+	 * @since 1.1
+	 */
+	public final void setLoaderWriter(CacheLoaderWriter<?, ?> loaderWriter) {
+		this.loaderWriter = loaderWriter;
 	}
 
 }

@@ -1,7 +1,7 @@
 /* ==================================================================
- * LocusEnergyCloudIntegrationService.java - 30/09/2024 12:05:16 pm
+ * EnphaseCloudIntegrationService.java - 3/03/2025 11:24:37 am
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -24,7 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
-import java.time.InstantSource;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,49 +50,41 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
- * Locus Energy implementation of {@link CloudIntegrationService}.
+ * Enphase API v4 implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
+public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.locus";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.enphase";
 
 	/**
-	 * The URL template for sites for a given {@code \{partnerId\}} parameter.
+	 * The URL template for listing all available sites.
 	 */
-	public static final String V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE = "/v3/partners/{partnerId}/sites";
+	public static final String LIST_SYSTEMS_URL = "/api/v4/systems";
 
-	/**
-	 * The URL template for components for a given {@code \{siteId\}} parameter.
-	 */
-	public static final String V3_COMPONENTS_FOR_SITE_ID_URL_TEMPLATE = "/v3/sites/{siteId}/components";
-
-	/**
-	 * The URL template for nodes (data available) for a given
-	 * {@code \{componentId\}} parameter.
-	 */
-	public static final String V3_NODES_FOR_COMPOENNT_ID_URL_TEMPLATE = "/v3/components/{componentId}/dataavailable";
-
-	/**
-	 * The URL template for data for a given {@code \{componentId\}} parameter.
-	 */
-	public static final String V3_DATA_FOR_COMPOENNT_ID_URL_TEMPLATE = "/v3/components/{componentId}/data";
-
-	/** The partner identifier setting name. */
-	public static final String PARTNER_ID_SETTING = "partnerId";
-
-	/** The base URL to the Locus Energy API. */
-	public static final URI BASE_URI = URI.create("https://api.locusenergy.com");
+	/** The base URL to the AlsoEnergy API. */
+	public static final URI BASE_URI = URI.create("https://api.enphaseenergy.com");
 
 	/** The OAuth token URL. */
 	public static final URI TOKEN_URI = BASE_URI.resolve("/oauth/token");
+
+	/** The API key query parameter. */
+	public static final String API_KEY_PARAM = "key";
+
+	/** The 1-based page query parameter. */
+	public static final String PAGE_PARAM = "page";
+
+	/** The page size query parameter, between 1 - 100. */
+	public static final String PAGE_SIZE_PARAM = "size";
+
+	/** The maximum page size allowed. */
+	public static final int MAX_PAGE_SIZE = 100;
 
 	/**
 	 * The well-known URLs.
@@ -107,10 +99,16 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(OAUTH_CLIENT_ID_SETTING_SPECIFIER, OAUTH_CLIENT_SECRET_SETTING_SPECIFIER,
-				USERNAME_SETTING_SPECIFIER, PASSWORD_SETTING_SPECIFIER,
-				new BasicTextFieldSettingSpecifier(PARTNER_ID_SETTING, null),
-				BASE_URL_SETTING_SPECIFIER);
+		// @formatter:off
+		SETTINGS = List.of(
+				API_KEY_SETTING_SPECIFIER,
+				OAUTH_CLIENT_ID_SETTING_SPECIFIER,
+				OAUTH_CLIENT_SECRET_SETTING_SPECIFIER,
+				OAUTH_ACCESS_TOKEN_SETTING_SPECIFIER,
+				OAUTH_REFRESH_TOKEN_SETTING_SPECIFIER,
+				BASE_URL_SETTING_SPECIFIER
+				);
+		// @formatter:on
 	}
 
 	/** The service secure setting keys. */
@@ -131,7 +129,7 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 	 * @param oauthClientManager
 	 *        the OAuth client manager
 	 * @param clock
-	 *        the clock to use
+	 *        the clock
 	 * @param integrationLocksCache
 	 *        an optional cache that, when provided, will be used to obtain a
 	 *        lock before acquiring an access token; this can be used in prevent
@@ -142,14 +140,14 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public LocusEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
+	public EnphaseCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
-		super(SERVICE_IDENTIFIER, "Locus Energy", datumStreamServices, userEventAppenderBiz, encryptor,
+		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
-						LoggerFactory.getLogger(LocusEnergyCloudIntegrationService.class),
+						LoggerFactory.getLogger(EnphaseCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
 						integrationLocksCache));
@@ -160,6 +158,13 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 		// check that authentication settings provided
 		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
 		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+
+		final String apiKey = integration.serviceProperty(CloudIntegrationService.API_KEY_SETTING,
+				String.class);
+		if ( apiKey == null || apiKey.isEmpty() ) {
+			String errMsg = ms.getMessage("error.apiKey.missing", null, locale);
+			errorDetails.add(new ErrorDetail(CloudIntegrationService.API_KEY_SETTING, null, errMsg));
+		}
 
 		final String oauthClientId = integration
 				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, String.class);
@@ -177,42 +182,43 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 					new ErrorDetail(CloudIntegrationService.OAUTH_CLIENT_SECRET_SETTING, null, errMsg));
 		}
 
-		final String username = integration.serviceProperty(CloudIntegrationService.USERNAME_SETTING,
-				String.class);
-		if ( username == null || username.isEmpty() ) {
-			String errMsg = ms.getMessage("error.username.missing", null, locale);
-			errorDetails.add(new ErrorDetail(CloudIntegrationService.USERNAME_SETTING, null, errMsg));
+		final String oauthAccessToken = integration
+				.serviceProperty(CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING, String.class);
+		if ( oauthAccessToken == null || oauthAccessToken.isEmpty() ) {
+			String errMsg = ms.getMessage("error.oauthAccessToken.missing", null, locale);
+			errorDetails.add(
+					new ErrorDetail(CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING, null, errMsg));
 		}
 
-		final String password = integration.serviceProperty(CloudIntegrationService.PASSWORD_SETTING,
-				String.class);
-		if ( password == null || password.isEmpty() ) {
-			String errMsg = ms.getMessage("error.password.missing", null, locale);
-			errorDetails.add(new ErrorDetail(CloudIntegrationService.PASSWORD_SETTING, null, errMsg));
-		}
-
-		final String partnerId = integration.serviceProperty(PARTNER_ID_SETTING, String.class);
-		if ( partnerId == null || partnerId.isEmpty() ) {
-			String errMsg = ms.getMessage("error.partnerId.missing", null, locale);
-			errorDetails.add(new ErrorDetail(PARTNER_ID_SETTING, null, errMsg));
+		final String oauthRefreshToken = integration
+				.serviceProperty(CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING, String.class);
+		if ( oauthRefreshToken == null || oauthRefreshToken.isEmpty() ) {
+			String errMsg = ms.getMessage("error.oauthRefreshToken.missing", null, locale);
+			errorDetails.add(
+					new ErrorDetail(CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING, null, errMsg));
 		}
 
 		if ( !errorDetails.isEmpty() ) {
 			String errMsg = ms.getMessage("error.settings.missing", null, locale);
-			return Result.error("LECI.0001", errMsg, errorDetails);
+			return Result.error("EPCI.0001", errMsg, errorDetails);
 		}
 
-		// validate by requesting the available sites for the partner ID
+		// validate by requesting the available sites
 		try {
-			final String response = restOpsHelper.httpGet("List sites", integration, String.class,
-					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI)).path(
-							LocusEnergyCloudIntegrationService.V3_SITES_FOR_PARTNER_ID_URL_TEMPLATE)
-							.buildAndExpand(integration.getServiceProperties()).toUri(),
+			final var decrypted = integration.copyWithId(integration.getId());
+			decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+
+			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
+					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL)
+							.queryParam(API_KEY_PARAM,
+									decrypted.serviceProperty(API_KEY_SETTING, String.class))
+							.buildAndExpand().toUri(),
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( Exception e ) {
-			return Result.error("LECI.0002", "Validation failed: " + e.getMessage());
+			return Result.error("EPCI.0002", "Validation failed: " + e.getMessage());
 		}
 	}
 

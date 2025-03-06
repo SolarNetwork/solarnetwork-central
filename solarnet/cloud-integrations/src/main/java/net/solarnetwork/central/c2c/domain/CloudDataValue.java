@@ -332,6 +332,36 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 		return 0;
 	}
 
+	@Override
+	public String toString() {
+		if ( reference != null ) {
+			return reference;
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append("CloudDataValue{");
+		if ( identifiers != null ) {
+			builder.append("identifiers=");
+			builder.append(identifiers);
+			builder.append(", ");
+		}
+		if ( name != null ) {
+			builder.append("name=");
+			builder.append(name);
+			builder.append(", ");
+		}
+		if ( metadata != null ) {
+			builder.append("metadata=");
+			builder.append(metadata);
+			builder.append(", ");
+		}
+		if ( children != null ) {
+			builder.append("children=");
+			builder.append(children);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
 	/**
 	 * Get the data value hierarchy identifier.
 	 *

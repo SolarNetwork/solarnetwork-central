@@ -22,7 +22,12 @@
 
 package net.solarnetwork.central.user.c2c.biz.impl.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
+import static java.time.ZoneOffset.UTC;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_CLIENT_ID_SETTING;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Completed;
 import static net.solarnetwork.central.domain.BasicClaimableJobState.Queued;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
@@ -38,6 +43,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -53,6 +60,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.threeten.extra.MutableClock;
 import jakarta.validation.Validation;
 import jakarta.validation.ValidatorFactory;
 import net.solarnetwork.central.ValidationException;
@@ -74,9 +82,12 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettings;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
+import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
+import net.solarnetwork.central.domain.UserStringStringCompositePK;
+import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.user.c2c.biz.impl.DaoUserCloudIntegrationsBiz;
 import net.solarnetwork.central.user.c2c.domain.CloudDatumStreamConfigurationInput;
@@ -97,7 +108,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -129,6 +140,9 @@ public class DaoUserCloudIntegrationsBizTests {
 	@Mock
 	private CloudDatumStreamSettingsEntityDao datumStreamSettingsDao;
 
+	@Mock
+	private ClientAccessTokenDao clientAccessTokenDao;
+
 	@Captor
 	private ArgumentCaptor<Locale> localeCaptor;
 
@@ -156,6 +170,11 @@ public class DaoUserCloudIntegrationsBizTests {
 	@Captor
 	private ArgumentCaptor<BasicFilter> filterCaptor;
 
+	@Captor
+	private ArgumentCaptor<ClientAccessTokenEntity> clientAccessTokenCaptor;
+
+	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
+
 	private PrefixedTextEncryptor textEncryptor = PrefixedTextEncryptor.aesTextEncryptor(randomString(),
 			randomString());
 
@@ -171,9 +190,10 @@ public class DaoUserCloudIntegrationsBizTests {
 				new BasicTextFieldSettingSpecifier("watchout", null, true));
 		given(integrationService.getSettingSpecifiers()).willReturn(settings);
 
-		biz = new DaoUserCloudIntegrationsBiz(userSettingsDao, integrationDao, datumStreamDao,
+		biz = new DaoUserCloudIntegrationsBiz(clock, userSettingsDao, integrationDao, datumStreamDao,
 				datumStreamSettingsDao, datumStreamMappingDao, datumStreamPropertyDao,
-				datumStreamPollTaskDao, textEncryptor, Collections.singleton(integrationService));
+				datumStreamPollTaskDao, clientAccessTokenDao, textEncryptor,
+				Collections.singleton(integrationService));
 
 		ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
 		biz.setValidator(factory.getValidator());
@@ -481,6 +501,102 @@ public class DaoUserCloudIntegrationsBizTests {
 					})
 					;
 			})
+			;
+
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(conf)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void integrationConfiguration_save_withAccessToken() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		final String oauthClientId = randomString();
+		final String accessToken = """
+				eyJhbGciOiJSUzI1NiJ9.eyJhcHBfdHlwZSI6InN5c3RlbSIsInVzZXJfbmFtZSI6Im1p\
+				Y2FoLmJyaWxsQHNreXZpZXd2ZW50dXJlcy5jb20iLCJlbmxfY2lkIjoiNTk4MDUxIiwiZ\
+				W5sX3Bhc3N3b3JkX2xhc3RfY2hhbmdlZCI6IjE1OTE2Njg4NjYiLCJhdXRob3JpdGllcy\
+				I6WyJST0xFX1VTRVIiXSwiY2xpZW50X2lkIjoiYjdjYmU0YjcwYWRjNWRhOTExZWY1MWN\
+				hZWFkZWRmMjQiLCJhdWQiOlsib2F1dGgyLXJlc291cmNlIl0sImlzX2ludGVybmFsX2Fw\
+				cCI6ZmFsc2UsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJleHAiOjE3NDEwMjc2NzYsI\
+				mVubF91aWQiOiIxOTk1MjcyIiwiYXBwX0lkIjoiMTQwOTYyNDQ0Njk0NCIsImp0aSI6Im\
+				QyZmFhM2IxLTA1NGEtNDljZC1iMDI0LTk5YjVmMDQ2MDM5MCJ9.IlUBREujj0BdZcHsdr\
+				LH8XFutmJOvFjJ0O8zyWDz-UVKLMxGUAbAKKgLeyTGP3ym2Wz5_3WlQ3lTcXzogZSh0Q8\
+				tjY34qBCA6tR4dSnt8Lw0sRxxL6n3ZQ_pwfGRVw5e5S1UTGRuRIuIIsVVlej4Bg3MuluE\
+				Cd1E1AaHLIXe9co""";
+		final String refreshToken = """
+				eyJhbGciOiJSUzI1NiJ9.eyJhcHBfdHlwZSI6InN5c3RlbSIsInVzZXJfbmFtZSI6Im1p\
+				Y2FoLmJyaWxsQHNreXZpZXd2ZW50dXJlcy5jb20iLCJlbmxfY2lkIjoiNTk4MDUxIiwiZ\
+				W5sX3Bhc3N3b3JkX2xhc3RfY2hhbmdlZCI6IjE1OTE2Njg4NjYiLCJhdXRob3JpdGllcy\
+				I6WyJST0xFX1VTRVIiXSwiY2xpZW50X2lkIjoiYjdjYmU0YjcwYWRjNWRhOTExZWY1MWN\
+				hZWFkZWRmMjQiLCJhdWQiOlsib2F1dGgyLXJlc291cmNlIl0sImlzX2ludGVybmFsX2Fw\
+				cCI6ZmFsc2UsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJhdGkiOiJkMmZhYTNiMS0wN\
+				TRhLTQ5Y2QtYjAyNC05OWI1ZjA0NjAzOTAiLCJleHAiOjE3NDM1NzEwMjIsImVubF91aW\
+				QiOiIxOTk1MjcyIiwiYXBwX0lkIjoiMTQwOTYyNDQ0Njk0NCIsImp0aSI6ImYyYmM3NGQ\
+				0LTMxZTAtNDYzYi1iMjZkLWMxZmI3NjM1NTQyZCJ9.LkbUq7mm6wfW8k9zj_wPZ5IRw8g\
+				Uywrn4E1LXMNtBzPxgHRnFKUKwR9-8SMjCod1u5xTY_2KjXg0AbnYAs5dmYUDARVfl2sY\
+				HFlck7-sbua9nnpcEya3Py0w6ORadX6cyzpg0HRxEXQo3D0GFLCpc4uxbaQZWtLCGx5Ga\
+				HxcYmI""";
+
+		final Map<String, Object> sprops = Map.of(OAUTH_CLIENT_ID_SETTING, oauthClientId,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken, OAUTH_REFRESH_TOKEN_SETTING, refreshToken);
+
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(sprops);
+
+		// save and retrieve
+		given(integrationDao.save(any())).willReturn(pk);
+		given(integrationDao.get(pk)).willReturn(conf);
+
+		final UserStringStringCompositePK accessTokenPk = new UserStringStringCompositePK(userId,
+				conf.systemIdentifier(), oauthClientId);
+		given(clientAccessTokenDao.save(any())).willReturn(accessTokenPk);
+
+		// WHEN
+		CloudIntegrationConfigurationInput input = new CloudIntegrationConfigurationInput();
+		input.setEnabled(true);
+		input.setName(randomString());
+		input.setServiceIdentifier(TEST_SERVICE_ID);
+		input.setServiceProperties(sprops);
+		UserLongCompositePK unassignedId = UserLongCompositePK.unassignedEntityIdKey(userId);
+		CloudIntegrationConfiguration result = biz.saveConfiguration(unassignedId, input);
+
+		// THEN
+		// @formatter:off
+		then(integrationDao).should().save(integrationCaptor.capture());
+
+		and.then(integrationCaptor.getValue())
+			.as("Entity ID unassigned on DAO save")
+			.returns(unassignedId, from(CloudIntegrationConfiguration::getId))
+			.as("Enabled from input passed to DAO")
+			.returns(input.isEnabled(), from(CloudIntegrationConfiguration::isEnabled))
+			.as("Name from input passed to DAO")
+			.returns(input.getName(), from(CloudIntegrationConfiguration::getName))
+			.as("Service identifier from input passed to DAO")
+			.returns(input.getServiceIdentifier(), from(CloudIntegrationConfiguration::getServiceIdentifier))
+			;
+
+		then(clientAccessTokenDao).should().save(clientAccessTokenCaptor.capture());
+
+		and.then(clientAccessTokenCaptor.getValue())
+			.as("Token entity ID assigned on save")
+			.returns(accessTokenPk, from(ClientAccessTokenEntity::getId))
+			.as("Access token as provided from settings")
+			.returns(accessToken.getBytes(UTF_8), from(ClientAccessTokenEntity::getAccessToken))
+			.as("Access token expiration date decoded from JWT")
+			.returns(Instant.ofEpochSecond(1741027676L), from(ClientAccessTokenEntity::getAccessTokenExpiresAt))
+			.as("Access token issue date not in JWT, defaults to clock time")
+			.returns(clock.instant(), from(ClientAccessTokenEntity::getAccessTokenIssuedAt))
+			.as("Refresh token as provided from settings")
+			.returns(refreshToken.getBytes(UTF_8), from(ClientAccessTokenEntity::getRefreshToken))
+			.as("Refresh token issue date not in JWT, defaults to clock time")
+			.returns(clock.instant(), from(ClientAccessTokenEntity::getRefreshTokenIssuedAt))
 			;
 
 		and.then(result)

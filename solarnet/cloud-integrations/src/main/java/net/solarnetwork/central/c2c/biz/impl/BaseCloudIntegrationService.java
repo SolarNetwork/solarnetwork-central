@@ -41,7 +41,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -90,6 +90,33 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier OAUTH_CLIENT_SECRET_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			OAUTH_CLIENT_SECRET_SETTING, null, true);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#OAUTH_ACCESS_TOKEN_SETTING}.
+	 *
+	 * @since 1.4
+	 */
+	public static final TextFieldSettingSpecifier OAUTH_ACCESS_TOKEN_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OAUTH_ACCESS_TOKEN_SETTING, null, true);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#OAUTH_REFRESH_TOKEN_SETTING}.
+	 *
+	 * @since 1.4
+	 */
+	public static final TextFieldSettingSpecifier OAUTH_REFRESH_TOKEN_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			OAUTH_REFRESH_TOKEN_SETTING, null, true);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#API_KEY_SETTING}.
+	 *
+	 * @since 1.4
+	 */
+	public static final TextFieldSettingSpecifier API_KEY_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			API_KEY_SETTING, null, true);
 
 	/** The supported datum stream services. */
 	protected final Collection<CloudDatumStreamService> datumStreamServices;

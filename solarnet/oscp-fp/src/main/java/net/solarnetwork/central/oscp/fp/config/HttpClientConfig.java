@@ -39,6 +39,7 @@ import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
@@ -167,7 +168,7 @@ public class HttpClientConfig {
 	 *        the request factory
 	 * @return the service
 	 */
-	@Profile("!http-trace")
+	@Profile(SolarNetCommonConfiguration.NOT_HTTP_TRACE)
 	@Bean
 	public RestTemplate restTemplate(ClientHttpRequestFactory reqFactory) {
 		return new RestTemplate(reqFactory);
@@ -180,7 +181,7 @@ public class HttpClientConfig {
 	 *        the request factory
 	 * @return the non-production service
 	 */
-	@Profile("http-trace")
+	@Profile(SolarNetCommonConfiguration.HTTP_TRACE)
 	@Bean
 	public RestTemplate testingRestTemplate(ClientHttpRequestFactory reqFactory) {
 		//var reqFactory = new SimpleClientHttpRequestFactory();

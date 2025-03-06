@@ -290,7 +290,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				datumStreamPropertyDao, SETTINGS,
 				new RestOperationsHelper(
 						LoggerFactory.getLogger(SolrenViewCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolrenViewCloudIntegrationService.SECURE_SETTINGS));
 	}
 

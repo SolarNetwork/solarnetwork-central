@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '2.37.0'
+version = '2.38.0'
 
 base {
 	archivesName = 'solaruser'

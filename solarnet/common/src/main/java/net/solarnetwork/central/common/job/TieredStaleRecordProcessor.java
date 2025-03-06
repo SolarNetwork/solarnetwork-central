@@ -24,7 +24,7 @@ package net.solarnetwork.central.common.job;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.JdbcOperations;
 
 /**
@@ -40,7 +40,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * </p>
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.6
  */
 public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
@@ -79,9 +79,9 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	protected int executeJobTask(AtomicInteger remainingIterations) throws Exception {
 		try {
 			return execute(remainingIterations);
-		} catch ( CannotAcquireLockException e ) {
-			log.warn("Failure acquiring DB lock while processing {} for tier '{}' with call {}",
-					taskDescription, tierProcessType, getJdbcCall(), e);
+		} catch ( PessimisticLockingFailureException e ) {
+			log.warn("Failure acquiring DB lock while processing {} for tier '{}' with call {}: {}",
+					taskDescription, tierProcessType, getJdbcCall(), e.getMessage());
 		}
 		return 0;
 	}
@@ -89,6 +89,16 @@ public abstract class TieredStaleRecordProcessor extends StaleRecordProcessor {
 	@Override
 	public void run() {
 		executeParallelJob(String.format("%s tier '%s'", taskDescription, tierProcessType));
+	}
+
+	/**
+	 * Get the task description.
+	 * 
+	 * @return the task description
+	 * @since 2.2
+	 */
+	public final String getTaskDescription() {
+		return taskDescription;
 	}
 
 	/**

@@ -26,7 +26,7 @@ package net.solarnetwork.central.c2c.config;
  * Marker interface for the cloud integrations configuration package.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SolarNetCloudIntegrationsConfiguration {
 
@@ -41,5 +41,12 @@ public interface SolarNetCloudIntegrationsConfiguration {
 
 	/** A qualifier for cloud integrations polling support. */
 	String CLOUD_INTEGRATIONS_POLL = "c2c-poll";
+
+	/**
+	 * A qualifier for cloud integrations integration locks.
+	 *
+	 * @since 1.1
+	 */
+	String CLOUD_INTEGRATIONS_INTEGRATION_LOCKS = "c2c-i9n-locks";
 
 }

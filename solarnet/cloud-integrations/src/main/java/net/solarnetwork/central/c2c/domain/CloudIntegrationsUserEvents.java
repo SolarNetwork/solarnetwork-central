@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,12 +35,26 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * Constants and helpers for cloud integration user event handling.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudIntegrationsUserEvents {
 
-	/** A user event tag for cloud integration. */
-	String CLOUD_INTEGRATION_TAG = "c2c";
+	/** A user event tag for cloud integrations. */
+	String CLOUD_INTEGRATIONS_TAG = "c2c";
+
+	/**
+	 * A user event tag for {@code CloudIntegrationService} related events.
+	 *
+	 * @since 1.2
+	 */
+	String CLOUD_INTEGRATION_TAG = "i9n";
+
+	/**
+	 * A user event tag for {@code CloudDatumStreamService} related events.
+	 *
+	 * @since 1.2
+	 */
+	String CLOUD_DATUM_STREAM_TAG = "ds";
 
 	/** A user event tag for an "error". */
 	String ERROR_TAG = "error";
@@ -75,23 +90,28 @@ public interface CloudIntegrationsUserEvents {
 	String SOURCE_DATA_KEY = "source";
 
 	/** Tags for an authorization error event. */
-	String[] AUTH_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, AUTHORIZATION_TAG };
+	String[] INTEGRATION_AUTH_ERROR_TAGS = new String[] { CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_INTEGRATION_TAG, AUTHORIZATION_TAG };
 
 	/** Tags for an HTTP error event. */
-	String[] HTTP_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, HTTP_TAG };
+	String[] INTEGRATION_HTTP_ERROR_TAGS = new String[] { CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_INTEGRATION_TAG, HTTP_TAG };
 
 	/** Tags for an expression error event. */
-	String[] EXPRESSION_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, EXPRESSION_TAG };
+	String[] DATUM_STREAM_EXPRESSION_ERROR_TAGS = new String[] { CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_DATUM_STREAM_TAG, EXPRESSION_TAG };
+
+	/** Tags for a poll error event. */
+	String[] INTEGRATION_POLL_ERROR_TAGS = new String[] { CLOUD_INTEGRATIONS_TAG, ERROR_TAG,
+			CLOUD_DATUM_STREAM_TAG, POLL_TAG };
 
 	/**
-	 * Tags for a non-error poll event.
+	 * Tags for a non-error poll events.
 	 *
 	 * @since 1.1
 	 */
-	String[] POLL_TAGS = new String[] { CLOUD_INTEGRATION_TAG, POLL_TAG };
-
-	/** Tags for a poll error event. */
-	String[] POLL_ERROR_TAGS = new String[] { CLOUD_INTEGRATION_TAG, ERROR_TAG, POLL_TAG };
+	String[] INTEGRATION_POLL_TAGS = Arrays.stream(INTEGRATION_POLL_ERROR_TAGS)
+			.filter(t -> !ERROR_TAG.equals(t)).toArray(String[]::new);
 
 	/**
 	 * Populate user-related composite key components to a parameter map.

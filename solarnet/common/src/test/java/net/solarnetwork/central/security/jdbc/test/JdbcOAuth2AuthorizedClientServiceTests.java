@@ -23,6 +23,7 @@
 package net.solarnetwork.central.security.jdbc.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserIdentifiableSystem.userIdSystemIdentifier;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.util.StringUtils.commaDelimitedStringFromCollection;
@@ -37,6 +38,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import net.solarnetwork.central.security.ClientAccessTokenEntity;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
@@ -241,7 +244,7 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 					.returns(refreshToken.getTokenValue(), from(OAuth2RefreshToken::getTokenValue))
 					.as("Refresh token issue date populated from database")
 					.returns(refreshToken.getIssuedAt(), from(OAuth2RefreshToken::getIssuedAt))
-					.as("Refresh token not available from database")
+					.as("Refresh token expiration not available from database")
 					.returns(null, from(OAuth2RefreshToken::getExpiresAt))
 					;
 			})
@@ -262,6 +265,78 @@ public class JdbcOAuth2AuthorizedClientServiceTests extends AbstractJUnit5JdbcDa
 		then(result)
 			.as("Authorized client not found in database")
 			.isNull()
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void select_unencryptedRefreshToken() {
+		// GIVEN
+		final ClientAccessTokenEntity entity = new ClientAccessTokenEntity(userId,
+				"%d:%s".formatted(userId, randomString()), randomString(),
+				now().truncatedTo(ChronoUnit.MILLIS));
+		entity.setAccessTokenType(TokenType.BEARER.getValue());
+		entity.setAccessToken(randomString().getBytes(UTF_8));
+		entity.setAccessTokenIssuedAt(now().truncatedTo(ChronoUnit.MILLIS));
+		entity.setAccessTokenExpiresAt(entity.getAccessTokenIssuedAt().plusSeconds(3600L));
+		entity.setAccessTokenScopes(Set.of());
+		entity.setRefreshToken(randomString().getBytes(UTF_8));
+		entity.setRefreshTokenIssuedAt(entity.getAccessTokenIssuedAt().plusSeconds(1L));
+
+		JdbcOAuth2AuthorizedClientService_ClientAccessTokenDaoTests.save(jdbcTemplate, entity);
+
+		// @formatter:off
+		final ClientRegistration clientReg = ClientRegistration.withRegistrationId(entity.getRegistrationId())
+				.tokenUri("http://example.com/token")
+				.clientId("client.id")
+				.clientSecret("client.secret")
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.build();
+		// @formatter:on
+
+		clientRegistrations.put(entity.getRegistrationId(), clientReg);
+
+		// WHEN
+		OAuth2AuthorizedClient result = service.loadAuthorizedClient(entity.getRegistrationId(),
+				entity.getPrincipalName());
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Authorized client returned from database")
+			.isNotNull()
+			.satisfies(c -> {
+				then(c.getClientRegistration())
+					.as("Registration returned from ClientRegistrationRepository")
+					.isSameAs(clientReg)
+					;
+			})
+			.as("Principal name populated from database")
+			.returns(entity.getPrincipalName(), from(OAuth2AuthorizedClient::getPrincipalName))
+			.satisfies(c -> {
+				then(c.getAccessToken())
+					.as("Access token type populated from database")
+					.returns(TokenType.BEARER, from(OAuth2AccessToken::getTokenType))
+					.as("Access token value populated from database")
+					.returns(entity.getAccessTokenValue(), from(OAuth2AccessToken::getTokenValue))
+					.as("Access token issue date populated from database")
+					.returns(entity.getAccessTokenIssuedAt(), from(OAuth2AccessToken::getIssuedAt))
+					.as("Access token expire date populated from database")
+					.returns(entity.getAccessTokenExpiresAt(), from(OAuth2AccessToken::getExpiresAt))
+					.as("Access token scopes populated from database")
+					.returns(Set.of(), from(OAuth2AccessToken::getScopes))
+					;
+			})
+			.satisfies(c -> {
+				then(c.getRefreshToken())
+					.as("Refresh token value populated from database")
+					.returns(entity.getRefreshTokenValue(), from(OAuth2RefreshToken::getTokenValue))
+					.as("Refresh token issue date populated from database")
+					.returns(entity.getRefreshTokenIssuedAt(), from(OAuth2RefreshToken::getIssuedAt))
+					.as("Refresh token expiration not available from database")
+					.returns(null, from(OAuth2RefreshToken::getExpiresAt))
+					;
+			})
 			;
 		// @formatter:on
 	}

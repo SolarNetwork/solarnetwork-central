@@ -44,22 +44,18 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * OpenWeatherMap API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.owm";
-
-	/** An API key setting name. */
-	public static final String API_KEY_SETTING = "apiKey";
 
 	/** The base URL to the OpenWeatherMap API. */
 	public static final URI BASE_URI = URI.create("https://api.openweathermap.org");
@@ -91,8 +87,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 	/** The service settings . */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(new BasicTextFieldSettingSpecifier(API_KEY_SETTING, null, true),
-				BASE_URL_SETTING_SPECIFIER);
+		SETTINGS = List.of(API_KEY_SETTING_SPECIFIER, BASE_URL_SETTING_SPECIFIER);
 	}
 
 	/** The service secure setting keys. */
@@ -119,7 +114,7 @@ public class OpenWeatherMapCloudIntegrationService extends BaseRestOperationsClo
 				SETTINGS, WELL_KNOWN_URLS,
 				new OpenWeatherMapRestOperationsHelper(
 						LoggerFactory.getLogger(OpenWeatherMapCloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS));
 	}
 

@@ -51,9 +51,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpMethod;
@@ -91,15 +93,16 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
+import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.StringUtils;
 
 /**
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
+public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.also";
@@ -127,6 +130,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 	/** The URI path to query for data. */
 	public static final String BIN_DATA_URL = "/v2/data/bindata";
+
+	/**
+	 * The data value identifier levels source ID range.
+	 *
+	 * @since 1.3
+	 */
+	public static final IntRange DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE = IntRange.rangeOf(0, 2);
 
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
@@ -174,6 +184,13 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 	 *        the OAuth client manager
 	 * @param clock
 	 *        the instant source to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -183,21 +200,26 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager, Clock clock) {
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy Datum Stream Service", clock, userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> AlsoEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager),
-				oauthClientManager);
+						oauthClientManager, clock, integrationLocksCache));
 	}
 
 	@Override
 	protected Iterable<String> supportedPlaceholders() {
 		return SUPPORTED_PLACEHOLDERS;
+	}
+
+	@Override
+	protected IntRange dataValueIdentifierLevelsSourceIdRange() {
+		return DATA_VALUE_IDENTIFIER_LEVELS_SOURCE_ID_RANGE;
 	}
 
 	@Override
@@ -379,7 +401,7 @@ public class AlsoEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatu
 
 	private List<CloudDataValue> siteHardware(CloudIntegrationConfiguration integration,
 			Map<String, ?> filters) {
-		return restOpsHelper.httpGet("List sites", integration, JsonNode.class,
+		return restOpsHelper.httpGet("List site hardware", integration, JsonNode.class,
 		// @formatter:off
 				(req) -> fromUri(resolveBaseUrl(integration, AlsoEnergyCloudIntegrationService.BASE_URI))
 						.path(SITE_HARDWARE_URL_TEMPLATE)

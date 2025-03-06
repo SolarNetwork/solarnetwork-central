@@ -1,0 +1,179 @@
+{
+  "system_id": 2875,
+  "total_devices": 5,
+  "items": "devices",
+  "devices": {
+    "micros": [
+      {
+        "id": 57389303,
+        "last_report_at": 1741011543,
+        "name": "Microinverter 000000000699",
+        "serial_number": "000000000699",
+        "part_number": "800-01731-r02",
+        "sku": "IQ7PLUS-72-M-US",
+        "model": "IQ7+",
+        "status": "normal",
+        "active": true,
+        "product_name": "IQ7+"
+      },
+      {
+        "id": 57389312,
+        "last_report_at": 1741011555,
+        "name": "Microinverter 000000004273",
+        "serial_number": "000000004273",
+        "part_number": "800-01731-r02",
+        "sku": "IQ7PLUS-72-M-US",
+        "model": "IQ7+",
+        "status": "normal",
+        "active": true,
+        "product_name": "IQ7+"
+      }
+    ],
+    "meters": [
+      {
+        "id": 57387732,
+        "last_report_at": 1741012200,
+        "name": "production",
+        "serial_number": "000000058195EIM1",
+        "part_number": "800-00655-r09",
+        "sku": null,
+        "model": "Envoy S",
+        "status": "normal",
+        "active": true,
+        "state": "enabled",
+        "config_type": "Production",
+        "product_name": "IQ Gateway"
+      },
+      {
+        "id": 57387733,
+        "last_report_at": null,
+        "name": "consumption",
+        "serial_number": "000000058195EIM2",
+        "part_number": "800-00655-r09",
+        "sku": null,
+        "model": "Envoy S",
+        "status": "disabled",
+        "active": true,
+        "state": "disabled",
+        "config_type": "Net",
+        "product_name": "IQ Gateway"
+      }
+    ],
+    "gateways": [
+      {
+        "id": 101805630,
+        "last_report_at": 1741012234,
+        "name": "Gateway 000000058195",
+        "serial_number": "000000058195",
+        "part_number": "800-00655-r09",
+        "emu_sw_version": "D5.0.55.201210 (4f2662)",
+        "sku": "X-IQ-AM1-240-3-ES",
+        "model": "IQ Envoy",
+        "status": "normal",
+        "active": true,
+        "cellular_modem": {
+          "imei": "000009116823241",
+          "part_num": "860-00157-r01",
+          "sku": "CELLMODEM-M1",
+          "plan_start_date": 1652684400,
+          "plan_end_date": 1810450800
+        },
+        "product_name": "IQ Gateway"
+      }
+    ],
+    "q_relays": [
+      {
+        "id": 1059640316,
+        "last_report_at": 1508174262,
+        "name": "IQ Relay 912158973973",
+        "serial_number": "912158973973",
+        "part_number": "800-00595-r01",
+        "sku": "Q-RELAY-1P-INT",
+        "model": "",
+        "status": "normal",
+        "active": true,
+        "product_name": "IQ Relay"
+      },
+      {
+        "id": 1059640326,
+        "last_report_at": 1508174262,
+        "name": "IQ Relay 912163603334",
+        "serial_number": "912163603334",
+        "part_number": "800-00595-r01",
+        "sku": "Q-RELAY-1P-INT",
+        "model": "",
+        "status": "normal",
+        "active": true,
+        "product_name": "IQ Relay"
+      }
+    ],
+    "acbs": [
+      {
+        "id": 1059640321,
+        "last_report_at": 1508174262,
+        "name": "AC Battery 911364446952",
+        "serial_number": "911364446952",
+        "part_number": "800-00560-r03",
+        "sku": "IQ7-B1200-LN-I-INT01-RV0",
+        "model": "",
+        "status": "normal",
+        "active": true,
+        "product_name": "ACB"
+      },
+      {
+        "id": 1059640321,
+        "last_report_at": 1508174262,
+        "name": "AC Battery 911499228280",
+        "serial_number": "911499228280",
+        "part_number": "800-00560-r03",
+        "sku": "IQ7-B1200-LN-I-INT01-RV0",
+        "model": "",
+        "status": "normal",
+        "active": true,
+        "product_name": "ACB"
+      }
+    ],
+    "encharges": [
+      {
+        "id": 1059640295,
+        "last_report_at": 1508174262,
+        "name": "IQ Battery 492312001241",
+        "serial_number": "121593621979",
+        "part_number": "800-00562-r01",
+        "sku": "B03-A01-US00-1-3",
+        "model": "",
+        "status": "normal",
+        "active": true,
+        "product_name": "IQ Battery R3 - 5P"
+      }
+    ],
+    "enpowers": [
+      {
+        "id": 1059640294,
+        "last_report_at": 1508174262,
+        "name": "IQ System Controller 482218007023",
+        "serial_number": "121245173988",
+        "part_number": "800-01135-r02",
+        "sku": "EP200G101-M240US00",
+        "model": "",
+        "status": "normal",
+        "active": true,
+        "product_name": "IQ System Controller"
+      }
+    ],
+    "ev_chargers": [
+      {
+        "id": 202313029329,
+        "last_report_at": 1686134789,
+        "name": "IQ EV Charger 202313029329",
+        "serial_number": "202313029329",
+        "part_number": "861-02006 09",
+        "sku": "IQ-EVSE-NA-1060-0100-0100",
+        "model": "IQ-EVSE-60R",
+        "status": "normal",
+        "active": "true",
+        "firmware": "v0.04.17"
+      }
+    ]
+  }
+}

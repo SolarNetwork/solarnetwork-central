@@ -61,9 +61,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -135,9 +137,9 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.11
+ * @version 1.12
  */
-public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDatumStreamService {
+public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.ds.locus";
@@ -201,6 +203,13 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 	 *        the OAuth client manager
 	 * @param clock
 	 *        the clock to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
@@ -211,16 +220,16 @@ public class LocusEnergyCloudDatumStreamService extends BaseOAuth2ClientCloudDat
 			CloudDatumStreamConfigurationDao datumStreamDao,
 			CloudDatumStreamMappingConfigurationDao datumStreamMappingDao,
 			CloudDatumStreamPropertyConfigurationDao datumStreamPropertyDao, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager, Clock clock) {
+			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "Locus Energy Datum Stream Service", clock, userEventAppenderBiz,
 				encryptor, expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
 				datumStreamPropertyDao, SETTINGS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(LocusEnergyCloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> LocusEnergyCloudIntegrationService.SECURE_SETTINGS,
-						oauthClientManager),
-				oauthClientManager);
+						oauthClientManager, clock, integrationLocksCache));
 		this.executor = requireNonNullArgument(executor, "executor");
 	}
 

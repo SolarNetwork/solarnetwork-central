@@ -149,9 +149,6 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		var ucSourceIdSpec = new BasicToggleSettingSpecifier(UPPER_CASE_SOURCE_ID_SETTING,
-				Boolean.FALSE);
-
 		var ibSourceIdSpec = new BasicToggleSettingSpecifier(INDEX_BASED_SOURCE_ID_SETTING,
 				Boolean.FALSE);
 
@@ -163,7 +160,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						(l, r) -> r, () -> new LinkedHashMap<>(SolarEdgeResolution.values().length))));
 		resolutionSpec.setValueTitles(resolutionTitles);
 
-		SETTINGS = List.of(ucSourceIdSpec, ibSourceIdSpec, resolutionSpec);
+		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, ibSourceIdSpec, resolutionSpec);
 	}
 
 	/**
@@ -280,7 +277,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 				datumStreamPropertyDao, SETTINGS,
 				new SolarEdgeV1RestOperationsHelper(
 						LoggerFactory.getLogger(SolarEdgeV1CloudDatumStreamService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SolarEdgeV1CloudIntegrationService.SECURE_SETTINGS));
 	}
 

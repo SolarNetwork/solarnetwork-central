@@ -25,8 +25,14 @@ package net.solarnetwork.central.c2c.http;
 import static net.solarnetwork.central.c2c.http.OAuth2Utils.addOAuthBearerAuthorization;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.InstantSource;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -37,6 +43,7 @@ import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -44,12 +51,47 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * {@link OAuth2AuthorizedClientManager} support.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
+	/**
+	 * The {@code lockExpiration} property default value.
+	 *
+	 * @since 1.1
+	 */
+	public static final long DEFAULT_LOCK_EXPIRATION = TimeUnit.HOURS.toMillis(1);
+
 	/** The OAuth client manager. */
 	protected final OAuth2AuthorizedClientManager oauthClientManager;
+
+	/**
+	 * The clock to use.
+	 *
+	 * @since 1.1
+	 */
+	protected final InstantSource clock;
+
+	/**
+	 * An optional cache of locks to synchronize access token requests per
+	 * configuration.
+	 *
+	 * <p>
+	 * This cache is assumed to have read-through semantics, in that any request
+	 * for a key not already present in the map will return a new lock instance.
+	 * </p>
+	 *
+	 * @since 1.1
+	 */
+	protected final Cache<UserLongCompositePK, Lock> integrationLocksCache;
+
+	/**
+	 * A mapping of service property keys to associated HTTP header names to
+	 * include in HTTP requests.
+	 *
+	 * @since 1.1
+	 */
+	protected final Map<String, String> extraServicePropertyHeaders;
 
 	/**
 	 * Constructor.
@@ -68,15 +110,102 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *        the sensitive key provider
 	 * @param oauthClientManager
 	 *        the OAuth client manager
+	 * @param clock
+	 *        the clock to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
 			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider,
-			OAuth2AuthorizedClientManager oauthClientManager) {
+			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
+		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
+				oauthClientManager, clock, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
+	 * @param oauthClientManager
+	 *        the OAuth client manager
+	 * @param clock
+	 *        the clock to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 1.1
+	 */
+	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
+			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			Function<String, Set<String>> sensitiveKeyProvider,
+			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
+		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
+				oauthClientManager, clock, integrationLocksCache, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param log
+	 *        the logger
+	 * @param userEventAppenderBiz
+	 *        the user event appender service
+	 * @param restOps
+	 *        the REST operations
+	 * @param errorEventTags
+	 *        the error event tags
+	 * @param encryptor
+	 *        the sensitive key encryptor
+	 * @param sensitiveKeyProvider
+	 *        the sensitive key provider
+	 * @param oauthClientManager
+	 *        the OAuth client manager
+	 * @param clock
+	 *        the clock to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
+	 * @param extraServicePropertyHeaders
+	 *        an optional map of extra service property keys to HTTP header
+	 *        names to include with HTTP requests
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 * @since 1.1
+	 */
+	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
+			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			Function<String, Set<String>> sensitiveKeyProvider,
+			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache,
+			Map<String, String> extraServicePropertyHeaders) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 		this.oauthClientManager = requireNonNullArgument(oauthClientManager, "oauthClientManager");
+		this.clock = requireNonNullArgument(clock, "clock");
+		this.integrationLocksCache = integrationLocksCache;
+		this.extraServicePropertyHeaders = extraServicePropertyHeaders;
 	}
 
 	@Override
@@ -87,8 +216,16 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 			if ( configuration instanceof CloudIntegrationConfiguration integration ) {
 				final var decrypted = integration.copyWithId(integration.getId());
 				decrypted.unmaskSensitiveInformation(sensitiveKeyProvider, encryptor);
-				addOAuthBearerAuthorization(decrypted, headers, oauthClientManager,
-						userEventAppenderBiz);
+				addOAuthBearerAuthorization(decrypted, headers, oauthClientManager, userEventAppenderBiz,
+						integrationLocksCache != null ? (id) -> integrationLocksCache.get(id) : null);
+				if ( extraServicePropertyHeaders != null ) {
+					for ( Entry<String, String> e : extraServicePropertyHeaders.entrySet() ) {
+						if ( integration.hasServiceProperty(e.getKey()) ) {
+							headers.add(e.getValue(),
+									integration.serviceProperty(e.getKey(), Object.class).toString());
+						}
+					}
+				}
 			}
 			return setup.apply(headers);
 		}, handler);

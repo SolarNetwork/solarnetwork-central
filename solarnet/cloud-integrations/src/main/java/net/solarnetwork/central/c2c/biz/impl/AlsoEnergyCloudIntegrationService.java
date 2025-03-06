@@ -24,6 +24,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
+import java.time.InstantSource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import javax.cache.Cache;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpEntity;
@@ -43,6 +46,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -52,9 +56,9 @@ import net.solarnetwork.settings.support.SettingUtils;
  * AlsoEnergy implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class AlsoEnergyCloudIntegrationService extends BaseOAuth2ClientCloudIntegrationService {
+public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
 	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.also";
@@ -104,19 +108,29 @@ public class AlsoEnergyCloudIntegrationService extends BaseOAuth2ClientCloudInte
 	 *        the REST operations
 	 * @param oauthClientManager
 	 *        the OAuth client manager
+	 * @param clock
+	 *        the clock to use
+	 * @param integrationLocksCache
+	 *        an optional cache that, when provided, will be used to obtain a
+	 *        lock before acquiring an access token; this can be used in prevent
+	 *        concurrent requests using the same {@code config} from making
+	 *        multiple token requests; not the cache is assumed to have
+	 *        read-through semantics that always returns a new lock for missing
+	 *        keys
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public AlsoEnergyCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
-			OAuth2AuthorizedClientManager oauthClientManager) {
+			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
+			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
 				new OAuth2RestOperationsHelper(
 						LoggerFactory.getLogger(AlsoEnergyCloudIntegrationService.class),
-						userEventAppenderBiz, restOps, HTTP_ERROR_TAGS, encryptor,
-						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager),
-				oauthClientManager);
+						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
+						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
+						integrationLocksCache));
 	}
 
 	@Override

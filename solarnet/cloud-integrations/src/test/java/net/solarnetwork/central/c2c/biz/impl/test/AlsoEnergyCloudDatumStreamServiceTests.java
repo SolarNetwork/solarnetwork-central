@@ -156,7 +156,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		expressionService = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao);
 		service = new AlsoEnergyCloudDatumStreamService(userEventAppenderBiz, encryptor,
 				expressionService, integrationDao, datumStreamDao, datumStreamMappingDao,
-				datumStreamPropertyDao, restOps, oauthClientManager, clock);
+				datumStreamPropertyDao, restOps, oauthClientManager, clock, null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
 		msg.setBasenames(AlsoEnergyCloudIntegrationService.class.getName(),

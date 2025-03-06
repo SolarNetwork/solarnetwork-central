@@ -1,0 +1,802 @@
+{
+  "system_id": 2875,
+  "total_devices": 1,
+  "intervals": [
+    {
+      "end_at": 1741088700,
+      "devices_reporting": 1,
+      "wh_del": 0
+    },
+    {
+      "end_at": 1741089600,
+      "devices_reporting": 1,
+      "wh_del": 5
+    },
+    {
+      "end_at": 1741090500,
+      "devices_reporting": 1,
+      "wh_del": 21
+    },
+    {
+      "end_at": 1741091400,
+      "devices_reporting": 1,
+      "wh_del": 44
+    },
+    {
+      "end_at": 1741092300,
+      "devices_reporting": 1,
+      "wh_del": 97
+    },
+    {
+      "end_at": 1741093200,
+      "devices_reporting": 1,
+      "wh_del": 99
+    },
+    {
+      "end_at": 1741094100,
+      "devices_reporting": 1,
+      "wh_del": 125
+    },
+    {
+      "end_at": 1741095000,
+      "devices_reporting": 1,
+      "wh_del": 162
+    },
+    {
+      "end_at": 1741095900,
+      "devices_reporting": 1,
+      "wh_del": 168
+    },
+    {
+      "end_at": 1741096800,
+      "devices_reporting": 1,
+      "wh_del": 250
+    },
+    {
+      "end_at": 1741097700,
+      "devices_reporting": 1,
+      "wh_del": 332
+    },
+    {
+      "end_at": 1741098600,
+      "devices_reporting": 1,
+      "wh_del": 443
+    },
+    {
+      "end_at": 1741099500,
+      "devices_reporting": 1,
+      "wh_del": 459
+    },
+    {
+      "end_at": 1741100400,
+      "devices_reporting": 1,
+      "wh_del": 614
+    },
+    {
+      "end_at": 1741101300,
+      "devices_reporting": 1,
+      "wh_del": 723
+    },
+    {
+      "end_at": 1741102200,
+      "devices_reporting": 1,
+      "wh_del": 873
+    },
+    {
+      "end_at": 1741103100,
+      "devices_reporting": 1,
+      "wh_del": 834
+    },
+    {
+      "end_at": 1741104000,
+      "devices_reporting": 1,
+      "wh_del": 794
+    },
+    {
+      "end_at": 1741104900,
+      "devices_reporting": 1,
+      "wh_del": 303
+    },
+    {
+      "end_at": 1741105800,
+      "devices_reporting": 1,
+      "wh_del": 895
+    },
+    {
+      "end_at": 1741106700,
+      "devices_reporting": 1,
+      "wh_del": 733
+    },
+    {
+      "end_at": 1741107600,
+      "devices_reporting": 1,
+      "wh_del": 660
+    },
+    {
+      "end_at": 1741108500,
+      "devices_reporting": 1,
+      "wh_del": 1052
+    },
+    {
+      "end_at": 1741109400,
+      "devices_reporting": 1,
+      "wh_del": 973
+    },
+    {
+      "end_at": 1741110300,
+      "devices_reporting": 1,
+      "wh_del": 801
+    },
+    {
+      "end_at": 1741111200,
+      "devices_reporting": 1,
+      "wh_del": 755
+    },
+    {
+      "end_at": 1741112100,
+      "devices_reporting": 1,
+      "wh_del": 871
+    },
+    {
+      "end_at": 1741113000,
+      "devices_reporting": 1,
+      "wh_del": 723
+    },
+    {
+      "end_at": 1741113900,
+      "devices_reporting": 1,
+      "wh_del": 610
+    },
+    {
+      "end_at": 1741114800,
+      "devices_reporting": 1,
+      "wh_del": 496
+    },
+    {
+      "end_at": 1741115700,
+      "devices_reporting": 1,
+      "wh_del": 418
+    },
+    {
+      "end_at": 1741116600,
+      "devices_reporting": 1,
+      "wh_del": 429
+    },
+    {
+      "end_at": 1741117500,
+      "devices_reporting": 1,
+      "wh_del": 424
+    },
+    {
+      "end_at": 1741118400,
+      "devices_reporting": 1,
+      "wh_del": 544
+    }
+  ],
+  "meta": {
+    "status": "normal",
+    "last_report_at": 1741118911,
+    "last_energy_at": 1741118400,
+    "operational_at": 1657080000
+  },
+  "meter_intervals": [
+    {
+      "meter_serial_number": "000005058195EIM1",
+      "envoy_serial_number": "000005058195",
+      "intervals": [
+        {
+          "channel": 1,
+          "wh_del": 0.0,
+          "curr_w": 0,
+          "end_at": 1741088700
+        },
+        {
+          "channel": 1,
+          "wh_del": 2.0,
+          "curr_w": 32,
+          "end_at": 1741089600
+        },
+        {
+          "channel": 1,
+          "wh_del": 11.0,
+          "curr_w": 52,
+          "end_at": 1741090500
+        },
+        {
+          "channel": 1,
+          "wh_del": 22.0,
+          "curr_w": 140,
+          "end_at": 1741091400
+        },
+        {
+          "channel": 1,
+          "wh_del": 49.0,
+          "curr_w": 255,
+          "end_at": 1741092300
+        },
+        {
+          "channel": 1,
+          "wh_del": 50.0,
+          "curr_w": 189,
+          "end_at": 1741093200
+        },
+        {
+          "channel": 1,
+          "wh_del": 63.00000000000001,
+          "curr_w": 293,
+          "end_at": 1741094100
+        },
+        {
+          "channel": 1,
+          "wh_del": 81.0,
+          "curr_w": 307,
+          "end_at": 1741095000
+        },
+        {
+          "channel": 1,
+          "wh_del": 84.0,
+          "curr_w": 417,
+          "end_at": 1741095900
+        },
+        {
+          "channel": 1,
+          "wh_del": 126.00000000000001,
+          "curr_w": 608,
+          "end_at": 1741096800
+        },
+        {
+          "channel": 1,
+          "wh_del": 166.0,
+          "curr_w": 725,
+          "end_at": 1741097700
+        },
+        {
+          "channel": 1,
+          "wh_del": 222.0,
+          "curr_w": 831,
+          "end_at": 1741098600
+        },
+        {
+          "channel": 1,
+          "wh_del": 229.99999999999997,
+          "curr_w": 1090,
+          "end_at": 1741099500
+        },
+        {
+          "channel": 1,
+          "wh_del": 308.0,
+          "curr_w": 1267,
+          "end_at": 1741100400
+        },
+        {
+          "channel": 1,
+          "wh_del": 362.0,
+          "curr_w": 1625,
+          "end_at": 1741101300
+        },
+        {
+          "channel": 1,
+          "wh_del": 437.0,
+          "curr_w": 1184,
+          "end_at": 1741102200
+        },
+        {
+          "channel": 1,
+          "wh_del": 417.0,
+          "curr_w": 1977,
+          "end_at": 1741103100
+        },
+        {
+          "channel": 1,
+          "wh_del": 398.0,
+          "curr_w": 1199,
+          "end_at": 1741104000
+        },
+        {
+          "channel": 1,
+          "wh_del": 152.0,
+          "curr_w": 928,
+          "end_at": 1741104900
+        },
+        {
+          "channel": 1,
+          "wh_del": 447.0,
+          "curr_w": 2239,
+          "end_at": 1741105800
+        },
+        {
+          "channel": 1,
+          "wh_del": 366.0,
+          "curr_w": 946,
+          "end_at": 1741106700
+        },
+        {
+          "channel": 1,
+          "wh_del": 330.0,
+          "curr_w": 2289,
+          "end_at": 1741107600
+        },
+        {
+          "channel": 1,
+          "wh_del": 527.0,
+          "curr_w": 2061,
+          "end_at": 1741108500
+        },
+        {
+          "channel": 1,
+          "wh_del": 488.00000000000006,
+          "curr_w": 1906,
+          "end_at": 1741109400
+        },
+        {
+          "channel": 1,
+          "wh_del": 401.0,
+          "curr_w": 1372,
+          "end_at": 1741110300
+        },
+        {
+          "channel": 1,
+          "wh_del": 378.0,
+          "curr_w": 1688,
+          "end_at": 1741111200
+        },
+        {
+          "channel": 1,
+          "wh_del": 437.0,
+          "curr_w": 1760,
+          "end_at": 1741112100
+        },
+        {
+          "channel": 1,
+          "wh_del": 362.59666666666664,
+          "curr_w": 1322,
+          "end_at": 1741113000
+        },
+        {
+          "channel": 1,
+          "wh_del": 305.4033333333333,
+          "curr_w": 1261,
+          "end_at": 1741113900
+        },
+        {
+          "channel": 1,
+          "wh_del": 248.0,
+          "curr_w": 972,
+          "end_at": 1741114800
+        },
+        {
+          "channel": 1,
+          "wh_del": 209.0,
+          "curr_w": 788,
+          "end_at": 1741115700
+        },
+        {
+          "channel": 1,
+          "wh_del": 215.0,
+          "curr_w": 823,
+          "end_at": 1741116600
+        },
+        {
+          "channel": 1,
+          "wh_del": 212.0,
+          "curr_w": 814,
+          "end_at": 1741117500
+        },
+        {
+          "channel": 1,
+          "wh_del": 272.0,
+          "curr_w": 1244,
+          "end_at": 1741118400
+        },
+        {
+          "channel": 2,
+          "wh_del": 0.0,
+          "curr_w": 0,
+          "end_at": 1741088700
+        },
+        {
+          "channel": 2,
+          "wh_del": 3.0,
+          "curr_w": 30,
+          "end_at": 1741089600
+        },
+        {
+          "channel": 2,
+          "wh_del": 10.0,
+          "curr_w": 49,
+          "end_at": 1741090500
+        },
+        {
+          "channel": 2,
+          "wh_del": 22.0,
+          "curr_w": 137,
+          "end_at": 1741091400
+        },
+        {
+          "channel": 2,
+          "wh_del": 48.0,
+          "curr_w": 252,
+          "end_at": 1741092300
+        },
+        {
+          "channel": 2,
+          "wh_del": 49.0,
+          "curr_w": 188,
+          "end_at": 1741093200
+        },
+        {
+          "channel": 2,
+          "wh_del": 62.0,
+          "curr_w": 289,
+          "end_at": 1741094100
+        },
+        {
+          "channel": 2,
+          "wh_del": 81.0,
+          "curr_w": 304,
+          "end_at": 1741095000
+        },
+        {
+          "channel": 2,
+          "wh_del": 84.0,
+          "curr_w": 410,
+          "end_at": 1741095900
+        },
+        {
+          "channel": 2,
+          "wh_del": 124.0,
+          "curr_w": 601,
+          "end_at": 1741096800
+        },
+        {
+          "channel": 2,
+          "wh_del": 166.0,
+          "curr_w": 722,
+          "end_at": 1741097700
+        },
+        {
+          "channel": 2,
+          "wh_del": 221.0,
+          "curr_w": 825,
+          "end_at": 1741098600
+        },
+        {
+          "channel": 2,
+          "wh_del": 228.99999999999997,
+          "curr_w": 1082,
+          "end_at": 1741099500
+        },
+        {
+          "channel": 2,
+          "wh_del": 306.0,
+          "curr_w": 1258,
+          "end_at": 1741100400
+        },
+        {
+          "channel": 2,
+          "wh_del": 361.0,
+          "curr_w": 1624,
+          "end_at": 1741101300
+        },
+        {
+          "channel": 2,
+          "wh_del": 436.0,
+          "curr_w": 1177,
+          "end_at": 1741102200
+        },
+        {
+          "channel": 2,
+          "wh_del": 417.0,
+          "curr_w": 1966,
+          "end_at": 1741103100
+        },
+        {
+          "channel": 2,
+          "wh_del": 396.0,
+          "curr_w": 1188,
+          "end_at": 1741104000
+        },
+        {
+          "channel": 2,
+          "wh_del": 151.0,
+          "curr_w": 928,
+          "end_at": 1741104900
+        },
+        {
+          "channel": 2,
+          "wh_del": 448.0,
+          "curr_w": 2243,
+          "end_at": 1741105800
+        },
+        {
+          "channel": 2,
+          "wh_del": 367.0,
+          "curr_w": 948,
+          "end_at": 1741106700
+        },
+        {
+          "channel": 2,
+          "wh_del": 330.0,
+          "curr_w": 2281,
+          "end_at": 1741107600
+        },
+        {
+          "channel": 2,
+          "wh_del": 525.0,
+          "curr_w": 2050,
+          "end_at": 1741108500
+        },
+        {
+          "channel": 2,
+          "wh_del": 485.0,
+          "curr_w": 1895,
+          "end_at": 1741109400
+        },
+        {
+          "channel": 2,
+          "wh_del": 400.0,
+          "curr_w": 1367,
+          "end_at": 1741110300
+        },
+        {
+          "channel": 2,
+          "wh_del": 377.0,
+          "curr_w": 1685,
+          "end_at": 1741111200
+        },
+        {
+          "channel": 2,
+          "wh_del": 434.0,
+          "curr_w": 1744,
+          "end_at": 1741112100
+        },
+        {
+          "channel": 2,
+          "wh_del": 360.5988888888889,
+          "curr_w": 1318,
+          "end_at": 1741113000
+        },
+        {
+          "channel": 2,
+          "wh_del": 304.4011111111111,
+          "curr_w": 1256,
+          "end_at": 1741113900
+        },
+        {
+          "channel": 2,
+          "wh_del": 248.0,
+          "curr_w": 969,
+          "end_at": 1741114800
+        },
+        {
+          "channel": 2,
+          "wh_del": 209.0,
+          "curr_w": 786,
+          "end_at": 1741115700
+        },
+        {
+          "channel": 2,
+          "wh_del": 214.0,
+          "curr_w": 818,
+          "end_at": 1741116600
+        },
+        {
+          "channel": 2,
+          "wh_del": 212.0,
+          "curr_w": 811,
+          "end_at": 1741117500
+        },
+        {
+          "channel": 2,
+          "wh_del": 272.0,
+          "curr_w": 1244,
+          "end_at": 1741118400
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741088700
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741089600
+        },
+        {
+          "channel": 3,
+          "wh_del": 0,
+          "curr_w": 45,
+          "end_at": 1741090500
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741091400
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741092300
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741093200
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741094100
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741095000
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741095900
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741096800
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741097700
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741098600
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741099500
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741100400
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741101300
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741102200
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741103100
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741104000
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741104900
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741105800
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741106700
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741107600
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741108500
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741109400
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741110300
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741111200
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741112100
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741113000
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741113900
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741114800
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741115700
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741116600
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741117500
+        },
+        {
+          "channel": 3,
+          "wh_del": null,
+          "curr_w": null,
+          "end_at": 1741118400
+        }
+      ]
+    }
+  ]
+}
