@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 
@@ -41,7 +42,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * rows.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.7
  */
 public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecordProcessor {
@@ -87,22 +88,31 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 					con.setAutoCommit(true); // we want every execution of our loop to commit immediately
 					int resultCount = 0;
 					int processedCount = 0;
-					do {
-						if ( call.execute() ) {
-							try (ResultSet rs = call.getResultSet()) {
-								if ( rs.next() ) {
-									processResultRow(rs);
-									resultCount = 1;
-								} else {
-									resultCount = 0;
+					try {
+						do {
+							if ( call.execute() ) {
+								try (ResultSet rs = call.getResultSet()) {
+									if ( rs.next() ) {
+										processResultRow(rs);
+										resultCount = 1;
+									} else {
+										resultCount = 0;
+									}
 								}
+							} else {
+								resultCount = call.getInt(1);
 							}
-						} else {
-							resultCount = call.getInt(1);
-						}
-						processedCount += resultCount;
-						remainingCount.addAndGet(-resultCount);
-					} while ( resultCount > 0 && remainingCount.get() > 0 );
+							processedCount += resultCount;
+							remainingCount.addAndGet(-resultCount);
+						} while ( resultCount > 0 && remainingCount.get() > 0 );
+					} catch ( PessimisticLockingFailureException e ) {
+						log.warn(
+								"Failure acquiring DB lock while processing {} for tier '{}' with call {}: {}",
+								getTaskDescription(), tierProcessType, getJdbcCall(), e.getMessage());
+					} catch ( Throwable e ) {
+						log.error("Error processing {} for tier '{}' with call {}: {}",
+								getTaskDescription(), tierProcessType, getJdbcCall(), e.getMessage(), e);
+					}
 					return processedCount;
 				}
 			}
