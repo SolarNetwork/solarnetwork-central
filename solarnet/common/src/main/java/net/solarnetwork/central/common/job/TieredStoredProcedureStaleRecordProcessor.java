@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -68,27 +69,27 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 	protected final int execute(final AtomicInteger remainingCount) {
 		final String tierProcessType = getTierProcessType();
 		final Integer tierProcessMax = getTierProcessMax();
-		return getJdbcOps().execute(new ConnectionCallback<Integer>() {
+		final MutableInt processedCount = new MutableInt(0);
+		try {
+			getJdbcOps().execute(new ConnectionCallback<Void>() {
 
-			@Override
-			public Integer doInConnection(Connection con) throws SQLException, DataAccessException {
-				final String sql = getJdbcCall();
-				final int paramCount = (int) sql.chars().filter(ch -> ch == '?').count();
-				try (CallableStatement call = con.prepareCall(sql)) {
-					int idx = 0;
-					if ( CALL_RETURN_COUNT.matcher(sql).find() && idx < paramCount ) {
-						call.registerOutParameter(++idx, Types.INTEGER);
-					}
-					if ( idx < paramCount ) {
-						call.setString(++idx, tierProcessType);
-					}
-					if ( tierProcessMax != null && idx < paramCount ) {
-						call.setInt(++idx, tierProcessMax);
-					}
-					con.setAutoCommit(true); // we want every execution of our loop to commit immediately
-					int resultCount = 0;
-					int processedCount = 0;
-					try {
+				@Override
+				public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+					final String sql = getJdbcCall();
+					final int paramCount = (int) sql.chars().filter(ch -> ch == '?').count();
+					try (CallableStatement call = con.prepareCall(sql)) {
+						int idx = 0;
+						if ( CALL_RETURN_COUNT.matcher(sql).find() && idx < paramCount ) {
+							call.registerOutParameter(++idx, Types.INTEGER);
+						}
+						if ( idx < paramCount ) {
+							call.setString(++idx, tierProcessType);
+						}
+						if ( tierProcessMax != null && idx < paramCount ) {
+							call.setInt(++idx, tierProcessMax);
+						}
+						con.setAutoCommit(true); // we want every execution of our loop to commit immediately
+						int resultCount = 0;
 						do {
 							if ( call.execute() ) {
 								try (ResultSet rs = call.getResultSet()) {
@@ -102,24 +103,23 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 							} else {
 								resultCount = call.getInt(1);
 							}
-							processedCount += resultCount;
+							processedCount.add(resultCount);
 							remainingCount.addAndGet(-resultCount);
 						} while ( resultCount > 0 && remainingCount.get() > 0 );
-					} catch ( PessimisticLockingFailureException e ) {
-						log.warn(
-								"{} acquiring DB lock while processing {} for tier '{}' with call {}: {}",
-								e.getClass().getSimpleName(), getTaskDescription(), tierProcessType,
-								getJdbcCall(), e.getMessage());
-					} catch ( Throwable e ) {
-						log.error("{} processing {} for tier '{}' with call {}: {}",
-								e.getClass().getSimpleName(), getTaskDescription(), tierProcessType,
-								getJdbcCall(), e.getMessage(), e);
+						return null;
 					}
-					return processedCount;
 				}
-			}
 
-		});
+			});
+		} catch ( PessimisticLockingFailureException e ) {
+			log.warn("{} acquiring DB lock while processing {} for tier '{}' with call {}: {}",
+					e.getClass().getSimpleName(), getTaskDescription(), tierProcessType, getJdbcCall(),
+					e.getMessage());
+		} catch ( Throwable e ) {
+			log.error("{} processing {} for tier '{}' with call {}: {}", e.getClass().getSimpleName(),
+					getTaskDescription(), tierProcessType, getJdbcCall(), e.getMessage(), e);
+		}
+		return processedCount.intValue();
 	}
 
 	/**
