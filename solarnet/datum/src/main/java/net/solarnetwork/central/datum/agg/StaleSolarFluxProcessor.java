@@ -26,6 +26,8 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang3.mutable.MutableInt;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.common.job.TieredStaleRecordProcessor;
@@ -63,7 +65,7 @@ import net.solarnetwork.central.datum.v2.support.DatumUtils;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.7
  */
 public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
@@ -100,63 +102,69 @@ public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
 		if ( !publisher.isConfigured() ) {
 			return 0;
 		}
-		return getJdbcOps().execute((ConnectionCallback<Integer>) con -> {
-			con.setAutoCommit(false);
-			int processedCount = 0;
-			BasicDatumCriteria filter = new BasicDatumCriteria();
-			filter.setMostRecent(true);
-			int resultCount = 0;
-			try (PreparedStatement query = con.prepareStatement(getJdbcCall(),
-					ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
-				do {
-					try (ResultSet rs = query.executeQuery()) {
-						resultCount = 0;
-						while ( rs.next() ) {
-							resultCount++;
+		final MutableInt processedCount = new MutableInt(0);
+		try {
+			getJdbcOps().execute((ConnectionCallback<Void>) con -> {
+				con.setAutoCommit(false);
+				BasicDatumCriteria filter = new BasicDatumCriteria();
+				filter.setMostRecent(true);
+				int resultCount = 0;
+				try (PreparedStatement query = con.prepareStatement(getJdbcCall(),
+						ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+					do {
+						try (ResultSet rs = query.executeQuery()) {
+							resultCount = 0;
+							while ( rs.next() ) {
+								resultCount++;
 
-							boolean handled = false;
-							try {
-								final StaleFluxDatum stale = StaleFluxDatumRowMapper.INSTANCE.mapRow(rs,
-										resultCount);
-								assert stale != null;
-								filter.setAggregation(stale.getKind());
-								filter.setStreamId(stale.getStreamId());
-								ObjectDatumStreamFilterResults<Datum, DatumPK> results = datumDao
-										.findFiltered(filter);
-								if ( results.getReturnedResultCount() > 0 ) {
-									Datum datum = results.iterator().next();
-									if ( datum != null ) {
-										GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
-												results.metadataForStreamId(datum.getStreamId()));
-										handled = publisher.processDatum(gnd, stale.getKind());
+								boolean handled = false;
+								try {
+									final StaleFluxDatum stale = StaleFluxDatumRowMapper.INSTANCE
+											.mapRow(rs, resultCount);
+									assert stale != null;
+									filter.setAggregation(stale.getKind());
+									filter.setStreamId(stale.getStreamId());
+									ObjectDatumStreamFilterResults<Datum, DatumPK> results = datumDao
+											.findFiltered(filter);
+									if ( results.getReturnedResultCount() > 0 ) {
+										Datum datum = results.iterator().next();
+										if ( datum != null ) {
+											GeneralNodeDatum gnd = DatumUtils.toGeneralNodeDatum(datum,
+													results.metadataForStreamId(datum.getStreamId()));
+											handled = publisher.processDatum(gnd, stale.getKind());
+										}
+									} else {
+										log.warn(
+												"Most recent {} datum for stream {} not found (not node stream?).",
+												stale.getKind(), stale.getStreamId());
+										handled = true;
 									}
-								} else {
-									log.warn(
-											"Most recent {} datum for stream {} not found (not node stream?).",
-											stale.getKind(), stale.getStreamId());
+								} catch ( IllegalArgumentException e ) {
+									log.error("Unsupported stale type: {}", e.toString());
 									handled = true;
+								} finally {
+									if ( handled ) {
+										rs.deleteRow();
+									}
 								}
-							} catch ( IllegalArgumentException e ) {
-								log.error("Unsupported stale type: {}", e.toString());
-								handled = true;
-							} finally {
-								if ( handled ) {
-									rs.deleteRow();
-								}
-							}
 
-							remainingCount.decrementAndGet();
-							processedCount++;
+								remainingCount.decrementAndGet();
+								processedCount.increment();
+							}
+							con.commit();
 						}
-						con.commit();
-					} catch ( Throwable t ) {
-						log.warn("Error processing stale solar flux: {}", t.toString(), t);
-						con.rollback();
-					}
-				} while ( resultCount > 0 && remainingCount.get() > 0 );
-			}
-			return processedCount;
-		});
+					} while ( resultCount > 0 && remainingCount.get() > 0 );
+				}
+				return null;
+			});
+		} catch ( PessimisticLockingFailureException e ) {
+			log.warn("{} processing {} with call {}: {}", e.getClass().getSimpleName(),
+					getTaskDescription(), getJdbcCall(), e.getMessage());
+		} catch ( Throwable e ) {
+			log.error("{} processing {} with call {}: {}", e.getClass().getSimpleName(),
+					getTaskDescription(), getJdbcCall(), e.getMessage(), e);
+		}
+		return processedCount.intValue();
 	}
 
 	/**

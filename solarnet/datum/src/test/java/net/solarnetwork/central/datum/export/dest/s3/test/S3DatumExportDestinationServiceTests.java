@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.export.dest.s3.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toSet;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -31,6 +33,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -44,6 +47,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -55,17 +60,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.FileCopyUtils;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.AmazonS3URI;
-import com.amazonaws.services.s3.model.DeleteObjectsRequest;
-import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
-import com.amazonaws.services.s3.model.DeleteObjectsResult;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.dest.s3.S3DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
@@ -77,6 +71,20 @@ import net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormat
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.KeyedSettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifier;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.http.apache.ApacheSdkHttpService;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Uri;
+import software.amazon.awssdk.services.s3.S3Utilities;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 /**
  * Test cases for the {@link S3DatumExportDestinationService} class.
@@ -105,6 +113,7 @@ public class S3DatumExportDestinationServiceTests {
 	private static Properties TEST_PROPS;
 
 	private ExecutorService executorService;
+	private S3Uri s3Uri;
 
 	@BeforeAll
 	public static void setupClass() {
@@ -122,9 +131,27 @@ public class S3DatumExportDestinationServiceTests {
 		TEST_PROPS = p;
 	}
 
+	private String region() {
+		String region = TEST_PROPS.getProperty("region", null);
+		if ( region == null ) {
+			String path = TEST_PROPS.getProperty("path");
+			Matcher m = Pattern.compile("://s3\\.([^.]+)\\.").matcher(path);
+			if ( m.find() ) {
+				region = m.group(1);
+			} else {
+				throw new IllegalStateException("region property not defined");
+			}
+		}
+		return region;
+	}
+
 	@BeforeEach
 	public void setup() {
 		executorService = Executors.newCachedThreadPool();
+
+		s3Uri = S3Utilities.builder().region(Region.of(region())).build()
+				.parseUri(URI.create(TEST_PROPS.getProperty("path")));
+
 	}
 
 	@AfterEach
@@ -134,38 +161,62 @@ public class S3DatumExportDestinationServiceTests {
 		}
 	}
 
-	private ListObjectsV2Result listFolder(AmazonS3 client) {
-		AmazonS3URI uri = new AmazonS3URI(TEST_PROPS.getProperty("path"));
-		return client.listObjectsV2(uri.getBucket(), uri.getKey());
+	private ListObjectsV2Response listS3Folder(S3Client client) {
+		return client.listObjectsV2(r -> r.bucket(s3Uri.bucket().get()).prefix(s3Uri.key().get()));
 	}
 
-	private void cleanS3Folder(AmazonS3 client) {
-		// clear out dir
-		AmazonS3URI uri = new AmazonS3URI(TEST_PROPS.getProperty("path"));
-
-		ListObjectsV2Result result = listFolder(client);
-
-		DeleteObjectsRequest req = new DeleteObjectsRequest(uri.getBucket());
-		if ( result.getKeyCount() > 0 ) {
-			for ( S3ObjectSummary obj : result.getObjectSummaries() ) {
-				req.getKeys().add(new KeyVersion(obj.getKey()));
+	private void cleanS3Folder(S3Client client) {
+		ListObjectsV2Response result = listS3Folder(client);
+		if ( result.keyCount() > 0 ) {
+			List<ObjectIdentifier> keys = new ArrayList<>();
+			for ( S3Object obj : result.contents() ) {
+				if ( s3Uri.key() != null && s3Uri.key().isPresent()
+						&& s3Uri.key().get().equals(obj.key()) ) {
+					continue;
+				}
+				keys.add(ObjectIdentifier.builder().key(obj.key()).build());
 			}
-			DeleteObjectsResult deleteResult = client.deleteObjects(req);
-			if ( deleteResult.getDeletedObjects() != null ) {
-				log.info("Deleted objects from S3: " + deleteResult.getDeletedObjects().stream()
-						.map(o -> o.getKey()).collect(Collectors.toList()));
+			if ( !keys.isEmpty() ) {
+				DeleteObjectsResponse deleteResult = client
+						.deleteObjects(r -> r.bucket(s3Uri.bucket().get()).delete(d -> d.objects(keys)));
+				if ( deleteResult.deleted() != null ) {
+					log.info("Deleted objects from S3: " + deleteResult.deleted().stream()
+							.map(o -> o.key()).collect(Collectors.toList()));
+				}
 			}
 		}
 	}
 
-	private String getObjectAsString(AmazonS3 client, String key) {
-		AmazonS3URI uri = new AmazonS3URI(TEST_PROPS.getProperty("path"));
-		S3Object obj = client.getObject(uri.getBucket(), key);
-		try {
-			return FileCopyUtils.copyToString(new InputStreamReader(obj.getObjectContent(), "UTF-8"));
+	private String objectAsString(S3Client client, String key) {
+		try (ResponseInputStream<GetObjectResponse> in = client
+				.getObject(r -> r.bucket(s3Uri.bucket().get()).key(key))) {
+			return FileCopyUtils.copyToString(new InputStreamReader(in, UTF_8));
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private S3Client s3Client() {
+		S3ClientBuilder builder = S3Client.builder()
+				.httpClient(new ApacheSdkHttpService().createHttpClientBuilder().build())
+				.region(s3Uri.region().get());
+		String accessKey = TEST_PROPS.getProperty("accessKey");
+		String secretKey = TEST_PROPS.getProperty("secretKey");
+		builder = builder.credentialsProvider(
+				StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
+		return builder.build();
+	}
+
+	private String getObjectKeyPrefix() {
+		String keyPrefix = s3Uri.uri().getPath();
+		if ( keyPrefix.startsWith("/") ) {
+			keyPrefix = keyPrefix.substring(1);
+		}
+		int bucketIdx = keyPrefix.indexOf('/');
+		if ( bucketIdx > 0 ) {
+			keyPrefix = keyPrefix.substring(bucketIdx + 1);
+		}
+		return keyPrefix;
 	}
 
 	@Test
@@ -190,33 +241,10 @@ public class S3DatumExportDestinationServiceTests {
 		return new BasicDatumExportResource(r, "text/plain;charset=UTF-8");
 	}
 
-	private AmazonS3 getS3Client() {
-		AmazonS3URI uri = new AmazonS3URI(TEST_PROPS.getProperty("path"));
-		AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard().withRegion(uri.getRegion());
-		String accessKey = TEST_PROPS.getProperty("accessKey");
-		String secretKey = TEST_PROPS.getProperty("secretKey");
-		builder = builder.withCredentials(
-				new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)));
-		return builder.build();
-	}
-
-	private String getObjectKeyPrefix() {
-		AmazonS3URI uri = new AmazonS3URI(TEST_PROPS.getProperty("path"));
-		String keyPrefix = uri.getURI().getPath();
-		if ( keyPrefix.startsWith("/") ) {
-			keyPrefix = keyPrefix.substring(1);
-		}
-		int bucketIdx = keyPrefix.indexOf('/');
-		if ( bucketIdx > 0 ) {
-			keyPrefix = keyPrefix.substring(bucketIdx + 1);
-		}
-		return keyPrefix;
-	}
-
 	@Test
 	public void export() throws IOException {
 		// GIVEN
-		AmazonS3 client = getS3Client();
+		S3Client client = s3Client();
 		cleanS3Folder(client);
 
 		S3DatumExportDestinationService service = new S3DatumExportDestinationService(executorService);
@@ -259,16 +287,16 @@ public class S3DatumExportDestinationServiceTests {
 		assertThat("Progress complete", progress.get(progress.size() - 1), equalTo((Double) 1.0));
 
 		// now list our folder to verify expected result
-		ListObjectsV2Result listing = listFolder(client);
-		Set<String> keys = listing.getObjectSummaries().stream().map(S3ObjectSummary::getKey)
-				.collect(Collectors.toSet());
+		ListObjectsV2Response listing = listS3Folder(client);
+		Set<String> keys = listing.contents().stream().map(S3Object::key).collect(toSet());
+
 		String keyPrefix = getObjectKeyPrefix();
 		assertThat(keys, containsInAnyOrder(keyPrefix + "/data-export-2018-04-10.csv"));
 
-		String exportContent = getObjectAsString(client, listing.getObjectSummaries().get(0).getKey());
+		String exportContent = objectAsString(client, listing.contents().get(0).key());
 		assertThat("Exported content", exportContent,
 				equalTo(FileCopyUtils.copyToString(new InputStreamReader(
-						getClass().getResourceAsStream("test-datum-export-01.txt"), "UTF-8"))));
+						getClass().getResourceAsStream("test-datum-export-01.txt"), UTF_8))));
 	}
 
 }
