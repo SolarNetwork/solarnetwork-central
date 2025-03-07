@@ -80,7 +80,7 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycleObserver {
 
@@ -285,7 +285,7 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 			if ( count < 1 ) {
 				// clean out stale 0 valued counter
 				itr.remove();
-				stats.increment(JdbcQueryAuditorCount.ZeroCountsCleared);
+				stats.increment(JdbcQueryAuditorCount.ZeroCountsCleared, true);
 				continue;
 			}
 			try {
