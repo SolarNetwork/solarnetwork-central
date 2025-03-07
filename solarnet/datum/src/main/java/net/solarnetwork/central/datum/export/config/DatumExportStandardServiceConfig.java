@@ -50,7 +50,7 @@ import net.solarnetwork.central.datum.export.standard.JsonDatumExportOutputForma
  * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
-public class DatumExportStandardServiceConfig {
+public class DatumExportStandardServiceConfig implements SolarNetDatumExportConfiguration {
 
 	@Value("${app.datum.export.temporary-dir}")
 	private String temporaryDir;
@@ -87,7 +87,7 @@ public class DatumExportStandardServiceConfig {
 	 * @return the task executor
 	 */
 	@Bean
-	@Qualifier("s3-datum-export")
+	@Qualifier(DATUM_EXPORT)
 	@ConfigurationProperties(prefix = "app.datum.export.s3.executor")
 	public ThreadPoolTaskExecutor s3DatumExportTaskExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -100,7 +100,7 @@ public class DatumExportStandardServiceConfig {
 
 	@Bean
 	public DatumExportDestinationService s3DatumExportDestinationService(
-			@Qualifier("s3-datum-export") ThreadPoolTaskExecutor taskExecutor) {
+			@Qualifier(DATUM_EXPORT) ThreadPoolTaskExecutor taskExecutor) {
 		S3DatumExportDestinationService service = new S3DatumExportDestinationService(
 				taskExecutor.getThreadPoolExecutor());
 

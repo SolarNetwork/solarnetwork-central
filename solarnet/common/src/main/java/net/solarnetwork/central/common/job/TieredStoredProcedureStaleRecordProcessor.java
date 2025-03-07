@@ -107,11 +107,13 @@ public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecord
 						} while ( resultCount > 0 && remainingCount.get() > 0 );
 					} catch ( PessimisticLockingFailureException e ) {
 						log.warn(
-								"Failure acquiring DB lock while processing {} for tier '{}' with call {}: {}",
-								getTaskDescription(), tierProcessType, getJdbcCall(), e.getMessage());
+								"{} acquiring DB lock while processing {} for tier '{}' with call {}: {}",
+								e.getClass().getSimpleName(), getTaskDescription(), tierProcessType,
+								getJdbcCall(), e.getMessage());
 					} catch ( Throwable e ) {
-						log.error("Error processing {} for tier '{}' with call {}: {}",
-								getTaskDescription(), tierProcessType, getJdbcCall(), e.getMessage(), e);
+						log.error("{} processing {} for tier '{}' with call {}: {}",
+								e.getClass().getSimpleName(), getTaskDescription(), tierProcessType,
+								getJdbcCall(), e.getMessage(), e);
 					}
 					return processedCount;
 				}
