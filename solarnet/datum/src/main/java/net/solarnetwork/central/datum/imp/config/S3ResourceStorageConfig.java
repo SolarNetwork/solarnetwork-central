@@ -53,7 +53,7 @@ public class S3ResourceStorageConfig implements SolarNetDatumImportConfiguration
 	@Bean(destroyMethod = "shutdown")
 	public ThreadPoolTaskExecutor datumImportS3Executor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-		executor.setThreadNamePrefix("SolarNet-");
+		executor.setThreadNamePrefix("SolarNet-S3-Import-");
 		executor.setCorePoolSize(2);
 		return executor;
 	}
@@ -65,7 +65,7 @@ public class S3ResourceStorageConfig implements SolarNetDatumImportConfiguration
 		return new Sdk2S3Client(executor.getThreadPoolExecutor(), "Datum-Import");
 	}
 
-	@ConfigurationProperties(prefix = "app.datum.import.s3-storage")
+	@ConfigurationProperties(prefix = "app.datum.import.s3-storage.service")
 	@Qualifier(DATUM_IMPORT)
 	@Bean(initMethod = "startup")
 	public ResourceStorageService datumImportResourceStorageService(

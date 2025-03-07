@@ -79,13 +79,14 @@ app:
       resource-storage-wait-ms: 60000
       resource-storage-uid: "Datum-Import"
       s3-storage:
-        objectKeyPrefix: "datum-import/"
+        service:
+          objectKeyPrefix: "datum-import/"
         executor:
-          thread-name-prefix: "SolarNet-S3-Import-"
+          thread-name-prefix: "SolarNet-S3-Import-HI-"
           core-pool-size: 5
           max-pool-size: 5
           allow-core-thread-time-out: true
-        s3Client:
+        s3-client:
           bucketName: "snf-apps"
           regionName: "us-west-2"
           accessToken: "TOKEN_HERE"
