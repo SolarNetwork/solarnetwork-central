@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.datum.imp.config;
 
-import static net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguration.DATUM_IMPORT;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,7 +29,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import net.solarnetwork.common.s3.S3Client;
 import net.solarnetwork.common.s3.S3ResourceStorageService;
+import net.solarnetwork.common.s3.sdk2.Sdk2S3Client;
 import net.solarnetwork.service.ResourceStorageService;
 
 /**
@@ -41,17 +43,36 @@ import net.solarnetwork.service.ResourceStorageService;
  */
 @Configuration(proxyBeanMethods = false)
 @Profile("datum-import-s3-resource-storage")
-public class S3ResourceStorageConfig {
+public class S3ResourceStorageConfig implements SolarNetDatumImportConfiguration {
 
 	@Autowired
 	public Executor executor;
 
+	@ConfigurationProperties(prefix = "app.datum.import.s3-storage.executor")
+	@Qualifier(DATUM_IMPORT)
+	@Bean(destroyMethod = "shutdown")
+	public ThreadPoolTaskExecutor datumImportS3Executor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setThreadNamePrefix("SolarNet-");
+		executor.setCorePoolSize(2);
+		return executor;
+	}
+
+	@ConfigurationProperties(prefix = "app.datum.import.s3-storage.s3-client")
+	@Qualifier(DATUM_IMPORT)
+	@Bean
+	public S3Client datumImportS3Client(@Qualifier(DATUM_IMPORT) ThreadPoolTaskExecutor executor) {
+		return new Sdk2S3Client(executor.getThreadPoolExecutor(), "Datum-Import");
+	}
+
 	@ConfigurationProperties(prefix = "app.datum.import.s3-storage")
 	@Qualifier(DATUM_IMPORT)
 	@Bean(initMethod = "startup")
-	public ResourceStorageService datumImportResourceStorageService() {
+	public ResourceStorageService datumImportResourceStorageService(
+			@Qualifier(DATUM_IMPORT) S3Client s3Client) {
 		S3ResourceStorageService service = new S3ResourceStorageService(executor);
 		service.setUid("Datum-Import");
+		service.setS3Client(s3Client);
 		return service;
 	}
 

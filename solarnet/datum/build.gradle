@@ -24,7 +24,7 @@ base {
 
 configurations {
 	all*.exclude group: 'commons-logging'
-	all*.exclude group: 'com.amazonaws', module: 'aws-java-sdk-osgi'
+	all*.exclude group: 'com.amazonaws'
 	all*.exclude group: 'log4j', module: 'log4j'
 	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
@@ -43,18 +43,20 @@ dependencies {
 	// Utilities
 	implementation "commons-io:commons-io:${commonsIoVersion}"
 	implementation 'commons-net:commons-net:3.10.0'
-	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.777'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.apache.httpcomponents.client5:httpclient5'
 	implementation 'org.aspectj:aspectjweaver'
+	implementation "software.amazon.awssdk:netty-nio-client:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
 	
 	// SolarNetwork
-	api 'net.solarnetwork.common:net.solarnetwork.common.s3:2.0.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3:3.2.0'
+	api 'net.solarnetwork.common:net.solarnetwork.common.s3.sdk2:1.0.0'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
+	testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 	testImplementation 'io.moquette:moquette-broker:0.15'
 	testImplementation "net.solarnetwork.common:net.solarnetwork.common.expr.spel:${snCommonExprSpelVersion}"
@@ -62,6 +64,7 @@ dependencies {
 	testImplementation 'org.eclipse.jetty:jetty-server'
 	testImplementation "org.tukaani:xz:${xzVersion}"
 	testImplementation 'org.mockftpserver:MockFtpServer:3.1.0'
+	implementation "software.amazon.awssdk:apache-client:${awsSdk2Version}"
 }
 
 jar.manifest {
