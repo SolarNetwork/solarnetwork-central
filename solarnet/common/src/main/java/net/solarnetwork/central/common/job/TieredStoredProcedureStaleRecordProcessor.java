@@ -43,7 +43,7 @@ import org.springframework.jdbc.core.JdbcOperations;
  * rows.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.7
  */
 public class TieredStoredProcedureStaleRecordProcessor extends TieredStaleRecordProcessor {

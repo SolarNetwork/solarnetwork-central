@@ -65,7 +65,7 @@ import net.solarnetwork.central.datum.v2.support.DatumUtils;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  * @since 1.7
  */
 public class StaleSolarFluxProcessor extends TieredStaleRecordProcessor {
