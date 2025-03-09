@@ -371,8 +371,10 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 				LOG.warn("Access DENIED to sources {} for {}: policy restriction", sourceIds, principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, sourceIds);
 			} else if ( !sourceIdsSet.equals(new HashSet<>(Arrays.asList(sourceIds))) ) {
-				LOG.warn("Access REMOVED to sources {} for {}: policy restriction", removedSourceIds,
-						principal);
+				if ( removedSourceIds != null ) {
+					LOG.warn("Access REMOVED to sources {} for {}: policy restriction", removedSourceIds,
+							principal);
+				}
 				sourceIds = sourceIdsSet.toArray(String[]::new);
 			}
 		} else {
