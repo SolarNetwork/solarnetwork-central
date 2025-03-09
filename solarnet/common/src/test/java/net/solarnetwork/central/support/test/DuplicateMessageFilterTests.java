@@ -148,6 +148,8 @@ public class DuplicateMessageFilterTests {
 				Level.INFO, "Test 1", null, null);
 		LoggingEvent evt1a = new LoggingEvent(DuplicateMessageFilterTests.class.getName(), log,
 				Level.INFO, "Test 1", null, null);
+		LoggingEvent evt1b = new LoggingEvent(DuplicateMessageFilterTests.class.getName(), log,
+				Level.INFO, "Test 1", null, null);
 
 		filter.setExpiration(100);
 		filter.start();
@@ -155,15 +157,19 @@ public class DuplicateMessageFilterTests {
 		// WHEN
 		// @formatter:off
 		then(filter.decide(evt1))
-			.as("First call with message 1 is allowed")
+			.as("1st call with message 1 is allowed")
 			.isEqualTo(FilterReply.NEUTRAL)
 			;
 		
 		Thread.sleep(200);
 		
 		then(filter.decide(evt1a))
-			.as("Second call with message 1 is allowed because cached message expired")
+			.as("2nd call with message 1 is allowed because cached message expired")
 			.isEqualTo(FilterReply.NEUTRAL)
+			;
+		then(filter.decide(evt1b))
+			.as("3rd call with message 1 is denied because cached message not expired")
+			.isEqualTo(FilterReply.DENY)
 			;
 		// @formatter:on
 	}
