@@ -25,12 +25,14 @@ package net.solarnetwork.central.security;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -44,7 +46,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
@@ -221,22 +223,29 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 		if ( nodeIds != null && nodeIds.length > 0 ) {
 			// remove any source IDs not in the policy
 			Set<Long> nodeIdsSet = new LinkedHashSet<>(Arrays.asList(nodeIds));
+			List<Long> removedNodeIds = null;
 			for ( Iterator<Long> itr = nodeIdsSet.iterator(); itr.hasNext(); ) {
 				Long nodeId = itr.next();
 				if ( !policyNodeIds.contains(nodeId) ) {
-					LOG.warn("Access DENIED to node {} for {}: policy restriction", nodeId, principal);
+					if ( removedNodeIds == null ) {
+						removedNodeIds = new ArrayList<>(8);
+					}
+					removedNodeIds.add(nodeId);
 					itr.remove();
 				}
 			}
 			if ( nodeIdsSet.isEmpty() ) {
-				LOG.warn("Access DENIED to nodes {} for {}", nodeIds, principal);
+				LOG.warn("Access DENIED to nodes {} for {}: policy restriction", nodeIds, principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, nodeIds);
 			} else if ( nodeIdsSet.size() < nodeIds.length ) {
+				LOG.warn("Access REMOVED to nodes {} for {}: policy restriction", removedNodeIds,
+						principal);
 				nodeIds = nodeIdsSet.toArray(Long[]::new);
 			}
 		} else {
 			// no source IDs provided, set to policy source IDs
-			LOG.info("Access RESTRICTED to nodes {} for {}", policyNodeIds, principal);
+			LOG.info("Access RESTRICTED to nodes {} for {}: policy restriction", policyNodeIds,
+					principal);
 			nodeIds = policyNodeIds.toArray(Long[]::new);
 		}
 		cachedNodeIds = (nodeIds == null ? new Long[0] : nodeIds);
@@ -321,13 +330,17 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			}
 
 			// remove any source IDs not in the policy (or not matching a pattern)
+			List<String> removedSourceIds = null;
 			for ( Iterator<String> itr = sourceIdsSet.iterator(); itr.hasNext(); ) {
 				final String sourceId = itr.next();
 				if ( policySourceIds.contains(sourceId) || (policySourceIdPatterns != null
 						&& matchesPattern(policySourceIdPatterns, sourceId)) ) {
 					continue;
 				}
-				LOG.warn("Access DENIED to source {} for {}: policy restriction", sourceId, principal);
+				if ( removedSourceIds == null ) {
+					removedSourceIds = new ArrayList<>(8);
+				}
+				removedSourceIds.add(sourceId);
 				itr.remove();
 			}
 
@@ -340,8 +353,10 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 							sourceIdsSet.add(sourceIdPattern);
 							continue;
 						}
-						LOG.warn("Access DENIED to source {} for {}: policy restriction",
-								sourceIdPattern, principal);
+						if ( removedSourceIds == null ) {
+							removedSourceIds = new ArrayList<>(8);
+						}
+						removedSourceIds.add(sourceIdPattern);
 					}
 				}
 				// if a source ID pattern matches a policy source ID, fill in that policy ID
@@ -353,14 +368,19 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 			}
 
 			if ( sourceIdsSet.isEmpty() ) {
-				LOG.warn("Access DENIED to sources {} for {}", sourceIds, principal);
+				LOG.warn("Access DENIED to sources {} for {}: policy restriction", sourceIds, principal);
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, sourceIds);
 			} else if ( !sourceIdsSet.equals(new HashSet<>(Arrays.asList(sourceIds))) ) {
+				if ( removedSourceIds != null ) {
+					LOG.warn("Access REMOVED to sources {} for {}: policy restriction", removedSourceIds,
+							principal);
+				}
 				sourceIds = sourceIdsSet.toArray(String[]::new);
 			}
 		} else {
 			// no source IDs provided, set to policy source IDs
-			LOG.info("Access RESTRICTED to sources {} for {}", policySourceIds, principal);
+			LOG.info("Access RESTRICTED to sources {} for {}: policy restriction", policySourceIds,
+					principal);
 			sourceIds = policySourceIds.toArray(String[]::new);
 		}
 		if ( cacheResults ) {

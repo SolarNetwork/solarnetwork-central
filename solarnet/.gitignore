@@ -9,6 +9,7 @@ logback-test.xml
 var/
 /*.properties
 /solar*/src/main/resources/application-*.yml
+/solar*/src/main/resources/logback.xml
 /*.yml
 /*/.vscode/*
 /*/*.yml
