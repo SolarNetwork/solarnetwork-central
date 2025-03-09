@@ -56,7 +56,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Enphase API v4 implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -70,6 +70,9 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 	/** The base URL to the AlsoEnergy API. */
 	public static final URI BASE_URI = URI.create("https://api.enphaseenergy.com");
+
+	/** The OAuth authorization URL. */
+	public static final URI AUTH_URI = BASE_URI.resolve("/oauth/authorize");
 
 	/** The OAuth token URL. */
 	public static final URI TOKEN_URI = BASE_URI.resolve("/oauth/token");
@@ -92,6 +95,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	// @formatter:off
 	public static final Map<String, URI> WELL_KNOWN_URLS = Map.of(
 			API_BASE_WELL_KNOWN_URL, BASE_URI,
+			AUTHORIZATION_WELL_KNOWN_URL, AUTH_URI,
 			TOKEN_WELL_KNOWN_URL, TOKEN_URI
 			);
 	// @formatter:on

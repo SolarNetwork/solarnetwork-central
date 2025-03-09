@@ -35,7 +35,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud integration service.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CloudIntegrationService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -45,6 +45,13 @@ public interface CloudIntegrationService
 
 	/** An API OAuth token-granting URL used by the external service API. */
 	String TOKEN_WELL_KNOWN_URL = "tokenUrl";
+
+	/**
+	 * An API OAuth authorization-granting URL used by the external service API.
+	 *
+	 * @since 1.4
+	 */
+	String AUTHORIZATION_WELL_KNOWN_URL = "authorizationUrl";
 
 	/** A standard OAuth client identifier setting name. */
 	String OAUTH_CLIENT_ID_SETTING = "oauthClientId";
