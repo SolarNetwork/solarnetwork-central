@@ -115,15 +115,15 @@ public class DuplicateMessageFilter extends Filter<ILoggingEvent> {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + Arrays.hashCode(params);
 			result = prime * result + Objects.hash(format);
+			result = prime * result + Arrays.deepHashCode(params);
 			return result;
 		}
 
 		@Override
 		public boolean equals(Object o) {
 			return o instanceof MessageEntry m && Objects.equals(format, m.format)
-					&& Arrays.equals(params, m.params);
+					&& Arrays.deepEquals(params, m.params);
 		}
 
 		@Override

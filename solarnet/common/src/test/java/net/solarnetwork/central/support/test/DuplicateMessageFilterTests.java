@@ -106,6 +106,35 @@ public class DuplicateMessageFilterTests {
 	}
 
 	@Test
+	public void denyDuplicate_withArrayArguments() {
+		// GIVEN
+		LoggingEvent evt1 = new LoggingEvent(DuplicateMessageFilterTests.class.getName(), log,
+				Level.INFO, "Test {}", null, new Object[] { new Integer[] { 1, 2 } });
+		LoggingEvent evt2 = new LoggingEvent(DuplicateMessageFilterTests.class.getName(), log,
+				Level.INFO, "Test {}", null, new Object[] { new Integer[] { 2, 3 } });
+		LoggingEvent evt1a = new LoggingEvent(DuplicateMessageFilterTests.class.getName(), log,
+				Level.INFO, "Test {}", null, new Object[] { new Integer[] { 1, 2 } });
+
+		filter.start();
+
+		// WHEN
+		// @formatter:off
+		then(filter.decide(evt1))
+			.as("First call with message 1 is allowed")
+			.isEqualTo(FilterReply.NEUTRAL)
+			;
+		then(filter.decide(evt2))
+			.as("First call with message 2 is allowed because arguments differ")
+			.isEqualTo(FilterReply.NEUTRAL)
+			;
+		then(filter.decide(evt1a))
+			.as("Second call with same message 1 is denied")
+			.isEqualTo(FilterReply.DENY)
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void denyDuplicate_cacheOverflow() {
 		// GIVEN
 		LoggingEvent evt1 = new LoggingEvent(DuplicateMessageFilterTests.class.getName(), log,
