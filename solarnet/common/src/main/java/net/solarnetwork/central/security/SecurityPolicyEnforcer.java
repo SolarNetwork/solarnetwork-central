@@ -46,7 +46,7 @@ import net.solarnetwork.domain.datum.GeneralDatumMetadata;
  * Support for enforcing a {@link SecurityPolicy} on domain objects.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.12
  */
 public class SecurityPolicyEnforcer implements InvocationHandler {
