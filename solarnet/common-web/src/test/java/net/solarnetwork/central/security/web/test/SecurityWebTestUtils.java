@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.security.web.test;
+package net.solarnetwork.central.security.web.test;
 
 import static net.solarnetwork.web.jakarta.security.AuthenticationData.nullSafeHeaderValue;
 import static net.solarnetwork.web.jakarta.security.AuthenticationUtils.uriEncode;

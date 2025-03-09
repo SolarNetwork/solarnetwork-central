@@ -54,12 +54,12 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.security.Role;
-import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.service.AuthenticationUserEventPublisher;
 import net.solarnetwork.central.security.web.AuthenticationTokenService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 import net.solarnetwork.central.security.web.SecurityTokenAuthenticationFilter;
+import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.central.security.web.support.UserDetailsAuthenticationTokenService;
 import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoint;
 

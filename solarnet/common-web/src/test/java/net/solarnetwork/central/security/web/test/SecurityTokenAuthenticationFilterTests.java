@@ -20,12 +20,12 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.security.web.test;
+package net.solarnetwork.central.security.web.test;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import static net.solarnetwork.central.common.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
-import static net.solarnetwork.central.common.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
+import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
+import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;

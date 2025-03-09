@@ -25,7 +25,7 @@ package net.solarnetwork.central.query.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
+import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 
 /**
  * Web security token configuration.

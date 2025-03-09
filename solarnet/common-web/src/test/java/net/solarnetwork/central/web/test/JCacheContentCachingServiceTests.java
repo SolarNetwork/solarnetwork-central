@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.web.support.test;
+package net.solarnetwork.central.web.test;
 
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.easymock.EasyMock.anyObject;

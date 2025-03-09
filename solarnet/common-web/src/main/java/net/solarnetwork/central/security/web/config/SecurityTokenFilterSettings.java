@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.security.config;
+package net.solarnetwork.central.security.web.config;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

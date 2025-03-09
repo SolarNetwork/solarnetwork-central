@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.web.support.test;
+package net.solarnetwork.central.web.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.BDDAssertions.and;

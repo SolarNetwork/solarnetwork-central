@@ -31,6 +31,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'

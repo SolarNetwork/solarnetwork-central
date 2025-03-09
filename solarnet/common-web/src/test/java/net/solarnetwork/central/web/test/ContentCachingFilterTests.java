@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.common.web.support.test;
+package net.solarnetwork.central.web.test;
 
 import static java.util.Collections.synchronizedList;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;

@@ -36,6 +36,7 @@ import net.solarnetwork.central.common.dao.config.SolarNetCommonDaoConfiguration
 import net.solarnetwork.central.datum.aop.SolarNetDatumAopConfiguration;
 import net.solarnetwork.central.datum.config.SolarNetDatumConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
+import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
 import net.solarnetwork.util.ApplicationContextUtils;
 
 /**
@@ -54,7 +55,8 @@ import net.solarnetwork.util.ApplicationContextUtils;
 @Import({
 	SolarNetCommonConfiguration.class,
 	SolarNetCommonDaoConfiguration.class,
-	SolarNetCommonSecurityConfiguration.class
+	SolarNetCommonSecurityConfiguration.class,
+	SolarNetCommonWebSecurityConfiguration.class,
 })
 //@formatter:on
 public class SolarQueryApp {

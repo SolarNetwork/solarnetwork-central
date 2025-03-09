@@ -1,7 +1,7 @@
 /* ==================================================================
- * WebSecurityTokenConfig.java - 18/03/2022 4:24:03 PM
+ * SolarNetCommonWebSecurityConfiguration.java - 10/03/2025 8:34:00 am
  *
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,26 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.jobs.config;
+package net.solarnetwork.central.security.web.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 
 /**
- * Web security token configuration.
+ * Marker for common web security configuration package.
  *
  * @author matt
  * @version 1.0
  */
-@Configuration(proxyBeanMethods = false)
-public class WebSecurityTokenConfig {
-
-	@ConfigurationProperties(prefix = "app.web.security.token")
-	@Bean
-	public SecurityTokenFilterSettings tokenAuthenticationFilterSettings() {
-		return new SecurityTokenFilterSettings();
-	}
-
+@Configuration
+@ComponentScan
+public class SolarNetCommonWebSecurityConfiguration {
+	// nothing here
 }

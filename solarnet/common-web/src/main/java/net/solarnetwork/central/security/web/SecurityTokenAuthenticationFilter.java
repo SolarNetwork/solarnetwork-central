@@ -56,7 +56,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
-import net.solarnetwork.central.security.config.SecurityTokenFilterSettings;
+import net.solarnetwork.central.security.web.config.SecurityTokenFilterSettings;
 import net.solarnetwork.web.jakarta.security.AuthenticationData;
 import net.solarnetwork.web.jakarta.security.AuthenticationDataFactory;
 import net.solarnetwork.web.jakarta.security.SecurityHttpServletRequestWrapper;

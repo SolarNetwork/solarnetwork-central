@@ -27,6 +27,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-dnp3')
 

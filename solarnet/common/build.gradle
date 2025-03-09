@@ -38,8 +38,8 @@ dependencies {
 	runtimeOnly 'org.springframework.boot:spring-boot-properties-migrator'
 
 	implementation 'org.springframework.security:spring-security-core'
+	implementation 'org.springframework.security:spring-security-web'
 	implementation 'org.springframework.security:spring-security-oauth2-client'
-	implementation 'org.springframework:spring-web'
 	
 	// DAO
 	implementation 'org.mybatis:mybatis'
@@ -78,7 +78,6 @@ dependencies {
 	implementation 'com.nimbusds:nimbus-jose-jwt:[9.37,10)'
 	implementation 'commons-codec:commons-codec'
 	implementation "commons-io:commons-io:${commonsIoVersion}"
-	implementation 'io.github.classgraph:classgraph:4.8.179'
 	implementation 'jakarta.validation:jakarta.validation-api'
 	implementation 'jakarta.annotation:jakarta.annotation-api'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
@@ -87,7 +86,6 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 	
-	
 	// Swagger support
 	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"
 	implementation "io.swagger.core.v3:swagger-core-jakarta:${swaggerVersion}"
@@ -95,7 +93,6 @@ dependencies {
 	
 	// Not pushed to extending projects by default
 	compileOnly "net.sf.saxon:Saxon-HE:${saxonVersion}"
-	compileOnly "org.apache.tomcat.embed:tomcat-embed-core"
 	
 	// OSGi Compatibility
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
@@ -107,10 +104,6 @@ dependencies {
 	api "net.solarnetwork.common:net.solarnetwork.common:${snCommonVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.mqtt:${snCommonMqttVersion}"
 	api "net.solarnetwork.common:net.solarnetwork.common.pki.bc:${snCommonPkiBcVersion}"
-	api "net.solarnetwork.common:net.solarnetwork.common.web.jakarta:${snCommonWebJakartaVersion}"
-	
-	// Web
-	implementation 'jakarta.servlet:jakarta.servlet-api'
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
