@@ -28,6 +28,7 @@ import static net.solarnetwork.domain.Result.error;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import jakarta.servlet.ServletRequest;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.RemoteServiceException;
@@ -65,7 +68,7 @@ import net.solarnetwork.util.NumberUtils;
  * Global REST controller support.
  * 
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 @RestControllerAdvice
 @Order(1000)
@@ -482,7 +485,45 @@ public class WebServiceGlobalControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link HttpMessageConversionException}.
+	 * Handle a {@link ClientAbortException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param servletRequest
+	 *        unused, but signals that the request has been completely handled
+	 *        by this method
+	 * @since 1.8
+	 */
+	@ExceptionHandler(ClientAbortException.class)
+	public void handleClientAbortException(ClientAbortException e, WebRequest request,
+			ServletRequest servletRequest) {
+		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request));
+	}
+
+	/**
+	 * Handle a {@link AsyncRequestNotUsableException}.
+	 * 
+	 * @param e
+	 *        the exception
+	 * @param request
+	 *        the request
+	 * @param servletRequest
+	 *        unused, but signals that the request has been completely handled
+	 *        by this method
+	 * @since 1.8
+	 */
+	@ExceptionHandler(AsyncRequestNotUsableException.class)
+	public void handleAsyncRequestNotUsableException(AsyncRequestNotUsableException e,
+			WebRequest request, ServletRequest servletRequest) {
+		log.info("AsyncRequestNotUsableException in request {}; user [{}]", requestDescription(request),
+				userPrincipalName(request));
+	}
+
+	/**
+	 * Handle a {@link IOException}.
 	 * 
 	 * @param e
 	 *        the exception

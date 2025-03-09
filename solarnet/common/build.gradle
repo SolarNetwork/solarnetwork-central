@@ -95,6 +95,7 @@ dependencies {
 	
 	// Not pushed to extending projects by default
 	compileOnly "net.sf.saxon:Saxon-HE:${saxonVersion}"
+	compileOnly "org.apache.tomcat.embed:tomcat-embed-core"
 	
 	// OSGi Compatibility
 	implementation 'org.osgi:org.osgi.enterprise:5.0.0'
