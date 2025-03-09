@@ -35,6 +35,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -344,6 +345,63 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		// THEN
 		then(results).as("Result for integration for datum stream returned")
 				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
+	}
+
+	private String[] randomServiceIdentifiers(List<CloudIntegrationConfiguration> confs) {
+		String[] randomServiceIdents = confs.stream().filter(c -> RNG.nextBoolean())
+				.map(c -> c.getServiceIdentifier()).toArray(String[]::new);
+		if ( randomServiceIdents.length < 1 ) {
+			randomServiceIdents = new String[] {
+					confs.get(RNG.nextInt(confs.size())).getServiceIdentifier() };
+		}
+		return randomServiceIdents;
+	}
+
+	@Test
+	public void findFiltered_forServiceIdentifiers() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final List<Long> userIds = new ArrayList<>(userCount);
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+
+		for ( int i = 0; i < count; i++ ) {
+			for ( int u = 0; u < userCount; u++ ) {
+				Long userId;
+				if ( i == 0 ) {
+					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+					userIds.add(userId);
+				} else {
+					userId = userIds.get(u);
+				}
+
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), props);
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		final String[] randomServiceIdents = randomServiceIdentifiers(confs);
+		Arrays.sort(randomServiceIdents);
+
+		// WHEN
+		final Long userId = userIds.get(1);
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(userId);
+		filter.setServiceIdentifiers(randomServiceIdents);
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId())
+						&& Arrays.binarySearch(randomServiceIdents, e.getServiceIdentifier()) >= 0)
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for single user returned").containsExactlyInAnyOrder(expected);
 	}
 
 }
