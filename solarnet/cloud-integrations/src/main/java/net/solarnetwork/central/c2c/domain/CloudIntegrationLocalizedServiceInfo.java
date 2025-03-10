@@ -1,7 +1,7 @@
 /* ==================================================================
- * CloudIntegrationFilter.java - 1/10/2024 7:40:57 am
+ * CloudIntegrationLocalizedServiceInfo.java - 10/03/2025 11:38:10 am
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,17 +20,25 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.c2c.dao;
+package net.solarnetwork.central.c2c.domain;
 
-import net.solarnetwork.central.common.dao.IdentifiableCriteria;
+import java.net.URI;
+import java.util.Map;
+import net.solarnetwork.settings.ConfigurableLocalizedServiceInfo;
 
 /**
- * A filter for cloud integration entities.
+ * Localized service information for cloud integration services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public interface CloudIntegrationFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria,
-		CloudDatumStreamCriteria, IdentifiableCriteria {
+public interface CloudIntegrationLocalizedServiceInfo extends ConfigurableLocalizedServiceInfo {
+
+	/**
+	 * Get a mapping of "well known" service URIs.
+	 *
+	 * @return the well-known URLs, never {@code null}
+	 */
+	Map<String, URI> getWellKnownUrls();
 
 }

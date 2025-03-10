@@ -1,0 +1,13 @@
+{
+    "access_token": "unique access token",
+    "token_type": "bearer",
+    "refresh_token": "unique refresh token",
+    "expires_in": 86393,
+    "scope": "read write",
+    "enl_uid": "217231",
+    "enl_cid": "5",
+    "enl_password_last_changed": "1638870641",
+    "is_internal_app": false,
+    "app_type": "system",
+    "jti": "1ee68d30-3e79-4347-b7ea-a5851f6f15db"
+}

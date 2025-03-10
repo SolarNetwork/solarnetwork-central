@@ -54,7 +54,7 @@ import net.solarnetwork.domain.datum.Datum;
  * Service API for SolarUser cloud integrations support.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface UserCloudIntegrationsBiz {
 
@@ -183,6 +183,26 @@ public interface UserCloudIntegrationsBiz {
 	List<CloudDatumStreamPropertyConfiguration> replaceDatumStreamPropertyConfiguration(
 			UserLongCompositePK datumStreamMappingId,
 			List<CloudDatumStreamPropertyConfigurationInput> inputs);
+
+	/**
+	 * Merge a set of service properties into an existing entity.
+	 *
+	 * @param <C>
+	 *        the configuration type
+	 * @param <K>
+	 *        the primary key type
+	 * @param id
+	 *        the ID of the configuration to save; at a minimum the user ID
+	 *        component must be provided
+	 * @param configurationClass
+	 *        the configuration type to update
+	 * @param serviceProperties
+	 *        the service properties to merge
+	 * @return the saved configuration
+	 * @since 1.4
+	 */
+	<C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C mergeConfigurationServiceProperties(
+			K id, Map<String, ?> serviceProperties, Class<C> configurationClass);
 
 	/**
 	 * Update the enabled status of configurations, optionally filtered.

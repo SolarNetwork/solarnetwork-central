@@ -40,7 +40,7 @@ import net.solarnetwork.central.common.dao.jdbc.sql.CommonSqlUtils;
  * Support for SELECT for {@link CloudIntegrationConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class SelectCloudIntegrationConfiguration
 		implements PreparedStatementCreator, SqlProvider, CountPreparedStatementCreatorProvider {
@@ -106,6 +106,9 @@ public final class SelectCloudIntegrationConfiguration
 		if ( filter.hasIntegrationCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getIntegrationIds(), "ci.id", where);
 		}
+		if ( filter.hasServiceIdentifierCriteria() ) {
+			idx += whereOptimizedArrayContains(filter.getServiceIdentifiers(), "ci.sident", where);
+		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getDatumStreamIds(), "cds.id", where);
 		}
@@ -136,6 +139,9 @@ public final class SelectCloudIntegrationConfiguration
 		}
 		if ( filter.hasIntegrationCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getIntegrationIds());
+		}
+		if ( filter.hasServiceIdentifierCriteria() ) {
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getServiceIdentifiers());
 		}
 		if ( filter.hasDatumStreamCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getDatumStreamIds());

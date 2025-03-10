@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.dao.jdbc.test;
 
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_STATE_SETTING;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudDatumStreamMappingConfigurationData;
 import static net.solarnetwork.central.c2c.dao.jdbc.test.CinJdbcTestUtils.allCloudIntegrationConfigurationData;
@@ -35,6 +36,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -61,7 +63,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link JdbcCloudIntegrationConfigurationDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
@@ -344,6 +346,427 @@ public class JdbcCloudIntegrationConfigurationDaoTests extends AbstractJUnit5Jdb
 		// THEN
 		then(results).as("Result for integration for datum stream returned")
 				.containsExactly(new CloudIntegrationConfiguration[] { randomIntegration });
+	}
+
+	private String[] randomServiceIdentifiers(List<CloudIntegrationConfiguration> confs) {
+		String[] randomServiceIdents = confs.stream().filter(c -> RNG.nextBoolean())
+				.map(c -> c.getServiceIdentifier()).toArray(String[]::new);
+		if ( randomServiceIdents.length < 1 ) {
+			randomServiceIdents = new String[] {
+					confs.get(RNG.nextInt(confs.size())).getServiceIdentifier() };
+		}
+		return randomServiceIdents;
+	}
+
+	@Test
+	public void findFiltered_forServiceIdentifiers() throws Exception {
+		// GIVEN
+		final int count = 3;
+		final int userCount = 3;
+		final List<Long> userIds = new ArrayList<>(userCount);
+		final List<CloudIntegrationConfiguration> confs = new ArrayList<>(count);
+
+		final Map<String, Object> props = Collections.singletonMap("foo", "bar");
+
+		for ( int i = 0; i < count; i++ ) {
+			for ( int u = 0; u < userCount; u++ ) {
+				Long userId;
+				if ( i == 0 ) {
+					userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+					userIds.add(userId);
+				} else {
+					userId = userIds.get(u);
+				}
+
+				CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId,
+						randomString(), randomString(), props);
+				UserLongCompositePK id = dao.create(userId, conf);
+				conf = conf.copyWithId(id);
+				confs.add(conf);
+			}
+		}
+
+		final String[] randomServiceIdents = randomServiceIdentifiers(confs);
+		Arrays.sort(randomServiceIdents);
+
+		// WHEN
+		final Long userId = userIds.get(1);
+		final BasicFilter filter = new BasicFilter();
+		filter.setUserId(userId);
+		filter.setServiceIdentifiers(randomServiceIdents);
+		FilterResults<CloudIntegrationConfiguration, UserLongCompositePK> results = dao
+				.findFiltered(filter);
+
+		// THEN
+		CloudIntegrationConfiguration[] expected = confs.stream()
+				.filter(e -> userId.equals(e.getUserId())
+						&& Arrays.binarySearch(randomServiceIdents, e.getServiceIdentifier()) >= 0)
+				.toArray(CloudIntegrationConfiguration[]::new);
+		then(results).as("Results for single user returned").containsExactlyInAnyOrder(expected);
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_notFound() {
+		// GIVEN
+		final UserLongCompositePK id = new UserLongCompositePK(randomLong(), randomLong());
+		final String state = randomString();
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, state, null);
+
+		// THEN
+		then(result).as("No record updated").isFalse();
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_noProps() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), null);
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final String state = randomString();
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, state, null);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property created")
+					.hasSize(1)
+					.as("OAuth state property saved")
+					.containsEntry(OAUTH_STATE_SETTING, state)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_addProp() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of("foo", randomString()));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final String state = randomString();
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, state, null);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property created")
+					.hasSize(2)
+					.as("Existing property preserved")
+					.containsEntry("foo", conf.getServiceProps().get("foo"))
+					.as("OAuth state property saved")
+					.containsEntry(OAUTH_STATE_SETTING, state)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_replaceProp() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(OAUTH_STATE_SETTING, randomString()));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final String state = randomString();
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, state, null);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property created")
+					.hasSize(1)
+					.as("OAuth state property saved")
+					.containsEntry(OAUTH_STATE_SETTING, state)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_removeProp() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(OAUTH_STATE_SETTING, randomString()));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, null, null);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property removed")
+					.isEmpty()
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_replaceProp_whenExpected() {
+		// GIVEN
+		final String initialState = randomString();
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(OAUTH_STATE_SETTING, initialState));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final String state = randomString();
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, state, initialState);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property created")
+					.hasSize(1)
+					.as("OAuth state property saved")
+					.containsEntry(OAUTH_STATE_SETTING, state)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_replaceProp_whenNotExpected() {
+		// GIVEN
+		final String initialState = randomString();
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(OAUTH_STATE_SETTING, initialState));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final String state = randomString();
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, state, randomString());
+
+		// THEN
+		then(result).as("Record NOT updated with expectedState does not match").isFalse();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property preserved")
+					.hasSize(1)
+					.as("OAuth state property unchanged")
+					.containsEntry(OAUTH_STATE_SETTING, initialState)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_removeProp_whenExpected() {
+		// GIVEN
+		final String initialState = randomString();
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(OAUTH_STATE_SETTING, initialState));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, null, initialState);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property removed")
+					.isEmpty()
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void saveOAuthAuthorizationState_removeProp_whenNotExpected() {
+		// GIVEN
+		final String initialState = randomString();
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of(OAUTH_STATE_SETTING, initialState));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		// WHEN
+		boolean result = dao.saveOAuthAuthorizationState(id, null, randomString());
+
+		// THEN
+		then(result).as("Record NOT updated with expectedState does not match").isFalse();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property preserved")
+					.hasSize(1)
+					.as("OAuth state property unchanged")
+					.containsEntry(OAUTH_STATE_SETTING, initialState)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProperties_merge() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(), Map.of("foo", randomString()));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of("bim", randomString(), "baz", randomString());
+
+		// WHEN
+		boolean result = dao.mergeServiceProperties(id, newProps);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property is merged old with new")
+					.isEqualTo(Map.of(
+						"foo", conf.getServiceProperties().get("foo"),
+						"bim", newProps.get("bim"),
+						"baz", newProps.get("baz")
+					))
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void mergeServiceProperties_replace() {
+		// GIVEN
+		CloudIntegrationConfiguration conf = newCloudIntegrationConfiguration(userId, randomString(),
+				randomString(),
+				Map.of("foo", randomString(), "baz", randomString(), "other", randomString()));
+		UserLongCompositePK id = dao.create(userId, conf);
+
+		final Map<String, Object> newProps = Map.of("foo", randomString(), "baz", randomString());
+
+		// WHEN
+		boolean result = dao.mergeServiceProperties(id, newProps);
+
+		// THEN
+		then(result).as("Record updated").isTrue();
+
+		var rows = CinJdbcTestUtils.allCloudIntegrationConfigurationData(jdbcTemplate);
+
+		// @formatter:off
+		then(rows)
+			.as("Integration row in database")
+			.hasSize(1)
+			.element(0)
+			.satisfies(r -> {
+				Map<String, Object> props = JsonUtils.getStringMap(r.get("sprops").toString());
+				then(props)
+					.as("OAuth state property is merged old with new")
+					.isEqualTo(Map.of(
+						"other", conf.getServiceProperties().get("other"),
+						"foo", newProps.get("foo"),
+						"baz", newProps.get("baz")
+					))
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 }

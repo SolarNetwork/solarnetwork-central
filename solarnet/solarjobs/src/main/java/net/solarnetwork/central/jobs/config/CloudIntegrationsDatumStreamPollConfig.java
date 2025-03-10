@@ -92,8 +92,8 @@ public class CloudIntegrationsDatumStreamPollConfig implements SolarNetCloudInte
 	/**
 	 * Expose a ping test for the task scheduler.
 	 *
-	 * @param taskScheduler
-	 *        the scheduler
+	 * @param taskExecutor
+	 *        the executor
 	 * @return the ping test
 	 * @since 1.2
 	 */

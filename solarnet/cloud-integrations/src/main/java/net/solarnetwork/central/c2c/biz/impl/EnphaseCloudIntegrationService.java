@@ -26,6 +26,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,19 +34,26 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.random.RandomGenerator;
 import javax.cache.Cache;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
+import net.solarnetwork.central.c2c.http.RestOperationsHelper;
+import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
@@ -56,7 +64,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Enphase API v4 implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -71,8 +79,17 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	/** The base URL to the AlsoEnergy API. */
 	public static final URI BASE_URI = URI.create("https://api.enphaseenergy.com");
 
+	/** The OAuth authorization path. */
+	public static final String AUTH_PATH = "/oauth/authorize";
+
+	/** The OAuth authorization URL. */
+	public static final URI AUTH_URI = BASE_URI.resolve(AUTH_PATH);
+
 	/** The OAuth token URL. */
-	public static final URI TOKEN_URI = BASE_URI.resolve("/oauth/token");
+	public static final String TOKEN_PATH = "/oauth/token";
+
+	/** The OAuth token URL. */
+	public static final URI TOKEN_URI = BASE_URI.resolve(TOKEN_PATH);
 
 	/** The API key query parameter. */
 	public static final String API_KEY_PARAM = "key";
@@ -92,6 +109,7 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	// @formatter:off
 	public static final Map<String, URI> WELL_KNOWN_URLS = Map.of(
 			API_BASE_WELL_KNOWN_URL, BASE_URI,
+			AUTHORIZATION_WELL_KNOWN_URL, AUTH_URI,
 			TOKEN_WELL_KNOWN_URL, TOKEN_URI
 			);
 	// @formatter:on
@@ -115,6 +133,10 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	public static final Set<String> SECURE_SETTINGS = Collections
 			.unmodifiableSet(SettingUtils.secureKeys(SETTINGS));
 
+	private final CloudIntegrationConfigurationDao integrationDao;
+	private final RandomGenerator rng;
+	private final RestOperationsHelper tokenFetchHelper;
+
 	/**
 	 * Constructor.
 	 *
@@ -124,6 +146,10 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 *        the user event appender service
 	 * @param encryptor
 	 *        the sensitive key encryptor
+	 * @param integrationDao
+	 *        the integration DAO
+	 * @param rng
+	 *        the random generator to use
 	 * @param restOps
 	 *        the REST operations
 	 * @param oauthClientManager
@@ -141,7 +167,8 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 *         if any argument is {@literal null}
 	 */
 	public EnphaseCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
-			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor, RestOperations restOps,
+			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
+			CloudIntegrationConfigurationDao integrationDao, RandomGenerator rng, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
@@ -151,6 +178,12 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
 						integrationLocksCache));
+		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
+		this.rng = requireNonNullArgument(rng, "rng");
+		this.tokenFetchHelper = new RestOperationsHelper(
+				LoggerFactory.getLogger(EnphaseCloudIntegrationService.class), userEventAppenderBiz,
+				restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
+				integrationServiceIdentifier -> SECURE_SETTINGS);
 	}
 
 	@Override
@@ -220,6 +253,111 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 		} catch ( Exception e ) {
 			return Result.error("EPCI.0002", "Validation failed: " + e.getMessage());
 		}
+	}
+
+	@Override
+	public HttpRequestInfo authorizationRequestInfo(CloudIntegrationConfiguration integration,
+			URI redirectUri, Locale locale) {
+		requireNonNullArgument(integration, "integration");
+
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+
+		final String oauthClientId = integration
+				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, String.class);
+		if ( oauthClientId == null || oauthClientId.isEmpty() ) {
+			String errMsg = ms.getMessage("error.oauthClientId.missing", null, locale);
+			throw new IllegalArgumentException(errMsg);
+		}
+
+		final byte[] rand = new byte[32];
+		rng.nextBytes(rand);
+		final String stateValue = Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand))
+				.replace("=", "");
+
+		integrationDao.saveOAuthAuthorizationState(integration.getId(), stateValue, null);
+
+		// @formatter:off
+		URI uri = UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+				.path(AUTH_PATH)
+				.queryParam("response_type", "code")
+				.queryParam("client_id", oauthClientId)
+				.queryParam("redirect_uri", redirectUri)
+				.queryParam("state", stateValue)
+				.buildAndExpand().toUri();
+		// @formatter:on
+
+		return new HttpRequestInfo("GET", uri, null);
+	}
+
+	@Override
+	public Map<String, ?> fetchAccessToken(CloudIntegrationConfiguration integration,
+			Map<String, ?> parameters, Locale locale) {
+		requireNonNullArgument(integration, "integration");
+		requireNonNullArgument(parameters, "parameters");
+
+		final String code = requireNonNullArgument(parameters.get(AUTHORIZATION_CODE_PARAM),
+				AUTHORIZATION_CODE_PARAM).toString();
+		final String state = requireNonNullArgument(parameters.get(AUTHORIZATION_STATE_PARAM),
+				AUTHORIZATION_STATE_PARAM).toString();
+		final String redirectUri = requireNonNullArgument(parameters.get(REDIRECT_URI_PARAM),
+				REDIRECT_URI_PARAM).toString();
+
+		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
+
+		if ( !integrationDao.saveOAuthAuthorizationState(integration.getId(), null, state) ) {
+			// state mis-match; abort
+			String errMsg = ms.getMessage("error.oauth.state.mismtach", null, locale);
+			throw new IllegalArgumentException(errMsg);
+		}
+
+		final var decrypted = integration.copyWithId(integration.getId());
+		decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
+
+		final JsonNode json = tokenFetchHelper.http("Get OAuth token", HttpMethod.POST, null,
+				integration, JsonNode.class, (req) -> {
+				// @formatter:off
+					URI uri = UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+						.path(TOKEN_PATH)
+						.queryParam("grant_type", "authorization_code")
+						.queryParam(AUTHORIZATION_CODE_PARAM, code)
+						.queryParam(REDIRECT_URI_PARAM, redirectUri)
+						.buildAndExpand().toUri();
+					// @formatter:on
+					req.setBasicAuth(decrypted.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class),
+							decrypted.serviceProperty(OAUTH_CLIENT_SECRET_SETTING, String.class));
+					return uri;
+				}, HttpEntity::getBody);
+
+		/*- JSON example:
+			{
+			    "access_token": "unique access token",
+			    "token_type": "bearer",
+			    "refresh_token": "unique refresh token",
+			    "expires_in": 86393,
+			    "scope": "read write",
+			    "enl_uid": "217231",
+			    "enl_cid": "5",
+			    "enl_password_last_changed": "1638870641",
+			    "is_internal_app": false,
+			    "app_type": "system",
+			    "jti": "1ee68d30-3e79-4347-b7ea-a5851f6f15db"
+			}
+		 */
+
+		final String accessToken = json.path("access_token").textValue();
+		if ( accessToken == null ) {
+			String errMsg = ms.getMessage("error.oauth.accessToken.missing", null, locale);
+			throw new IllegalStateException(errMsg);
+		}
+
+		final String refreshToken = json.path("refresh_token").textValue();
+		if ( refreshToken == null ) {
+			String errMsg = ms.getMessage("error.oauth.refreshToken.missing", null, locale);
+			throw new IllegalStateException(errMsg);
+		}
+
+		return Map.of(OAUTH_ACCESS_TOKEN_SETTING, accessToken, OAUTH_REFRESH_TOKEN_SETTING,
+				refreshToken);
 	}
 
 }
