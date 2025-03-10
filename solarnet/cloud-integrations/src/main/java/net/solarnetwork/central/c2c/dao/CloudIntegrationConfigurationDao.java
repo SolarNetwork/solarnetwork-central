@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.dao;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Map;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
@@ -56,5 +57,31 @@ public interface CloudIntegrationConfigurationDao
 		var results = findFiltered(filter);
 		return (results.getReturnedResultCount() > 0 ? results.iterator().next() : null);
 	}
+
+	/**
+	 * Save an authorization state value on an integration.
+	 *
+	 * @param id
+	 *        the ID of the integration to update
+	 * @param state
+	 *        the state to save, or {@code null} to remove the state value
+	 * @param expectedState
+	 *        an optional expected state; if provided then only update the state
+	 *        if a state value already exists with this value
+	 * @return {@code true} if a matching record was updated
+	 */
+	boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state, String expectedState);
+
+	/**
+	 * Save service properties, replacing any existing properties with the same
+	 * values while preserving any existing properties.
+	 *
+	 * @param id
+	 *        the ID of the integration to update
+	 * @param serviceProperties
+	 *        the properties to merge onto the integration's service properties
+	 * @return {@code true} if a matching record was updated
+	 */
+	boolean mergeServiceProperties(UserLongCompositePK id, Map<String, ?> serviceProperties);
 
 }

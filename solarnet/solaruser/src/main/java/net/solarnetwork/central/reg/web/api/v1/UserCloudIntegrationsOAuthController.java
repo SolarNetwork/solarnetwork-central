@@ -23,18 +23,26 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.Collections.emptyList;
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
+import java.net.URI;
+import java.util.Locale;
 import java.util.stream.StreamSupport;
 import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 import net.solarnetwork.central.web.GlobalExceptionRestController;
@@ -99,6 +107,39 @@ public class UserCloudIntegrationsOAuthController {
 
 		var result = userCloudIntegrationsBiz.listConfigurationsForUser(getCurrentActorUserId(), filter,
 				CloudIntegrationConfiguration.class);
+		return success(result);
+	}
+
+	/**
+	 * Generate authorization information for an integration.
+	 *
+	 * @param integrationId
+	 *        the integration ID
+	 * @param redirectUri
+	 *        an optional redirect URL to use; if not provided an internal URI
+	 *        will be used
+	 * @param locale
+	 *        the desired locale for messages
+	 * @return the information
+	 */
+	@RequestMapping(value = "/integrations/{integrationId}/auth-info", method = RequestMethod.GET)
+	public Result<HttpRequestInfo> getOauthCloudIntegrationAuthorizationInfo(
+			@PathVariable("integrationId") Long integrationId,
+			@RequestParam(value = "redirectUri", required = false) String redirectUri, Locale locale) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
+		var integration = userCloudIntegrationsBiz.configurationForId(id,
+				CloudIntegrationConfiguration.class);
+		var service = requireNonNullObject(
+				userCloudIntegrationsBiz.integrationService(integration.getServiceIdentifier()),
+				integration.getServiceIdentifier());
+
+		URI redirect = (redirectUri != null ? URI.create(redirectUri)
+				: fromMethodCall(
+						on(net.solarnetwork.central.reg.web.UserCloudIntegrationsOAuthController.class)
+								.oauthRedirect(0L, "", "", Locale.getDefault())).replaceQueryParams(null)
+										.buildAndExpand(integrationId).toUri());
+
+		var result = service.authorizationRequestInfo(integration, redirect, locale);
 		return success(result);
 	}
 

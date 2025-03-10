@@ -22,10 +22,24 @@
 
 package net.solarnetwork.central.reg.web;
 
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
+import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
+import java.util.Locale;
+import java.util.Map;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.ModelAndView;
+import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.SecurityUtils;
+import net.solarnetwork.central.user.c2c.biz.UserCloudIntegrationsBiz;
 
 /**
  * Controller for Cloud Integrations OAuth UI.
@@ -34,19 +48,62 @@ import net.solarnetwork.central.security.SecurityUtils;
  * @version 1.0
  */
 @GlobalServiceController
+@RequestMapping("/u/sec/c2c/oauth")
 public class UserCloudIntegrationsOAuthController {
 
 	/** The model attribute for the actor's user ID. */
 	public static final String ACTOR_USER_ID_ATTR = "actorUserId";
 
-	@RequestMapping(value = "/u/sec/c2c/oauth", method = RequestMethod.GET)
-	public String oauthHome() {
-		return "sec/c2c/oauth";
+	private final UserCloudIntegrationsBiz userCloudIntegrationsBiz;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param userCloudIntegrationsBiz
+	 *        the user cloud integrations service
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserCloudIntegrationsOAuthController(UserCloudIntegrationsBiz userCloudIntegrationsBiz) {
+		super();
+		this.userCloudIntegrationsBiz = requireNonNullArgument(userCloudIntegrationsBiz,
+				"userCloudIntegrationsBiz");
 	}
 
 	@ModelAttribute(name = ACTOR_USER_ID_ATTR)
 	public Long actorUserId() {
 		return SecurityUtils.getCurrentActorUserId();
+	}
+
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	public ModelAndView oauthHome() {
+		return new ModelAndView("sec/c2c/oauth");
+	}
+
+	@RequestMapping(value = "/integrations/{integrationId}/auth-redirect", method = RequestMethod.GET)
+	public ModelAndView oauthRedirect(@PathVariable("integrationId") Long integrationId,
+			@RequestParam("code") String code, @RequestParam("state") String state, Locale locale) {
+		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
+		var integration = userCloudIntegrationsBiz.configurationForId(id,
+				CloudIntegrationConfiguration.class);
+		var service = requireNonNullObject(
+				userCloudIntegrationsBiz.integrationService(integration.getServiceIdentifier()),
+				integration.getServiceIdentifier());
+
+		var redirectUri = fromMethodCall(on(UserCloudIntegrationsOAuthController.class).oauthRedirect(0L,
+				"", "", Locale.getDefault())).replaceQueryParams(null).buildAndExpand(integrationId)
+						.toUri();
+
+		var params = Map.of(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code,
+				CloudIntegrationService.AUTHORIZATION_STATE_PARAM, state,
+				CloudIntegrationService.REDIRECT_URI_PARAM, redirectUri);
+
+		Map<String, ?> token = service.fetchAccessToken(integration, params, locale);
+
+		userCloudIntegrationsBiz.mergeConfigurationServiceProperties(id, token,
+				CloudIntegrationConfiguration.class);
+
+		return new ModelAndView("redirect:sec/c2c/oauth");
 	}
 
 }

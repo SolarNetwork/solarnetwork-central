@@ -29,6 +29,7 @@ import java.time.Clock;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
+import java.util.random.RandomGenerator;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -144,6 +145,9 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
 	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
 
+	@Autowired
+	private RandomGenerator rng;
+
 	@Bean
 	@Qualifier(ENPHASE)
 	public OAuth2AuthorizedClientManager enphaseOauthAuthorizedClientManager(@Autowired(
@@ -196,7 +200,8 @@ public class EnphaseConfig implements SolarNetCloudIntegrationsConfiguration {
 			@Qualifier(ENPHASE) OAuth2AuthorizedClientManager oauthClientManager,
 			@Qualifier(ENPHASE) Collection<CloudDatumStreamService> datumStreamServices) {
 		var service = new EnphaseCloudIntegrationService(datumStreamServices, userEventAppender,
-				encryptor, restOps, oauthClientManager, Clock.systemUTC(), integrationLocksCache);
+				encryptor, integrationConfigurationDao, rng, restOps, oauthClientManager,
+				Clock.systemUTC(), integrationLocksCache);
 
 		ResourceBundleMessageSource msgSource = new ResourceBundleMessageSource();
 		msgSource.setBasenames(EnphaseCloudIntegrationService.class.getName(),
