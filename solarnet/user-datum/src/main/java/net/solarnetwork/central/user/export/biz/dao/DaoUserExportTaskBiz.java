@@ -60,7 +60,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * DAO implementation of {@link UserExportTaskBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
@@ -121,8 +121,9 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				|| !pathMatcher.isPattern(pattern) ) {
 			return (pattern == null || pattern.isEmpty() ? sources : Collections.singleton(pattern));
 		}
-		sources.removeIf(source -> !pathMatcher.match(pattern, source));
-		return sources;
+		Set<String> result = new LinkedHashSet<>(sources);
+		result.removeIf(source -> !pathMatcher.match(pattern, source));
+		return result;
 	}
 
 	@Transactional(propagation = Propagation.SUPPORTS)
@@ -150,7 +151,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 			}
 		}
 
-		// if there is exactly one source ID, support pattern matching
+		// resolve explicit source IDs from source ID patterns and available data
 		if ( taskDatumFilter.getSourceId() != null ) {
 			Instant startDate = taskDatumFilter.getStartDate();
 			Instant endDate = taskDatumFilter.getEndDate();

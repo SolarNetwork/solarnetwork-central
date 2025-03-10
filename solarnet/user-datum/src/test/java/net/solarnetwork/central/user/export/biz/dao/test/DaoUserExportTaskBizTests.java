@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.fail;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -363,6 +364,89 @@ public class DaoUserExportTaskBizTests {
 		then(task.getConfig().getName()).isEqualTo(config.getName());
 		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
 				.contains(TEST_NODE_ID);
+	}
+
+	@Test
+	public void submitAdhocTask_withMultipleNodes_withSourceIdPatterns() {
+		// GIVEN
+		biz.setPathMatcher(new AntPathMatcher());
+
+		UserDatumExportConfiguration config = createConfiguration();
+
+		// make ad hoc with no ID
+		config.setId(null);
+
+		UserDataConfiguration dataConfig = new UserDataConfiguration();
+		DatumFilterCommand filter = new DatumFilterCommand();
+		filter.setStartDate(Instant.parse("2025-03-01T00:00:00Z"));
+		filter.setEndDate(Instant.parse("2025-03-02T00:00:00Z"));
+		filter.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID_2 });
+		filter.setSourceIds(new String[] { "/test/**", "/foo/**" });
+		dataConfig.setFilter(filter);
+		config.setUserDataConfiguration(dataConfig);
+
+		Set<String> allSourceIdsNode1 = new LinkedHashSet<>(
+				Arrays.asList("/foo/bar", "/test/foo", "/test/bar", "/some/other"));
+		List<ObjectDatumStreamMetadata> allMetas1 = allSourceIdsNode1.stream().map(e -> {
+			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
+					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
+		}).collect(Collectors.toList());
+		Set<String> allSourceIdsNode2 = new LinkedHashSet<>(Arrays.asList("/test/bam", "/bam/bam"));
+		List<ObjectDatumStreamMetadata> allMetas2 = allSourceIdsNode2.stream().map(e -> {
+			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
+					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
+		}).collect(Collectors.toList());
+		expect(metaDao.findDatumStreamMetadata(assertWith(new Assertion<ObjectStreamCriteria>() {
+
+			private int call = 0;
+
+			@Override
+			public void check(ObjectStreamCriteria sourceFilter) throws Throwable {
+				call++;
+				if ( call < 3 ) {
+					assertThat("Source filter node " + call, sourceFilter.getNodeId(),
+							equalTo(call == 1 ? TEST_NODE_ID : TEST_NODE_ID_2));
+					assertThat("Source filter start date " + call, sourceFilter.getStartDate(),
+							equalTo(filter.getStartDate()));
+					assertThat("Source filter end date " + call, sourceFilter.getEndDate(),
+							equalTo(filter.getEndDate()));
+				} else {
+					fail("Expected only 2 calls to getAvailableSources(filter)");
+				}
+			}
+		}))).andReturn(allMetas1).andReturn(allMetas2);
+
+		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
+
+		UUID pk = UUID.randomUUID();
+		expect(adhocTaskDao.save(capture(taskCaptor))).andReturn(pk);
+
+		// WHEN
+		replayAll();
+		SecurityToken auth = becomeToken(randomString(), User, TEST_USER_ID, null);
+		UserAdhocDatumExportTaskInfo task = biz.submitAdhocDatumExportConfiguration(config);
+
+		// THEN
+		// @formatter:off
+		then(task)
+			.as("Task created")
+			.isNotNull()
+			.as("Task user ID")
+			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
+			.as("Schedule is Adhoc")
+			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
+			.as("No token")
+			.returns(auth.getToken(), UserAdhocDatumExportTaskInfo::getTokenId)
+			.as("Config name")
+			;
+		// @formatter:on
+		then(task.getConfig().getName()).isEqualTo(config.getName());
+		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
+				.as("Node IDs given in filter patterns are resolved")
+				.containsExactlyInAnyOrder(TEST_NODE_ID, TEST_NODE_ID_2);
+		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
+				.as("Source IDs matching filter patterns are resolved")
+				.containsExactlyInAnyOrder("/foo/bar", "/test/foo", "/test/bar", "/test/bam");
 	}
 
 }
