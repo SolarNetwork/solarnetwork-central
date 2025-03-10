@@ -27,6 +27,7 @@ import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUse
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.fromMethodCall;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.on;
+import java.net.URI;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -80,9 +81,35 @@ public class UserCloudIntegrationsOAuthController {
 		return new ModelAndView("sec/c2c/oauth");
 	}
 
-	@RequestMapping(value = "/integrations/{integrationId}/auth-redirect", method = RequestMethod.GET)
-	public ModelAndView oauthRedirect(@PathVariable("integrationId") Long integrationId,
-			@RequestParam("code") String code, @RequestParam("state") String state, Locale locale) {
+	/**
+	 * Get an OAuth access token for a given authorization code.
+	 *
+	 * <p>
+	 * The
+	 * {@link net.solarnetwork.central.reg.web.api.v1.UserCloudIntegrationsOAuthController#getOAuthCloudIntegrationAuthorizationInfo(Long, String, Locale)}
+	 * method must have been invoked before this method, to obtain the necessary
+	 * {@code state} value. The token details will also be automatically saved
+	 * on the
+	 * </p>
+	 *
+	 * @param integrationId
+	 *        the ID of the integration to get
+	 * @param code
+	 *        the code value returned from the OAuth authorization provider
+	 * @param state
+	 *        the state value returned from a previous call to
+	 *        {@code getOAuthCloudIntegrationAuthorizationInfo()}
+	 * @param redirectUri
+	 *        the same value passed to the previous call to
+	 *        {@code getOAuthCloudIntegrationAuthorizationInfo()}
+	 * @param locale
+	 *        the desired locale for messages
+	 * @return the resulting view
+	 */
+	@RequestMapping(value = "/integrations/{integrationId}/auth-code", method = RequestMethod.GET)
+	public ModelAndView handleOAuthAuthCode(@PathVariable("integrationId") Long integrationId,
+			@RequestParam("code") String code, @RequestParam("state") String state,
+			@RequestParam(name = "redirect_uri", required = false) String redirectUri, Locale locale) {
 		var id = new UserLongCompositePK(getCurrentActorUserId(), integrationId);
 		var integration = userCloudIntegrationsBiz.configurationForId(id,
 				CloudIntegrationConfiguration.class);
@@ -90,13 +117,14 @@ public class UserCloudIntegrationsOAuthController {
 				userCloudIntegrationsBiz.integrationService(integration.getServiceIdentifier()),
 				integration.getServiceIdentifier());
 
-		var redirectUri = fromMethodCall(on(UserCloudIntegrationsOAuthController.class).oauthRedirect(0L,
-				"", "", Locale.getDefault())).replaceQueryParams(null).buildAndExpand(integrationId)
-						.toUri();
+		var uri = (redirectUri != null ? URI.create(redirectUri)
+				: fromMethodCall(on(UserCloudIntegrationsOAuthController.class).handleOAuthAuthCode(0L,
+						"", "", null, Locale.getDefault())).replaceQueryParams(null)
+								.buildAndExpand(integrationId).toUri());
 
 		var params = Map.of(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code,
 				CloudIntegrationService.AUTHORIZATION_STATE_PARAM, state,
-				CloudIntegrationService.REDIRECT_URI_PARAM, redirectUri);
+				CloudIntegrationService.REDIRECT_URI_PARAM, uri);
 
 		Map<String, ?> token = service.fetchAccessToken(integration, params, locale);
 
