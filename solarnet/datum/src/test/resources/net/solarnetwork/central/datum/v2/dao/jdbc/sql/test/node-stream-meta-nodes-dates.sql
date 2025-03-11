@@ -9,5 +9,6 @@ INNER JOIN LATERAL (
 	WHERE datum.stream_id = s.stream_id
 		AND datum.ts >= ?
 		AND datum.ts < ?
-	LIMIT 1) d ON d.stream_id = s.stream_id
+	LIMIT 1
+	) d ON d.stream_id = s.stream_id
 WHERE s.node_id = ANY(?)
