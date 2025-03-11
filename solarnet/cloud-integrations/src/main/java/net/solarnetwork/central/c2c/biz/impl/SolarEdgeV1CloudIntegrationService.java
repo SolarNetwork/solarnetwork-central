@@ -43,6 +43,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
@@ -50,7 +51,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * SolarEdge implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -138,6 +139,8 @@ public class SolarEdgeV1CloudIntegrationService extends BaseRestOperationsCloudI
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
+		} catch ( RemoteServiceException e ) {
+			return validationResult(e, null);
 		} catch ( Exception e ) {
 			return Result.error("SECI.0002", "Validation failed: " + e.getMessage());
 		}

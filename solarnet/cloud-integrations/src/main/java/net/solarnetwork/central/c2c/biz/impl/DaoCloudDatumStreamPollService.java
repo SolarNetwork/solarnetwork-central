@@ -76,7 +76,7 @@ import net.solarnetwork.service.ServiceLifecycleObserver;
  * DAO based implementation of {@link CloudDatumStreamPollService}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class DaoCloudDatumStreamPollService
 		implements CloudDatumStreamPollService, ServiceLifecycleObserver, CloudIntegrationsUserEvents {
@@ -240,10 +240,9 @@ public class DaoCloudDatumStreamPollService
 								"Resetting datum stream {} poll task by changing state from {} to {} after error: {}",
 								taskInfo.getId().ident(), oldState, Queued, e.toString());
 						taskInfo.setState(Queued);
-						if ( Duration.between(taskInfo.getExecuteAt(), clock.instant())
-								.getSeconds() < 60 ) {
+						if ( taskInfo.getExecuteAt().isBefore(clock.instant()) ) {
 							// bump date into future by 1 minute so we do not immediately try to process again
-							taskInfo.setExecuteAt(clock.instant().plusSeconds(60));
+							taskInfo.setExecuteAt(clock.instant().plus(1, ChronoUnit.MINUTES));
 						}
 					} else {
 						// stop processing job if not what appears to be an API IO exception
