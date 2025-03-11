@@ -19,6 +19,7 @@
 			, completed
 			, load_count
 			, progress
+			, jmeta
 		) VALUES (
 			#{uuid,typeHandler=net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler}
 			, ${userId}
@@ -35,6 +36,7 @@
 			, #{completed}
 			, #{loadedCount}
 			, #{percentComplete}
+			, #{metaJson}::jsonb
 		)
 		ON CONFLICT (user_id, id) DO UPDATE
 		SET state = EXCLUDED.state
@@ -45,6 +47,7 @@
 			, completed = EXCLUDED.completed
 			, load_count = EXCLUDED.load_count
 			, progress = EXCLUDED.progress
+			, jmeta = EXCLUDED.jmeta
 	</update>
 	
 	<sql id="fragment-DatumImportJobInfo-full-result">
@@ -62,7 +65,8 @@
 		dij.load_count AS datum_import_job_load_count,
 		dij.progress AS datum_import_job_progress,
 		dij.started AS datum_import_job_started,
-		dij.completed AS datum_import_job_completed
+		dij.completed AS datum_import_job_completed,
+		dij.jmeta AS datum_import_job_jmeta
 	</sql>
 	
 	<resultMap id="DatumImportJobInfoFullResult" type="net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo">
@@ -81,6 +85,7 @@
 		<result property="percentComplete" column="datum_import_job_progress"/>
 		<result property="started" column="datum_import_job_started"/>
 		<result property="completed" column="datum_import_job_completed"/>
+		<result property="metaJson" column="datum_import_job_jmeta"/>
 	</resultMap>
 
 	<resultMap id="DatumImportJobInfoDirectResult" type="net.solarnetwork.central.datum.imp.domain.DatumImportJobInfo">
@@ -99,6 +104,7 @@
 		<result property="percentComplete" column="progress"/>
 		<result property="started" column="started"/>
 		<result property="completed" column="completed"/>
+		<result property="metaJson" column="jmeta"/>
 	</resultMap>
 	
 	<select id="get-DatumImportJobInfo-for-id" parameterType="net.solarnetwork.central.dao.UserUuidPK" resultMap="DatumImportJobInfoFullResult">

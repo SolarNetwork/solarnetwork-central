@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.imp.dao.mybatis.test;
 
 import static java.util.Collections.singleton;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -36,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +59,7 @@ import net.solarnetwork.central.datum.imp.domain.DatumImportState;
  * Test cases for the {@link MyBatisDatumImportJobInfoDao} class.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImportDaoTestSupport {
 
@@ -134,6 +137,24 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	}
 
 	@Test
+	public void storeNew_withMetadata() {
+		// GIVEN
+		DatumImportJobInfo info = createTestInfo();
+		info.setMetadata(Map.of("foo", 1, "bar", "two"));
+
+		// WHEN
+		UserUuidPK id = dao.save(info);
+
+		// THEN
+		assertThat("Primary key assigned", id, notNullValue());
+		assertThat("Primary key matches", id, equalTo(info.getId()));
+
+		// stash results for other tests to use
+		info.setId(id);
+		this.info = info;
+	}
+
+	@Test
 	public void getByPrimaryKey() {
 		storeNew();
 		DatumImportJobInfo info = dao.get(this.info.getId());
@@ -161,6 +182,59 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 		assertThat("Import date", info.getImportDate(), notNullValue());
 		assertThat("Percent complete", info.getPercentComplete(), equalTo(0.0));
 		assertThat("Token ID", info.getTokenId(), equalTo(this.tokenId));
+
+		// stash results for other tests to use
+		this.info = info;
+	}
+
+	@Test
+	public void getByPrimaryKey_withMetadata() {
+		// GIVEN
+		storeNew_withMetadata();
+
+		// WHEN
+		DatumImportJobInfo info = dao.get(this.info.getId());
+
+		// THEN
+
+		// @formatter:off
+		then(info)
+			.as("Found by PK")
+			.isNotNull()
+			.as("Primary key matches")
+			.returns(this.info.getId(), from(DatumImportJobInfo::getId))
+			.as("User ID returned")
+			.returns(this.userId, from(DatumImportJobInfo::getUserId))
+			.as("Percent complete")
+			.returns(0.0, from(DatumImportJobInfo::getPercentComplete))
+			.as("Token ID returned")
+			.returns(this.tokenId, from(DatumImportJobInfo::getTokenId))
+			.as("Metadata returned")
+			.returns(Map.of("foo", 1, "bar", "two"), from(DatumImportJobInfo::getMetadata))
+			.satisfies(e -> {
+				then(e.getCreated())
+					.as("Created date set")
+					.isNotNull()
+					;
+				then(e.getImportDate())
+					.as("Import date set")
+					.isNotNull()
+					;
+			})
+			.extracting(DatumImportJobInfo::getConfiguration)
+			.usingRecursiveComparison()
+			.ignoringFields("inputConfiguration.userId") // not serialized to JSON
+			.as("Configuration preserved")
+			.isEqualTo(this.info.getConfiguration())
+			;
+
+		then(info.getMetadata())
+			.as("Metadata returned")
+			.isNotNull()
+			.as("Metadata preserved")
+			.isEqualTo(Map.of("foo", 1, "bar", "two"))
+			;
+		// @formatter:on
 
 		// stash results for other tests to use
 		this.info = info;

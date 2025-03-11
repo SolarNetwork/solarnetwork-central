@@ -20,6 +20,7 @@ CREATE TABLE solarnet.sn_datum_import_job (
 	completed 		TIMESTAMP WITH TIME ZONE,
 	message			TEXT,
 	config			jsonb NOT NULL,
+	jmeta			jsonb,
 	CONSTRAINT datum_import_job_pkey PRIMARY KEY (user_id, id),
 	CONSTRAINT datum_import_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
