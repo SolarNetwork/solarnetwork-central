@@ -151,8 +151,8 @@ public class UserCloudIntegrationsOAuthController {
 		URI redirect = (redirectUri != null ? URI.create(redirectUri)
 				: fromMethodCall(
 						on(net.solarnetwork.central.reg.web.UserCloudIntegrationsOAuthController.class)
-								.handleOAuthAuthCode(0L, "", "", null, Locale.getDefault()))
-										.replaceQueryParams(null).buildAndExpand(integrationId).toUri());
+								.handleOAuthAuthCode(null, Locale.getDefault()))
+										.buildAndExpand(integrationId).toUri());
 
 		var result = service.authorizationRequestInfo(integration, redirect, locale);
 		return success(result);
@@ -198,8 +198,8 @@ public class UserCloudIntegrationsOAuthController {
 		var uri = (redirectUri != null ? URI.create(redirectUri)
 				: fromMethodCall(
 						on(net.solarnetwork.central.reg.web.UserCloudIntegrationsOAuthController.class)
-								.handleOAuthAuthCode(0L, "", "", null, Locale.getDefault()))
-										.replaceQueryParams(null).buildAndExpand(integrationId).toUri());
+								.handleOAuthAuthCode(null, Locale.getDefault()))
+										.buildAndExpand(integrationId).toUri());
 
 		var params = Map.of(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code,
 				CloudIntegrationService.AUTHORIZATION_STATE_PARAM, state,

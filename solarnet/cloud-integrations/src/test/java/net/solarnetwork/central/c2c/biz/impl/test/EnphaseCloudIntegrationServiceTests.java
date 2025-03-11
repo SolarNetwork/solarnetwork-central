@@ -87,6 +87,7 @@ import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.AuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.domain.Result;
@@ -294,9 +295,10 @@ public class EnphaseCloudIntegrationServiceTests {
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId
 			));
+		// @formatter:on
 
 		byte[] rand = new byte[32];
-		Arrays.fill(rand, (byte)1);
+		Arrays.fill(rand, (byte) 1);
 
 		// provide specific "random" bytes
 		willDoNothing().given(rng).nextBytes(assertArg(a -> {
@@ -307,12 +309,15 @@ public class EnphaseCloudIntegrationServiceTests {
 		final URI redirectUri = URI.create("https://%s/auth".formatted(randomString()));
 
 		// WHEN
-		HttpRequestInfo result = service.authorizationRequestInfo(conf, redirectUri, Locale.getDefault());
+		HttpRequestInfo result = service.authorizationRequestInfo(conf, redirectUri,
+				Locale.getDefault());
+
+		final AuthorizationState expectedState = new AuthorizationState(conf.getConfigId(),
+				Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand)).replace("=", ""));
 
 		// THEN
 		// @formatter:off
-		final String expectedState = Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand)).replace("=", "");
-		then(integrationDao).should().saveOAuthAuthorizationState(conf.getId(), expectedState, null);
+		then(integrationDao).should().saveOAuthAuthorizationState(conf.getId(), expectedState.token(), null);
 
 		and.then(result)
 			.as("Result provided")
@@ -324,7 +329,7 @@ public class EnphaseCloudIntegrationServiceTests {
 					.queryParam("response_type", "code")
 					.queryParam("client_id", clientId)
 					.queryParam("redirect_uri", redirectUri)
-					.queryParam("state", expectedState)
+					.queryParam("state", expectedState.stateValue())
 					.buildAndExpand().toUri()
 					, from(HttpRequestInfo::uri))
 			.as("No headers provided")
@@ -336,25 +341,28 @@ public class EnphaseCloudIntegrationServiceTests {
 	@Test
 	public void fetchAccessToken() {
 		// GIVEN
+		final Long integrationId = randomLong();
 		final String clientId = randomString();
 		final String clientSecret = randomString();
 		final String code = randomString();
-		final String state = randomString();
+		final AuthorizationState state = new AuthorizationState(integrationId, randomString());
+		final String stateValue = state.stateValue();
 		final String redirectUri = "http://localhost/" + randomString();
 		final Locale locale = Locale.getDefault();
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
+				integrationId, now());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
 				OAUTH_CLIENT_ID_SETTING, clientId,
 				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
-				OAUTH_STATE_SETTING, state
+				OAUTH_STATE_SETTING, stateValue
 			));
 		// @formatter:on
 
 		// validate state value
-		given(integrationDao.saveOAuthAuthorizationState(conf.getId(), null, state)).willReturn(true);
+		given(integrationDao.saveOAuthAuthorizationState(conf.getId(), null, state.token()))
+				.willReturn(true);
 
 		// request token
 		final URI getTokenUri = UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.BASE_URI)
@@ -370,7 +378,7 @@ public class EnphaseCloudIntegrationServiceTests {
 
 		// WHEN
 		Map<String, Object> params = Map.of(AUTHORIZATION_CODE_PARAM, code, AUTHORIZATION_STATE_PARAM,
-				state, REDIRECT_URI_PARAM, redirectUri);
+				stateValue, REDIRECT_URI_PARAM, redirectUri);
 		Map<String, ?> result = service.fetchAccessToken(conf, params, locale);
 
 		// THEN

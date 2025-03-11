@@ -8,14 +8,78 @@
 	<link rel="stylesheet" href="../../../static/css/global.css">
 </head>
 <body>
-<section id="c2c-oauth" data-th-fragment="content">
-	<h2>
-		<span data-th-text="#{c2c.oauth.list.header}">Integrations</span>
-	</h2>
-	<p class="intro" data-th-utext="#{c2c.oauth.list.intro(0)}">
-		Your OAuth Cloud Integrations are shown here.
-	</p>
-
+<section id="c2c-oauth-connect" data-th-fragment="content">
+		<div class="no-entities hidden">
+			<p data-th-utext="#{c2c.oauth.list.intro.empty}">You have no
+				Cloud Integrations that support OAuth.</p>
+		</div>
+		<div class="some-entities" data-th-classappend="'hidden'">
+		<p data-th-utext="#{c2c.oauth.list.intro.some(0)}">
+			Your OAuth Cloud Integrations are shown here.
+		</p>
+		<form id="c2c-oauth-connect-form"  class="form form-horizontal"
+				data-th-action="@{/u/sec/c2c/oauth/integrations/{integrationId}/auth-info}">
+			<div class="form-group">
+				<label class="col-sm-3 control-label" data-th-text="#{c2c.oauth.integration.label}">
+					Integration
+				</label>
+				<div class="col-sm-8">
+					<select id="c2c-oauth-integration-select" name="integrationId" class="form-control">
+						<option data-th-remove="all"></option>
+						<option value="123" data-th-remove="all">My Integration</option>
+					</select>
+				</div>
+			</div>
+			<div class="form-group active" data-th-classappend="'hidden'">
+				<label class="col-sm-3 control-label" data-th-text="#{c2c.oauth.clientId.label}">
+					Client ID
+				</label>
+				<div class="col-sm-8">
+					<p class="form-control-static" data-tprop="clientId">abc123</p>
+				</div>
+			</div>
+			<div class="form-group active" data-th-classappend="'hidden'">
+				<label class="col-sm-3 control-label" data-th-text="#{c2c.oauth.clientSecret.label}">
+					Client Secret
+				</label>
+				<div class="col-sm-8">
+					<p class="form-control-static">
+						<span class="label label-success" data-th-class="|label|"
+								data-tprop="clientSecretPresent"
+								data-th-data-true-text="#{c2c.oauth.clientSecret.present}"
+								data-th-data-false-text="#{c2c.oauth.clientSecret.missing}">Present</span>
+					</p>
+				</div>
+			</div>
+			<div class="form-group active" data-th-classappend="'hidden'">
+				<label class="col-sm-3 control-label" data-th-text="#{c2c.oauth.status.label}">
+					Status
+				</label>
+				<div class="col-sm-8">
+					<p class="form-control-static">
+						<span class="status-unresolved label label-warning hidden" data-th-text="#{c2c.oauth.status.unknown}">Unknown</span>
+						<span class="status-resolved label label-success" data-th-class="|status-resolved label|"
+								data-tprop="connectionValid"
+								data-th-data-true-text="#{c2c.oauth.status.valid}"
+								data-th-data-false-text="#{c2c.oauth.status.invalid}">Valid</span>
+					</p>
+				</div>
+			</div>
+			<div class="form-group error hidden">
+				<div class="col-sm-offset-3 col-sm-8">
+					<div class="alert alert-danger">
+						<span data-th-text="#{c2c.oauth.connect.error}">Error!</span> <span id="c2c-oauth-error"></span>
+					</div>
+				</div>
+			</div>
+			<div class="form-group active" data-th-classappend="'hidden'">
+				<div class="col-sm-offset-3 col-sm-8">
+				  <button type="submit" class="btn btn-default" data-th-text="#{c2c.oauth.connect.label}">Connect</button>
+				  <span class="help-block" data-th-text="#{c2c.oauth.connect.help}">Connect, or reconnect, as needed.</span>
+				</div>
+			</div>
+		</form>
+	</div>
 </section>
 </body>
 </html>

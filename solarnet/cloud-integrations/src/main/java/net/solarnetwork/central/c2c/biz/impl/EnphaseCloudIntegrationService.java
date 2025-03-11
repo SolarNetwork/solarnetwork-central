@@ -50,11 +50,14 @@ import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.domain.AuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
 import net.solarnetwork.central.domain.HttpRequestInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -271,10 +274,12 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		final byte[] rand = new byte[32];
 		rng.nextBytes(rand);
-		final String stateValue = Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand))
+		final String stateToken = Base64.getUrlEncoder().encodeToString(DigestUtils.sha3_224(rand))
 				.replace("=", "");
 
-		integrationDao.saveOAuthAuthorizationState(integration.getId(), stateValue, null);
+		integrationDao.saveOAuthAuthorizationState(integration.getId(), stateToken, null);
+
+		String stateValue = new AuthorizationState(integration.getConfigId(), stateToken).stateValue();
 
 		// @formatter:off
 		URI uri = UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
@@ -297,14 +302,20 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		final String code = requireNonNullArgument(parameters.get(AUTHORIZATION_CODE_PARAM),
 				AUTHORIZATION_CODE_PARAM).toString();
-		final String state = requireNonNullArgument(parameters.get(AUTHORIZATION_STATE_PARAM),
+		final String stateValue = requireNonNullArgument(parameters.get(AUTHORIZATION_STATE_PARAM),
 				AUTHORIZATION_STATE_PARAM).toString();
 		final String redirectUri = requireNonNullArgument(parameters.get(REDIRECT_URI_PARAM),
 				REDIRECT_URI_PARAM).toString();
 
 		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
 
-		if ( !integrationDao.saveOAuthAuthorizationState(integration.getId(), null, state) ) {
+		final AuthorizationState state = requireNonNullArgument(
+				AuthorizationState.forStateValue(stateValue), "state");
+		if ( !state.integrationId().equals(integration.getConfigId()) ) {
+			throw new AuthorizationException(Reason.ACCESS_DENIED, state.integrationId());
+		}
+
+		if ( !integrationDao.saveOAuthAuthorizationState(integration.getId(), null, state.token()) ) {
 			// state mis-match; abort
 			String errMsg = ms.getMessage("error.oauth.state.mismtach", null, locale);
 			throw new IllegalArgumentException(errMsg);

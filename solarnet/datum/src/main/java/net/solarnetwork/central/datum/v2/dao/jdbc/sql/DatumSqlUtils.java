@@ -1010,12 +1010,12 @@ public final class DatumSqlUtils {
 		if ( paramCount < 1 ) {
 			return 0;
 		}
-		buf.append("INNER JOIN LATERAL (");
-		buf.append("	SELECT stream_id");
-		buf.append("	FROM ").append(tableName).append(" datum");
-		buf.append("	WHERE datum.stream_id = s.stream_id");
+		buf.append("INNER JOIN LATERAL (\n");
+		buf.append("	SELECT stream_id\n");
+		buf.append("	FROM ").append(tableName).append(" datum\n");
+		buf.append("	WHERE datum.stream_id = s.stream_id\n");
 		buf.append(where);
-		buf.append("	LIMIT 1");
+		buf.append("	LIMIT 1\n");
 		buf.append(") d ON d.stream_id = s.stream_id\n");
 		return paramCount;
 	}

@@ -52,8 +52,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.AuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.reg.config.WebSecurityConfig;
@@ -109,7 +112,8 @@ public class UserCloudIntegrationsOAuthControllerTests {
 		final Long integrationId = randomLong();
 		final String serviceId = randomString();
 		final String code = randomString();
-		final String state = randomString();
+		final AuthorizationState state = new AuthorizationState(integrationId, randomString());
+		final String stateValue = state.stateValue();
 		final Locale locale = Locale.getDefault();
 
 		final UserLongCompositePK integrationPk = new UserLongCompositePK(userId, integrationId);
@@ -134,9 +138,11 @@ public class UserCloudIntegrationsOAuthControllerTests {
 		becomeUser(userId);
 
 		var request = new MockHttpServletRequest();
+		request.addParameter("code", code);
+		request.addParameter("state", stateValue);
 		RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
-		ModelAndView result = controller.handleOAuthAuthCode(integrationId, code, state, null, locale);
+		ModelAndView result = controller.handleOAuthAuthCode(new ServletWebRequest(request), locale);
 
 		// THEN
 		then(service1).should().fetchAccessToken(same(integration), paramsCaptor.capture(),
@@ -150,20 +156,19 @@ public class UserCloudIntegrationsOAuthControllerTests {
 			.as("Code provided as service param")
 			.containsEntry(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code)
 			.as("State provided as service param")
-			.containsEntry(CloudIntegrationService.AUTHORIZATION_STATE_PARAM, state)
+			.containsEntry(CloudIntegrationService.AUTHORIZATION_STATE_PARAM, stateValue)
 			.as("Redirect URI calculated as self and provided as service param")
 			.containsEntry(CloudIntegrationService.REDIRECT_URI_PARAM,
 				fromMethodCall(on(UserCloudIntegrationsOAuthController.class)
-						.handleOAuthAuthCode(0L, "", "", null, Locale.getDefault()))
-						.replaceQueryParams(null)
-						.buildAndExpand(integrationId).toUri())
+						.handleOAuthAuthCode(null, Locale.getDefault()))
+						.buildAndExpand().toUri())
 			;
 
 		and.then(result)
 			.as("Result provided")
 			.isNotNull()
 			.as("Expected view returned")
-			.returns("redirect:sec/c2c/oauth", from(ModelAndView::getViewName))
+			.returns("redirect:/u/sec/c2c/oauth?integrationId=" + integrationId, from(ModelAndView::getViewName))
 			;
 		// @formatter:on
 	}
@@ -176,7 +181,8 @@ public class UserCloudIntegrationsOAuthControllerTests {
 		final Long integrationId = randomLong();
 		final String serviceId = randomString();
 		final String code = randomString();
-		final String state = randomString();
+		final AuthorizationState state = new AuthorizationState(integrationId, randomString());
+		final String stateValue = state.stateValue();
 		final String redirectUri = "http://localhost/" + randomString();
 		final Locale locale = Locale.getDefault();
 
@@ -201,8 +207,11 @@ public class UserCloudIntegrationsOAuthControllerTests {
 		// WHEN
 		becomeUser(userId);
 
-		ModelAndView result = controller.handleOAuthAuthCode(integrationId, code, state, redirectUri,
-				locale);
+		var request = new MockHttpServletRequest();
+		request.addParameter("code", code);
+		request.addParameter("state", stateValue);
+		request.addParameter("redirect_uri", redirectUri);
+		ModelAndView result = controller.handleOAuthAuthCode(new ServletWebRequest(request), locale);
 
 		// THEN
 		then(service1).should().fetchAccessToken(same(integration), paramsCaptor.capture(),
@@ -216,7 +225,7 @@ public class UserCloudIntegrationsOAuthControllerTests {
 			.as("Code provided as service param")
 			.containsEntry(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code)
 			.as("State provided as service param")
-			.containsEntry(CloudIntegrationService.AUTHORIZATION_STATE_PARAM, state)
+			.containsEntry(CloudIntegrationService.AUTHORIZATION_STATE_PARAM, stateValue)
 			.as("Redirect URI calculated as self and provided as service param")
 			.containsEntry(CloudIntegrationService.REDIRECT_URI_PARAM, URI.create(redirectUri))
 			;
@@ -225,7 +234,57 @@ public class UserCloudIntegrationsOAuthControllerTests {
 			.as("Result provided")
 			.isNotNull()
 			.as("Expected view returned")
-			.returns("redirect:sec/c2c/oauth", from(ModelAndView::getViewName))
+			.returns("redirect:/u/sec/c2c/oauth?integrationId=" + integrationId, from(ModelAndView::getViewName))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void handleOAuthAuthCode_error() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long integrationId = randomLong();
+		final String serviceId = randomString();
+		final AuthorizationState state = new AuthorizationState(integrationId, randomString());
+		final String stateValue = state.stateValue();
+		final Locale locale = Locale.getDefault();
+		final String error = randomString();
+		final String errorDesc = randomString();
+
+		final UserLongCompositePK integrationPk = new UserLongCompositePK(userId, integrationId);
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(
+				integrationPk, now());
+		integration.setServiceIdentifier(serviceId);
+
+		// look up integration
+		given(userCloudIntegrationsBiz.configurationForId(integrationPk,
+				CloudIntegrationConfiguration.class)).willReturn(integration);
+
+		// WHEN
+		becomeUser(userId);
+
+		var request = new MockHttpServletRequest();
+		request.addParameter("error", error);
+		request.addParameter("error_description", errorDesc);
+		request.addParameter("state", stateValue);
+		RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+		ModelAndView result = controller.handleOAuthAuthCode(new ServletWebRequest(request), locale);
+
+		// THEN
+		// @formatter:off
+		String expectedView = "redirect:" + UriComponentsBuilder.fromPath("/u/sec/c2c/oauth")
+				.queryParam("integrationId", state.integrationId())
+				.queryParam("errorMessage", "%s (%s)".formatted(errorDesc, error))
+				.build(false)
+				.toUriString()
+				;
+
+		and.then(result)
+			.as("Result provided")
+			.isNotNull()
+			.as("Expected view returned")
+			.returns(expectedView, from(ModelAndView::getViewName))
 			;
 		// @formatter:on
 	}

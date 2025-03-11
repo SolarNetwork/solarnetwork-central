@@ -205,8 +205,7 @@ public class UserCloudIntegrationsOAuthControllerTests {
 
 		final var implicitRedirectUri = fromMethodCall(
 				on(net.solarnetwork.central.reg.web.UserCloudIntegrationsOAuthController.class)
-						.handleOAuthAuthCode(0L, "", "", null, Locale.getDefault()))
-								.replaceQueryParams(null).buildAndExpand(integrationId).toUri();
+						.handleOAuthAuthCode(null, Locale.getDefault())).buildAndExpand().toUri();
 		final var reqInfo = new HttpRequestInfo("GET",
 				URI.create("http://example.com/" + randomString()), null);
 		given(service1.authorizationRequestInfo(same(integration), eq(implicitRedirectUri),
