@@ -13,9 +13,20 @@ $(document).ready(function() {
 		 * @property {object} serviceProperties the service properties
 		 */
 
+		/**
+		 * Authorization request info.
+		 *
+		 * @typedef {Object} AuthRequestInfo
+		 * @property {string} method the HTTP method
+		 * @property {string} uri the URI to redirect to
+		 * @property {object} headers optional HTTP header values to include
+		 */
+
 		/** @type {Map<String, CloudIntegration>} */
 		const integrations = new Map(); // configId -> config
 		
+		const integrationsForm = $('#c2c-oauth-connect-form');
+
 		const integrationsSelect = $('#c2c-oauth-integration-select');
 		
 		function renderIntegrationConfigs(/** @type {Array<CloudIntegration>} */ configs) {
@@ -40,6 +51,26 @@ $(document).ready(function() {
 			});
 			
 			form.find('.active').toggleClass('hidden', !config);
+		});
+		
+		integrationsForm.on('submit', function handleIntegrationFormSubmit() {
+			const integrationId = integrationsSelect.val();
+			const form = this;
+			if ( integrationId ) {
+				const url = encodeURI(SolarReg.replaceTemplateParameters(decodeURI(form.action), {integrationId:integrationId}));
+				$.getJSON(url).done((json) => {
+					if (json && json.success === true) {
+						/** @type {AuthRequestInfo} */
+						const authInfo = json.data;
+						if ( authInfo.uri ) {
+							// assuming GET: redirect browser to given location
+							console.info('Redirecting for OAuth authorization code flow, to: %s', authInfo.uri);
+							location.href = authInfo.uri;
+						}
+					}
+				});
+			}
+			return false;
 		});
 		
 		/* ============================

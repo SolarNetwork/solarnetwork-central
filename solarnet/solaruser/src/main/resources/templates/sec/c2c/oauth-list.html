@@ -17,7 +17,8 @@
 		<p data-th-utext="#{c2c.oauth.list.intro.some(0)}">
 			Your OAuth Cloud Integrations are shown here.
 		</p>
-		<form id="c2c-oauth-connect-form"  class="form form-horizontal">
+		<form id="c2c-oauth-connect-form"  class="form form-horizontal"
+				data-th-action="@{/u/sec/c2c/oauth/integrations/{integrationId}/auth-info}">
 			<div class="form-group">
 				<label class="col-sm-3 control-label" data-th-text="#{c2c.oauth.integration.label}">
 					Integration
@@ -58,7 +59,7 @@
 			</div>
 			<div class="form-group active" data-th-classappend="'hidden'">
 				<div class="col-sm-offset-3 col-sm-8">
-				  <button type="button" class="btn btn-default" data-th-text="#{c2c.oauth.connect.label}">Connect</button>
+				  <button type="submit" class="btn btn-default" data-th-text="#{c2c.oauth.connect.label}">Connect</button>
 				</div>
 			</div>
 		</form>
