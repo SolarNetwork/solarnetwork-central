@@ -60,6 +60,7 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
@@ -253,6 +254,8 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
+		} catch ( RemoteServiceException e ) {
+			return validationResult(e, null);
 		} catch ( Exception e ) {
 			return Result.error("EPCI.0002", "Validation failed: " + e.getMessage());
 		}

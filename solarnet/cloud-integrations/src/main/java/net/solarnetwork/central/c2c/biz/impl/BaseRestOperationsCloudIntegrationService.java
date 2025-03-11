@@ -27,12 +27,16 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.biz.UserServiceAuditor;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 
 /**
@@ -41,7 +45,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public abstract class BaseRestOperationsCloudIntegrationService extends BaseCloudIntegrationService {
 
@@ -84,6 +88,30 @@ public abstract class BaseRestOperationsCloudIntegrationService extends BaseClou
 	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
 		super.setUserServiceAuditor(userServiceAuditor);
 		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
+	}
+
+	/**
+	 * Create a standard validation result from a
+	 * {@link RemoteServiceException}.
+	 *
+	 * @param <T>
+	 *        the result body type
+	 * @param e
+	 *        the exception
+	 * @param body
+	 *        the body
+	 * @return the result
+	 * @since 1.2
+	 */
+	public static <T> Result<T> validationResult(RemoteServiceException e, T body) {
+		if ( e.getCause() instanceof HttpClientErrorException h ) {
+			if ( h.getStatusCode().isSameCodeAs(HttpStatus.TOO_MANY_REQUESTS) ) {
+				return new Result<>(true, "BCI.0002",
+						"Authentication succeeded but HTTP 429 (too many requests) was returned.", body);
+			}
+		}
+		return new Result<>(false, "BCI.0001", "Validation failed: " + e.getMessage(), body);
+
 	}
 
 }

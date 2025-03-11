@@ -43,6 +43,7 @@ import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
@@ -50,7 +51,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Solcast API implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SolcastCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -182,6 +183,8 @@ public class SolcastCloudIntegrationService extends BaseRestOperationsCloudInteg
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
+		} catch ( RemoteServiceException e ) {
+			return validationResult(e, null);
 		} catch ( Exception e ) {
 			return Result.error("SCCI.0002", "Validation failed: " + e.getMessage());
 		}

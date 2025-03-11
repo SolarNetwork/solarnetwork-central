@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
@@ -77,6 +78,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
@@ -280,6 +282,85 @@ public class EnphaseCloudIntegrationServiceTests {
 			.isNotNull()
 			.as("Result is success")
 			.returns(true, from(Result::getSuccess))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void validate_429_tooManyRequests() {
+		// GIVEN
+		final String tokenUri = "https://example.com/oauth/token";
+		final String apiKey = randomString();
+		final String clientId = randomString();
+		final String clientSecret = randomString();
+		final String accessToken = randomString();
+		final String refreshToken = randomString();
+
+		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		// @formatter:off
+		conf.setServiceProps(Map.of(
+				API_KEY_SETTING, apiKey,
+				OAUTH_CLIENT_ID_SETTING, clientId,
+				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
+				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
+				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
+			));
+
+		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
+		final ClientRegistration oauthClientReg = ClientRegistration
+			.withRegistrationId("test")
+			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+			.clientId(clientId)
+			.clientSecret(clientSecret)
+			.tokenUri(tokenUri)
+			.build();
+		// @formatter:on
+
+		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
+				randomString(), now(), now().plusSeconds(60));
+
+		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
+				oauthAccessToken);
+
+		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
+
+		final URI listSystems = EnphaseCloudIntegrationService.BASE_URI
+				.resolve(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL + "?key=" + apiKey);
+		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class))).willThrow(
+				HttpClientErrorException.create("Too many requests", HttpStatus.TOO_MANY_REQUESTS,
+						"429 TOO_MANY_REQUESTS", new HttpHeaders(), "Too many".getBytes(UTF_8), UTF_8));
+
+		// WHEN
+
+		Result<Void> result = service.validate(conf, Locale.getDefault());
+
+		// THEN
+		// @formatter:off
+		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
+
+		and.then(authRequestCaptor.getValue())
+			.as("OAuth request provided")
+			.isNotNull()
+			.as("No OAuth2AuthorizedClient provided")
+			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
+			.as("Client registration ID is configuration system identifier")
+			.returns(conf.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
+			;
+
+		and.then(result)
+			.as("Result generated")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			.as("Code included")
+			.returns("BCI.0002", from(Result::getCode))
+			.satisfies(r -> {
+				and.then(r.getMessage())
+					.as("429 included in message")
+					.contains("HTTP 429")
+					;
+			})
 			;
 		// @formatter:on
 	}
