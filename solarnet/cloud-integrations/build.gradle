@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Cloud Integrations'
-version = '1.19.0'
+version = '1.20.0'
 
 base {
 	archivesName = 'solarnet-cloud-integrations'
@@ -27,6 +27,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-user')

@@ -805,4 +805,94 @@ public class DaoCloudDatumStreamPollServiceTests {
 		and.then(result).as("DAO result returned").isEqualTo(resetCount);
 	}
 
+	@Test
+	public void executeTask_remoteException_clientHttpError_oldExecuteAt() throws Exception {
+		// GIVEN
+		// submit task
+		var future = new CompletableFuture<CloudDatumStreamPollTaskEntity>();
+		given(executor.submit(argThat((Callable<CloudDatumStreamPollTaskEntity> call) -> {
+			try {
+				future.complete(call.call());
+			} catch ( Exception e ) {
+				future.completeExceptionally(e);
+			}
+			return true;
+		}))).willReturn(future);
+
+		final Instant oldHour = clock.instant().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS);
+
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(randomLong());
+		datumStream.setServiceIdentifier(TEST_DATUM_STREAM_SERVICE_IDENTIFIER);
+		datumStream.setSchedule("0 0/5 * * * *");
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(randomLong());
+		datumStream.setSourceId(randomString());
+
+		// look up datum stream associated with task
+		given(datumStreamDao.get(datumStream.getId())).willReturn(datumStream);
+
+		// resolve datum stream settings
+		given(datumStreamSettingsDao.resolveSettings(TEST_USER_ID, datumStream.getConfigId(),
+				DEFAULT_DATUM_STREAM_SETTINGS)).willReturn(DEFAULT_DATUM_STREAM_SETTINGS);
+
+		// verify node ownership
+		final var nodeOwner = new BasicSolarNodeOwnership(datumStream.getObjectId(), TEST_USER_ID, "NZ",
+				UTC, true, false);
+		given(nodeOwnershipDao.ownershipForNodeId(datumStream.getObjectId())).willReturn(nodeOwner);
+
+		// update task state to "processing"
+		given(taskDao.updateTaskState(datumStream.getId(), Executing, Claimed)).willReturn(true);
+
+		// query for data associated with service configured on datum stream; but throw 429
+		final String httpClientErrorExceptionMessage = randomString();
+		final RemoteServiceException remoteServiceException = new RemoteServiceException("Remote error",
+				HttpClientErrorException.create(httpClientErrorExceptionMessage,
+						HttpStatus.TOO_MANY_REQUESTS, "429 Too Many Requests", new HttpHeaders(),
+						new byte[0], null));
+		given(datumStreamService.datum(same(datumStream), any())).willThrow(remoteServiceException);
+
+		// update task details
+		given(taskDao.updateTask(any(), eq(Executing))).willReturn(true);
+
+		// WHEN
+		var task = new CloudDatumStreamPollTaskEntity(datumStream.getId());
+		task.setState(Claimed);
+		task.setExecuteAt(oldHour);
+		task.setStartAt(oldHour.minusSeconds(300));
+
+		Future<CloudDatumStreamPollTaskEntity> result = service.executeTask(task);
+
+		// THEN
+		// @formatter:off
+		then(taskDao).should().updateTask(taskCaptor.capture(), eq(Executing));
+		and.then(taskCaptor.getValue())
+			.as("Task to update is copy of given task")
+			.isNotSameAs(task)
+			.as("Task to update has same ID as given task")
+			.isEqualTo(task)
+			.as("Update task state to Queued to run again after client HTTP error")
+			.returns(Queued, from(CloudDatumStreamPollTaskEntity::getState))
+			.as("Update task execute date to 1min in future")
+			.returns(clock.instant().plusSeconds(60), from(CloudDatumStreamPollTaskEntity::getExecuteAt))
+			.as("Update task start date unchanged")
+			.returns(task.getStartAt(), from(CloudDatumStreamPollTaskEntity::getStartAt))
+			.as("Error message saved")
+			.returns("Error executing poll task.", from(CloudDatumStreamPollTaskEntity::getMessage))
+			.as("Service properties saved with exception message")
+			.returns(Map.of("message", httpClientErrorExceptionMessage), from(CloudDatumStreamPollTaskEntity::getServiceProperties))
+			;
+
+		and.thenThrownBy(() -> {
+				result.get(1, TimeUnit.MINUTES);
+			}, "ExecutionException thrown")
+			.isInstanceOf(ExecutionException.class)
+			.cause()
+			.isSameAs(remoteServiceException)
+			;
+
+		// @formatter:on
+	}
+
 }

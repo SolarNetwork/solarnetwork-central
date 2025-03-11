@@ -28,6 +28,7 @@ import static net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils.execu
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.springframework.jdbc.core.JdbcOperations;
 import net.solarnetwork.central.c2c.dao.BasicFilter;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
@@ -35,6 +36,8 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationFilter;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.InsertCloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.SelectCloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationConfiguration;
+import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationMergeServiceProperties;
+import net.solarnetwork.central.c2c.dao.jdbc.sql.UpdateCloudIntegrationOAuthAuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.common.dao.jdbc.sql.CommonJdbcUtils;
 import net.solarnetwork.central.common.dao.jdbc.sql.DeleteForCompositeKey;
@@ -47,7 +50,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link CloudIntegrationConfigurationDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationConfigurationDao {
 
@@ -147,6 +150,19 @@ public class JdbcCloudIntegrationConfigurationDao implements CloudIntegrationCon
 				: UserLongCompositePK.unassignedEntityIdKey(userId);
 		var sql = new UpdateEnabledIdFilter(TABLE_NAME, PK_COLUMN_NAMES, key, enabled);
 		return jdbcOps.update(sql);
+	}
+
+	@Override
+	public boolean saveOAuthAuthorizationState(UserLongCompositePK id, String state,
+			String expectedState) {
+		var sql = new UpdateCloudIntegrationOAuthAuthorizationState(id, state, expectedState);
+		return jdbcOps.update(sql) > 0;
+	}
+
+	@Override
+	public boolean mergeServiceProperties(UserLongCompositePK id, Map<String, ?> serviceProperties) {
+		var sql = new UpdateCloudIntegrationMergeServiceProperties(id, serviceProperties);
+		return jdbcOps.update(sql) > 0;
 	}
 
 }

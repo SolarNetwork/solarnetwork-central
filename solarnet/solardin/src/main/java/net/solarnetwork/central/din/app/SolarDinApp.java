@@ -37,6 +37,7 @@ import net.solarnetwork.central.din.config.SolarNetDatumInputConfiguration;
 import net.solarnetwork.central.inin.config.SolarNetInstructionInputConfiguration;
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
+import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
 import net.solarnetwork.central.user.config.UserDaoConfig;
 import net.solarnetwork.util.ApplicationContextUtils;
 
@@ -58,6 +59,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetCommonConfiguration.class,
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetCommonSecurityConfiguration.class,
+		SolarNetCommonWebSecurityConfiguration.class,
 		UserDaoConfig.class,
 })
 //@formatter:on

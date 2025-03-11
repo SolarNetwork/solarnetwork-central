@@ -27,12 +27,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
+import net.solarnetwork.central.c2c.domain.BasicCloudIntegrationLocalizedServiceInfo;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
+import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
@@ -41,7 +44,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -211,6 +214,13 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 			result = integration.serviceProperty(BASE_URL_SETTING, String.class);
 		}
 		return result;
+	}
+
+	@Override
+	public LocalizedServiceInfo getLocalizedServiceInfo(Locale locale) {
+		return new BasicCloudIntegrationLocalizedServiceInfo(
+				super.getLocalizedServiceInfo(locale != null ? locale : Locale.getDefault()),
+				getSettingSpecifiers(), wellKnownUrls);
 	}
 
 	@Override

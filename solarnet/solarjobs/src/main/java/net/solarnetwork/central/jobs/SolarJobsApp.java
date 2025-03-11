@@ -39,6 +39,7 @@ import net.solarnetwork.central.datum.imp.config.SolarNetDatumImportConfiguratio
 import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguration;
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
+import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
 import net.solarnetwork.central.user.config.SolarNetUserConfiguration;
 import net.solarnetwork.central.user.event.config.SolarNetUserEventConfiguration;
 import net.solarnetwork.central.user.expire.config.SolarNetUserExpireConfiguration;
@@ -71,6 +72,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetCommonDaoConfiguration.class,
 		SolarNetCommonMailConfiguration.class,
 		SolarNetCommonSecurityConfiguration.class,
+		SolarNetCommonWebSecurityConfiguration.class,
 })
 //@formatter:on
 public class SolarJobsApp {

@@ -9,5 +9,6 @@ INNER JOIN LATERAL (
 	WHERE datum.stream_id = s.stream_id
 		AND datum.ts >= ? AT TIME ZONE COALESCE(l.time_zone, 'UTC')
 		AND datum.ts < ? AT TIME ZONE COALESCE(l.time_zone, 'UTC')
-	LIMIT 1) d ON d.stream_id = s.stream_id
+	LIMIT 1
+	) d ON d.stream_id = s.stream_id
 WHERE s.node_id = ANY(?)

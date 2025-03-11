@@ -1,0 +1,112 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+	id 'org.springframework.boot' version '3.4.3' apply false
+}
+
+apply plugin: 'java-library'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+dependencyManagement {
+	imports {
+		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+	}
+}
+
+description = 'SolarNet: Common Web'
+version = '1.0.0'
+
+base {
+	archivesName = 'solarnet-common-web'
+}
+
+configurations {
+	all*.exclude group: 'commons-logging'
+	all*.exclude group: 'javax.servlet'
+	all*.exclude group: 'log4j', module: 'log4j'
+	all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+}
+
+dependencies {
+	implementation project(':solarnet-common')
+
+	api "net.solarnetwork.common:net.solarnetwork.common.web.jakarta:${snCommonWebJakartaVersion}"
+
+	// JCache
+	implementation 'javax.cache:cache-api'
+	
+	// Security
+	implementation 'org.springframework.security:spring-security-core'
+	implementation 'org.springframework.security:spring-security-oauth2-client'
+	
+	// Swagger support
+	implementation "io.swagger.core.v3:swagger-annotations-jakarta:${swaggerVersion}"
+	implementation "io.swagger.core.v3:swagger-core-jakarta:${swaggerVersion}"
+	implementation "io.swagger.core.v3:swagger-models-jakarta:${swaggerVersion}"
+	
+	// Web
+	implementation 'jakarta.servlet:jakarta.servlet-api'
+	implementation "org.apache.tomcat.embed:tomcat-embed-core"
+	implementation 'org.springframework:spring-web'
+	implementation 'org.springframework.boot:spring-boot-actuator'
+	
+	// Utilities
+	implementation 'io.github.classgraph:classgraph:4.8.179'
+	
+	// Testing
+	testImplementation project(':solarnet-common-test')
+    
+}
+
+jar.manifest {
+    attributes('Implementation-Version': version)
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			pom {
+				name = project.description
+				description = 'Shared library for all SolarNet web projects.'
+				url = 'https://github.com/SolarNetwork/solarnetwork-central'
+				licenses {
+					license {
+						name = 'GNU General Public License, Version 2.0'
+						url = 'https://opensource.org/licenses/GPL-2.0'
+					}
+				}
+				developers {
+					developer {
+						name = 'SolarNetwork Developers'
+						email = 'code@solarnetwork.net'
+						organization = 'SolarNetwork Foundation'
+						organizationUrl = 'https://solarnetwork.net'
+					}
+				}
+				scm {
+					connection = 'scm:git:https://github.com/SolarNetwork/solarnetwork-central.git'
+					developerConnection = 'scm:git:git@github.com:SolarNetwork/solarnetwork-central.git'
+					url = 'https://github.com/SolarNetwork/solarnetwork-central'
+				}
+			}
+		}
+	}
+	repositories {
+		maven {
+			name = "OSSRH"
+			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			credentials {
+				username = ossrhUsername
+				password = ossrhPassword
+			}
+		}
+	}
+}
+
+signing {
+	useGpgCmd()
+	sign publishing.publications.mavenJava
+}

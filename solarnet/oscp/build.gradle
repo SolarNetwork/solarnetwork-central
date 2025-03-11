@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: OSCP'
-version = '2.4.0'
+version = '2.5.0'
 
 base {
 	archivesName = 'solarnet-oscp'
@@ -29,6 +29,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-instructor')
 	implementation project(':solarnet-user')

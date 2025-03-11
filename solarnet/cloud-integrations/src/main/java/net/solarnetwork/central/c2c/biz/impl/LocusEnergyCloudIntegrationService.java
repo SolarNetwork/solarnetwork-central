@@ -49,6 +49,7 @@ import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
@@ -57,7 +58,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * Locus Energy implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -211,6 +212,8 @@ public class LocusEnergyCloudIntegrationService extends BaseRestOperationsCloudI
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
+		} catch ( RemoteServiceException e ) {
+			return validationResult(e, null);
 		} catch ( Exception e ) {
 			return Result.error("LECI.0002", "Validation failed: " + e.getMessage());
 		}

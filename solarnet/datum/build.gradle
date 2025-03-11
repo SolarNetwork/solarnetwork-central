@@ -16,7 +16,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Datum'
-version = '2.22.0'
+version = '2.23.0'
 
 base {
 	archivesName = 'solarnet-datum'
@@ -31,6 +31,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 
 	// Spring
 	implementation 'org.springframework.boot:spring-boot-starter'

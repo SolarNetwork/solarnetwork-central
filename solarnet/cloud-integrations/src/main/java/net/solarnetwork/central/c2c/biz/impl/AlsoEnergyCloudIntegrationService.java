@@ -49,6 +49,7 @@ import net.solarnetwork.central.c2c.http.OAuth2RestOperationsHelper;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
+import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
@@ -56,7 +57,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * AlsoEnergy implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
@@ -175,6 +176,8 @@ public class AlsoEnergyCloudIntegrationService extends BaseRestOperationsCloudIn
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
+		} catch ( RemoteServiceException e ) {
+			return validationResult(e, null);
 		} catch ( Exception e ) {
 			return Result.error("AECI.0002", "Validation failed: " + e.getMessage());
 		}

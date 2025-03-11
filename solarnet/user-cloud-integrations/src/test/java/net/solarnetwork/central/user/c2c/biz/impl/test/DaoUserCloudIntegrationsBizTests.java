@@ -38,6 +38,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -108,11 +109,13 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Test cases for the {@link DaoUserCloudIntegrationsBiz} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DaoUserCloudIntegrationsBizTests {
+
+	private static final String TEST_SECURE_SETTING = "watchout";
 
 	private static final String TEST_SERVICE_ID = randomString();
 
@@ -173,6 +176,9 @@ public class DaoUserCloudIntegrationsBizTests {
 	@Captor
 	private ArgumentCaptor<ClientAccessTokenEntity> clientAccessTokenCaptor;
 
+	@Captor
+	private ArgumentCaptor<Map<String, ?>> propsCaptor;
+
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
 	private PrefixedTextEncryptor textEncryptor = PrefixedTextEncryptor.aesTextEncryptor(randomString(),
@@ -187,7 +193,7 @@ public class DaoUserCloudIntegrationsBizTests {
 
 		// provide settings to verify masking sensitive values
 		List<SettingSpecifier> settings = Arrays.asList(new BasicTextFieldSettingSpecifier("foo", null),
-				new BasicTextFieldSettingSpecifier("watchout", null, true));
+				new BasicTextFieldSettingSpecifier(TEST_SECURE_SETTING, null, true));
 		given(integrationService.getSettingSpecifiers()).willReturn(settings);
 
 		biz = new DaoUserCloudIntegrationsBiz(clock, userSettingsDao, integrationDao, datumStreamDao,
@@ -221,7 +227,7 @@ public class DaoUserCloudIntegrationsBizTests {
 	public void integrationConfigurations_forUser() {
 		// GIVEN
 		final Long userId = randomLong();
-		final Map<String, Object> sprops = Map.of("foo", "bar", "watchout", "should be masked");
+		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(userId,
 				randomLong(), now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
@@ -446,7 +452,7 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long entityId = randomLong();
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 
-		final Map<String, Object> sprops = Map.of("foo", "bar", "watchout", "should be masked");
+		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
@@ -485,7 +491,7 @@ public class DaoUserCloudIntegrationsBizTests {
 					.containsOnlyKeys(sprops.keySet())
 					.as("Non-senstive property unchanged")
 					.containsEntry("foo", sprops.get("foo"))
-					.hasEntrySatisfying("watchout", v -> {
+					.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
 						and.then(v)
 							.asInstanceOf(InstanceOfAssertFactories.STRING)
 							.as("Sensitive value has encryptor prefix")
@@ -494,7 +500,7 @@ public class DaoUserCloudIntegrationsBizTests {
 							.satisfies(cipherText -> {
 								and.then(textEncryptor.decrypt(cipherText))
 									.as("Decrypted value same as original plain text")
-									.isEqualTo(sprops.get("watchout"))
+									.isEqualTo(sprops.get(TEST_SECURE_SETTING))
 									;
 							})
 							;
@@ -510,6 +516,32 @@ public class DaoUserCloudIntegrationsBizTests {
 		// @formatter:on
 	}
 
+	private static final String TEST_ACCESS_TOKEN = """
+			eyJhbGciOiJSUzI1NiJ9.eyJhcHBfdHlwZSI6InN5c3RlbSIsInVzZXJfbmFtZSI6Im1p\
+			Y2FoLmJyaWxsQHNreXZpZXd2ZW50dXJlcy5jb20iLCJlbmxfY2lkIjoiNTk4MDUxIiwiZ\
+			W5sX3Bhc3N3b3JkX2xhc3RfY2hhbmdlZCI6IjE1OTE2Njg4NjYiLCJhdXRob3JpdGllcy\
+			I6WyJST0xFX1VTRVIiXSwiY2xpZW50X2lkIjoiYjdjYmU0YjcwYWRjNWRhOTExZWY1MWN\
+			hZWFkZWRmMjQiLCJhdWQiOlsib2F1dGgyLXJlc291cmNlIl0sImlzX2ludGVybmFsX2Fw\
+			cCI6ZmFsc2UsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJleHAiOjE3NDEwMjc2NzYsI\
+			mVubF91aWQiOiIxOTk1MjcyIiwiYXBwX0lkIjoiMTQwOTYyNDQ0Njk0NCIsImp0aSI6Im\
+			QyZmFhM2IxLTA1NGEtNDljZC1iMDI0LTk5YjVmMDQ2MDM5MCJ9.IlUBREujj0BdZcHsdr\
+			LH8XFutmJOvFjJ0O8zyWDz-UVKLMxGUAbAKKgLeyTGP3ym2Wz5_3WlQ3lTcXzogZSh0Q8\
+			tjY34qBCA6tR4dSnt8Lw0sRxxL6n3ZQ_pwfGRVw5e5S1UTGRuRIuIIsVVlej4Bg3MuluE\
+			Cd1E1AaHLIXe9co""";
+	private static final String TEST_REFRESH_TOKEN = """
+			eyJhbGciOiJSUzI1NiJ9.eyJhcHBfdHlwZSI6InN5c3RlbSIsInVzZXJfbmFtZSI6Im1p\
+			Y2FoLmJyaWxsQHNreXZpZXd2ZW50dXJlcy5jb20iLCJlbmxfY2lkIjoiNTk4MDUxIiwiZ\
+			W5sX3Bhc3N3b3JkX2xhc3RfY2hhbmdlZCI6IjE1OTE2Njg4NjYiLCJhdXRob3JpdGllcy\
+			I6WyJST0xFX1VTRVIiXSwiY2xpZW50X2lkIjoiYjdjYmU0YjcwYWRjNWRhOTExZWY1MWN\
+			hZWFkZWRmMjQiLCJhdWQiOlsib2F1dGgyLXJlc291cmNlIl0sImlzX2ludGVybmFsX2Fw\
+			cCI6ZmFsc2UsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJhdGkiOiJkMmZhYTNiMS0wN\
+			TRhLTQ5Y2QtYjAyNC05OWI1ZjA0NjAzOTAiLCJleHAiOjE3NDM1NzEwMjIsImVubF91aW\
+			QiOiIxOTk1MjcyIiwiYXBwX0lkIjoiMTQwOTYyNDQ0Njk0NCIsImp0aSI6ImYyYmM3NGQ\
+			0LTMxZTAtNDYzYi1iMjZkLWMxZmI3NjM1NTQyZCJ9.LkbUq7mm6wfW8k9zj_wPZ5IRw8g\
+			Uywrn4E1LXMNtBzPxgHRnFKUKwR9-8SMjCod1u5xTY_2KjXg0AbnYAs5dmYUDARVfl2sY\
+			HFlck7-sbua9nnpcEya3Py0w6ORadX6cyzpg0HRxEXQo3D0GFLCpc4uxbaQZWtLCGx5Ga\
+			HxcYmI""";
+
 	@Test
 	public void integrationConfiguration_save_withAccessToken() {
 		// GIVEN
@@ -517,34 +549,10 @@ public class DaoUserCloudIntegrationsBizTests {
 		final Long entityId = randomLong();
 		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
 		final String oauthClientId = randomString();
-		final String accessToken = """
-				eyJhbGciOiJSUzI1NiJ9.eyJhcHBfdHlwZSI6InN5c3RlbSIsInVzZXJfbmFtZSI6Im1p\
-				Y2FoLmJyaWxsQHNreXZpZXd2ZW50dXJlcy5jb20iLCJlbmxfY2lkIjoiNTk4MDUxIiwiZ\
-				W5sX3Bhc3N3b3JkX2xhc3RfY2hhbmdlZCI6IjE1OTE2Njg4NjYiLCJhdXRob3JpdGllcy\
-				I6WyJST0xFX1VTRVIiXSwiY2xpZW50X2lkIjoiYjdjYmU0YjcwYWRjNWRhOTExZWY1MWN\
-				hZWFkZWRmMjQiLCJhdWQiOlsib2F1dGgyLXJlc291cmNlIl0sImlzX2ludGVybmFsX2Fw\
-				cCI6ZmFsc2UsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJleHAiOjE3NDEwMjc2NzYsI\
-				mVubF91aWQiOiIxOTk1MjcyIiwiYXBwX0lkIjoiMTQwOTYyNDQ0Njk0NCIsImp0aSI6Im\
-				QyZmFhM2IxLTA1NGEtNDljZC1iMDI0LTk5YjVmMDQ2MDM5MCJ9.IlUBREujj0BdZcHsdr\
-				LH8XFutmJOvFjJ0O8zyWDz-UVKLMxGUAbAKKgLeyTGP3ym2Wz5_3WlQ3lTcXzogZSh0Q8\
-				tjY34qBCA6tR4dSnt8Lw0sRxxL6n3ZQ_pwfGRVw5e5S1UTGRuRIuIIsVVlej4Bg3MuluE\
-				Cd1E1AaHLIXe9co""";
-		final String refreshToken = """
-				eyJhbGciOiJSUzI1NiJ9.eyJhcHBfdHlwZSI6InN5c3RlbSIsInVzZXJfbmFtZSI6Im1p\
-				Y2FoLmJyaWxsQHNreXZpZXd2ZW50dXJlcy5jb20iLCJlbmxfY2lkIjoiNTk4MDUxIiwiZ\
-				W5sX3Bhc3N3b3JkX2xhc3RfY2hhbmdlZCI6IjE1OTE2Njg4NjYiLCJhdXRob3JpdGllcy\
-				I6WyJST0xFX1VTRVIiXSwiY2xpZW50X2lkIjoiYjdjYmU0YjcwYWRjNWRhOTExZWY1MWN\
-				hZWFkZWRmMjQiLCJhdWQiOlsib2F1dGgyLXJlc291cmNlIl0sImlzX2ludGVybmFsX2Fw\
-				cCI6ZmFsc2UsInNjb3BlIjpbInJlYWQiLCJ3cml0ZSJdLCJhdGkiOiJkMmZhYTNiMS0wN\
-				TRhLTQ5Y2QtYjAyNC05OWI1ZjA0NjAzOTAiLCJleHAiOjE3NDM1NzEwMjIsImVubF91aW\
-				QiOiIxOTk1MjcyIiwiYXBwX0lkIjoiMTQwOTYyNDQ0Njk0NCIsImp0aSI6ImYyYmM3NGQ\
-				0LTMxZTAtNDYzYi1iMjZkLWMxZmI3NjM1NTQyZCJ9.LkbUq7mm6wfW8k9zj_wPZ5IRw8g\
-				Uywrn4E1LXMNtBzPxgHRnFKUKwR9-8SMjCod1u5xTY_2KjXg0AbnYAs5dmYUDARVfl2sY\
-				HFlck7-sbua9nnpcEya3Py0w6ORadX6cyzpg0HRxEXQo3D0GFLCpc4uxbaQZWtLCGx5Ga\
-				HxcYmI""";
 
 		final Map<String, Object> sprops = Map.of(OAUTH_CLIENT_ID_SETTING, oauthClientId,
-				OAUTH_ACCESS_TOKEN_SETTING, accessToken, OAUTH_REFRESH_TOKEN_SETTING, refreshToken);
+				OAUTH_ACCESS_TOKEN_SETTING, TEST_ACCESS_TOKEN, OAUTH_REFRESH_TOKEN_SETTING,
+				TEST_REFRESH_TOKEN);
 
 		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
 		conf.setServiceIdentifier(TEST_SERVICE_ID);
@@ -588,13 +596,13 @@ public class DaoUserCloudIntegrationsBizTests {
 			.as("Token entity ID assigned on save")
 			.returns(accessTokenPk, from(ClientAccessTokenEntity::getId))
 			.as("Access token as provided from settings")
-			.returns(accessToken.getBytes(UTF_8), from(ClientAccessTokenEntity::getAccessToken))
+			.returns(TEST_ACCESS_TOKEN.getBytes(UTF_8), from(ClientAccessTokenEntity::getAccessToken))
 			.as("Access token expiration date decoded from JWT")
 			.returns(Instant.ofEpochSecond(1741027676L), from(ClientAccessTokenEntity::getAccessTokenExpiresAt))
 			.as("Access token issue date not in JWT, defaults to clock time")
 			.returns(clock.instant(), from(ClientAccessTokenEntity::getAccessTokenIssuedAt))
 			.as("Refresh token as provided from settings")
-			.returns(refreshToken.getBytes(UTF_8), from(ClientAccessTokenEntity::getRefreshToken))
+			.returns(TEST_REFRESH_TOKEN.getBytes(UTF_8), from(ClientAccessTokenEntity::getRefreshToken))
 			.as("Refresh token issue date not in JWT, defaults to clock time")
 			.returns(clock.instant(), from(ClientAccessTokenEntity::getRefreshTokenIssuedAt))
 			;
@@ -1105,7 +1113,7 @@ public class DaoUserCloudIntegrationsBizTests {
 	}
 
 	@Test
-	public void saveUserSettigns() {
+	public void saveUserSettings() {
 		// GIVEN
 		Long userId = randomLong();
 		given(userSettingsDao.save(any())).willReturn(userId);
@@ -1139,7 +1147,7 @@ public class DaoUserCloudIntegrationsBizTests {
 	}
 
 	@Test
-	public void deleteUserSettigns() {
+	public void deleteUserSettings() {
 		// GIVEN
 		Long userId = randomLong();
 
@@ -1152,6 +1160,154 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(userSettingsCaptor.getValue())
 			.as("User ID as provided")
 			.returns(userId, from(UserSettingsEntity::getUserId))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void integrationConfiguration_mergeServiceProperties() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now());
+		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+
+		given(integrationDao.get(pk)).willReturn(conf1, conf2);
+
+		given(integrationDao.mergeServiceProperties(eq(pk), any())).willReturn(true);
+
+		// WHEN
+		Map<String, Object> props = Map.of("foo", 1, "bim", "bam");
+		CloudIntegrationConfiguration result = biz.mergeConfigurationServiceProperties(pk, props,
+				CloudIntegrationConfiguration.class);
+
+		// THEN
+		then(integrationDao).should().mergeServiceProperties(eq(pk), eq(props));
+		// @formatter:off
+		and.then(result)
+			.as("2nd DAO result returned")
+			.isSameAs(conf2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void integrationConfiguration_mergeServiceProperties_secure() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now());
+		conf1.setServiceIdentifier(TEST_SERVICE_ID);
+
+		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+
+		given(integrationDao.get(pk)).willReturn(conf1, conf2);
+
+		given(integrationDao.mergeServiceProperties(eq(pk), any())).willReturn(true);
+
+		// WHEN
+		Map<String, Object> props = Map.of("foo", 1, TEST_SECURE_SETTING, "bam");
+		CloudIntegrationConfiguration result = biz.mergeConfigurationServiceProperties(pk, props,
+				CloudIntegrationConfiguration.class);
+
+		// THEN
+		then(integrationDao).should().mergeServiceProperties(eq(pk), propsCaptor.capture());
+		// @formatter:off
+		and.then(propsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("OAuth tokens merged")
+			.hasSize(2)
+			.as("Plain token saved as-is")
+			.containsEntry("foo", props.get("foo"))
+			.as("Secure token saved encrypted")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(InstanceOfAssertFactories.STRING)
+					.as("Sensitive value has encryptor prefix")
+					.startsWith(textEncryptor.getPrefix())
+					.as("Can decrypt value back to original plain text")
+					.satisfies(cipherText -> {
+						and.then(textEncryptor.decrypt(cipherText))
+							.as("Decrypted value same as original plain text")
+							.isEqualTo(props.get(TEST_SECURE_SETTING))
+							;
+					})
+					;
+			})
+			;
+
+		and.then(result)
+			.as("2nd DAO result returned")
+			.isSameAs(conf2)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void integrationConfiguration_mergeServiceProperties_withAccessToken() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long entityId = randomLong();
+		final UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		final CloudIntegrationConfiguration conf1 = new CloudIntegrationConfiguration(pk, now());
+		final String clientId = randomString();
+		conf1.setServiceProps(Map.of(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, clientId));
+
+		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+
+		given(integrationDao.get(pk)).willReturn(conf1, conf2);
+
+		given(integrationDao.mergeServiceProperties(eq(pk), any())).willReturn(true);
+
+		final UserStringStringCompositePK accessTokenPk = new UserStringStringCompositePK(userId,
+				conf2.systemIdentifier(), clientId);
+		given(clientAccessTokenDao.save(any())).willReturn(accessTokenPk);
+
+		// WHEN
+		Map<String, Object> props = Map.of(CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING,
+				TEST_ACCESS_TOKEN, CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING,
+				TEST_REFRESH_TOKEN);
+		CloudIntegrationConfiguration result = biz.mergeConfigurationServiceProperties(pk, props,
+				CloudIntegrationConfiguration.class);
+
+		// THEN
+		then(integrationDao).should().mergeServiceProperties(eq(pk), propsCaptor.capture());
+		// @formatter:off
+		and.then(propsCaptor.getValue())
+			.asInstanceOf(map(String.class, Object.class))
+			.as("OAuth tokens merged")
+			.hasSize(2)
+			.as("Access token saved")
+			.containsEntry(CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING, TEST_ACCESS_TOKEN)
+			.as("Refresh token saved")
+			.containsEntry(CloudIntegrationService.OAUTH_REFRESH_TOKEN_SETTING, TEST_REFRESH_TOKEN)
+			;
+
+		then(clientAccessTokenDao).should().save(clientAccessTokenCaptor.capture());
+
+		and.then(clientAccessTokenCaptor.getValue())
+			.as("Token entity ID assigned on save")
+			.returns(accessTokenPk, from(ClientAccessTokenEntity::getId))
+			.as("Access token as provided from settings")
+			.returns(TEST_ACCESS_TOKEN.getBytes(UTF_8), from(ClientAccessTokenEntity::getAccessToken))
+			.as("Access token expiration date decoded from JWT")
+			.returns(Instant.ofEpochSecond(1741027676L), from(ClientAccessTokenEntity::getAccessTokenExpiresAt))
+			.as("Access token issue date not in JWT, defaults to clock time")
+			.returns(clock.instant(), from(ClientAccessTokenEntity::getAccessTokenIssuedAt))
+			.as("Refresh token as provided from settings")
+			.returns(TEST_REFRESH_TOKEN.getBytes(UTF_8), from(ClientAccessTokenEntity::getRefreshToken))
+			.as("Refresh token issue date not in JWT, defaults to clock time")
+			.returns(clock.instant(), from(ClientAccessTokenEntity::getRefreshTokenIssuedAt))
+			;
+
+
+		and.then(result)
+			.as("2nd DAO result returned")
+			.isSameAs(conf2)
 			;
 		// @formatter:on
 	}

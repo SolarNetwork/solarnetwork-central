@@ -105,7 +105,7 @@ public final class OAuth2Utils {
 	 *        the OAuth client manager
 	 * @param userEventAppenderBiz
 	 *        the user event appender service
-	 * @param lockProvided
+	 * @param lockProvider
 	 *        if provided then obtain a lock before acquiring the token; this
 	 *        can be used in prevent concurrent requests using the same
 	 *        {@code config} from making multiple token requests
@@ -148,7 +148,8 @@ public final class OAuth2Utils {
 			headers.add("Authorization", "Bearer " + accessToken.getTokenValue());
 		} catch ( OAuth2AuthorizationException e ) {
 			userEventAppenderBiz.addEvent(config.getUserId(),
-					eventForConfiguration(config.getId(), CloudIntegrationsUserEvents.INTEGRATION_AUTH_ERROR_TAGS,
+					eventForConfiguration(config.getId(),
+							CloudIntegrationsUserEvents.INTEGRATION_AUTH_ERROR_TAGS,
 							format("OAuth error: %s", e.getMessage())));
 			throw new RemoteServiceException("Error authenticating to cloud integration %d: %s"
 					.formatted(config.getConfigId(), e.getMessage()), e);

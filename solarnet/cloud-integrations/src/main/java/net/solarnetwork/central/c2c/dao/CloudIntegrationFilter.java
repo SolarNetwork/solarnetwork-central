@@ -22,13 +22,15 @@
 
 package net.solarnetwork.central.c2c.dao;
 
+import net.solarnetwork.central.common.dao.IdentifiableCriteria;
+
 /**
  * A filter for cloud integration entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public interface CloudIntegrationFilter
-		extends CloudIntegrationsFilter, CloudIntegrationCriteria, CloudDatumStreamCriteria {
+public interface CloudIntegrationFilter extends CloudIntegrationsFilter, CloudIntegrationCriteria,
+		CloudDatumStreamCriteria, IdentifiableCriteria {
 
 }

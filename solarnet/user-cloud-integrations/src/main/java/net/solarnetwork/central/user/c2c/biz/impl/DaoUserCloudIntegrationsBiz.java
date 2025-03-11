@@ -42,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -110,7 +111,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -312,8 +313,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		return result;
 	}
 
-	private void saveOAuthTokens(UserIdentifiableSystem config,
-			Map<String, Object> oauthTokenProperties) {
+	private void saveOAuthTokens(UserIdentifiableSystem config, Map<String, ?> oauthTokenProperties) {
 		final String clientId = getMapString(OAUTH_CLIENT_ID_SETTING, oauthTokenProperties);
 		final String accessTokenValue = getMapString(OAUTH_ACCESS_TOKEN_SETTING, oauthTokenProperties);
 		final String refreshTokenValue = getMapString(OAUTH_REFRESH_TOKEN_SETTING, oauthTokenProperties);
@@ -375,6 +375,65 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		registration.setRefreshToken(refreshTokenValue.getBytes(UTF_8));
 		registration.setRefreshTokenIssuedAt(refreshTokenIssuedAt);
 		clientAccessTokenDao.save(registration);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C mergeConfigurationServiceProperties(
+			K id, Map<String, ?> serviceProperties, Class<C> configurationClass) {
+		requireNonNullArgument(id, "id");
+		requireNonNullArgument(serviceProperties, "serviceProperties");
+		if ( !id.userIdIsAssigned() ) {
+			throw new IllegalArgumentException("The userId must be provided.");
+		}
+
+		// currently the only configuration this is supported on is Integration
+		if ( !CloudIntegrationConfiguration.class.isAssignableFrom(configurationClass) ) {
+			throw new UnsupportedOperationException(
+					"Configuration class %s is not supported".formatted(configurationClass.getName()));
+		}
+
+		CloudIntegrationConfiguration config = integrationDao.get((UserLongCompositePK) id);
+
+		// handle OAuth raw token values
+		Map<String, Object> oauthTokenProperties = null;
+		if ( serviceProperties.get(OAUTH_ACCESS_TOKEN_SETTING) != null
+				&& serviceProperties.get(OAUTH_REFRESH_TOKEN_SETTING) != null ) {
+			oauthTokenProperties = new LinkedHashMap<>(serviceProperties);
+			oauthTokenProperties.put(OAUTH_CLIENT_ID_SETTING,
+					config.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class));
+		}
+
+		if ( config.getServiceProps() == null ) {
+			config.setServiceProps(new LinkedHashMap<>(serviceProperties));
+		} else {
+			var props = new LinkedHashMap<>(config.getServiceProps());
+			props.putAll(serviceProperties);
+			config.setServiceProps(props);
+		}
+
+		// make sensitive properties
+		config.maskSensitiveInformation(serviceSecureKeys::get, textEncryptor);
+
+		Map<String, Object> propsToMerge = new LinkedHashMap<>(serviceProperties.size());
+		for ( Entry<String, Object> e : config.getServiceProps().entrySet() ) {
+			String key = e.getKey();
+			if ( !serviceProperties.containsKey(key) ) {
+				continue;
+			}
+			propsToMerge.put(key, e.getValue());
+		}
+
+		integrationDao.mergeServiceProperties(config.getId(), propsToMerge);
+
+		@SuppressWarnings("unchecked")
+		C result = (C) integrationDao.get(config.getId());
+
+		if ( oauthTokenProperties != null ) {
+			saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
+		}
+
+		return result;
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)

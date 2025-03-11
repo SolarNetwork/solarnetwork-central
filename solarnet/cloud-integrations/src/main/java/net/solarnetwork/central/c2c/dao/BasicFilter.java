@@ -29,6 +29,7 @@ import java.util.Objects;
 import java.util.SequencedSet;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
 import net.solarnetwork.central.common.dao.ClaimableJobStateCriteria;
+import net.solarnetwork.central.common.dao.IdentifiableCriteria;
 import net.solarnetwork.central.common.dao.IndexCriteria;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.ClaimableJobState;
@@ -39,7 +40,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  * Basic implementation of cloud integration query filter.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BasicFilter extends BasicCoreCriteria
 		implements CloudIntegrationFilter, CloudDatumStreamFilter, CloudDatumStreamMappingFilter,
@@ -50,6 +51,7 @@ public class BasicFilter extends BasicCoreCriteria
 	private Long[] datumStreamMappingIds;
 	private Integer[] indexes;
 	private BasicClaimableJobState[] claimableJobStates;
+	private String[] serviceIdentifiers;
 	private Instant startDate;
 	private Instant endDate;
 
@@ -84,6 +86,7 @@ public class BasicFilter extends BasicCoreCriteria
 			setDatumStreamMappingIds(f.getDatumStreamMappingIds());
 			setIndexes(f.getIndexes());
 			setClaimableJobStates(f.getClaimableJobStates());
+			setServiceIdentifiers(f.getServiceIdentifiers());
 			setStartDate(f.getStartDate());
 			setEndDate(f.getEndDate());
 		} else {
@@ -114,6 +117,9 @@ public class BasicFilter extends BasicCoreCriteria
 				}
 				setClaimableJobStates(copy.toArray(BasicClaimableJobState[]::new));
 			}
+			if ( criteria instanceof IdentifiableCriteria f ) {
+				setServiceIdentifiers(f.getServiceIdentifiers());
+			}
 			if ( criteria instanceof DateRangeCriteria f ) {
 				setStartDate(f.getStartDate());
 				setEndDate(f.getEndDate());
@@ -130,6 +136,7 @@ public class BasicFilter extends BasicCoreCriteria
 		result = prime * result + Arrays.hashCode(datumStreamMappingIds);
 		result = prime * result + Arrays.hashCode(indexes);
 		result = prime * result + Arrays.hashCode(claimableJobStates);
+		result = prime * result + Arrays.hashCode(serviceIdentifiers);
 		result = prime * result + Objects.hash(startDate, endDate);
 		return result;
 	}
@@ -150,7 +157,8 @@ public class BasicFilter extends BasicCoreCriteria
 				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
 				&& Arrays.equals(datumStreamMappingIds, other.datumStreamMappingIds)
 				&& Arrays.equals(indexes, other.indexes)
-				&& Objects.equals(claimableJobStates, other.claimableJobStates)
+				&& Arrays.equals(claimableJobStates, other.claimableJobStates)
+				&& Arrays.equals(serviceIdentifiers, other.serviceIdentifiers)
 				&& Objects.equals(startDate, other.startDate) && Objects.equals(endDate, other.endDate);
 	}
 
@@ -323,6 +331,22 @@ public class BasicFilter extends BasicCoreCriteria
 	 */
 	public void setEndDate(Instant endDate) {
 		this.endDate = endDate;
+	}
+
+	@Override
+	public final String[] getServiceIdentifiers() {
+		return serviceIdentifiers;
+	}
+
+	/**
+	 * Set the service identifiers.
+	 *
+	 * @param serviceIdentifiers
+	 *        the service identifiers to set
+	 * @since 1.2
+	 */
+	public final void setServiceIdentifiers(String[] serviceIdentifiers) {
+		this.serviceIdentifiers = serviceIdentifiers;
 	}
 
 }

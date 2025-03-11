@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarFlux VerneMQ Webhook'
-version = '2.3.0'
+version = '2.4.0'
 
 configurations {
 	all*.exclude group: 'commons-logging'
@@ -38,6 +38,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 
 	implementation "org.springframework.boot:spring-boot-starter"
 	implementation "org.springframework.boot:spring-boot-starter-cache"

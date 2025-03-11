@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User DNP3'
-version = '2.2.0'
+version = '2.3.0'
 
 base {
 	archivesName = 'solarnet-user-dnp3'
@@ -27,6 +27,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-user')
 	implementation project(':solarnet-dnp3')
 

@@ -9,7 +9,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarDNP3'
-version = '2.6.1'
+version = '2.7.0'
 
 base {
 	archivesName = 'solardnp3'
@@ -24,6 +24,7 @@ configurations {
 
 dependencies {
 	implementation project(':solarnet-common')
+	implementation project(':solarnet-common-web')
 	implementation project(':solarnet-datum')
 	implementation project(':solarnet-dnp3')
 	implementation project(':solarnet-instructor')
