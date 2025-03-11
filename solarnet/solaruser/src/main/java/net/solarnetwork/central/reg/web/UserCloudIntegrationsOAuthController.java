@@ -34,8 +34,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.UriComponentsBuilder;
 import net.solarnetwork.central.c2c.biz.CloudIntegrationService;
 import net.solarnetwork.central.c2c.domain.AuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -105,33 +106,63 @@ public class UserCloudIntegrationsOAuthController {
 	 * on the
 	 * </p>
 	 *
-	 * @param code
-	 *        the code value returned from the OAuth authorization provider
-	 * @param stateValue
-	 *        the state value returned from a previous call to
-	 *        {@code getOAuthCloudIntegrationAuthorizationInfo()}
-	 * @param redirectUri
-	 *        the same value passed to the previous call to
-	 *        {@code getOAuthCloudIntegrationAuthorizationInfo()}
+	 * <p>
+	 * The follow request parameters are supported:
+	 * </p>
+	 *
+	 * <dl>
+	 * <dt>code</dt>
+	 * <dd>the code value returned from the OAuth authorization provider</dd>
+	 * <dt>state</dt>
+	 * <dd>the state value returned from a previous call to
+	 * {@code getOAuthCloudIntegrationAuthorizationInfo()}</dd>
+	 * <dt>redirect_uri</dt>
+	 * <dd>the same value passed to the previous call to
+	 * {@code getOAuthCloudIntegrationAuthorizationInfo()}</dd>
+	 * <dt>error</dt>
+	 * <dd>an error reason</dd>
+	 * <dt>error_description</dt>
+	 * <dd>an error description</dd>
+	 * </dl>
+	 *
+	 * @param request
+	 *        the request
 	 * @param locale
 	 *        the desired locale for messages
 	 * @return the resulting view
 	 */
 	@RequestMapping(value = "/integrations/auth-code", method = RequestMethod.GET)
-	public ModelAndView handleOAuthAuthCode(@RequestParam("code") String code,
-			@RequestParam("state") String stateValue,
-			@RequestParam(name = "redirect_uri", required = false) String redirectUri, Locale locale) {
+	public ModelAndView handleOAuthAuthCode(WebRequest request, Locale locale) {
+		final String code = request.getParameter("code");
+		final String stateValue = request.getParameter("state");
+		final String redirectUri = request.getParameter("redirect_uri");
+		final String error = request.getParameter("error");
+		final String errorDesc = request.getParameter("error_description");
+
 		final UserCloudIntegrationsBiz biz = biz();
 		final AuthorizationState state = requireNonNullObject(forStateValue(stateValue), stateValue);
 		var id = new UserLongCompositePK(getCurrentActorUserId(), state.integrationId());
 		var integration = biz.configurationForId(id, CloudIntegrationConfiguration.class);
+
+		if ( error != null || errorDesc != null ) {
+			UriComponentsBuilder b = UriComponentsBuilder.fromPath("/u/sec/c2c/oauth")
+					.queryParam("integrationId", state.integrationId());
+			if ( error != null && errorDesc != null ) {
+				b.queryParam("errorMessage", "%s (%s)".formatted(errorDesc, error));
+			} else if ( errorDesc != null ) {
+				b.queryParam("errorMessage", errorDesc);
+			} else {
+				b.queryParam("errorMessage", error);
+			}
+			return new ModelAndView("redirect:" + b.build(false).toString());
+		}
+
 		var service = requireNonNullObject(biz.integrationService(integration.getServiceIdentifier()),
 				integration.getServiceIdentifier());
 
 		var uri = (redirectUri != null ? URI.create(redirectUri)
-				: fromMethodCall(on(UserCloudIntegrationsOAuthController.class).handleOAuthAuthCode("",
-						"", null, Locale.getDefault())).replaceQueryParams(null).buildAndExpand()
-								.toUri());
+				: fromMethodCall(on(UserCloudIntegrationsOAuthController.class).handleOAuthAuthCode(null,
+						Locale.getDefault())).buildAndExpand().toUri());
 
 		var params = Map.of(CloudIntegrationService.AUTHORIZATION_CODE_PARAM, code,
 				CloudIntegrationService.AUTHORIZATION_STATE_PARAM, stateValue,

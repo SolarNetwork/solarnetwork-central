@@ -11,6 +11,7 @@ $(document).ready(function() {
 		 * @property {string} name a display name
 		 * @property {string} serviceIdentifier the Cloud Integration Service ID
 		 * @property {object} serviceProperties the service properties
+		 * @property {string} errorMessage an error message
 		 */
 
 		/**
@@ -45,12 +46,34 @@ $(document).ready(function() {
 			const form = $(this.form);
 			const config = selectedConfigId ? integrations.get(selectedConfigId) : undefined;
 			
-			SolarReg.Templates.replaceTemplateProperties(form, {
-				clientId: config.serviceProperties.oauthClientId,
-				clientSecretPresent: !!config.serviceProperties.oauthClientSecret,
-			});
+			if ( config ) {
+				SolarReg.Templates.replaceTemplateProperties(form, {
+					clientId: config.serviceProperties.oauthClientId,
+					clientSecretPresent: !!config.serviceProperties.oauthClientSecret,
+				});
+				
+				$.getJSON(SolarReg.solarUserURL(`/sec/c2c/integrations/${selectedConfigId}/validate`)).done((json) => {
+					const valid = json && json.success === true;
+					SolarReg.Templates.replaceTemplateProperties(form, {
+						connectionValid: valid,
+					});
+					form.find('.status-unresolved').addClass('hidden');
+					form.find('.status-resolved').removeClass('hidden');
+					form.find('button[type=submit]').prop('disabled', false);
+				});
+			}
 			
+			if ( config && config.errorMessage ) {
+				$('#c2c-oauth-error').text(config.errorMessage);
+				form.find('.error').removeClass('hidden');
+			} else {
+				form.find('.error').addClass('hidden');
+			}
+
 			form.find('.active').toggleClass('hidden', !config);
+			form.find('.status-unresolved').removeClass('hidden');
+			form.find('.status-resolved').addClass('hidden');
+			form.find('button[type=submit]').prop('disabled', true);
 		});
 		
 		integrationsForm.on('submit', function handleIntegrationFormSubmit() {
@@ -89,10 +112,20 @@ $(document).ready(function() {
 					root.find('.some-entities').toggleClass('hidden', integrationConfs.length < 1);
 					SolarReg.populateListCount(root, integrationConfs);
 					
-					const selectedConfigId = new URLSearchParams(location.search).get('integrationId');
+					const params = new URLSearchParams(location.search);
+					const selectedConfigId = params.get('integrationId');
 					if ( selectedConfigId && integrations.has(selectedConfigId) ) {
 						// jump to given configuration
-						integrationsSelect.val(selectedConfigId).trigger('change');
+						integrationsSelect.val(selectedConfigId);
+
+						const errMsg = params.get('errorMessage');
+						if ( errMsg ) {
+							integrations.get(selectedConfigId).errorMessage = errMsg;							
+						} else {
+							delete integrations.get(selectedConfigId).errorMessage;
+						}
+						
+						integrationsSelect.trigger('change');
 					}
 					
 					SolarReg.showPageLoaded();
