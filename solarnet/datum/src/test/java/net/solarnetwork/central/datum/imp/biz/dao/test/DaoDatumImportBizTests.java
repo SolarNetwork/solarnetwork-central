@@ -25,7 +25,10 @@ package net.solarnetwork.central.datum.imp.biz.dao.test;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static net.solarnetwork.central.datum.imp.biz.dao.DaoDatumImportBiz.EMPTY_INPUT_RESOURCE_META;
 import static net.solarnetwork.test.EasyMockUtils.assertWith;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -55,6 +58,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -71,6 +75,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -422,6 +427,88 @@ public class DaoDatumImportBizTests {
 						copyToByteArray(getClass().getResourceAsStream("test-data-01.csv"))),
 				equalTo(true));
 		dataFile.delete();
+	}
+
+	@Test
+	public void submitDatumImportRequest_withResourceStorage_emptydata() throws IOException {
+		// given
+		biz.setResourceStorageService(resourceStorageService);
+		BasicInputConfiguration inputConfiguration = new BasicInputConfiguration(TEST_USER_ID);
+		inputConfiguration.setName("Test CSV Input");
+		inputConfiguration.setTimeZoneId("UTC");
+		inputConfiguration.setServiceIdentifier("foo");
+		inputConfiguration.setServiceProps(Collections.singletonMap("foo", "bar"));
+		BasicConfiguration configuration = new BasicConfiguration("Test Import", false);
+		configuration.setInputConfiguration(inputConfiguration);
+		BasicDatumImportRequest request = new BasicDatumImportRequest(configuration, TEST_USER_ID);
+		BasicDatumImportResource resource = new BasicDatumImportResource(
+				new ByteArrayResource(new byte[0], "test-data-01.csv"), "text/csv");
+
+		Capture<DatumImportJobInfo> jobInfoCaptor = new Capture<>();
+		expect(jobInfoDao.save(capture(jobInfoCaptor))).andAnswer(new IAnswer<UserUuidPK>() {
+
+			@Override
+			public UserUuidPK answer() throws Throwable {
+				return jobInfoCaptor.getValue().getId();
+			}
+		});
+		expect(jobInfoDao.get(assertWith(new Assertion<UserUuidPK>() {
+
+			@Override
+			public void check(UserUuidPK argument) throws Throwable {
+				assertThat(argument, equalTo(jobInfoCaptor.getValue().getId()));
+			}
+		}))).andAnswer(new IAnswer<DatumImportJobInfo>() {
+
+			@Override
+			public DatumImportJobInfo answer() throws Throwable {
+				return jobInfoCaptor.getValue();
+			}
+
+		});
+
+		// WHEN
+		replayAll();
+		DatumImportReceipt receipt = biz.submitDatumImportRequest(request, resource);
+
+		// THEN
+		then(receipt).as("Receipt returned").isNotNull();
+
+		DatumImportJobInfo info = jobInfoCaptor.getValue();
+		// @formatter:off
+		then(info)
+			.as("Job info saved to DAO")
+			.isNotNull()
+			.as("User ID returned")
+			.returns(TEST_USER_ID, from(DatumImportJobInfo::getUserId))
+			.as("Percent complete")
+			.returns(0.0, from(DatumImportJobInfo::getPercentComplete))
+			.as("Metadata created with empty flag")
+			.returns(Map.of(EMPTY_INPUT_RESOURCE_META, true), from(DatumImportJobInfo::getMetadata))
+			.satisfies(e -> {
+				then(e.getImportDate())
+					.as("Import date set")
+					.isNotNull()
+					;
+				then(e.getConfiguration())
+					.as("Configuration present")
+					.isNotNull()
+					.as("Configuration cloned")
+					.isNotSameAs(configuration)
+					;
+			})
+			.extracting(DatumImportJobInfo::getConfiguration)
+			.usingRecursiveComparison()
+			.ignoringFields("inputConfiguration.userId") // not serialized to JSON
+			.as("Configuration preserved")
+			.isEqualTo(configuration)
+			;
+
+		then(biz.getImportDataFile(info.getId()))
+			.as("With empty data input, no data file created")
+			.doesNotExist()
+			;
+		// @formatter:on
 	}
 
 	private static class TestInputService extends BaseDatumImportInputFormatService {
@@ -1092,6 +1179,105 @@ public class DaoDatumImportBizTests {
 				.collect(Collectors.toList());
 		assertThat("Requested resources to delete", deleteResourcePaths,
 				Matchers.contains(dataFile.getName()));
+	}
+
+	@Test
+	public void performImport_emptyResource() throws Exception {
+		// GIVEN
+		biz.setResourceStorageService(resourceStorageService);
+		List<GeneralNodeDatum> data = sampleData(5,
+				Instant.now().truncatedTo(ChronoUnit.HOURS).minus(1, ChronoUnit.HOURS));
+		biz.setInputServices(singletonList(new TestInputService(data)));
+		UserUuidPK pk = new UserUuidPK(TEST_USER_ID, UUID.randomUUID());
+
+		DatumImportJobInfo info = createTestJobInfo(pk);
+		info.setMetadata(Map.of(EMPTY_INPUT_RESOURCE_META, true));
+		expect(jobInfoDao.get(pk)).andReturn(info);
+
+		Capture<Callable<DatumImportResult>> taskCaptor = new Capture<>();
+		CompletableFuture<DatumImportResult> future = new CompletableFuture<>();
+		expect(executorSercvice.submit(capture(taskCaptor))).andReturn(future);
+
+		// allow updating the status as job progresses
+		expect(jobInfoDao.save(info)).andReturn(pk).anyTimes();
+
+		// make test node owned by job's user
+		SolarNodeOwnership ownership = new BasicSolarNodeOwnership(TEST_NODE_ID, TEST_USER_ID, "NZ",
+				ZoneId.of("Pacific/Auckland"), false, false);
+		expect(userNodeDao.ownershipsForUserId(TEST_USER_ID))
+				.andReturn(new SolarNodeOwnership[] { ownership }).anyTimes();
+
+		Capture<BulkLoadingDao.LoadingOptions> loadingOptionsCaptor = new Capture<>();
+		expect(datumDao.createBulkLoadingContext(capture(loadingOptionsCaptor), anyObject()))
+				.andReturn(loadingContext);
+
+		Capture<GeneralNodeDatum> loadedDataCaptor = new Capture<GeneralNodeDatum>(CaptureType.ALL);
+		loadingContext.load(capture(loadedDataCaptor));
+		expectLastCall().times(data.size());
+
+		expect(loadingContext.getLoadedCount()).andAnswer(new IAnswer<Long>() {
+
+			private long count = 0;
+
+			@Override
+			public Long answer() throws Throwable {
+				return ++count;
+			}
+		}).times(data.size());
+
+		loadingContext.commit();
+
+		Long committedCount = 5L;
+		expect(loadingContext.getCommittedCount()).andReturn(committedCount);
+
+		loadingContext.close();
+
+		// WHEN
+		replayAll();
+		DatumImportStatus status = biz.performImport(pk);
+
+		// pretend to perform work via executor service
+		DatumImportResult result = taskCaptor.getValue().call();
+
+		// THEN
+		then(status).as("Status returned").isNotNull();
+
+		// @formatter:off
+		for ( int i = 0; i < data.size(); i++ ) {
+			then(loadedDataCaptor.getValues().get(i))
+				.as("Loaded data PK %d", i)
+				.returns(data.get(i).getId(), from(GeneralNodeDatum::getId))
+				.as("Loaded data samples %d", i)
+				.returns(data.get(i).getSamples(), from(GeneralNodeDatum::getSamples))
+				.as("Loaded data %d posted date set to import date", i)
+				.returns(info.getImportDate(), from(GeneralNodeDatum::getPosted))
+				;
+		}
+
+		then(loadingOptionsCaptor.getValue())
+			.as("Loading tx mode")
+			.returns(LoadingTransactionMode.SingleTransaction, from(BulkLoadingDao.LoadingOptions::getTransactionMode))
+			.as("Loading batch size")
+			.returns(null, from(BulkLoadingDao.LoadingOptions::getBatchSize))
+			;
+
+		then(result)
+			.as("Import result available")
+			.isNotNull()
+			.satisfies(r -> {
+				then(r.getCompletionDate())
+					.as("Import completion date set")
+					.isNotNull()
+					;
+			})
+			.as("Import succeeded")
+			.returns(true, from(DatumImportResult::isSuccess))
+			.as("Import message formatted")
+			.returns("Loaded " + data.size() + " datum.", from(DatumImportResult::getMessage))
+			.as("Import loaded count")
+			.returns(committedCount, from(DatumImportResult::getLoadedCount))
+			;
+		// @formatter:on
 	}
 
 	@Test

@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.task.AsyncTaskExecutor;
@@ -116,7 +118,7 @@ import net.solarnetwork.util.StringUtils;
  * DAO based {@link DatumImportBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoDatumImportBiz extends BaseDatumImportBiz
 		implements DatumImportJobBiz, ServiceLifecycleObserver {
@@ -129,6 +131,13 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	/** The default value for the {@code resourceStorageWaitMs} property. */
 	public static final long DEFAULT_RESOURCE_STORAGE_WAIT_MS = TimeUnit.MINUTES.toMillis(1);
+
+	/**
+	 * A job metadata key to signal that the job input data resource is empty.
+	 *
+	 * @since 2.5
+	 */
+	public static final String EMPTY_INPUT_RESOURCE_META = "emptyInput";
 
 	private final TaskScheduler scheduler;
 	private final AsyncTaskExecutor executor;
@@ -245,35 +254,45 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		info.setGroupKey(groupKeyForRequest(request));
 		info.setTokenId(SecurityUtils.currentTokenId());
 
-		File f = saveToWorkDirectory(resource, id);
-		final ResourceStorageService rss = this.resourceStorageService;
-		if ( rss != null && rss.isConfigured() ) {
-			CompletableFuture<Boolean> saveFuture = saveToResourceStorage(f, id, rss);
-			if ( this.resourceStorageWaitMs > 0 ) {
-				try {
-					Boolean result = saveFuture.get(this.resourceStorageWaitMs, TimeUnit.MILLISECONDS);
-					if ( result != null && !result ) {
-						throw new RuntimeException("Failed to save resource.");
+		Map<String, Object> meta = new LinkedHashMap<>(2);
+		if ( resource.contentLength() < 1 ) {
+			meta.put(EMPTY_INPUT_RESOURCE_META, true);
+		} else {
+			File f = saveToWorkDirectory(resource, id);
+			final ResourceStorageService rss = this.resourceStorageService;
+			if ( rss != null && rss.isConfigured() ) {
+				CompletableFuture<Boolean> saveFuture = saveToResourceStorage(f, id, rss);
+				if ( this.resourceStorageWaitMs > 0 ) {
+					try {
+						Boolean result = saveFuture.get(this.resourceStorageWaitMs,
+								TimeUnit.MILLISECONDS);
+						if ( result != null && !result ) {
+							throw new RuntimeException("Failed to save resource.");
+						}
+					} catch ( TimeoutException e ) {
+						log.warn(
+								"Timeout waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
+								this.resourceStorageWaitMs, f.getName(), rss.getUid());
+					} catch ( InterruptedException e ) {
+						log.warn(
+								"Interrupted waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
+								this.resourceStorageWaitMs, f.getName(), rss.getUid());
+					} catch ( ExecutionException | RuntimeException e ) {
+						log.error("Error saving data import file [{}] to resource storage [{}]: {}",
+								f.getName(), rss.getUid(), e.getCause(), e);
+						Throwable t = e;
+						while ( t.getCause() != null ) {
+							t = t.getCause();
+						}
+						throw new RuntimeException(
+								"Failed to save import data to resource storage: " + t.getMessage());
 					}
-				} catch ( TimeoutException e ) {
-					log.warn(
-							"Timeout waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
-							this.resourceStorageWaitMs, f.getName(), rss.getUid());
-				} catch ( InterruptedException e ) {
-					log.warn(
-							"Interrupted waiting {}ms for data import file [{}] to save to resource storage [{}], moving on",
-							this.resourceStorageWaitMs, f.getName(), rss.getUid());
-				} catch ( ExecutionException | RuntimeException e ) {
-					log.error("Error saving data import file [{}] to resource storage [{}]: {}",
-							f.getName(), rss.getUid(), e.getCause(), e);
-					Throwable t = e;
-					while ( t.getCause() != null ) {
-						t = t.getCause();
-					}
-					throw new RuntimeException(
-							"Failed to save import data to resource storage: " + t.getMessage());
 				}
 			}
+		}
+
+		if ( !meta.isEmpty() ) {
+			info.setMetadata(meta);
 		}
 
 		jobInfoDao.save(info);
@@ -439,13 +458,20 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 
 	private ImportContext createImportContext(DatumImportJobInfo info,
 			ProgressListener<DatumImportService> progressListener) throws IOException {
-		File dataFile = getImportDataFile(info.getId());
-		if ( !dataFile.canRead() ) {
-			boolean fetched = fetchImportResource(dataFile);
-			if ( !fetched || !dataFile.canRead() ) {
-				throw new FileNotFoundException(
-						"Data file for job " + info.getId().getId() + " not found");
+		Resource inputData;
+		if ( info.hasMetadataValue(EMPTY_INPUT_RESOURCE_META, true) ) {
+			inputData = new ByteArrayResource(new byte[0],
+					info.getUserId() + "-" + info.getId().getId());
+		} else {
+			File dataFile = getImportDataFile(info.getId());
+			if ( !dataFile.canRead() ) {
+				boolean fetched = fetchImportResource(dataFile);
+				if ( !fetched || !dataFile.canRead() ) {
+					throw new FileNotFoundException(
+							"Data file for job " + info.getId().getId() + " not found");
+				}
 			}
+			inputData = new FileSystemResource(dataFile);
 		}
 		Configuration config = info.getConfiguration();
 		if ( config == null || config.getInputConfiguration() == null ) {
@@ -461,8 +487,8 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 		BasicInputConfiguration basicInput = new BasicInputConfiguration(inputConfig);
 		basicInput.setUserId(info.getUserId());
 
-		BasicDatumImportResource resource = new BasicDatumImportResource(
-				new FileSystemResource(dataFile), inputService.getInputContentType());
+		BasicDatumImportResource resource = new BasicDatumImportResource(inputData,
+				inputService.getInputContentType());
 		return inputService.createImportContext(basicInput, resource, progressListener);
 	}
 
@@ -848,7 +874,9 @@ public class DaoDatumImportBiz extends BaseDatumImportBiz
 			} catch ( Exception e ) {
 				throw new RuntimeException(e);
 			} finally {
-				cleanupAfterImportDone(getImportDataFile(info.getId()));
+				if ( !info.hasMetadataValue(EMPTY_INPUT_RESOURCE_META, true) ) {
+					cleanupAfterImportDone(getImportDataFile(info.getId()));
+				}
 			}
 		}
 

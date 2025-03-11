@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.imp.domain;
 
 import java.io.Serial;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -37,17 +38,20 @@ import net.solarnetwork.codec.JsonUtils;
  * Entity for user-specific datum import jobs.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class DatumImportJobInfo
 		extends BaseClaimableJob<Configuration, Long, DatumImportState, UserUuidPK>
 		implements UserRelatedEntity<UserUuidPK>, DatumImportRequest, DatumImportResult {
 
 	@Serial
-	private static final long serialVersionUID = -4736763531785706680L;
+	private static final long serialVersionUID = -7688580940916750418L;
 
 	private Instant importDate;
 	private String configJson;
+	private String metaJson;
+
+	private transient Map<String, Object> metadata;
 
 	@JsonIgnore
 	@Override
@@ -187,6 +191,95 @@ public class DatumImportJobInfo
 
 	public void setLoadedCount(long loadedCount) {
 		setResult(loadedCount);
+	}
+
+	/**
+	 * Test if a metadata value is present.
+	 *
+	 * @param key
+	 *        the key to check
+	 * @param value
+	 *        if non-{@code null} then also check if the metadata value equals
+	 *        this value
+	 * @return {@code true} if the {@code key} exists as metadata, and if
+	 *         {@code value} is given then also equals {@code value}
+	 * @since 2.1
+	 */
+	public boolean hasMetadataValue(String key, Object value) {
+		Map<String, Object> meta = getMetadata();
+		if ( meta == null ) {
+			return false;
+		}
+		Object val = meta.get(key);
+		if ( value == null ) {
+			return val != null;
+		}
+		return value.equals(val);
+	}
+
+	/**
+	 * Get the metadata object as a JSON string.
+	 *
+	 * @return a JSON encoded string, or {@code null} if no metadata available
+	 * @since 2.1
+	 */
+	@JsonIgnore
+	public String getMetaJson() {
+		return metaJson;
+	}
+
+	/**
+	 * Set the metadata object via a JSON string.
+	 *
+	 * <p>
+	 * This method will remove any previously created metadata and replace it
+	 * with the values parsed from the JSON.
+	 * </p>
+	 *
+	 * @param json
+	 *        the JSON to parse as metadata
+	 * @since 2.1
+	 */
+	@JsonIgnore
+	public void setMetaJson(String json) {
+		metaJson = json;
+		metadata = null;
+	}
+
+	/**
+	 * Get the metadata.
+	 *
+	 * <p>
+	 * This will decode the {@link #getMetaJson()} value into a map instance.
+	 * </p>
+	 *
+	 * @return the metadata
+	 * @since 2.1
+	 */
+	@JsonIgnore
+	public Map<String, Object> getMetadata() {
+		if ( metadata == null && metaJson != null ) {
+			metadata = JsonUtils.getStringMap(metaJson);
+		}
+		return metadata;
+	}
+
+	/**
+	 * Set the metadata to use.
+	 *
+	 * <p>
+	 * This will replace any value set previously via
+	 * {@link #setMetaJson(String)} as well.
+	 * </p>
+	 *
+	 * @param metadata
+	 *        the metadata to set
+	 * @since 2.1
+	 */
+	@JsonIgnore
+	public void setMetadata(Map<String, Object> metadata) {
+		this.metadata = metadata;
+		metaJson = JsonUtils.getJSONString(metadata, null);
 	}
 
 }
