@@ -76,17 +76,20 @@ import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepo
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.JwtOAuth2AccessTokenResponseConverter;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
 /**
  * Configuration for the AlsoEnergy cloud integration services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -145,6 +148,13 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 	@Autowired(required = false)
 	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
 	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
+
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
 	@Bean
 	@Qualifier(ALSO_ENERGY)
@@ -219,6 +229,8 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 
 		return service;
 	}

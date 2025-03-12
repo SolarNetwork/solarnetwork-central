@@ -53,17 +53,20 @@ import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
 /**
  * Configuration for the SolarEdge cloud integration services.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class SolarEdgeConfig {
+public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	/** A qualifier for SolarEdge configuration. */
 	public static final String SOLAREDGE = "solaredge";
@@ -110,6 +113,13 @@ public class SolarEdgeConfig {
 
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
+
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
 	@Bean
 	@Qualifier(SOLAREDGE_SITE_TZ)
@@ -159,6 +169,8 @@ public class SolarEdgeConfig {
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setSiteTimeZoneCache(solarEdgeSiteTimeZoneCache);
 		service.setSiteInventoryCache(solarEdgeSiteInventoryCache);
 

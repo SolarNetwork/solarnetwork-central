@@ -40,6 +40,7 @@ import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguratio
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 
@@ -47,7 +48,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Cloud integrations general configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Profile(CLOUD_INTEGRATIONS)
 @Configuration(proxyBeanMethods = false)
@@ -126,6 +127,21 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 			@Value("${app.c2c.encryptor.password}") String password,
 			@Value("${app.c2c.encryptor.salt-hex}") String salt) {
 		return PrefixedTextEncryptor.aesTextEncryptor(password, salt);
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	@ConfigurationProperties(prefix = "app.c2c.cache.datum-stream-meta-cache")
+	public CacheSettings cloudIntegrationsDatumStreamMetadataCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	public Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> cloudIntegrationsDatumStreamMetadataCache(
+			@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA) CacheSettings settings) {
+		return settings.createCache(cacheManager, ObjectDatumStreamMetadataId.class,
+				GeneralDatumMetadata.class, CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA + "-cache");
 	}
 
 }

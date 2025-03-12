@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
+import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
@@ -60,15 +61,20 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
+import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
@@ -81,7 +87,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -113,7 +119,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	protected final CloudIntegrationsExpressionService expressionService;
 
 	private DatumEntityDao datumDao;
+	private DatumStreamMetadataDao datumStreamMetadataDao;
 	private QueryAuditor queryAuditor;
+	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
 	/**
 	 * Constructor.
@@ -385,8 +393,15 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
 			for ( MutableDatum d : datum ) {
+				DatumMetadataOperations metaOps = null;
+				if ( datumStreamMetadataDao != null ) {
+					metaOps = new LazyDatumMetadataOperations(
+							new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(),
+									d.getSourceId()),
+							datumStreamMetadataDao, datumStreamMetadataCache);
+				}
 				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(d,
-						parameters, null, datumStreamsAccessor);
+						parameters, metaOps, datumStreamsAccessor);
 				Object val = null;
 				try {
 					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
@@ -701,6 +716,27 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	}
 
 	/**
+	 * Get the datum stream metadata DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.13
+	 */
+	public final DatumStreamMetadataDao getDatumStreamMetadataDao() {
+		return datumStreamMetadataDao;
+	}
+
+	/**
+	 * Set the datum stream metadata DAO.
+	 *
+	 * @param datumStreamMetadataDao
+	 *        the DAO to set
+	 * @since 1.13
+	 */
+	public final void setDatumStreamMetadataDao(DatumStreamMetadataDao datumStreamMetadataDao) {
+		this.datumStreamMetadataDao = datumStreamMetadataDao;
+	}
+
+	/**
 	 * Get the query auditor.
 	 *
 	 * @return the auditor
@@ -719,6 +755,28 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public final void setQueryAuditor(QueryAuditor queryAuditor) {
 		this.queryAuditor = queryAuditor;
+	}
+
+	/**
+	 * Get the datum stream metadata cache.
+	 *
+	 * @return the cache
+	 * @since 1.13
+	 */
+	public final Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> getDatumStreamMetadataCache() {
+		return datumStreamMetadataCache;
+	}
+
+	/**
+	 * Set the datum stream metadata cache.
+	 *
+	 * @param datumStreamMetadataCache
+	 *        the cache to use
+	 * @since 1.13
+	 */
+	public final void setDatumStreamMetadataCache(
+			Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache) {
+		this.datumStreamMetadataCache = datumStreamMetadataCache;
 	}
 
 }
