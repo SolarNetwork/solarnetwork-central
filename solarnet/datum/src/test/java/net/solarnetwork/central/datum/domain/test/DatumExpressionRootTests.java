@@ -141,6 +141,8 @@ public class DatumExpressionRootTests {
 		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId, meta, null, null);
 		String result1 = expressionService.evaluateExpression("metadata()?.info?.b", null, root, null,
 				String.class);
+		String result1a = expressionService.evaluateExpression("metadata()?.info['b']", null, root, null,
+				String.class);
 		String result2 = expressionService.evaluateExpression("metadata('/m/b')", null, root, null,
 				String.class);
 		Integer result3 = expressionService.evaluateExpression(
@@ -150,6 +152,7 @@ public class DatumExpressionRootTests {
 
 		// THEN
 		and.then(result1).as("Metadata info traversal").isEqualTo("two");
+		and.then(result1a).as("Metadata info traversal").isEqualTo("two");
 		and.then(result2).as("Metadata info path traversal").isEqualTo("two");
 		and.then(result3).as("Metadata property info traversal").isEqualTo(3000);
 		and.then(result4).as("Metadata property info path traversal").isEqualTo(3000);
