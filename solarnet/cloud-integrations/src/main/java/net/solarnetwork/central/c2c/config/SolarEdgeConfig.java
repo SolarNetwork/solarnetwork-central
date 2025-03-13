@@ -30,6 +30,7 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -127,6 +128,9 @@ public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
 	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
+	@Value("${app.c2c.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
+
 	@Bean
 	@Qualifier(SOLAREDGE_SITE_TZ)
 	@ConfigurationProperties(prefix = "app.c2c.cache.solaredge-site-tz")
@@ -180,6 +184,7 @@ public class SolarEdgeConfig implements SolarNetCloudIntegrationsConfiguration {
 		service.setSiteTimeZoneCache(solarEdgeSiteTimeZoneCache);
 		service.setSiteInventoryCache(solarEdgeSiteInventoryCache);
 		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}
