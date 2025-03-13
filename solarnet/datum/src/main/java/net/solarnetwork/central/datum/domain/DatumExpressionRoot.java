@@ -193,16 +193,18 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	}
 
 	/**
-	 * Resolve a tariff schedule from node metadata at a given path.
+	 * Resolve a tariff schedule from metadata at a given path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @return the schedule, or {@code node} if none available
+	 * @since 1.3
 	 */
-	public TariffSchedule nodeTariffSchedule(String path) {
+	public TariffSchedule tariffSchedule(DatumMetadataOperations meta, String path) {
 		final Datum d = getDatum();
-		final DatumMetadataOperations meta = nodeMetadata();
 		return (d != null && meta != null && tariffScheduleProvider != null
 				? tariffScheduleProvider.apply(meta,
 						new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), path))
@@ -210,50 +212,61 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	}
 
 	/**
-	 * Resolve the first available tariff schedule rate for "now" from node
-	 * metadata at a given path.
+	 * Resolve the first available tariff schedule rate for "now" from metadata
+	 * at a given path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @return the first available rate for the current time, or {@code null} if
 	 *         not available
+	 * @since 1.3
 	 */
-	public BigDecimal resolveNodeTariffScheduleRate(String path) {
-		return resolveNodeTariffScheduleRate(path, LocalDateTime.now(), null);
+	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path) {
+		return resolveTariffScheduleRate(meta, path, LocalDateTime.now(), null);
 	}
 
 	/**
-	 * Resolve the first available tariff schedule rate from node metadata at a
-	 * given path.
+	 * Resolve the first available tariff schedule rate from metadata at a given
+	 * path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @param date
 	 *        the date to evaluate the schedule at
 	 * @return the first available rate, or {@code null} if not available
+	 * @since 1.3
 	 */
-	public BigDecimal resolveNodeTariffScheduleRate(String path, LocalDateTime date) {
-		return resolveNodeTariffScheduleRate(path, date, null);
+	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path,
+			LocalDateTime date) {
+		return resolveTariffScheduleRate(meta, path, date, null);
 	}
 
 	/**
-	 * Resolve a tariff schedule rate from node metadata at a given path.
+	 * Resolve a tariff schedule rate from metadata at a given path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @param date
 	 *        the date to evaluate the schedule at
 	 * @param rateName
 	 *        the name of the rate to return, or {@code null} to return the
 	 *        first available rate
 	 * @return the rate, or {@code null} if not available
+	 * @since 1.3
 	 */
-	public BigDecimal resolveNodeTariffScheduleRate(String path, LocalDateTime date, String rateName) {
+	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path,
+			LocalDateTime date, String rateName) {
 		BigDecimal result = null;
-		TariffSchedule schedule = nodeTariffSchedule(path);
+		TariffSchedule schedule = tariffSchedule(meta, path);
 		if ( schedule != null ) {
 			Tariff t = schedule.resolveTariff(date, null);
 			if ( t != null ) {
