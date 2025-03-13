@@ -28,8 +28,11 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
-import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -40,11 +43,18 @@ import java.util.function.Function;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
+import net.solarnetwork.central.support.HttpOperations;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -59,11 +69,21 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * @author matt
  * @version 1.2
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DatumExpressionRootTests {
 
 	@Mock
 	private DatumStreamsAccessor datumStreamsAccessor;
+
+	@Mock
+	private HttpOperations httpOperations;
+
+	@Captor
+	private ArgumentCaptor<URI> uriCaptor;
+
+	@Captor
+	private ArgumentCaptor<HttpHeaders> httpHeadersCaptor;
 
 	private SpelExpressionService expressionService;
 
@@ -72,11 +92,11 @@ public class DatumExpressionRootTests {
 		expressionService = new SpelExpressionService();
 	}
 
-	private DatumExpressionRoot createTestRoot(Long nodeId, String sourceId) {
-		return createTestRoot(nodeId, sourceId, null, null, null);
+	private DatumExpressionRoot createTestRoot(Long userId, Long nodeId, String sourceId) {
+		return createTestRoot(userId, nodeId, sourceId, null, null, null);
 	}
 
-	private DatumExpressionRoot createTestRoot(Long nodeId, String sourceId,
+	private DatumExpressionRoot createTestRoot(Long userId, Long nodeId, String sourceId,
 			DatumMetadataOperations metadata,
 			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
 			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider) {
@@ -99,13 +119,14 @@ public class DatumExpressionRootTests {
 		p.put("f", 35);
 		p.put("g", 35);
 
-		return new DatumExpressionRoot(d, s, p, metadata, datumStreamsAccessor, metadataProvider,
-				tariffScheduleProvider);
+		return new DatumExpressionRoot(userId, d, s, p, metadata, datumStreamsAccessor, metadataProvider,
+				tariffScheduleProvider, httpOperations);
 	}
 
 	@Test
 	public void metadata() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
@@ -117,7 +138,7 @@ public class DatumExpressionRootTests {
 		meta.putInfoValue("deviceInfo", "Capacity", 3000);
 
 		// WHEN
-		DatumExpressionRoot root = createTestRoot(nodeId, sourceId, meta, null, null);
+		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId, meta, null, null);
 		String result1 = expressionService.evaluateExpression("metadata()?.info?.b", null, root, null,
 				String.class);
 		String result2 = expressionService.evaluateExpression("metadata('/m/b')", null, root, null,
@@ -128,15 +149,16 @@ public class DatumExpressionRootTests {
 				null, root, null, Integer.class);
 
 		// THEN
-		then(result1).as("Metadata info traversal").isEqualTo("two");
-		then(result2).as("Metadata info path traversal").isEqualTo("two");
-		then(result3).as("Metadata property info traversal").isEqualTo(3000);
-		then(result4).as("Metadata property info path traversal").isEqualTo(3000);
+		and.then(result1).as("Metadata info traversal").isEqualTo("two");
+		and.then(result2).as("Metadata info path traversal").isEqualTo("two");
+		and.then(result3).as("Metadata property info traversal").isEqualTo(3000);
+		and.then(result4).as("Metadata property info path traversal").isEqualTo(3000);
 	}
 
 	@Test
 	public void nodeMetadata() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
@@ -148,7 +170,7 @@ public class DatumExpressionRootTests {
 		meta.putInfoValue("deviceInfo", "Capacity", 3000);
 
 		// WHEN
-		DatumExpressionRoot root = createTestRoot(nodeId, sourceId, null, (id) -> {
+		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId, null, (id) -> {
 			if ( id != null && id.getKind() == ObjectDatumKind.Node && nodeId.equals(id.getObjectId())
 					&& id.getSourceId() == null ) {
 				return meta;
@@ -166,15 +188,16 @@ public class DatumExpressionRootTests {
 				null, root, null, Integer.class);
 
 		// THEN
-		then(result1).as("Node metadata info traversal").isEqualTo("two");
-		then(result2).as("Node metadata info path traversal").isEqualTo("two");
-		then(result3).as("Node metadata property info traversal").isEqualTo(3000);
-		then(result4).as("Node metadata property info path traversal").isEqualTo(3000);
+		and.then(result1).as("Node metadata info traversal").isEqualTo("two");
+		and.then(result2).as("Node metadata info path traversal").isEqualTo("two");
+		and.then(result3).as("Node metadata property info traversal").isEqualTo(3000);
+		and.then(result4).as("Node metadata property info path traversal").isEqualTo(3000);
 	}
 
 	@Test
 	public void latestDatum() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
@@ -183,7 +206,7 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, 0)).willReturn(latestDatum);
 
 		// WHEN
-		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		Boolean hasResult = expressionService.evaluateExpression("hasLatest('%s')".formatted(sourceId),
 				null, root, null, Boolean.class);
@@ -192,19 +215,20 @@ public class DatumExpressionRootTests {
 				null, root, null, Integer.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum evaluated")
+		and.then(result).as("Latest datum evaluated")
 				.isEqualTo(latestDatum.getSampleInteger(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void latestDatum_time() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		final GeneralDatum latestDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
 				new DatumSamples(Map.of("foo", randomInt()), null, null));
@@ -220,15 +244,16 @@ public class DatumExpressionRootTests {
 				"latest('%s', timestamp)?.foo".formatted(sourceId), null, root, null, Integer.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum evaluated")
+		and.then(result).as("Latest datum evaluated")
 				.isEqualTo(latestDatum.getSampleInteger(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void offsetDatum() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
@@ -238,7 +263,7 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offset(Node, nodeId, sourceId, offset)).willReturn(offsetDatum);
 
 		// WHEN
-		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		Boolean hasResult = expressionService.evaluateExpression(
 				"hasOffset('%s', %d)".formatted(sourceId, offset), null, root, null, Boolean.class);
@@ -247,19 +272,20 @@ public class DatumExpressionRootTests {
 				"offset('%s', %d)?.foo".formatted(sourceId, offset), null, root, null, Integer.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum evaluated")
+		and.then(result).as("Latest datum evaluated")
 				.isEqualTo(offsetDatum.getSampleInteger(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void offsetDatum_time() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		final int offset = randomInt();
 		final GeneralDatum offsetDatum = GeneralDatum.nodeDatum(nodeId, sourceId, Instant.now(),
@@ -278,15 +304,16 @@ public class DatumExpressionRootTests {
 				Integer.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum evaluated")
+		and.then(result).as("Latest datum evaluated")
 				.isEqualTo(offsetDatum.getSampleInteger(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void latestMatching() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
@@ -298,7 +325,7 @@ public class DatumExpressionRootTests {
 		given(datumStreamsAccessor.offsetMatching(Node, nodeId, "*", 0)).willReturn(List.of(d1, d2));
 
 		// WHEN
-		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		Boolean hasResult = expressionService.evaluateExpression("hasLatestMatching('*')", null, root,
 				null, Boolean.class);
@@ -307,19 +334,20 @@ public class DatumExpressionRootTests {
 				null, Long.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum matching evaluated").isEqualTo(
+		and.then(result).as("Latest datum matching evaluated").isEqualTo(
 				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void latestMatching_time() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, randomString(), now,
@@ -338,15 +366,16 @@ public class DatumExpressionRootTests {
 				null, root, null, Long.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum matching evaluated").isEqualTo(
+		and.then(result).as("Latest datum matching evaluated").isEqualTo(
 				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void offsetMatching() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
@@ -360,7 +389,7 @@ public class DatumExpressionRootTests {
 				.willReturn(List.of(d1, d2));
 
 		// WHEN
-		DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		Boolean hasResult = expressionService.evaluateExpression(
 				"hasOffsetMatching('*', %d)".formatted(offset), null, root, null, Boolean.class);
@@ -369,19 +398,20 @@ public class DatumExpressionRootTests {
 				"sum(offsetMatching('*', %d).![foo])".formatted(offset), null, root, null, Long.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum matching evaluated").isEqualTo(
+		and.then(result).as("Latest datum matching evaluated").isEqualTo(
 				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
 	}
 
 	@Test
 	public void offsetMatching_time() {
 		// GIVEN
+		final Long userId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 
-		final DatumExpressionRoot root = createTestRoot(nodeId, sourceId);
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
 
 		final Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 		final GeneralDatum d1 = GeneralDatum.nodeDatum(nodeId, randomString(), now,
@@ -403,10 +433,44 @@ public class DatumExpressionRootTests {
 				Long.class);
 
 		// THEN
-		then(hasResult).as("Does have result").isTrue();
+		and.then(hasResult).as("Does have result").isTrue();
 
-		then(result).as("Latest datum matching evaluated").isEqualTo(
+		and.then(result).as("Latest datum matching evaluated").isEqualTo(
 				d1.getSampleLong(Instantaneous, "foo") + d2.getSampleLong(Instantaneous, "foo"));
+	}
+
+	@Test
+	public void httpGet() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final String uri = "http://example.com/" + randomString();
+		final var params = Map.of("foo", "b&a?r", "bim", 1);
+		final var headers = Map.of("x-foo", "bar");
+
+		final JsonNode res = JsonUtils.getObjectFromJSON("""
+				{"yee":"haw"}
+				""", JsonNode.class);
+		final var httpRes = new Result<>(res);
+		given(httpOperations.httpGet(eq(uri), eq(params), eq(headers), eq(JsonNode.class), eq(userId)))
+				.willReturn(httpRes);
+
+		// WHEN
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+		Result<Map<String, Object>> result = root.httpGet(uri, params, headers);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result provided")
+			.isNotNull()
+			.as("Result is success")
+			.returns(true, from(Result::getSuccess))
+			.as("Json result returned as Map")
+			.returns(Map.of("yee", "haw"), from(Result::getData))
+			;
+		// @formatter:on
 	}
 
 }

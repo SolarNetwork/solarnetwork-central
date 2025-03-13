@@ -23,8 +23,15 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.net.URI;
 import java.time.Clock;
 import java.util.List;
+import java.util.Map;
+import javax.cache.Cache;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -34,7 +41,10 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.c2c.http.RestOperationsHelper;
+import net.solarnetwork.central.support.HttpOperations;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.settings.SettingSpecifier;
 
 /**
@@ -43,12 +53,15 @@ import net.solarnetwork.settings.SettingSpecifier;
  * {@link RestOperations} support.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
-public abstract class BaseRestOperationsCloudDatumStreamService extends BaseCloudDatumStreamService {
+public abstract class BaseRestOperationsCloudDatumStreamService extends BaseCloudDatumStreamService
+		implements HttpOperations {
 
 	/** The REST operations helper. */
 	protected final RestOperationsHelper restOpsHelper;
+
+	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
 	/**
 	 * Constructor.
@@ -97,6 +110,57 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 	public void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
 		super.setUserServiceAuditor(userServiceAuditor);
 		restOpsHelper.setUserServiceAuditor(userServiceAuditor);
+	}
+
+	@Override
+	public <I, O> ResponseEntity<O> http(HttpMethod method, URI uri, HttpHeaders headers, I body,
+			Class<O> responseType, Object context) {
+		RequestEntity<I> req = RequestEntity.method(method, uri).headers(headers).body(body);
+		return restOpsHelper.http(req, responseType, context);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <O> Result<O> httpGet(String uri, Map<String, ?> parameters, Map<String, ?> headers,
+			Class<O> responseType, Object context) {
+		URI u = HttpOperations.uri(uri, parameters);
+		HttpHeaders h = HttpOperations.headersForMap(headers);
+		CachableRequestEntity req = new CachableRequestEntity(context, h, HttpMethod.GET, u);
+
+		Result<O> result = null;
+		if ( httpCache != null ) {
+			result = (Result<O>) httpCache.get(req);
+		}
+		if ( result == null ) {
+			ResponseEntity<O> res = restOpsHelper.http(req, responseType, context);
+			result = Result.success(res.getBody());
+			if ( httpCache != null ) {
+				httpCache.put(req, result);
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Get the HTTP cache.
+	 *
+	 * @return the cache
+	 * @since 1.4
+	 */
+	public final Cache<CachableRequestEntity, Result<?>> getHttpCache() {
+		return httpCache;
+	}
+
+	/**
+	 * Set the HTTP cache.
+	 *
+	 * @param httpCache
+	 *        the cache to set
+	 * @since 1.4
+	 */
+	public final void setHttpCache(Cache<CachableRequestEntity, Result<?>> httpCache) {
+		this.httpCache = httpCache;
 	}
 
 }

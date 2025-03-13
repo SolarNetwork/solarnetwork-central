@@ -66,6 +66,7 @@ import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -400,8 +401,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 									d.getSourceId()),
 							datumStreamMetadataDao, datumStreamMetadataCache);
 				}
-				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(d,
-						parameters, metaOps, datumStreamsAccessor);
+				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId, d,
+						parameters, metaOps, datumStreamsAccessor,
+						this instanceof HttpOperations httpOps ? httpOps : null);
 				Object val = null;
 				try {
 					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,

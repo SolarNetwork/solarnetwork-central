@@ -47,9 +47,11 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
@@ -107,6 +109,10 @@ public class SolrenViewConfig implements SolarNetCloudIntegrationsConfiguration 
 	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
 	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
+	private Cache<CachableRequestEntity, Result<?>> httpCache;
+
 	@Bean
 	@Qualifier(SOLRENVIEW)
 	public CloudDatumStreamService solrenViewCloudDatumStreamService() {
@@ -125,6 +131,7 @@ public class SolrenViewConfig implements SolarNetCloudIntegrationsConfiguration 
 		service.setQueryAuditor(queryAuditor);
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setHttpCache(httpCache);
 
 		return service;
 	}

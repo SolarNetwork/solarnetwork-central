@@ -27,6 +27,7 @@ import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
+import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 
@@ -34,7 +35,7 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
  * API for a service that can evaluate expressions.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface CloudIntegrationsExpressionService {
 
@@ -49,6 +50,8 @@ public interface CloudIntegrationsExpressionService {
 	/**
 	 * Create a standard datum expression root instance.
 	 *
+	 * @param userId
+	 *        the owner user ID
 	 * @param datum
 	 *        the datum
 	 * @param parameters
@@ -57,11 +60,14 @@ public interface CloudIntegrationsExpressionService {
 	 *        the metadata
 	 * @param datumStreamsAccessor
 	 *        the datum streams accessor
+	 * @param httpOperations
+	 *        the optional HTTP operations
 	 * @return the root
 	 * @since 1.1
 	 */
-	DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor);
+	DatumExpressionRoot createDatumExpressionRoot(Long userId, Datum datum, Map<String, ?> parameters,
+			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor,
+			HttpOperations httpOperations);
 
 	/**
 	 * Evaluate a property expression.

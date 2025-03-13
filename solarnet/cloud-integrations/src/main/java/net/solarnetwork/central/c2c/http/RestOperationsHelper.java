@@ -25,6 +25,8 @@ package net.solarnetwork.central.c2c.http;
 import static java.lang.String.format;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CONTENT_PROCESSED_AUDIT_SERVICE;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.domain.LogEventInfo.event;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.util.Arrays;
@@ -36,6 +38,7 @@ import org.slf4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
@@ -290,6 +293,50 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 				if ( userServiceAuditor != null ) {
 					userServiceAuditor.auditUserService(configuration.getUserId(),
 							CONTENT_PROCESSED_AUDIT_SERVICE, (int) len);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Make an HTTP request and return the result.
+	 *
+	 * @param <I>
+	 *        the request body type
+	 * @param <O>
+	 *        the response body type
+	 * @param req
+	 *        the request
+	 * @param responseType
+	 *        the expected response type, or {@code null} for no body
+	 * @param context
+	 *        an optional user ID
+	 * @return the result, never {@literal null}
+	 */
+	public <I, O> ResponseEntity<O> http(RequestEntity<I> req, Class<O> responseType, Object context) {
+		Long userId = context instanceof Long u ? u : null;
+		if ( responseLengthTracker != null && userId != null ) {
+			responseLengthTracker.get().set(0);
+		}
+		if ( userId != null ) {
+			userEventAppenderBiz.addEvent(userId, event(eventTags, "HTTP request", getJSONString(
+					Map.of("method", req.getMethod().toString(), "uri", req.getUrl().toString()))));
+		}
+		try {
+			return restOps.exchange(req, responseType);
+		} catch ( RuntimeException e ) {
+			if ( userId != null ) {
+				userEventAppenderBiz.addEvent(userId,
+						event(errorEventTags, format("HTTP request error: %s", e), null));
+			}
+			throw e;
+		} finally {
+			if ( responseLengthTracker != null && userId != null ) {
+				long len = responseLengthTracker.get().get();
+				log.debug("Tracked [{}] response body length: {}", req.getUrl(), len);
+				if ( userServiceAuditor != null ) {
+					userServiceAuditor.auditUserService(userId, CONTENT_PROCESSED_AUDIT_SERVICE,
+							(int) len);
 				}
 			}
 		}

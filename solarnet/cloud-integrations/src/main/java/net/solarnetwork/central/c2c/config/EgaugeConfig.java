@@ -55,11 +55,13 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.CloudDataValue;
+import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
@@ -133,6 +135,10 @@ public class EgaugeConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
 	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
 
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
+	private Cache<CachableRequestEntity, Result<?>> httpCache;
+
 	@Bean
 	@Qualifier(EGAUGE_DEVICE_REGISTERS)
 	@ConfigurationProperties(prefix = "app.c2c.cache.egague-device-registers")
@@ -179,6 +185,7 @@ public class EgaugeConfig implements SolarNetCloudIntegrationsConfiguration {
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setDeviceRegistersCache(deviceRegistersCache);
+		service.setHttpCache(httpCache);
 
 		return service;
 	}

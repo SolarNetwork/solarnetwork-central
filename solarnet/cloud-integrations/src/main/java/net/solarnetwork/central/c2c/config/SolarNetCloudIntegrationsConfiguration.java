@@ -26,7 +26,7 @@ package net.solarnetwork.central.c2c.config;
  * Marker interface for the cloud integrations configuration package.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface SolarNetCloudIntegrationsConfiguration {
 
@@ -55,5 +55,12 @@ public interface SolarNetCloudIntegrationsConfiguration {
 	 * @since 1.2
 	 */
 	String CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA = "c2c-i9n-datum-stream-meta";
+
+	/**
+	 * A qualifier for cloud integrations HTTP.
+	 *
+	 * @since 1.3
+	 */
+	String CLOUD_INTEGRATIONS_HTTP = "c2c-i9n-http";
 
 }
