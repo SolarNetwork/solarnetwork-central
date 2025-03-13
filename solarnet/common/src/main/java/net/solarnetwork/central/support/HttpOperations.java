@@ -69,8 +69,6 @@ public interface HttpOperations {
 	/**
 	 * Make an HTTP GET request for an object and return the result.
 	 *
-	 * @param method
-	 *        the request method
 	 * @param uri
 	 *        the URL to request
 	 * @param parameters
