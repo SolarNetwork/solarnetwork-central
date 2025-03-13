@@ -691,11 +691,40 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *
 	 * @param uri
 	 *        the URL to request
+	 * @return the result, never {@literal null}
+	 * @since 1.3
+	 */
+	public Result<Map<String, Object>> httpGet(String uri) {
+		return httpGet(uri, null, null);
+	}
+
+	/**
+	 * Make an HTTP GET request for a JSON object and return the result as a
+	 * map.
+	 *
+	 * @param uri
+	 *        the URL to request
+	 * @param parameters
+	 *        optional query parameters to include in the URL
+	 * @return the result, never {@literal null}
+	 * @since 1.3
+	 */
+	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters) {
+		return httpGet(uri, parameters, null);
+	}
+
+	/**
+	 * Make an HTTP GET request for a JSON object and return the result as a
+	 * map.
+	 *
+	 * @param uri
+	 *        the URL to request
 	 * @param parameters
 	 *        optional query parameters to include in the URL
 	 * @param headers
 	 *        optional HTTP headers to include
 	 * @return the result, never {@literal null}
+	 * @since 1.3
 	 */
 	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters,
 			Map<String, ?> headers) {
