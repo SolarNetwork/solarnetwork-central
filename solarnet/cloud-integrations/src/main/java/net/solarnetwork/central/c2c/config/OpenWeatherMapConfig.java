@@ -28,6 +28,7 @@ import java.util.Collection;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -116,6 +117,9 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
 	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
+	@Value("${app.c2c.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
+
 	@Bean
 	@Qualifier(OPEN_WEATHER_MAP)
 	public CloudDatumStreamService openWeatherMapWeatherCloudDatumStreamService() {
@@ -136,6 +140,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}
@@ -160,6 +165,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}
@@ -184,6 +190,7 @@ public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfigurat
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}

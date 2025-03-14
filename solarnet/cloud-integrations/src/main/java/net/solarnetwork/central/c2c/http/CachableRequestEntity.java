@@ -33,9 +33,6 @@ import net.solarnetwork.util.ObjectUtils;
  * Extension of {@link RequestEntity} that changes the equality methods to
  * consider a "context" object (such as a user ID) and headers in addition to
  * the method and URI.
- *
- * @param <T>
- *        the request body type
  */
 public final class CachableRequestEntity extends RequestEntity<Void> {
 

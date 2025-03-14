@@ -42,8 +42,8 @@ public interface DatumCollectionFunctions {
 	 *        the additional maps
 	 * @return a new map that is a union of all given maps
 	 */
-	default Map<Object, Object> union(Map<?, ?> map,
-			@SuppressWarnings("unchecked") Map<String, ?>... maps) {
+	@SuppressWarnings("unchecked")
+	default Map<Object, Object> union(Map<?, ?> map, Map<String, ?>... maps) {
 		if ( map == null ) {
 			return null;
 		}

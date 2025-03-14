@@ -32,6 +32,7 @@ import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -162,6 +163,9 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
 	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
+	@Value("${app.c2c.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
+
 	@Bean
 	@Qualifier(ALSO_ENERGY)
 	public OAuth2AuthorizedClientManager alsoEnergyOauthAuthorizedClientManager(@Autowired(
@@ -238,6 +242,7 @@ public class AlsoEnergyConfig implements SolarNetCloudIntegrationsConfiguration 
 		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}

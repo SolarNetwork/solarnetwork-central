@@ -30,6 +30,7 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -139,6 +140,9 @@ public class EgaugeConfig implements SolarNetCloudIntegrationsConfiguration {
 	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
 	private Cache<CachableRequestEntity, Result<?>> httpCache;
 
+	@Value("${app.c2c.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
+
 	@Bean
 	@Qualifier(EGAUGE_DEVICE_REGISTERS)
 	@ConfigurationProperties(prefix = "app.c2c.cache.egague-device-registers")
@@ -186,6 +190,7 @@ public class EgaugeConfig implements SolarNetCloudIntegrationsConfiguration {
 		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
 		service.setDeviceRegistersCache(deviceRegistersCache);
 		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}

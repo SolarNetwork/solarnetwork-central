@@ -163,4 +163,26 @@ public abstract class BaseRestOperationsCloudDatumStreamService extends BaseClou
 		this.httpCache = httpCache;
 	}
 
+	/**
+	 * Get the "allow local hosts" mode.
+	 *
+	 * @return {@code true} to allow HTTP requests to local hosts; defaults to
+	 *         {@code false}
+	 * @since 1.4
+	 */
+	public final boolean isAllowLocalHosts() {
+		return restOpsHelper.isAllowLocalHosts();
+	}
+
+	/**
+	 * Set the "allow local hosts" mode.
+	 *
+	 * @param allowLocalHosts
+	 *        {@code true} to allow HTTP requests to local hosts
+	 * @since 1.4
+	 */
+	public final void setAllowLocalHosts(boolean allowLocalHosts) {
+		restOpsHelper.setAllowLocalHosts(allowLocalHosts);
+	}
+
 }
