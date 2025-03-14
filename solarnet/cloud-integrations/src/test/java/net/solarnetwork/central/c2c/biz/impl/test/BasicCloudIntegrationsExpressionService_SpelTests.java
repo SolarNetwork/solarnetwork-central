@@ -195,8 +195,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
 				Instant.now());
 		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference(
-				"(resolveNodeTariffScheduleRate('%s') ?: 1) * a".formatted(tariffSchedulePath));
+		config.setValueReference("(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
+				.formatted(tariffSchedulePath));
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
@@ -247,8 +247,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
 				Instant.now());
 		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference(
-				"(resolveNodeTariffScheduleRate('%s') ?: 1) * a".formatted(tariffSchedulePath));
+		config.setValueReference("(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
+				.formatted(tariffSchedulePath));
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
