@@ -30,7 +30,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
+import net.solarnetwork.central.support.HttpOperations;
+import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
@@ -39,15 +43,20 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.Tariff;
 import net.solarnetwork.domain.tariff.TariffSchedule;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * Extension of {@link DatumSamplesExpressionRoot} that adds support for
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
-public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
+public class DatumExpressionRoot extends DatumSamplesExpressionRoot
+		implements DatumCollectionFunctions, DatumHttpFunctions {
+
+	// the owner user ID
+	private final Long userId;
 
 	// a general metadata object, for example user metadata
 	private final DatumMetadataOperations metadata;
@@ -60,9 +69,13 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 
 	private final DatumStreamsAccessor datumStreamsAccessor;
 
+	private final HttpOperations httpOperations;
+
 	/**
 	 * Constructor.
 	 *
+	 * @param userId
+	 *        the owner ID
 	 * @param datum
 	 *        the datum currently being populated
 	 * @param sample
@@ -81,16 +94,22 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 *        function that resolves a {@link TariffSchedule} from metadata
 	 *        located at a path specified by
 	 *        {@link ObjectDatumStreamMetadataId#getSourceId()}
+	 * @param httpOperations
+	 *        optional HTTP operations
 	 */
-	public DatumExpressionRoot(Datum datum, DatumSamplesOperations sample, Map<String, ?> parameters,
-			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor,
+	public DatumExpressionRoot(Long userId, Datum datum, DatumSamplesOperations sample,
+			Map<String, ?> parameters, DatumMetadataOperations metadata,
+			DatumStreamsAccessor datumStreamsAccessor,
 			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
-			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider) {
+			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider,
+			HttpOperations httpOperations) {
 		super(datum, sample, parameters);
+		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.metadata = metadata;
 		this.datumStreamsAccessor = datumStreamsAccessor;
 		this.metadataProvider = metadataProvider;
 		this.tariffScheduleProvider = tariffScheduleProvider;
+		this.httpOperations = httpOperations;
 	}
 
 	/**
@@ -122,8 +141,8 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 */
 	public DatumExpressionRoot copyWith(Datum datum, DatumSamplesOperations samples,
 			Map<String, ?> parameters) {
-		return new DatumExpressionRoot(datum, samples, parameters, metadata, datumStreamsAccessor,
-				metadataProvider, tariffScheduleProvider);
+		return new DatumExpressionRoot(userId, datum, samples, parameters, metadata,
+				datumStreamsAccessor, metadataProvider, tariffScheduleProvider, httpOperations);
 	}
 
 	/**
@@ -174,16 +193,18 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	}
 
 	/**
-	 * Resolve a tariff schedule from node metadata at a given path.
+	 * Resolve a tariff schedule from metadata at a given path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @return the schedule, or {@code node} if none available
+	 * @since 1.3
 	 */
-	public TariffSchedule nodeTariffSchedule(String path) {
+	public TariffSchedule tariffSchedule(DatumMetadataOperations meta, String path) {
 		final Datum d = getDatum();
-		final DatumMetadataOperations meta = nodeMetadata();
 		return (d != null && meta != null && tariffScheduleProvider != null
 				? tariffScheduleProvider.apply(meta,
 						new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), path))
@@ -191,50 +212,61 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	}
 
 	/**
-	 * Resolve the first available tariff schedule rate for "now" from node
-	 * metadata at a given path.
+	 * Resolve the first available tariff schedule rate for "now" from metadata
+	 * at a given path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @return the first available rate for the current time, or {@code null} if
 	 *         not available
+	 * @since 1.3
 	 */
-	public BigDecimal resolveNodeTariffScheduleRate(String path) {
-		return resolveNodeTariffScheduleRate(path, LocalDateTime.now(), null);
+	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path) {
+		return resolveTariffScheduleRate(meta, path, LocalDateTime.now(), null);
 	}
 
 	/**
-	 * Resolve the first available tariff schedule rate from node metadata at a
-	 * given path.
+	 * Resolve the first available tariff schedule rate from metadata at a given
+	 * path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @param date
 	 *        the date to evaluate the schedule at
 	 * @return the first available rate, or {@code null} if not available
+	 * @since 1.3
 	 */
-	public BigDecimal resolveNodeTariffScheduleRate(String path, LocalDateTime date) {
-		return resolveNodeTariffScheduleRate(path, date, null);
+	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path,
+			LocalDateTime date) {
+		return resolveTariffScheduleRate(meta, path, date, null);
 	}
 
 	/**
-	 * Resolve a tariff schedule rate from node metadata at a given path.
+	 * Resolve a tariff schedule rate from metadata at a given path.
 	 *
+	 * @param meta
+	 *        the metadata to resolve the tariff schedule from
 	 * @param path
-	 *        the node metadata path to resolve the schedule at; the schedule
-	 *        can be a CSV string or list of string arrays
+	 *        the metadata path to resolve the schedule at; the schedule can be
+	 *        a CSV string or list of string arrays
 	 * @param date
 	 *        the date to evaluate the schedule at
 	 * @param rateName
 	 *        the name of the rate to return, or {@code null} to return the
 	 *        first available rate
 	 * @return the rate, or {@code null} if not available
+	 * @since 1.3
 	 */
-	public BigDecimal resolveNodeTariffScheduleRate(String path, LocalDateTime date, String rateName) {
+	public BigDecimal resolveTariffScheduleRate(DatumMetadataOperations meta, String path,
+			LocalDateTime date, String rateName) {
 		BigDecimal result = null;
-		TariffSchedule schedule = nodeTariffSchedule(path);
+		TariffSchedule schedule = tariffSchedule(meta, path);
 		if ( schedule != null ) {
 			Tariff t = schedule.resolveTariff(date, null);
 			if ( t != null ) {
@@ -664,6 +696,63 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot {
 	 */
 	public boolean hasLatest(String sourceId, Instant timestamp) {
 		return hasOffset(sourceId, 0, timestamp);
+	}
+
+	/**
+	 * Make an HTTP GET request for a JSON object and return the result as a
+	 * map.
+	 *
+	 * @param uri
+	 *        the URL to request
+	 * @return the result, never {@literal null}
+	 * @since 1.3
+	 */
+	public Result<Map<String, Object>> httpGet(String uri) {
+		return httpGet(uri, null, null);
+	}
+
+	/**
+	 * Make an HTTP GET request for a JSON object and return the result as a
+	 * map.
+	 *
+	 * @param uri
+	 *        the URL to request
+	 * @param parameters
+	 *        optional query parameters to include in the URL
+	 * @return the result, never {@literal null}
+	 * @since 1.3
+	 */
+	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters) {
+		return httpGet(uri, parameters, null);
+	}
+
+	/**
+	 * Make an HTTP GET request for a JSON object and return the result as a
+	 * map.
+	 *
+	 * @param uri
+	 *        the URL to request
+	 * @param parameters
+	 *        optional query parameters to include in the URL
+	 * @param headers
+	 *        optional HTTP headers to include
+	 * @return the result, never {@literal null}
+	 * @since 1.3
+	 */
+	public Result<Map<String, Object>> httpGet(String uri, Map<String, ?> parameters,
+			Map<String, ?> headers) {
+		if ( httpOperations == null ) {
+			return Result.error("DXR.00001", "HTTP not supported");
+		}
+		Result<JsonNode> res = httpOperations.httpGet(uri, parameters, headers, JsonNode.class, userId);
+		if ( res == null ) {
+			return Result.error();
+		}
+		Map<String, Object> data = null;
+		if ( res.getData() != null ) {
+			data = JsonUtils.getStringMapFromTree(res.getData());
+		}
+		return new Result<>(res.getSuccess(), res.getCode(), res.getMessage(), res.getErrors(), data);
 	}
 
 }

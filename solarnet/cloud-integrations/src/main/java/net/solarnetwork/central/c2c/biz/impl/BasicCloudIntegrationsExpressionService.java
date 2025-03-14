@@ -42,6 +42,7 @@ import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
+import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -55,7 +56,7 @@ import net.solarnetwork.service.ExpressionService;
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
@@ -136,8 +137,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	}
 
 	@Override
-	public DatumExpressionRoot createDatumExpressionRoot(Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor) {
+	public DatumExpressionRoot createDatumExpressionRoot(Long userId, Datum datum,
+			Map<String, ?> parameters, DatumMetadataOperations metadata,
+			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
 		Map<String, ?> p = parameters;
 
 		// for node datum, lookup ownership so we have access to the node's time zone
@@ -151,8 +153,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 			}
 		}
 
-		return new DatumExpressionRoot(datum, datum != null ? datum.asSampleOperations() : null, p,
-				metadata, datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule);
+		return new DatumExpressionRoot(userId, datum, datum != null ? datum.asSampleOperations() : null,
+				p, metadata, datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule,
+				httpOperations);
 	}
 
 	private DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {

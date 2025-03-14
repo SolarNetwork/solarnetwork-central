@@ -32,6 +32,7 @@ import java.util.concurrent.locks.Lock;
 import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,20 +73,25 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.c2c.http.ClientCredentialsClientRegistrationRepository;
 import net.solarnetwork.central.c2c.http.OAuth2Utils;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.jdbc.JdbcOAuth2AuthorizedClientService;
 import net.solarnetwork.central.security.service.CachingOAuth2ClientRegistrationRepository;
 import net.solarnetwork.central.security.service.RetryingOAuth2AuthorizedClientManager;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
 /**
  * Configuration for the Locus Energy cloud integration services.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -147,6 +153,20 @@ public class LocusEnergyConfig implements SolarNetCloudIntegrationsConfiguration
 	@Autowired(required = false)
 	@Qualifier(CLOUD_INTEGRATIONS_INTEGRATION_LOCKS)
 	private Cache<UserLongCompositePK, Lock> integrationLocksCache;
+
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
+	private Cache<CachableRequestEntity, Result<?>> httpCache;
+
+	@Value("${app.c2c.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
 
 	@Bean
 	@Qualifier(LOCUS_ENERGY)
@@ -216,6 +236,10 @@ public class LocusEnergyConfig implements SolarNetCloudIntegrationsConfiguration
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}

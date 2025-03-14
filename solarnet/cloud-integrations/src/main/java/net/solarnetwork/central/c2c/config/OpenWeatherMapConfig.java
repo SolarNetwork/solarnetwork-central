@@ -25,8 +25,10 @@ package net.solarnetwork.central.c2c.config;
 import static net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration.CLOUD_INTEGRATIONS;
 import java.time.Clock;
 import java.util.Collection;
+import javax.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -49,18 +51,23 @@ import net.solarnetwork.central.c2c.dao.CloudDatumStreamConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamMappingConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudDatumStreamPropertyConfigurationDao;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
+import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
 /**
  * Configuration for the OpenWeatherMap cloud integration services.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
-public class OpenWeatherMapConfig {
+public class OpenWeatherMapConfig implements SolarNetCloudIntegrationsConfiguration {
 
 	/** A qualifier for OpenWeatherMap configuration. */
 	public static final String OPEN_WEATHER_MAP = "owm";
@@ -99,6 +106,20 @@ public class OpenWeatherMapConfig {
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
+	@Autowired
+	private DatumStreamMetadataDao datumStreamMetadataDao;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	private Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> datumStreamMetadataCache;
+
+	@Autowired(required = false)
+	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
+	private Cache<CachableRequestEntity, Result<?>> httpCache;
+
+	@Value("${app.c2c.allow-http-local-hosts:false}")
+	private boolean allowHttpLocalHosts;
+
 	@Bean
 	@Qualifier(OPEN_WEATHER_MAP)
 	public CloudDatumStreamService openWeatherMapWeatherCloudDatumStreamService() {
@@ -116,6 +137,10 @@ public class OpenWeatherMapConfig {
 		service.setUserServiceAuditor(userServiceAuditor);
 		service.setDatumDao(datumDao);
 		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}
@@ -135,6 +160,12 @@ public class OpenWeatherMapConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}
@@ -154,6 +185,12 @@ public class OpenWeatherMapConfig {
 		service.setMessageSource(msgSource);
 
 		service.setUserServiceAuditor(userServiceAuditor);
+		service.setDatumDao(datumDao);
+		service.setQueryAuditor(queryAuditor);
+		service.setDatumStreamMetadataCache(datumStreamMetadataCache);
+		service.setDatumStreamMetadataDao(datumStreamMetadataDao);
+		service.setHttpCache(httpCache);
+		service.setAllowLocalHosts(allowHttpLocalHosts);
 
 		return service;
 	}

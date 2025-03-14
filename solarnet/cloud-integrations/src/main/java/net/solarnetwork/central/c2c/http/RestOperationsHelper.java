@@ -25,8 +25,12 @@ package net.solarnetwork.central.c2c.http;
 import static java.lang.String.format;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.CONTENT_PROCESSED_AUDIT_SERVICE;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
+import static net.solarnetwork.central.domain.LogEventInfo.event;
+import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +40,7 @@ import org.slf4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.security.oauth2.core.OAuth2AuthorizationException;
@@ -91,6 +96,13 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
 	/** An optional user service auditor, for response body counts. */
 	protected UserServiceAuditor userServiceAuditor;
+
+	/**
+	 * Enable HTTP requests to local host destinations.
+	 *
+	 * @since 1.5
+	 */
+	private boolean allowLocalHosts;
 
 	/**
 	 * Constructor.
@@ -296,6 +308,66 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	}
 
 	/**
+	 * Make an HTTP request and return the result.
+	 *
+	 * @param <I>
+	 *        the request body type
+	 * @param <O>
+	 *        the response body type
+	 * @param req
+	 *        the request
+	 * @param responseType
+	 *        the expected response type, or {@code null} for no body
+	 * @param context
+	 *        an optional user ID
+	 * @return the result, never {@literal null}
+	 */
+	public <I, O> ResponseEntity<O> http(RequestEntity<I> req, Class<O> responseType, Object context) {
+		validateRequest(req);
+		Long userId = context instanceof Long u ? u : null;
+		if ( responseLengthTracker != null && userId != null ) {
+			responseLengthTracker.get().set(0);
+		}
+		if ( userId != null ) {
+			userEventAppenderBiz.addEvent(userId, event(eventTags, "HTTP request", getJSONString(
+					Map.of("method", req.getMethod().toString(), "uri", req.getUrl().toString()))));
+		}
+		try {
+			return restOps.exchange(req, responseType);
+		} catch ( RuntimeException e ) {
+			if ( userId != null ) {
+				userEventAppenderBiz.addEvent(userId,
+						event(errorEventTags, format("HTTP request error: %s", e), null));
+			}
+			throw e;
+		} finally {
+			if ( responseLengthTracker != null && userId != null ) {
+				long len = responseLengthTracker.get().get();
+				log.debug("Tracked [{}] response body length: {}", req.getUrl(), len);
+				if ( userServiceAuditor != null ) {
+					userServiceAuditor.auditUserService(userId, CONTENT_PROCESSED_AUDIT_SERVICE,
+							(int) len);
+				}
+			}
+		}
+	}
+
+	private void validateRequest(RequestEntity<?> req) {
+		if ( allowLocalHosts ) {
+			return;
+		}
+		String host = req.getUrl().getHost();
+		try {
+			InetAddress addr = InetAddress.getByName(host);
+			if ( addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isSiteLocalAddress() ) {
+				throw new IllegalArgumentException("Host [" + host + "] is not allowed");
+			}
+		} catch ( UnknownHostException e ) {
+			throw new IllegalArgumentException("Unknown host [" + host + "]");
+		}
+	}
+
+	/**
 	 * Get the REST operations.
 	 *
 	 * @return the REST operations, never {@literal null}
@@ -323,6 +395,28 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 */
 	public final void setUserServiceAuditor(UserServiceAuditor userServiceAuditor) {
 		this.userServiceAuditor = userServiceAuditor;
+	}
+
+	/**
+	 * Get the "allow local hosts" mode.
+	 *
+	 * @return {@code true} to allow HTTP requests to local hosts; defaults to
+	 *         {@code false}
+	 * @since 1.5
+	 */
+	public final boolean isAllowLocalHosts() {
+		return allowLocalHosts;
+	}
+
+	/**
+	 * Set the "allow local hosts" mode.
+	 *
+	 * @param allowLocalHosts
+	 *        {@code true} to allow HTTP requests to local hosts
+	 * @since 1.5
+	 */
+	public final void setAllowLocalHosts(boolean allowLocalHosts) {
+		this.allowLocalHosts = allowLocalHosts;
 	}
 
 }

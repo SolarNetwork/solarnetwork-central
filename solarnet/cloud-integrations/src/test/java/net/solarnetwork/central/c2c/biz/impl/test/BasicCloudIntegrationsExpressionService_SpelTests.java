@@ -48,8 +48,8 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.central.support.SimpleCache;
-import net.solarnetwork.central.test.CommonTestUtils;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -73,6 +73,9 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 	@Mock
 	private SolarNodeMetadataReadOnlyDao metadataDao;
+
+	@Mock
+	private HttpOperations httpOperations;
 
 	private SimpleCache<String, Expression> expressionCache;
 	private SimpleCache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache;
@@ -102,14 +105,16 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	@Test
 	public void createRoot() {
 		// GIVEN
-		final Long nodeId = CommonTestUtils.randomLong();
-		final String sourceId = CommonTestUtils.randomString();
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
 
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
 		// WHEN
-		DatumExpressionRoot result = service.createDatumExpressionRoot(datum, parameters, null, null);
+		DatumExpressionRoot result = service.createDatumExpressionRoot(userId, datum, parameters, null,
+				null, null);
 
 		// THEN
 		// @formatter:off
@@ -156,8 +161,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
-				null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
+				parameters, null, null, null);
 		final Double result = service.evaluateDatumPropertyExpression(config, root, null, Double.class);
 
 		// THEN
@@ -190,8 +195,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
 				Instant.now());
 		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference(
-				"(resolveNodeTariffScheduleRate('%s') ?: 1) * a".formatted(tariffSchedulePath));
+		config.setValueReference("(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
+				.formatted(tariffSchedulePath));
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
@@ -203,8 +208,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
-				null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
+				parameters, null, null, null);
 		final BigDecimal result = service.evaluateDatumPropertyExpression(config, root, null,
 				BigDecimal.class);
 
@@ -242,8 +247,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
 				Instant.now());
 		config.setValueType(CloudDatumStreamValueType.SpelExpression);
-		config.setValueReference(
-				"(resolveNodeTariffScheduleRate('%s') ?: 1) * a".formatted(tariffSchedulePath));
+		config.setValueReference("(resolveTariffScheduleRate(nodeMetadata(), '%s') ?: 1) * a"
+				.formatted(tariffSchedulePath));
 
 		final var nodeMeta = new GeneralDatumMetadata();
 		nodeMeta.putInfoValue("setpoint", 0.5);
@@ -254,8 +259,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
-				null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
+				parameters, null, null, null);
 		final BigDecimal result = service.evaluateDatumPropertyExpression(config, root, null,
 				BigDecimal.class);
 
@@ -297,8 +302,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(datum, parameters, null,
-				null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
+				parameters, null, null, null);
 
 		final LocalDateTime start = LocalDateTime.now(nodeOwnership.getZone());
 		final LocalDateTime result = service.evaluateDatumPropertyExpression(config, root, null,

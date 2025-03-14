@@ -37,9 +37,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.expression.Expression;
 import net.solarnetwork.central.c2c.config.SolarNetCloudIntegrationsConfiguration;
+import net.solarnetwork.central.c2c.http.CachableRequestEntity;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.central.support.CacheSettings;
+import net.solarnetwork.domain.Result;
+import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.TariffSchedule;
 
@@ -47,7 +50,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Cloud integrations general configuration.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -126,6 +129,37 @@ public class CloudIntegrationsConfig implements SolarNetCloudIntegrationsConfigu
 			@Value("${app.c2c.encryptor.password}") String password,
 			@Value("${app.c2c.encryptor.salt-hex}") String salt) {
 		return PrefixedTextEncryptor.aesTextEncryptor(password, salt);
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	@ConfigurationProperties(prefix = "app.c2c.cache.datum-stream-meta-cache")
+	public CacheSettings cloudIntegrationsDatumStreamMetadataCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA)
+	public Cache<ObjectDatumStreamMetadataId, GeneralDatumMetadata> cloudIntegrationsDatumStreamMetadataCache(
+			@Qualifier(CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA) CacheSettings settings) {
+		return settings.createCache(cacheManager, ObjectDatumStreamMetadataId.class,
+				GeneralDatumMetadata.class, CLOUD_INTEGRATIONS_DATUM_STREAM_METADATA + "-cache");
+	}
+
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
+	@ConfigurationProperties(prefix = "app.c2c.cache.http-cache")
+	public CacheSettings cloudIntegrationsHttpCacheSettings() {
+		return new CacheSettings();
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Bean
+	@Qualifier(CLOUD_INTEGRATIONS_HTTP)
+	public Cache<CachableRequestEntity, Result<?>> cloudIntegrationsHttpCache(
+			@Qualifier(CLOUD_INTEGRATIONS_HTTP) CacheSettings settings) {
+		return (Cache) settings.createCache(cacheManager, CachableRequestEntity.class, Result.class,
+				CLOUD_INTEGRATIONS_HTTP + "-cache");
 	}
 
 }
