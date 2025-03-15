@@ -385,37 +385,6 @@ public class DaoUserExportTaskBizTests {
 		dataConfig.setFilter(filter);
 		config.setUserDataConfiguration(dataConfig);
 
-		Set<String> allSourceIdsNode1 = new LinkedHashSet<>(
-				Arrays.asList("/foo/bar", "/test/foo", "/test/bar", "/some/other"));
-		List<ObjectDatumStreamMetadata> allMetas1 = allSourceIdsNode1.stream().map(e -> {
-			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
-					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
-		}).collect(Collectors.toList());
-		Set<String> allSourceIdsNode2 = new LinkedHashSet<>(Arrays.asList("/test/bam", "/bam/bam"));
-		List<ObjectDatumStreamMetadata> allMetas2 = allSourceIdsNode2.stream().map(e -> {
-			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
-					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
-		}).collect(Collectors.toList());
-		expect(metaDao.findDatumStreamMetadata(assertWith(new Assertion<ObjectStreamCriteria>() {
-
-			private int call = 0;
-
-			@Override
-			public void check(ObjectStreamCriteria sourceFilter) throws Throwable {
-				call++;
-				if ( call < 3 ) {
-					assertThat("Source filter node " + call, sourceFilter.getNodeId(),
-							equalTo(call == 1 ? TEST_NODE_ID : TEST_NODE_ID_2));
-					assertThat("Source filter start date " + call, sourceFilter.getStartDate(),
-							equalTo(filter.getStartDate()));
-					assertThat("Source filter end date " + call, sourceFilter.getEndDate(),
-							equalTo(filter.getEndDate()));
-				} else {
-					fail("Expected only 2 calls to getAvailableSources(filter)");
-				}
-			}
-		}))).andReturn(allMetas1).andReturn(allMetas2);
-
 		Capture<UserAdhocDatumExportTaskInfo> taskCaptor = new Capture<>();
 
 		UUID pk = UUID.randomUUID();
@@ -442,11 +411,11 @@ public class DaoUserExportTaskBizTests {
 		// @formatter:on
 		then(task.getConfig().getName()).isEqualTo(config.getName());
 		then(task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds())
-				.as("Node IDs given in filter patterns are resolved")
+				.as("Node IDs given in filter are resolved")
 				.containsExactlyInAnyOrder(TEST_NODE_ID, TEST_NODE_ID_2);
 		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
-				.as("Source IDs matching filter patterns are resolved")
-				.containsExactlyInAnyOrder("/foo/bar", "/test/foo", "/test/bar", "/test/bam");
+				.as("Source IDs fiven in filter are resolved")
+				.containsExactlyInAnyOrder(filter.getSourceIds());
 	}
 
 }

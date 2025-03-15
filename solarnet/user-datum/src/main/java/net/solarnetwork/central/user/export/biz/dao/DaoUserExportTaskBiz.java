@@ -151,35 +151,11 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 			}
 		}
 
-		// resolve explicit source IDs from source ID patterns and available data
-		if ( taskDatumFilter.getSourceId() != null ) {
-			Instant startDate = taskDatumFilter.getStartDate();
-			Instant endDate = taskDatumFilter.getEndDate();
-
-			Set<String> allSourceIds = new LinkedHashSet<>();
-			BasicDatumCriteria filter = new BasicDatumCriteria();
-			filter.setStartDate(startDate);
-			filter.setEndDate(endDate);
-			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
-				filter.setNodeId(nodeId);
-				Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(filter);
-				Set<String> nodeSources = stream(results.spliterator(), false)
-						.map(ObjectDatumStreamMetadata::getSourceId)
-						.collect(toCollection(LinkedHashSet::new));
-				allSourceIds.addAll(nodeSources);
-			}
-			Set<String> resolvedSourceIds = new LinkedHashSet<>(allSourceIds.size());
-			for ( String sourceId : taskDatumFilter.getSourceIds() ) {
-				Set<String> sources = filterSources(allSourceIds, this.pathMatcher, sourceId);
-				if ( sources != null ) {
-					resolvedSourceIds.addAll(sources);
-				}
-			}
-			taskDatumFilter.setSourceIds(resolvedSourceIds.toArray(String[]::new));
-		}
-
 		taskDataConfig.setDatumFilter(taskDatumFilter);
 		taskConfig.setDataConfiguration(taskDataConfig);
+
+		// NOTE: assume node and source IDs will be enforced by query, using userId and tokenId
+		// see net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.whereStwhereStreamMetadata()
 
 		UserAdhocDatumExportTaskInfo task = new UserAdhocDatumExportTaskInfo();
 		task.setCreated(Instant.now());
