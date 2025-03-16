@@ -30,13 +30,11 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
-import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
@@ -56,7 +54,7 @@ import net.solarnetwork.support.PrefixedMessageSource;
  * User export service configuration.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 public class UserExportBizConfig {
@@ -83,9 +81,6 @@ public class UserExportBizConfig {
 	private UserNodeDao userNodeDao;
 
 	@Autowired
-	private DatumStreamMetadataDao metaDao;
-
-	@Autowired
 	private AppEventHandlerRegistrar appEventHandlerRegistrar;
 
 	@Autowired
@@ -96,14 +91,7 @@ public class UserExportBizConfig {
 
 	@Bean
 	public UserExportTaskBiz userExportTaskBiz() {
-		DaoUserExportTaskBiz biz = new DaoUserExportTaskBiz(taskDao, adhocTaskDao, userNodeDao, metaDao);
-
-		AntPathMatcher pathMatcher = new AntPathMatcher();
-		pathMatcher.setCachePatterns(false);
-		pathMatcher.setCaseSensitive(false);
-		biz.setPathMatcher(pathMatcher);
-
-		return biz;
+		return new DaoUserExportTaskBiz(taskDao, adhocTaskDao, userNodeDao);
 	}
 
 	@Bean
