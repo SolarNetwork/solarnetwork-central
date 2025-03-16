@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis;
 
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,18 +37,12 @@ import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
  * MyBatis implementation of {@link UserDatumExportTaskInfoDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  * @since 1.1
  */
 public class MyBatisUserAdhocDatumExportTaskInfoDao
 		extends BaseMyBatisUserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UUID>
 		implements UserAdhocDatumExportTaskInfoDao {
-
-	/**
-	 * The {@code DELETE} query name used for
-	 * {@link #purgeCompletedTasks(Instant)}.
-	 */
-	public static final String UPDATE_PURGE_COMPLETED = "delete-UserAdhocDatumExportTaskInfo-completed";
 
 	/**
 	 * The query name used for {@link #findTasksForUser(Long, Set, Boolean)}.
@@ -62,26 +55,6 @@ public class MyBatisUserAdhocDatumExportTaskInfoDao
 	public MyBatisUserAdhocDatumExportTaskInfoDao() {
 		super(UserAdhocDatumExportTaskInfo.class, UUID.class);
 	}
-
-	//	@Override
-	//	public UserAdhocDatumExportTaskInfo getForTaskId(UUID taskId) {
-	//		return selectFirst(QUERY_TASK_INFO_FOR_TASK_ID, taskId);
-	//	}
-
-	@Override
-	public long purgeCompletedTasks(Instant olderThanDate) {
-		Map<String, Object> params = new HashMap<>(2);
-		params.put("date", olderThanDate);
-		getSqlSession().update(UPDATE_PURGE_COMPLETED, params);
-		Long result = (Long) params.get("result");
-		return (result == null ? 0 : result);
-	}
-
-	//	@Override
-	//	public UUID addAdHocDatumExport(UserAdhocDatumExportTaskInfo info) {
-	//		UUID uuid = getSqlSession().selectOne(ADD_AD_HOC_TASK, info);
-	//		return uuid;
-	//	}
 
 	@Override
 	public List<UserAdhocDatumExportTaskInfo> findTasksForUser(Long userId, Set<DatumExportState> states,

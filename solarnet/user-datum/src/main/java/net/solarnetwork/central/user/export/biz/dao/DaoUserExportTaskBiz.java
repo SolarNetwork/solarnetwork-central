@@ -22,8 +22,6 @@
 
 package net.solarnetwork.central.user.export.biz.dao;
 
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -42,8 +40,6 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDataConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
@@ -53,25 +49,20 @@ import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * DAO implementation of {@link UserExportTaskBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
 	private final UserDatumExportTaskInfoDao taskDao;
 	private final UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private final UserNodeDao userNodeDao;
-	private final DatumStreamMetadataDao metaDao;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
-
-	private PathMatcher pathMatcher;
 
 	/**
 	 * Constructor.
@@ -82,19 +73,15 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 	 *        the ad hoc task DAO to use
 	 * @param userNodeDao
 	 *        the user node DAO to use
-	 * @param metaDao
-	 *        the metadata DAO to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public DaoUserExportTaskBiz(UserDatumExportTaskInfoDao taskDao,
-			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserNodeDao userNodeDao,
-			DatumStreamMetadataDao metaDao) {
+			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserNodeDao userNodeDao) {
 		super();
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.adhocTaskDao = requireNonNullArgument(adhocTaskDao, "adhocTaskDao");
 		this.userNodeDao = requireNonNullArgument(userNodeDao, "userNodeDao");
-		this.metaDao = requireNonNullArgument(metaDao, "metaDao");
 	}
 
 	/**
@@ -196,38 +183,14 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 				return null;
 			}
 		}
+
+		taskDataConfig.setDatumFilter(taskDatumFilter);
+		taskConfig.setDataConfiguration(taskDataConfig);
+
 		ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
 				: ZoneOffset.UTC);
 		ZonedDateTime currExportDate = scheduleType
 				.exportDate(exportDate != null ? exportDate.atZone(zone) : ZonedDateTime.now(zone));
-		ZonedDateTime nextExportDate = scheduleType.nextExportDate(currExportDate);
-
-		if ( taskDatumFilter.getSourceId() != null ) {
-			Set<String> allSourceIds = new LinkedHashSet<>();
-			BasicDatumCriteria filter = new BasicDatumCriteria();
-			filter.setStartDate(currExportDate.toInstant());
-			filter.setEndDate(nextExportDate.toInstant());
-			filter.setObjectKind(ObjectDatumKind.Node);
-			for ( Long nodeId : taskDatumFilter.getNodeIds() ) {
-				filter.setNodeId(nodeId);
-				Iterable<ObjectDatumStreamMetadata> results = metaDao.findDatumStreamMetadata(filter);
-				Set<String> nodeSources = stream(results.spliterator(), false)
-						.map(ObjectDatumStreamMetadata::getSourceId)
-						.collect(toCollection(LinkedHashSet::new));
-				allSourceIds.addAll(nodeSources);
-			}
-			Set<String> resolvedSourceIds = new LinkedHashSet<>(allSourceIds.size());
-			for ( String sourceId : taskDatumFilter.getSourceIds() ) {
-				Set<String> sources = filterSources(allSourceIds, this.pathMatcher, sourceId);
-				if ( sources != null ) {
-					resolvedSourceIds.addAll(sources);
-				}
-			}
-			taskDatumFilter.setSourceIds(resolvedSourceIds.toArray(String[]::new));
-		}
-
-		taskDataConfig.setDatumFilter(taskDatumFilter);
-		taskConfig.setDataConfiguration(taskDataConfig);
 
 		UserDatumExportTaskInfo task = new UserDatumExportTaskInfo();
 		task.setCreated(Instant.now());
@@ -239,20 +202,6 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		UserDatumExportTaskPK pk = taskDao.save(task);
 		task.setId(pk);
 		return task;
-	}
-
-	/**
-	 * Set a path matcher to resolve patterns against.
-	 *
-	 * <p>
-	 * If configured, this will be used to resolve source ID patterns.
-	 * </p>
-	 *
-	 * @param pathMatcher
-	 *        the path matcher to use
-	 */
-	public void setPathMatcher(PathMatcher pathMatcher) {
-		this.pathMatcher = pathMatcher;
 	}
 
 }

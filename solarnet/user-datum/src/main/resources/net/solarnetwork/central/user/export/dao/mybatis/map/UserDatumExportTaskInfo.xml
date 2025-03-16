@@ -81,10 +81,4 @@
 			uet.schedule, uet.export_date
 	</select>
 
-	<delete id="delete-UserDatumExportTaskInfo-completed" parameterType="map" statementType="CALLABLE">
-		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_completed_user_export_tasks(
-			#{date, mode=IN, jdbcType=TIMESTAMP}
-		)}
-	</delete>
- 
 </mapper>

@@ -31,17 +31,15 @@ import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.scheduler.ManagedJob;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
-import net.solarnetwork.central.user.export.dao.UserDatumExportTaskInfoDao;
 import net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService;
 import net.solarnetwork.central.user.export.jobs.UserExportJobsService;
-import net.solarnetwork.central.user.export.jobs.UserExportTaskCleanerJob;
 import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
 
 /**
  * User datum export jobs configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class UserDatumExportJobsConfig {
@@ -51,9 +49,6 @@ public class UserDatumExportJobsConfig {
 
 	@Autowired
 	private UserDatumExportConfigurationDao userDatumExportConfigurationDao;
-
-	@Autowired
-	private UserDatumExportTaskInfoDao userDatumExportTaskInfoDao;
 
 	@Autowired
 	private UserExportTaskBiz userExportTaskBiz;
@@ -99,15 +94,6 @@ public class UserDatumExportJobsConfig {
 		UserExportTaskPopulatorJob job = new UserExportTaskPopulatorJob(ScheduleType.Monthly,
 				userExportJobsService());
 		job.setId("UserExportTaskPopulatorMonthly");
-		job.setParallelTaskExecutor(taskExecutor);
-		return job;
-	}
-
-	@ConfigurationProperties(prefix = "app.job.user-datum-export.cleaner")
-	@Bean
-	public ManagedJob userExportTaskCleanerJob() {
-		UserExportTaskCleanerJob job = new UserExportTaskCleanerJob(userDatumExportTaskInfoDao);
-		job.setId("UserExportTaskCleaner");
 		job.setParallelTaskExecutor(taskExecutor);
 		return job;
 	}
