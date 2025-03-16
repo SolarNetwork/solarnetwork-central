@@ -44,23 +44,23 @@ public enum DatumExportState implements ClaimableJobState {
 	Unknown(UNKNOWN_KEY),
 
 	/**
-	 * The import task has been queued, but not started yet.
+	 * The task has been queued, but not started yet.
 	 */
 	Queued(QUEUED_KEY),
 
 	/**
-	 * The import task as been "claimed" for execution but has not started
-	 * execution yet.
+	 * The task as been "claimed" for execution but has not started execution
+	 * yet.
 	 */
 	Claimed(CLAIMED_KEY),
 
 	/**
-	 * The import task is being executed currently.
+	 * The task is being executed currently.
 	 */
 	Executing(EXECUTING_KEY),
 
 	/**
-	 * The import task has completed.
+	 * The task has completed.
 	 */
 	Completed(COMPLETED_KEY);
 
