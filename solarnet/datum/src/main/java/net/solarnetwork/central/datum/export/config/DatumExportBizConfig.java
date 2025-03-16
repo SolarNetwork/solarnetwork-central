@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.transaction.support.TransactionTemplate;
-import net.solarnetwork.central.dao.SecurityTokenDao;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
@@ -69,9 +68,6 @@ public class DatumExportBizConfig {
 	@Autowired
 	private DatumEntityDao datumEntityDao;
 
-	@Autowired
-	private SecurityTokenDao securityTokenDao;
-
 	@Autowired(required = false)
 	private QueryAuditor queryAuditor;
 
@@ -84,7 +80,7 @@ public class DatumExportBizConfig {
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DaoDatumExportBiz datumExportBiz() {
 		DaoDatumExportBiz biz = new DaoDatumExportBiz(datumExportTaskInfoDao, datumEntityDao,
-				securityTokenDao, taskScheduler, taskExecutor, transactionTemplate);
+				taskScheduler, taskExecutor, transactionTemplate);
 		biz.setQueryAuditor(queryAuditor);
 		biz.setCompletedTaskMinimumCacheTime(completedTaskMinimumCacheTime);
 		biz.setDestinationServices(datumExportDestinationServices);

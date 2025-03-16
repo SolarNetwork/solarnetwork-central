@@ -1,66 +1,68 @@
 /* ==================================================================
  * DatumExportState.java - 29/03/2018 6:03:38 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.export.domain;
 
+import net.solarnetwork.central.domain.ClaimableJobState;
+
 /**
  * A status for a datum export job.
- * 
+ *
  * <p>
  * An export job starts in the {@code Queued} state, then will transition to
  * {@code Executing} and then finally {@code Completed}.
  * </p>
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.23
  */
-public enum DatumExportState {
+public enum DatumExportState implements ClaimableJobState {
 
 	/**
 	 * The state is not known.
 	 */
-	Unknown('u'),
+	Unknown(UNKNOWN_KEY),
 
 	/**
-	 * The export job has been queued, but not started yet.
+	 * The task has been queued, but not started yet.
 	 */
-	Queued('q'),
+	Queued(QUEUED_KEY),
 
 	/**
-	 * The export job as been "claimed" for execution but has not started
-	 * execution yet.
+	 * The task as been "claimed" for execution but has not started execution
+	 * yet.
 	 */
-	Claimed('p'),
+	Claimed(CLAIMED_KEY),
 
 	/**
-	 * The export job is being executed currently.
+	 * The task is being executed currently.
 	 */
-	Executing('e'),
+	Executing(EXECUTING_KEY),
 
 	/**
-	 * The export job has completed.
+	 * The task has completed.
 	 */
-	Completed('c');
+	Completed(COMPLETED_KEY);
 
 	private final char key;
 
@@ -70,16 +72,17 @@ public enum DatumExportState {
 
 	/**
 	 * Get the key value.
-	 * 
+	 *
 	 * @return the key value
 	 */
+	@Override
 	public char getKey() {
 		return key;
 	}
 
 	/**
 	 * Get an enum for a key value.
-	 * 
+	 *
 	 * @param key
 	 *        the key of the enum to get
 	 * @return the enum with the given key, or {@link DatumExportState#Unknown}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -217,22 +218,65 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 
 	@Test
 	public void purgeCompletedNoneCompleted() {
+		// GIVEN
 		getByPrimaryKey();
-		long result = dao.purgeCompletedTasks(Instant.now());
-		assertThat("Delete count", result, equalTo(0L));
+
+		// WHEN
+		long result = datumTaskDao.purgeCompletedTasks(Instant.now());
+
+		// THEN
+		then(result).as("Deleted no expired rows").isEqualTo(0L);
+		var rows = allTableData(log, jdbcTemplate, "solaruser.user_adhoc_export_task", "task_id");
+		// @formatter:off
+		then(rows)
+			.as("User export task row remains")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.hasEntrySatisfying("task_id", id -> {
+				then(id)
+					.as("task_id present")
+					.isNotNull()
+					.as("ID for expected task")
+					.hasToString(this.info.getId().toString())
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void purgeCompletedNoneExpired() {
+		// GIVEN
 		getByPrimaryKey();
 
-		long result = dao.purgeCompletedTasks(
+		// WHEN
+		long result = datumTaskDao.purgeCompletedTasks(
 				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
-		assertThat("Delete count", result, equalTo(0L));
+
+		// THEN
+		then(result).as("Deleted no expired rows").isEqualTo(0L);
+
+		var rows = allTableData(log, jdbcTemplate, "solaruser.user_adhoc_export_task", "task_id");
+		// @formatter:off
+		then(rows)
+			.as("User export task row remains")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.hasEntrySatisfying("task_id", id -> {
+				then(id)
+					.as("task_id present")
+					.isNotNull()
+					.as("ID for expected task")
+					.hasToString(this.info.getId().toString())
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void purgeCompleted() {
+		// GIVEN
 		getByPrimaryKey();
 		DatumExportTaskInfo datumTask = datumTaskDao.get(this.info.getId());
 		datumTask.setStatus(DatumExportState.Completed);
@@ -248,9 +292,20 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		datumTask.setCompleted(Instant.now().truncatedTo(ChronoUnit.HOURS));
 		datumTaskDao.save(datumTask);
 
-		long result = dao.purgeCompletedTasks(
+		// WHEN
+		long result = datumTaskDao.purgeCompletedTasks(
 				Instant.now().truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS));
-		assertThat("Delete count", result, equalTo(2L));
+
+		// THEN
+		then(result).as("Deleted expired rows").isEqualTo(2L);
+
+		var rows = allTableData(log, jdbcTemplate, "solaruser.user_adhoc_export_task", "task_id");
+		// @formatter:off
+		then(rows)
+			.as("User export task rows deleted via CASCADE on solarnet.sn_datum_export_task")
+			.hasSize(0)
+			;
+		// @formatter:on
 	}
 
 	@Test

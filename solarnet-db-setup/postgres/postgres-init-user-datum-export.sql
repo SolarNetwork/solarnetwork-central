@@ -100,7 +100,7 @@ CREATE TABLE solaruser.user_export_task (
 	CONSTRAINT user_export_task_pkey PRIMARY KEY (user_id, schedule, export_date),
 	CONSTRAINT user_export_task_datum_export_task_fk
 		FOREIGN KEY (task_id) REFERENCES solarnet.sn_datum_export_task (id)
-		ON UPDATE NO ACTION ON DELETE NO ACTION,
+		ON UPDATE NO ACTION ON DELETE CASCADE,
 	CONSTRAINT user_export_task_user_export_datum_conf_fk FOREIGN KEY (conf_id)
 		REFERENCES solaruser.user_export_datum_conf (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE CASCADE
@@ -150,31 +150,6 @@ BEGIN
 END;
 $BODY$;
 
-/**************************************************************************************************
- * FUNCTION solarnet.purge_completed_user_export_tasks(timestamp with time zone)
- *
- * Delete user_export_task rows whose related sn_datum_export_task have reached the 'c' status and
- * completed date is older than the given date.
- *
- * @param older_date The maximum date to delete tasks for.
- * @return The number of rows deleted.
- */
-CREATE OR REPLACE FUNCTION solaruser.purge_completed_user_export_tasks(older_date timestamp with time zone)
-  RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
-$BODY$
-DECLARE
-	num_rows BIGINT := 0;
-BEGIN
-	DELETE FROM solaruser.user_export_task
-	USING solarnet.sn_datum_export_task
-	WHERE task_id = sn_datum_export_task.id
-		AND sn_datum_export_task.completed < older_date
-		AND sn_datum_export_task.status = 'c';
-	GET DIAGNOSTICS num_rows = ROW_COUNT;
-	RETURN num_rows;
-END;
-$BODY$;
-
 
 /**************************************************************************************************
  * TABLE solaruser.user_adhoc_export_task
@@ -218,30 +193,5 @@ BEGIN
 	VALUES
 		(usr, sched, t_id, token);
 	RETURN t_id;
-END;
-$$;
-
-/**************************************************************************************************
- * FUNCTION solarnet.purge_completed_user_adhoc_export_tasks(timestamp with time zone)
- *
- * Delete user_adhoc_export_task rows whose related sn_datum_export_task have reached the 'c' status and
- * completed date is older than the given date.
- *
- * @param older_date The maximum date to delete tasks for.
- * @return The number of rows deleted.
- */
-CREATE OR REPLACE FUNCTION solaruser.purge_completed_user_adhoc_export_tasks(older_date timestamp with time zone)
-  RETURNS BIGINT LANGUAGE plpgsql VOLATILE AS
-$$
-DECLARE
-	num_rows BIGINT := 0;
-BEGIN
-	DELETE FROM solaruser.user_adhoc_export_task
-	USING solarnet.sn_datum_export_task
-	WHERE task_id = sn_datum_export_task.id
-		AND sn_datum_export_task.completed < older_date
-		AND sn_datum_export_task.status = 'c';
-	GET DIAGNOSTICS num_rows = ROW_COUNT;
-	RETURN num_rows;
 END;
 $$;
