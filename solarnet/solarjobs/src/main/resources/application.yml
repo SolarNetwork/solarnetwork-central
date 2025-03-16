@@ -254,9 +254,6 @@ app:
         maximum-wait-ms: 21600000
         schedule: "0 25 3 * * *"
     user-datum-export:
-      cleaner:
-        minimum-age-minutes: 360
-        schedule:  "0 37 * * * *"
       hourly:
         maximum-wait-ms: 600000
         schedule: "0 10/30 * * * ?"

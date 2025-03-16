@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.export.dao;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.time.Instant;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
@@ -41,22 +40,11 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  * @since 1.1
  */
 public interface UserAdhocDatumExportTaskInfoDao
 		extends UserRelatedGenericDao<UserAdhocDatumExportTaskInfo, UUID> {
-
-	/**
-	 * Purge tasks that have reached a
-	 * {@link net.solarnetwork.central.datum.export.domain.DatumExportState#Completed}
-	 * and are older than a given date.
-	 * 
-	 * @param olderThanDate
-	 *        the maximum date for which to purge completed tasks
-	 * @return the number of tasks deleted
-	 */
-	long purgeCompletedTasks(Instant olderThanDate);
 
 	/**
 	 * Find all available ad hoc export tasks for a given user.

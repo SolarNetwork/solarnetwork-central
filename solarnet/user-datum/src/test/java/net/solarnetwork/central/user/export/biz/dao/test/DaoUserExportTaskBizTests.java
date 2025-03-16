@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.export.biz.dao.test;
 import static net.solarnetwork.central.security.SecurityTokenType.User;
 import static net.solarnetwork.central.security.SecurityUtils.becomeToken;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
-import static net.solarnetwork.test.EasyMockUtils.assertWith;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
@@ -33,28 +32,20 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.fail;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
-import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
-import net.solarnetwork.central.datum.v2.dao.ObjectStreamCriteria;
-import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -67,9 +58,6 @@ import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskInfo;
 import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
-import net.solarnetwork.domain.datum.ObjectDatumKind;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.test.Assertion;
 
 /**
  * Test cases for the {@link UserExportBiz} class.
@@ -87,7 +75,6 @@ public class DaoUserExportTaskBizTests {
 	private UserDatumExportTaskInfoDao taskDao;
 	private UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private UserNodeDao userNodeDao;
-	private DatumStreamMetadataDao metaDao;
 
 	private DaoUserExportTaskBiz biz;
 
@@ -96,18 +83,17 @@ public class DaoUserExportTaskBizTests {
 		taskDao = EasyMock.createMock(UserDatumExportTaskInfoDao.class);
 		adhocTaskDao = EasyMock.createMock(UserAdhocDatumExportTaskInfoDao.class);
 		userNodeDao = EasyMock.createMock(UserNodeDao.class);
-		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 
-		biz = new DaoUserExportTaskBiz(taskDao, adhocTaskDao, userNodeDao, metaDao);
+		biz = new DaoUserExportTaskBiz(taskDao, adhocTaskDao, userNodeDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(taskDao, adhocTaskDao, userNodeDao, metaDao);
+		EasyMock.replay(taskDao, adhocTaskDao, userNodeDao);
 	}
 
 	@AfterEach
 	public void teardown() {
-		EasyMock.verify(taskDao, adhocTaskDao, userNodeDao, metaDao);
+		EasyMock.verify(taskDao, adhocTaskDao, userNodeDao);
 		SecurityUtils.removeAuthentication();
 	}
 
@@ -153,10 +139,8 @@ public class DaoUserExportTaskBizTests {
 	}
 
 	@Test
-	public void submitTaskResolveSourceIdPattern() {
+	public void submitTask_sourceIdPattern() {
 		// given
-		biz.setPathMatcher(new AntPathMatcher());
-
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
 		UserDataConfiguration dataConfig = new UserDataConfiguration();
@@ -169,15 +153,6 @@ public class DaoUserExportTaskBizTests {
 				.andReturn(Collections.singleton(TEST_NODE_ID));
 
 		ZonedDateTime exportDate = ScheduleType.Hourly.exportDate(now);
-
-		Set<String> allSourceIds = new LinkedHashSet<>(
-				Arrays.asList("/foo/bar", "/test/foo", "/test/bar"));
-		List<ObjectDatumStreamMetadata> allMetas = allSourceIds.stream().map(e -> {
-			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
-					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
-		}).collect(Collectors.toList());
-		Capture<ObjectStreamCriteria> sourceFilterCaptor = new Capture<>();
-		expect(metaDao.findDatumStreamMetadata(capture(sourceFilterCaptor))).andReturn(allMetas);
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -200,23 +175,14 @@ public class DaoUserExportTaskBizTests {
 		assertThat("Node ID populated",
 				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
 				arrayContaining(TEST_NODE_ID));
-		assertThat("Source IDs populated",
-				task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds(),
-				arrayContaining("/test/foo", "/test/bar"));
-
-		ObjectStreamCriteria sourceFilter = sourceFilterCaptor.getValue();
-		assertThat("Source filter node", sourceFilter.getNodeId(), equalTo(TEST_NODE_ID));
-		assertThat("Source filter start date", sourceFilter.getStartDate(),
-				equalTo(exportDate.toInstant()));
-		assertThat("Source filter end date", sourceFilter.getEndDate(),
-				equalTo(ScheduleType.Hourly.nextExportDate(exportDate).toInstant()));
+		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
+				.as("Source IDs fiven in filter are resolved")
+				.containsExactlyInAnyOrder(filter.getSourceIds());
 	}
 
 	@Test
-	public void submitTaskResolveSourceIdPatternMultipleNodes() {
+	public void submitTask_sourceIdPatternMultipleNodes() {
 		// given
-		biz.setPathMatcher(new AntPathMatcher());
-
 		UserDatumExportConfiguration config = createConfiguration();
 		ZonedDateTime now = ZonedDateTime.now(config.zone());
 		UserDataConfiguration dataConfig = new UserDataConfiguration();
@@ -229,37 +195,6 @@ public class DaoUserExportTaskBizTests {
 				.andReturn(new LinkedHashSet<>(Arrays.asList(TEST_NODE_ID, TEST_NODE_ID_2)));
 
 		ZonedDateTime exportDate = ScheduleType.Hourly.exportDate(now);
-
-		Set<String> allSourceIdsNode1 = new LinkedHashSet<>(
-				Arrays.asList("/foo/bar", "/test/foo", "/test/bar"));
-		List<ObjectDatumStreamMetadata> allMetas1 = allSourceIdsNode1.stream().map(e -> {
-			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
-					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
-		}).collect(Collectors.toList());
-		Set<String> allSourceIdsNode2 = new LinkedHashSet<>(Arrays.asList("/test/bam"));
-		List<ObjectDatumStreamMetadata> allMetas2 = allSourceIdsNode2.stream().map(e -> {
-			return BasicObjectDatumStreamMetadata.emptyMeta(UUID.randomUUID(), "UTC",
-					ObjectDatumKind.Node, UUID.randomUUID().getMostSignificantBits(), e);
-		}).collect(Collectors.toList());
-		expect(metaDao.findDatumStreamMetadata(assertWith(new Assertion<ObjectStreamCriteria>() {
-
-			private int call = 0;
-
-			@Override
-			public void check(ObjectStreamCriteria sourceFilter) throws Throwable {
-				call++;
-				if ( call < 3 ) {
-					assertThat("Source filter node " + call, sourceFilter.getNodeId(),
-							equalTo(call == 1 ? TEST_NODE_ID : TEST_NODE_ID_2));
-					assertThat("Source filter start date " + call, sourceFilter.getStartDate(),
-							equalTo(exportDate.toInstant()));
-					assertThat("Source filter end date " + call, sourceFilter.getEndDate(),
-							equalTo(ScheduleType.Hourly.nextExportDate(exportDate).toInstant()));
-				} else {
-					fail("Expected only 2 calls to getAvailableSources(filter)");
-				}
-			}
-		}))).andReturn(allMetas1).andReturn(allMetas2);
 
 		Capture<UserDatumExportTaskInfo> taskCaptor = new Capture<>();
 
@@ -282,9 +217,9 @@ public class DaoUserExportTaskBizTests {
 		assertThat("Node ID populated",
 				task.getConfig().getDataConfiguration().getDatumFilter().getNodeIds(),
 				arrayContaining(TEST_NODE_ID, TEST_NODE_ID_2));
-		assertThat("Source IDs populated",
-				task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds(),
-				arrayContaining("/test/foo", "/test/bar", "/test/bam"));
+		then(task.getConfig().getDataConfiguration().getDatumFilter().getSourceIds())
+				.as("Source IDs fiven in filter are resolved")
+				.containsExactlyInAnyOrder(filter.getSourceIds());
 	}
 
 	@Test
@@ -356,7 +291,7 @@ public class DaoUserExportTaskBizTests {
 			.returns(TEST_USER_ID, UserAdhocDatumExportTaskInfo::getUserId)
 			.as("Schedule is Adhoc")
 			.returns(ScheduleType.Adhoc, UserAdhocDatumExportTaskInfo::getScheduleType)
-			.as("No token")
+			.as("Token included")
 			.returns(auth.getToken(), UserAdhocDatumExportTaskInfo::getTokenId)
 			.as("Config name")
 			;
@@ -369,8 +304,6 @@ public class DaoUserExportTaskBizTests {
 	@Test
 	public void submitAdhocTask_withMultipleNodes_withSourceIdPatterns() {
 		// GIVEN
-		biz.setPathMatcher(new AntPathMatcher());
-
 		UserDatumExportConfiguration config = createConfiguration();
 
 		// make ad hoc with no ID

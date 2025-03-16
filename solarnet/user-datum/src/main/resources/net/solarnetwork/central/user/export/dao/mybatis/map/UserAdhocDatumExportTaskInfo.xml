@@ -72,10 +72,4 @@
 			uaet.schedule, uaet.created
 	</select>
 
-	<delete id="delete-UserAdhocDatumExportTaskInfo-completed" parameterType="map" statementType="CALLABLE">
-		{#{result, mode=OUT, jdbcType=BIGINT} = call solaruser.purge_completed_user_adhoc_export_tasks(
-			#{date, mode=IN, jdbcType=TIMESTAMP}
-		)}
-	</delete>
- 
 </mapper>
