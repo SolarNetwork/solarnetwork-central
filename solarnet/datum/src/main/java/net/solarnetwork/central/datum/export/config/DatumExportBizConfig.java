@@ -24,11 +24,13 @@ package net.solarnetwork.central.datum.export.config;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
@@ -45,7 +47,7 @@ import net.solarnetwork.event.AppEventPublisher;
  * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
-public class DatumExportBizConfig {
+public class DatumExportBizConfig implements SolarNetDatumExportConfiguration {
 
 	@Value("${app.datum.export.completed-task-minimum-cache-time:14400000}")
 	private int completedTaskMinimumCacheTime = 14400000;
@@ -77,14 +79,17 @@ public class DatumExportBizConfig {
 	@Autowired
 	private List<DatumExportOutputFormatService> datumExportOutputFormatServices;
 
+	@Qualifier(DATUM_EXPORT)
+	@Autowired
+	private TextEncryptor textEncryptor;
+
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public DaoDatumExportBiz datumExportBiz() {
 		DaoDatumExportBiz biz = new DaoDatumExportBiz(datumExportTaskInfoDao, datumEntityDao,
-				taskScheduler, taskExecutor, transactionTemplate);
+				taskScheduler, taskExecutor, textEncryptor, datumExportOutputFormatServices,
+				datumExportDestinationServices, transactionTemplate);
 		biz.setQueryAuditor(queryAuditor);
 		biz.setCompletedTaskMinimumCacheTime(completedTaskMinimumCacheTime);
-		biz.setDestinationServices(datumExportDestinationServices);
-		biz.setOutputFormatServices(datumExportOutputFormatServices);
 		biz.setEventPublisher(eventPublisher);
 		return biz;
 	}

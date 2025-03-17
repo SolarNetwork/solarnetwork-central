@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -57,7 +59,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * Test cases for the {@link MyBatisUserAdhocDatumExportTaskInfoDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 1.1
  */
 public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
@@ -87,8 +89,8 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	}
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setUserId(this.user.getId());
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
+				unassignedEntityIdKey(this.user.getId()), now());
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);

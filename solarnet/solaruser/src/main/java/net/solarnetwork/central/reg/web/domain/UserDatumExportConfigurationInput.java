@@ -1,7 +1,7 @@
 /* ==================================================================
- * DatumExportProperties.java - 17/04/2018 9:41:27 AM
+ * UserDatumExportConfigurationInput.java - 17/03/2025 5:01:53 pm
  *
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -23,23 +23,21 @@
 package net.solarnetwork.central.reg.web.domain;
 
 import java.time.Instant;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import net.solarnetwork.central.dao.BaseUserRelatedStdInput;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 
 /**
- * DTO for datum export configuration.
+ * Input DTO for {@link UserDatumExportConfiguration} entities.
  *
  * @author matt
- * @version 1.1
- * @since 1.26
+ * @version 1.0
  */
-@JsonIgnoreProperties({ "dataConfiguration", "destinationConfiguration", "outputConfiguration" })
-public final class DatumExportProperties {
+public final class UserDatumExportConfigurationInput
+		extends BaseUserRelatedStdInput<UserDatumExportConfiguration, UserLongCompositePK> {
 
-	private Long userId;
 	private Long id;
-	private Instant created;
 	private String name;
 	private ScheduleType schedule;
 	private int hourDelayOffset;
@@ -51,56 +49,73 @@ public final class DatumExportProperties {
 	private Long destinationConfigurationId;
 	private Long outputConfigurationId;
 
-	public DatumExportProperties() {
+	private UserDataConfigurationInput dataConfiguration;
+	private UserOutputConfigurationInput outputConfiguration;
+	private UserDestinationConfigurationInput destinationConfiguration;
+
+	/**
+	 * Constructor.
+	 */
+	public UserDatumExportConfigurationInput() {
 		super();
 	}
 
-	/**
-	 * Copy constructor.
-	 *
-	 * @param other
-	 *        the configuration to copy the properties from
-	 */
-	public DatumExportProperties(UserDatumExportConfiguration other) {
-		super();
-		setCreated(other.getCreated());
-		setId(other.getConfigId());
-		setUserId(other.getUserId());
-
-		setHourDelayOffset(other.getHourDelayOffset());
-		setName(other.getName());
-		setSchedule(other.getSchedule());
-		setMinimumExportDate(other.getMinimumExportDate());
-		setTimeZoneId(other.getTimeZoneId());
-
-		setDataConfigurationId(other.getUserDataConfigurationId());
-		setDestinationConfigurationId(other.getUserDestinationConfigurationId());
-		setOutputConfigurationId(other.getUserOutputConfigurationId());
+	@Override
+	public UserDatumExportConfiguration toEntity(UserLongCompositePK id, Instant date) {
+		UserDatumExportConfiguration entity = new UserDatumExportConfiguration(id, date);
+		populateConfiguration(entity);
+		return entity;
 	}
 
-	/**
-	 * Get the user ID.
-	 *
-	 * @return the user ID
-	 */
-	public final Long getUserId() {
-		return userId;
-	}
+	@Override
+	protected void populateConfiguration(UserDatumExportConfiguration conf) {
+		super.populateConfiguration(conf);
+		conf.setName(name);
+		conf.setSchedule(schedule);
+		conf.setHourDelayOffset(hourDelayOffset);
+		conf.setMinimumExportDate(minimumExportDate);
+		conf.setTimeZoneId(timeZoneId);
+		conf.setTokenId(tokenId);
 
-	/**
-	 * Set the user ID.
-	 *
-	 * @param userId
-	 *        the user ID to set
-	 */
-	public final void setUserId(Long userId) {
-		this.userId = userId;
+		if ( dataConfiguration != null ) {
+			conf.setUserDataConfiguration(
+					dataConfiguration.toEntity(
+							new UserLongCompositePK(conf.getUserId(),
+									dataConfiguration.getId() != null ? dataConfiguration.getId()
+											: UserLongCompositePK.UNASSIGNED_ENTITY_ID),
+							conf.getCreated()));
+		} else if ( dataConfigurationId != null ) {
+			conf.setUserDataConfigurationId(dataConfigurationId);
+		}
+
+		if ( outputConfiguration != null ) {
+			conf.setUserOutputConfiguration(
+					outputConfiguration.toEntity(
+							new UserLongCompositePK(conf.getUserId(),
+									outputConfiguration.getId() != null ? outputConfiguration.getId()
+											: UserLongCompositePK.UNASSIGNED_ENTITY_ID),
+							conf.getCreated()));
+		} else if ( outputConfigurationId != null ) {
+			conf.setUserOutputConfigurationId(outputConfigurationId);
+		}
+
+		if ( destinationConfiguration != null ) {
+			conf.setUserDestinationConfiguration(
+					destinationConfiguration.toEntity(
+							new UserLongCompositePK(conf.getUserId(),
+									destinationConfiguration.getId() != null
+											? destinationConfiguration.getId()
+											: UserLongCompositePK.UNASSIGNED_ENTITY_ID),
+							conf.getCreated()));
+		} else if ( destinationConfigurationId != null ) {
+			conf.setUserDestinationConfigurationId(destinationConfigurationId);
+		}
 	}
 
 	/**
 	 * Get the configuration ID.
 	 *
-	 * @return the configuration ID
+	 * @return the ID
 	 */
 	public Long getId() {
 		return id;
@@ -114,25 +129,6 @@ public final class DatumExportProperties {
 	 */
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	/**
-	 * Get the creation date.
-	 *
-	 * @return the creation date
-	 */
-	public Instant getCreated() {
-		return created;
-	}
-
-	/**
-	 * Set the creation date.
-	 *
-	 * @param created
-	 *        the date to set
-	 */
-	public void setCreated(Instant created) {
-		this.created = created;
 	}
 
 	/**
@@ -290,13 +286,6 @@ public final class DatumExportProperties {
 	/**
 	 * Set the minimum export date that can be scheduled for execution.
 	 *
-	 * <p>
-	 * This date will be updated over time as export tasks complete. It
-	 * represents the minimum export date that can be scheduled for future
-	 * export tasks, so that we can know at what date the next scheduled export
-	 * task should use for its export date.
-	 * </p>
-	 *
 	 * @param minimumExportDate
 	 *        the minimum export date to use
 	 */
@@ -340,6 +329,63 @@ public final class DatumExportProperties {
 	 */
 	public void setTokenId(String tokenId) {
 		this.tokenId = tokenId;
+	}
+
+	/**
+	 * Get the data configuration.
+	 *
+	 * @return the configuration
+	 */
+	public UserDataConfigurationInput getDataConfiguration() {
+		return dataConfiguration;
+	}
+
+	/**
+	 * Set the data configuration.
+	 *
+	 * @param dataConfiguration
+	 *        the configuration to set
+	 */
+	public void setDataConfiguration(UserDataConfigurationInput dataConfiguration) {
+		this.dataConfiguration = dataConfiguration;
+	}
+
+	/**
+	 * Get the output configuration.
+	 *
+	 * @return the configuration
+	 */
+	public UserOutputConfigurationInput getOutputConfiguration() {
+		return outputConfiguration;
+	}
+
+	/**
+	 * Set the output configuration.
+	 *
+	 * @param outputConfiguration
+	 *        the configuration to set
+	 */
+	public void setOutputConfiguration(UserOutputConfigurationInput outputConfiguration) {
+		this.outputConfiguration = outputConfiguration;
+	}
+
+	/**
+	 * Get the destination configuration.
+	 *
+	 * @return the configuration
+	 */
+	public UserDestinationConfigurationInput getDestinationConfiguration() {
+		return destinationConfiguration;
+	}
+
+	/**
+	 * Set the destination configuration.
+	 *
+	 * @param destinationConfiguration
+	 *        the configuration to set
+	 */
+	public void setDestinationConfiguration(UserDestinationConfigurationInput destinationConfiguration) {
+		this.destinationConfiguration = destinationConfiguration;
 	}
 
 }

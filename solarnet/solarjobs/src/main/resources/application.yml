@@ -73,6 +73,9 @@ app:
     export:
       completed-task-minimum-cache-time: 14400000
       temporary-dir: "${java.io.tmpdir}"
+      encryptor:
+        password: "Secret123"
+        salt-hex: "01234567"
       s3.executor:
         thread-name-prefix: "SolarNet-S3-Export-"
         core-pool-size: 10

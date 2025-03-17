@@ -53,7 +53,7 @@ public interface GenericCompositeKey2Dao<T extends Entity<K>, K extends Composit
 	 * @param keyComponent1
 	 *        the assigned key component
 	 * @param entity
-	 *        the domain object so store; the {@link Entity#getId()} of the
+	 *        the domain object to store; the {@link Entity#getId()} of the
 	 *        entity will be ignored
 	 * @return the primary key of the stored object
 	 */

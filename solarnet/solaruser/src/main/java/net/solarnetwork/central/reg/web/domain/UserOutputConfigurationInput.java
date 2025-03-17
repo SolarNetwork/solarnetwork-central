@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserOutputConfiguration.java - 21/03/2018 2:13:25 PM
+ * UserOutputConfigurationInput.java - 17/03/2025 4:53:37 pm
  *
- * Copyright 2018 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,94 +20,83 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.export.domain;
+package net.solarnetwork.central.reg.web.domain;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.Instant;
-import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import net.solarnetwork.central.dao.BaseUserRelatedStdIdentifiableConfigurationInput;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
-import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.domain.UserLongCompositePK;
+import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
 
 /**
- * User related {@link OutputConfiguration} entity.
+ * Input DTO for {@link UserOutputConfiguration} entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-@JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "compressionTypeKey",
-		"serviceProperties" })
-@JsonIgnoreProperties("enabled")
-public class UserOutputConfiguration extends BaseExportConfigurationEntity<UserOutputConfiguration>
-		implements OutputConfiguration, Serializable {
+public final class UserOutputConfigurationInput extends
+		BaseUserRelatedStdIdentifiableConfigurationInput<UserOutputConfiguration, UserLongCompositePK> {
 
-	@Serial
-	private static final long serialVersionUID = -1581617729654201770L;
+	private Long id;
 
 	private OutputCompressionType compressionType;
 
 	/**
 	 * Constructor.
-	 * 
-	 * @param id
-	 *        the primary key
-	 * @param created
-	 *        the creation date
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
 	 */
-	public UserOutputConfiguration(UserLongCompositePK id, Instant created) {
-		super(id, created);
+	public UserOutputConfigurationInput() {
+		super();
+	}
+
+	@Override
+	public UserOutputConfiguration toEntity(UserLongCompositePK id, Instant date) {
+		UserOutputConfiguration entity = new UserOutputConfiguration(id, date);
+		populateConfiguration(entity);
+		return entity;
+	}
+
+	@Override
+	protected void populateConfiguration(UserOutputConfiguration conf) {
+		super.populateConfiguration(conf);
+		conf.setCompressionType(compressionType);
 	}
 
 	/**
-	 * Constructor.
-	 * 
-	 * @param userId
-	 *        the user ID
-	 * @param configId
-	 *        the configuration ID
-	 * @param created
-	 *        the creation date
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@literal null}
+	 * Get the configuration ID.
+	 *
+	 * @return the ID
 	 */
-	public UserOutputConfiguration(Long userId, Long configId, Instant created) {
-		this(new UserLongCompositePK(userId, configId), created);
+	public Long getId() {
+		return id;
 	}
 
-	@Override
-	public UserOutputConfiguration copyWithId(UserLongCompositePK id) {
-		var copy = new UserOutputConfiguration(id, getCreated());
-		copyTo(copy);
-		return copy;
+	/**
+	 * Set the configuration ID.
+	 *
+	 * @param id
+	 *        the ID to set
+	 */
+	public void setId(Long id) {
+		this.id = id;
 	}
 
-	@Override
-	public void copyTo(UserOutputConfiguration entity) {
-		super.copyTo(entity);
-		entity.setCompressionType(compressionType);
-	}
-
-	@Override
-	public boolean isSameAs(UserOutputConfiguration other) {
-		boolean result = super.isSameAs(other);
-		if ( !result ) {
-			return false;
-		}
-		return Objects.equals(compressionType, other.getCompressionType());
-	}
-
+	/**
+	 * Get the compression type.
+	 *
+	 * @return the type
+	 */
 	@JsonIgnore
-	@Override
 	public OutputCompressionType getCompressionType() {
 		return compressionType;
 	}
 
+	/**
+	 * Set the compression type.
+	 *
+	 * @param compressionType
+	 *        the type to set
+	 */
 	public void setCompressionType(OutputCompressionType compressionType) {
 		this.compressionType = compressionType;
 	}

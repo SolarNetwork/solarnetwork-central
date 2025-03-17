@@ -22,15 +22,17 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertNotNull;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDestinationConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
@@ -47,7 +50,7 @@ import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
  * Test cases for the {@link MyBatisUserDestinationConfigurationDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -71,9 +74,8 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 
 	@Test
 	public void storeNew() {
-		UserDestinationConfiguration conf = new UserDestinationConfiguration();
-		conf.setCreated(Instant.now());
-		conf.setUserId(this.user.getId());
+		UserDestinationConfiguration conf = new UserDestinationConfiguration(
+				unassignedEntityIdKey(this.user.getId()), now());
 		conf.setName(TEST_NAME);
 		conf.setServiceIdentifier(TEST_SERVICE_IDENT);
 
@@ -88,12 +90,13 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 
 		conf.setServiceProps(sprops);
 
-		Long id = confDao.save(conf);
-		assertThat("Primary key assigned", id, notNullValue());
+		UserLongCompositePK id = confDao.save(conf);
+		assertThat("Primary key returned", id, notNullValue());
+		assertThat("Entity key assigned", id.getEntityId(), notNullValue());
+		assertThat("Entity key assigned", id.entityIdIsAssigned(), is(true));
 
 		// stash results for other tests to use
-		conf.setId(id);
-		this.conf = conf;
+		this.conf = conf.copyWithId(id);
 	}
 
 	@Test
@@ -128,7 +131,7 @@ public class MyBatisUserDestinationConfigurationDaoTests extends AbstractMyBatis
 		options.put("string", "updated");
 		options.put("added-string", "added");
 
-		Long id = confDao.save(conf);
+		UserLongCompositePK id = confDao.save(conf);
 		assertThat("PK unchanged", id, equalTo(this.conf.getId()));
 
 		UserDestinationConfiguration updatedConf = confDao.get(id, this.user.getId());

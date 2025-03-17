@@ -23,52 +23,151 @@
 package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serial;
-import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Objects;
 import org.springframework.lang.NonNull;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import net.solarnetwork.central.dao.BaseEntity;
-import net.solarnetwork.central.dao.UserRelatedEntity;
+import net.solarnetwork.central.dao.BaseUserModifiableEntity;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * User related {@link Configuration} entity.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
-public class UserDatumExportConfiguration extends BaseEntity
-		implements Configuration, UserRelatedEntity<Long>, Serializable {
+@JsonPropertyOrder({ "id", "created", "userId", "name", "hourDelayOffset", "scheduleKey" })
+@JsonIgnoreProperties("enabled")
+public class UserDatumExportConfiguration
+		extends BaseUserModifiableEntity<UserDatumExportConfiguration, UserLongCompositePK>
+		implements Configuration {
 
 	@Serial
 	private static final long serialVersionUID = 7392841763656888488L;
 
-	private Long userId;
 	private String name;
 	private ScheduleType schedule;
 	private int hourDelayOffset;
-	private UserDataConfiguration userDataConfiguration;
-	private UserOutputConfiguration userOutputConfiguration;
-	private UserDestinationConfiguration userDestinationConfiguration;
 	private Instant minimumExportDate;
 	private String timeZoneId;
 	private String tokenId;
+	private UserDataConfiguration userDataConfiguration;
+	private UserOutputConfiguration userOutputConfiguration;
+	private UserDestinationConfiguration userDestinationConfiguration;
 
-	@Override
-	public Long getUserId() {
-		return userId;
+	private transient Long configId;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserDatumExportConfiguration(UserLongCompositePK id, Instant created) {
+		super(id, created);
 	}
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param configId
+	 *        the configuration ID
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserDatumExportConfiguration(Long userId, Long configId, Instant created) {
+		this(new UserLongCompositePK(userId, configId), created);
+	}
+
+	@Override
+	public UserDatumExportConfiguration copyWithId(UserLongCompositePK id) {
+		var copy = new UserDatumExportConfiguration(id, getCreated());
+		copyTo(copy);
+		return copy;
+	}
+
+	@Override
+	public void copyTo(UserDatumExportConfiguration entity) {
+		super.copyTo(entity);
+		entity.setName(name);
+		entity.setSchedule(schedule);
+		entity.setHourDelayOffset(hourDelayOffset);
+		entity.setUserDataConfiguration(userDataConfiguration);
+		entity.setUserOutputConfiguration(userOutputConfiguration);
+		entity.setUserDestinationConfiguration(userDestinationConfiguration);
+		entity.setMinimumExportDate(minimumExportDate);
+		entity.setTimeZoneId(timeZoneId);
+		entity.setTokenId(tokenId);
+	}
+
+	@Override
+	public boolean isSameAs(UserDatumExportConfiguration other) {
+		if ( !super.isSameAs(other) ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(this.name, other.getName())
+				&& Objects.equals(this.schedule, other.getSchedule())
+				&& Objects.equals(this.hourDelayOffset, other.getHourDelayOffset())
+				&& Objects.equals(this.userDataConfiguration, other.getUserDataConfiguration())
+				&& Objects.equals(this.userOutputConfiguration, other.getOutputConfiguration())
+				&& Objects.equals(this.userDestinationConfiguration, other.getUserDestinationConfiguration())
+				&& Objects.equals(this.minimumExportDate, other.getMinimumExportDate())
+				&& Objects.equals(this.timeZoneId, other.getTimeZoneId())
+				&& Objects.equals(this.tokenId, other.getTokenId())
+				;
+		// @formatter:on
+
+	}
+
+	/**
+	 * Get the configuration ID.
+	 *
+	 * @return the configuration ID
+	 * @since 1.2
+	 */
+	@JsonProperty("id")
+	public Long getConfigId() {
+		if ( configId != null ) {
+			return configId;
+		}
+		UserLongCompositePK id = getId();
+		return (id != null ? id.getEntityId() : null);
+	}
+
+	/**
+	 * Set the temporary configuration ID.
+	 * 
+	 * <p>
+	 * This method is here to support DAO mapping that wants to set new primary
+	 * key values on creation.
+	 * </p>
+	 * 
+	 * @param configId
+	 *        the configuration ID to set
+	 */
+	public final void setConfigId(Long configId) {
+		this.configId = configId;
 	}
 
 	@Override
@@ -149,10 +248,11 @@ public class UserDatumExportConfiguration extends BaseEntity
 	public void setUserDataConfigurationId(Long id) {
 		UserDataConfiguration conf = getUserDataConfiguration();
 		if ( conf == null ) {
-			conf = new UserDataConfiguration();
+			conf = new UserDataConfiguration(new UserLongCompositePK(getUserId(), id), Instant.now());
 			setUserDataConfiguration(conf);
+		} else {
+			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
 		}
-		conf.setId(id);
 	}
 
 	/**
@@ -163,7 +263,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	@JsonIgnore
 	public Long getUserDataConfigurationId() {
 		UserDataConfiguration conf = getUserDataConfiguration();
-		return (conf != null ? conf.getId() : null);
+		return (conf != null ? conf.getConfigId() : null);
 	}
 
 	@Override
@@ -192,10 +292,11 @@ public class UserDatumExportConfiguration extends BaseEntity
 	public void setUserOutputConfigurationId(Long id) {
 		UserOutputConfiguration conf = getUserOutputConfiguration();
 		if ( conf == null ) {
-			conf = new UserOutputConfiguration();
+			conf = new UserOutputConfiguration(new UserLongCompositePK(getUserId(), id), Instant.now());
 			setUserOutputConfiguration(conf);
+		} else {
+			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
 		}
-		conf.setId(id);
 	}
 
 	/**
@@ -206,7 +307,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	@JsonIgnore
 	public Long getUserOutputConfigurationId() {
 		UserOutputConfiguration conf = getUserOutputConfiguration();
-		return (conf != null ? conf.getId() : null);
+		return (conf != null ? conf.getConfigId() : null);
 	}
 
 	@Override
@@ -236,10 +337,12 @@ public class UserDatumExportConfiguration extends BaseEntity
 	public void setUserDestinationConfigurationId(Long id) {
 		UserDestinationConfiguration conf = getUserDestinationConfiguration();
 		if ( conf == null ) {
-			conf = new UserDestinationConfiguration();
+			conf = new UserDestinationConfiguration(new UserLongCompositePK(getUserId(), id),
+					Instant.now());
 			setUserDestinationConfiguration(conf);
+		} else {
+			conf = conf.copyWithId(new UserLongCompositePK(getUserId(), id));
 		}
-		conf.setId(id);
 	}
 
 	/**
@@ -250,7 +353,7 @@ public class UserDatumExportConfiguration extends BaseEntity
 	@JsonIgnore
 	public Long getUserDestinationConfigurationId() {
 		UserDestinationConfiguration conf = getUserDestinationConfiguration();
-		return (conf != null ? conf.getId() : null);
+		return (conf != null ? conf.getConfigId() : null);
 	}
 
 	@Override

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.domain.test;
 
+import static java.time.Instant.now;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.export.domain.UserDataConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 import net.solarnetwork.central.user.export.domain.UserDestinationConfiguration;
@@ -52,10 +54,7 @@ import net.solarnetwork.util.DateUtils;
 public class UserDatumExportConfigurationTests {
 
 	public static UserDataConfiguration newDataConf(Long id, Long userId, Instant now) {
-		UserDataConfiguration conf = new UserDataConfiguration();
-		conf.setCreated(now);
-		conf.setUserId(userId);
-		conf.setId(id);
+		UserDataConfiguration conf = new UserDataConfiguration(new UserLongCompositePK(userId, id), now);
 		conf.setName(randomString());
 		conf.setServiceIdentifier(randomString());
 
@@ -79,10 +78,8 @@ public class UserDatumExportConfigurationTests {
 	}
 
 	public static UserDestinationConfiguration newDestConf(Long id, Long userId, Instant now) {
-		UserDestinationConfiguration conf = new UserDestinationConfiguration();
-		conf.setCreated(now);
-		conf.setUserId(userId);
-		conf.setId(id);
+		UserDestinationConfiguration conf = new UserDestinationConfiguration(
+				new UserLongCompositePK(userId, id), now);
 		conf.setName(UUID.randomUUID().toString());
 		conf.setServiceIdentifier(UUID.randomUUID().toString());
 
@@ -101,10 +98,8 @@ public class UserDatumExportConfigurationTests {
 	}
 
 	public static UserOutputConfiguration newOutpConf(Long id, Long userId, Instant now) {
-		UserOutputConfiguration conf = new UserOutputConfiguration();
-		conf.setCreated(now);
-		conf.setUserId(userId);
-		conf.setId(id);
+		UserOutputConfiguration conf = new UserOutputConfiguration(new UserLongCompositePK(userId, id),
+				now);
 		conf.setName(UUID.randomUUID().toString());
 		conf.setServiceIdentifier(UUID.randomUUID().toString());
 		conf.setCompressionType(OutputCompressionType.None);
@@ -126,12 +121,8 @@ public class UserDatumExportConfigurationTests {
 	@Test
 	public void toJson() {
 		// GIVEN
-		UserDataConfiguration dataConf = newDataConf(randomLong(), randomLong(), Instant.now());
-
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setCreated(dataConf.getCreated());
-		conf.setUserId(dataConf.getUserId());
-		conf.setId(randomLong());
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
+				new UserLongCompositePK(randomLong(), randomLong()), now());
 		conf.setName(randomString());
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);
@@ -142,7 +133,7 @@ public class UserDatumExportConfigurationTests {
 		// THEN
 		then(json).isEqualTo("""
 				{"id":%d,"created":"%s","userId":%d,"name":"%s","hourDelayOffset":2,"scheduleKey":"w"}"""
-				.formatted(conf.getId(), DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()),
+				.formatted(conf.getConfigId(), DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()),
 						conf.getUserId(), conf.getName()));
 	}
 

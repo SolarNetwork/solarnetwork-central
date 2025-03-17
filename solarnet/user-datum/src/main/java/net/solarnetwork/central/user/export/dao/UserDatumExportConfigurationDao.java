@@ -24,7 +24,9 @@ package net.solarnetwork.central.user.export.dao;
 
 import java.time.Instant;
 import java.util.List;
+import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.UserConfigurationDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
@@ -33,11 +35,12 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * DAO API for {@link UserDatumExportConfiguration} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public interface UserDatumExportConfigurationDao
-		extends UserRelatedGenericDao<UserDatumExportConfiguration, Long>,
-		UserConfigurationDao<UserDatumExportConfiguration, Long> {
+		extends GenericCompositeKey2Dao<UserDatumExportConfiguration, UserLongCompositePK, Long, Long>,
+		UserRelatedGenericDao<UserDatumExportConfiguration, UserLongCompositePK>,
+		UserConfigurationDao<UserDatumExportConfiguration, UserLongCompositePK> {
 
 	/**
 	 * Find all configurations requiring export task execution.

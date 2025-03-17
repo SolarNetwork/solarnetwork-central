@@ -51,7 +51,7 @@ public class UserDestinationConfigurationTests {
 		then(json).isEqualTo("""
 				{"id":%d,"created":"%s","userId":%d,"name":"%s",\
 				"serviceIdentifier":"%s","serviceProperties":{"string":"foo",\
-				"list":["first","second"],"number":42}}""".formatted(conf.getId(),
+				"list":["first","second"],"number":42}}""".formatted(conf.getConfigId(),
 				DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()), conf.getUserId(),
 				conf.getName(), conf.getServiceIdentifier()));
 	}

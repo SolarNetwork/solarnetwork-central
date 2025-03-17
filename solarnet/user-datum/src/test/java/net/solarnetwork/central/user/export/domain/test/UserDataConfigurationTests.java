@@ -53,7 +53,7 @@ public class UserDataConfigurationTests {
 				"serviceIdentifier":"%s","datumFilter":{"nodeIds":[%d],"aggregation":"Day",\
 				"aggregationKey":"d","partialAggregationKey":"0","mostRecent":false,"location":{},\
 				"withoutTotalResultsCount":false},"serviceProperties":{"string":"foo",\
-				"list":["first","second"],"number":42}}""".formatted(conf.getId(),
+				"list":["first","second"],"number":42}}""".formatted(conf.getConfigId(),
 				DateUtils.ISO_DATE_TIME_ALT_UTC.format(conf.getCreated()), conf.getUserId(),
 				conf.getName(), conf.getServiceIdentifier(), conf.getFilter().getNodeId()));
 	}

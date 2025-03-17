@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.export.biz.dao;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Duration;
@@ -32,9 +33,11 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -44,10 +47,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.support.TransactionTemplate;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
@@ -60,6 +65,8 @@ import net.solarnetwork.central.datum.export.biz.DatumExportService;
 import net.solarnetwork.central.datum.export.dao.DatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDatumExportResult;
+import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DatumExportRequest;
 import net.solarnetwork.central.datum.export.domain.DatumExportResource;
@@ -72,20 +79,24 @@ import net.solarnetwork.central.datum.export.support.DatumExportException;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.support.DatumUtils;
+import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.dao.BasicBulkExportOptions;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallbackAction;
+import net.solarnetwork.domain.BasicIdentifiableConfiguration;
 import net.solarnetwork.domain.Identity;
 import net.solarnetwork.event.AppEventPublisher;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.service.ServiceLifecycleObserver;
+import net.solarnetwork.settings.SettingSpecifierProvider;
+import net.solarnetwork.settings.support.SettingUtils;
 
 /**
  * DAO-based implementation of {@link DatumExportBiz}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserver {
 
@@ -103,8 +114,12 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	private final TaskScheduler scheduler;
 	private final AsyncTaskExecutor executor;
 	private final TransactionTemplate transactionTemplate;
-	private List<DatumExportOutputFormatService> outputFormatServices;
-	private List<DatumExportDestinationService> destinationServices;
+	private final TextEncryptor textEncryptor;
+
+	private final List<DatumExportOutputFormatService> outputFormatServices;
+	private final List<DatumExportDestinationService> destinationServices;
+	private final Map<String, Set<String>> serviceSecureKeys;
+
 	private AppEventPublisher eventPublisher;
 	private long completedTaskMinimumCacheTime = TimeUnit.HOURS.toMillis(4);
 
@@ -124,19 +139,38 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 	 *        the executor
 	 * @param transactionTemplate
 	 *        the transaction template
+	 * @param textEncryptor
+	 *        the encryptor to handle sensitive properties with
+	 * @param outputFormatServices
+	 *        the output format services
+	 * @param destinationServices
+	 *        the destination services
 	 * @throws IllegalArgumentException
 	 *         if any argument other than {@code transactionTemplate} is
 	 *         {@literal null}
 	 */
 	public DaoDatumExportBiz(DatumExportTaskInfoDao taskDao, DatumEntityDao datumDao,
-			TaskScheduler scheduler, AsyncTaskExecutor executor,
+			TaskScheduler scheduler, AsyncTaskExecutor executor, TextEncryptor textEncryptor,
+			List<DatumExportOutputFormatService> outputFormatServices,
+			List<DatumExportDestinationService> destinationServices,
 			TransactionTemplate transactionTemplate) {
 		super();
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.datumDao = requireNonNullArgument(datumDao, "datumDao");
 		this.scheduler = requireNonNullArgument(scheduler, "scheduler");
 		this.executor = requireNonNullArgument(executor, "executor");
+		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
+		this.outputFormatServices = requireNonNullArgument(outputFormatServices, "outputFormatServices");
+		this.destinationServices = requireNonNullArgument(destinationServices, "destinationServices");
+
 		this.transactionTemplate = transactionTemplate;
+
+		// create a map of all services to their corresponding secure keys
+		// we assume here that all integration and datum stream identifiers are globally unique
+		this.serviceSecureKeys = Stream.of(outputFormatServices, destinationServices)
+				.flatMap(Collection::stream).map(SettingSpecifierProvider.class::cast)
+				.collect(toUnmodifiableMap(SettingSpecifierProvider::getSettingUid,
+						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
 	}
 
 	/**
@@ -189,6 +223,15 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			}
 		}
 
+	}
+
+	public <T extends BasicIdentifiableConfiguration> T unmaskSensitiveInformation(T config) {
+		Set<String> secureKeys = serviceSecureKeys.get(config.getServiceIdentifier());
+		if ( secureKeys != null && !secureKeys.isEmpty() ) {
+			config.setServiceProps(
+					SecurityUtils.decryptedMap(config.getServiceProps(), secureKeys, textEncryptor));
+		}
+		return config;
 	}
 
 	private final class DatumExportTask implements Callable<DatumExportResult>, DatumExportStatus,
@@ -486,8 +529,20 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 		if ( info.getConfiguration() == null ) {
 			throw new IllegalArgumentException("The configuration argument is required.");
 		}
+
+		// copy configs and decrypt
+		var config = new BasicConfiguration(info.getConfiguration());
+		if ( config.getOutputConfiguration() != null ) {
+			config.setOutputConfiguration(unmaskSensitiveInformation(
+					new BasicOutputConfiguration(config.getOutputConfiguration())));
+		}
+		if ( config.getDestinationConfiguration() != null ) {
+			config.setDestinationConfiguration(unmaskSensitiveInformation(
+					new BasicDestinationConfiguration(config.getDestinationConfiguration())));
+		}
+
 		DatumExportTaskInfo taskInfo = new DatumExportTaskInfo();
-		taskInfo.setConfig(new BasicConfiguration(info.getConfiguration()));
+		taskInfo.setConfig(config);
 		taskInfo.setExportDate(info.getExportDate());
 		taskInfo.setId(info.getId());
 		taskInfo.setCreated(Instant.now());
@@ -540,26 +595,6 @@ public class DaoDatumExportBiz implements DatumExportBiz, ServiceLifecycleObserv
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Set the optional output format services.
-	 *
-	 * @param outputFormatServices
-	 *        the optional services
-	 */
-	public void setOutputFormatServices(List<DatumExportOutputFormatService> outputFormatServices) {
-		this.outputFormatServices = outputFormatServices;
-	}
-
-	/**
-	 * Set the optional destination services.
-	 *
-	 * @param destinationServices
-	 *        the optional services
-	 */
-	public void setDestinationServices(List<DatumExportDestinationService> destinationServices) {
-		this.destinationServices = destinationServices;
 	}
 
 	/**

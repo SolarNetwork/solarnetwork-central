@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.export.aop.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_USER_ID;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -102,8 +105,8 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 	@Test(expected = AuthorizationException.class)
 	public void saveConfigNoAuth() {
 		replayAll();
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration();
-		config.setUserId(TEST_USER_ID);
+		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
+				unassignedEntityIdKey(TEST_USER_ID), now());
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
 	}
@@ -112,8 +115,8 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration();
-		config.setUserId(-2L);
+		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
+				unassignedEntityIdKey(-2L), now());
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
 	}
@@ -122,7 +125,8 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 	public void saveConfigMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration();
+		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
+				unassignedEntityIdKey(UNASSIGNED_USER_ID), now());
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
 	}
@@ -131,8 +135,8 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 	public void saveConfigAllowed() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration();
-		config.setUserId(TEST_USER_ID);
+		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
+				unassignedEntityIdKey(TEST_USER_ID), now());
 		aspect.saveConfigurationCheck(config);
 		verifyAll();
 	}

@@ -39,6 +39,8 @@ import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDataConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.dao.UserNodeDao;
@@ -54,7 +56,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  * DAO implementation of {@link UserExportTaskBiz}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 
@@ -141,8 +143,20 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		taskDataConfig.setDatumFilter(taskDatumFilter);
 		taskConfig.setDataConfiguration(taskDataConfig);
 
+		if ( taskConfig.getOutputConfiguration() != null
+				&& !(taskConfig.getOutputConfiguration() instanceof BasicOutputConfiguration) ) {
+			taskConfig.setOutputConfiguration(
+					new BasicOutputConfiguration(taskConfig.getOutputConfiguration()));
+		}
+
+		if ( taskConfig.getDestinationConfiguration() != null && !(taskConfig
+				.getDestinationConfiguration() instanceof BasicDestinationConfiguration) ) {
+			taskConfig.setDestinationConfiguration(
+					new BasicDestinationConfiguration(taskConfig.getDestinationConfiguration()));
+		}
+
 		// NOTE: assume node and source IDs will be enforced by query, using userId and tokenId
-		// see net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.whereStwhereStreamMetadata()
+		// see net.solarnetwork.central.datum.v2.dao.jdbc.sql.DatumSqlUtils.whereStreamMetadata()
 
 		UserAdhocDatumExportTaskInfo task = new UserAdhocDatumExportTaskInfo();
 		task.setCreated(Instant.now());
@@ -187,6 +201,18 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		taskDataConfig.setDatumFilter(taskDatumFilter);
 		taskConfig.setDataConfiguration(taskDataConfig);
 
+		if ( taskConfig.getOutputConfiguration() != null
+				&& !(taskConfig.getOutputConfiguration() instanceof BasicOutputConfiguration) ) {
+			taskConfig.setOutputConfiguration(
+					new BasicOutputConfiguration(taskConfig.getOutputConfiguration()));
+		}
+
+		if ( taskConfig.getDestinationConfiguration() != null && !(taskConfig
+				.getDestinationConfiguration() instanceof BasicDestinationConfiguration) ) {
+			taskConfig.setDestinationConfiguration(
+					new BasicDestinationConfiguration(taskConfig.getDestinationConfiguration()));
+		}
+
 		ZoneId zone = (config.getTimeZoneId() != null ? ZoneId.of(config.getTimeZoneId())
 				: ZoneOffset.UTC);
 		ZonedDateTime currExportDate = scheduleType
@@ -197,7 +223,7 @@ public class DaoUserExportTaskBiz implements UserExportTaskBiz {
 		task.setUserId(config.getUserId());
 		task.setExportDate(currExportDate.toInstant());
 		task.setScheduleType(scheduleType);
-		task.setUserDatumExportConfigurationId(config.getId());
+		task.setUserDatumExportConfigurationId(config.getConfigId());
 		task.setConfig(taskConfig);
 		UserDatumExportTaskPK pk = taskDao.save(task);
 		task.setId(pk);

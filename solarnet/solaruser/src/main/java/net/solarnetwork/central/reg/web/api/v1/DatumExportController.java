@@ -23,12 +23,12 @@
 package net.solarnetwork.central.reg.web.api.v1;
 
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.error;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfiguration;
 import static net.solarnetwork.service.IdentifiableConfiguration.maskConfigurations;
 import static net.solarnetwork.service.LocalizedServiceInfoProvider.localizedServiceSettings;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -50,15 +50,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicDataConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicDestinationConfiguration;
+import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.Configuration;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.reg.web.domain.DatumExportFullConfigurations;
 import net.solarnetwork.central.reg.web.domain.DatumExportProperties;
+import net.solarnetwork.central.reg.web.domain.UserDataConfigurationInput;
+import net.solarnetwork.central.reg.web.domain.UserDatumExportConfigurationInput;
+import net.solarnetwork.central.reg.web.domain.UserDestinationConfigurationInput;
+import net.solarnetwork.central.reg.web.domain.UserOutputConfigurationInput;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.domain.UserAdhocDatumExportTaskInfo;
@@ -75,7 +82,7 @@ import net.solarnetwork.settings.SettingSpecifier;
  * Web service API for datum export management.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  * @since 1.26
  */
 @GlobalExceptionRestController
@@ -163,7 +170,7 @@ public class DatumExportController {
 	@RequestMapping(value = "/configs", method = RequestMethod.GET)
 	public Result<DatumExportFullConfigurations> fullConfiguration() {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
-		List<UserDatumExportConfiguration> configs = null;
+		List<DatumExportProperties> configs = null;
 		List<UserDataConfiguration> dataConfigs = Collections.emptyList();
 		List<UserDestinationConfiguration> destConfigs = Collections.emptyList();
 		List<UserOutputConfiguration> outputConfigs = Collections.emptyList();
@@ -185,30 +192,27 @@ public class DatumExportController {
 	@ResponseBody
 	@RequestMapping(value = "/configs", method = RequestMethod.POST)
 	public Result<UserDatumExportConfiguration> saveExportConfiguration(
-			@RequestBody DatumExportProperties config) {
+			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
-			if ( config.getDataConfigurationId() != null ) {
-				config.setUserDataConfiguration(exportBiz.configurationForUser(config.getUserId(),
-						UserDataConfiguration.class, config.getDataConfigurationId()));
-			}
-			if ( config.getDestinationConfigurationId() != null ) {
-				config.setUserDestinationConfiguration(exportBiz.configurationForUser(config.getUserId(),
-						UserDestinationConfiguration.class, config.getDestinationConfigurationId()));
-			}
-			if ( config.getOutputConfigurationId() != null ) {
-				config.setUserOutputConfiguration(exportBiz.configurationForUser(config.getUserId(),
-						UserOutputConfiguration.class, config.getOutputConfigurationId()));
-			}
+			var config = input.toEntity(new UserLongCompositePK(getCurrentActorUserId(),
+					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
 			Long id = exportBiz.saveDatumExportConfiguration(config);
 			if ( id != null ) {
-				config.setId(id);
-				return success(config);
+				return success(config.copyWithId(new UserLongCompositePK(config.getUserId(), id)));
+			}
+		}
+		return error();
+	}
+
+	@ResponseBody
+	@RequestMapping(value = "/configs/{id}", method = RequestMethod.POST)
+	public Result<UserDatumExportConfiguration> saveExportConfiguration(
+			@RequestBody UserDatumExportConfigurationInput input, @PathVariable("id") Long configId) {
+		if ( exportBiz != null ) {
+			var config = input.toEntity(new UserLongCompositePK(getCurrentActorUserId(), configId));
+			Long id = exportBiz.saveDatumExportConfiguration(config);
+			if ( id != null ) {
+				return success(config.copyWithId(new UserLongCompositePK(config.getUserId(), id)));
 			}
 		}
 		return error();
@@ -273,18 +277,15 @@ public class DatumExportController {
 
 	@ResponseBody
 	@RequestMapping(value = "/configs/data", method = RequestMethod.POST)
-	public Result<DataConfiguration> saveDataConfiguration(@RequestBody UserDataConfiguration config) {
+	public Result<DataConfiguration> saveDataConfiguration(
+			@RequestBody UserDataConfigurationInput input) {
 		if ( exportBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
+			UserDataConfiguration config = input.toEntity(new UserLongCompositePK(
+					getCurrentActorUserId(),
+					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
-				config.setId(id);
-				return success(config);
+				return success(config.copyWithId(new UserLongCompositePK(config.getUserId(), id)));
 			}
 		}
 		return error();
@@ -307,19 +308,16 @@ public class DatumExportController {
 	@ResponseBody
 	@RequestMapping(value = "/configs/output", method = RequestMethod.POST)
 	public Result<OutputConfiguration> saveOutputConfiguration(
-			@RequestBody UserOutputConfiguration config) {
+			@RequestBody UserOutputConfigurationInput input) {
 		if ( exportBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
+			UserOutputConfiguration config = input.toEntity(new UserLongCompositePK(
+					getCurrentActorUserId(),
+					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
-				config.setId(id);
-				return success(maskConfiguration(config, serviceSettings,
-						(Void) -> exportBiz.availableOutputFormatServices()));
+				return success(maskConfiguration(
+						config.copyWithId(new UserLongCompositePK(config.getUserId(), id)),
+						serviceSettings, (Void) -> exportBiz.availableOutputFormatServices()));
 			}
 		}
 		return error();
@@ -342,19 +340,16 @@ public class DatumExportController {
 	@ResponseBody
 	@RequestMapping(value = "/configs/destination", method = RequestMethod.POST)
 	public Result<DestinationConfiguration> saveDestinationConfiguration(
-			@RequestBody UserDestinationConfiguration config) {
+			@RequestBody UserDestinationConfigurationInput input) {
 		if ( exportBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
+			UserDestinationConfiguration config = input.toEntity(new UserLongCompositePK(
+					getCurrentActorUserId(),
+					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
 			Long id = exportBiz.saveConfiguration(config);
 			if ( id != null ) {
-				config.setId(id);
-				return success(maskConfiguration(config, serviceSettings,
-						(Void) -> exportBiz.availableDestinationServices()));
+				return success(maskConfiguration(
+						config.copyWithId(new UserLongCompositePK(config.getUserId(), id)),
+						serviceSettings, (Void) -> exportBiz.availableDestinationServices()));
 			}
 		}
 		return error();
@@ -385,14 +380,11 @@ public class DatumExportController {
 	@ResponseBody
 	@RequestMapping(value = "/adhoc", method = RequestMethod.POST)
 	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportJobRequest(
-			@RequestBody UserDatumExportConfiguration config) {
+			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
+			UserDatumExportConfiguration config = input.toEntity(new UserLongCompositePK(
+					getCurrentActorUserId(),
+					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
 			UserAdhocDatumExportTaskInfo info = exportBiz
 					.saveAdhocDatumExportTaskForConfiguration(config);
 			if ( info != null ) {
@@ -416,21 +408,18 @@ public class DatumExportController {
 	@ResponseBody
 	@RequestMapping(value = "/adhocRef", method = RequestMethod.POST)
 	public Result<UserAdhocDatumExportTaskInfo> submitAdhocExportReferenceJobRequest(
-			@RequestBody UserDatumExportConfiguration config) {
+			@RequestBody UserDatumExportConfigurationInput input) {
 		if ( exportBiz != null ) {
-			if ( config.getUserId() == null ) {
-				config.setUserId(SecurityUtils.getCurrentActorUserId());
-			}
-			if ( config.getCreated() == null ) {
-				config.setCreated(Instant.now());
-			}
-			if ( config.getUserDestinationConfigurationId() != null ) {
+			UserDatumExportConfiguration config = input.toEntity(new UserLongCompositePK(
+					getCurrentActorUserId(),
+					input.getId() != null ? input.getId() : UserLongCompositePK.UNASSIGNED_ENTITY_ID));
+			if ( input.getDestinationConfigurationId() != null ) {
 				config.setUserDestinationConfiguration(exportBiz.configurationForUser(config.getUserId(),
-						UserDestinationConfiguration.class, config.getUserDestinationConfigurationId()));
+						UserDestinationConfiguration.class, input.getDestinationConfigurationId()));
 			}
-			if ( config.getUserOutputConfigurationId() != null ) {
+			if ( input.getOutputConfigurationId() != null ) {
 				config.setUserOutputConfiguration(exportBiz.configurationForUser(config.getUserId(),
-						UserOutputConfiguration.class, config.getUserOutputConfigurationId()));
+						UserOutputConfiguration.class, input.getOutputConfigurationId()));
 			}
 			UserAdhocDatumExportTaskInfo info = exportBiz
 					.saveAdhocDatumExportTaskForConfiguration(config);
@@ -500,6 +489,18 @@ public class DatumExportController {
 		BasicConfiguration respConfig = (config instanceof BasicConfiguration
 				? (BasicConfiguration) config
 				: new BasicConfiguration(config));
+
+		if ( respConfig.getDataConfiguration() instanceof UserDataConfiguration u
+				&& !u.getId().entityIdIsAssigned() ) {
+			// convert to basic configuration if user configuration has no ID (ad-hoc)
+			respConfig.setDataConfiguration(new BasicDataConfiguration(u));
+		}
+
+		if ( respConfig.getOutputConfiguration() instanceof UserOutputConfiguration u
+				&& !u.getId().entityIdIsAssigned() ) {
+			// convert to basic configuration if user configuration has no ID (ad-hoc)
+			respConfig.setOutputConfiguration(new BasicOutputConfiguration(u));
+		}
 
 		// mask destination config settings, such as S3 password
 		BasicDestinationConfiguration respDestConfig = (respConfig

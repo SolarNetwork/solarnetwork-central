@@ -24,8 +24,11 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * User related {@link DestinationConfiguration} entity.
@@ -34,10 +37,49 @@ import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
  * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProperties" })
-public class UserDestinationConfiguration extends BaseExportConfigurationEntity
+@JsonIgnoreProperties("enabled")
+public class UserDestinationConfiguration
+		extends BaseExportConfigurationEntity<UserDestinationConfiguration>
 		implements DestinationConfiguration, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 4860680512331245447L;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserDestinationConfiguration(UserLongCompositePK id, Instant created) {
+		super(id, created);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param configId
+	 *        the configuration ID
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserDestinationConfiguration(Long userId, Long configId, Instant created) {
+		this(new UserLongCompositePK(userId, configId), created);
+	}
+
+	@Override
+	public UserDestinationConfiguration copyWithId(UserLongCompositePK id) {
+		var copy = new UserDestinationConfiguration(id, getCreated());
+		copyTo(copy);
+		return copy;
+	}
 
 }

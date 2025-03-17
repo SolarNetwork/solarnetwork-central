@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import net.solarnetwork.central.dao.UserRelatedEntity;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
+import net.solarnetwork.central.domain.CompositeKey2;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 
 /**
@@ -51,7 +52,7 @@ import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
  * </ol>
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  * @since 1.11
  */
 public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEntity<PK>, PK extends Serializable>
@@ -73,7 +74,12 @@ public abstract class BaseMyBatisUserRelatedGenericDao<T extends UserRelatedEnti
 	@Override
 	public T get(PK id, Long userId) {
 		Map<String, Object> params = new HashMap<>(2);
-		params.put("id", id);
+		if ( id instanceof CompositeKey2<?, ?> pk && userId.equals(pk.keyComponent1()) ) {
+			// automatically unwrap secondary key component as userId parameter provided directly below
+			params.put("id", pk.keyComponent2());
+		} else {
+			params.put("id", id);
+		}
 		params.put("userId", userId);
 		return getSqlSession().selectOne(getQueryForId(), params);
 	}

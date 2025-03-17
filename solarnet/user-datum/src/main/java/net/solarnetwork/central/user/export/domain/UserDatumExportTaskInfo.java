@@ -39,7 +39,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Entity for user-specific datum export tasks.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTaskPK>
 		implements UserRelatedEntity<UserDatumExportTaskPK> {
@@ -120,7 +120,7 @@ public class UserDatumExportTaskInfo extends BaseObjectEntity<UserDatumExportTas
 	@JsonDeserialize(as = BasicConfiguration.class)
 	public void setConfig(Configuration config) {
 		if ( config instanceof UserDatumExportConfiguration ) {
-			setUserDatumExportConfigurationId(((UserDatumExportConfiguration) config).getId());
+			setUserDatumExportConfigurationId(((UserDatumExportConfiguration) config).getConfigId());
 		}
 		if ( !config.getClass().equals(BasicConfiguration.class) ) {
 			config = new BasicConfiguration(config);

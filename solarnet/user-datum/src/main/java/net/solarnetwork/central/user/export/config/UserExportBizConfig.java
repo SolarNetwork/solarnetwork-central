@@ -26,12 +26,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import net.solarnetwork.central.datum.export.biz.DatumExportDestinationService;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
+import net.solarnetwork.central.datum.export.config.SolarNetDatumExportConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
@@ -54,10 +57,10 @@ import net.solarnetwork.support.PrefixedMessageSource;
  * User export service configuration.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration(proxyBeanMethods = false)
-public class UserExportBizConfig {
+public class UserExportBizConfig implements SolarNetDatumExportConfiguration {
 
 	@Autowired
 	private UserDatumExportConfigurationDao datumExportConfigDao;
@@ -89,6 +92,10 @@ public class UserExportBizConfig {
 	@Autowired
 	private List<DatumExportDestinationService> datumExportDestinationServices;
 
+	@Qualifier(DATUM_EXPORT)
+	@Autowired
+	private TextEncryptor textEncryptor;
+
 	@Bean
 	public UserExportTaskBiz userExportTaskBiz() {
 		return new DaoUserExportTaskBiz(taskDao, adhocTaskDao, userNodeDao);
@@ -97,10 +104,8 @@ public class UserExportBizConfig {
 	@Bean
 	public UserExportBiz userExportBiz(UserExportTaskBiz userExportTaskBiz) {
 		DaoUserExportBiz biz = new DaoUserExportBiz(datumExportConfigDao, dataConfigDao,
-				destinationConfigDao, outputConfigDao, taskDao, adhocTaskDao, userExportTaskBiz);
-
-		biz.setOutputFormatServices(datumExportOutputFormatServices);
-		biz.setDestinationServices(datumExportDestinationServices);
+				destinationConfigDao, outputConfigDao, taskDao, adhocTaskDao, userExportTaskBiz,
+				textEncryptor, datumExportOutputFormatServices, datumExportDestinationServices);
 
 		ResourceBundleMessageSource compressionMsgSrc = new ResourceBundleMessageSource();
 		compressionMsgSrc.setBasename(OutputCompressionType.class.getName());
