@@ -22,23 +22,28 @@
 
 package net.solarnetwork.central.user.export.biz.dao;
 
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
@@ -48,6 +53,7 @@ import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportStatus;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.export.biz.UserExportBiz;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
@@ -69,7 +75,6 @@ import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.event.AppEvent;
 import net.solarnetwork.event.AppEventHandler;
-import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.SettingSpecifierProvider;
 import net.solarnetwork.settings.support.SettingUtils;
 import net.solarnetwork.util.StringUtils;
@@ -78,9 +83,11 @@ import net.solarnetwork.util.StringUtils;
  * DAO implementation of {@link UserExportBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final UserDatumExportConfigurationDao datumExportConfigDao;
 	private final UserDataConfigurationDao dataConfigDao;
@@ -89,11 +96,11 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	private final UserDatumExportTaskInfoDao taskDao;
 	private final UserAdhocDatumExportTaskInfoDao adhocTaskDao;
 	private final UserExportTaskBiz userExportTaskBiz;
+	private final TextEncryptor textEncryptor;
 
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
-	private List<DatumExportOutputFormatService> outputFormatServices;
-	private List<DatumExportDestinationService> destinationServices;
+	private final List<DatumExportOutputFormatService> outputFormatServices;
+	private final List<DatumExportDestinationService> destinationServices;
+	private final Map<String, Set<String>> serviceSecureKeys;
 
 	private MessageSource messageSource;
 
@@ -114,13 +121,21 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	 *        the ad hoc task DAO to use
 	 * @param userExportTaskBiz
 	 *        the export task service to use
+	 * @param textEncryptor
+	 *        the encryptor to handle sensitive properties with
+	 * @param outputFormatServices
+	 *        the output format services
+	 * @param destinationServices
+	 *        the destination services
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public DaoUserExportBiz(UserDatumExportConfigurationDao datumExportConfigDao,
 			UserDataConfigurationDao dataConfigDao, UserDestinationConfigurationDao destinationConfigDao,
 			UserOutputConfigurationDao outputConfigDao, UserDatumExportTaskInfoDao taskDao,
-			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserExportTaskBiz userExportTaskBiz) {
+			UserAdhocDatumExportTaskInfoDao adhocTaskDao, UserExportTaskBiz userExportTaskBiz,
+			TextEncryptor textEncryptor, List<DatumExportOutputFormatService> outputFormatServices,
+			List<DatumExportDestinationService> destinationServices) {
 		super();
 		this.datumExportConfigDao = requireNonNullArgument(datumExportConfigDao, "datumExportConfigDao");
 		this.dataConfigDao = requireNonNullArgument(dataConfigDao, "dataConfigDao");
@@ -129,6 +144,16 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		this.taskDao = requireNonNullArgument(taskDao, "taskDao");
 		this.adhocTaskDao = requireNonNullArgument(adhocTaskDao, "adhocTaskDao");
 		this.userExportTaskBiz = requireNonNullArgument(userExportTaskBiz, "userExportTaskBiz");
+		this.textEncryptor = requireNonNullArgument(textEncryptor, "textEncryptor");
+		this.outputFormatServices = requireNonNullArgument(outputFormatServices, "outputFormatServices");
+		this.destinationServices = requireNonNullArgument(destinationServices, "destinationServices");
+
+		// create a map of all services to their corresponding secure keys
+		// we assume here that all integration and datum stream identifiers are globally unique
+		this.serviceSecureKeys = Stream.of(outputFormatServices, destinationServices)
+				.flatMap(Collection::stream).map(SettingSpecifierProvider.class::cast)
+				.collect(toUnmodifiableMap(SettingSpecifierProvider::getSettingUid,
+						s -> SettingUtils.secureKeys(s.getSettingSpecifiers())));
 	}
 
 	@Override
@@ -204,7 +229,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public UserDatumExportConfiguration datumExportConfigurationForUser(Long userId, Long id) {
-		return datumExportConfigDao.get(id, userId);
+		return datumExportConfigDao.get(new UserLongCompositePK(userId, id), userId);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -216,7 +241,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 			configuration.setMinimumExportDate(ts.toInstant());
 		}
 		configuration.setTokenId(SecurityUtils.currentTokenId());
-		return datumExportConfigDao.save(configuration);
+		return datumExportConfigDao.create(configuration.getUserId(), configuration).getEntityId();
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -236,12 +261,13 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Override
 	public <T extends UserRelatedIdentifiableConfigurationEntity<?>> T configurationForUser(Long userId,
 			Class<T> configurationClass, Long id) {
+		final var pk = new UserLongCompositePK(userId, id);
 		if ( UserDataConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) dataConfigDao.get(id, userId);
+			return (T) dataConfigDao.get(pk, userId);
 		} else if ( UserDestinationConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) destinationConfigDao.get(id, userId);
+			return (T) destinationConfigDao.get(pk, userId);
 		} else if ( UserOutputConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return (T) outputConfigDao.get(id, userId);
+			return (T) outputConfigDao.get(pk, userId);
 		}
 		throw new IllegalArgumentException("Unsupported configurationClass: " + configurationClass);
 	}
@@ -261,29 +287,7 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		}
 	}
 
-	private Iterable<? extends SettingSpecifierProvider> providersForServiceProperties(
-			Class<? extends UserRelatedIdentifiableConfigurationEntity<?>> configurationClass) {
-		if ( UserDestinationConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return availableDestinationServices();
-		} else if ( UserOutputConfiguration.class.isAssignableFrom(configurationClass) ) {
-			return availableOutputFormatServices();
-		}
-		return Collections.emptyList();
-	}
-
-	private List<SettingSpecifier> settingsForService(String identifier,
-			Iterable<? extends SettingSpecifierProvider> providers) {
-		if ( identifier != null && providers != null ) {
-			for ( SettingSpecifierProvider provider : providers ) {
-				if ( identifier.equals(provider.getSettingUid()) ) {
-					return provider.getSettingSpecifiers();
-				}
-			}
-		}
-		return Collections.emptyList();
-	}
-
-	private <T extends BaseExportConfigurationEntity> T mergeServiceProperties(T entity) {
+	private <T extends BaseExportConfigurationEntity<?>> T mergeServiceProperties(T entity) {
 		if ( entity == null ) {
 			return null;
 		}
@@ -291,15 +295,14 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 		if ( serviceProps == null || serviceProps.isEmpty() ) {
 			return entity;
 		}
-		BaseExportConfigurationEntity existing = (entity.getId() != null
-				? configurationForUser(entity.getUserId(), entity.getClass(), entity.getId())
+		serviceProps = new LinkedHashMap<>(serviceProps);
+
+		BaseExportConfigurationEntity<?> existing = (entity.getId() != null
+				? configurationForUser(entity.getUserId(), entity.getClass(), entity.getConfigId())
 				: null);
 		Map<String, Object> existingServiceProps = (existing != null ? existing.getServiceProps()
 				: null);
-		Iterable<? extends SettingSpecifierProvider> providers = providersForServiceProperties(
-				entity.getClass());
-		List<SettingSpecifier> settings = settingsForService(entity.getServiceIdentifier(), providers);
-		Set<String> secureEntrySettings = SettingUtils.secureKeys(settings);
+		Set<String> secureEntrySettings = serviceSecureKeys.get(entity.getServiceIdentifier());
 		for ( Iterator<Entry<String, Object>> propItr = serviceProps.entrySet().iterator(); propItr
 				.hasNext(); ) {
 			Entry<String, Object> prop = propItr.next();
@@ -327,6 +330,14 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 				propItr.remove();
 			}
 		}
+
+		if ( !serviceProps.equals(entity.getServiceProps()) ) {
+			entity.setServiceProps(serviceProps);
+		}
+
+		// make sensitive properties
+		entity.maskSensitiveInformation(serviceSecureKeys::get, textEncryptor);
+
 		return entity;
 	}
 
@@ -334,12 +345,15 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Override
 	public Long saveConfiguration(UserRelatedIdentifiableConfigurationEntity<?> configuration) {
 		if ( configuration instanceof UserDataConfiguration ) {
-			return dataConfigDao.save(mergeServiceProperties((UserDataConfiguration) configuration));
+			return dataConfigDao.save(mergeServiceProperties((UserDataConfiguration) configuration))
+					.getEntityId();
 		} else if ( configuration instanceof UserDestinationConfiguration ) {
 			return destinationConfigDao
-					.save(mergeServiceProperties((UserDestinationConfiguration) configuration));
+					.save(mergeServiceProperties((UserDestinationConfiguration) configuration))
+					.getEntityId();
 		} else if ( configuration instanceof UserOutputConfiguration ) {
-			return outputConfigDao.save(mergeServiceProperties((UserOutputConfiguration) configuration));
+			return outputConfigDao.save(mergeServiceProperties((UserOutputConfiguration) configuration))
+					.getEntityId();
 		}
 		throw new IllegalArgumentException("Unsupported configuration: " + configuration);
 	}
@@ -370,6 +384,14 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 	@Override
 	public UserAdhocDatumExportTaskInfo saveAdhocDatumExportTaskForConfiguration(
 			UserDatumExportConfiguration config) {
+		if ( config.getUserOutputConfiguration() != null ) {
+			config.getUserOutputConfiguration().maskSensitiveInformation(serviceSecureKeys::get,
+					textEncryptor);
+		}
+		if ( config.getUserDestinationConfiguration() != null ) {
+			config.getUserDestinationConfiguration().maskSensitiveInformation(serviceSecureKeys::get,
+					textEncryptor);
+		}
 		return userExportTaskBiz.submitAdhocDatumExportConfiguration(config);
 	}
 
@@ -427,26 +449,6 @@ public class DaoUserExportBiz implements UserExportBiz, AppEventHandler {
 				info.getUserId(), info.getUserDatumExportConfigurationId(), nextExportDate, jobId);
 		datumExportConfigDao.updateMinimumExportDate(info.getUserDatumExportConfigurationId(),
 				info.getUserId(), nextExportDate.toInstant());
-	}
-
-	/**
-	 * Set the optional output format services.
-	 *
-	 * @param outputFormatServices
-	 *        the optional services
-	 */
-	public void setOutputFormatServices(List<DatumExportOutputFormatService> outputFormatServices) {
-		this.outputFormatServices = outputFormatServices;
-	}
-
-	/**
-	 * Set the optional destination services.
-	 *
-	 * @param destinationServices
-	 *        the optional services
-	 */
-	public void setDestinationServices(List<DatumExportDestinationService> destinationServices) {
-		this.destinationServices = destinationServices;
 	}
 
 	/**

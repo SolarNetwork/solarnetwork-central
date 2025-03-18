@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.export.jobs.test;
 
+import static java.time.Instant.now;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -43,6 +44,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
@@ -53,7 +55,7 @@ import net.solarnetwork.central.user.export.jobs.DefaultUserExportJobsService;
  * Test cases for the {@link DefaultUserExportJobsService} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DefaultUserExportJobsServiceTests {
 
@@ -98,10 +100,9 @@ public class DefaultUserExportJobsServiceTests {
 	}
 
 	private UserDatumExportConfiguration createConfiguration(String tzId) {
-		UserDatumExportConfiguration config = new UserDatumExportConfiguration();
-		config.setId(ID_GENERATOR.decrementAndGet());
+		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
+				new UserLongCompositePK(TEST_USER_ID, ID_GENERATOR.decrementAndGet()), now());
 		config.setName("Config" + config.getId());
-		config.setUserId(TEST_USER_ID);
 		config.setTimeZoneId(tzId);
 		return config;
 	}

@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.export.dao.mybatis.test;
 
+import static java.time.Instant.now;
+import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -45,6 +47,7 @@ import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
 import net.solarnetwork.central.datum.export.domain.DatumExportTaskInfo;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.dao.mybatis.MyBatisUserDatumExportTaskInfoDao;
@@ -56,7 +59,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportTaskPK;
  * Test cases for the {@link MyBatisUserDatumExportTaskInfoDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -89,18 +92,16 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 	}
 
 	private UserDatumExportConfiguration createNewUserDatumExportConfig() {
-		UserDatumExportConfiguration conf = new UserDatumExportConfiguration();
-		conf.setCreated(Instant.now());
-		conf.setUserId(this.user.getId());
+		UserDatumExportConfiguration conf = new UserDatumExportConfiguration(
+				unassignedEntityIdKey(this.user.getId()), now());
 		conf.setName(TEST_NAME);
 		conf.setHourDelayOffset(2);
 		conf.setSchedule(ScheduleType.Weekly);
 
-		Long id = confDao.save(conf);
+		UserLongCompositePK id = confDao.save(conf);
 		assertThat("Primary key assigned", id, notNullValue());
 
-		conf.setId(id);
-		return conf;
+		return conf.copyWithId(id);
 	}
 
 	@Test
@@ -133,7 +134,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 		assertThat("Modified date not used", info.getModified(), nullValue());
 		assertThat("Task ID", info.getTaskId(), notNullValue());
 		assertThat("Config ID", info.getUserDatumExportConfigurationId(),
-				equalTo(this.userDatumExportConfig.getId()));
+				equalTo(this.userDatumExportConfig.getConfigId()));
 
 		// stash results for other tests to use
 		this.info = info;

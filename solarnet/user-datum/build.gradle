@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: User Datum'
-version = '2.9.0'
+version = '2.10.0'
 
 base {
 	archivesName = 'solarnet-user-datum'
@@ -36,6 +36,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.security:spring-security-core'
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// JCache

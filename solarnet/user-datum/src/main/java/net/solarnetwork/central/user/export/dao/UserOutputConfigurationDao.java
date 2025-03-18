@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.export.dao;
 
+import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.UserConfigurationDao;
 import net.solarnetwork.central.user.dao.UserRelatedGenericDao;
 import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
@@ -30,9 +32,11 @@ import net.solarnetwork.central.user.export.domain.UserOutputConfiguration;
  * DAO API for {@link UserOutputConfiguration} entities.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public interface UserOutputConfigurationDao extends UserRelatedGenericDao<UserOutputConfiguration, Long>,
-		UserConfigurationDao<UserOutputConfiguration, Long> {
+public interface UserOutputConfigurationDao
+		extends GenericCompositeKey2Dao<UserOutputConfiguration, UserLongCompositePK, Long, Long>,
+		UserRelatedGenericDao<UserOutputConfiguration, UserLongCompositePK>,
+		UserConfigurationDao<UserOutputConfiguration, UserLongCompositePK> {
 
 }

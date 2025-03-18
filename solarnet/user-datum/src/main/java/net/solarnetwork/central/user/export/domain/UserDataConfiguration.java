@@ -24,12 +24,16 @@ package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.Instant;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.codec.JsonUtils;
 
 /**
@@ -39,14 +43,72 @@ import net.solarnetwork.codec.JsonUtils;
  * @version 1.1
  */
 @JsonPropertyOrder({ "id", "created", "userId", "name", "serviceIdentifier", "serviceProps" })
-public class UserDataConfiguration extends BaseExportConfigurationEntity
+@JsonIgnoreProperties("enabled")
+public class UserDataConfiguration extends BaseExportConfigurationEntity<UserDataConfiguration>
 		implements DataConfiguration, Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 866381003784859350L;
 
 	private String filterJson;
-	private DatumFilterCommand filter;
+
+	private transient DatumFilterCommand filter;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserDataConfiguration(UserLongCompositePK id, Instant created) {
+		super(id, created);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param userId
+	 *        the user ID
+	 * @param configId
+	 *        the configuration ID
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserDataConfiguration(Long userId, Long configId, Instant created) {
+		this(new UserLongCompositePK(userId, configId), created);
+	}
+
+	@Override
+	public UserDataConfiguration copyWithId(UserLongCompositePK id) {
+		var copy = new UserDataConfiguration(id, getCreated());
+		copyTo(copy);
+		return copy;
+	}
+
+	@Override
+	public void copyTo(UserDataConfiguration entity) {
+		super.copyTo(entity);
+		entity.setFilterJson(filterJson);
+	}
+
+	@Override
+	public boolean isSameAs(UserDataConfiguration other) {
+		boolean result = super.isSameAs(other);
+		if ( !result ) {
+			return false;
+		}
+		// @formatter:off
+		return  // compare decoded JSON, as JSON key order not assumed
+				Objects.equals(getFilter(), other.getFilter())
+				;
+		// @formatter:on
+	}
 
 	@Override
 	public AggregateGeneralNodeDatumFilter getDatumFilter() {

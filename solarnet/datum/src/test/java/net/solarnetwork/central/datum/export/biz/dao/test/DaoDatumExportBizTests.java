@@ -43,7 +43,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -78,12 +77,14 @@ import net.solarnetwork.central.datum.export.standard.CsvDatumExportOutputFormat
 import net.solarnetwork.central.datum.export.support.BaseDatumExportDestinationService;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
+import net.solarnetwork.central.security.PrefixedTextEncryptor;
 import net.solarnetwork.dao.BasicBulkExportResult;
 import net.solarnetwork.dao.BulkExportingDao.ExportCallback;
 import net.solarnetwork.dao.BulkExportingDao.ExportOptions;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.service.ProgressListener;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 
 /**
  * Test cases for the {@link DaoDatumExportBiz} class.
@@ -93,6 +94,8 @@ import net.solarnetwork.settings.SettingSpecifier;
  */
 @ExtendWith(MockitoExtension.class)
 public class DaoDatumExportBizTests {
+
+	private static final String TEST_SECURE_SETTING = "watchout";
 
 	@Mock
 	private DatumExportTaskInfoDao datumExportTaskInfoDao;
@@ -106,6 +109,9 @@ public class DaoDatumExportBizTests {
 	@Captor
 	private ArgumentCaptor<ExportOptions> exportOptionsCaptor;
 
+	private PrefixedTextEncryptor textEncryptor = PrefixedTextEncryptor.aesTextEncryptor(randomString(),
+			randomString());
+
 	private final DatumExportOutputFormatService csvOutput = new CsvDatumExportOutputFormatService();
 
 	private static final DateTimeFormatter CSV_INSTANT_FORMAT = DateTimeFormatter
@@ -117,18 +123,18 @@ public class DaoDatumExportBizTests {
 
 	@BeforeEach
 	public void setup() {
-		service = new DaoDatumExportBiz(datumExportTaskInfoDao, datumDao, scheduler,
-				new SimpleAsyncTaskExecutor(), null);
-		service.setOutputFormatServices(Arrays.asList(csvOutput));
-
 		destService = new TestDatumExportDestinationService();
-		service.setDestinationServices(Arrays.asList(destService));
+
+		service = new DaoDatumExportBiz(datumExportTaskInfoDao, datumDao, scheduler,
+				new SimpleAsyncTaskExecutor(), textEncryptor, List.of(csvOutput), List.of(destService),
+				null);
 	}
 
 	private static final class TestDatumExportDestinationService
 			extends BaseDatumExportDestinationService {
 
 		private final List<DatumExportResource> exports = new ArrayList<>(4);
+		private Configuration config;
 
 		/**
 		 * Test destination service.
@@ -144,13 +150,15 @@ public class DaoDatumExportBizTests {
 
 		@Override
 		public List<SettingSpecifier> getSettingSpecifiers() {
-			return Collections.emptyList();
+			return Arrays.asList(new BasicTextFieldSettingSpecifier("foo", null),
+					new BasicTextFieldSettingSpecifier(TEST_SECURE_SETTING, null, true));
 		}
 
 		@Override
 		public void export(Configuration config, Iterable<DatumExportResource> resources,
 				Map<String, ?> runtimeProperties, ProgressListener<DatumExportService> progressListener)
 				throws IOException {
+			this.config = config;
 			if ( resources != null ) {
 				for ( DatumExportResource r : resources ) {
 					exports.add(r);
@@ -181,6 +189,7 @@ public class DaoDatumExportBizTests {
 		final BasicDestinationConfiguration destConf = new BasicDestinationConfiguration();
 		destConf.setName(randomString());
 		destConf.setServiceIdentifier(destService.getId());
+		destConf.setServiceProps(Map.of("foo", 1, TEST_SECURE_SETTING, textEncryptor.encrypt("bam")));
 
 		final BasicConfiguration conf = new BasicConfiguration(randomString(), ScheduleType.Adhoc, 0);
 		conf.setDataConfiguration(dataConf);
@@ -234,6 +243,16 @@ public class DaoDatumExportBizTests {
 			.element(0)
 			.as("CVS export content type")
 			.returns("text/csv;charset=UTF-8", from(DatumExportResource::getContentType))
+			;
+
+		then(destService.config.getDestinationConfiguration().getServiceProperties())
+			.as("Service props preserved")
+			.asInstanceOf(map(String.class, Object.class))
+			.hasSize(2)
+			.as("Plain setting as-is")
+			.containsEntry("foo", 1)
+			.as("Secure setting decrypted")
+			.containsEntry(TEST_SECURE_SETTING, "bam")
 			;
 
 		verify(datumDao).bulkExport(any(), exportOptionsCaptor.capture());

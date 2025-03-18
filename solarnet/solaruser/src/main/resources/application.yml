@@ -61,7 +61,11 @@ app:
     password: solartest
     initialize: false
   datum:
-    export.temporaryDir: "${java.io.tmpdir}"
+    export:
+      temporaryDir: "${java.io.tmpdir}"
+      encryptor:
+        password: "Secret123"
+        salt-hex: "01234567"
     import:
       concurrent-tasks: 2
       concurrent-preview-tasks: 4

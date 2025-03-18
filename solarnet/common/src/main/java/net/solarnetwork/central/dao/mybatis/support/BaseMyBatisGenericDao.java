@@ -35,6 +35,7 @@ import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.validation.Errors;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.dao.Entity;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.Identity;
@@ -266,7 +267,9 @@ public abstract class BaseMyBatisGenericDao<T extends Entity<PK>, PK extends Ser
 
 	@Override
 	public PK save(T datum) {
-		if ( datum.getId() != null ) {
+		final PK id = datum.getId();
+		if ( (id instanceof CompositeKey ck && ck.allKeyComponentsAreAssigned())
+				|| (!(id instanceof CompositeKey) && datum.getId() != null) ) {
 			return handleUpdate(datum);
 		}
 		preprocessInsert(datum);

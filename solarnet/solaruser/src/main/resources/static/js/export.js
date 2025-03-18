@@ -115,16 +115,18 @@ $(document).ready(function() {
 				id: config.id,
 				name: config.name,
 				schedule: SolarReg.Templates.serviceDisplayName(scheduleTypes, config.scheduleKey),
-				date: config.startingExportDate,
-				dataConfigId: config.dataConfigurationId,
-				destinationConfigId: config.destinationConfigurationId,
-				outputConfigId: config.outputConfigurationId,
+				date: config.minimumExportDate,
 			};
 			if ( model.schedule ) {
 				model.schedule = model.schedule.toLowerCase();
 			}
 			if ( config.dataConfigurationId ) {
-				relatedConfig = SolarReg.findByIdentifier(exportConfigs.dataConfigs, config.dataConfigurationId);
+				model.dataConfigId = config.dataConfigurationId;
+			} else if ( config.dataConfiguration && config.dataConfiguration.id ) {
+				model.dataConfigId = config.dataConfiguration.id;
+			}
+			if ( model.dataConfigId ) {
+				relatedConfig = SolarReg.findByIdentifier(exportConfigs.dataConfigs, model.dataConfigId);
 				if ( relatedConfig ) {
 					model.dataConfigName = relatedConfig.name;
 				}
@@ -132,8 +134,14 @@ $(document).ready(function() {
 			if ( !model.dataConfigName ) {
 				model.dataConfigName = '?';
 			}
+			
 			if ( config.destinationConfigurationId ) {
-				relatedConfig = SolarReg.findByIdentifier(exportConfigs.destinationConfigs, config.destinationConfigurationId);
+				model.destinationConfigId = config.destinationConfigurationId;
+			} else if ( config.destinationConfiguration && config.destinationConfiguration.id ) {
+				model.destinationConfigId = config.destinationConfiguration.id;
+			}
+			if ( model.destinationConfigId ) {
+				relatedConfig = SolarReg.findByIdentifier(exportConfigs.destinationConfigs, model.destinationConfigId);
 				if ( relatedConfig ) {
 					model.destinationConfigName = relatedConfig.name;
 				}
@@ -141,8 +149,14 @@ $(document).ready(function() {
 			if ( !model.destinationConfigName ) {
 				model.destinationConfigName = '?';
 			}
+			
 			if ( config.outputConfigurationId ) {
-				relatedConfig = SolarReg.findByIdentifier(exportConfigs.outputConfigs, config.outputConfigurationId);
+				model.outputConfigId = config.outputConfigurationId;
+			} else if ( config.outputConfiguration && config.outputConfiguration.id ) {
+				model.outputConfigId = config.outputConfiguration.id;
+			}
+			if ( model.outputConfigId ) {
+				relatedConfig = SolarReg.findByIdentifier(exportConfigs.outputConfigs, model.outputConfigId);
 				if ( relatedConfig ) {
 					model.outputConfigName = relatedConfig.name;
 				}
@@ -432,7 +446,7 @@ $(document).ready(function() {
 		SolarReg.Settings.handlePostEditServiceForm(event, function(req, res) {
 			var config = SolarReg.Templates.findContextItem(form);
 			if ( config ) {
-				config.startingExportDate = res;
+				config.minimumExportDate = res;
 				populateDatumExportConfigs([config], true);
 			}
 		});

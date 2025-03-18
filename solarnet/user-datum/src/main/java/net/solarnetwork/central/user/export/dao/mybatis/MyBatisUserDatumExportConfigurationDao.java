@@ -24,22 +24,25 @@ package net.solarnetwork.central.user.export.dao.mybatis;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.dao.mybatis.BaseMyBatisUserRelatedGenericDao;
 import net.solarnetwork.central.user.export.dao.UserDatumExportConfigurationDao;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link UserDatumExportConfigurationDao}.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserDatumExportConfigurationDao
-		extends BaseMyBatisUserRelatedGenericDao<UserDatumExportConfiguration, Long>
+		extends BaseMyBatisUserRelatedGenericDao<UserDatumExportConfiguration, UserLongCompositePK>
 		implements UserDatumExportConfigurationDao {
 
 	/** The query name used for {@link #findConfigurationsForUser(Long)}. */
@@ -60,7 +63,29 @@ public class MyBatisUserDatumExportConfigurationDao
 	 * Default constructor.
 	 */
 	public MyBatisUserDatumExportConfigurationDao() {
-		super(UserDatumExportConfiguration.class, Long.class);
+		super(UserDatumExportConfiguration.class, UserLongCompositePK.class);
+	}
+
+	@Override
+	public UserLongCompositePK create(Long userId, UserDatumExportConfiguration entity) {
+		if ( !userId.equals(entity.getUserId()) ) {
+			entity = entity.copyWithId(new UserLongCompositePK(userId, entity.getConfigId()));
+		}
+		return save(entity);
+	}
+
+	@Override
+	protected UserLongCompositePK handleInsert(UserDatumExportConfiguration datum) {
+		UserLongCompositePK id = super.handleInsert(datum);
+		if ( !id.entityIdIsAssigned() && datum.getConfigId() != null ) {
+			id = new UserLongCompositePK(id.getUserId(), datum.getConfigId());
+		}
+		return id;
+	}
+
+	@Override
+	public Collection<UserDatumExportConfiguration> findAll(Long userId, List<SortDescriptor> sorts) {
+		return findConfigurationsForUser(userId);
 	}
 
 	@Override

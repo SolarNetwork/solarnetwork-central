@@ -23,125 +23,67 @@
 package net.solarnetwork.central.user.export.domain;
 
 import java.io.Serial;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.Map;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import net.solarnetwork.central.dao.BaseEntity;
-import net.solarnetwork.central.dao.UserRelatedIdentifiableConfigurationEntity;
-import net.solarnetwork.codec.JsonUtils;
-import net.solarnetwork.domain.SerializeIgnore;
+import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
+import net.solarnetwork.central.domain.UserLongCompositePK;
 
 /**
  * Base class for export configuration entities.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public class BaseExportConfigurationEntity extends BaseEntity
-		implements UserRelatedIdentifiableConfigurationEntity<Long>, Serializable {
+public abstract class BaseExportConfigurationEntity<C extends BaseIdentifiableUserModifiableEntity<C, UserLongCompositePK>>
+		extends BaseIdentifiableUserModifiableEntity<C, UserLongCompositePK> {
 
 	@Serial
-	private static final long serialVersionUID = -1417068116997904853L;
+	private static final long serialVersionUID = 6321748992039317099L;
 
-	private Long userId;
-	private String name;
-	private String serviceIdentifier;
-	private String servicePropsJson;
+	private transient Long configId;
 
-	private Map<String, Object> serviceProps;
-
-	@Override
-	public Long getUserId() {
-		return userId;
-	}
-
-	public void setUserId(Long userId) {
-		this.userId = userId;
-	}
-
-	@Override
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	@Override
-	public String getServiceIdentifier() {
-		return serviceIdentifier;
-	}
-
-	public void setServiceIdentifier(String serviceIdentifier) {
-		this.serviceIdentifier = serviceIdentifier;
+	/**
+	 * Constructor.
+	 * 
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public BaseExportConfigurationEntity(UserLongCompositePK id, Instant created) {
+		super(id, created);
 	}
 
 	/**
-	 * Get the service properties object as a JSON string.
+	 * Get the configuration ID.
 	 *
-	 * @return a JSON encoded string, or {@literal null} if no service
-	 *         properties available
+	 * @return the configuration ID
+	 * @since 1.2
 	 */
-	@SerializeIgnore
-	@JsonIgnore
-	public String getServicePropsJson() {
-		if ( servicePropsJson == null ) {
-			servicePropsJson = JsonUtils.getJSONString(serviceProps, null);
+	@JsonProperty("id")
+	public Long getConfigId() {
+		if ( configId != null ) {
+			return configId;
 		}
-		return servicePropsJson;
+		UserLongCompositePK id = getId();
+		return (id != null ? id.getEntityId() : null);
 	}
 
 	/**
-	 * Set the service properties object via a JSON string.
-	 *
+	 * Set the temporary configuration ID.
+	 * 
 	 * <p>
-	 * This method will remove any previously created service properties and
-	 * replace it with the values parsed from the JSON. All floating point
-	 * values will be converted to {@link BigDecimal} instances.
+	 * This method is here to support DAO mapping that wants to set new primary
+	 * key values on creation.
 	 * </p>
-	 *
-	 * @param json
-	 *        the JSON to parse as service properties
+	 * 
+	 * @param configId
+	 *        the configuration ID to set
 	 */
-	@JsonProperty
-	// @JsonProperty needed because of @JsonIgnore on getter
-	public void setServicePropsJson(String json) {
-		servicePropsJson = json;
-		serviceProps = null;
-	}
-
-	@JsonIgnore
-	public Map<String, Object> getServiceProps() {
-		if ( serviceProps == null && servicePropsJson != null ) {
-			serviceProps = JsonUtils.getStringMap(servicePropsJson);
-		}
-		return serviceProps;
-	}
-
-	/**
-	 * Set the service properties to use.
-	 *
-	 * <p>
-	 * This will replace any value set previously via
-	 * {@link #setServicePropsJson(String)} as well.
-	 * </p>
-	 *
-	 * @param serviceProps
-	 *        the service properties to set
-	 */
-	@JsonSetter("serviceProperties")
-	public void setServiceProps(Map<String, Object> serviceProps) {
-		this.serviceProps = serviceProps;
-		servicePropsJson = null;
-	}
-
-	@Override
-	public Map<String, ?> getServiceProperties() {
-		return getServiceProps();
+	public final void setConfigId(Long configId) {
+		this.configId = configId;
 	}
 
 }

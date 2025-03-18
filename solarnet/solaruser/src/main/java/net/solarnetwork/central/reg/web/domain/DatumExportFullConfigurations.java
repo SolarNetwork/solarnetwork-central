@@ -26,23 +26,22 @@ import java.util.List;
 import net.solarnetwork.central.datum.export.domain.DataConfiguration;
 import net.solarnetwork.central.datum.export.domain.DestinationConfiguration;
 import net.solarnetwork.central.datum.export.domain.OutputConfiguration;
-import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 
 /**
  * DTO to consolidate datum export configuration details into a single response.
  *
  * @author matt
- * @version 1.0
+ * @version 2.0
  * @since 1.26
  */
 public class DatumExportFullConfigurations {
 
-	private final List<UserDatumExportConfiguration> datumExportConfigs;
+	private final List<DatumExportProperties> datumExportConfigs;
 	private final List<? extends DataConfiguration> dataConfigs;
 	private final List<? extends DestinationConfiguration> destinationConfigs;
 	private final List<? extends OutputConfiguration> outputConfigs;
 
-	public DatumExportFullConfigurations(List<UserDatumExportConfiguration> datumExportConfigs,
+	public DatumExportFullConfigurations(List<DatumExportProperties> datumExportConfigs,
 			List<? extends DataConfiguration> dataConfigs,
 			List<? extends DestinationConfiguration> destinationConfigs,
 			List<? extends OutputConfiguration> outputConfigs) {
@@ -53,7 +52,7 @@ public class DatumExportFullConfigurations {
 		this.outputConfigs = outputConfigs;
 	}
 
-	public List<UserDatumExportConfiguration> getDatumExportConfigs() {
+	public List<DatumExportProperties> getDatumExportConfigs() {
 		return datumExportConfigs;
 	}
 

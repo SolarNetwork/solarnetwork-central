@@ -11,17 +11,15 @@
 	sprops			jsonb
 -->
 
-	<insert id="insert-UserDestinationConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
-		<selectKey keyProperty="id" resultType="long" order="BEFORE"> 
-              SELECT nextval('solaruser.user_export_seq') AS id 
-		</selectKey>
+	<insert id="insert-UserDestinationConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration"
+			useGeneratedKeys="true" keyProperty="configId">
 		INSERT INTO solaruser.user_export_dest_conf (
-			id, user_id, cname, sident
+			user_id, cname, sident
 			<if test="created != null">,created</if>
 			<if test="servicePropsJson != null">,sprops</if>
 			)
 		VALUES (
-			#{id}, #{userId}, #{name}, #{serviceIdentifier}
+			#{userId}, #{name}, #{serviceIdentifier}
 			<if test="created != null">,#{created}</if>
 			<if test="servicePropsJson != null">,CAST(#{servicePropsJson} AS jsonb)</if>
 			)
@@ -35,12 +33,12 @@
 			, sident = #{serviceIdentifier}
 			, sprops = CAST(#{servicePropsJson} AS jsonb)
 		WHERE
-			id = #{id} AND user_id = #{userId}
+			id = #{configId} AND user_id = #{userId}
 	</update>
 
 	<delete id="delete-UserDestinationConfiguration" parameterType="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
 		DELETE FROM solaruser.user_export_dest_conf
-		WHERE id = #{id} AND user_id = #{userId}
+		WHERE id = #{configId} AND user_id = #{userId}
 	</delete>
 	
 	<sql id="fragment-UserDestinationConfiguration-full-result">
@@ -53,9 +51,11 @@
 	</sql>
 
 	<resultMap id="UserDestinationConfigurationFullResult" type="net.solarnetwork.central.user.export.domain.UserDestinationConfiguration">
-		<id property="id" column="user_export_dest_conf_id"/>
-		<result property="created" column="user_export_dest_conf_created"/>
-		<result property="userId" column="user_export_dest_conf_user_id"/>
+		<constructor>
+			<idArg column="user_export_dest_conf_user_id" javaType="java.lang.Long"/>
+			<idArg column="user_export_dest_conf_id" javaType="java.lang.Long"/>
+			<arg column="user_export_dest_conf_created" javaType="java.time.Instant"/>
+		</constructor>
 		<result property="name" column="user_export_dest_conf_cname"/>
 		<result property="serviceIdentifier" column="user_export_dest_conf_sident"/>
 		<result property="servicePropsJson" column="user_export_dest_conf_sprops"/>
