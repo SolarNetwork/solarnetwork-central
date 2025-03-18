@@ -38,6 +38,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.catchThrowableOfType;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.STRING;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -84,6 +85,7 @@ import net.solarnetwork.central.c2c.domain.CloudDatumStreamSettingsEntity;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
+import net.solarnetwork.central.dao.BaseIdentifiableUserModifiableEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.domain.UserLongIntegerCompositePK;
@@ -255,7 +257,20 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(result)
 			.as("Result provided from DAO")
 			.isSameAs(daoResults)
-			.as("Service props are changed")
+			.element(0)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("foo", "bar")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -264,8 +279,11 @@ public class DaoUserCloudIntegrationsBizTests {
 	public void datumStreamConfigurations_forUser() {
 		// GIVEN
 		final Long userId = randomLong();
+		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
 		final CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(userId,
 				randomLong(), now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(sprops);
 		final var daoResults = new BasicFilterResults<CloudDatumStreamConfiguration, UserLongCompositePK>(
 				Arrays.asList(conf));
 		given(datumStreamDao.findFiltered(any(), isNull(), isNull(), isNull())).willReturn(daoResults);
@@ -280,9 +298,31 @@ public class DaoUserCloudIntegrationsBizTests {
 		BasicFilter expectedFilter = new BasicFilter();
 		expectedFilter.setUserId(userId);
 
-		and.then(filterCaptor.getValue()).as("Filter has user ID set").isEqualTo(expectedFilter);
+		// @formatter:off
+		and.then(filterCaptor.getValue())
+			.as("Filter has user ID set")
+			.isEqualTo(expectedFilter)
+			;
 
-		and.then(result).as("Result provided from DAO").isSameAs(daoResults);
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(daoResults)
+			.element(0)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("foo", "bar")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -377,7 +417,10 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
 		CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(pk, now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(Map.of("foo", "bar", TEST_SECURE_SETTING, "bam"));
 
 		given(integrationDao.get(pk)).willReturn(conf);
 
@@ -386,7 +429,25 @@ public class DaoUserCloudIntegrationsBizTests {
 				CloudIntegrationConfiguration.class);
 
 		// THEN
-		and.then(result).as("Result provided from DAO").isSameAs(conf);
+		// @formatter:off
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(conf)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("foo", "bar")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -395,7 +456,10 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(Map.of("foo", "bar", TEST_SECURE_SETTING, "bam"));
 
 		given(datumStreamDao.get(pk)).willReturn(conf);
 
@@ -404,7 +468,25 @@ public class DaoUserCloudIntegrationsBizTests {
 				CloudDatumStreamConfiguration.class);
 
 		// THEN
-		and.then(result).as("Result provided from DAO").isSameAs(conf);
+		// @formatter:off
+		and.then(result)
+			.as("Result provided from DAO")
+			.isSameAs(conf)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("foo", "bar")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -484,7 +566,7 @@ public class DaoUserCloudIntegrationsBizTests {
 			.returns(input.getName(), from(CloudIntegrationConfiguration::getName))
 			.as("Service identifier from input passed to DAO")
 			.returns(input.getServiceIdentifier(), from(CloudIntegrationConfiguration::getServiceIdentifier))
-			.as("Service properties passed to DAO are changed to mask secrets")
+			.as("Service properties passed to DAO are changed to encrypt secrets")
 			.satisfies(c -> {
 				and.then(c.getServiceProps())
 					.as("Has same keys provided in input")
@@ -512,6 +594,19 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(result)
 			.as("Result provided from DAO")
 			.isSameAs(conf)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("foo", "bar")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -620,20 +715,22 @@ public class DaoUserCloudIntegrationsBizTests {
 		Long userId = randomLong();
 		Long entityId = randomLong();
 		UserLongCompositePK pk = new UserLongCompositePK(userId, entityId);
+
+		final Map<String, Object> sprops = Map.of("foo", "bar", TEST_SECURE_SETTING, "should be masked");
+
 		CloudDatumStreamConfiguration conf = new CloudDatumStreamConfiguration(pk, now());
+		conf.setServiceIdentifier(TEST_SERVICE_ID);
+		conf.setServiceProps(sprops);
 
 		// save and retrieve
 		given(datumStreamDao.save(any(CloudDatumStreamConfiguration.class))).willReturn(pk);
 		given(datumStreamDao.get(pk)).willReturn(conf);
 
 		// WHEN
-		Map<String, Object> sprops = new LinkedHashMap<>(4);
-		sprops.put("foo", "bar");
-
 		CloudDatumStreamConfigurationInput input = new CloudDatumStreamConfigurationInput();
 		input.setEnabled(true);
 		input.setName(randomString());
-		input.setServiceIdentifier(randomString());
+		input.setServiceIdentifier(TEST_SERVICE_ID);
 		input.setServiceProperties(new LinkedHashMap<>(sprops));
 		input.setDatumStreamMappingId(randomLong());
 		input.setSchedule(randomString());
@@ -656,8 +753,6 @@ public class DaoUserCloudIntegrationsBizTests {
 			.returns(input.getName(), from(CloudDatumStreamConfiguration::getName))
 			.as("Service identifier from input passed to DAO")
 			.returns(input.getServiceIdentifier(), from(CloudDatumStreamConfiguration::getServiceIdentifier))
-			.as("Service properties from input passed to DAO")
-			.returns(input.getServiceProperties(), from(CloudDatumStreamConfiguration::getServiceProperties))
 			.as("Datum steram mapping ID from input passed to DAO")
 			.returns(input.getDatumStreamMappingId(), from(CloudDatumStreamConfiguration::getDatumStreamMappingId))
 			.as("Schedule from input passed to DAO")
@@ -668,11 +763,47 @@ public class DaoUserCloudIntegrationsBizTests {
 			.returns(input.getObjectId(), from(CloudDatumStreamConfiguration::getObjectId))
 			.as("Source ID from input passed to DAO")
 			.returns(input.getSourceId(), from(CloudDatumStreamConfiguration::getSourceId))
+			.as("Service properties passed to DAO are changed to encrypt secrets")
+			.satisfies(c -> {
+				and.then(c.getServiceProps())
+					.as("Has same keys provided in input")
+					.containsOnlyKeys(sprops.keySet())
+					.as("Non-senstive property unchanged")
+					.containsEntry("foo", sprops.get("foo"))
+					.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+						and.then(v)
+							.asInstanceOf(InstanceOfAssertFactories.STRING)
+							.as("Sensitive value has encryptor prefix")
+							.startsWith(textEncryptor.getPrefix())
+							.as("Can decrypt value back to original plain text")
+							.satisfies(cipherText -> {
+								and.then(textEncryptor.decrypt(cipherText))
+									.as("Decrypted value same as original plain text")
+									.isEqualTo(sprops.get(TEST_SECURE_SETTING))
+									;
+							})
+							;
+					})
+					;
+			})
 			;
 
 		and.then(result)
 			.as("Result provided from DAO")
 			.isSameAs(conf)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("foo", "bar")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
 			;
 		// @formatter:on
 	}
@@ -1203,6 +1334,8 @@ public class DaoUserCloudIntegrationsBizTests {
 		conf1.setServiceIdentifier(TEST_SERVICE_ID);
 
 		final CloudIntegrationConfiguration conf2 = new CloudIntegrationConfiguration(pk, now());
+		conf2.setServiceIdentifier(TEST_SERVICE_ID);
+		conf2.setServiceProps(Map.of("la", "tee-da", TEST_SECURE_SETTING, "boom"));
 
 		given(integrationDao.get(pk)).willReturn(conf1, conf2);
 
@@ -1225,7 +1358,7 @@ public class DaoUserCloudIntegrationsBizTests {
 			.as("Secure token saved encrypted")
 			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
 				and.then(v)
-					.asInstanceOf(InstanceOfAssertFactories.STRING)
+					.asInstanceOf(STRING)
 					.as("Sensitive value has encryptor prefix")
 					.startsWith(textEncryptor.getPrefix())
 					.as("Can decrypt value back to original plain text")
@@ -1242,6 +1375,19 @@ public class DaoUserCloudIntegrationsBizTests {
 		and.then(result)
 			.as("2nd DAO result returned")
 			.isSameAs(conf2)
+			.extracting(BaseIdentifiableUserModifiableEntity::getServiceProps, map(String.class, Object.class))
+			.as("Service props from DAO returned")
+			.hasSize(2)
+			.as("Plain setting returned as-is")
+			.containsEntry("la", "tee-da")
+			.as("Secure setting returned as digest")
+			.hasEntrySatisfying(TEST_SECURE_SETTING, v -> {
+				and.then(v)
+					.asInstanceOf(STRING)
+					.as("Sensitive value has digest prefix")
+					.startsWith("{SSHA-256}")
+					;
+			})
 			;
 		// @formatter:on
 	}

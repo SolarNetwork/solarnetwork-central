@@ -85,6 +85,7 @@ import net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity;
 import net.solarnetwork.central.c2c.domain.UserSettingsEntity;
 import net.solarnetwork.central.common.dao.ClientAccessTokenDao;
 import net.solarnetwork.central.dao.UserModifiableEnabledStatusDao;
+import net.solarnetwork.central.dao.UserRelatedStdIdentifiableConfigurationEntity;
 import net.solarnetwork.central.domain.BasicClaimableJobState;
 import net.solarnetwork.central.domain.UserIdentifiableSystem;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -111,7 +112,7 @@ import net.solarnetwork.settings.support.SettingUtils;
  * DAO based implementation of {@link UserCloudIntegrationsBiz}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
@@ -257,7 +258,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 		BasicFilter f = new BasicFilter(filter);
 		f.setUserId(userId);
 		FilterableDao<C, K, CloudIntegrationsFilter> dao = filterableDao(configurationClass);
-		return dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax());
+		return digestSensitiveInformation(dao.findFiltered(f, f.getSorts(), f.getOffset(), f.getMax()));
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -272,7 +273,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 
 		GenericDao<C, K> dao = genericDao(configurationClass);
 
-		return requireNonNullObject(dao.get(id), id);
+		return digestSensitiveInformation(requireNonNullObject(dao.get(id), id));
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -310,7 +311,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
 		}
 
-		return result;
+		return digestSensitiveInformation(result);
 	}
 
 	private void saveOAuthTokens(UserIdentifiableSystem config, Map<String, ?> oauthTokenProperties) {
@@ -433,7 +434,7 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			saveOAuthTokens((UserIdentifiableSystem) result, oauthTokenProperties);
 		}
 
-		return result;
+		return digestSensitiveInformation(result);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -722,6 +723,29 @@ public class DaoUserCloudIntegrationsBiz implements UserCloudIntegrationsBiz {
 			return result;
 		}
 		throw new UnsupportedOperationException("Configuration type %s not supported.".formatted(clazz));
+	}
+
+	@SuppressWarnings("unchecked")
+	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> C digestSensitiveInformation(
+			C entity) {
+		if ( entity == null ) {
+			return entity;
+		}
+		if ( entity instanceof UserRelatedStdIdentifiableConfigurationEntity u ) {
+			u.digestSensitiveInformation(serviceSecureKeys::get);
+		}
+		return entity;
+	}
+
+	private <C extends CloudIntegrationsConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>> FilterResults<C, K> digestSensitiveInformation(
+			FilterResults<C, K> results) {
+		if ( results == null || results.getReturnedResultCount() < 1 ) {
+			return results;
+		}
+		for ( C entity : results ) {
+			digestSensitiveInformation(entity);
+		}
+		return results;
 	}
 
 	/**

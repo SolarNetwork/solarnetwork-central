@@ -36,12 +36,13 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.util.StringUtils;
 
 /**
  * A base user-related entity that is also an identifiable configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentifiableUserModifiableEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		extends BaseUserModifiableEntity<C, K>
@@ -119,6 +120,18 @@ public abstract class BaseIdentifiableUserModifiableEntity<C extends BaseIdentif
 		if ( secureKeys != null && !secureKeys.isEmpty() ) {
 			setServiceProps(SecurityUtils.decryptedMap(getServiceProps(), secureKeys, encryptor));
 		}
+	}
+
+	@Override
+	public BaseIdentifiableUserModifiableEntity<C, K> digestSensitiveInformation(
+			Function<String, Set<String>> sensitiveKeyProvider) {
+		Set<String> secureKeys = (sensitiveKeyProvider != null && serviceIdentifier != null
+				? sensitiveKeyProvider.apply(serviceIdentifier)
+				: null);
+		if ( secureKeys != null && !secureKeys.isEmpty() ) {
+			setServiceProps(StringUtils.sha256MaskedMap(getServiceProps(), secureKeys));
+		}
+		return this;
 	}
 
 	@Override
