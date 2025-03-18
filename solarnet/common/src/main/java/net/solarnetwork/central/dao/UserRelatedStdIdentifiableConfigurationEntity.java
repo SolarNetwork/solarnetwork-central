@@ -23,6 +23,8 @@
 package net.solarnetwork.central.dao;
 
 import java.io.Serializable;
+import java.util.Set;
+import java.util.function.Function;
 import net.solarnetwork.central.domain.UserRelatedCompositeKey;
 
 /**
@@ -35,7 +37,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  *        the key type
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRelatedStdIdentifiableConfigurationEntity<C, K>, K extends UserRelatedCompositeKey<K>>
 		extends UserRelatedStdEntity<C, K>, UserRelatedIdentifiableConfigurationEntity<K>, Serializable,
@@ -46,6 +48,21 @@ public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRel
 	 */
 	default void eraseCredentials() {
 		// extending classes can implement as needed
+	}
+
+	/**
+	 * Cryptographically digest any sensitive settings.
+	 *
+	 * @param sensitiveKeyProvider
+	 *        a function that can supply a set of "sensitive" information keys
+	 *        (names) that should be masked
+	 * @param returns
+	 *        this object for method chaining
+	 * @since 1.1
+	 */
+	default UserRelatedStdIdentifiableConfigurationEntity<C, K> digestSensitiveInformation(
+			Function<String, Set<String>> sensitiveKeyProvider) {
+		return this;
 	}
 
 }
