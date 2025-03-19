@@ -113,7 +113,7 @@ public abstract class BaseMyBatisFilterableDao<T extends Entity<PK>, M extends F
 
 		List<M> rows = selectList(query, sqlProps, offset, max);
 
-		return new BasicFilterResults<>(rows,
+		return new BasicFilterResults<M, PK>(rows,
 				(totalCount != null ? totalCount : Long.valueOf(rows.size())),
 				offset != null ? offset : 0L, rows.size());
 	}
