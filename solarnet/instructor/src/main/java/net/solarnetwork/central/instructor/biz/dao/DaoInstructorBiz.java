@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.biz.NodeServiceAuditor;
-import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
@@ -44,9 +42,7 @@ import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
-import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.FilteredResultsProcessor;
-import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
@@ -120,30 +116,6 @@ public class DaoInstructorBiz implements InstructorBiz {
 		this.nodeServiceAuditor = nodeServiceAuditor;
 	}
 
-	private List<Instruction> asResultList(FilterResults<EntityMatch, Long> matches) {
-		List<Instruction> results = new ArrayList<>(matches.getReturnedResultCount());
-		for ( EntityMatch match : matches.getResults() ) {
-			if ( match instanceof Instruction ) {
-				results.add((Instruction) match);
-			} else {
-				results.add(nodeInstructionDao.get(match.getId()));
-			}
-		}
-		return results;
-	}
-
-	private List<NodeInstruction> asNodeInstructionList(FilterResults<EntityMatch, Long> matches) {
-		List<NodeInstruction> results = new ArrayList<>(matches.getReturnedResultCount());
-		for ( EntityMatch match : matches.getResults() ) {
-			if ( match instanceof NodeInstruction ) {
-				results.add((NodeInstruction) match);
-			} else {
-				results.add(nodeInstructionDao.get(match.getId()));
-			}
-		}
-		return results;
-	}
-
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public NodeInstruction getInstruction(Long instructionId) {
@@ -152,64 +124,6 @@ public class DaoInstructorBiz implements InstructorBiz {
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<NodeInstruction> getInstructions(Set<Long> instructionIds) {
-		Long[] ids = instructionIds.toArray(Long[]::new);
-		SimpleInstructionFilter filter = new SimpleInstructionFilter();
-		filter.setInstructionIds(ids);
-		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
-				MAX_FILTER_RESULTS);
-		return asNodeInstructionList(matches);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<Instruction> getActiveInstructionsForNode(Long nodeId) {
-		SimpleInstructionFilter filter = new SimpleInstructionFilter();
-		filter.setNodeId(nodeId);
-		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
-				MAX_FILTER_RESULTS);
-		return asResultList(matches);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<NodeInstruction> getActiveInstructionsForNodes(Set<Long> nodeIds) {
-		Long[] ids = nodeIds.toArray(Long[]::new);
-		SimpleInstructionFilter filter = new SimpleInstructionFilter();
-		filter.setNodeIds(ids);
-		filter.setState(InstructionState.Queued);
-		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
-				MAX_FILTER_RESULTS);
-		return asNodeInstructionList(matches);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<Instruction> getPendingInstructionsForNode(Long nodeId) {
-		SimpleInstructionFilter filter = new SimpleInstructionFilter();
-		filter.setNodeId(nodeId);
-		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
-				InstructionState.Executing));
-		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
-				MAX_FILTER_RESULTS);
-		return asResultList(matches);
-	}
-
-	@Override
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	public List<NodeInstruction> getPendingInstructionsForNodes(Set<Long> nodeIds) {
-		Long[] ids = nodeIds.toArray(Long[]::new);
-		SimpleInstructionFilter filter = new SimpleInstructionFilter();
-		filter.setNodeIds(ids);
-		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
-				InstructionState.Executing));
-		FilterResults<EntityMatch, Long> matches = nodeInstructionDao.findFiltered(filter, null, null,
-				MAX_FILTER_RESULTS);
-		return asNodeInstructionList(matches);
-	}
-
-	@Override
 	public void findFilteredNodeInstructions(InstructionFilter filter,
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
 		nodeInstructionDao.findFilteredStream(filter, processor);

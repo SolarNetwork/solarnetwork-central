@@ -38,7 +38,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * API for central instruction service.
  * 
  * @author matt
- * @version 1.7
+ * @version 2.0
  */
 public interface InstructorBiz {
 
@@ -48,67 +48,6 @@ public interface InstructorBiz {
 	 * @since 1.5
 	 */
 	String INSTRUCTION_ADDED_AUDIT_SERVICE = "inst";
-
-	/**
-	 * Return any active instructions for a specific node.
-	 * 
-	 * <p>
-	 * An instruction is considered <em>active</em> if it is in the
-	 * {@link InstructionState#Queued} state.
-	 * </p>
-	 * 
-	 * @param nodeId
-	 *        the ID of the node to get active instructions for
-	 * @return the instructions
-	 */
-	List<Instruction> getActiveInstructionsForNode(Long nodeId);
-
-	/**
-	 * Return any active instructions for a set of nodes.
-	 * 
-	 * <p>
-	 * An instruction is considered <em>active</em> if it is in the
-	 * {@link InstructionState#Queued} state.
-	 * </p>
-	 * 
-	 * @param nodeIds
-	 *        the IDs of the nodes to get active instructions for
-	 * @return the instructions
-	 * @since 1.3
-	 */
-	List<NodeInstruction> getActiveInstructionsForNodes(Set<Long> nodeIds);
-
-	/**
-	 * Return any pending instructions for a specific node.
-	 * 
-	 * <p>
-	 * An instruction is considered <em>pending</em> if it is in
-	 * {@link InstructionState#Queued}, {@link InstructionState#Received}, or
-	 * {@link InstructionState#Executing} states.
-	 * </p>
-	 * 
-	 * @param nodeId
-	 *        the ID of the node to get pending instructions for
-	 * @return the instructions
-	 * @since 1.1
-	 */
-	List<Instruction> getPendingInstructionsForNode(Long nodeId);
-
-	/**
-	 * Return any pending instructions for a set of nodes.
-	 * 
-	 * <p>
-	 * An instruction is considered <em>pending</em> if it is in
-	 * {@link InstructionState#Queued}, {@link InstructionState#Received}, or
-	 * {@link InstructionState#Executing} states.
-	 * </p>
-	 * 
-	 * @param nodeIds
-	 *        the IDs of the nodes to get pending instructions for
-	 * @return the instructions
-	 * @since 1.3
-	 */
-	List<NodeInstruction> getPendingInstructionsForNodes(Set<Long> nodeIds);
 
 	/**
 	 * API for querying for a filtered set of node instructions, streaming the
@@ -158,16 +97,6 @@ public interface InstructorBiz {
 	 * @return the found instruction, or {@literal null} if not found
 	 */
 	NodeInstruction getInstruction(Long instructionId);
-
-	/**
-	 * Get a set of instructions.
-	 * 
-	 * @param instructionIds
-	 *        the instruction IDs to fetch
-	 * @return the found instructions, or {@literal null} if not found
-	 * @since 1.3
-	 */
-	List<NodeInstruction> getInstructions(Set<Long> instructionIds);
 
 	/**
 	 * Update the state of a specific instruction.

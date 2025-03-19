@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,7 +71,7 @@ import net.solarnetwork.domain.Result;
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -144,14 +145,27 @@ public class NodeInstructionController {
 	 *
 	 * @param instructionIds
 	 *        the IDs of the instructions to view
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
 	 * @return the instruction
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "ids")
 	@ResponseBody
-	public Result<List<NodeInstruction>> viewInstruction(@RequestParam("ids") Set<Long> instructionIds) {
-		List<NodeInstruction> results = instructorBiz.getInstructions(instructionIds);
-		return success(results);
+	public void viewInstruction(@RequestParam("ids") Set<Long> instructionIds,
+			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
+			final HttpServletResponse response) throws IOException {
+		final var filter = new SimpleInstructionFilter();
+		filter.setInstructionIds(instructionIds.toArray(Long[]::new));
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (FilteredResultsProcessor<NodeInstruction> processor = WebUtils
+				.filteredResultsProcessorForType(acceptTypes, response,
+						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
+								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
+			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		}
 	}
 
 	/**
@@ -159,13 +173,18 @@ public class NodeInstructionController {
 	 *
 	 * @param nodeId
 	 *        the ID of the node to get instructions for
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
 	 * @return the active instructions for the node
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public Result<List<Instruction>> activeInstructions(@RequestParam("nodeId") Long nodeId) {
-		List<Instruction> instructions = instructorBiz.getActiveInstructionsForNode(nodeId);
-		return success(instructions);
+	public void activeInstructions(@RequestParam("nodeId") Long nodeId,
+			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
+			final HttpServletResponse response) throws IOException {
+		activeInstructions(Set.of(nodeId), accept, response);
 	}
 
 	/**
@@ -173,14 +192,28 @@ public class NodeInstructionController {
 	 *
 	 * @param nodeIds
 	 *        the IDs of the nodes to get instructions for
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
 	 * @return the active instructions for the nodes
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public Result<List<NodeInstruction>> activeInstructions(@RequestParam("nodeIds") Set<Long> nodeIds) {
-		List<NodeInstruction> instructions = instructorBiz.getActiveInstructionsForNodes(nodeIds);
-		return success(instructions);
+	public void activeInstructions(@RequestParam("nodeIds") Set<Long> nodeIds,
+			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
+			final HttpServletResponse response) throws IOException {
+		final var filter = new SimpleInstructionFilter();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+		filter.setState(InstructionState.Queued);
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (FilteredResultsProcessor<NodeInstruction> processor = WebUtils
+				.filteredResultsProcessorForType(acceptTypes, response,
+						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
+								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
+			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		}
 	}
 
 	/**
@@ -188,14 +221,19 @@ public class NodeInstructionController {
 	 *
 	 * @param nodeId
 	 *        the ID of the node to get instructions for
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
 	 * @return the pending instructions for the node
 	 * @since 1.1
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
-	public Result<List<Instruction>> pendingInstructions(@RequestParam("nodeId") Long nodeId) {
-		List<Instruction> instructions = instructorBiz.getPendingInstructionsForNode(nodeId);
-		return success(instructions);
+	public void pendingInstructions(@RequestParam("nodeId") Long nodeId,
+			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
+			final HttpServletResponse response) throws IOException {
+		pendingInstructions(Set.of(nodeId), accept, response);
 	}
 
 	/**
@@ -203,15 +241,29 @@ public class NodeInstructionController {
 	 *
 	 * @param nodeIds
 	 *        the IDs of the nodes to get instructions for
+	 * @param accept
+	 *        the HTTP accept header value
+	 * @param response
+	 *        the HTTP response
 	 * @return the pending instructions for the nodes
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "nodeIds")
 	@ResponseBody
-	public Result<List<NodeInstruction>> pendingInstructions(
-			@RequestParam("nodeIds") Set<Long> nodeIds) {
-		List<NodeInstruction> instructions = instructorBiz.getPendingInstructionsForNodes(nodeIds);
-		return success(instructions);
+	public void pendingInstructions(@RequestParam("nodeIds") Set<Long> nodeIds,
+			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
+			final HttpServletResponse response) throws IOException {
+		final var filter = new SimpleInstructionFilter();
+		filter.setNodeIds(nodeIds.toArray(Long[]::new));
+		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
+				InstructionState.Executing));
+		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
+		try (FilteredResultsProcessor<NodeInstruction> processor = WebUtils
+				.filteredResultsProcessorForType(acceptTypes, response,
+						new OutputSerializationSupportContext<>(objectMapper, cborObjectMapper,
+								NodeInstructionSerializer.INSTANCE, propertySerializerRegistrar))) {
+			instructorBiz.findFilteredNodeInstructions(filter, processor);
+		}
 	}
 
 	/**
@@ -403,8 +455,8 @@ public class NodeInstructionController {
 	@ResponseBody
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public void listInstructions(final SimpleInstructionFilter cmd,
-			@RequestHeader(HttpHeaders.ACCEPT) final String accept, final HttpServletResponse response)
-			throws IOException {
+			@RequestHeader(value = HttpHeaders.ACCEPT, required = false) final String accept,
+			final HttpServletResponse response) throws IOException {
 		final List<MediaType> acceptTypes = MediaType.parseMediaTypes(accept);
 		try (FilteredResultsProcessor<NodeInstruction> processor = WebUtils
 				.filteredResultsProcessorForType(acceptTypes, response,

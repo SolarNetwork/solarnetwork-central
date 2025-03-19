@@ -357,7 +357,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 			return resultsFactory.createFilterResults(filter, sqlProps, rows, totalCount, offset,
 					rows.size());
 		}
-		return new BasicFilterResults<>(rows, totalCount, offset != null ? offset : 0, rows.size());
+		return new BasicFilterResults<M, K>(rows, totalCount, offset != null ? offset : 0, rows.size());
 	}
 
 }
