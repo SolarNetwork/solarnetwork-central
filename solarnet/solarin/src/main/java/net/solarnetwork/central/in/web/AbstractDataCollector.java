@@ -24,7 +24,6 @@
 
 package net.solarnetwork.central.in.web;
 
-import java.util.List;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,7 +36,6 @@ import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
-import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.security.AuthenticatedNode;
 import net.solarnetwork.central.security.SecurityException;
 
@@ -45,7 +43,7 @@ import net.solarnetwork.central.security.SecurityException;
  * Base class for data collector implementations.
  *
  * @author matt.magoffin
- * @version 2.0
+ * @version 2.1
  */
 public abstract class AbstractDataCollector {
 
@@ -78,31 +76,6 @@ public abstract class AbstractDataCollector {
 	@ResponseStatus(value = HttpStatus.METHOD_NOT_ALLOWED, reason = "POST required")
 	public Void getData() {
 		return null;
-	}
-
-	/**
-	 * Default handling of node instructions.
-	 *
-	 * <p>
-	 * This method will use the configured {@link #getInstructorBiz()}, if
-	 * available, and put the returned instructions on the {@code Model} on the
-	 * {@link #MODEL_KEY_INSTRUCTIONS} key.
-	 * </p>
-	 *
-	 * @param nodeId
-	 *        the node ID to get instructions for
-	 * @param model
-	 *        the model
-	 */
-	protected void defaultHandleNodeInstructions(Long nodeId, Model model) {
-		// look for instructions to return for the given node
-		final InstructorBiz biz = getInstructorBiz();
-		if ( biz != null ) {
-			List<Instruction> instructions = biz.getActiveInstructionsForNode(nodeId);
-			if ( !instructions.isEmpty() ) {
-				model.addAttribute(MODEL_KEY_INSTRUCTIONS, instructions);
-			}
-		}
 	}
 
 	/**

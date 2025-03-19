@@ -53,7 +53,7 @@ import net.solarnetwork.central.support.OutputSerializationSupportContext;
  * Helper utilities for web APIs.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public final class WebUtils {
 
@@ -160,6 +160,11 @@ public final class WebUtils {
 	 * <li>text/csv</li>
 	 * </ul>
 	 *
+	 * <p>
+	 * If {@code acceptTypes} is empty, then {@code application/json} will be
+	 * assumed.
+	 * </p>
+	 *
 	 * @param <T>
 	 *        the result type
 	 * @param acceptTypes
@@ -177,7 +182,8 @@ public final class WebUtils {
 			final List<MediaType> acceptTypes, final HttpServletResponse response,
 			OutputSerializationSupportContext<T> context) throws IOException {
 		FilteredResultsProcessor<T> processor = null;
-		for ( MediaType acceptType : acceptTypes ) {
+		for ( MediaType acceptType : acceptTypes != null && !acceptTypes.isEmpty() ? acceptTypes
+				: List.of(MediaType.APPLICATION_JSON) ) {
 			if ( MediaType.APPLICATION_CBOR.isCompatibleWith(acceptType) ) {
 				processor = new ObjectMapperFilteredResultsProcessor<>(
 						context.cborObjectMapper().createGenerator(response.getOutputStream()),

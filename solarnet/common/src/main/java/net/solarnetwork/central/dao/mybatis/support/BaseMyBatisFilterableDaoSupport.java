@@ -126,7 +126,7 @@ public abstract class BaseMyBatisFilterableDaoSupport<T extends Entity<K>, K, M 
 	@Override
 	public FilterResults<M, K> createFilterResults(F filter, Map<String, Object> sqlProps,
 			Iterable<M> rows, Long totalCount, Long offset, Integer returnedCount) {
-		return BasicFilterResults.filterResults(rows, filter, totalCount,
+		return BasicFilterResults.<M, K> filterResults(rows, filter, totalCount,
 				(returnedCount != null ? returnedCount : 0));
 	}
 
