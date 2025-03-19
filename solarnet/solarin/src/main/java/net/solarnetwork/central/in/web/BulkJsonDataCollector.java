@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.SolarNodeDao;
+import net.solarnetwork.central.dao.TooManyStreamedResultsException;
 import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.support.DatumUtils;
@@ -48,7 +49,11 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.in.biz.DataCollectorBiz;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.domain.Instruction;
+import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.security.AuthenticatedNode;
+import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
+import net.solarnetwork.central.support.FilteredResultsProcessor;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 import net.solarnetwork.domain.Result;
@@ -59,7 +64,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * JSON implementation of bulk upload service.
  *
  * @author matt
- * @version 3.4
+ * @version 3.5
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },
@@ -227,9 +232,27 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		// add instructions for the node
 		final InstructorBiz instructorBiz = getInstructorBiz();
 		if ( instructorBiz != null ) {
-			List<Instruction> instructions = instructorBiz
-					.getActiveInstructionsForNode(authNode.getNodeId());
-			if ( instructions != null && !instructions.isEmpty() ) {
+			List<Instruction> instructions = new ArrayList<>(2);
+			var filter = new SimpleInstructionFilter();
+			filter.setNodeId(authNode.getNodeId());
+			filter.setState(InstructionState.Queued);
+			try (FilteredResultsProcessor<NodeInstruction> processor = new AbstractFilteredResultsProcessor<NodeInstruction>() {
+
+				@Override
+				public void handleResultItem(NodeInstruction resultItem) throws IOException {
+					instructions.add(resultItem);
+					if ( instructions.size() >= 100 ) {
+						throw new TooManyStreamedResultsException();
+					}
+				}
+
+			}) {
+				instructorBiz.findFilteredNodeInstructions(filter, processor);
+			} catch ( Exception e ) {
+				// just stop processing and continue
+			}
+
+			if ( !instructions.isEmpty() ) {
 				result.setInstructions(instructions);
 			}
 		}
