@@ -26,7 +26,9 @@ import java.io.Serial;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.solarnetwork.central.dao.EntityMatch;
+import net.solarnetwork.central.instructor.support.NodeInstructionSerializer;
 import net.solarnetwork.domain.InstructionStatus;
 
 /**
@@ -35,6 +37,7 @@ import net.solarnetwork.domain.InstructionStatus;
  * @author matt
  * @version 2.4
  */
+@JsonSerialize(using = NodeInstructionSerializer.class)
 public class NodeInstruction extends Instruction implements EntityMatch {
 
 	@Serial

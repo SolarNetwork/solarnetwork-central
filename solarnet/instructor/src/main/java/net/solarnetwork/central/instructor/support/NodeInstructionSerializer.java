@@ -78,11 +78,21 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 				;
 		// @formatter:on
 		generator.writeStartObject(instr, size);
-		generator.writeNumberField("id", instr.getId());
-		generator.writeObjectField("created", instr.getCreated());
-		generator.writeNumberField("nodeId", instr.getNodeId());
-		generator.writeStringField("topic", instr.getTopic());
-		generator.writeObjectField("instructionDate", instr.getInstructionDate());
+		if ( instr.getId() != null ) {
+			generator.writeNumberField("id", instr.getId());
+		}
+		if ( instr.getCreated() != null ) {
+			generator.writeObjectField("created", instr.getCreated());
+		}
+		if ( instr.getNodeId() != null ) {
+			generator.writeNumberField("nodeId", instr.getNodeId());
+		}
+		if ( instr.getTopic() != null ) {
+			generator.writeStringField("topic", instr.getTopic());
+		}
+		if ( instr.getInstructionDate() != null ) {
+			generator.writeObjectField("instructionDate", instr.getInstructionDate());
+		}
 		if ( instr.getState() != null ) {
 			generator.writeStringField("state", instr.getState().toString());
 		}
