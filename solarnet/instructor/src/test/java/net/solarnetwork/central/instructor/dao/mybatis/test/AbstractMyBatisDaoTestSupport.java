@@ -28,18 +28,18 @@ import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 
 /**
  * Base class for MyBatis DAO tests.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5CentralTransactionalTest {
 
 	@Autowired
 	private SqlSessionFactory sqlSessionFactory;

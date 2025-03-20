@@ -155,6 +155,9 @@ public class DaoInstructorBiz implements InstructorBiz {
 				}
 			}
 		}
+		if ( instruction instanceof NodeInstruction ni && ni.getExpirationDate() != null ) {
+			instr.setExpirationDate(ni.getExpirationDate());
+		}
 		if ( log.isTraceEnabled() ) {
 			log.trace("Processing instruction {} with {} hooks", instr.getId(), queueHooks.size());
 		}

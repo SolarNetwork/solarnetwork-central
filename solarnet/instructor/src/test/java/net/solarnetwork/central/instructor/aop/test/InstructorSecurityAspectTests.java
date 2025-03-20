@@ -23,6 +23,8 @@
 package net.solarnetwork.central.instructor.aop.test;
 
 import static net.solarnetwork.central.domain.BasicSolarNodeOwnership.ownershipFor;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.expect;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -30,9 +32,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -42,6 +44,7 @@ import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.instructor.aop.InstructorSecurityAspect;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.security.AuthenticatedToken;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
@@ -52,7 +55,7 @@ import net.solarnetwork.central.security.SecurityTokenType;
  * Test cases for the {@link InstructorSecurityAspect} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InstructorSecurityAspectTests {
 
@@ -60,7 +63,7 @@ public class InstructorSecurityAspectTests {
 	private NodeInstructionDao nodeInstructionDao;
 	private InstructorSecurityAspect service;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
@@ -68,7 +71,7 @@ public class InstructorSecurityAspectTests {
 		SecurityContextHolder.getContext().setAuthentication(null);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(nodeOwnershipDao, nodeInstructionDao);
 		SecurityContextHolder.getContext().setAuthentication(null);
@@ -105,7 +108,7 @@ public class InstructorSecurityAspectTests {
 		service.instructionsForNodeCheck(nodeId);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void instructionsForNodeDeniedNotOwner() {
 		final Long nodeId = -1L;
 		final Long userId = -100L;
@@ -115,7 +118,9 @@ public class InstructorSecurityAspectTests {
 		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
 		replayAll();
 
-		service.instructionsForNodeCheck(nodeId);
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			service.instructionsForNodeCheck(nodeId);
+		});
 	}
 
 	@Test
@@ -138,7 +143,7 @@ public class InstructorSecurityAspectTests {
 		service.instructionsForNodesCheck(nodeIds);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void instructionsForNodesDeniedNotOwner() {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
@@ -161,7 +166,9 @@ public class InstructorSecurityAspectTests {
 
 		replayAll();
 
-		service.instructionsForNodesCheck(nodeIds);
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			service.instructionsForNodesCheck(nodeIds);
+		});
 	}
 
 	@Test
@@ -191,7 +198,7 @@ public class InstructorSecurityAspectTests {
 		service.viewInstructionsAccessCheck(instructionIds, instructions);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void viewInstructionsByIdDeniedNotOwner() {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
@@ -226,7 +233,9 @@ public class InstructorSecurityAspectTests {
 
 		replayAll();
 
-		service.viewInstructionsAccessCheck(instructionIds, instructions);
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			service.viewInstructionsAccessCheck(instructionIds, instructions);
+		});
 	}
 
 	@Test
@@ -254,7 +263,7 @@ public class InstructorSecurityAspectTests {
 		service.updateInstructionsAccessCheck(instructionIds);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void updateInstructionsStateByIdDeniedNotOwner() {
 		final Long userId = (long) (Math.random() * 1000);
 		setAuthenticatedUserToken(userId, null);
@@ -287,7 +296,111 @@ public class InstructorSecurityAspectTests {
 
 		replayAll();
 
-		service.updateInstructionsAccessCheck(instructionIds);
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> {
+			service.updateInstructionsAccessCheck(instructionIds);
+		});
+	}
+
+	@Test
+	public void findFilteredInstructionsCheck_noNodeOrInstructionIds() {
+		// GIVEN
+		final Long userId = randomLong();
+		setAuthenticatedUserToken(userId, null);
+
+		// WHEN
+		replayAll();
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		thenExceptionOfType(AuthorizationException.class)
+				.as("Missing node AND instruction IDs not allowed").isThrownBy(() -> {
+					service.findFilteredInstructionsCheck(filter);
+				});
+	}
+
+	@Test
+	public void findFilteredInstructionsCheck_nodeIds_pass() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final Long userId = randomLong();
+		setAuthenticatedUserToken(userId, null);
+
+		SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setNodeId(nodeId);
+		service.findFilteredInstructionsCheck(filter);
+	}
+
+	@Test
+	public void findFilteredInstructionsCheck_nodeIds_fail() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final Long userId = randomLong();
+		final Long otherUserId = randomLong();
+
+		SolarNodeOwnership ownership = ownershipFor(nodeId, otherUserId);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+		setAuthenticatedUserToken(userId, null);
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setNodeId(nodeId);
+		thenExceptionOfType(AuthorizationException.class).as("Node not owned by actor")
+				.isThrownBy(() -> {
+					service.findFilteredInstructionsCheck(filter);
+				});
+	}
+
+	@Test
+	public void findFilteredInstructionsCheck_instructionIds_pass() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final Long userId = randomLong();
+		setAuthenticatedUserToken(userId, null);
+
+		NodeInstruction instruction = new NodeInstruction();
+		instruction.setId(randomLong());
+		instruction.setNodeId(nodeId);
+		expect(nodeInstructionDao.get(instruction.getId())).andReturn(instruction);
+
+		SolarNodeOwnership ownership = ownershipFor(nodeId, userId);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setInstructionIds(new Long[] { instruction.getId() });
+		service.findFilteredInstructionsCheck(filter);
+	}
+
+	@Test
+	public void findFilteredInstructionsCheck_instructionIds_fail() {
+		// GIVEN
+		final Long nodeId = randomLong();
+		final Long userId = randomLong();
+		final Long otherUserId = randomLong();
+
+		NodeInstruction instruction = new NodeInstruction();
+		instruction.setId(randomLong());
+		instruction.setNodeId(nodeId);
+		expect(nodeInstructionDao.get(instruction.getId())).andReturn(instruction);
+
+		SolarNodeOwnership ownership = ownershipFor(nodeId, otherUserId);
+		expect(nodeOwnershipDao.ownershipForNodeId(nodeId)).andReturn(ownership);
+
+		// WHEN
+		replayAll();
+		setAuthenticatedUserToken(userId, null);
+		SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		filter.setInstructionIds(new Long[] { instruction.getId() });
+		thenExceptionOfType(AuthorizationException.class).as("Node not owned by actor")
+				.isThrownBy(() -> {
+					service.findFilteredInstructionsCheck(filter);
+				});
 	}
 
 }

@@ -41,7 +41,7 @@ import net.solarnetwork.central.security.AuthorizationSupport;
  * Security aspect for {@link InstructorBiz}.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 @Aspect
 @Component
@@ -53,9 +53,9 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * Constructor.
 	 *
 	 * @param nodeOwnershipDao
-	 * 		the ownership DAO to use
+	 *        the ownership DAO to use
 	 * @param nodeInstructionDao
-	 * 		the instruction DAO to use
+	 *        the instruction DAO to use
 	 */
 	public InstructorSecurityAspect(SolarNodeOwnershipDao nodeOwnershipDao,
 			NodeInstructionDao nodeInstructionDao) {
@@ -103,7 +103,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * Allow the current user (or current node) access to node instructions.
 	 *
 	 * @param nodeId
-	 * 		the ID of the node to verify
+	 *        the ID of the node to verify
 	 */
 	@Before(value = "instructionsForNode(nodeId) || queueInstruction(nodeId)", argNames = "nodeId")
 	public void instructionsForNodeCheck(Long nodeId) {
@@ -117,7 +117,7 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * Allow the current user (or current node) access to node instructions.
 	 *
 	 * @param nodeIds
-	 * 		the IDs of the nodes to verify
+	 *        the IDs of the nodes to verify
 	 */
 	@Before(value = "instructionsForNodes(nodeIds) || queueInstructions(nodeIds)", argNames = "nodeIds")
 	public void instructionsForNodesCheck(Set<Long> nodeIds) {
@@ -133,18 +133,20 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	 * Allow the current user to filter instructions.
 	 *
 	 * @param filter
-	 * 		the filter
+	 *        the filter
 	 */
 	@Before(value = "findFilteredInstructions(filter)", argNames = "filter")
 	public void findFilteredInstructionsCheck(InstructionFilter filter) {
-		if ( filter == null || filter.getNodeId() == null ) {
+		if ( filter == null || !(filter.hasNodeIdCriteria() || filter.hasInstructionIdCriteria()) ) {
 			log.warn("Access DENIED; no node ID provided");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
-		for ( Long nodeId : filter.getNodeIds() ) {
-			requireNodeWriteAccess(nodeId);
+		if ( filter.hasNodeIdCriteria() ) {
+			for ( Long nodeId : filter.getNodeIds() ) {
+				requireNodeWriteAccess(nodeId);
+			}
 		}
-		if ( filter.getInstructionIds() != null ) {
+		if ( filter.hasInstructionIdCriteria() ) {
 			for ( Long instrId : filter.getInstructionIds() ) {
 				updateInstructionAccessCheck(instrId);
 			}
@@ -152,14 +154,16 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to viewing instructions by ID.
+	 * Allow the current user (or current node) access to viewing instructions
+	 * by ID.
 	 *
 	 * @param instructionId
-	 * 		the instruction ID
+	 *        the instruction ID
 	 * @param instruction
-	 * 		the instruction
+	 *        the instruction
 	 */
-	@AfterReturning(pointcut = "viewInstruction(instructionId)", returning = "instruction", argNames = "instructionId,instruction")
+	@AfterReturning(pointcut = "viewInstruction(instructionId)", returning = "instruction",
+			argNames = "instructionId,instruction")
 	public void viewInstructionAccessCheck(Long instructionId, NodeInstruction instruction) {
 		if ( instructionId == null ) {
 			return;
@@ -172,14 +176,16 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to viewing instructions by IDs.
+	 * Allow the current user (or current node) access to viewing instructions
+	 * by IDs.
 	 *
 	 * @param instructionIds
-	 * 		the instruction IDs
+	 *        the instruction IDs
 	 * @param instructions
-	 * 		the instructions
+	 *        the instructions
 	 */
-	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions", argNames = "instructionIds,instructions")
+	@AfterReturning(pointcut = "viewInstructions(instructionIds)", returning = "instructions",
+			argNames = "instructionIds,instructions")
 	public void viewInstructionsAccessCheck(Set<Long> instructionIds,
 			List<NodeInstruction> instructions) {
 		if ( instructionIds == null || instructions == null ) {
@@ -191,10 +197,11 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to updating instructions by ID.
+	 * Allow the current user (or current node) access to updating instructions
+	 * by ID.
 	 *
 	 * @param instructionId
-	 * 		the ID of the instruction being updated
+	 *        the ID of the instruction being updated
 	 */
 	@Before(value = "updateInstructionState(instructionId)", argNames = "instructionId")
 	public void updateInstructionAccessCheck(Long instructionId) {
@@ -213,10 +220,11 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	}
 
 	/**
-	 * Allow the current user (or current node) access to updating instructions by ID.
+	 * Allow the current user (or current node) access to updating instructions
+	 * by ID.
 	 *
 	 * @param instructionIds
-	 * 		the IDs of the instructions being updated
+	 *        the IDs of the instructions being updated
 	 */
 	@Before(value = "updateInstructionsState(instructionIds)", argNames = "instructionIds")
 	public void updateInstructionsAccessCheck(Set<Long> instructionIds) {

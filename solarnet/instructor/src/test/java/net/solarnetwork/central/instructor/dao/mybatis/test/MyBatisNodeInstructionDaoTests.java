@@ -22,17 +22,25 @@
 
 package net.solarnetwork.central.instructor.dao.mybatis.test;
 
+import static java.time.temporal.ChronoUnit.HOURS;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Collections.singletonMap;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toUnmodifiableSet;
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.iterable;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -40,16 +48,21 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.instructor.dao.mybatis.MyBatisNodeInstructionDao;
+import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.central.support.AbstractFilteredResultsProcessor;
+import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
@@ -57,7 +70,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -66,7 +79,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	private NodeInstruction lastDatum;
 	private List<NodeInstruction> addedInstructions;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisNodeInstructionDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
@@ -85,24 +98,33 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 
 	private NodeInstruction storeNewInstruction(Long nodeId, Instant date,
 			Map<String, Object> resultParams) {
+		return storeNewInstruction(nodeId, date, null, null);
+	}
 
-		NodeInstruction datum = new NodeInstruction();
-		datum.setCreated(Instant.now());
-		datum.setStatusDate(date);
-		datum.setInstructionDate(date);
-		datum.setNodeId(nodeId);
-		datum.setState(InstructionState.Queued);
-		datum.setTopic("Test Topic");
-		datum.setResultParameters(resultParams);
+	private NodeInstruction storeNewInstruction(Long nodeId, Instant date,
+			Map<String, Object> resultParams, Consumer<NodeInstruction> callback) {
 
-		datum.addParameter("Test param 1", "Test value 1");
-		datum.addParameter("Test param 2", "Test value 2");
+		NodeInstruction instr = new NodeInstruction();
+		instr.setCreated(Instant.now());
+		instr.setStatusDate(date);
+		instr.setInstructionDate(date);
+		instr.setNodeId(nodeId);
+		instr.setState(InstructionState.Queued);
+		instr.setTopic("Test Topic");
+		instr.setResultParameters(resultParams);
 
-		Long id = dao.save(datum);
-		assertNotNull(id);
-		datum.setId(id);
-		addedInstructions.add(datum);
-		return datum;
+		instr.addParameter("Test param 1", "Test value 1");
+		instr.addParameter("Test param 2", "Test value 2");
+
+		if ( callback != null ) {
+			callback.accept(instr);
+		}
+
+		Long id = dao.save(instr);
+		then(id).as("ID returned").isNotNull();
+		instr.setId(id);
+		addedInstructions.add(instr);
+		return instr;
 	}
 
 	@Test
@@ -111,15 +133,39 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	private void validate(NodeInstruction src, NodeInstruction entity) {
-		assertNotNull("NodeInstruction should exist", entity);
-		assertNotNull("Created date should be set", entity.getCreated());
-		assertEquals(src.getStatusDate(), entity.getStatusDate());
-		assertEquals(src.getInstructionDate(), entity.getInstructionDate());
-		assertEquals(src.getNodeId(), entity.getNodeId());
-		assertEquals(src.getState(), entity.getState());
-		assertEquals(src.getTopic(), entity.getTopic());
-		assertEquals(src.getParameters(), entity.getParameters());
-		assertEquals(src.getResultParameters(), entity.getResultParameters());
+		// @formatter:off
+		then(entity)
+			.as("NodeInstruction should exist")
+			.isNotNull()
+			.satisfies(instr -> {
+				then(instr.getCreated())
+					.as("Creation date is non-null")
+					.isNotNull()
+					;
+			})
+			.as("Status date matches")
+			.as("Topic copied")
+			.returns(src.getTopic(), from(NodeInstruction::getTopic))
+			.as("Instruction date copied")
+			.returns(src.getInstructionDate(), from(NodeInstruction::getInstructionDate))
+			.as("State copied")
+			.returns(src.getState(), from(NodeInstruction::getState))
+			.as("Status date copied")
+			.returns(src.getStatusDate(), from(NodeInstruction::getStatusDate))
+			.as("Instruction parameters copied")
+			.returns(src.getParameters(), from(NodeInstruction::getParameters))
+			.as("Instruction date copied")
+			.returns(src.getResultParameters(), from(NodeInstruction::getResultParameters))
+			.as("Node ID copied")
+			.returns(src.getNodeId(), from(NodeInstruction::getNodeId))
+			.as("Expiration date copied")
+			.returns(src.getExpirationDate(), from(NodeInstruction::getExpirationDate))
+			;
+		// @formatter:on
+	}
+
+	private List<Map<String, Object>> allNodeInstructionRows() {
+		return allTableData(log, jdbcTemplate, "solarnet.sn_node_instruction", "id");
 	}
 
 	@Test
@@ -142,13 +188,47 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	}
 
 	@Test
+	public void storeNew_withExpiration() {
+		// GIVEN
+		lastDatum = storeNewInstruction(TEST_NODE_ID, Instant.now(), null, instr -> {
+			instr.setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+		});
+
+		// THEN
+		List<Map<String, Object>> rows = allNodeInstructionRows();
+		// @formatter:off
+		then(rows)
+			.as("One row stored")
+			.hasSize(1)
+			.element(0, map(String.class, Object.class))
+			.as("ID persisted")
+			.containsEntry("id", lastDatum.getId())
+			.as("Expiration date persisted")
+			.containsEntry("expire_date", Timestamp.from(lastDatum.getExpirationDate()))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void getByPrimaryKey_withExpiration() {
+		// GIVEN
+		storeNew_withExpiration();
+
+		// WHEN
+		NodeInstruction result = dao.get(lastDatum.getId());
+
+		// THEN
+		validate(lastDatum, result);
+	}
+
+	@Test
 	public void update() {
 		storeNew();
 		NodeInstruction datum = dao.get(lastDatum.getId());
 		datum.setState(InstructionState.Declined);
 		datum.setStatusDate(Instant.now());
 		Long newId = dao.save(datum);
-		assertEquals(datum.getId(), newId);
+		then(newId).as("ID preserved").isEqualTo(datum.getId());
 		NodeInstruction datum2 = dao.get(datum.getId());
 		validate(datum, datum2);
 	}
@@ -161,7 +241,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setStatusDate(Instant.now());
 		datum.setResultParameters(Collections.singletonMap("foo", (Object) "bar"));
 		Long newId = dao.save(datum);
-		assertEquals(datum.getId(), newId);
+		then(newId).as("ID preserved").isEqualTo(datum.getId());
 		NodeInstruction datum2 = dao.get(datum.getId());
 		validate(datum, datum2);
 	}
@@ -182,24 +262,31 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setState(InstructionState.Queued);
 		datum.setTopic("Test Topic");
 		final Long instr2Id = dao.save(datum);
-		assertNotNull(instr2Id);
+		then(instr2Id).as("ID 2 returned").isNotNull();
 		datum.setId(instr2Id);
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(TEST_NODE_ID);
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(1, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-		int count = 0;
-		EntityMatch m = null;
-		for ( EntityMatch one : matches.getResults() ) {
-			count++;
-			m = one;
-		}
-		assertEquals(1, count);
-		assertEquals(lastDatum.getId(), m.getId());
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 1 result")
+			.hasSize(1)
+			.satisfies(r -> {
+				then(r)
+					.element(0)
+					.isEqualTo(lastDatum)
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(1L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(1, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -221,16 +308,25 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeIds(new Long[] { node2Id, node3Id });
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(2, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-		int count = 0;
-		for ( EntityMatch one : matches.getResults() ) {
-			assertThat(one.getId(), equalTo(instructionIds.get(count)));
-			count++;
-		}
-		assertEquals(2, count);
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 2 result")
+			.hasSize(2)
+			.satisfies(r -> {
+				then(r)
+					.asInstanceOf(iterable(NodeInstruction.class))
+					.contains(instr2, instr3)
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(2L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(2, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -251,16 +347,25 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setInstructionIds(instructionIds);
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(2, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-		int count = 0;
-		for ( EntityMatch one : matches.getResults() ) {
-			assertThat(one.getId(), equalTo(instructionIds[count]));
-			count++;
-		}
-		assertEquals(2, count);
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 2 result")
+			.hasSize(2)
+			.satisfies(r -> {
+				then(r)
+					.asInstanceOf(iterable(NodeInstruction.class))
+					.contains(addedInstructions.get(0), addedInstructions.get(2))
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(2L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(2, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -271,18 +376,25 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		filter.setNodeId(TEST_NODE_ID);
 		filter.setState(InstructionState.Queued);
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(1, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-		int count = 0;
-		EntityMatch m = null;
-		for ( EntityMatch one : matches.getResults() ) {
-			count++;
-			m = one;
-		}
-		assertEquals(1, count);
-		assertEquals(lastDatum.getId(), m.getId());
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 1 result")
+			.hasSize(1)
+			.satisfies(r -> {
+				then(r)
+					.element(0)
+					.isEqualTo(lastDatum)
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(1L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(1, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -300,16 +412,25 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		filter.setNodeIds(new Long[] { node2Id, node3Id });
 		filter.setState(InstructionState.Queued);
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(2, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-		int count = 0;
-		for ( EntityMatch one : matches.getResults() ) {
-			count++;
-			assertThat(one.getId(), equalTo(addedInstructions.get(count).getId()));
-		}
-		assertEquals(2, count);
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 2 result")
+			.hasSize(2)
+			.satisfies(r -> {
+				then(r)
+					.asInstanceOf(iterable(NodeInstruction.class))
+					.contains(addedInstructions.get(1), addedInstructions.get(2))
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(2L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(2, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -350,12 +471,14 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 	@Test
 	public void findForDateRange_stream() throws IOException {
 		// GIVEN
-		final Instant ts1 = Instant.now().truncatedTo(ChronoUnit.MINUTES).minus(1, ChronoUnit.HOURS);
+		final Instant ts1 = Instant.now().truncatedTo(MINUTES).minus(1, HOURS);
 		storeNewInstruction(TEST_NODE_ID, ts1);
-		final Instant ts2 = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+		final Instant ts2 = Instant.now().truncatedTo(MINUTES);
 		storeNewInstruction(TEST_NODE_ID, ts2);
-		final Instant ts3 = Instant.now().truncatedTo(ChronoUnit.MINUTES).plus(1, ChronoUnit.HOURS);
-		storeNewInstruction(TEST_NODE_ID, ts3);
+		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
+		storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
+			instr.setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+		});
 
 		// WHEN
 		SimpleInstructionFilter f = new SimpleInstructionFilter();
@@ -373,11 +496,12 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		});
 
 		// THEN
-		assertThat("Results for ts 1 and 2 returned", results, hasSize(2));
+		then(results).as("Results for ts 1 and 2 returned").hasSize(2);
 		int i = 0;
 		for ( NodeInstruction instr : results ) {
 			NodeInstruction expected = addedInstructions.get(i++);
-			assertThat("Instruction " + i, instr.getId(), is(equalTo(expected.getId())));
+			then(instr.getId()).as("Instruction %d", i).isEqualTo(expected.getId());
+			validate(expected, instr);
 		}
 	}
 
@@ -394,7 +518,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setState(InstructionState.Executing);
 		datum.setTopic("Test Topic");
 		final Long instr2Id = dao.save(datum);
-		assertNotNull(instr2Id);
+		then(instr2Id).isNotNull();
 		datum.setId(instr2Id);
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
@@ -402,16 +526,25 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		filter.setStateSet(EnumSet.of(InstructionState.Queued, InstructionState.Received,
 				InstructionState.Executing));
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(2L), matches.getTotalResults());
-		assertEquals(2, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-
-		Set<Long> expectedIds = new HashSet<Long>(Arrays.asList(lastDatum.getId(), datum.getId()));
-		for ( EntityMatch one : matches.getResults() ) {
-			expectedIds.remove(one.getId());
-		}
-		assertEquals("Two results returned", 0, expectedIds.size());
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 2 result")
+			.hasSize(2)
+			.satisfies(r -> {
+				then(r)
+					.asInstanceOf(iterable(NodeInstruction.class))
+					.contains(lastDatum, datum)
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(2L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(2, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -428,7 +561,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setTopic("Test Topic");
 
 		final Long instr2Id = dao.save(datum);
-		assertNotNull(instr2Id);
+		then(instr2Id).isNotNull();
 		datum.setId(instr2Id);
 
 		// WHEN
@@ -465,28 +598,40 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		datum.setState(InstructionState.Executing);
 		datum.setTopic("Test Topic");
 		final Long instr2Id = dao.save(datum);
-		assertNotNull(instr2Id);
+		then(instr2Id).isNotNull();
 		datum.setId(instr2Id);
 
 		SimpleInstructionFilter filter = new SimpleInstructionFilter();
 		filter.setNodeId(TEST_NODE_ID);
 		FilterResults<EntityMatch, Long> matches = dao.findFiltered(filter, null, null, null);
-		assertNotNull(matches);
-		assertEquals(Long.valueOf(1L), matches.getTotalResults());
-		assertEquals(1, matches.getReturnedResultCount());
-		assertNotNull(matches.getResults());
-
-		EntityMatch match = matches.getResults().iterator().next();
-		assertTrue(match instanceof NodeInstruction);
-		NodeInstruction ni = (NodeInstruction) match;
-		assertNotNull(ni.getParameters());
-		assertEquals("Empty parameters", 0, ni.getParameters().size());
+		// @formatter:off
+		then(matches)
+			.as("Result returned")
+			.isNotNull()
+			.as("Returns 1 result")
+			.hasSize(1)
+			.satisfies(r -> {
+				then(r)
+					.element(0, type(NodeInstruction.class))
+					.isEqualTo(datum)
+					.extracting(NodeInstruction::getParameters, list(InstructionParameter.class))
+					.as("Empty parameters")
+					.isEmpty()
+					;
+			})
+			.asInstanceOf(type(FilterResults.class))
+			.as("Total results provided")
+			.returns(1L, from(FilterResults<?, ?>::getTotalResults))
+			.as("Returned results provided")
+			.returns(1, from(FilterResults<?,?>::getReturnedResultCount))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void purgeCompletedInstructionsNone() {
 		long result = dao.purgeCompletedInstructions(Instant.now());
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -494,7 +639,7 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		long result = dao
 				.purgeCompletedInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -504,9 +649,9 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		dao.save(lastDatum);
 		long result = dao
 				.purgeCompletedInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
-		assertEquals(1, result);
+		then(result).isOne();
 		NodeInstruction instr = dao.get(lastDatum.getId());
-		assertNull("Purged instruction is not found", instr);
+		then(instr).as("Purged instruction is not found").isNull();
 	}
 
 	@Test
@@ -520,15 +665,15 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		dao.save(lastDatum);
 		long result = dao
 				.purgeCompletedInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
-		assertEquals(2, result);
+		then(result).isEqualTo(2L);
 		NodeInstruction instr = dao.get(lastDatum.getId());
-		assertNull("Purged instruction is not found", instr);
+		then(instr).as("Purged instruction is not found").isNull();
 	}
 
 	@Test
 	public void purgeIncompleteInstructionsNone() {
 		long result = dao.purgeIncompleteInstructions(Instant.now());
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -536,8 +681,8 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		storeNew();
 		long result = dao
 				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
-		assertEquals(1, result);
-		assertNull("Purged instruction is not found", dao.get(lastDatum.getId()));
+		then(result).isOne();
+		then(dao.get(lastDatum.getId())).as("Purged instruction is not found").isNull();
 	}
 
 	@Test
@@ -547,9 +692,8 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		dao.save(lastDatum);
 		long result = dao
 				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
-		assertEquals(1, result);
-		NodeInstruction instr = dao.get(lastDatum.getId());
-		assertNull("Purged instruction is not found", instr);
+		then(result).isOne();
+		then(dao.get(lastDatum.getId())).as("Purged instruction is not found").isNull();
 	}
 
 	@Test
@@ -563,9 +707,8 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 		dao.save(lastDatum);
 		long result = dao
 				.purgeIncompleteInstructions(lastDatum.getInstructionDate().plus(1, ChronoUnit.DAYS));
-		assertEquals(3, result);
-		NodeInstruction instr = dao.get(lastDatum.getId());
-		assertNull("Purged instruction is not found", instr);
+		then(result).isEqualTo(3L);
+		then(dao.get(lastDatum.getId())).as("Purged instruction is not found").isNull();
 	}
 
 	@Test
@@ -716,4 +859,127 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 					equalTo(i < numMinutes ? InstructionState.Completed : InstructionState.Queued));
 		}
 	}
+
+	@Test
+	public void transitionExpired() {
+		// GIVEN
+		final Instant expirationDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final List<NodeInstruction> instructions = new ArrayList<>();
+		for ( int i = 0; i < 20; i++ ) {
+			NodeInstruction instr = new NodeInstruction("test", Instant.now(), TEST_NODE_ID,
+					expirationDate.minus(10 - i, ChronoUnit.MINUTES));
+			instr.setState(InstructionState.values()[i % InstructionState.values().length]);
+			Long id = dao.save(instr);
+			instr.setId(id);
+			instructions.add(instr);
+		}
+
+		List<Map<String, Object>> rows = allNodeInstructionRows();
+		then(rows).as("All instructions have been persisted").hasSize(instructions.size());
+
+		// WHEN
+		var criteria = new NodeInstruction();
+		criteria.setExpirationDate(expirationDate);
+		criteria.setState(InstructionState.Declined);
+		criteria.setResultParameters(Map.of("message", randomString()));
+		int result = dao.transitionExpiredInstructions(criteria);
+
+		// THEN
+		Set<InstructionState> statesToTransition = EnumSet
+				.complementOf(EnumSet.of(InstructionState.Completed, InstructionState.Declined));
+		List<NodeInstruction> expectedToTransition = instructions.stream()
+				.filter(instr -> instr.getExpirationDate().isBefore(expirationDate)
+						&& statesToTransition.contains(instr.getState()))
+				.toList();
+		Set<Long> expectedToTransitionIds = expectedToTransition.stream().map(NodeInstruction::getId)
+				.collect(toUnmodifiableSet());
+
+		// @formatter:off
+		then(result)
+			.as("Expired rows updated")
+			.isEqualTo(expectedToTransition.size())
+			;
+		
+		rows = allNodeInstructionRows();
+		then(rows)
+			.as("All instructions have been persisted")
+			.hasSize(instructions.size())
+			;
+		
+		then(rows.stream().filter(row -> expectedToTransitionIds.contains(row.get("id"))))
+			.allSatisfy(row -> {
+				then(row)
+					.as("State transitioned to given state")
+					.containsEntry("deliver_state", criteria.getState().name())
+					.hasEntrySatisfying("jresult_params", json -> {
+						then(JsonUtils.getStringMap(json.toString()))
+							.isEqualTo(criteria.getResultParameters())
+							;
+					})
+					;
+			})
+			.map(row -> (Long)row.get("id"))
+			.as("Expected instructions that expired have been transitioned")
+			.containsExactly(expectedToTransition.stream().map(e -> e.getId()).toArray(Long[]::new))
+			;
+		
+		Map<Long, NodeInstruction> instructionsById = instructions.stream().collect(toMap(NodeInstruction::getId, Function.identity()));
+		then(rows.stream().filter(row -> !expectedToTransitionIds.contains(row.get("id"))))
+			.allSatisfy(row -> {
+				Long id = (Long)row.get("id");
+				NodeInstruction instr = instructionsById.get(id);
+				then(row)
+					.as("State not changed for non-expired entity")
+					.containsEntry("deliver_state", instr.getState().name())
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void transitionExpired_mergeResultParameters() {
+		// GIVEN
+		final Instant expirationDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final NodeInstruction instruction = storeNewInstruction(TEST_NODE_ID, Instant.now(),
+				Map.of("foo", "bar"), instr -> {
+					instr.setState(InstructionState.Queued);
+					instr.setExpirationDate(expirationDate.minusSeconds(1));
+				});
+
+		// WHEN
+		var criteria = new NodeInstruction();
+		criteria.setExpirationDate(expirationDate);
+		criteria.setState(InstructionState.Declined);
+		criteria.setResultParameters(Map.of("message", randomString()));
+		int result = dao.transitionExpiredInstructions(criteria);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Expired rows updated")
+			.isOne()
+			;
+		
+		List<Map<String, Object>> rows = allNodeInstructionRows();
+		then(rows)
+			.as("All instructions are persisted")
+			.hasSize(1)
+			;
+		
+		then(rows).element(0, map(String.class, Object.class))
+			.as("State transitioned to given state")
+			.containsEntry("deliver_state", criteria.getState().name())
+			.hasEntrySatisfying("jresult_params", json -> {
+				var merged = new LinkedHashMap<>(instruction.getResultParameters());
+				merged.putAll(criteria.getResultParameters());
+				then(JsonUtils.getStringMap(json.toString()))
+					.as("Result parameters is merged from original and update properties")
+					.isEqualTo(merged)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
 }
