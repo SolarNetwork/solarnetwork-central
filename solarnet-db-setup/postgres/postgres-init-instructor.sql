@@ -11,6 +11,7 @@ CREATE TABLE solarnet.sn_node_instruction (
 	topic			CHARACTER VARYING(128) NOT NULL,
 	instr_date		TIMESTAMP WITH TIME ZONE NOT NULL,
 	deliver_state	solarnet.instruction_delivery_state NOT NULL,
+	expire_date		TIMESTAMP WITH TIME ZONE,
 	jresult_params	json,
 	CONSTRAINT sn_node_instruction_pkey PRIMARY KEY (id),
 	CONSTRAINT sn_node_instruction_node_fk
@@ -20,6 +21,9 @@ CREATE TABLE solarnet.sn_node_instruction (
 
 CREATE INDEX sn_node_instruction_node_idx ON solarnet.sn_node_instruction
 	(node_id, deliver_state, instr_date);
+	
+CREATE INDEX sn_node_instruction_exp_idx ON solarnet.sn_node_instruction
+	(expire_date);
 
 CREATE TABLE solarnet.sn_node_instruction_param (
 	instr_id		BIGINT NOT NULL,

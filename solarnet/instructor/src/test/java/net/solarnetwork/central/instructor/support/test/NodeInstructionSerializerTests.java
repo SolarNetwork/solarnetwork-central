@@ -32,8 +32,8 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.instructor.domain.InstructionParameter;
@@ -46,7 +46,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link NodeInstructionSerializer} class.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NodeInstructionSerializerTests {
 
@@ -65,7 +65,7 @@ public class NodeInstructionSerializerTests {
 		return m;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		mapper = createObjectMapper();
 	}
@@ -159,6 +159,41 @@ public class NodeInstructionSerializerTests {
 				+ ",\"instructionDate\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
 				+ ",\"statusDate\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"parameters\":["
+					 +"{\"name\":\"a\",\"value\":\"" + instr.getParameters().get(0).getValue() +"\"}"
+					+",{\"name\":\"b\",\"value\":\"" + instr.getParameters().get(1).getValue() +"\"}"
+				+ "]}";
+		// @formatter:on
+		assertThat("JSON", json, is(equalTo(expectedJson)));
+	}
+
+	@Test
+	public void serialize_withExpirationDate() throws IOException {
+		// GIVEN
+		final Long id = UUID.randomUUID().getMostSignificantBits();
+		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
+		final String topic = UUID.randomUUID().toString();
+
+		// WHEN
+		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
+		instr.setId(id);
+		instr.setCreated(TEST_DATE);
+		instr.setState(InstructionState.Completed);
+		instr.setExpirationDate(TEST_DATE);
+		instr.setParameters(Arrays.asList(
+				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+						new InstructionParameter("b", UUID.randomUUID().toString()) }));
+		String json = mapper.writeValueAsString(instr);
+
+		// THEN
+		// @formatter:off
+		final String expectedJson = "{\"id\":" + id						
+				+ ",\"created\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"nodeId\":" + nodeId
+				+ ",\"topic\":\"" + topic + "\""
+				+ ",\"instructionDate\":\"" + TEST_DATE_STRING + "\""
+				+ ",\"state\":\"" + InstructionState.Completed.name() + "\""
+				+ ",\"expirationDate\":\"" + TEST_DATE_STRING + "\""
 				+ ",\"parameters\":["
 					 +"{\"name\":\"a\",\"value\":\"" + instr.getParameters().get(0).getValue() +"\"}"
 					+",{\"name\":\"b\",\"value\":\"" + instr.getParameters().get(1).getValue() +"\"}"

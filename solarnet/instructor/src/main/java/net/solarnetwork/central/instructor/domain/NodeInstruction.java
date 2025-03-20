@@ -33,7 +33,7 @@ import net.solarnetwork.domain.InstructionStatus;
  * Instruction for a specific node.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 public class NodeInstruction extends Instruction implements EntityMatch {
 
@@ -41,6 +41,7 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	private static final long serialVersionUID = -8910808111207075055L;
 
 	private Long nodeId;
+	private Instant expirationDate;
 
 	/**
 	 * Default constructor.
@@ -53,41 +54,73 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * Construct with values.
 	 *
 	 * @param topic
-	 * 		the topic
+	 *        the topic
 	 * @param instructionDate
-	 * 		the instruction date
+	 *        the instruction date
 	 * @param nodeId
-	 * 		the node ID
+	 *        the node ID
 	 */
 	public NodeInstruction(String topic, Instant instructionDate, Long nodeId) {
+		this(topic, instructionDate, nodeId, null);
+	}
+
+	/**
+	 * Construct with values.
+	 *
+	 * @param topic
+	 *        the topic
+	 * @param instructionDate
+	 *        the instruction date
+	 * @param nodeId
+	 *        the node ID
+	 * @since 2.4
+	 */
+	public NodeInstruction(String topic, Instant instructionDate, Long nodeId, Instant expirationDate) {
 		super(topic, instructionDate);
 		setNodeId(nodeId);
+		setExpirationDate(expirationDate);
 	}
 
 	/**
 	 * Copy constructor.
 	 *
 	 * @param other
-	 * 		the instance to copy
+	 *        the instance to copy
 	 * @since 1.1
 	 */
 	public NodeInstruction(NodeInstruction other) {
 		super(other);
-		setNodeId(other.getNodeId());
+		other.copyTo(this);
 	}
 
 	/**
 	 * Create a copy with a specific node ID.
 	 *
 	 * @param nodeId
-	 * 		the node ID to assign to the copy
+	 *        the node ID to assign to the copy
 	 * @return the new copy
 	 * @since 2.3
 	 */
 	public NodeInstruction copyWithNodeId(Long nodeId) {
 		NodeInstruction copy = new NodeInstruction(this);
-		copy.setNodeId(nodeId);
+		copyTo(copy);
 		return copy;
+	}
+
+	/**
+	 * Copy the properties of this class to another instance.
+	 * 
+	 * <p>
+	 * Note the properties of the super class are <b>not</b> copied.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the instance to copy to
+	 * @since 2.4
+	 */
+	public void copyTo(NodeInstruction other) {
+		other.setNodeId(nodeId);
+		other.setExpirationDate(expirationDate);
 	}
 
 	@Override
@@ -106,6 +139,10 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 		builder.append(getId());
 		builder.append(", nodeId=");
 		builder.append(nodeId);
+		if ( expirationDate != null ) {
+			builder.append(", expirationDate=");
+			builder.append(expirationDate);
+		}
 		builder.append(", topic=");
 		builder.append(getTopic());
 		builder.append(", state=");
@@ -188,10 +225,35 @@ public class NodeInstruction extends Instruction implements EntityMatch {
 	 * Set the node ID.
 	 *
 	 * @param nodeId
-	 * 		the node ID to set
+	 *        the node ID to set
 	 */
 	public final void setNodeId(Long nodeId) {
 		this.nodeId = nodeId;
+	}
+
+	/**
+	 * Get the expiration date.
+	 * 
+	 * @return the expiration date
+	 */
+	public Instant getExpirationDate() {
+		return expirationDate;
+	}
+
+	/**
+	 * Set the expiration date.
+	 * 
+	 * <p>
+	 * This date represents the point in time that a "pending" instruction can
+	 * be automatically transitioned to the {@code Declined} state, adding an
+	 * appropriate {@code message} result property.
+	 * </p>
+	 * 
+	 * @param expirationDate
+	 *        the expiration date to set
+	 */
+	public void setExpirationDate(Instant expirationDate) {
+		this.expirationDate = expirationDate;
 	}
 
 }
