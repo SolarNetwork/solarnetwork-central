@@ -22,11 +22,14 @@
 
 package net.solarnetwork.central.jobs.config;
 
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
+import net.solarnetwork.central.instructor.jobs.ExpiredNodeInstructionUpdater;
 import net.solarnetwork.central.instructor.jobs.NodeInstructionCleaner;
 import net.solarnetwork.central.instructor.jobs.StaleNodeStateUpdater;
 import net.solarnetwork.central.scheduler.ManagedJob;
@@ -35,7 +38,7 @@ import net.solarnetwork.central.scheduler.ManagedJob;
  * Instructor jobs configuration.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class InstructionJobsConfig {
@@ -46,7 +49,7 @@ public class InstructionJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.instr.cleaner")
 	@Bean
 	public ManagedJob completedNodeInstructionCleaner() {
-		NodeInstructionCleaner job = new NodeInstructionCleaner(nodeInstructionDao);
+		var job = new NodeInstructionCleaner(nodeInstructionDao);
 		job.setId("NodeInstructionCleaner");
 		return job;
 	}
@@ -54,8 +57,17 @@ public class InstructionJobsConfig {
 	@ConfigurationProperties(prefix = "app.job.instr.stale-queuing")
 	@Bean
 	public ManagedJob queuingStaleNodeStateUpdator() {
-		StaleNodeStateUpdater job = new StaleNodeStateUpdater(nodeInstructionDao);
+		var job = new StaleNodeStateUpdater(nodeInstructionDao);
 		job.setId("StaleNodeStateUpdater-Queuing");
+		return job;
+	}
+
+	@ConfigurationProperties(prefix = "app.job.instr.expired-transition")
+	@Bean
+	public ManagedJob expiredNodeInstructionUpdater(
+			@Value("${app.job.instr.expired-transition.message}") String message) {
+		var job = new ExpiredNodeInstructionUpdater(nodeInstructionDao, Map.of("message", message));
+		job.setId("ExpiredNodeInstructionUpdater");
 		return job;
 	}
 

@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -930,6 +931,51 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 				then(row)
 					.as("State not changed for non-expired entity")
 					.containsEntry("deliver_state", instr.getState().name())
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void transitionExpired_mergeResultParameters() {
+		// GIVEN
+		final Instant expirationDate = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+		final NodeInstruction instruction = storeNewInstruction(TEST_NODE_ID, Instant.now(),
+				Map.of("foo", "bar"), instr -> {
+					instr.setState(InstructionState.Queued);
+					instr.setExpirationDate(expirationDate.minusSeconds(1));
+				});
+
+		// WHEN
+		var criteria = new NodeInstruction();
+		criteria.setExpirationDate(expirationDate);
+		criteria.setState(InstructionState.Declined);
+		criteria.setResultParameters(Map.of("message", randomString()));
+		int result = dao.transitionExpiredInstructions(criteria);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Expired rows updated")
+			.isOne()
+			;
+		
+		List<Map<String, Object>> rows = allNodeInstructionRows();
+		then(rows)
+			.as("All instructions are persisted")
+			.hasSize(1)
+			;
+		
+		then(rows).element(0, map(String.class, Object.class))
+			.as("State transitioned to given state")
+			.containsEntry("deliver_state", criteria.getState().name())
+			.hasEntrySatisfying("jresult_params", json -> {
+				var merged = new LinkedHashMap<>(instruction.getResultParameters());
+				merged.putAll(criteria.getResultParameters());
+				then(JsonUtils.getStringMap(json.toString()))
+					.as("Result parameters is merged from original and update properties")
+					.isEqualTo(merged)
 					;
 			})
 			;
