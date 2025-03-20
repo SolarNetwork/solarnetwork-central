@@ -372,7 +372,7 @@ public class DatumExportController {
 	/**
 	 * Submit an ad hoc export job request.
 	 *
-	 * @param config
+	 * @param input
 	 *        the export job configuration
 	 * @return the task info
 	 * @since 1.1
@@ -400,7 +400,7 @@ public class DatumExportController {
 	 * destination configurations, instead of submitting ad-hoc versions of
 	 * those.
 	 *
-	 * @param config
+	 * @param input
 	 *        the export job configuration
 	 * @return the task info
 	 * @since 1.3
