@@ -40,7 +40,7 @@ import net.solarnetwork.util.SearchFilter;
  * Generate dynamic SQL for a "find stream metadata" query.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  * @since 3.8
  */
 public final class SelectObjectStreamMetadata implements PreparedStatementCreator, SqlProvider {
@@ -108,8 +108,15 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 
 	@Override
 	public String getSql() {
+		final boolean withNameFts = (kind == ObjectDatumKind.Location
+				&& style == MetadataSelectStyle.WithGeography && filter.hasLocationCriteria()
+				&& filter.getLocation().getName() != null);
+
 		StringBuilder buf = new StringBuilder();
 		int idx;
+		if ( withNameFts ) {
+			buf.append("SELECT * FROM (\n");
+		}
 		if ( kind == ObjectDatumKind.Location ) {
 			idx = DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
 					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, buf);
@@ -121,6 +128,20 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 		if ( idx > 0 && searchFilter != null ) {
 			DatumSqlUtils.metadataSearchFilterSql(searchFilter, buf);
 		}
+
+		if ( withNameFts ) {
+			// add metadata rows that FTS match on stream metadata (in addition to location metadata above)
+			buf.append("\nUNION\n\n");
+			var tmp = new StringBuilder();
+			DatumSqlUtils.locationMetadataFilterSql(filter, style, filter, "solardatm.da_datm",
+					Aggregation.None, null, SQL_AT_LOCATION_TIME_ZONE, tmp);
+			buf.append(tmp.toString().replace("l.fts_default", "s.fts_default"));
+			if ( searchFilter != null ) {
+				DatumSqlUtils.metadataSearchFilterSql(searchFilter, buf);
+			}
+			buf.append(") s\n");
+		}
+
 		StringBuilder order = new StringBuilder();
 		idx = orderBySorts(filter.getSorts(),
 				kind == ObjectDatumKind.Location
@@ -137,6 +158,10 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 	private PreparedStatement createStatement(Connection con, String sql) throws SQLException {
 		PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
 				ResultSet.CONCUR_READ_ONLY, ResultSet.CLOSE_CURSORS_AT_COMMIT);
+		final boolean withNameFts = (kind == ObjectDatumKind.Location
+				&& style == MetadataSelectStyle.WithGeography && filter.hasLocationCriteria()
+				&& filter.getLocation().getName() != null);
+
 		int p = 0;
 		if ( filter.hasLocalDateRange() ) {
 			p = DatumSqlUtils.prepareLocalDateRangeFilter(filter, con, stmt, p);
@@ -145,8 +170,16 @@ public final class SelectObjectStreamMetadata implements PreparedStatementCreato
 		}
 		p = DatumSqlUtils.prepareObjectMetadataFilter(filter, kind, con, stmt, p);
 		if ( p > 0 && searchFilter != null ) {
-			DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
+			p = DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
 		}
+
+		if ( withNameFts ) {
+			stmt.setString(++p, filter.getLocation().getName());
+			if ( searchFilter != null ) {
+				DatumSqlUtils.prepareMetadataSearchFilter(searchFilter, con, stmt, p);
+			}
+		}
+
 		return stmt;
 	}
 

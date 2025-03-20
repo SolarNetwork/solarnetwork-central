@@ -10,6 +10,7 @@ SELECT * FROM (
 		AND l.longitude IS NULL
 		AND l.elevation IS NULL
 		AND l.fts_default @@ solarcommon.plainto_prefix_tsquery(?)
+		AND solarcommon.json_array_to_text_array(s.jdata -> 't') @> ?
 	
 	UNION
 	
@@ -24,5 +25,6 @@ SELECT * FROM (
 		AND l.longitude IS NULL
 		AND l.elevation IS NULL
 		AND s.fts_default @@ solarcommon.plainto_prefix_tsquery(?)
+		AND solarcommon.json_array_to_text_array(s.jdata -> 't') @> ?
 ) s
 ORDER BY loc_id, source_id

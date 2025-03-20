@@ -43,7 +43,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
@@ -56,7 +56,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SelectObjectStreamMetadata} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SelectObjectStreamMetadataTests {
 
@@ -463,7 +463,6 @@ public class SelectObjectStreamMetadataTests {
 		filter.setSorts(sorts("loc", "source"));
 		SimpleLocation locFilter = new SimpleLocation();
 		locFilter.setName("Wellington");
-		locFilter.setTimeZoneId("Pacific/Auckland");
 		filter.setLocation(locFilter);
 
 		// WHEN
@@ -473,6 +472,26 @@ public class SelectObjectStreamMetadataTests {
 		log.debug("Generated SQL:\n{}", sql);
 		assertThat("SQL matches", sql, equalToTextResource("loc-stream-meta-geo-fts-sortLocSource.sql",
 				TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_loc_streamMeta_geo_fts_tag_sortLocSource() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setName("Wellington");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(/t=foo)");
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter).getSql();
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sql);
+		assertThat("SQL matches", sql, equalToTextResource(
+				"loc-stream-meta-geo-fts-tag-sortLocSource.sql", TestSqlResources.class));
 	}
 
 	@Test
@@ -685,6 +704,86 @@ public class SelectObjectStreamMetadataTests {
 				equalToTextResource("node-stream-meta-statusPropertyNames.sql", TestSqlResources.class));
 		assertThat("Connection statement returned", result, sameInstance(stmt));
 		verify(con, stmt, namesArray);
+	}
+
+	@Test
+	public void prep_loc_streamMeta_geo_fts_sortLocSource() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setName("Wellington");
+		filter.setLocation(locFilter);
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		stmt.setString(1, locFilter.getName());
+		stmt.setString(2, locFilter.getName());
+
+		// WHEN
+		replay(con, stmt);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"loc-stream-meta-geo-fts-sortLocSource.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt);
+
+	}
+
+	@Test
+	public void prep_loc_streamMeta_geo_fts_tag_sortLocSource() throws SQLException {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setObjectKind(ObjectDatumKind.Location);
+		filter.setSorts(sorts("loc", "source"));
+		SimpleLocation locFilter = new SimpleLocation();
+		locFilter.setName("Wellington");
+		filter.setLocation(locFilter);
+		filter.setSearchFilter("(&(/t=foo)(/t=bar))");
+
+		Connection con = EasyMock.createMock(Connection.class);
+		PreparedStatement stmt = EasyMock.createMock(PreparedStatement.class);
+
+		Capture<String> sqlCaptor = new Capture<>();
+		expect(con.prepareStatement(capture(sqlCaptor), eq(ResultSet.TYPE_FORWARD_ONLY),
+				eq(ResultSet.CONCUR_READ_ONLY), eq(ResultSet.CLOSE_CURSORS_AT_COMMIT))).andReturn(stmt);
+
+		stmt.setString(1, locFilter.getName());
+
+		Array tagsArray1 = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(new String[] { "foo", "bar" })))
+				.andReturn(tagsArray1);
+		stmt.setArray(2, tagsArray1);
+		tagsArray1.free();
+
+		stmt.setString(3, locFilter.getName());
+
+		Array tagsArray2 = EasyMock.createMock(Array.class);
+		expect(con.createArrayOf(eq("text"), aryEq(new String[] { "foo", "bar" })))
+				.andReturn(tagsArray2);
+		stmt.setArray(4, tagsArray2);
+		tagsArray2.free();
+
+		// WHEN
+		replay(con, stmt, tagsArray1, tagsArray2);
+		PreparedStatement result = new SelectObjectStreamMetadata(filter).createPreparedStatement(con);
+
+		// THEN
+		log.debug("Generated SQL:\n{}", sqlCaptor.getValue());
+		assertThat("SQL matches", sqlCaptor.getValue(), equalToTextResource(
+				"loc-stream-meta-geo-fts-tag-sortLocSource.sql", TestSqlResources.class));
+		assertThat("Connection statement returned", result, sameInstance(stmt));
+		verify(con, stmt, tagsArray1, tagsArray2);
+
 	}
 
 }
