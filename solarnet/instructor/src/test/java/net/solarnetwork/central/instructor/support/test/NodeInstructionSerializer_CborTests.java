@@ -33,8 +33,8 @@ import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
@@ -48,7 +48,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link NodeInstructionSerializer} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class NodeInstructionSerializer_CborTests {
 
@@ -66,7 +66,7 @@ public class NodeInstructionSerializer_CborTests {
 		return m;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		mapper = createObjectMapper();
 	}
@@ -131,6 +131,28 @@ public class NodeInstructionSerializer_CborTests {
 
 		// THEN
 		assertThat("CBOR", cbor, is(arrayWithSize(327)));
+	}
+
+	@Test
+	public void serialize_withExpirationDate() throws IOException {
+		// GIVEN
+		final Long id = UUID.randomUUID().getMostSignificantBits();
+		final Long nodeId = UUID.randomUUID().getMostSignificantBits();
+		final String topic = UUID.randomUUID().toString();
+
+		// WHEN
+		NodeInstruction instr = new NodeInstruction(topic, TEST_DATE, nodeId);
+		instr.setId(id);
+		instr.setCreated(TEST_DATE);
+		instr.setState(InstructionState.Completed);
+		instr.setExpirationDate(TEST_DATE);
+		instr.setParameters(Arrays.asList(
+				new InstructionParameter[] { new InstructionParameter("a", UUID.randomUUID().toString()),
+						new InstructionParameter("b", UUID.randomUUID().toString()) }));
+		Byte[] cbor = objectArray(mapper.writeValueAsBytes(instr));
+
+		// THEN
+		assertThat("CBOR", cbor, is(arrayWithSize(331)));
 	}
 
 }

@@ -201,6 +201,9 @@ app:
         days-older: 30
         abandoned-days-older: 120
         schedule: "0 0 1 ? * SUN"
+      expired-transition:
+        message: "Expired"
+        schedule: 60000
       stale-queuing:
         seconds-older: 30
         schedule: "6/10 * * * * *"

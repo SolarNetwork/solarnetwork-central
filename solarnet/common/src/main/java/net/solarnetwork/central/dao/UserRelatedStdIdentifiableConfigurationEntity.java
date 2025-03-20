@@ -56,8 +56,7 @@ public interface UserRelatedStdIdentifiableConfigurationEntity<C extends UserRel
 	 * @param sensitiveKeyProvider
 	 *        a function that can supply a set of "sensitive" information keys
 	 *        (names) that should be masked
-	 * @param returns
-	 *        this object for method chaining
+	 * @returns this object for method chaining
 	 * @since 1.1
 	 */
 	default UserRelatedStdIdentifiableConfigurationEntity<C, K> digestSensitiveInformation(

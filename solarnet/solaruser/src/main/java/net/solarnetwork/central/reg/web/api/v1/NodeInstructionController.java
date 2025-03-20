@@ -149,7 +149,6 @@ public class NodeInstructionController {
 	 *        the HTTP accept header value
 	 * @param response
 	 *        the HTTP response
-	 * @return the instruction
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/view", method = RequestMethod.GET, params = "ids")
@@ -177,7 +176,6 @@ public class NodeInstructionController {
 	 *        the HTTP accept header value
 	 * @param response
 	 *        the HTTP response
-	 * @return the active instructions for the node
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "!nodeIds")
 	@ResponseBody
@@ -196,7 +194,6 @@ public class NodeInstructionController {
 	 *        the HTTP accept header value
 	 * @param response
 	 *        the HTTP response
-	 * @return the active instructions for the nodes
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewActive", method = RequestMethod.GET, params = "nodeIds")
@@ -225,7 +222,6 @@ public class NodeInstructionController {
 	 *        the HTTP accept header value
 	 * @param response
 	 *        the HTTP response
-	 * @return the pending instructions for the node
 	 * @since 1.1
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "!nodeIds")
@@ -245,7 +241,6 @@ public class NodeInstructionController {
 	 *        the HTTP accept header value
 	 * @param response
 	 *        the HTTP response
-	 * @return the pending instructions for the nodes
 	 * @since 1.2
 	 */
 	@RequestMapping(value = "/viewPending", method = RequestMethod.GET, params = "nodeIds")

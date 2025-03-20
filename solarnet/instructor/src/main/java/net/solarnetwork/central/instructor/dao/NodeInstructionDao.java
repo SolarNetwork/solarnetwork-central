@@ -37,7 +37,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public interface NodeInstructionDao
 		extends GenericDao<NodeInstruction, Long>, FilterableDao<EntityMatch, Long, InstructionFilter> {
@@ -63,6 +63,24 @@ public interface NodeInstructionDao
 	 * @since 2.1
 	 */
 	long purgeIncompleteInstructions(Instant olderThanDate);
+
+	/**
+	 * Transition instructions that have expired to a new state.
+	 * 
+	 * <p>
+	 * The {@link NodeInstruction#getExpirationDate()} will be used as the date
+	 * before which expired instructions should be transitioned. The
+	 * {@link NodeInstruction#getState()} will be the state the matching
+	 * instructions are transitioned to. The
+	 * {@link NodeInstruction#getResultParameters()} will be persisted as well.
+	 * </p>
+	 * 
+	 * @param criteria
+	 *        the expiration criteria
+	 * @return the updated row count
+	 * @since 2.5
+	 */
+	int transitionExpiredInstructions(NodeInstruction criteria);
 
 	/**
 	 * Update the state of a node instruction.

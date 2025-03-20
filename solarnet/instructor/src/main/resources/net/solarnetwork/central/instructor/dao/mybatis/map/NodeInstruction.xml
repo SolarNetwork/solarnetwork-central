@@ -12,6 +12,7 @@
 			<if test="created != null">,created</if>
 			<if test="statusDate != null">,modified</if>
 			, node_id, topic, instr_date, deliver_state
+			<if test="expirationDate != null">, expire_date</if>
 			<if test="resultParametersJson != null">,jresult_params</if>
 			)
 		VALUES
@@ -20,6 +21,7 @@
 			<if test="statusDate != null">,#{statusDate}</if>
 			, #{nodeId}, #{topic}, #{instructionDate}, 
 			CAST(#{state} AS solarnet.instruction_delivery_state)
+			<if test="expirationDate != null">, #{expirationDate}</if>
 			<if test="resultParametersJson != null">,CAST(#{resultParametersJson} AS json)</if>
 			)
 	</insert>
@@ -91,6 +93,7 @@
 		ni.topic AS sn_node_instruction_topic,
 		ni.instr_date AS sn_node_instruction_instr_date,
 		ni.deliver_state AS sn_node_instruction_deliver_state,
+		ni.expire_date AS sn_node_instruction_expire_date,
 		ni.jresult_params AS sn_node_instruction_jresult_params
 	</sql>
 	
@@ -102,6 +105,7 @@
 		<result property="topic" column="sn_node_instruction_topic"/>
 		<result property="instructionDate" column="sn_node_instruction_instr_date"/>
 		<result property="state" column="sn_node_instruction_deliver_state"/>
+		<result property="expirationDate" column="sn_node_instruction_expire_date"/>
 		<result property="resultParametersJson" column="sn_node_instruction_jresult_params"/>
 		<collection property="parameters" resultMap="net.solarnetwork.central.instructor.dao.mybatis.NodeInstruction.InstructionParameterFullResult"/>
 	</resultMap>
@@ -179,6 +183,16 @@
 		{#{result, mode=OUT, jdbcType=BIGINT} = call solarnet.purge_incomplete_instructions(
 			#{date, mode=IN, jdbcType=TIMESTAMP}
 		)}
+	</update>
+	
+	<update id="update-NodeInstruction-expired" parameterType="NodeInstruction">
+		UPDATE solarnet.sn_node_instruction
+		SET deliver_state = #{state}::solarnet.instruction_delivery_state
+			, jresult_params = CAST(COALESCE(jresult_params::jsonb, '{}'::jsonb) || #{resultParametersJson}::jsonb AS json)
+		WHERE expire_date &lt; #{expirationDate}
+			AND deliver_state NOT IN (
+				  'Declined'::solarnet.instruction_delivery_state
+				, 'Completed'::solarnet.instruction_delivery_state)
 	</update>
 	
 	<!-- InstructionParameter support -->

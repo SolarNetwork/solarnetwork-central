@@ -37,7 +37,7 @@ import net.solarnetwork.codec.JsonUtils;
  * Serializer for {@link NodeInstruction} objects.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 
@@ -72,21 +72,35 @@ public class NodeInstructionSerializer extends StdSerializer<NodeInstruction> {
 				+ (instr.getInstructionDate() != null ? 1 : 0)
 				+ (instr.getState() != null ? 1 : 0)
 				+ (instr.getStatusDate() != null ? 1 : 0)
+				+ (instr.getExpirationDate() != null ? 1 : 0)
 				+ (hasParameters ? 1 : 0)
 				+ (hasResultParams ? 1 : 0)
 				;
 		// @formatter:on
 		generator.writeStartObject(instr, size);
-		generator.writeNumberField("id", instr.getId());
-		generator.writeObjectField("created", instr.getCreated());
-		generator.writeNumberField("nodeId", instr.getNodeId());
-		generator.writeStringField("topic", instr.getTopic());
-		generator.writeObjectField("instructionDate", instr.getInstructionDate());
+		if ( instr.getId() != null ) {
+			generator.writeNumberField("id", instr.getId());
+		}
+		if ( instr.getCreated() != null ) {
+			generator.writeObjectField("created", instr.getCreated());
+		}
+		if ( instr.getNodeId() != null ) {
+			generator.writeNumberField("nodeId", instr.getNodeId());
+		}
+		if ( instr.getTopic() != null ) {
+			generator.writeStringField("topic", instr.getTopic());
+		}
+		if ( instr.getInstructionDate() != null ) {
+			generator.writeObjectField("instructionDate", instr.getInstructionDate());
+		}
 		if ( instr.getState() != null ) {
 			generator.writeStringField("state", instr.getState().toString());
 		}
 		if ( instr.getStatusDate() != null ) {
 			generator.writeObjectField("statusDate", instr.getStatusDate());
+		}
+		if ( instr.getExpirationDate() != null ) {
+			generator.writeObjectField("expirationDate", instr.getExpirationDate());
 		}
 		if ( hasParameters ) {
 			generator.writeFieldName("parameters");

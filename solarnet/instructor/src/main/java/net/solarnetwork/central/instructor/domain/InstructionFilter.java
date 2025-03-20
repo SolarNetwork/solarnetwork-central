@@ -31,7 +31,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Filter for Instruction entities.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface InstructionFilter extends Filter, DateRangeCriteria {
 
@@ -51,12 +51,33 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	Long[] getNodeIds();
 
 	/**
+	 * Test if a node ID is present.
+	 * 
+	 * @return {@code true} if at least one node ID is present
+	 * @since 1.5
+	 */
+	default boolean hasNodeIdCriteria() {
+		return getNodeId() != null;
+	}
+
+	/**
 	 * Get an array of instruction IDs.
 	 *
 	 * @return array of instruction IDs (may be {@literal null})
 	 * @since 1.2
 	 */
 	Long[] getInstructionIds();
+
+	/**
+	 * Test if an instruction ID is present.
+	 * 
+	 * @return {@code true} if at least one instruction ID is available
+	 * @since 1.5
+	 */
+	default boolean hasInstructionIdCriteria() {
+		Long[] ids = getInstructionIds();
+		return (ids != null && ids.length > 0);
+	}
 
 	/**
 	 * Filter based on state.
@@ -68,8 +89,19 @@ public interface InstructionFilter extends Filter, DateRangeCriteria {
 	/**
 	 * Filter based on a set of states.
 	 *
-	 * @return the states, treated as a logical <em>or</em> so an instruction matches if its state is
-	 * contained in this set
+	 * @return the states, treated as a logical <em>or</em> so an instruction
+	 *         matches if its state is contained in this set
 	 */
 	List<InstructionState> getStates();
+
+	/**
+	 * Test if an instruction state is present.
+	 * 
+	 * @return {@code true} if at least one instruction state is available
+	 * @since 1.5
+	 */
+	default boolean hasInstructionStateCriteria() {
+		return getState() != null;
+	}
+
 }

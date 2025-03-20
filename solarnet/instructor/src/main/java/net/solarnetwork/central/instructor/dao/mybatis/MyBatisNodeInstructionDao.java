@@ -45,7 +45,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * MyBatis implementation of {@link NodeInstructionDao}.
  *
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -55,7 +55,8 @@ public class MyBatisNodeInstructionDao
 	public static final String UPDATE_PURGE_COMPLETED_INSTRUCTIONS = "delete-NodeInstruction-completed";
 
 	/**
-	 * Query name used by {@link #updateNodeInstructionState(Long, Long, InstructionState, Map)}.
+	 * Query name used by
+	 * {@link #updateNodeInstructionState(Long, Long, InstructionState, Map)}.
 	 *
 	 * @since 1.2
 	 */
@@ -83,6 +84,14 @@ public class MyBatisNodeInstructionDao
 	 * @since 1.4
 	 */
 	public static final String UPDATE_PURGE_INCOMPLETE_INSTRUCTIONS = "delete-NodeInstruction-incomplete";
+
+	/**
+	 * Query name used by
+	 * {@link #transitionExpiredInstructions(NodeInstruction)}.
+	 * 
+	 * @since 1.10
+	 */
+	public static final String UPDATE_TRANSITION_EXPIRED = "update-NodeInstruction-expired";
 
 	/**
 	 * Default constructor.
@@ -168,8 +177,7 @@ public class MyBatisNodeInstructionDao
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException {
 		requireNonNullArgument(filter, "filter");
 		requireNonNullArgument(processor, "processor");
-		processor.start(null, null, null,
-				Collections.emptyMap()); // TODO: support count total results/offset/max
+		processor.start(null, null, null, Collections.emptyMap()); // TODO: support count total results/offset/max
 		try {
 			getSqlSession().select("findall-NodeInstruction-EntityMatch",
 					singletonMap(FILTER_PROPERTY, filter),
@@ -188,6 +196,11 @@ public class MyBatisNodeInstructionDao
 			}
 			throw e;
 		}
+	}
+
+	@Override
+	public int transitionExpiredInstructions(NodeInstruction criteria) {
+		return getSqlSession().update(UPDATE_TRANSITION_EXPIRED, criteria);
 	}
 
 }
