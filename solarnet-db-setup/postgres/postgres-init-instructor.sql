@@ -21,9 +21,11 @@ CREATE TABLE solarnet.sn_node_instruction (
 
 CREATE INDEX sn_node_instruction_node_idx ON solarnet.sn_node_instruction
 	(node_id, deliver_state, instr_date);
-	
+
 CREATE INDEX sn_node_instruction_exp_idx ON solarnet.sn_node_instruction
-	(expire_date);
+	(expire_date) WHERE deliver_state NOT IN (
+		  'Declined'::solarnet.instruction_delivery_state
+		, 'Completed'::solarnet.instruction_delivery_state);
 
 CREATE TABLE solarnet.sn_node_instruction_param (
 	instr_id		BIGINT NOT NULL,
