@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.dao;
 
 import java.util.Arrays;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.KeyCriteria;
+import net.solarnetwork.central.common.dao.TopicCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
@@ -34,6 +36,7 @@ import net.solarnetwork.dao.PaginationCriteria;
  */
 public class BasicUserSecretFilter extends BasicCoreCriteria implements UserSecretFilter {
 
+	private String[] topicIds;
 	private String[] keys;
 
 	/**
@@ -54,9 +57,13 @@ public class BasicUserSecretFilter extends BasicCoreCriteria implements UserSecr
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicUserSecretFilter c ) {
+			setTopicIds(c.getTopicIds());
 			setKeys(c.getKeys());
 		} else {
-			if ( criteria instanceof UserSecretFilter c ) {
+			if ( criteria instanceof TopicCriteria c ) {
+				setTopicIds(c.getTopicIds());
+			}
+			if ( criteria instanceof KeyCriteria c ) {
 				setKeys(c.getKeys());
 			}
 		}
@@ -88,6 +95,54 @@ public class BasicUserSecretFilter extends BasicCoreCriteria implements UserSecr
 	@Override
 	public BasicUserSecretFilter clone() {
 		return (BasicUserSecretFilter) super.clone();
+	}
+
+	/**
+	 * Set a single topic ID.
+	 * 
+	 * <p>
+	 * This will completely replace the configured topic IDs.
+	 * </p>
+	 * 
+	 * @param topicId
+	 *        the topic ID to set
+	 */
+	public void setTopicId(String topicId) {
+		setTopicIds(topicId != null ? new String[] { topicId } : null);
+	}
+
+	/**
+	 * Get the topic IDs.
+	 * 
+	 * @return the topic IDs
+	 */
+	@Override
+	public String[] getTopicIds() {
+		return topicIds;
+	}
+
+	/**
+	 * Set the topic IDS.
+	 * 
+	 * @param topicIds
+	 *        the topic IDs to set
+	 */
+	public void setTopicIds(String[] topicIds) {
+		this.topicIds = topicIds;
+	}
+
+	/**
+	 * Set a single key.
+	 * 
+	 * <p>
+	 * This will completely replace the configured keys.
+	 * </p>
+	 * 
+	 * @param key
+	 *        the key to set
+	 */
+	public void setKey(String key) {
+		setKeys(key != null ? new String[] { key } : null);
 	}
 
 	@Override

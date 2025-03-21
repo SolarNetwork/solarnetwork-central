@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserSecretDao.java - 21/03/2025 4:42:34 pm
+ * KeyCriteria.java - 22/03/2025 7:36:26 am
  * 
  * Copyright 2025 SolarNetwork.net Dev Team
  * 
@@ -20,21 +20,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao;
-
-import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
-import net.solarnetwork.central.domain.UserStringStringCompositePK;
-import net.solarnetwork.central.user.domain.UserSecretEntity;
-import net.solarnetwork.dao.FilterableDao;
+package net.solarnetwork.central.common.dao;
 
 /**
- * DAO API for {@link UserSecretEntity} objects.
+ * Criteria API for keyed entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserSecretDao extends
-		GenericCompositeKey3Dao<UserSecretEntity, UserStringStringCompositePK, Long, String, String>,
-		FilterableDao<UserSecretEntity, UserStringStringCompositePK, UserSecretFilter> {
+public interface KeyCriteria {
+
+	/**
+	 * Get the key criteria.
+	 * 
+	 * @return the keys
+	 */
+	String[] getKeys();
+
+	/**
+	 * Get a single key criteria.
+	 * 
+	 * @return the first available key criteria
+	 */
+	default String getKey() {
+		String[] keys = getKeys();
+		return (keys != null && keys.length > 0 ? keys[0] : null);
+	}
+
+	/**
+	 * Test if any key criteria is available.
+	 * 
+	 * @return {@code true} if at least one key criteria is available
+	 */
+	default boolean hasKeyCriteria() {
+		return getKey() != null;
+	}
 
 }

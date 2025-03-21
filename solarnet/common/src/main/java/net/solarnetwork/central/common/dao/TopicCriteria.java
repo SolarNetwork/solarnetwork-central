@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserSecretFilter.java - 21/03/2025 5:35:34 pm
+ * TopicCriteria.java - 12/08/2022 4:44:36 pm
  * 
- * Copyright 2025 SolarNetwork.net Dev Team
+ * Copyright 2022 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,19 +20,46 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.dao;
-
-import net.solarnetwork.central.common.dao.KeyCriteria;
-import net.solarnetwork.central.common.dao.TopicCriteria;
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
+package net.solarnetwork.central.common.dao;
 
 /**
- * Filter API for user secret entities.
+ * Criteria API for topical entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserSecretFilter extends UserCriteria, TopicCriteria, KeyCriteria, PaginationCriteria {
+public interface TopicCriteria {
+
+	/**
+	 * Test if any group criteria exists.
+	 * 
+	 * @return {@literal true} if a group criteria exists
+	 */
+	default boolean hasTopicCriteria() {
+		String id = getTopicId();
+		return (id != null);
+	}
+
+	/**
+	 * Get an array of group IDs.
+	 * 
+	 * @return array of IDs (may be {@literal null})
+	 */
+	String[] getTopicIds();
+
+	/**
+	 * Get the first group ID.
+	 * 
+	 * <p>
+	 * This returns the first available ID from the {@link #getTopicIds()}
+	 * array, or {@literal null} if not available.
+	 * </p>
+	 * 
+	 * @return the group ID, or {@literal null} if not available
+	 */
+	default String getTopicId() {
+		String[] ids = getTopicIds();
+		return (ids != null && ids.length > 0 ? ids[0] : null);
+	}
 
 }

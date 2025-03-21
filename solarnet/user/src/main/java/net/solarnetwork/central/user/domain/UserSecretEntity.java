@@ -28,7 +28,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import net.solarnetwork.central.dao.BasicUserEntity;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
-import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A user-managed "secret".
@@ -47,18 +46,34 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 *
 	 * @param id
 	 *        the primary key
-	 * @param created
-	 *        the creation date
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserSecretEntity(UserStringStringCompositePK id, Instant created, byte[] secret) {
-		super(id, created);
-		byte[] secretCopy = new byte[requireNonNullArgument(secret, "secret").length];
-		System.arraycopy(secret, 0, secretCopy, 0, secret.length);
-		this.secret = secretCopy;
+	public UserSecretEntity(UserStringStringCompositePK id, byte[] secret) {
+		super(id);
+		this.secret = Arrays.copyOf(secret, requireNonNullArgument(secret, "secret").length);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param id
+	 *        the primary key
+	 * @param created
+	 *        the creation date
+	 * @param modified
+	 *        the modification date
+	 * @param secret
+	 *        the secret value
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserSecretEntity(UserStringStringCompositePK id, Instant created, Instant modified,
+			byte[] secret) {
+		super(id, created, modified);
+		this.secret = Arrays.copyOf(secret, requireNonNullArgument(secret, "secret").length);
 	}
 
 	/**
@@ -66,19 +81,22 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param groupId
-	 *        the group ID
+	 * @param topicId
+	 *        the topic ID
 	 * @param key
 	 *        the key
 	 * @param created
 	 *        the creation date
+	 * @param modified
+	 *        the modification date
 	 * @param secret
 	 *        the secret value
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserSecretEntity(Long userId, String groupId, String key, Instant created, byte[] secret) {
-		this(new UserStringStringCompositePK(userId, groupId, key), created, secret);
+	public UserSecretEntity(Long userId, String topicId, String key, Instant created, Instant modified,
+			byte[] secret) {
+		this(new UserStringStringCompositePK(userId, topicId, key), created, modified, secret);
 	}
 
 	/**
@@ -90,6 +108,24 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 *
 	 * @param id
 	 *        the primary key
+	 * @param secretValue
+	 *        the secret value
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
+	 */
+	public UserSecretEntity(UserStringStringCompositePK id, String secretValue) {
+		this(id, requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * The secret value will be encoded as UTF-8 bytes.
+	 * </p>
+	 * 
+	 * @param id
+	 *        the ID
 	 * @param created
 	 *        the creation date
 	 * @param secretValue
@@ -97,9 +133,9 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserSecretEntity(UserStringStringCompositePK id, Instant created, String secretValue) {
-		this(id, created,
-				ObjectUtils.requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
+	public UserSecretEntity(UserStringStringCompositePK id, Instant created, Instant modified,
+			String secretValue) {
+		this(id, created, modified, requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
 	}
 
 	/**
@@ -111,8 +147,8 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * 
 	 * @param userId
 	 *        the user ID
-	 * @param groupId
-	 *        the group ID
+	 * @param topicId
+	 *        the topic ID
 	 * @param key
 	 *        the key
 	 * @param created
@@ -122,19 +158,15 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserSecretEntity(Long userId, String groupId, String key, Instant created,
+	public UserSecretEntity(Long userId, String topicId, String key, Instant created, Instant modified,
 			String secretValue) {
-		this(new UserStringStringCompositePK(userId, groupId, key), created, secretValue);
+		this(userId, topicId, key, created, modified,
+				requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
 	}
 
 	@Override
 	public UserSecretEntity copyWithId(UserStringStringCompositePK id) {
-		return new UserSecretEntity(id, getCreated(), secret);
-	}
-
-	@Override
-	public void copyTo(UserSecretEntity entity) {
-		throw new UnsupportedOperationException();
+		return new UserSecretEntity(id, getCreated(), getModified(), secret);
 	}
 
 	@Override
@@ -143,11 +175,11 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	}
 
 	/**
-	 * Get the group ID.
+	 * Get the topic ID.
 	 * 
-	 * @return the group ID
+	 * @return the topic ID
 	 */
-	public String getGroupId() {
+	public String getTopicId() {
 		var pk = getId();
 		return (pk != null ? pk.getGroupId() : null);
 	}
@@ -168,9 +200,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @return the secret value
 	 */
 	public byte[] secret() {
-		byte[] secretCopy = new byte[secret.length];
-		System.arraycopy(secret, 0, secretCopy, 0, secret.length);
-		return secretCopy;
+		return Arrays.copyOf(secret, secret.length);
 	}
 
 	/**

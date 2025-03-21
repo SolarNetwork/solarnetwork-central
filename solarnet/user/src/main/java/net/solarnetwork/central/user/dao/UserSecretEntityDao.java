@@ -1,5 +1,5 @@
 /* ==================================================================
- * UserSecretFilter.java - 21/03/2025 5:35:34 pm
+ * UserSecretEntityDao.java - 21/03/2025 4:42:34 pm
  * 
  * Copyright 2025 SolarNetwork.net Dev Team
  * 
@@ -22,17 +22,19 @@
 
 package net.solarnetwork.central.user.dao;
 
-import net.solarnetwork.central.common.dao.KeyCriteria;
-import net.solarnetwork.central.common.dao.TopicCriteria;
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.central.common.dao.GenericCompositeKey3Dao;
+import net.solarnetwork.central.domain.UserStringStringCompositePK;
+import net.solarnetwork.central.user.domain.UserSecretEntity;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
- * Filter API for user secret entities.
+ * DAO API for {@link UserSecretEntity} objects.
  * 
  * @author matt
  * @version 1.0
  */
-public interface UserSecretFilter extends UserCriteria, TopicCriteria, KeyCriteria, PaginationCriteria {
+public interface UserSecretEntityDao extends
+		GenericCompositeKey3Dao<UserSecretEntity, UserStringStringCompositePK, Long, String, String>,
+		FilterableDao<UserSecretEntity, UserStringStringCompositePK, UserSecretFilter> {
 
 }

@@ -43,6 +43,8 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	@Serial
 	private static final long serialVersionUID = 1520924063897057459L;
 
+	private final Instant modified;
+
 	/**
 	 * Constructor.
 	 *
@@ -50,10 +52,10 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 *        the ID
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
-	 * @since 1.2
 	 */
 	public BasicUserEntity(K id) {
 		super(requireNonNullArgument(id, "id"), null);
+		this.modified = null;
 	}
 
 	/**
@@ -63,11 +65,14 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 *        the ID
 	 * @param created
 	 *        the creation date
+	 * @param modified
+	 *        the modification date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public BasicUserEntity(K id, Instant created) {
+	public BasicUserEntity(K id, Instant created, Instant modified) {
 		super(requireNonNullArgument(id, "id"), requireNonNullArgument(created, "created"));
+		this.modified = requireNonNullArgument(modified, "modified");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -80,7 +85,8 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	 * Test if this entity has the same property values as another.
 	 *
 	 * <p>
-	 * The {@code id} and {@code created} properties are not compared.
+	 * The {@code id}, {@code created}, and {@code modified} properties are not
+	 * compared.
 	 * </p>
 	 *
 	 * @param other
@@ -93,6 +99,11 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 	@Override
 	public boolean differsFrom(C other) {
 		return !isSameAs(other);
+	}
+
+	@Override
+	public void copyTo(C entity) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -116,6 +127,15 @@ public abstract class BasicUserEntity<C extends BasicUserEntity<C, K>, K extends
 			buf.append(id);
 		}
 		return buf.toString();
+	}
+
+	/**
+	 * Get the modification date.
+	 * 
+	 * @return the modified date
+	 */
+	public Instant getModified() {
+		return modified;
 	}
 
 }
