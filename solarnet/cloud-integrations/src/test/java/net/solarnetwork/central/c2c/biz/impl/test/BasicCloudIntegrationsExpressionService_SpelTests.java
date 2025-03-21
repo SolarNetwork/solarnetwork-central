@@ -63,7 +63,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * using the {@link SpelExpressionService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class BasicCloudIntegrationsExpressionService_SpelTests {
@@ -106,6 +106,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	public void createRoot() {
 		// GIVEN
 		final Long userId = randomLong();
+		final Long integrationId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
@@ -113,8 +114,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
 		// WHEN
-		DatumExpressionRoot result = service.createDatumExpressionRoot(userId, datum, parameters, null,
-				null, null);
+		DatumExpressionRoot result = service.createDatumExpressionRoot(userId, integrationId, datum,
+				parameters, null, null, null);
 
 		// THEN
 		// @formatter:off
@@ -141,6 +142,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	@Test
 	public void evaluate_nodeMetadata() {
 		// GIVEN
+		final Long integrationId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
@@ -161,8 +163,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
-				parameters, null, null, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(),
+				integrationId, datum, parameters, null, null, null);
 		final Double result = service.evaluateDatumPropertyExpression(config, root, null, Double.class);
 
 		// THEN
@@ -185,6 +187,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	@Test
 	public void evaluate_nodeMetadataTariffSchedule() {
 		// GIVEN
+		final Long integrationId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
@@ -208,8 +211,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
-				parameters, null, null, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(),
+				integrationId, datum, parameters, null, null, null);
 		final BigDecimal result = service.evaluateDatumPropertyExpression(config, root, null,
 				BigDecimal.class);
 
@@ -237,6 +240,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	@Test
 	public void evaluate_nodeMetadataTariffSchedule_noSchedule() {
 		// GIVEN
+		final Long integrationId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
@@ -259,8 +263,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		given(metadataDao.get(nodeId)).willReturn(nodeMetadata);
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
-				parameters, null, null, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(),
+				integrationId, datum, parameters, null, null, null);
 		final BigDecimal result = service.evaluateDatumPropertyExpression(config, root, null,
 				BigDecimal.class);
 
@@ -286,6 +290,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 	@Test
 	public void nodeTz() {
 		// GIVEN
+		final Long integrationId = randomLong();
 		final Long nodeId = randomLong();
 		final String sourceId = randomString();
 		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
@@ -302,8 +307,8 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		final Map<String, Object> parameters = Map.of("foo", "bar");
 
 		// WHEN
-		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(), datum,
-				parameters, null, null, null);
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(),
+				integrationId, datum, parameters, null, null, null);
 
 		final LocalDateTime start = LocalDateTime.now(nodeOwnership.getZone());
 		final LocalDateTime result = service.evaluateDatumPropertyExpression(config, root, null,

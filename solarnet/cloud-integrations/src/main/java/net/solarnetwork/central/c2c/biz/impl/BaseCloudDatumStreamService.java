@@ -417,8 +417,8 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 									d.getSourceId()),
 							datumStreamMetadataDao, datumStreamMetadataCache);
 				}
-				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId, d,
-						params, metaOps, datumStreamsAccessor,
+				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId,
+						integrationId, d, params, metaOps, datumStreamsAccessor,
 						this instanceof HttpOperations httpOps ? httpOps : null);
 				Object val = null;
 				try {

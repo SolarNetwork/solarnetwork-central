@@ -52,6 +52,8 @@ public interface CloudIntegrationsExpressionService {
 	 *
 	 * @param userId
 	 *        the owner user ID
+	 * @param integrationId
+	 *        the integration ID
 	 * @param datum
 	 *        the datum
 	 * @param parameters
@@ -65,9 +67,9 @@ public interface CloudIntegrationsExpressionService {
 	 * @return the root
 	 * @since 1.1
 	 */
-	DatumExpressionRoot createDatumExpressionRoot(Long userId, Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor,
-			HttpOperations httpOperations);
+	DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId, Datum datum,
+			Map<String, ?> parameters, DatumMetadataOperations metadata,
+			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations);
 
 	/**
 	 * Evaluate a property expression.

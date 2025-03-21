@@ -56,7 +56,7 @@ import net.solarnetwork.service.ExpressionService;
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
@@ -137,9 +137,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	}
 
 	@Override
-	public DatumExpressionRoot createDatumExpressionRoot(Long userId, Datum datum,
-			Map<String, ?> parameters, DatumMetadataOperations metadata,
-			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
+	public DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId,
+			Datum datum, Map<String, ?> parameters,
+			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
 		Map<String, ?> p = parameters;
 
 		// for node datum, lookup ownership so we have access to the node's time zone
