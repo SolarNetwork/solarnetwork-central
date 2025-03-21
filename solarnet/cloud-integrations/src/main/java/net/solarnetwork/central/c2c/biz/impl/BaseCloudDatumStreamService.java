@@ -359,8 +359,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId) {
 		assert mappingId != null && integrationId != null;
 		if ( datum != null && !datum.isEmpty() && configurations != null && !configurations.isEmpty() ) {
-			var parameters = Map.of("datumStreamMappingId", mappingId, "integrationId", integrationId);
-			evaluateExpressions(configurations, datum, parameters);
+			evaluateExpressions(configurations, datum, mappingId, integrationId, null);
 		}
 	}
 
@@ -371,13 +370,30 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        the property configurations
 	 * @param datum
 	 *        the datum to evaluate expressions on
+	 * @param mappingId
+	 *        the {@link CloudDatumStreamMappingConfiguration} ID to provide as
+	 *        a {@code datumStreamMappingId} parameter
+	 * @param integrationId
+	 *        the {@link CloudIntegrationConfiguration} ID to provide as a
+	 *        {@code integrationId} parameter
 	 * @param parameters
-	 *        parameters to pass to the expressions
+	 *        optional parameters to pass to the expressions
 	 */
 	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
-			Collection<? extends MutableDatum> datum, Map<String, ?> parameters) {
+			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId,
+			Map<String, ?> parameters) {
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
 			return;
+		}
+
+		final Map<String, ?> params;
+		if ( parameters == null ) {
+			params = Map.of("datumStreamMappingId", mappingId, "integrationId", integrationId);
+		} else {
+			var tmp = new LinkedHashMap<String, Object>(parameters);
+			tmp.put("datumStreamMappingId", mappingId);
+			tmp.put("integrationId", integrationId);
+			params = tmp;
 		}
 
 		// assume all configurations owned by the same user; extract the user ID from the first one
@@ -402,7 +418,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 							datumStreamMetadataDao, datumStreamMetadataCache);
 				}
 				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId, d,
-						parameters, metaOps, datumStreamsAccessor,
+						params, metaOps, datumStreamsAccessor,
 						this instanceof HttpOperations httpOps ? httpOps : null);
 				Object val = null;
 				try {

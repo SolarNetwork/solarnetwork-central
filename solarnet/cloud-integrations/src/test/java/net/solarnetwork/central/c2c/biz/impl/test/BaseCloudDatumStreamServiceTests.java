@@ -73,7 +73,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
  * Test cases for the {@link BaseCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -277,9 +277,10 @@ public class BaseCloudDatumStreamServiceTests {
 		final var userId = randomLong();
 		final var nodeId = randomLong();
 		final var sourceId = randomString();
-		final var datumSourceId = randomLong();
+		final var integrationId = randomLong();
+		final var mappingId = randomLong();
 
-		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, datumSourceId, 0,
+		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
 				Instant.now());
 		exprProp.setEnabled(true);
 		exprProp.setPropertyName("out");
@@ -298,7 +299,7 @@ public class BaseCloudDatumStreamServiceTests {
 						.willReturn(new GeneralDatumMetadata(Map.of("foo", foo)));
 
 		// WHEN
-		service.evaluateExpressions(List.of(exprProp), List.of(datum), Map.of());
+		service.evaluateExpressions(List.of(exprProp), List.of(datum), mappingId, integrationId);
 
 		// THEN
 		then(datumStreamMetadataCache).shouldHaveNoMoreInteractions();
@@ -320,9 +321,10 @@ public class BaseCloudDatumStreamServiceTests {
 		final var userId = randomLong();
 		final var nodeId = randomLong();
 		final var sourceId = randomString();
-		final var datumSourceId = randomLong();
+		final var integrationId = randomLong();
+		final var mappingId = randomLong();
 
-		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, datumSourceId, 0,
+		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
 				Instant.now());
 		exprProp.setEnabled(true);
 		exprProp.setPropertyName("out");
@@ -341,7 +343,7 @@ public class BaseCloudDatumStreamServiceTests {
 		given(nodeMetadataReadOnlyDao.get(nodeId)).willReturn(nodeMeta);
 
 		// WHEN
-		service.evaluateExpressions(List.of(exprProp), List.of(datum), Map.of());
+		service.evaluateExpressions(List.of(exprProp), List.of(datum), mappingId, integrationId);
 
 		// THEN
 		then(nodeMetadataReadOnlyDao).shouldHaveNoMoreInteractions();
