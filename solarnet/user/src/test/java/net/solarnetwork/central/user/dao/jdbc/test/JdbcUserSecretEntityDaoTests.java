@@ -1,5 +1,5 @@
 /* ==================================================================
- * JdbcUserSecretDaoTests.java - 22/03/2025 7:51:58 am
+ * JdbcUserSecretEntityDaoTests.java - 22/03/2025 7:51:58 am
  * 
  * Copyright 2025 SolarNetwork.net Dev Team
  * 
@@ -51,7 +51,7 @@ import net.solarnetwork.dao.Entity;
  * @author matt
  * @version 1.0
  */
-public class JdbcUserSecretDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
+public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private JdbcUserSecretEntityDao dao;
 	private Long userId;

@@ -26,6 +26,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.util.Arrays;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import net.solarnetwork.central.dao.BasicUserEntity;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 
@@ -35,7 +37,10 @@ import net.solarnetwork.central.domain.UserStringStringCompositePK;
  * @author matt
  * @version 1.0
  */
-public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStringStringCompositePK> {
+@JsonPropertyOrder({ "userId", "topicId", "key", "created", "modified" })
+@JsonIncludeProperties({ "id" })
+public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStringStringCompositePK>
+		implements UserSecret {
 
 	private static final long serialVersionUID = 1894357432310854707L;
 
@@ -174,11 +179,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 		return Arrays.equals(secret, other.secret);
 	}
 
-	/**
-	 * Get the topic ID.
-	 * 
-	 * @return the topic ID
-	 */
+	@Override
 	public String getTopicId() {
 		var pk = getId();
 		return (pk != null ? pk.getGroupId() : null);
@@ -189,6 +190,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * 
 	 * @return the key
 	 */
+	@Override
 	public String getKey() {
 		var pk = getId();
 		return (pk != null ? pk.getEntityId() : null);
