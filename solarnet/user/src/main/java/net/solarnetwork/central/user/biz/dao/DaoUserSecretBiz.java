@@ -22,22 +22,27 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.InstantSource;
-import org.springframework.security.crypto.encrypt.BytesEncryptor;
+import org.springframework.security.crypto.encrypt.RsaSecretEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import net.solarnetwork.central.ValidationException;
+import net.solarnetwork.central.biz.SecretsBiz;
+import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.biz.UserSecretBiz;
 import net.solarnetwork.central.user.dao.BasicUserSecretFilter;
+import net.solarnetwork.central.user.dao.UserKeyPairEntityDao;
 import net.solarnetwork.central.user.dao.UserSecretEntityDao;
 import net.solarnetwork.central.user.dao.UserSecretFilter;
+import net.solarnetwork.central.user.domain.UserKeyPairEntity;
 import net.solarnetwork.central.user.domain.UserSecret;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.central.user.domain.UserSecretInput;
@@ -51,9 +56,13 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class DaoUserSecretBiz implements UserSecretBiz {
 
+	/** A template pattern for configuration secret names. */
+	public static final String DEFAULT_SECRETS_NAME_TEMPLATE = "keypair/user/%s/id/%s";
+
 	private final InstantSource clock;
+	private final SecretsBiz secretsBiz;
+	private final UserKeyPairEntityDao keyPairDao;
 	private final UserSecretEntityDao secretDao;
-	private final BytesEncryptor bytesEncryptor;
 
 	private Validator validator;
 
@@ -62,19 +71,48 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	 * 
 	 * @param clock
 	 *        the clock to use
-	 * @param bytesEncryptor
-	 *        the encryptor to use
+	 * @param secretsBiz
+	 *        the secrets service to use
+	 * @param keyPairDao
+	 *        the key pair DAO to use
 	 * @param secretDao
 	 *        the secret DAO to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DaoUserSecretBiz(InstantSource clock, BytesEncryptor bytesEncryptor,
+	public DaoUserSecretBiz(InstantSource clock, SecretsBiz secretsBiz, UserKeyPairEntityDao keyPairDao,
 			UserSecretEntityDao secretDao) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
-		this.bytesEncryptor = requireNonNullArgument(bytesEncryptor, "bytesEncryptor");
+		this.secretsBiz = requireNonNullArgument(secretsBiz, "secretsBiz");
+		this.keyPairDao = requireNonNullArgument(keyPairDao, "keyPairDao");
 		this.secretDao = requireNonNullArgument(secretDao, "secretDao");
+	}
+
+	/**
+	 * Derive a {@link UserKeyPairEntity} {@code key} value from a
+	 * {@link UserSecretEntity} {@code topicId} value.
+	 * 
+	 * <p>
+	 * If the topic has a {@code /} delimiter, then the part before the last
+	 * delimiter is returned. Otherwise the {@code topicId} value is returned
+	 * directly.
+	 * </p>
+	 * 
+	 * @param topicId
+	 *        the topic ID
+	 * @return the key
+	 */
+	private String keyPairKeyForTopicId(String topicId) {
+		int idx = topicId.lastIndexOf('/');
+		if ( idx > 0 ) {
+			return topicId.substring(0, idx);
+		}
+		return topicId;
+	}
+
+	private String secretsBizKeyForKeyPair(UserKeyPairEntity keyPair) {
+		return DEFAULT_SECRETS_NAME_TEMPLATE.formatted(keyPair.getUserId(), keyPair.getKey());
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)
@@ -88,8 +126,18 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 
 		Instant now = clock.instant();
 
+		// lookup KeyPairEntity using key derived from topic ID
+		var keyPairId = new UserStringCompositePK(userId, keyPairKeyForTopicId(topicId));
+		UserKeyPairEntity keyPair = requireNonNullObject(keyPairDao.get(keyPairId), keyPairId);
+
+		var keyPairPasswordKey = secretsBizKeyForKeyPair(keyPair);
+		var keyPairPassword = requireNonNullObject(secretsBiz.getSecret(keyPairPasswordKey),
+				keyPairPasswordKey);
+
+		var encryptor = new RsaSecretEncryptor(keyPair.keyPair(keyPairPassword));
+
 		UserSecretEntity entity = new UserSecretEntity(userId, topicId, key, now, now,
-				bytesEncryptor.encrypt(input.getSecret()));
+				encryptor.encrypt(input.getSecret()));
 		var id = secretDao.save(entity);
 		return (id != null ? secretDao.get(id) : null);
 	}

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.domain;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.io.Serial;
 import java.time.Instant;
 import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
@@ -42,6 +43,7 @@ import net.solarnetwork.central.domain.UserStringStringCompositePK;
 public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStringStringCompositePK>
 		implements UserSecret {
 
+	@Serial
 	private static final long serialVersionUID = 1894357432310854707L;
 
 	private final byte[] secret;
