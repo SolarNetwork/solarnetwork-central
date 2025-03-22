@@ -22,8 +22,12 @@
 
 package net.solarnetwork.central.user.biz;
 
+import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
+import net.solarnetwork.central.user.dao.UserKeyPairFilter;
 import net.solarnetwork.central.user.dao.UserSecretFilter;
+import net.solarnetwork.central.user.domain.UserKeyPair;
+import net.solarnetwork.central.user.domain.UserKeyPairInput;
 import net.solarnetwork.central.user.domain.UserSecret;
 import net.solarnetwork.central.user.domain.UserSecretInput;
 import net.solarnetwork.dao.FilterResults;
@@ -37,6 +41,49 @@ import net.solarnetwork.dao.FilterResults;
 public interface UserSecretBiz {
 
 	/**
+	 * Save a user key pair.
+	 * 
+	 * @param userId
+	 *        the ID of the user to save the key pair for
+	 * @param key
+	 *        a unique name for the key pair
+	 * @param input
+	 *        the key data to save
+	 * @return the saved key pair
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @throws IllegalStateException
+	 *         if the key data cannot be decoded
+	 */
+	UserKeyPair saveUserKeyPair(Long userId, String key, UserKeyPairInput input);
+
+	/**
+	 * Delete a user key pair.
+	 *
+	 * @param userId
+	 *        the ID of the user to delete key pair for
+	 * @param key
+	 *        the unique key pair name to delete
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 */
+	void deleteUserKeyPair(Long userId, String key);
+
+	/**
+	 * Get a list of all available secrets for a given user.
+	 *
+	 * @param userId
+	 *        the user ID to get key pairs for
+	 * @param filter
+	 *        an optional filter
+	 * @return the available key pairs, never {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
+	 */
+	FilterResults<? extends UserKeyPair, UserStringCompositePK> listKeyPairsForUser(Long userId,
+			UserKeyPairFilter filter);
+
+	/**
 	 * Save a user secret.
 	 *
 	 * @param userId
@@ -44,7 +91,7 @@ public interface UserSecretBiz {
 	 * @param topicId
 	 *        the topic ID
 	 * @param key
-	 *        the key
+	 *        a unique name for the secret
 	 * @param input
 	 *        the secret to save
 	 * @return the saved settings
@@ -71,7 +118,7 @@ public interface UserSecretBiz {
 	 * Get a list of all available secrets for a given user.
 	 *
 	 * @param userId
-	 *        the user ID to get configurations for
+	 *        the user ID to get secrets for
 	 * @param filter
 	 *        an optional filter
 	 * @return the available secrets, never {@literal null}

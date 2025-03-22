@@ -50,7 +50,8 @@ import net.solarnetwork.service.CertificateService;
  * @author matt
  * @version 1.0
  */
-public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserStringCompositePK> {
+public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserStringCompositePK>
+		implements UserKeyPair {
 
 	@Serial
 	private static final long serialVersionUID = 6598578387510820116L;
@@ -133,6 +134,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 	 * 
 	 * @return the key
 	 */
+	@Override
 	public String getKey() {
 		var pk = getId();
 		return (pk != null ? pk.getEntityId() : null);
@@ -179,17 +181,7 @@ public class UserKeyPairEntity extends BasicUserEntity<UserKeyPairEntity, UserSt
 
 	}
 
-	/**
-	 * Extract the key pair from the keystore data.
-	 * 
-	 * @param password
-	 *        the password to use
-	 * @return the key pair, never {@literal null}
-	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
-	 * @throws IllegalStateException
-	 *         if the key pair cannot be extracted
-	 */
+	@Override
 	public KeyPair keyPair(String password) {
 		KeyStore store = keyStore(password);
 		try {

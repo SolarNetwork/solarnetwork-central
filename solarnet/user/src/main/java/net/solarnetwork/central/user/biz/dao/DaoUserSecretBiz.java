@@ -26,6 +26,9 @@ import static net.solarnetwork.central.security.AuthorizationException.requireNo
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.InstantSource;
+import java.util.Base64;
+import org.apache.commons.codec.digest.HmacAlgorithms;
+import org.apache.commons.codec.digest.HmacUtils;
 import org.springframework.security.crypto.encrypt.RsaSecretEncryptor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,17 +39,22 @@ import net.solarnetwork.central.ValidationException;
 import net.solarnetwork.central.biz.SecretsBiz;
 import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.domain.UserStringStringCompositePK;
+import net.solarnetwork.central.security.RsaKeyHelper;
 import net.solarnetwork.central.support.ExceptionUtils;
 import net.solarnetwork.central.user.biz.UserSecretBiz;
 import net.solarnetwork.central.user.dao.BasicUserSecretFilter;
 import net.solarnetwork.central.user.dao.UserKeyPairEntityDao;
+import net.solarnetwork.central.user.dao.UserKeyPairFilter;
 import net.solarnetwork.central.user.dao.UserSecretEntityDao;
 import net.solarnetwork.central.user.dao.UserSecretFilter;
+import net.solarnetwork.central.user.domain.UserKeyPair;
 import net.solarnetwork.central.user.domain.UserKeyPairEntity;
+import net.solarnetwork.central.user.domain.UserKeyPairInput;
 import net.solarnetwork.central.user.domain.UserSecret;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.central.user.domain.UserSecretInput;
 import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.service.CertificateService;
 
 /**
  * DAO implementation of {@link UserSecretBiz}.
@@ -56,13 +64,22 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class DaoUserSecretBiz implements UserSecretBiz {
 
-	/** A template pattern for configuration secret names. */
-	public static final String DEFAULT_SECRETS_NAME_TEMPLATE = "keypair/user/%s/id/%s";
+	/**
+	 * A template pattern for configuration secret names.
+	 * 
+	 * <p>
+	 * The template accepts two parameters: a user ID and a key value.
+	 * </p>
+	 */
+	public static final String SECRETS_NAME_TEMPLATE = "keypair/user/%d/key/%s";
 
 	private final InstantSource clock;
 	private final SecretsBiz secretsBiz;
+	private final CertificateService certificateService;
 	private final UserKeyPairEntityDao keyPairDao;
 	private final UserSecretEntityDao secretDao;
+
+	private final HmacUtils hmac;
 
 	private Validator validator;
 
@@ -73,20 +90,28 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 	 *        the clock to use
 	 * @param secretsBiz
 	 *        the secrets service to use
+	 * @param certificateService
+	 *        the certificate service to use
 	 * @param keyPairDao
 	 *        the key pair DAO to use
 	 * @param secretDao
 	 *        the secret DAO to use
+	 * @param hmacKey
+	 *        the HMAC key to use
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@code null}
 	 */
-	public DaoUserSecretBiz(InstantSource clock, SecretsBiz secretsBiz, UserKeyPairEntityDao keyPairDao,
-			UserSecretEntityDao secretDao) {
+	public DaoUserSecretBiz(InstantSource clock, SecretsBiz secretsBiz,
+			CertificateService certificateService, UserKeyPairEntityDao keyPairDao,
+			UserSecretEntityDao secretDao, String hmacKey) {
 		super();
 		this.clock = requireNonNullArgument(clock, "clock");
 		this.secretsBiz = requireNonNullArgument(secretsBiz, "secretsBiz");
+		this.certificateService = requireNonNullArgument(certificateService, "certificateService");
 		this.keyPairDao = requireNonNullArgument(keyPairDao, "keyPairDao");
 		this.secretDao = requireNonNullArgument(secretDao, "secretDao");
+		this.hmac = new HmacUtils(HmacAlgorithms.HMAC_SHA_256,
+				requireNonNullArgument(hmacKey, "hmacKey"));
 	}
 
 	/**
@@ -111,8 +136,64 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 		return topicId;
 	}
 
-	private String secretsBizKeyForKeyPair(UserKeyPairEntity keyPair) {
-		return DEFAULT_SECRETS_NAME_TEMPLATE.formatted(keyPair.getUserId(), keyPair.getKey());
+	/**
+	 * Generate the {@link SecretsBiz} key to use for a given
+	 * {@link UserKeyPairEntity}.
+	 * 
+	 * @param keyPair
+	 *        the entity to get the key for
+	 * @return the key
+	 */
+	public static String secretsBizKeyForKeyPair(UserKeyPairEntity keyPair) {
+		return SECRETS_NAME_TEMPLATE.formatted(requireNonNullArgument(keyPair, "keyPair").getUserId(),
+				keyPair.getKey());
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public UserKeyPair saveUserKeyPair(Long userId, String key, UserKeyPairInput input) {
+		requireNonNullArgument(userId, "id");
+		requireNonNullArgument(key, "key");
+
+		validateInput(requireNonNullArgument(input, "input"));
+
+		Instant now = clock.instant();
+
+		var keyPair = RsaKeyHelper.parseKeyPair(input.getKeyPem());
+
+		// use hash of provided password, so we know it is of a known length
+		var passwordHash = hmac.hmac(input.getPassword());
+		var password = Base64.getUrlEncoder().encodeToString(passwordHash);
+
+		UserKeyPairEntity entity = UserKeyPairEntity.withKeyPair(userId, key, now, now, keyPair,
+				password, certificateService);
+
+		secretsBiz.putSecret(secretsBizKeyForKeyPair(entity), password);
+
+		var id = keyPairDao.create(userId, entity);
+		return (id != null ? keyPairDao.get(id) : null);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRED)
+	@Override
+	public void deleteUserKeyPair(Long userId, String key) {
+		requireNonNullArgument(userId, "id");
+		requireNonNullArgument(key, "key");
+
+		var pk = keyPairDao.entityKey(new UserStringCompositePK(userId, key));
+
+		secretsBiz.deleteSecret(secretsBizKeyForKeyPair(pk));
+
+		keyPairDao.delete(pk);
+	}
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	@Override
+	public FilterResults<? extends UserKeyPair, UserStringCompositePK> listKeyPairsForUser(Long userId,
+			UserKeyPairFilter filter) {
+		BasicUserSecretFilter f = new BasicUserSecretFilter(filter);
+		f.setUserId(userId);
+		return keyPairDao.findFiltered(f);
 	}
 
 	@Transactional(propagation = Propagation.REQUIRED)

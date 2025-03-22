@@ -39,11 +39,11 @@ public class RsaKeyHelperTests {
 	@Test
 	public void loadRsaPrivateKeyPemFile() {
 		// GIVEN
-		// ssh-keygen -m PEM -t rsa -b 1024 -f test-ssh-private-key-01.pem
+		// ssh-keygen -m PEM -t rsa -b 1024 -f test-rsa-private-key-01.pem
 
 		// WHEN
 		KeyPair result = RsaKeyHelper
-				.parseKeyPair(utf8StringResource("test-ssh-private-key-01.pem", getClass()));
+				.parseKeyPair(utf8StringResource("test-rsa-private-key-01.pem", getClass()));
 
 		// THEN
 		// @formatter:off

@@ -22,16 +22,20 @@
 
 package net.solarnetwork.central.biz;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 import org.springframework.security.crypto.encrypt.AesBytesEncryptor;
 import org.springframework.security.crypto.encrypt.AesBytesEncryptor.CipherAlgorithm;
 import org.springframework.security.crypto.encrypt.BytesEncryptor;
@@ -45,7 +49,7 @@ import net.solarnetwork.util.ObjectUtils;
  * development.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SimpleSecretsBiz implements SecretsBiz {
 
@@ -54,15 +58,25 @@ public class SimpleSecretsBiz implements SecretsBiz {
 
 	private final Path dir;
 	private final ConcurrentMap<String, String> data;
+	private final ConcurrentMap<String, byte[]> binaryData;
 
 	private final String salt;
 	private final BytesKeyGenerator iv;
 	private final String password;
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param dir
+	 *        the directory to save the secret data to
+	 * @param password
+	 *        the password to encrypt the data file with
+	 */
 	public SimpleSecretsBiz(Path dir, String password) {
 		super();
 		this.dir = ObjectUtils.requireNonNullArgument(dir, "dir");
 		this.data = new ConcurrentHashMap<>(8, 0.9f, 2);
+		this.binaryData = new ConcurrentHashMap<>(8, 0.9f, 2);
 		this.password = password;
 
 		Path metaPath = dir.resolve(SECRETS_META);
@@ -116,8 +130,22 @@ public class SimpleSecretsBiz implements SecretsBiz {
 			try {
 				byte[] enc = Files.readAllBytes(dataPath);
 				Map<String, Object> map = JsonUtils
-						.getStringMap(new String(encryptor.decrypt(enc), StandardCharsets.UTF_8));
-				map.forEach((k, v) -> data.put(k, v.toString()));
+						.getStringMap(new String(encryptor.decrypt(enc), UTF_8));
+				map.forEach((k, v) -> {
+					if ( "__data__".equals(k) && v instanceof Map<?, ?> m ) {
+						for ( Entry<?, ?> e : m.entrySet() ) {
+							data.put(e.getKey().toString(), e.getValue().toString());
+						}
+					} else if ( "__binaryData__".equals(k) && v instanceof Map<?, ?> m ) {
+						var decoder = Base64.getDecoder();
+						for ( Entry<?, ?> e : m.entrySet() ) {
+							binaryData.put(e.getKey().toString(),
+									decoder.decode(e.getValue().toString()));
+						}
+					} else {
+						data.put(k, v.toString());
+					}
+				});
 			} catch ( IOException e ) {
 				throw new RuntimeException(
 						"Error loading encrypted secrets from [%s]".formatted(dataPath), e);
@@ -137,15 +165,34 @@ public class SimpleSecretsBiz implements SecretsBiz {
 	}
 
 	@Override
+	public byte[] getSecretData(String secretName) {
+		byte[] data = binaryData.get(secretName);
+		return (data != null ? data.clone() : null);
+	}
+
+	@Override
+	public void putSecretData(String secretName, byte[] secretData) {
+		binaryData.put(secretName, secretData != null ? secretData.clone() : null);
+		saveData();
+	}
+
+	@Override
 	public synchronized void deleteSecret(String secretName) {
 		data.remove(secretName);
+		binaryData.remove(secretName);
 		saveData();
 	}
 
 	private void saveData() {
 		Path dataPath = dir.resolve(SECRETS_DATA);
+		var encoder = Base64.getEncoder();
 		try {
-			String json = JsonUtils.getJSONString(data, "{}");
+			String json = JsonUtils
+					.getJSONString(
+							Map.of("__data__", data, "__binaryData__",
+									binaryData.entrySet().stream().collect(Collectors.toMap(
+											Entry::getKey, e -> encoder.encodeToString(e.getValue())))),
+							"{}");
 			BytesEncryptor encryptor = new AesBytesEncryptor(password, salt, iv, CipherAlgorithm.GCM);
 			byte[] enc = encryptor.encrypt(json.getBytes(StandardCharsets.UTF_8));
 			Files.write(dataPath, enc);
