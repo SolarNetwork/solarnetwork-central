@@ -19,6 +19,7 @@ CREATE TABLE solaruser.user_keypair (
 		ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+
 /**
  * User secrets.
  *
@@ -39,6 +40,5 @@ CREATE TABLE solaruser.user_secret (
 	CONSTRAINT user_secret_pk PRIMARY KEY (user_id, topic_id, skey),
 	CONSTRAINT user_secret_user_fk FOREIGN KEY (user_id)
 		REFERENCES solaruser.user_user (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE CASCADE,
-	CONSTRAINT user_secret_sdata_len CHECK (length(sdata) < 4096)
+		ON UPDATE NO ACTION ON DELETE CASCADE
 );

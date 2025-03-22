@@ -1,5 +1,5 @@
 /* ==================================================================
- * DeleteUserSecretEntity.java - 22/03/2025 7:14:59 am
+ * UpsertUserKeyPairEntity.java - 22/03/2025 6:44:28 am
  * 
  * Copyright 2025 SolarNetwork.net Dev Team
  * 
@@ -26,46 +26,48 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.Instant;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SqlProvider;
-import net.solarnetwork.central.user.domain.UserSecretEntity;
+import net.solarnetwork.central.user.domain.UserKeyPairEntity;
 
 /**
- * Support for DELETE for {@link UserSecretEntity} entities.
+ * Support for INSERT ... ON CONFLICT {@link UserKeyPairEntity} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public class DeleteUserSecretEntity implements PreparedStatementCreator, SqlProvider {
+public class UpsertUserKeyPairEntity implements PreparedStatementCreator, SqlProvider {
 
 	private static final String SQL = """
-			DELETE FROM solaruser.user_secret
-			WHERE user_id = ?
-			AND topic_id = ?
-			AND skey = ?
+			INSERT INTO solaruser.user_keypair (
+				user_id, skey, created, modified, keystore
+			)
+			VALUES (?,?,?,?,?)
+			ON CONFLICT (user_id, skey) DO UPDATE
+				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
+					, keystore = EXCLUDED.keystore
 			""";
 
 	private final Long userId;
-	private final String topicId;
-	private final String key;
+	private final UserKeyPairEntity entity;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param topicId
-	 *        the topic ID
-	 * @param key
-	 *        the key
+	 * @param entity
+	 *        the entity
 	 * @throws IllegalArgumentException
-	 *         if any argument is {@code null}
+	 *         if any argument is {@literal null}
 	 */
-	public DeleteUserSecretEntity(Long userId, String topicId, String key) {
+	public UpsertUserKeyPairEntity(Long userId, UserKeyPairEntity entity) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
-		this.topicId = requireNonNullArgument(topicId, "topicId");
-		this.key = requireNonNullArgument(key, "key");
+		this.entity = requireNonNullArgument(entity, "entity");
 	}
 
 	@Override
@@ -75,10 +77,14 @@ public class DeleteUserSecretEntity implements PreparedStatementCreator, SqlProv
 
 	@Override
 	public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-		PreparedStatement stmt = con.prepareStatement(getSql());
+		Timestamp ts = Timestamp.from(entity.getCreated() != null ? entity.getCreated() : Instant.now());
+		Timestamp mod = entity.getModified() != null ? Timestamp.from(entity.getModified()) : ts;
+		PreparedStatement stmt = con.prepareStatement(getSql(), Statement.NO_GENERATED_KEYS);
 		stmt.setObject(1, userId);
-		stmt.setString(2, topicId);
-		stmt.setString(3, key);
+		stmt.setString(2, entity.getKey());
+		stmt.setTimestamp(3, ts);
+		stmt.setTimestamp(4, mod);
+		stmt.setBytes(5, entity.keyStoreData());
 		return stmt;
 	}
 

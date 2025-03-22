@@ -30,6 +30,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
+import net.solarnetwork.central.user.domain.UserKeyPairEntity;
 import net.solarnetwork.central.user.domain.UserSecretEntity;
 
 /**
@@ -44,6 +45,37 @@ public final class UserJdbcTestUtils {
 
 	private UserJdbcTestUtils() {
 		// not available
+	}
+
+	/**
+	 * Create a new user key pair instance.
+	 *
+	 * @param userId
+	 *        the user ID
+	 * @param key
+	 *        the key
+	 * @param keystore
+	 *        the keystore
+	 * @return the entity
+	 */
+	public static UserKeyPairEntity newUserKeyPairEntity(Long userId, String key, byte[] keystore) {
+		var ts = now().truncatedTo(MILLIS);
+		return new UserKeyPairEntity(userId, key, ts, ts, keystore);
+	}
+
+	/**
+	 * List user key pair rows.
+	 *
+	 * @param jdbcOps
+	 *        the JDBC operations
+	 * @return the rows
+	 */
+	public static List<Map<String, Object>> allUserKeyPairEntityData(JdbcOperations jdbcOps) {
+		List<Map<String, Object>> data = jdbcOps
+				.queryForList("select * from solaruser.user_keypair ORDER BY user_id, skey");
+		log.debug("solaruser.user_keypair table has {} items: [{}]", data.size(),
+				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
+		return data;
 	}
 
 	/**

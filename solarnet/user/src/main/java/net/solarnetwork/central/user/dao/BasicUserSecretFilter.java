@@ -34,7 +34,8 @@ import net.solarnetwork.dao.PaginationCriteria;
  * @author matt
  * @version 1.0
  */
-public class BasicUserSecretFilter extends BasicCoreCriteria implements UserSecretFilter {
+public class BasicUserSecretFilter extends BasicCoreCriteria
+		implements UserSecretFilter, UserKeyPairFilter {
 
 	private String[] topicIds;
 	private String[] keys;
@@ -73,6 +74,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria implements UserSecr
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(topicIds);
 		result = prime * result + Arrays.hashCode(keys);
 		return result;
 	}
@@ -89,7 +91,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria implements UserSecr
 			return false;
 		}
 		BasicUserSecretFilter other = (BasicUserSecretFilter) obj;
-		return Arrays.equals(keys, other.keys);
+		return Arrays.equals(topicIds, topicIds) && Arrays.equals(keys, other.keys);
 	}
 
 	@Override
