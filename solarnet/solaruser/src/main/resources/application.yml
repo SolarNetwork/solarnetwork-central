@@ -201,7 +201,7 @@ app:
     cache:
       ttl: 900
       heap-max-entries: 500
-      disk-max-size-mb: 50
+      disk-max-size-mb: 0
     simple:
       dir: "var/secrets"
       password: "Secret.123"
