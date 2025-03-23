@@ -51,7 +51,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
  * a crypto provider or have BC added as one.
  * 
  * <p>
- * Shamlessly adapted from
+ * Shamelessly adapted from
  * {@link org.springframework.security.crypto.encrypt.RsaKeyHelper} because that
  * class is package-private.
  * </p>
