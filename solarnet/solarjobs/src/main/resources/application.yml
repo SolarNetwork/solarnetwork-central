@@ -318,6 +318,18 @@ app:
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
+  secrets:
+    aws:
+      region: "us-west-2"
+      access-token: "TOKEN_HERE"
+      access-secret: "SECRET_HERE"
+    cache:
+      ttl: 900
+      heap-max-entries: 500
+      disk-max-size-mb: 0
+    simple:
+      dir: "var/secrets"
+      password: "Secret.123"
   solarflux:
     connection:
       uid: "SolarFlux-${app.meta.instance-id}"
@@ -356,6 +368,19 @@ app:
   user.reg:
     mail.template:
       from: "nobody@localhost"
+  user.secret:
+    biz:
+      key-pair-password-hmac-key: "Secret123"
+      secret-encryption-salt: "flimflam"
+    cache:
+      keypair-cache:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+      secret-cache:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
   user-alert:
     stale-data:
       mail:

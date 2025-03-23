@@ -460,11 +460,9 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 
 			// evaluate expressions on merged datum
 			if ( !exprProps.isEmpty() ) {
-				var parameters = Map.of("datumStreamMappingId", ds.getDatumStreamMappingId(),
-						"integrationId", mapping.getIntegrationId());
-				for ( Map<String, GeneralDatum> e : datum.values() ) {
-					evaluateExpressions(exprProps, e.values(), parameters);
-				}
+				var allDatum = datum.values().stream().flatMap(e -> e.values().stream()).toList();
+				evaluateExpressions(exprProps, allDatum, ds.getDatumStreamMappingId(),
+						mapping.getIntegrationId());
 			}
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null, datum.values().stream()

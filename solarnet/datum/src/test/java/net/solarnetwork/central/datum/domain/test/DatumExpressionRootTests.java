@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.datum.domain.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomInt;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -31,6 +33,7 @@ import static net.solarnetwork.domain.datum.ObjectDatumKind.Node;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import java.net.URI;
 import java.time.Instant;
@@ -67,7 +70,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Test cases for the {@link DatumExpressionRoot} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -78,6 +81,9 @@ public class DatumExpressionRootTests {
 
 	@Mock
 	private HttpOperations httpOperations;
+
+	@Mock
+	private BiFunction<DatumExpressionRoot, String, byte[]> userSecretProvider;
 
 	@Captor
 	private ArgumentCaptor<URI> uriCaptor;
@@ -120,7 +126,7 @@ public class DatumExpressionRootTests {
 		p.put("g", 35);
 
 		return new DatumExpressionRoot(userId, d, s, p, metadata, datumStreamsAccessor, metadataProvider,
-				tariffScheduleProvider, httpOperations);
+				tariffScheduleProvider, httpOperations, userSecretProvider);
 	}
 
 	@Test
@@ -472,6 +478,56 @@ public class DatumExpressionRootTests {
 			.returns(true, from(Result::getSuccess))
 			.as("Json result returned as Map")
 			.returns(Map.of("yee", "haw"), from(Result::getData))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void userSecret_data() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final String secretName = randomString();
+		final byte[] secretValue = randomBytes();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		given(userSecretProvider.apply(same(root), eq(secretName))).willReturn(secretValue);
+
+		// WHEN
+		byte[] result = root.secretData(secretName);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Secret bytes returned")
+			.isEqualTo(secretValue)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void userSecret_string() {
+		// GIVEN
+		final Long userId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final String secretName = randomString();
+		final byte[] secretValue = randomBytes();
+
+		final DatumExpressionRoot root = createTestRoot(userId, nodeId, sourceId);
+
+		given(userSecretProvider.apply(same(root), eq(secretName))).willReturn(secretValue);
+
+		// WHEN
+		String result = root.secret(secretName);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Secret bytes returned as UTF-8 string")
+			.isEqualTo(new String(secretValue, UTF_8))
 			;
 		// @formatter:on
 	}

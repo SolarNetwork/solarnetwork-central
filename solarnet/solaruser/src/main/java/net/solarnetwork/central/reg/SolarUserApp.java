@@ -46,6 +46,7 @@ import net.solarnetwork.central.instructor.config.SolarNetInstructorConfiguratio
 import net.solarnetwork.central.mail.config.SolarNetCommonMailConfiguration;
 import net.solarnetwork.central.security.config.SolarNetCommonSecurityConfiguration;
 import net.solarnetwork.central.security.web.config.SolarNetCommonWebSecurityConfiguration;
+import net.solarnetwork.central.user.aop.SolarNetUserAopConfiguration;
 import net.solarnetwork.central.user.billing.aop.SolarNetUserBillingAopConfiguration;
 import net.solarnetwork.central.user.c2c.aop.SolarNetUserCloudIntegrationsAopConfiguration;
 import net.solarnetwork.central.user.c2c.config.SolarNetUserCloudIntegrationsConfiguration;
@@ -74,7 +75,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
  * Main entry point for the SolarUser application.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 //@formatter:off
 @SpringBootApplication(scanBasePackageClasses = {
@@ -89,6 +90,7 @@ import net.solarnetwork.util.ApplicationContextUtils;
 		SolarNetInstructionInputConfiguration.class,
 		SolarNetInstructorAopConfiguration.class,
 		SolarNetInstructorConfiguration.class,
+		SolarNetUserAopConfiguration.class,
 		SolarNetUserConfiguration.class,
 		SolarNetUserBillingAopConfiguration.class,
 		SolarNetUserCloudIntegrationsAopConfiguration.class,

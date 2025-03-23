@@ -83,16 +83,16 @@ public final class CloudDatumStreamPropertyConfiguration extends
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param dataSourceId
-	 *        the data source ID
+	 * @param datumStreamMappingId
+	 *        the datum stream mapping ID
 	 * @param created
 	 *        the creation date
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public CloudDatumStreamPropertyConfiguration(Long userId, Long dataSourceId, Integer index,
+	public CloudDatumStreamPropertyConfiguration(Long userId, Long datumStreamMappingId, Integer index,
 			Instant created) {
-		this(new UserLongIntegerCompositePK(userId, dataSourceId, index), created);
+		this(new UserLongIntegerCompositePK(userId, datumStreamMappingId, index), created);
 	}
 
 	@Override

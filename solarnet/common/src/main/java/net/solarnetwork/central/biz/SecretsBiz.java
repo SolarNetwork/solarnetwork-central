@@ -34,7 +34,7 @@ import net.solarnetwork.codec.JsonUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface SecretsBiz {
 
@@ -63,6 +63,31 @@ public interface SecretsBiz {
 	 *        the value to store
 	 */
 	void putSecret(String secretName, String secretValue);
+
+	/**
+	 * Get a secret byte value.
+	 * 
+	 * @param secretName
+	 *        the unique name of the secret to get
+	 * @return the secret data, or {@literal null} if one does not exist
+	 * @since 1.1
+	 */
+	byte[] getSecretData(String secretName);
+
+	/**
+	 * Put a secret value.
+	 * 
+	 * <p>
+	 * This will replace any existing value of a secret with the same name.
+	 * </p>
+	 * 
+	 * @param secretName
+	 *        the unique name of the secret to put
+	 * @param secretData
+	 *        the value to store
+	 * @since 1.1
+	 */
+	void putSecretData(String secretName, byte[] secretData);
 
 	/**
 	 * Delete a secret.

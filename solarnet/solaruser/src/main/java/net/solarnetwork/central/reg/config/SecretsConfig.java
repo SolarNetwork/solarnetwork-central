@@ -49,8 +49,6 @@ import net.solarnetwork.central.support.CacheSettings;
 @Configuration(proxyBeanMethods = false)
 public class SecretsConfig {
 
-	// oscp/config/role/cp/user/147/id/1
-
 	@Autowired
 	private CacheManager cacheManager;
 

@@ -35,9 +35,16 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
  * API for a service that can evaluate expressions.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CloudIntegrationsExpressionService {
+
+	/**
+	 * The {@code topicId} used for user secrets.
+	 *
+	 * @since 1.3
+	 */
+	String USER_SECRET_TOPIC_ID = "c2c/i9n";
 
 	/**
 	 * Get a {@link PathMatcher} that can be used for source ID matching.
@@ -52,6 +59,8 @@ public interface CloudIntegrationsExpressionService {
 	 *
 	 * @param userId
 	 *        the owner user ID
+	 * @param integrationId
+	 *        the integration ID
 	 * @param datum
 	 *        the datum
 	 * @param parameters
@@ -65,9 +74,9 @@ public interface CloudIntegrationsExpressionService {
 	 * @return the root
 	 * @since 1.1
 	 */
-	DatumExpressionRoot createDatumExpressionRoot(Long userId, Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor,
-			HttpOperations httpOperations);
+	DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId, Datum datum,
+			Map<String, ?> parameters, DatumMetadataOperations metadata,
+			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations);
 
 	/**
 	 * Evaluate a property expression.

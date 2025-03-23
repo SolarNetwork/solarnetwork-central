@@ -39,7 +39,7 @@ import net.solarnetwork.util.ClassUtils;
  * Common test utilities.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public final class CommonTestUtils {
 
@@ -129,6 +129,30 @@ public final class CommonTestUtils {
 	 */
 	public static boolean randomBoolean() {
 		return RNG.nextBoolean();
+	}
+
+	/**
+	 * Get 16 random bytes.
+	 *
+	 * @return the random bytes
+	 * @since 1.5
+	 */
+	public static byte[] randomBytes() {
+		return randomBytes(16);
+	}
+
+	/**
+	 * Get random bytes.
+	 *
+	 * @param len
+	 *        the desired number of bytes
+	 * @return random bytes, of length {@code len}
+	 * @since 1.5
+	 */
+	public static byte[] randomBytes(int len) {
+		byte[] bytes = new byte[len];
+		RNG.nextBytes(bytes);
+		return bytes;
 	}
 
 	/**

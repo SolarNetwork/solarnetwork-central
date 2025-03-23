@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.domain;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -50,7 +51,7 @@ import net.solarnetwork.util.ObjectUtils;
  * {@link DatumMetadataOperations}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		implements DatumCollectionFunctions, DatumHttpFunctions {
@@ -70,6 +71,9 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	private final DatumStreamsAccessor datumStreamsAccessor;
 
 	private final HttpOperations httpOperations;
+
+	// a function to return decrypted user secrets based on a key
+	private final BiFunction<DatumExpressionRoot, String, byte[]> secretProvider;
 
 	/**
 	 * Constructor.
@@ -96,13 +100,16 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	 *        {@link ObjectDatumStreamMetadataId#getSourceId()}
 	 * @param httpOperations
 	 *        optional HTTP operations
+	 * @param secretProvider
+	 *        the secret provider
 	 */
 	public DatumExpressionRoot(Long userId, Datum datum, DatumSamplesOperations sample,
 			Map<String, ?> parameters, DatumMetadataOperations metadata,
 			DatumStreamsAccessor datumStreamsAccessor,
 			Function<ObjectDatumStreamMetadataId, DatumMetadataOperations> metadataProvider,
 			BiFunction<DatumMetadataOperations, ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleProvider,
-			HttpOperations httpOperations) {
+			HttpOperations httpOperations,
+			BiFunction<DatumExpressionRoot, String, byte[]> secretProvider) {
 		super(datum, sample, parameters);
 		this.userId = ObjectUtils.requireNonNullArgument(userId, "userId");
 		this.metadata = metadata;
@@ -110,6 +117,7 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 		this.metadataProvider = metadataProvider;
 		this.tariffScheduleProvider = tariffScheduleProvider;
 		this.httpOperations = httpOperations;
+		this.secretProvider = secretProvider;
 	}
 
 	/**
@@ -142,7 +150,18 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 	public DatumExpressionRoot copyWith(Datum datum, DatumSamplesOperations samples,
 			Map<String, ?> parameters) {
 		return new DatumExpressionRoot(userId, datum, samples, parameters, metadata,
-				datumStreamsAccessor, metadataProvider, tariffScheduleProvider, httpOperations);
+				datumStreamsAccessor, metadataProvider, tariffScheduleProvider, httpOperations,
+				secretProvider);
+	}
+
+	/**
+	 * Get the user ID.
+	 *
+	 * @return the user ID
+	 * @since 1.4
+	 */
+	public Long getUserId() {
+		return userId;
 	}
 
 	/**
@@ -753,6 +772,40 @@ public class DatumExpressionRoot extends DatumSamplesExpressionRoot
 			data = JsonUtils.getStringMapFromTree(res.getData());
 		}
 		return new Result<>(res.getSuccess(), res.getCode(), res.getMessage(), res.getErrors(), data);
+	}
+
+	/**
+	 * Get a user-configured secret value as a string.
+	 *
+	 * @param key
+	 *        the key of the secret to retrieve
+	 * @return the secret value as a string, or {@code null}
+	 * @since 1.4
+	 */
+	public String secret(String key) {
+		// TODO
+		byte[] secret = secretData(key);
+		if ( secret == null ) {
+			return null;
+		}
+		return new String(secret, UTF_8);
+	}
+
+	/**
+	 * Get a user-configured secret value.
+	 *
+	 * <p>
+	 * The {@code secretProvider} must have been provided to the constructor for
+	 * this to look up the secret values.
+	 * </p>
+	 *
+	 * @param key
+	 *        the key of the secret to retrieve
+	 * @return the secret value, or {@code null}
+	 * @since 1.4
+	 */
+	public byte[] secretData(String key) {
+		return (secretProvider != null ? secretProvider.apply(this, key) : null);
 	}
 
 }
