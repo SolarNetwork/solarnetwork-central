@@ -35,9 +35,16 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
  * API for a service that can evaluate expressions.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public interface CloudIntegrationsExpressionService {
+
+	/**
+	 * The {@code topicId} used for user secrets.
+	 *
+	 * @since 1.3
+	 */
+	String USER_SECRET_TOPIC_ID = "c2c/i9n";
 
 	/**
 	 * Get a {@link PathMatcher} that can be used for source ID matching.

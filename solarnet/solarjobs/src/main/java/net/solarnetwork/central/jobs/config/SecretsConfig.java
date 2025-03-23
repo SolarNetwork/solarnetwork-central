@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.reg.config;
+package net.solarnetwork.central.jobs.config;
 
 import static net.solarnetwork.central.biz.SecretsBiz.SECRETS;
 import java.nio.file.Path;

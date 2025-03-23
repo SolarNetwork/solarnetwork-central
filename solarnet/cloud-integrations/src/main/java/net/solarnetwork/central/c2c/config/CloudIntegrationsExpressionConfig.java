@@ -35,6 +35,7 @@ import org.springframework.expression.Expression;
 import net.solarnetwork.central.c2c.biz.impl.BasicCloudIntegrationsExpressionService;
 import net.solarnetwork.central.common.dao.SolarNodeMetadataReadOnlyDao;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
+import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.domain.tariff.TariffSchedule;
@@ -43,7 +44,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * Cloud integrations expression configuration.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @Configuration(proxyBeanMethods = false)
 @Profile(CLOUD_INTEGRATIONS)
@@ -65,7 +66,10 @@ public class CloudIntegrationsExpressionConfig implements SolarNetCloudIntegrati
 
 			@Qualifier(CLOUD_INTEGRATIONS_TARIFF)
 			@Autowired(required = false)
-			Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache
+			Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache,
+
+			@Autowired(required = false)
+			UserSecretAccessDao userSecretAccessDao
 			// @formatter:on
 	) {
 		var service = new BasicCloudIntegrationsExpressionService(nodeOwnershipDao,
@@ -73,6 +77,7 @@ public class CloudIntegrationsExpressionConfig implements SolarNetCloudIntegrati
 		service.setMetadataDao(nodeMetadataDao);
 		service.setExpressionCache(expressionCache);
 		service.setTariffScheduleCache(tariffScheduleCache);
+		service.setUserSecretAccessDao(userSecretAccessDao);
 		return service;
 	}
 

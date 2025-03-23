@@ -356,6 +356,19 @@ app:
   user.reg:
     mail.template:
       from: "nobody@localhost"
+  user.secret:
+    biz:
+      key-pair-password-hmac-key: "Secret123"
+      secret-encryption-salt: "flimflam"
+    cache:
+      keypair-cache:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
+      secret-cache:
+        ttl: 900
+        heap-max-entries: 1000
+        disk-max-size-mb: 0
   user-alert:
     stale-data:
       mail:

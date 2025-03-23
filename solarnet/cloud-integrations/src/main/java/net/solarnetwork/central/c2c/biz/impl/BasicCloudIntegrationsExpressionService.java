@@ -43,6 +43,7 @@ import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeOwnership;
 import net.solarnetwork.central.support.HttpOperations;
+import net.solarnetwork.central.user.dao.UserSecretAccessDao;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
@@ -56,7 +57,7 @@ import net.solarnetwork.service.ExpressionService;
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
@@ -64,6 +65,7 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	private final ExpressionService expressionService;
 	private final SolarNodeOwnershipDao nodeOwnershipDao;
 
+	private UserSecretAccessDao userSecretAccessDao;
 	private Cache<String, Expression> expressionCache;
 	private SolarNodeMetadataReadOnlyDao metadataDao;
 	private Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache;
@@ -137,9 +139,9 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	}
 
 	@Override
-	public DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId,
-			Datum datum, Map<String, ?> parameters,
-			DatumMetadataOperations metadata, DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
+	public DatumExpressionRoot createDatumExpressionRoot(Long userId, Long integrationId, Datum datum,
+			Map<String, ?> parameters, DatumMetadataOperations metadata,
+			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations) {
 		Map<String, ?> p = parameters;
 
 		// for node datum, lookup ownership so we have access to the node's time zone
@@ -155,7 +157,19 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 
 		return new DatumExpressionRoot(userId, datum, datum != null ? datum.asSampleOperations() : null,
 				p, metadata, datumStreamsAccessor, this::nodeMetadata, this::tariffSchedule,
-				httpOperations);
+				httpOperations, this::decryptUserSecret);
+	}
+
+	private byte[] decryptUserSecret(DatumExpressionRoot root, String key) {
+		final var dao = getUserSecretAccessDao();
+		if ( dao == null ) {
+			return null;
+		}
+		var secret = dao.getUserSecret(root.getUserId(), USER_SECRET_TOPIC_ID, key);
+		if ( secret == null ) {
+			return null;
+		}
+		return dao.decryptSecretValue(secret);
 	}
 
 	private DatumMetadataOperations nodeMetadata(ObjectDatumStreamMetadataId id) {
@@ -310,6 +324,27 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	public final void setTariffScheduleCache(
 			Cache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache) {
 		this.tariffScheduleCache = tariffScheduleCache;
+	}
+
+	/**
+	 * Get the user secret access DAO.
+	 *
+	 * @return the DAO
+	 * @since 1.3
+	 */
+	public UserSecretAccessDao getUserSecretAccessDao() {
+		return userSecretAccessDao;
+	}
+
+	/**
+	 * Set the user secret access DAO.
+	 *
+	 * @param userSecretAccessDao
+	 *        the DAO to set
+	 * @since 1.3
+	 */
+	public void setUserSecretAccessDao(UserSecretAccessDao userSecretAccessDao) {
+		this.userSecretAccessDao = userSecretAccessDao;
 	}
 
 }

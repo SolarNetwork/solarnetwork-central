@@ -29,6 +29,7 @@ import net.solarnetwork.service.RemoteServiceException;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
@@ -45,12 +46,13 @@ import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundExce
  * Implementation of {@link SecretsBiz} using AWS Secrets Manager.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class AwsSecretsBiz implements SecretsBiz {
 
 	private final SecretsManagerClient client;
 	private Cache<String, String> secretCache;
+	private Cache<String, byte[]> secretDataCache;
 
 	/**
 	 * Constructor.
@@ -103,7 +105,30 @@ public class AwsSecretsBiz implements SecretsBiz {
 				cache.put(secretName, secretValue);
 			}
 		} catch ( SdkException e ) {
-			throw new RemoteServiceException("Error retrieving secret [%s]".formatted(secretName), e);
+			throw new RemoteServiceException("Error storing secret [%s]".formatted(secretName), e);
+		}
+	}
+
+	@Override
+	public void putSecretData(String secretName, byte[] secretData) {
+		final Cache<String, byte[]> cache = this.secretDataCache;
+		final SdkBytes bytes = SdkBytes.fromByteArray(secretData);
+		try {
+			try {
+				CreateSecretRequest createReq = CreateSecretRequest.builder().name(secretName)
+						.secretBinary(bytes).build();
+				client.createSecret(createReq);
+			} catch ( ResourceExistsException ree ) {
+				// update existing secret
+				PutSecretValueRequest putReq = PutSecretValueRequest.builder().secretId(secretName)
+						.secretBinary(bytes).build();
+				client.putSecretValue(putReq);
+			}
+			if ( cache != null ) {
+				cache.put(secretName, secretData.clone());
+			}
+		} catch ( SdkException e ) {
+			throw new RemoteServiceException("Error storing secret data [%s]".formatted(secretName), e);
 		}
 	}
 
@@ -122,6 +147,28 @@ public class AwsSecretsBiz implements SecretsBiz {
 			String result = res.secretString();
 			if ( cache != null ) {
 				cache.put(secretName, result);
+			}
+			return result;
+		} catch ( SdkException e ) {
+			throw new RemoteServiceException("Error retrieving secret [%s]".formatted(secretName), e);
+		}
+	}
+
+	@Override
+	public byte[] getSecretData(String secretName) {
+		final Cache<String, byte[]> cache = this.secretDataCache;
+		if ( cache != null ) {
+			byte[] result = cache.get(secretName);
+			if ( result != null ) {
+				return result.clone();
+			}
+		}
+		try {
+			GetSecretValueRequest req = GetSecretValueRequest.builder().secretId(secretName).build();
+			GetSecretValueResponse res = client.getSecretValue(req);
+			byte[] result = res.secretBinary().asByteArray();
+			if ( cache != null ) {
+				cache.put(secretName, result.clone());
 			}
 			return result;
 		} catch ( SdkException e ) {
@@ -153,6 +200,16 @@ public class AwsSecretsBiz implements SecretsBiz {
 	 */
 	public void setSecretCache(Cache<String, String> secretCache) {
 		this.secretCache = secretCache;
+	}
+
+	/**
+	 * Configure a cache to use for secret data.
+	 * 
+	 * @param secretDataCache
+	 *        the cache
+	 */
+	public void setSecretDataCache(Cache<String, byte[]> secretDataCache) {
+		this.secretDataCache = secretDataCache;
 	}
 
 }

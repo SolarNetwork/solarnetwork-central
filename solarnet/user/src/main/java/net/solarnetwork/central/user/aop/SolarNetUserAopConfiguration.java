@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserConfiguration.java - 7/10/2021 10:52:06 AM
+ * SolarNetUserAopConfiguration.java - 23/03/2025 11:33:34 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,23 +20,14 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.config;
+package net.solarnetwork.central.user.aop;
 
 /**
- * Marker interface for the Instructor configuration package.
+ * Marker interface for user AOP configuration package.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SolarNetUserConfiguration {
-
-	/** A qualifier for user secrets support. */
-	public static final String USER_SECRETS = "user-secrets";
-
-	/** The qualifier for the user key pair related services. */
-	public static final String USER_KEYPAIR = "user-keypair";
-
-	/** The qualifier for the user secret related services. */
-	public static final String USER_SECRET = "user-secret";
-
+public interface SolarNetUserAopConfiguration {
+	// nothing here
 }

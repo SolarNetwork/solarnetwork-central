@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserConfiguration.java - 7/10/2021 10:52:06 AM
+ * UserSecretFilter.java - 21/03/2025 5:35:34 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,23 +20,19 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.config;
+package net.solarnetwork.central.user.dao;
+
+import net.solarnetwork.central.common.dao.KeyCriteria;
+import net.solarnetwork.central.common.dao.TopicCriteria;
+import net.solarnetwork.central.common.dao.UserCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
 
 /**
- * Marker interface for the Instructor configuration package.
+ * Filter API for user secret entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SolarNetUserConfiguration {
-
-	/** A qualifier for user secrets support. */
-	public static final String USER_SECRETS = "user-secrets";
-
-	/** The qualifier for the user key pair related services. */
-	public static final String USER_KEYPAIR = "user-keypair";
-
-	/** The qualifier for the user secret related services. */
-	public static final String USER_SECRET = "user-secret";
+public interface UserSecretFilter extends UserCriteria, TopicCriteria, KeyCriteria, PaginationCriteria {
 
 }

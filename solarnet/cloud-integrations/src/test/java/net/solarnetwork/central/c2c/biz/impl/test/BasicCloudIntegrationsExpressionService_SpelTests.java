@@ -22,12 +22,16 @@
 
 package net.solarnetwork.central.c2c.biz.impl.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService.USER_SECRET_TOPIC_ID;
+import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Accumulating;
 import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.assertj.core.api.BDDAssertions.thenObject;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -48,8 +52,11 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.DatumExpressionRoot;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
+import net.solarnetwork.central.domain.UserStringStringCompositePK;
 import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.central.support.SimpleCache;
+import net.solarnetwork.central.user.dao.UserSecretAccessDao;
+import net.solarnetwork.central.user.domain.UserSecretEntity;
 import net.solarnetwork.common.expr.spel.SpelExpressionService;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.GeneralDatum;
@@ -63,7 +70,7 @@ import net.solarnetwork.domain.tariff.TariffSchedule;
  * using the {@link SpelExpressionService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @ExtendWith(MockitoExtension.class)
 public class BasicCloudIntegrationsExpressionService_SpelTests {
@@ -76,6 +83,9 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 	@Mock
 	private HttpOperations httpOperations;
+
+	@Mock
+	private UserSecretAccessDao userSecretAccessDao;
 
 	private SimpleCache<String, Expression> expressionCache;
 	private SimpleCache<ObjectDatumStreamMetadataId, TariffSchedule> tariffScheduleCache;
@@ -91,6 +101,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 		service.setExpressionCache(expressionCache);
 		service.setTariffScheduleCache(tariffScheduleCache);
 		service.setMetadataDao(metadataDao);
+		service.setUserSecretAccessDao(userSecretAccessDao);
 	}
 
 	private static GeneralDatum createNodeDatum(Long nodeId, String sourceId) {
@@ -316,6 +327,42 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 
 		// THEN
 		then(ChronoUnit.SECONDS.between(start, result)).isLessThanOrEqualTo(2);
+	}
+
+	@Test
+	public void userSecret() {
+		// GIVEN
+		final Long integrationId = randomLong();
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final GeneralDatum datum = createNodeDatum(nodeId, sourceId);
+
+		final var config = new CloudDatumStreamPropertyConfiguration(randomLong(), randomLong(), 0,
+				Instant.now());
+		config.setValueType(CloudDatumStreamValueType.SpelExpression);
+		config.setValueReference("secret('foo')");
+
+		final Map<String, Object> parameters = Map.of("foo", "bar");
+
+		final UserSecretEntity userSecret = new UserSecretEntity(
+				new UserStringStringCompositePK(config.getUserId(), USER_SECRET_TOPIC_ID, "foo"),
+				randomBytes());
+		given(userSecretAccessDao.getUserSecret(config.getUserId(), USER_SECRET_TOPIC_ID, "foo"))
+				.willReturn(userSecret);
+
+		final String decryptedSecretValue = randomString();
+		given(userSecretAccessDao.decryptSecretValue(same(userSecret)))
+				.willReturn(decryptedSecretValue.getBytes(UTF_8));
+
+		// WHEN
+		final DatumExpressionRoot root = service.createDatumExpressionRoot(config.getUserId(),
+				integrationId, datum, parameters, null, null, null);
+		final String result = service.evaluateDatumPropertyExpression(config, root, null, String.class);
+
+		// THEN
+		then(result)
+				.as("UserSecretBiz used with hard-coded topic to decrypt secret value from UTF-8 bytes")
+				.isEqualTo(decryptedSecretValue);
 	}
 
 }

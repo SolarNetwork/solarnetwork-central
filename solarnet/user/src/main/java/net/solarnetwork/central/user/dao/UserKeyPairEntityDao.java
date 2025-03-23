@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserConfiguration.java - 7/10/2021 10:52:06 AM
+ * UserKeyPairEntityDao.java - 22/03/2025 12:00:15 pm
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,23 +20,21 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.config;
+package net.solarnetwork.central.user.dao;
+
+import net.solarnetwork.central.common.dao.GenericCompositeKey2Dao;
+import net.solarnetwork.central.domain.UserStringCompositePK;
+import net.solarnetwork.central.user.domain.UserKeyPairEntity;
+import net.solarnetwork.dao.FilterableDao;
 
 /**
- * Marker interface for the Instructor configuration package.
+ * DAO API for {@link UserKeyPairEntity} objects.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SolarNetUserConfiguration {
-
-	/** A qualifier for user secrets support. */
-	public static final String USER_SECRETS = "user-secrets";
-
-	/** The qualifier for the user key pair related services. */
-	public static final String USER_KEYPAIR = "user-keypair";
-
-	/** The qualifier for the user secret related services. */
-	public static final String USER_SECRET = "user-secret";
+public interface UserKeyPairEntityDao
+		extends GenericCompositeKey2Dao<UserKeyPairEntity, UserStringCompositePK, Long, String>,
+		FilterableDao<UserKeyPairEntity, UserStringCompositePK, UserKeyPairFilter> {
 
 }

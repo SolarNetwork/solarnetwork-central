@@ -1,7 +1,7 @@
 /* ==================================================================
- * UserConfiguration.java - 7/10/2021 10:52:06 AM
+ * KeyCriteria.java - 22/03/2025 7:36:26 am
  * 
- * Copyright 2021 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,23 +20,40 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.config;
+package net.solarnetwork.central.common.dao;
 
 /**
- * Marker interface for the Instructor configuration package.
+ * Criteria API for keyed entities.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public interface SolarNetUserConfiguration {
+public interface KeyCriteria {
 
-	/** A qualifier for user secrets support. */
-	public static final String USER_SECRETS = "user-secrets";
+	/**
+	 * Get the key criteria.
+	 * 
+	 * @return the keys
+	 */
+	String[] getKeys();
 
-	/** The qualifier for the user key pair related services. */
-	public static final String USER_KEYPAIR = "user-keypair";
+	/**
+	 * Get a single key criteria.
+	 * 
+	 * @return the first available key criteria
+	 */
+	default String getKey() {
+		String[] keys = getKeys();
+		return (keys != null && keys.length > 0 ? keys[0] : null);
+	}
 
-	/** The qualifier for the user secret related services. */
-	public static final String USER_SECRET = "user-secret";
+	/**
+	 * Test if any key criteria is available.
+	 * 
+	 * @return {@code true} if at least one key criteria is available
+	 */
+	default boolean hasKeyCriteria() {
+		return getKey() != null;
+	}
 
 }
