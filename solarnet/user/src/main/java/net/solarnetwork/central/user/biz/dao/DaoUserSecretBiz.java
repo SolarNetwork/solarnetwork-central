@@ -168,7 +168,7 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 		Instant now = clock.instant();
 
 		// lookup KeyPairEntity using key derived from topic ID
-		var keyPairId = new UserStringCompositePK(userId, input.getTopicId());
+		var keyPairId = new UserStringCompositePK(userId, input.getTopic());
 		UserKeyPairEntity keyPair = requireNonNullObject(keyPairDao.get(keyPairId), keyPairId);
 
 		// lookup key pair password from SecretsBiz
@@ -178,9 +178,9 @@ public class DaoUserSecretBiz implements UserSecretBiz {
 
 		var encryptor = encryptor(keyPair, keyPairPassword);
 
-		UserSecretEntity entity = new UserSecretEntity(userId, input.getTopicId(), input.getKey(), now,
+		UserSecretEntity entity = new UserSecretEntity(userId, input.getTopic(), input.getKey(), now,
 				now, encryptor.encrypt(input.getSecret()));
-		var id = secretDao.create(userId, input.getTopicId(), entity);
+		var id = secretDao.create(userId, input.getTopic(), entity);
 		return (id != null ? secretDao.get(id) : null);
 	}
 

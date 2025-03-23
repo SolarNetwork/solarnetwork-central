@@ -75,19 +75,18 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	}
 
 	@Override
-	public UserStringStringCompositePK create(Long userId, String topicId, UserSecretEntity entity) {
-		final var sql = new UpsertUserSecretEntity(userId, topicId, entity);
+	public UserStringStringCompositePK create(Long userId, String topic, UserSecretEntity entity) {
+		final var sql = new UpsertUserSecretEntity(userId, topic, entity);
 		int count = jdbcOps.update(sql);
-		return (count > 0 ? new UserStringStringCompositePK(userId, entity.getTopicId(), entity.getKey())
+		return (count > 0 ? new UserStringStringCompositePK(userId, entity.getTopic(), entity.getKey())
 				: null);
 	}
 
 	@Override
-	public Collection<UserSecretEntity> findAll(Long userId, String topicId,
-			List<SortDescriptor> sorts) {
+	public Collection<UserSecretEntity> findAll(Long userId, String topic, List<SortDescriptor> sorts) {
 		var filter = new BasicUserSecretFilter();
 		filter.setUserId(requireNonNullArgument(userId, "userId"));
-		filter.setTopicId(requireNonNullArgument(topicId, "topicId"));
+		filter.setTopic(requireNonNullArgument(topic, "topic"));
 		var sql = new SelectUserSecretEntity(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql, UserSecretEntityRowMapper.INSTANCE);
 		return stream(results.spliterator(), false).toList();
@@ -103,7 +102,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 
 	@Override
 	public UserStringStringCompositePK save(UserSecretEntity entity) {
-		return create(entity.getUserId(), entity.getTopicId(), entity);
+		return create(entity.getUserId(), entity.getTopic(), entity);
 	}
 
 	@Override
@@ -111,7 +110,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 		var filter = new BasicUserSecretFilter();
 		filter.setUserId(
 				requireNonNullArgument(requireNonNullArgument(id, "id").getUserId(), "id.userId"));
-		filter.setTopicId(requireNonNullArgument(id.getGroupId(), "id.groupId"));
+		filter.setTopic(requireNonNullArgument(id.getGroupId(), "id.groupId"));
 		filter.setKey(requireNonNullArgument(id.getEntityId(), "id.entityId"));
 		var sql = new SelectUserSecretEntity(filter);
 		var results = executeFilterQuery(jdbcOps, filter, sql, UserSecretEntityRowMapper.INSTANCE);
@@ -124,7 +123,7 @@ public class JdbcUserSecretEntityDao implements UserSecretEntityDao {
 	}
 
 	private static final String TABLE_NAME = "solaruser.user_secret";
-	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", "topic_id", "skey" };
+	private static final String[] PK_COLUMN_NAMES = new String[] { "user_id", "topic", "skey" };
 
 	@Override
 	public void delete(UserSecretEntity entity) {

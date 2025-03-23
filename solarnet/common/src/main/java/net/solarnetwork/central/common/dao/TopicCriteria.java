@@ -31,34 +31,34 @@ package net.solarnetwork.central.common.dao;
 public interface TopicCriteria {
 
 	/**
-	 * Test if any group criteria exists.
+	 * Test if any topic criteria exists.
 	 * 
-	 * @return {@literal true} if a group criteria exists
+	 * @return {@literal true} if a topic criteria exists
 	 */
 	default boolean hasTopicCriteria() {
-		String id = getTopicId();
+		String id = getTopic();
 		return (id != null);
 	}
 
 	/**
-	 * Get an array of group IDs.
+	 * Get an array of topics.
 	 * 
-	 * @return array of IDs (may be {@literal null})
+	 * @return array of topics (may be {@literal null})
 	 */
-	String[] getTopicIds();
+	String[] getTopics();
 
 	/**
-	 * Get the first group ID.
+	 * Get the first topic.
 	 * 
 	 * <p>
-	 * This returns the first available ID from the {@link #getTopicIds()}
+	 * This returns the first available topic from the {@link #getTopics()}
 	 * array, or {@literal null} if not available.
 	 * </p>
 	 * 
-	 * @return the group ID, or {@literal null} if not available
+	 * @return the topic, or {@literal null} if not available
 	 */
-	default String getTopicId() {
-		String[] ids = getTopicIds();
+	default String getTopic() {
+		String[] ids = getTopics();
 		return (ids != null && ids.length > 0 ? ids[0] : null);
 	}
 

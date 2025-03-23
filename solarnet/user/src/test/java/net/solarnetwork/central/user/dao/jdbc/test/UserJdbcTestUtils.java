@@ -83,18 +83,18 @@ public final class UserJdbcTestUtils {
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param topicId
-	 *        the topic ID
+	 * @param topic
+	 *        the topic
 	 * @param key
 	 *        the key
 	 * @param secret
 	 *        the secret
 	 * @return the entity
 	 */
-	public static UserSecretEntity newUserSecretEntity(Long userId, String topicId, String key,
+	public static UserSecretEntity newUserSecretEntity(Long userId, String topic, String key,
 			String secret) {
 		var ts = now().truncatedTo(MILLIS);
-		return new UserSecretEntity(userId, topicId, key, ts, ts, secret);
+		return new UserSecretEntity(userId, topic, key, ts, ts, secret);
 	}
 
 	/**
@@ -106,7 +106,7 @@ public final class UserJdbcTestUtils {
 	 */
 	public static List<Map<String, Object>> allUserSecretEntityData(JdbcOperations jdbcOps) {
 		List<Map<String, Object>> data = jdbcOps
-				.queryForList("select * from solaruser.user_secret ORDER BY user_id, topic_id, skey");
+				.queryForList("select * from solaruser.user_secret ORDER BY user_id, topic, skey");
 		log.debug("solaruser.user_secret table has {} items: [{}]", data.size(),
 				data.stream().map(Object::toString).collect(joining("\n\t", "\n\t", "\n")));
 		return data;

@@ -43,16 +43,16 @@ public class UpsertUserSecretEntity implements PreparedStatementCreator, SqlProv
 
 	private static final String SQL = """
 			INSERT INTO solaruser.user_secret (
-				user_id, topic_id, skey, created, modified, sdata
+				user_id, topic, skey, created, modified, sdata
 			)
 			VALUES (?,?,?,?,?,?)
-			ON CONFLICT (user_id, topic_id, skey) DO UPDATE
+			ON CONFLICT (user_id, topic, skey) DO UPDATE
 				SET modified = COALESCE(EXCLUDED.modified, CURRENT_TIMESTAMP)
 					, sdata = EXCLUDED.sdata
 			""";
 
 	private final Long userId;
-	private final String topicId;
+	private final String topic;
 	private final UserSecretEntity entity;
 
 	/**
@@ -60,17 +60,17 @@ public class UpsertUserSecretEntity implements PreparedStatementCreator, SqlProv
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param topicId
-	 *        the topic ID
+	 * @param topic
+	 *        the topic
 	 * @param entity
 	 *        the entity
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UpsertUserSecretEntity(Long userId, String topicId, UserSecretEntity entity) {
+	public UpsertUserSecretEntity(Long userId, String topic, UserSecretEntity entity) {
 		super();
 		this.userId = requireNonNullArgument(userId, "userId");
-		this.topicId = requireNonNullArgument(topicId, "topicId");
+		this.topic = requireNonNullArgument(topic, "topic");
 		this.entity = requireNonNullArgument(entity, "entity");
 	}
 
@@ -85,7 +85,7 @@ public class UpsertUserSecretEntity implements PreparedStatementCreator, SqlProv
 		Timestamp mod = entity.getModified() != null ? Timestamp.from(entity.getModified()) : ts;
 		PreparedStatement stmt = con.prepareStatement(getSql(), Statement.NO_GENERATED_KEYS);
 		stmt.setObject(1, userId);
-		stmt.setString(2, topicId);
+		stmt.setString(2, topic);
 		stmt.setString(3, entity.getKey());
 		stmt.setTimestamp(4, ts);
 		stmt.setTimestamp(5, mod);

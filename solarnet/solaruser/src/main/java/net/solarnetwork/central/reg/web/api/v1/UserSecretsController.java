@@ -142,16 +142,16 @@ public class UserSecretsController {
 	/**
 	 * Delete a key pair.
 	 *
-	 * @param topicId
-	 *        the topic ID of the key pair to delete
+	 * @param topic
+	 *        the topic of the key pair to delete
 	 * @param key
 	 *        the key of the key pair to delete
 	 * @return success result
 	 */
 	@RequestMapping(value = "/secret", method = RequestMethod.DELETE)
-	public Result<Void> deleteUserSecret(@RequestParam("topicId") String topicId,
+	public Result<Void> deleteUserSecret(@RequestParam("topic") String topic,
 			@RequestParam("key") String key) {
-		biz.deleteUserSecret(getCurrentActorUserId(), topicId, key);
+		biz.deleteUserSecret(getCurrentActorUserId(), topic, key);
 		return success();
 	}
 

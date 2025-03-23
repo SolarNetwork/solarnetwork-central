@@ -44,11 +44,11 @@ public interface UserSecret extends Identity<UserStringStringCompositePK>, UserI
 	Long getUserId();
 
 	/**
-	 * Get the topic ID.
+	 * Get the topic.
 	 * 
-	 * @return the topic ID
+	 * @return the topic
 	 */
-	String getTopicId();
+	String getTopic();
 
 	/**
 	 * Get the key.

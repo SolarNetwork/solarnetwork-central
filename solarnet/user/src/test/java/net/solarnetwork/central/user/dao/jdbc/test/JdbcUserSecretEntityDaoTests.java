@@ -94,7 +94,7 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 		// @formatter:on
 
 		// WHEN
-		UserStringStringCompositePK result = dao.create(userId, conf.getTopicId(), conf);
+		UserStringStringCompositePK result = dao.create(userId, conf.getTopic(), conf);
 
 		// THEN
 
@@ -104,7 +104,7 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 			.as("User ID as provided")
 			.returns(userId, UserStringStringCompositePK::getUserId)
 			.as("Topic ID as provided")
-			.returns(conf.getTopicId(), UserStringStringCompositePK::getGroupId)
+			.returns(conf.getTopic(), UserStringStringCompositePK::getGroupId)
 			.as("Key as provided")
 			.returns(conf.getKey(), UserStringStringCompositePK::getEntityId)
 			;
@@ -115,7 +115,7 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 			.as("Row user ID")
 			.containsEntry("user_id", userId)
 			.as("Row topic ID")
-			.containsEntry("topic_id", conf.getTopicId())
+			.containsEntry("topic", conf.getTopic())
 			.as("Row key")
 			.containsEntry("skey", conf.getKey())
 			.as("Row creation date")
@@ -189,17 +189,17 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 		for ( int u = 0; u < userCount; u++ ) {
 			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			for ( int s = 0; s < topicCount; s++ ) {
-				final String topicId = randomString();
+				final String topic = randomString();
 				for ( int i = 0; i < secretCount; i++ ) {
 					// @formatter:off
 						UserSecretEntity conf = newUserSecretEntity(
 								userId,
-								topicId,
+								topic,
 								"Key %d".formatted(i),
 								randomString()
 								);
 						// @formatter:on
-					UserStringStringCompositePK id = dao.create(userId, topicId, conf);
+					UserStringStringCompositePK id = dao.create(userId, topic, conf);
 					conf = conf.copyWithId(id);
 					confs.add(conf);
 				}
@@ -208,13 +208,13 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 
 		// WHEN
 		final UserSecretEntity randomConf = confs.get(RNG.nextInt(confs.size()));
-		Collection<UserSecretEntity> results = dao.findAll(randomConf.getUserId(),
-				randomConf.getTopicId(), null);
+		Collection<UserSecretEntity> results = dao.findAll(randomConf.getUserId(), randomConf.getTopic(),
+				null);
 
 		// THEN
 		UserSecretEntity[] expected = confs.stream()
 				.filter(e -> randomConf.getUserId().equals(e.getUserId())
-						&& randomConf.getTopicId().equals(e.getTopicId()))
+						&& randomConf.getTopic().equals(e.getTopic()))
 				.toArray(UserSecretEntity[]::new);
 		then(results).as("All results for user topic returned").containsExactly(expected);
 	}
@@ -230,17 +230,17 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 		for ( int u = 0; u < userCount; u++ ) {
 			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			for ( int s = 0; s < topicCount; s++ ) {
-				final String topicId = randomString();
+				final String topic = randomString();
 				for ( int i = 0; i < secretCount; i++ ) {
 					// @formatter:off
 						UserSecretEntity conf = newUserSecretEntity(
 								userId,
-								topicId,
+								topic,
 								"Key %d".formatted(i),
 								randomString()
 								);
 						// @formatter:on
-					UserStringStringCompositePK id = dao.create(userId, topicId, conf);
+					UserStringStringCompositePK id = dao.create(userId, topic, conf);
 					conf = conf.copyWithId(id);
 					confs.add(conf);
 				}
@@ -250,7 +250,7 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 		// WHEN
 		final UserSecretEntity randomConf = confs.get(RNG.nextInt(confs.size()));
 		dao.delete(dao.entityKey(UserStringStringCompositePK
-				.unassignedEntityIdKey(randomConf.getUserId(), randomConf.getTopicId())));
+				.unassignedEntityIdKey(randomConf.getUserId(), randomConf.getTopic())));
 
 		// THEN
 		List<Map<String, Object>> allRows = allUserSecretEntityData(jdbcTemplate);
@@ -258,10 +258,10 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 		then(allRows)
 			.as("Should have deleted 3 rows")
 			.hasSize(confs.size() - 3)
-			.as("Should have deleted all rows for given (user,topicId) group")
+			.as("Should have deleted all rows for given (user,topic) group")
 			.noneMatch(row -> {
 				return row.get("user_id").equals(randomConf.getUserId())
-						&& row.get("topic_id").equals(randomConf.getTopicId());
+						&& row.get("topic").equals(randomConf.getTopic());
 			})
 			;
 		// @formatter:on
@@ -278,17 +278,17 @@ public class JdbcUserSecretEntityDaoTests extends AbstractJUnit5JdbcDaoTestSuppo
 		for ( int u = 0; u < userCount; u++ ) {
 			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
 			for ( int s = 0; s < topicCount; s++ ) {
-				final String topicId = randomString();
+				final String topic = randomString();
 				for ( int i = 0; i < secretCount; i++ ) {
 					// @formatter:off
 						UserSecretEntity conf = newUserSecretEntity(
 								userId,
-								topicId,
+								topic,
 								"Key %d".formatted(i),
 								randomString()
 								);
 						// @formatter:on
-					UserStringStringCompositePK id = dao.create(userId, topicId, conf);
+					UserStringStringCompositePK id = dao.create(userId, topic, conf);
 					conf = conf.copyWithId(id);
 					confs.add(conf);
 				}

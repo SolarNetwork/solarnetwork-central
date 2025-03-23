@@ -37,7 +37,7 @@ import net.solarnetwork.dao.PaginationCriteria;
 public class BasicUserSecretFilter extends BasicCoreCriteria
 		implements UserSecretFilter, UserKeyPairFilter {
 
-	private String[] topicIds;
+	private String[] topics;
 	private String[] keys;
 
 	/**
@@ -58,11 +58,11 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	public void copyFrom(PaginationCriteria criteria) {
 		super.copyFrom(criteria);
 		if ( criteria instanceof BasicUserSecretFilter c ) {
-			setTopicIds(c.getTopicIds());
+			setTopics(c.getTopics());
 			setKeys(c.getKeys());
 		} else {
 			if ( criteria instanceof TopicCriteria c ) {
-				setTopicIds(c.getTopicIds());
+				setTopics(c.getTopics());
 			}
 			if ( criteria instanceof KeyCriteria c ) {
 				setKeys(c.getKeys());
@@ -74,7 +74,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Arrays.hashCode(topicIds);
+		result = prime * result + Arrays.hashCode(topics);
 		result = prime * result + Arrays.hashCode(keys);
 		return result;
 	}
@@ -91,7 +91,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 			return false;
 		}
 		BasicUserSecretFilter other = (BasicUserSecretFilter) obj;
-		return Arrays.equals(topicIds, topicIds) && Arrays.equals(keys, other.keys);
+		return Arrays.equals(topics, topics) && Arrays.equals(keys, other.keys);
 	}
 
 	@Override
@@ -100,37 +100,37 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	}
 
 	/**
-	 * Set a single topic ID.
+	 * Set a single topic.
 	 * 
 	 * <p>
-	 * This will completely replace the configured topic IDs.
+	 * This will completely replace the configured topics.
 	 * </p>
 	 * 
 	 * @param topicId
-	 *        the topic ID to set
+	 *        the topic to set
 	 */
-	public void setTopicId(String topicId) {
-		setTopicIds(topicId != null ? new String[] { topicId } : null);
+	public void setTopic(String topic) {
+		setTopics(topic != null ? new String[] { topic } : null);
 	}
 
 	/**
-	 * Get the topic IDs.
+	 * Get the topics.
 	 * 
-	 * @return the topic IDs
+	 * @return the topics
 	 */
 	@Override
-	public String[] getTopicIds() {
-		return topicIds;
+	public String[] getTopics() {
+		return topics;
 	}
 
 	/**
-	 * Set the topic IDS.
+	 * Set the topicS.
 	 * 
-	 * @param topicIds
-	 *        the topic IDs to set
+	 * @param topics
+	 *        the topics to set
 	 */
-	public void setTopicIds(String[] topicIds) {
-		this.topicIds = topicIds;
+	public void setTopics(String[] topicIds) {
+		this.topics = topicIds;
 	}
 
 	/**

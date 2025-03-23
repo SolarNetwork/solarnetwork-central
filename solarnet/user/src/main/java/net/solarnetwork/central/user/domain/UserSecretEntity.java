@@ -38,7 +38,7 @@ import net.solarnetwork.central.domain.UserStringStringCompositePK;
  * @author matt
  * @version 1.0
  */
-@JsonPropertyOrder({ "userId", "topicId", "key", "created", "modified" })
+@JsonPropertyOrder({ "userId", "topic", "key", "created", "modified" })
 @JsonIgnoreProperties({ "id" })
 public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStringStringCompositePK>
 		implements UserSecret {
@@ -88,8 +88,8 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 *
 	 * @param userId
 	 *        the user ID
-	 * @param topicId
-	 *        the topic ID
+	 * @param topic
+	 *        the topic
 	 * @param key
 	 *        the key
 	 * @param created
@@ -101,9 +101,9 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserSecretEntity(Long userId, String topicId, String key, Instant created, Instant modified,
+	public UserSecretEntity(Long userId, String topic, String key, Instant created, Instant modified,
 			byte[] secret) {
-		this(new UserStringStringCompositePK(userId, topicId, key), created, modified, secret);
+		this(new UserStringStringCompositePK(userId, topic, key), created, modified, secret);
 	}
 
 	/**
@@ -154,8 +154,8 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * 
 	 * @param userId
 	 *        the user ID
-	 * @param topicId
-	 *        the topic ID
+	 * @param topic
+	 *        the topic
 	 * @param key
 	 *        the key
 	 * @param created
@@ -165,9 +165,9 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public UserSecretEntity(Long userId, String topicId, String key, Instant created, Instant modified,
+	public UserSecretEntity(Long userId, String topic, String key, Instant created, Instant modified,
 			String secretValue) {
-		this(userId, topicId, key, created, modified,
+		this(userId, topic, key, created, modified,
 				requireNonNullArgument(secretValue, "secretValue").getBytes(UTF_8));
 	}
 
@@ -182,7 +182,7 @@ public class UserSecretEntity extends BasicUserEntity<UserSecretEntity, UserStri
 	}
 
 	@Override
-	public String getTopicId() {
+	public String getTopic() {
 		var pk = getId();
 		return (pk != null ? pk.getGroupId() : null);
 	}

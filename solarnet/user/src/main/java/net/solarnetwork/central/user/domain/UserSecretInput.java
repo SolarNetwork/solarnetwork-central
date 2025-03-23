@@ -43,7 +43,7 @@ public class UserSecretInput {
 
 	@NotBlank
 	@Size(max = 64)
-	private String topicId;
+	private String topic;
 
 	@NotEmpty
 	@Size(max = 4096)
@@ -80,18 +80,18 @@ public class UserSecretInput {
 	 * 
 	 * @return the topic ID
 	 */
-	public String getTopicId() {
-		return topicId;
+	public String getTopic() {
+		return topic;
 	}
 
 	/**
 	 * Set the topic ID.
 	 * 
-	 * @param topicId
+	 * @param topic
 	 *        the topic ID to set
 	 */
-	public void setTopicId(String topicId) {
-		this.topicId = topicId;
+	public void setTopic(String topicId) {
+		this.topic = topicId;
 	}
 
 	/**

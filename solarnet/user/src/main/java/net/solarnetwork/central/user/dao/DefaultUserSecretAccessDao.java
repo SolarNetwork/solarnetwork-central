@@ -103,7 +103,7 @@ public class DefaultUserSecretAccessDao implements UserSecretAccessDao {
 
 		final var cache = getKeyPairCache();
 
-		final var keyPairId = new UserStringCompositePK(secret.getUserId(), secret.getTopicId());
+		final var keyPairId = new UserStringCompositePK(secret.getUserId(), secret.getTopic());
 
 		KeyPair keyPair = null;
 		if ( cache != null ) {

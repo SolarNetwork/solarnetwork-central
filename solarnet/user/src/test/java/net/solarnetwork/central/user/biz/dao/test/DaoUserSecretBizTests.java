@@ -267,14 +267,14 @@ public class DaoUserSecretBizTests {
 	public void saveUserSecret() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String topicId = "%s/%s".formatted(randomString(), randomString());
+		final String topic = "%s/%s".formatted(randomString(), randomString());
 		final String key = randomString();
 
 		// look up user key pair to encrypt secret with
-		final var keyPairPk = new UserStringCompositePK(userId, topicId);
+		final var keyPairPk = new UserStringCompositePK(userId, topic);
 		final var keyPair = RsaKeyHelper.generateKeyPair();
 		final var keyPairPassword = randomString();
-		final var daoKeyPairEntity = UserKeyPairEntity.withKeyPair(userId, topicId, clock.instant(),
+		final var daoKeyPairEntity = UserKeyPairEntity.withKeyPair(userId, topic, clock.instant(),
 				clock.instant(), keyPair, keyPairPassword, certificateService);
 		given(keyPairDao.get(keyPairPk)).willReturn(daoKeyPairEntity);
 
@@ -282,22 +282,22 @@ public class DaoUserSecretBizTests {
 		final var passwordKey = daoKeyPairEntity.secretsBizKey();
 		given(secretsBiz.getSecret(passwordKey)).willReturn(keyPairPassword);
 
-		final var secretPk = new UserStringStringCompositePK(userId, topicId, key);
+		final var secretPk = new UserStringStringCompositePK(userId, topic, key);
 		final var daoSecretEntity = new UserSecretEntity(secretPk, randomBytes());
-		given(secretDao.create(eq(userId), eq(topicId), any())).willReturn(secretPk);
+		given(secretDao.create(eq(userId), eq(topic), any())).willReturn(secretPk);
 		given(secretDao.get(secretPk)).willReturn(daoSecretEntity);
 
 		// WHEN
 		final String secretValue = randomString();
 		UserSecretInput input = new UserSecretInput();
-		input.setTopicId(topicId);
+		input.setTopic(topic);
 		input.setKey(key);
 		input.setSecretValue(secretValue);
 		UserSecret result = biz.saveUserSecret(userId, input);
 
 		// THEN
 		// @formatter:off
-		then(secretDao).should().create(eq(userId), eq(topicId), secretEntityCaptor.capture());
+		then(secretDao).should().create(eq(userId), eq(topic), secretEntityCaptor.capture());
 		and.then(secretEntityCaptor.getValue())
 			.as("Non-null UserSecretEntity persisted to DAO")
 			.isNotNull()
@@ -331,16 +331,16 @@ public class DaoUserSecretBizTests {
 	public void deleteUserSecret() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String topicId = randomString();
+		final String topic = randomString();
 		final String key = randomString();
 
-		final var secretPk = new UserStringStringCompositePK(userId, topicId, key);
+		final var secretPk = new UserStringStringCompositePK(userId, topic, key);
 		final var daoSecretEntity = new UserSecretEntity(secretPk, randomBytes());
 
 		given(secretDao.entityKey(secretPk)).willReturn(daoSecretEntity);
 
 		// WHEN
-		biz.deleteUserSecret(userId, topicId, key);
+		biz.deleteUserSecret(userId, topic, key);
 
 		// THEN
 		// @formatter:off
@@ -358,10 +358,10 @@ public class DaoUserSecretBizTests {
 	public void listSecretsForUser() {
 		// GIVEN
 		final Long userId = randomLong();
-		final String topicId = randomString();
+		final String topic = randomString();
 		final String key = randomString();
 
-		final var secretPk = new UserStringStringCompositePK(userId, topicId, key);
+		final var secretPk = new UserStringStringCompositePK(userId, topic, key);
 		final var daoSecretEntity = new UserSecretEntity(secretPk, randomBytes());
 
 		final var daoFilterResults = new BasicFilterResults<>(List.of(daoSecretEntity));

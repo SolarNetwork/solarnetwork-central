@@ -91,7 +91,7 @@ public class SelectUserSecretEntity
 
 	private void sqlCore(StringBuilder buf) {
 		buf.append("""
-				SELECT us.user_id, us.topic_id, us.skey, us.created, us.modified, us.sdata
+				SELECT us.user_id, us.topic, us.skey, us.created, us.modified, us.sdata
 				FROM solaruser.user_secret us
 				""");
 	}
@@ -103,7 +103,7 @@ public class SelectUserSecretEntity
 			idx += whereOptimizedArrayContains(filter.getUserIds(), "us.user_id", where);
 		}
 		if ( filter.hasTopicCriteria() ) {
-			idx += whereOptimizedArrayContains(filter.getTopicIds(), "us.topic_id", where);
+			idx += whereOptimizedArrayContains(filter.getTopics(), "us.topic", where);
 		}
 		if ( filter.hasKeyCriteria() ) {
 			idx += whereOptimizedArrayContains(filter.getKeys(), "us.skey", where);
@@ -114,7 +114,7 @@ public class SelectUserSecretEntity
 	}
 
 	private void sqlOrderBy(StringBuilder buf) {
-		buf.append("ORDER BY us.user_id, us.topic_id, us.skey");
+		buf.append("ORDER BY us.user_id, us.topic, us.skey");
 	}
 
 	@Override
@@ -134,7 +134,7 @@ public class SelectUserSecretEntity
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getUserIds());
 		}
 		if ( filter.hasTopicCriteria() ) {
-			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getTopicIds());
+			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getTopics());
 		}
 		if ( filter.hasKeyCriteria() ) {
 			p = prepareOptimizedArrayParameter(con, stmt, p, filter.getKeys());

@@ -78,7 +78,7 @@ public class UserSecretEntityTests {
 		String result = getJSONString(entity);
 
 		then(result).as("JSON encoding").isEqualTo("""
-				{"userId":%d,"topicId":%s,"key":%s,"created":%s,"modified":%s}""".formatted(userId,
+				{"userId":%d,"topic":%s,"key":%s,"created":%s,"modified":%s}""".formatted(userId,
 				getJSONString(topicId), getJSONString(key), getJSONString(ts), getJSONString(mod)));
 	}
 
