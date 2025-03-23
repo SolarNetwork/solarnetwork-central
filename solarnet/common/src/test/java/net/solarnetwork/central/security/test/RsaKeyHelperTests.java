@@ -37,13 +37,51 @@ import net.solarnetwork.central.security.RsaKeyHelper;
 public class RsaKeyHelperTests {
 
 	@Test
-	public void loadRsaPrivateKeyPemFile() {
+	public void loadRsaPrivateKeyPemFile_openssh() {
 		// GIVEN
 		// ssh-keygen -m PEM -t rsa -b 1024 -f test-rsa-private-key-01.pem
 
 		// WHEN
 		KeyPair result = RsaKeyHelper
 				.parseKeyPair(utf8StringResource("test-rsa-private-key-01.pem", getClass()));
+
+		// THEN
+		// @formatter:off
+		then(result).as("KeyPair decoded").isNotNull();
+		
+		then(result.getPrivate().getEncoded()).as("Private key available").isNotEmpty();
+		
+		then(result.getPrivate().getAlgorithm()).as("Private key is RSA").isEqualTo("RSA");
+		// @formatter:on
+	}
+
+	@Test
+	public void loadRsaPrivateKeyPemFile_openssl_traditional() {
+		// GIVEN
+		// openssl genrsa -traditional -out test-rsa-private-key-02.pem 4096 
+
+		// WHEN
+		KeyPair result = RsaKeyHelper
+				.parseKeyPair(utf8StringResource("test-rsa-private-key-02.pem", getClass()));
+
+		// THEN
+		// @formatter:off
+		then(result).as("KeyPair decoded").isNotNull();
+		
+		then(result.getPrivate().getEncoded()).as("Private key available").isNotEmpty();
+		
+		then(result.getPrivate().getAlgorithm()).as("Private key is RSA").isEqualTo("RSA");
+		// @formatter:on
+	}
+
+	@Test
+	public void loadRsaPrivateKeyPemFile_openssl() {
+		// GIVEN
+		// openssl genrsa -out test-rsa-private-key-03.pem 1024 
+
+		// WHEN
+		KeyPair result = RsaKeyHelper
+				.parseKeyPair(utf8StringResource("test-rsa-private-key-03.pem", getClass()));
 
 		// THEN
 		// @formatter:off

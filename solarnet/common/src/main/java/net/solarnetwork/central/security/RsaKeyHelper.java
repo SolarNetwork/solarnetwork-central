@@ -32,9 +32,11 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -52,6 +54,12 @@ import org.bouncycastle.asn1.ASN1Sequence;
  * Shamlessly adapted from
  * {@link org.springframework.security.crypto.encrypt.RsaKeyHelper} because that
  * class is package-private.
+ * </p>
+ * 
+ * <p>
+ * One logic change introduced is to support the PKCS#8 "PRIVATE KEY" format
+ * that OpenSSL generates by default, unless a {@code -traditional} argument is
+ * included.
  * </p>
  *
  * @author Luke Taylor
@@ -111,6 +119,25 @@ public final class RsaKeyHelper {
 							key.getCoefficient());
 					publicKey = fact.generatePublic(pubSpec);
 					privateKey = fact.generatePrivate(privSpec);
+				}
+				case "PRIVATE KEY" -> {
+					org.bouncycastle.asn1.pkcs.PrivateKeyInfo pkInfo = org.bouncycastle.asn1.pkcs.PrivateKeyInfo
+							.getInstance(content);
+					if ( !org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers.rsaEncryption
+							.equals(pkInfo.getPrivateKeyAlgorithm().getAlgorithm()) ) {
+						throw new IllegalArgumentException(
+								"Only RSA is currently supported, but algorithm was "
+										+ pkInfo.getPrivateKeyAlgorithm().getAlgorithm().getId());
+					}
+					try {
+						PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(pkInfo.getEncoded());
+						privateKey = fact.generatePrivate(privSpec);
+						publicKey = fact.generatePublic(
+								new RSAPublicKeySpec(((RSAPrivateCrtKey) privateKey).getModulus(),
+										((RSAPrivateCrtKey) privateKey).getPublicExponent()));
+					} catch ( IOException e ) {
+						throw new IllegalArgumentException(e);
+					}
 				}
 				case "PUBLIC KEY" -> {
 					KeySpec keySpec = new X509EncodedKeySpec(content);
