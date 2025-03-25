@@ -409,8 +409,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
-			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
+			final var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
+			final var expression = expressionService.expression(config);
 			for ( MutableDatum d : datum ) {
 				DatumMetadataOperations metaOps = null;
 				if ( datumStreamMetadataDao != null ) {
@@ -424,7 +425,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 						this instanceof HttpOperations httpOps ? httpOps : null);
 				Object val = null;
 				try {
-					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
+					val = expressionService.evaluateDatumPropertyExpression(expression, root, vars,
 							Object.class);
 				} catch ( Exception e ) {
 					Throwable t = e;
