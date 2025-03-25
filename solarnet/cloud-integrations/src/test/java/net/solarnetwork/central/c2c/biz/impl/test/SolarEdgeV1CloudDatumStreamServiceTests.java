@@ -37,6 +37,7 @@ import static net.solarnetwork.util.DateUtils.ISO_DATE_OPT_TIME_ALT;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -622,8 +623,27 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 				Map.of(streamMeta1.getStreamId(), streamMeta1, streamMeta2.getStreamId(), streamMeta2),
 				List.of());
 
-		given(datumDao.findFiltered(any())).willReturn(filterResults1).willReturn(gapFillResults1)
-				.willReturn(filterResults2).willReturn(gapFillResults2);
+		// actual order of DAO queries is not determinate, so have to set up argument filters
+
+		given(datumDao.findFiltered(argThat(c -> {
+			return c != null && streamMeta1.getSourceId().equals(c.getSourceId()) && c.getMax() != null
+					&& c.getMax() == 1;
+		}))).willReturn(filterResults1);
+
+		given(datumDao.findFiltered(argThat(c -> {
+			return c != null && streamMeta1.getSourceId().equals(c.getSourceId())
+					&& (c.getMax() == null || c.getMax() > 1);
+		}))).willReturn(gapFillResults1);
+
+		given(datumDao.findFiltered(argThat(c -> {
+			return c != null && streamMeta2.getSourceId().equals(c.getSourceId()) && c.getMax() != null
+					&& c.getMax() == 1;
+		}))).willReturn(filterResults2);
+
+		given(datumDao.findFiltered(argThat(c -> {
+			return c != null && streamMeta2.getSourceId().equals(c.getSourceId())
+					&& (c.getMax() == null || c.getMax() > 1);
+		}))).willReturn(gapFillResults2);
 
 		// WHEN
 		Iterable<Datum> result = service.latestDatum(datumStream);
@@ -635,7 +655,11 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 			.hasSize(4)
 			.satisfies(l -> {
 				final Instant genDatumDate = Instant.parse("2024-10-23T20:15:00Z");
-				and.then(l).element(0)
+				and.then(l)
+					.filteredOn(c -> streamMeta1.getSourceId().equals(c.getSourceId()) && c.getMax() != null && c.getMax() == 1)
+					.as("Query for INV1")
+					.hasSize(1)
+					.element(0)
 					.as("Query for user")
 					.returns(TEST_USER_ID, from(DatumCriteria::getUserId))
 					.as("Query for stream node")
@@ -648,7 +672,11 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.returns(genDatumDate.plusMillis(1), from(DatumCriteria::getEndDate))
 					;
 				final Instant inv1OldestDate = Instant.parse("2024-10-23T20:19:30Z");
-				and.then(l).element(1)
+				and.then(l)
+					.filteredOn(c -> streamMeta1.getSourceId().equals(c.getSourceId()) && (c.getMax() == null || c.getMax() > 1))
+					.as("Query for INV1 gapfill")
+					.hasSize(1)
+					.element(0)
 					.as("Gap fill query for user")
 					.returns(TEST_USER_ID, from(DatumCriteria::getUserId))
 					.as("Gap fill query for stream node")
@@ -660,7 +688,11 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.as("Gap fill query start date is first discovered INV1 datum +1ms for >")
 					.returns(datumEntity1.getTimestamp().plusMillis(1), from(DatumCriteria::getStartDate))
 					;
-				and.then(l).element(2)
+				and.then(l)
+					.filteredOn(c -> streamMeta2.getSourceId().equals(c.getSourceId()) && c.getMax() != null && c.getMax() == 1)
+					.as("Query for INV2")
+					.hasSize(1)
+					.element(0)
 					.as("Query for user")
 					.returns(TEST_USER_ID, from(DatumCriteria::getUserId))
 					.as("Query for stream node")
@@ -673,7 +705,11 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 					.returns(genDatumDate.plusMillis(1), from(DatumCriteria::getEndDate))
 					;
 				final Instant inv2OldestDate = Instant.parse("2024-10-23T20:17:30Z");
-				and.then(l).element(3)
+				and.then(l)
+					.filteredOn(c -> streamMeta2.getSourceId().equals(c.getSourceId()) && (c.getMax() == null || c.getMax() > 1))
+					.as("Query for INV2 gapfill")
+					.hasSize(1)
+					.element(0)
 					.as("Gap fill query for user")
 					.returns(TEST_USER_ID, from(DatumCriteria::getUserId))
 					.as("Gap fill query for stream node")
