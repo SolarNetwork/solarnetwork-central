@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz;
 
 import java.util.Map;
+import org.springframework.expression.Expression;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
@@ -35,7 +36,7 @@ import net.solarnetwork.domain.datum.DatumMetadataOperations;
  * API for a service that can evaluate expressions.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CloudIntegrationsExpressionService {
 
@@ -79,6 +80,16 @@ public interface CloudIntegrationsExpressionService {
 			DatumStreamsAccessor datumStreamsAccessor, HttpOperations httpOperations);
 
 	/**
+	 * Get an {@link Expression} instance for a property configuration.
+	 *
+	 * @param property
+	 *        the property configuration
+	 * @return the expression
+	 * @since 1.4
+	 */
+	Expression expression(CloudDatumStreamPropertyConfiguration property);
+
+	/**
 	 * Evaluate a property expression.
 	 *
 	 * @param <T>
@@ -94,7 +105,28 @@ public interface CloudIntegrationsExpressionService {
 	 *        the result type
 	 * @return the result
 	 */
-	<T> T evaluateDatumPropertyExpression(CloudDatumStreamPropertyConfiguration property, Object root,
-			Map<String, Object> variables, Class<T> resultClass);
+	default <T> T evaluateDatumPropertyExpression(CloudDatumStreamPropertyConfiguration property,
+			Object root, Map<String, Object> variables, Class<T> resultClass) {
+		return evaluateDatumPropertyExpression(expression(property), root, variables, resultClass);
+	}
 
+	/**
+	 * Evaluate a property expression.
+	 *
+	 * @param <T>
+	 *        the result type
+	 * @param expression
+	 *        the expression to evaluate
+	 * @param root
+	 *        the root object, for example a
+	 *        {@link net.solarnetwork.domain.datum.DatumSamplesExpressionRoot}
+	 * @param variables
+	 *        optional expression variables
+	 * @param resultClass
+	 *        the result type
+	 * @return the result
+	 * @since 1.4
+	 */
+	<T> T evaluateDatumPropertyExpression(Expression expression, Object root,
+			Map<String, Object> variables, Class<T> resultClass);
 }
