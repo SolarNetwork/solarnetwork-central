@@ -218,6 +218,7 @@ public class CloudDatumStreamDatumImportInputFormatService extends BaseDatumImpo
 				var nextFilter = results.getNextQueryFilter();
 				if ( nextFilter != null ) {
 					filter = BasicQueryFilter.copyOf(nextFilter, config.getServiceProperties());
+					filter.setEndDate(endDate); // keep importing to end date
 				} else {
 					filter = null;
 				}
