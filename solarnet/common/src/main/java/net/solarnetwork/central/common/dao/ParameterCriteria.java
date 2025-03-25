@@ -28,7 +28,7 @@ import java.util.Map;
  * Search criteria for arbitrary parameters.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface ParameterCriteria {
 
@@ -60,6 +60,19 @@ public interface ParameterCriteria {
 	default boolean hasParameter(String key) {
 		final var params = getParameters();
 		return params != null && params.containsKey(key);
+	}
+
+	/**
+	 * Get a parameter value.
+	 * 
+	 * @param key
+	 *        the key to get
+	 * @return the parameter value, or {@code null} if not found
+	 * @since 1.2
+	 */
+	default Object parameter(String key) {
+		final var params = getParameters();
+		return params != null ? params.get(key) : null;
 	}
 
 }

@@ -1,0 +1,17 @@
+{
+  "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
+  "name": "Site 1",
+  "address": {
+    "country": null,
+    "zipCode": null,
+    "street": null,
+    "city": null,
+    "state": null
+  },
+  "pictureURL": "https://froniussestimagesweprod/pvsystem-images/ced6f980-8907-4128-87ea-000000000000%2F7fb2aa40-d0bc-a513-dbc2-000000000000",
+  "peakPower": 7600.0,
+  "installationDate": "2000-01-01T00:00:00Z",
+  "lastImport": "2025-03-24T16:45:08Z",
+  "meteoData": "light",
+  "timeZone": "Europe/London"
+}
