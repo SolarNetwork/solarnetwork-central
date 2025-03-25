@@ -1,0 +1,86 @@
+{
+  "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
+  "deviceId": "3b482b62-1754-48f1-a0ca-000000000000",
+  "data": [
+    {
+      "logDateTime": "2025-03-23T01:25:00Z",
+      "logDuration": 300,
+      "channels": [
+        {
+          "channelName": "EnergyExported",
+          "channelType": "Energy",
+          "unit": "Wh",
+          "value": 1.0
+        },
+        {
+          "channelName": "StandardizedPower",
+          "channelType": "Percentage",
+          "unit": "%",
+          "value": 0.0
+        },
+        {
+          "channelName": "CurrentA",
+          "channelType": "Current",
+          "unit": "A",
+          "value": 0.0
+        },
+        {
+          "channelName": "VoltageDC1",
+          "channelType": "Voltage",
+          "unit": "V",
+          "value": 0.73
+        },
+        {
+          "channelName": "CurrentDC1",
+          "channelType": "Current",
+          "unit": "A",
+          "value": 0.0
+        },
+        {
+          "channelName": "ReactivePower",
+          "channelType": "Reactive Power",
+          "unit": "VAr",
+          "value": 0.0
+        },
+        {
+          "channelName": "ApparentPower",
+          "channelType": "Apparent Power",
+          "unit": "VA",
+          "value": 0.0
+        },
+        {
+          "channelName": "PowerFactor",
+          "channelType": "Power",
+          "unit": "",
+          "value": 0.0
+        },
+        {
+          "channelName": "EnergyDC1",
+          "channelType": "Energy",
+          "unit": "Wh",
+          "value": 0.0
+        },
+        {
+          "channelName": "EnergyDC2",
+          "channelType": "Energy",
+          "unit": "Wh",
+          "value": 0.0
+        },
+        {
+          "channelName": "EnergyImported",
+          "channelType": "Energy",
+          "unit": "Wh",
+          "value": 2.0
+        }
+      ]
+    }
+  ],
+  "links": {
+    "first": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices/3b482b62-1754-48f1-a0ca-000000000000/histdata?from=2025-03-23T01:20:17Z&to=2025-03-24T01:20:17Z&offset=0&limit=1",
+    "prev": null,
+    "self": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices/3b482b62-1754-48f1-a0ca-000000000000/histdata?from=2025-03-23T01:20:17Z&to=2025-03-24T01:20:17Z&offset=0&limit=1",
+    "next": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices/3b482b62-1754-48f1-a0ca-000000000000/histdata?from=2025-03-23T01:20:17Z&to=2025-03-24T01:20:17Z&offset=1&limit=1",
+    "last": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices/3b482b62-1754-48f1-a0ca-000000000000/histdata?from=2025-03-23T01:20:17Z&to=2025-03-24T01:20:17Z&offset=280&limit=1",
+    "totalItemsCount": 281
+  }
+}

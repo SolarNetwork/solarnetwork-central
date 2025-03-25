@@ -256,8 +256,8 @@ public class CloudDatumStreamDatumImportInputFormatServiceTests {
 					and.then(filters).element(i)
 						.as("Start date from expected page filter")
 						.returns(queryFilters.get(i).getStartDate(), CloudDatumStreamQueryFilter::getStartDate)
-						.as("End date from expected page filter")
-						.returns(queryFilters.get(i).getEndDate(), CloudDatumStreamQueryFilter::getEndDate)
+						.as("End date from original filter")
+						.returns(endDate.toInstant(), CloudDatumStreamQueryFilter::getEndDate)
 						;
 				}
 			})

@@ -1,0 +1,492 @@
+{
+  "devices": [
+    {
+      "deviceType": "Inverter",
+      "deviceId": "7796944e-b09e-424e-a77f-000000000000",
+      "deviceName": "Primo GEN24 3.6 Plus",
+      "deviceManufacturer": "Fronius",
+      "serialNumber": "32555894",
+      "deviceTypeDetails": "Primo GEN24 3.6 Plus",
+      "dataloggerId": "pilot-0.5e-580975161653392885_0000000000",
+      "nodeType": 254,
+      "numberMPPTrackers": 2,
+      "numberPhases": 1,
+      "peakPower": {
+        "dc1": 3600.0,
+        "dc2": 0.0
+      },
+      "nominalAcPower": 3600.0,
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2022-03-23T18:15:23Z",
+      "deactivationDate": "2023-07-28T14:24:06Z"
+    },
+    {
+      "deviceType": "Inverter",
+      "deviceId": "3b482b62-1754-48f1-a0ca-000000000000",
+      "deviceName": "Primo GEN24 3.6 Plus",
+      "deviceManufacturer": "Fronius",
+      "serialNumber": "34731506",
+      "deviceTypeDetails": "Primo GEN24 3.6 Plus",
+      "dataloggerId": "pilot-0.6e-2236461441151190384_0000000000",
+      "nodeType": 254,
+      "numberMPPTrackers": 2,
+      "numberPhases": 1,
+      "peakPower": {
+        "dc1": 3600.0,
+        "dc2": 0.0
+      },
+      "nominalAcPower": 3600.0,
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": "2025-03-18T16:45:03Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "Inverter",
+      "deviceId": "5980b6f7-f230-4a52-ad9a-000000000000",
+      "deviceName": "Primo 3.6-1 (1)",
+      "deviceManufacturer": "Fronius",
+      "serialNumber": "25392042",
+      "deviceTypeDetails": "Fronius Primo 3.6-1",
+      "dataloggerId": "240.80298",
+      "nodeType": 97,
+      "numberMPPTrackers": 2,
+      "numberPhases": 1,
+      "peakPower": {
+        "dc1": 4000.0,
+        "dc2": 0.0
+      },
+      "nominalAcPower": 3680.0,
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": "2015-04-10T09:31:01Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "Sensor",
+      "deviceId": "d3d544da-a81f-4e93-b6a1-000000000000",
+      "deviceName": "Sensor Card / Box (0)",
+      "deviceManufacturer": "Fronius",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": null,
+      "deactivationDate": null,
+      "dataloggerId": "240.80298",
+      "sensors": [
+        {
+          "sensorName": "Digital1",
+          "sensorType": "Velocity",
+          "isActive": true,
+          "activationDate": "2016-01-12T16:48:22Z",
+          "deactivationDate": null
+        },
+        {
+          "sensorName": "Insolation",
+          "sensorType": "Insolation",
+          "isActive": true,
+          "activationDate": "2016-01-12T16:48:22Z",
+          "deactivationDate": null
+        },
+        {
+          "sensorName": "Temperature1",
+          "sensorType": "Temperature",
+          "isActive": true,
+          "activationDate": "2016-01-12T16:48:22Z",
+          "deactivationDate": null
+        }
+      ]
+    },
+    {
+      "deviceType": "Battery",
+      "deviceId": "3f614216-0d30-4e5f-92e6-000000000000",
+      "deviceName": "BYD Battery-Box Premium HV",
+      "deviceManufacturer": "BYD",
+      "serialNumber": "P030T020Z2009013172     ",
+      "capacity": 7680,
+      "dataloggerId": "pilot-0.5e-580975161653392885_0000000000",
+      "maxChargePower": 7680.0,
+      "maxDischargePower": 7680.0,
+      "maxSOC": 100,
+      "minSOC": 5,
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2022-05-17T17:54:48Z",
+      "deactivationDate": "2023-07-28T14:24:06Z"
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "df0e8cc4-0c4f-48df-932d-000000000000",
+      "deviceName": "Ext. Device",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2017-11-02T13:01:41Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "2b65e37d-a868-45ec-a8e1-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2020-12-03T10:08:04Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "e211b8e6-2f4a-478a-af0c-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": "Fronius",
+      "deviceCategory": "Primary Meter",
+      "deviceLocation": "Grid",
+      "serialNumber": "769617",
+      "dataloggerId": "pilot-0.5e-580975161653392885_0000000000",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2022-05-17T17:54:48Z",
+      "deactivationDate": "2023-07-28T14:24:06Z"
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "19fbf9ec-dd76-4b1f-b7a6-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": "Fronius",
+      "deviceCategory": "Primary Meter",
+      "deviceLocation": "Grid",
+      "serialNumber": "769617",
+      "dataloggerId": "pilot-0.6e-2236461441151190384_0000000000",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": "2025-03-18T16:45:03Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "62c8c8e8-08c7-4c54-81cc-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2025-01-15T17:04:10Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "7f091686-b8cb-4c95-91cc-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": "Fronius",
+      "deviceCategory": "Primary Meter",
+      "deviceLocation": "Grid",
+      "serialNumber": "769676",
+      "dataloggerId": "pilot-0.5e-580975161653392885_0000000000",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2022-07-27T12:17:18Z",
+      "deactivationDate": "2023-07-28T14:24:06Z"
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "f0b72443-acfa-4948-b440-000000000000",
+      "deviceName": "Ext. Device",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2018-03-17T14:12:26Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "66b94cc3-8f7d-48a5-98c7-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2025-01-15T17:04:10Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "6f58c76f-fcee-4c7b-8bef-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2019-11-01T16:13:04Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "87ea87e4-a0a5-4c46-8e2a-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": "Fronius",
+      "deviceCategory": "Primary Meter",
+      "deviceLocation": "Grid",
+      "serialNumber": "769617",
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": "2019-11-06T14:25:17Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "2db5957b-7802-44c7-8ad1-000000000000",
+      "deviceName": "Ext. Device",
+      "deviceManufacturer": null,
+      "deviceCategory": null,
+      "deviceLocation": null,
+      "serialNumber": null,
+      "dataloggerId": "240.80298",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2018-03-29T13:19:42Z",
+      "deactivationDate": null
+    },
+    {
+      "deviceType": "SmartMeter",
+      "deviceId": "02fc86ec-73d2-4e48-9b71-000000000000",
+      "deviceName": "PowerMeter",
+      "deviceManufacturer": "Continental Control Systems",
+      "deviceCategory": "Primary Meter",
+      "deviceLocation": "Grid",
+      "serialNumber": "9311116",
+      "dataloggerId": "pilot-0.5e-580975161653392885_0000000000",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2023-04-12T15:36:43Z",
+      "deactivationDate": "2023-07-28T14:24:06Z"
+    },
+    {
+      "deviceType": "Ohmpilot",
+      "deviceId": "d8a714df-afea-4dec-a4de-000000000000",
+      "deviceName": "Ohmpilot",
+      "deviceManufacturer": "Fronius",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": "2019-05-13T12:09:47Z",
+      "deactivationDate": null,
+      "dataloggerId": "240.80298",
+      "sensors": [
+        {
+          "sensorName": "Temperature",
+          "sensorType": null,
+          "isActive": true,
+          "activationDate": null,
+          "deactivationDate": null
+        }
+      ]
+    },
+    {
+      "deviceType": "Ohmpilot",
+      "deviceId": "0ca4c646-9ded-4f19-afa7-000000000000",
+      "deviceName": "Ohmpilot",
+      "deviceManufacturer": "Fronius",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2018-02-28T13:28:09Z",
+      "deactivationDate": "2019-02-04T15:00:01Z",
+      "dataloggerId": "240.80298",
+      "sensors": [
+        {
+          "sensorName": "Temperature",
+          "sensorType": null,
+          "isActive": false,
+          "activationDate": null,
+          "deactivationDate": null
+        }
+      ]
+    },
+    {
+      "deviceType": "Datalogger",
+      "deviceId": "6f6c6970-2d74-2e30-3565-000000000000",
+      "deviceName": "Datalogger",
+      "deviceManufacturer": "Fronius",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": "2022-03-23T16:10:22Z",
+      "deactivationDate": null,
+      "dataloggerId": "pilot-0.5e-580975161653392885_0000000000",
+      "isOnline": false
+    },
+    {
+      "deviceType": "Datalogger",
+      "deviceId": "6f6c6970-2d74-2e30-3665-000000000000",
+      "deviceName": "Datalogger",
+      "deviceManufacturer": "Fronius",
+      "firmware": {
+        "updateAvailable": true,
+        "installedVersion": "1.25.2-1",
+        "availableVersion": "1.35.8-1"
+      },
+      "isActive": true,
+      "activationDate": null,
+      "deactivationDate": null,
+      "dataloggerId": "pilot-0.6e-2236461441151190384_0000000000",
+      "isOnline": true
+    },
+    {
+      "deviceType": "Datalogger",
+      "deviceId": "2e303432-3038-3932-3800-000000000000",
+      "deviceName": "Datalogger",
+      "deviceManufacturer": "Fronius",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": "3.32.1-2",
+        "availableVersion": "3.32.1-2"
+      },
+      "isActive": true,
+      "activationDate": null,
+      "deactivationDate": null,
+      "dataloggerId": "240.80298",
+      "isOnline": false
+    },
+    {
+      "deviceType": "EVCharger",
+      "deviceId": "7658101b-3d9c-4cea-a3ac-000000000000",
+      "deviceName": "Wattpilot_32332392",
+      "deviceManufacturer": "Fronius",
+      "serialNumber": "32332392",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": false,
+      "activationDate": null,
+      "deactivationDate": "2022-05-19T08:54:06Z",
+      "dataloggerId": null,
+      "isOnline": false
+    },
+    {
+      "deviceType": "EVCharger",
+      "deviceId": "f17de3ae-7c60-4100-9861-000000000000",
+      "deviceName": "Wattpilot 4",
+      "deviceManufacturer": "Fronius",
+      "serialNumber": "32332392",
+      "firmware": {
+        "updateAvailable": false,
+        "installedVersion": null,
+        "availableVersion": null
+      },
+      "isActive": true,
+      "activationDate": "2022-05-19T08:54:06Z",
+      "deactivationDate": null,
+      "dataloggerId": null,
+      "isOnline": true
+    }
+  ],
+  "links": {
+    "first": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices?offset=0&limit=50",
+    "prev": null,
+    "self": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices?offset=0&limit=50",
+    "next": null,
+    "last": "https://api.solarweb.com/swqapi/pvsystems/ced6f980-8907-4128-87ea-000000000000/devices?offset=0&limit=50",
+    "totalItemsCount": 23
+  }
+}

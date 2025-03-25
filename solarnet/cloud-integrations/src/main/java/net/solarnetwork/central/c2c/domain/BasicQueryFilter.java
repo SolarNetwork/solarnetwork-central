@@ -27,14 +27,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.central.common.dao.ParameterCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
+import net.solarnetwork.dao.PaginationCriteria;
+import net.solarnetwork.domain.SimplePagination;
 
 /**
  * Basic implementation of {@link CloudDatumStreamQueryFilter}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
-public final class BasicQueryFilter implements CloudDatumStreamQueryFilter {
+public final class BasicQueryFilter extends SimplePagination
+		implements CloudDatumStreamQueryFilter, PaginationCriteria {
 
 	private Instant startDate;
 	private Instant endDate;

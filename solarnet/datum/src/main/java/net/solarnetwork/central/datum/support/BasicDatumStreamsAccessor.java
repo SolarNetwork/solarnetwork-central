@@ -31,6 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.PathMatcher;
 import net.solarnetwork.central.datum.biz.DatumStreamsAccessor;
 import net.solarnetwork.domain.datum.Datum;
@@ -78,20 +82,39 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 */
 	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> sortedDatumStreams() {
 		if ( timeSortedDatumBySource == null ) {
-			Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> map = new HashMap<>(2);
+			// create tmp map with SortedSet to identify and warn about duplicate datum
+			Map<ObjectDatumKind, Map<Long, Map<String, SortedSet<Datum>>>> map = new HashMap<>(2);
 			for ( Datum d : datum ) {
-				map.computeIfAbsent(d.getKind(), k -> new HashMap<>(2))
+				SortedSet<Datum> set = map.computeIfAbsent(d.getKind(), k -> new HashMap<>(2))
 						.computeIfAbsent(d.getObjectId(), k -> new HashMap<>(8))
-						.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(8)).add(d);
+						.computeIfAbsent(d.getSourceId(), k -> new TreeSet<>(
+								(l, r) -> r.getTimestamp().compareTo(l.getTimestamp())));
+
+				if ( !set.contains(d) ) {
+					set.add(d);
+				} else {
+					Logger log = LoggerFactory.getLogger(getClass());
+					log.error(
+							"Duplicate datum discovered and discarded; check calling methods for logic error: {}",
+							d, new Exception("Duplicate datum"));
+				}
 			}
-			for ( Map<Long, Map<String, List<Datum>>> nodeMap : map.values() ) {
-				for ( Map<String, List<Datum>> sourceMap : nodeMap.values() ) {
-					for ( List<Datum> list : sourceMap.values() ) {
-						list.sort((l, r) -> r.getTimestamp().compareTo(l.getTimestamp()));
+			// convert SortedSet to List for indexed based access
+			Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> result = new HashMap<>(map.size());
+			for ( Map<Long, Map<String, SortedSet<Datum>>> nodeMap : map.values() ) {
+				for ( Map<String, SortedSet<Datum>> sourceMap : nodeMap.values() ) {
+					for ( SortedSet<Datum> set : sourceMap.values() ) {
+						for ( Datum d : set ) {
+							result.computeIfAbsent(d.getKind(), k -> new HashMap<>(nodeMap.size()))
+									.computeIfAbsent(d.getObjectId(),
+											k -> new HashMap<>(sourceMap.size()))
+									.computeIfAbsent(d.getSourceId(), k -> new ArrayList<>(set.size()))
+									.add(d);
+						}
 					}
 				}
 			}
-			timeSortedDatumBySource = map;
+			timeSortedDatumBySource = result;
 		}
 		return timeSortedDatumBySource;
 	}

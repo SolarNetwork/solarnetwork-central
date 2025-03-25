@@ -40,7 +40,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -91,6 +91,13 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @since 1.4
 	 */
 	public static final String DESCRIPTION_METADATA = "description";
+
+	/**
+	 * Standard metadata key for an active state (boolean).
+	 *
+	 * @since 1.5
+	 */
+	public static final String ACTIVE_METADATA = "active";
 
 	/**
 	 * A wildcard identifier value.

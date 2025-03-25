@@ -57,7 +57,7 @@ import net.solarnetwork.service.ExpressionService;
  * Basic implementation of {@link CloudIntegrationsExpressionService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class BasicCloudIntegrationsExpressionService implements CloudIntegrationsExpressionService {
 
@@ -239,14 +239,14 @@ public class BasicCloudIntegrationsExpressionService implements CloudIntegration
 	}
 
 	@Override
-	public <T> T evaluateDatumPropertyExpression(CloudDatumStreamPropertyConfiguration property,
-			Object root, Map<String, Object> variables, Class<T> resultClass) {
-		Expression expr = expression(property);
-		return expressionService.evaluateExpression(expr, variables, root,
+	public <T> T evaluateDatumPropertyExpression(Expression expression, Object root,
+			Map<String, Object> variables, Class<T> resultClass) {
+		return expressionService.evaluateExpression(expression, variables, root,
 				SpelExpressionService.DEFAULT_EVALUATION_CONTEXT, resultClass);
 	}
 
-	private Expression expression(CloudDatumStreamPropertyConfiguration property) {
+	@Override
+	public Expression expression(CloudDatumStreamPropertyConfiguration property) {
 		final Cache<String, Expression> cache = getExpressionCache();
 		Expression result = null;
 		String cacheKey = null;

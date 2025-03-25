@@ -32,6 +32,8 @@ import static net.solarnetwork.util.StringUtils.nonEmptyString;
 import static org.springframework.util.StringUtils.delimitedListToStringArray;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -88,7 +90,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -407,8 +409,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
-			var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
+			final var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
 					config.getDatumStreamMappingId());
+			final var expression = expressionService.expression(config);
 			for ( MutableDatum d : datum ) {
 				DatumMetadataOperations metaOps = null;
 				if ( datumStreamMetadataDao != null ) {
@@ -422,7 +425,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 						this instanceof HttpOperations httpOps ? httpOps : null);
 				Object val = null;
 				try {
-					val = expressionService.evaluateDatumPropertyExpression(config, root, vars,
+					val = expressionService.evaluateDatumPropertyExpression(expression, root, vars,
 							Object.class);
 				} catch ( Exception e ) {
 					Throwable t = e;
@@ -477,8 +480,87 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			Map<String, Object> map) {
 		String s = JsonUtils.parseNonEmptyStringAttribute(node, fieldName);
 		if ( s != null ) {
-			map.put(key, s);
+			map.put(key, s.trim());
 		}
+	}
+
+	/**
+	 * Populate a non-empty JSON field value onto a map as a boolean.
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is present
+	 * @param map
+	 *        the map to populate with the boolean value
+	 * @since 1.14
+	 */
+	public static void populateBooleanValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map) {
+		JsonNode field = node.path(fieldName);
+		if ( field.isMissingNode() ) {
+			return;
+		}
+		map.put(key, field.asBoolean());
+	}
+
+	/**
+	 * Populate a non-empty JSON field value onto a map as an {@code Instant}.
+	 *
+	 * <p>
+	 * If the JSON field value is a number, it will be treated as a millisecond
+	 * Unix epoch value and {@code parser} will not be invoked.
+	 * </p>
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is present
+	 * @param map
+	 *        the map to populate with the {@link Instant} value
+	 * @param parser
+	 *        the function to use for parsing the timestamp value into an
+	 *        {@link Instant}
+	 * @since 1.14
+	 */
+	public static void populateTimestampValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map, Function<String, Instant> parser) {
+		JsonNode field = node.path(fieldName);
+		if ( field.isMissingNode() ) {
+			return;
+		}
+		if ( field.isNumber() ) {
+			// treat as epoch
+			map.put(key, Instant.ofEpochMilli(field.asLong()));
+		}
+		try {
+			map.put(key, parser.apply(field.asText()));
+		} catch ( DateTimeParseException e ) {
+			// ignore
+		}
+	}
+
+	/**
+	 * Populate a non-empty JSON field value onto a map as an ISO 8601 timestamp
+	 * formatted {@code Instant}.
+	 *
+	 * @param node
+	 *        the JSON node to read the field from
+	 * @param fieldName
+	 *        the name of the JSON field to read
+	 * @param key
+	 *        the map key to populate if the field is present
+	 * @param map
+	 *        the map to populate with the {@link Instant} value
+	 * @since 1.14
+	 */
+	public static void populateIsoTimestampValue(JsonNode node, String fieldName, String key,
+			Map<String, Object> map) {
+		populateTimestampValue(node, fieldName, key, map, Instant::parse);
 	}
 
 	/**
@@ -501,10 +583,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( field.isNumber() ) {
 			n = field.numberValue();
 		} else if ( field.isTextual() ) {
-			n = NumberUtils.narrow(StringUtils.numberValue(field.asText()), 2);
+			n = StringUtils.numberValue(field.asText());
 		}
 		if ( n != null ) {
-			map.put(key, n);
+			map.put(key, NumberUtils.narrow(n, 2));
 		}
 	}
 

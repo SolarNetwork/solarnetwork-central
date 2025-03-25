@@ -797,7 +797,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
 				datumStream.serviceProperty(PLACEHOLDERS_SERVICE_PROPERTY, Map.class),
-				(sourceIdMap != null ? sourceIdMap.values() : null));
+				(sourceIdMap != null ? sourceIdMap.keySet() : null));
 		for ( CloudDatumStreamPropertyConfiguration config : propConfigs ) {
 			for ( Map<String, ?> ph : placeholderSets ) {
 				String ref = StringUtils.expandTemplateString(config.getValueReference(), ph);

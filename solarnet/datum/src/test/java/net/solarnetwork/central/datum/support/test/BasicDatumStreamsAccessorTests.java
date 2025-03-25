@@ -44,7 +44,7 @@ import net.solarnetwork.domain.datum.GeneralDatum;
  * Test cases for the {@link BasicDatumStreamsAccessor} class.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class BasicDatumStreamsAccessorTests {
 
@@ -205,6 +205,39 @@ public class BasicDatumStreamsAccessorTests {
 		then(result)
 			.as("Offset %d from %s for source returned", offset, now.minusSeconds(timeOffset))
 			.isSameAs(data.get((sourceIdx * sourceCount) + (datumCount - timeOffset - offset - 1)))
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void offset_time_duplicateInput() {
+		// GIVEN
+		final int sourceCount = 5;
+		final int datumCount = 5;
+		final List<GeneralDatum> data = testData(sourceCount, datumCount);
+
+		final int sourceIdx = RNG.nextInt(sourceCount);
+		final String sourceId = testSource(sourceIdx);
+		final int timeOffset = RNG.nextInt(datumCount);
+		final int offset = datumCount - timeOffset - 1 > 0 ? RNG.nextInt(datumCount - timeOffset - 1)
+				: 0;
+
+		// insert a duplicate datum, for our timestamp
+		final int keyIndex = (sourceIdx * sourceCount) + (datumCount - timeOffset - offset - 1);
+		final GeneralDatum keyDatum = data.get(keyIndex);
+		final GeneralDatum keyDatumDuplicate = keyDatum.clone();
+		data.add(keyIndex, keyDatumDuplicate);
+
+		// WHEN
+		var accessor = new BasicDatumStreamsAccessor(sourceIdPathMatcher, data);
+		Datum result = accessor.offset(Node, nodeId, sourceId, now.minusSeconds(timeOffset), offset);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Duplicate offset %d from %s for source returned because original discarded",
+					offset, now.minusSeconds(timeOffset))
+			.isSameAs(keyDatumDuplicate)
 			;
 		// @formatter:on
 	}

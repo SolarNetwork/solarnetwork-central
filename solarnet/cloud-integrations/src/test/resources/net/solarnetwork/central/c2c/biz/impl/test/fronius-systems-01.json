@@ -1,0 +1,46 @@
+{
+  "pvSystems": [
+    {                
+      "pvSystemId": "3e210d7d-2b9e-43d6-830a-000000000000",
+      "name": "Site 1",
+      "address": {
+        "country": "DK",
+        "zipCode": "12345",
+        "street": "123 Main Street",
+        "city": "Anytown",
+        "state": "State"
+      },
+      "pictureURL": "https://froniussestimagesweprod/pvsystem-images/3e210d7d-2b9e-43d6-830a-000000000000",
+      "peakPower": 98340.0,
+      "installationDate": "2009-06-15T00:00:00Z",
+      "lastImport": "2025-03-24T00:35:07Z",
+      "meteoData": "pro",
+      "timeZone": "Europe/Berlin"
+    },
+    {
+      "pvSystemId": "ced6f980-8907-4128-87ea-000000000000",
+      "name": "Site 2",
+      "address": {
+        "country": null,
+        "zipCode": null,
+        "street": null,
+        "city": null,
+        "state": null
+      },
+      "pictureURL": "https://froniussestimagesweprod/pvsystem-images/ced6f980-8907-4128-87ea-000000000000",
+      "peakPower": 7600.0,
+      "installationDate": "2000-01-01T00:00:00Z",
+      "lastImport": "2025-03-23T23:15:08Z",
+      "meteoData": "light",
+      "timeZone": "Europe/London"
+    }
+  ],
+  "links": {
+    "first": "https://api.solarweb.com/swqapi/pvsystems?offset=0&limit=2",
+    "prev": "https://api.solarweb.com/swqapi/pvsystems?offset=0&limit=2",
+    "self": "https://api.solarweb.com/swqapi/pvsystems?offset=2&limit=2",
+    "next": "https://api.solarweb.com/swqapi/pvsystems?offset=4&limit=2",
+    "last": "https://api.solarweb.com/swqapi/pvsystems?offset=8&limit=2",
+    "totalItemsCount": 9
+  }
+}
