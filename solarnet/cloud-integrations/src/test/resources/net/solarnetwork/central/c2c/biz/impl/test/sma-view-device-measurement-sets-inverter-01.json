@@ -1,0 +1,17 @@
+{
+  "plant": {
+    "plantId": "11260000",
+    "name": "Site 2",
+    "timezone": "America/New_York"
+  },
+  "device": {
+    "deviceId": "11260000",
+    "name": "WR8KU002 SN:2001500000",
+    "timezone": "America/New_York"
+  },
+  "sets": [
+    "EnergyAndPowerPv",
+    "PowerDc",
+    "PowerAc"
+  ]
+}
