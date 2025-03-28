@@ -1,0 +1,10 @@
+{
+	"access_token":"unique access token",
+	"expires_in":300,
+	"refresh_expires_in":0,
+	"refresh_token":"unique refresh token",
+	"token_type":"Bearer",
+	"not-before-policy":1626710983,
+	"session_state":"a57421a7-a319-476b-9bad-000000000000",
+	"scope":"profile monitoringApi:read email offline_access"
+}
