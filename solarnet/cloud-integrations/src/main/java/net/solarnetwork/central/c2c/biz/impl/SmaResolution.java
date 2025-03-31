@@ -1,7 +1,7 @@
 /* ==================================================================
- * AlsoEnergyGranularity.java - 22/11/2024 2:19:11 pm
+ * SmaResolution.java - 31/03/2025 6:28:53 am
  *
- * Copyright 2024 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -30,68 +30,57 @@ import java.time.temporal.TemporalAmount;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
- * Enumeration of AlsoEnergy data granularity ("BinSize") values.
+ * Enumeration of time resolution values.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
-public enum AlsoEnergyGranularity {
+public enum SmaResolution {
 
-	/** Raw data. */
-	Raw("Raw", Duration.ofMinutes(1)),
+	/** One minute resolution. */
+	OneMinute("OneMinute", Duration.ofMinutes(1)),
 
-	/** Five minutes. */
-	FiveMinute("5Min", Duration.ofMinutes(5)),
+	/** Five minute resolution. */
+	FiveMinute("FiveMinutes", Duration.ofMinutes(5)),
 
-	/** Fifteen minutes. */
-	FifteenMinute("15Min", Duration.ofMinutes(15)),
+	/** Fifteen minute resolution. */
+	FifteenMinute("FifteenMinutes", Duration.ofMinutes(15)),
 
-	/** One hour. */
-	Hour("1Hour", Duration.ofHours(1)),
+	/** One hour resolution. */
+	Hour("OneHour", Duration.ofHours(1)),
 
-	/** One day. */
-	Day("Day", Duration.ofDays(1)),
+	/** One day resolution. */
+	Day("OneDay", Duration.ofDays(1)),
 
-	/** One month. */
-	Month("Month", Period.ofMonths(1)),
+	/** One month resolution. */
+	Month("OneMonth", Period.ofMonths(1)),
 
-	/** One year. */
-	Year("Year", Period.ofYears(1)),
+	/** One year resolution. */
+	Year("OneYear", Period.ofYears(1)),
 
 	;
 
 	private final String key;
-	private final String queryKey;
 	private final TemporalAmount tickAmount;
 
-	private AlsoEnergyGranularity(String key, TemporalAmount tickAmount) {
+	private SmaResolution(String key, TemporalAmount tickAmount) {
 		this.key = key;
-		this.queryKey = "Bin" + key;
 		this.tickAmount = tickAmount;
 	}
 
 	/**
 	 * Get the key.
 	 *
-	 * @return the key, never {@code null}
+	 * @return the key, never {@literal null}
 	 */
-	public String getKey() {
+	public final String getKey() {
 		return key;
-	}
-
-	/**
-	 * Get the query key.
-	 *
-	 * @return the query key, never {@code null}
-	 */
-	public String getQueryKey() {
-		return queryKey;
 	}
 
 	/**
 	 * Get a clock tick duration appropriate for this granularity.
 	 *
-	 * @return the duration, or {@code null}
+	 * @return the duration, never {@literal null}
 	 */
 	public TemporalAmount getTickAmount() {
 		return tickAmount;
@@ -142,21 +131,21 @@ public enum AlsoEnergyGranularity {
 	 * @param value
 	 *        the enumeration name or key value, case-insensitve
 	 * @return the enum; if {@code value} is {@literal null} or empty then
-	 *         {@link #Raw} is returned
+	 *         {@link #FiveMinute} is returned
 	 * @throws IllegalArgumentException
 	 *         if {@code value} is not a valid value
 	 */
 	@JsonCreator
-	public static AlsoEnergyGranularity fromValue(String value) {
+	public static SmaResolution fromValue(String value) {
 		if ( value == null || value.isEmpty() ) {
-			return Raw;
+			return FiveMinute;
 		}
-		for ( AlsoEnergyGranularity e : AlsoEnergyGranularity.values() ) {
+		for ( SmaResolution e : SmaResolution.values() ) {
 			if ( value.equalsIgnoreCase(e.key) || value.equalsIgnoreCase(e.name()) ) {
 				return e;
 			}
 		}
-		throw new IllegalArgumentException("Unknown AlsoEnergyGranularity value [" + value + "]");
+		throw new IllegalArgumentException("Unknown SmaResolution value [" + value + "]");
 	}
 
 }

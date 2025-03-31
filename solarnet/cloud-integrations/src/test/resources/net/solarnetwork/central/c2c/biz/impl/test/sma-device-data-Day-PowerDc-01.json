@@ -1,0 +1,10010 @@
+{
+  "plant": {
+    "plantId": "7190001",
+    "name": "Site 1",
+    "timezone": "America/New_York"
+  },
+  "device": {
+    "deviceId": "7190002",
+    "name": "SN 3010457687",
+    "timezone": "America/New_York"
+  },
+  "setType": "PowerDc",
+  "resolution": "FiveMinutes",
+  "set": [
+    {
+      "time": "2025-03-01T00:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T00:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T00:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T00:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T00:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T01:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T01:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T01:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T01:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T01:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T02:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T02:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T02:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T02:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T02:45:00",
+      "dcPowerInput": [],
+      "dcVoltageInput": [],
+      "dcCurrentInput": []
+    },
+    {
+      "time": "2025-03-01T03:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T03:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T03:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T03:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T03:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T03:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T04:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T04:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T04:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T04:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T04:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T05:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 26.944
+        },
+        {
+          "index": "B",
+          "value": 26.791
+        },
+        {
+          "index": "C",
+          "value": 27.368
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 16.405
+        },
+        {
+          "index": "B",
+          "value": 16.343
+        },
+        {
+          "index": "C",
+          "value": 16.513
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 32.153
+        },
+        {
+          "index": "B",
+          "value": 32.032
+        },
+        {
+          "index": "C",
+          "value": 32.37
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T06:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 14.633
+        },
+        {
+          "index": "B",
+          "value": 14.733
+        },
+        {
+          "index": "C",
+          "value": 13.267
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 287.141
+        },
+        {
+          "index": "B",
+          "value": 286.573
+        },
+        {
+          "index": "C",
+          "value": 260.21
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.043
+        },
+        {
+          "index": "B",
+          "value": 0.043
+        },
+        {
+          "index": "C",
+          "value": 0.043
+        }
+      ],
+      "isolationResistance": 2276467.2
+    },
+    {
+      "time": "2025-03-01T06:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 25.9
+        },
+        {
+          "index": "B",
+          "value": 25.9
+        },
+        {
+          "index": "C",
+          "value": 23.7
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 352.13
+        },
+        {
+          "index": "B",
+          "value": 351.432
+        },
+        {
+          "index": "C",
+          "value": 319.076
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.075
+        },
+        {
+          "index": "B",
+          "value": 0.075
+        },
+        {
+          "index": "C",
+          "value": 0.076
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T06:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 38.467
+        },
+        {
+          "index": "B",
+          "value": 37.683
+        },
+        {
+          "index": "C",
+          "value": 31.083
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 364.721
+        },
+        {
+          "index": "B",
+          "value": 373.738
+        },
+        {
+          "index": "C",
+          "value": 343.918
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.106
+        },
+        {
+          "index": "B",
+          "value": 0.101
+        },
+        {
+          "index": "C",
+          "value": 0.093
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T06:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 49.8
+        },
+        {
+          "index": "B",
+          "value": 49.133
+        },
+        {
+          "index": "C",
+          "value": 45.033
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 385.444
+        },
+        {
+          "index": "B",
+          "value": 393.887
+        },
+        {
+          "index": "C",
+          "value": 354.586
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.13
+        },
+        {
+          "index": "B",
+          "value": 0.125
+        },
+        {
+          "index": "C",
+          "value": 0.128
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T06:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 76.1
+        },
+        {
+          "index": "B",
+          "value": 76.1
+        },
+        {
+          "index": "C",
+          "value": 68.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 398.048
+        },
+        {
+          "index": "B",
+          "value": 400.151
+        },
+        {
+          "index": "C",
+          "value": 361.853
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.192
+        },
+        {
+          "index": "B",
+          "value": 0.19
+        },
+        {
+          "index": "C",
+          "value": 0.189
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T06:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 103.45
+        },
+        {
+          "index": "B",
+          "value": 103.067
+        },
+        {
+          "index": "C",
+          "value": 92.083
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 407.975
+        },
+        {
+          "index": "B",
+          "value": 409.798
+        },
+        {
+          "index": "C",
+          "value": 369.99
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.254
+        },
+        {
+          "index": "B",
+          "value": 0.252
+        },
+        {
+          "index": "C",
+          "value": 0.249
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 115.028
+        },
+        {
+          "index": "B",
+          "value": 114.917
+        },
+        {
+          "index": "C",
+          "value": 102.244
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 411.519
+        },
+        {
+          "index": "B",
+          "value": 416.136
+        },
+        {
+          "index": "C",
+          "value": 374.714
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.28
+        },
+        {
+          "index": "B",
+          "value": 0.276
+        },
+        {
+          "index": "C",
+          "value": 0.273
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 161.958
+        },
+        {
+          "index": "B",
+          "value": 160.792
+        },
+        {
+          "index": "C",
+          "value": 142.717
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 418.314
+        },
+        {
+          "index": "B",
+          "value": 422.084
+        },
+        {
+          "index": "C",
+          "value": 381.281
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.387
+        },
+        {
+          "index": "B",
+          "value": 0.382
+        },
+        {
+          "index": "C",
+          "value": 0.375
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 210.117
+        },
+        {
+          "index": "B",
+          "value": 208.444
+        },
+        {
+          "index": "C",
+          "value": 185.333
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 421.068
+        },
+        {
+          "index": "B",
+          "value": 425.061
+        },
+        {
+          "index": "C",
+          "value": 385.433
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.5
+        },
+        {
+          "index": "B",
+          "value": 0.491
+        },
+        {
+          "index": "C",
+          "value": 0.482
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 240.9
+        },
+        {
+          "index": "B",
+          "value": 239.117
+        },
+        {
+          "index": "C",
+          "value": 213.717
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 424.248
+        },
+        {
+          "index": "B",
+          "value": 424.967
+        },
+        {
+          "index": "C",
+          "value": 386.791
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.568
+        },
+        {
+          "index": "B",
+          "value": 0.563
+        },
+        {
+          "index": "C",
+          "value": 0.553
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 220.5
+        },
+        {
+          "index": "B",
+          "value": 219.625
+        },
+        {
+          "index": "C",
+          "value": 195.875
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 423.478
+        },
+        {
+          "index": "B",
+          "value": 423.752
+        },
+        {
+          "index": "C",
+          "value": 384.244
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.521
+        },
+        {
+          "index": "B",
+          "value": 0.518
+        },
+        {
+          "index": "C",
+          "value": 0.51
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 256.4
+        },
+        {
+          "index": "B",
+          "value": 253.8
+        },
+        {
+          "index": "C",
+          "value": 227.1
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 426.826
+        },
+        {
+          "index": "B",
+          "value": 426.229
+        },
+        {
+          "index": "C",
+          "value": 386.846
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.601
+        },
+        {
+          "index": "B",
+          "value": 0.596
+        },
+        {
+          "index": "C",
+          "value": 0.587
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 274.944
+        },
+        {
+          "index": "B",
+          "value": 273.111
+        },
+        {
+          "index": "C",
+          "value": 244.778
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 426.463
+        },
+        {
+          "index": "B",
+          "value": 428.587
+        },
+        {
+          "index": "C",
+          "value": 388.25
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.646
+        },
+        {
+          "index": "B",
+          "value": 0.638
+        },
+        {
+          "index": "C",
+          "value": 0.631
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 376.0
+        },
+        {
+          "index": "B",
+          "value": 370.0
+        },
+        {
+          "index": "C",
+          "value": 331.9
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.97
+        },
+        {
+          "index": "B",
+          "value": 434.599
+        },
+        {
+          "index": "C",
+          "value": 395.385
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.867
+        },
+        {
+          "index": "B",
+          "value": 0.85
+        },
+        {
+          "index": "C",
+          "value": 0.839
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 528.333
+        },
+        {
+          "index": "B",
+          "value": 520.0
+        },
+        {
+          "index": "C",
+          "value": 465.833
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 442.457
+        },
+        {
+          "index": "B",
+          "value": 439.458
+        },
+        {
+          "index": "C",
+          "value": 398.5
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.195
+        },
+        {
+          "index": "B",
+          "value": 1.184
+        },
+        {
+          "index": "C",
+          "value": 1.17
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 545.76
+        },
+        {
+          "index": "B",
+          "value": 534.561
+        },
+        {
+          "index": "C",
+          "value": 475.281
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 443.532
+        },
+        {
+          "index": "B",
+          "value": 442.069
+        },
+        {
+          "index": "C",
+          "value": 399.894
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.231
+        },
+        {
+          "index": "B",
+          "value": 1.209
+        },
+        {
+          "index": "C",
+          "value": 1.19
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 452.822
+        },
+        {
+          "index": "B",
+          "value": 443.313
+        },
+        {
+          "index": "C",
+          "value": 392.896
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 442.385
+        },
+        {
+          "index": "B",
+          "value": 439.908
+        },
+        {
+          "index": "C",
+          "value": 398.55
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.024
+        },
+        {
+          "index": "B",
+          "value": 1.008
+        },
+        {
+          "index": "C",
+          "value": 0.987
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T07:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 349.59
+        },
+        {
+          "index": "B",
+          "value": 337.41
+        },
+        {
+          "index": "C",
+          "value": 298.868
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 439.492
+        },
+        {
+          "index": "B",
+          "value": 437.249
+        },
+        {
+          "index": "C",
+          "value": 396.855
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.796
+        },
+        {
+          "index": "B",
+          "value": 0.772
+        },
+        {
+          "index": "C",
+          "value": 0.754
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 307.833
+        },
+        {
+          "index": "B",
+          "value": 302.994
+        },
+        {
+          "index": "C",
+          "value": 265.544
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 440.667
+        },
+        {
+          "index": "B",
+          "value": 435.809
+        },
+        {
+          "index": "C",
+          "value": 391.305
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.699
+        },
+        {
+          "index": "B",
+          "value": 0.696
+        },
+        {
+          "index": "C",
+          "value": 0.679
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 374.292
+        },
+        {
+          "index": "B",
+          "value": 348.833
+        },
+        {
+          "index": "C",
+          "value": 300.819
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 443.551
+        },
+        {
+          "index": "B",
+          "value": 437.195
+        },
+        {
+          "index": "C",
+          "value": 397.377
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.845
+        },
+        {
+          "index": "B",
+          "value": 0.799
+        },
+        {
+          "index": "C",
+          "value": 0.758
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 651.3
+        },
+        {
+          "index": "B",
+          "value": 606.2
+        },
+        {
+          "index": "C",
+          "value": 522.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 451.08
+        },
+        {
+          "index": "B",
+          "value": 437.457
+        },
+        {
+          "index": "C",
+          "value": 398.305
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.443
+        },
+        {
+          "index": "B",
+          "value": 1.385
+        },
+        {
+          "index": "C",
+          "value": 1.311
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 814.5
+        },
+        {
+          "index": "B",
+          "value": 785.0
+        },
+        {
+          "index": "C",
+          "value": 684.9
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 454.446
+        },
+        {
+          "index": "B",
+          "value": 451.66
+        },
+        {
+          "index": "C",
+          "value": 403.242
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.792
+        },
+        {
+          "index": "B",
+          "value": 1.737
+        },
+        {
+          "index": "C",
+          "value": 1.7
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 868.25
+        },
+        {
+          "index": "B",
+          "value": 839.25
+        },
+        {
+          "index": "C",
+          "value": 738.25
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 451.148
+        },
+        {
+          "index": "B",
+          "value": 448.998
+        },
+        {
+          "index": "C",
+          "value": 403.929
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.927
+        },
+        {
+          "index": "B",
+          "value": 1.87
+        },
+        {
+          "index": "C",
+          "value": 1.829
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 895.833
+        },
+        {
+          "index": "B",
+          "value": 869.833
+        },
+        {
+          "index": "C",
+          "value": 766.833
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 446.217
+        },
+        {
+          "index": "B",
+          "value": 442.948
+        },
+        {
+          "index": "C",
+          "value": 398.072
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.009
+        },
+        {
+          "index": "B",
+          "value": 1.964
+        },
+        {
+          "index": "C",
+          "value": 1.927
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 956.25
+        },
+        {
+          "index": "B",
+          "value": 916.875
+        },
+        {
+          "index": "C",
+          "value": 794.375
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 440.3
+        },
+        {
+          "index": "B",
+          "value": 443.252
+        },
+        {
+          "index": "C",
+          "value": 401.36
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.173
+        },
+        {
+          "index": "B",
+          "value": 2.069
+        },
+        {
+          "index": "C",
+          "value": 1.981
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 970.0
+        },
+        {
+          "index": "B",
+          "value": 943.1
+        },
+        {
+          "index": "C",
+          "value": 817.9
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 438.354
+        },
+        {
+          "index": "B",
+          "value": 441.105
+        },
+        {
+          "index": "C",
+          "value": 399.726
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.213
+        },
+        {
+          "index": "B",
+          "value": 2.138
+        },
+        {
+          "index": "C",
+          "value": 2.048
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 888.75
+        },
+        {
+          "index": "B",
+          "value": 868.063
+        },
+        {
+          "index": "C",
+          "value": 764.031
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 435.87
+        },
+        {
+          "index": "B",
+          "value": 441.082
+        },
+        {
+          "index": "C",
+          "value": 401.621
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.04
+        },
+        {
+          "index": "B",
+          "value": 1.969
+        },
+        {
+          "index": "C",
+          "value": 1.903
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 894.249
+        },
+        {
+          "index": "B",
+          "value": 875.706
+        },
+        {
+          "index": "C",
+          "value": 777.122
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 437.213
+        },
+        {
+          "index": "B",
+          "value": 438.4
+        },
+        {
+          "index": "C",
+          "value": 399.1
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.046
+        },
+        {
+          "index": "B",
+          "value": 1.999
+        },
+        {
+          "index": "C",
+          "value": 1.949
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 873.2
+        },
+        {
+          "index": "B",
+          "value": 860.333
+        },
+        {
+          "index": "C",
+          "value": 769.733
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.736
+        },
+        {
+          "index": "B",
+          "value": 435.463
+        },
+        {
+          "index": "C",
+          "value": 395.106
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.014
+        },
+        {
+          "index": "B",
+          "value": 1.977
+        },
+        {
+          "index": "C",
+          "value": 1.949
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T08:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 943.7
+        },
+        {
+          "index": "B",
+          "value": 925.9
+        },
+        {
+          "index": "C",
+          "value": 821.3
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 436.33
+        },
+        {
+          "index": "B",
+          "value": 435.914
+        },
+        {
+          "index": "C",
+          "value": 400.014
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.163
+        },
+        {
+          "index": "B",
+          "value": 2.125
+        },
+        {
+          "index": "C",
+          "value": 2.054
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1052.083
+        },
+        {
+          "index": "B",
+          "value": 1033.944
+        },
+        {
+          "index": "C",
+          "value": 896.833
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 435.647
+        },
+        {
+          "index": "B",
+          "value": 437.099
+        },
+        {
+          "index": "C",
+          "value": 404.156
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.415
+        },
+        {
+          "index": "B",
+          "value": 2.366
+        },
+        {
+          "index": "C",
+          "value": 2.221
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 870.592
+        },
+        {
+          "index": "B",
+          "value": 857.958
+        },
+        {
+          "index": "C",
+          "value": 755.458
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.503
+        },
+        {
+          "index": "B",
+          "value": 433.084
+        },
+        {
+          "index": "C",
+          "value": 396.847
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.009
+        },
+        {
+          "index": "B",
+          "value": 1.982
+        },
+        {
+          "index": "C",
+          "value": 1.903
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 725.625
+        },
+        {
+          "index": "B",
+          "value": 716.125
+        },
+        {
+          "index": "C",
+          "value": 642.5
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.9
+        },
+        {
+          "index": "B",
+          "value": 431.428
+        },
+        {
+          "index": "C",
+          "value": 390.9
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.677
+        },
+        {
+          "index": "B",
+          "value": 1.66
+        },
+        {
+          "index": "C",
+          "value": 1.644
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 729.5
+        },
+        {
+          "index": "B",
+          "value": 721.9
+        },
+        {
+          "index": "C",
+          "value": 649.6
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.006
+        },
+        {
+          "index": "B",
+          "value": 432.468
+        },
+        {
+          "index": "C",
+          "value": 391.65
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.697
+        },
+        {
+          "index": "B",
+          "value": 1.67
+        },
+        {
+          "index": "C",
+          "value": 1.659
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 733.253
+        },
+        {
+          "index": "B",
+          "value": 726.861
+        },
+        {
+          "index": "C",
+          "value": 654.181
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.618
+        },
+        {
+          "index": "B",
+          "value": 429.973
+        },
+        {
+          "index": "C",
+          "value": 391.059
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.704
+        },
+        {
+          "index": "B",
+          "value": 1.691
+        },
+        {
+          "index": "C",
+          "value": 1.674
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 730.744
+        },
+        {
+          "index": "B",
+          "value": 726.292
+        },
+        {
+          "index": "C",
+          "value": 654.035
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 427.999
+        },
+        {
+          "index": "B",
+          "value": 428.772
+        },
+        {
+          "index": "C",
+          "value": 389.481
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.709
+        },
+        {
+          "index": "B",
+          "value": 1.695
+        },
+        {
+          "index": "C",
+          "value": 1.68
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 732.5
+        },
+        {
+          "index": "B",
+          "value": 726.25
+        },
+        {
+          "index": "C",
+          "value": 654.25
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 428.853
+        },
+        {
+          "index": "B",
+          "value": 432.495
+        },
+        {
+          "index": "C",
+          "value": 391.355
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.708
+        },
+        {
+          "index": "B",
+          "value": 1.679
+        },
+        {
+          "index": "C",
+          "value": 1.673
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 843.5
+        },
+        {
+          "index": "B",
+          "value": 836.5
+        },
+        {
+          "index": "C",
+          "value": 755.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.045
+        },
+        {
+          "index": "B",
+          "value": 433.145
+        },
+        {
+          "index": "C",
+          "value": 393.715
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.949
+        },
+        {
+          "index": "B",
+          "value": 1.932
+        },
+        {
+          "index": "C",
+          "value": 1.918
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 870.85
+        },
+        {
+          "index": "B",
+          "value": 863.625
+        },
+        {
+          "index": "C",
+          "value": 779.6
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.606
+        },
+        {
+          "index": "B",
+          "value": 433.151
+        },
+        {
+          "index": "C",
+          "value": 391.263
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.013
+        },
+        {
+          "index": "B",
+          "value": 1.994
+        },
+        {
+          "index": "C",
+          "value": 1.993
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 899.64
+        },
+        {
+          "index": "B",
+          "value": 892.358
+        },
+        {
+          "index": "C",
+          "value": 806.2
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.751
+        },
+        {
+          "index": "B",
+          "value": 431.466
+        },
+        {
+          "index": "C",
+          "value": 391.629
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.08
+        },
+        {
+          "index": "B",
+          "value": 2.069
+        },
+        {
+          "index": "C",
+          "value": 2.059
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 969.7
+        },
+        {
+          "index": "B",
+          "value": 961.7
+        },
+        {
+          "index": "C",
+          "value": 868.5
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.204
+        },
+        {
+          "index": "B",
+          "value": 431.837
+        },
+        {
+          "index": "C",
+          "value": 394.412
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.245
+        },
+        {
+          "index": "B",
+          "value": 2.228
+        },
+        {
+          "index": "C",
+          "value": 2.203
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T09:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 972.913
+        },
+        {
+          "index": "B",
+          "value": 964.533
+        },
+        {
+          "index": "C",
+          "value": 870.793
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.985
+        },
+        {
+          "index": "B",
+          "value": 431.79
+        },
+        {
+          "index": "C",
+          "value": 392.311
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.252
+        },
+        {
+          "index": "B",
+          "value": 2.235
+        },
+        {
+          "index": "C",
+          "value": 2.221
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 874.905
+        },
+        {
+          "index": "B",
+          "value": 866.89
+        },
+        {
+          "index": "C",
+          "value": 780.665
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.46
+        },
+        {
+          "index": "B",
+          "value": 430.848
+        },
+        {
+          "index": "C",
+          "value": 392.63
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.033
+        },
+        {
+          "index": "B",
+          "value": 2.013
+        },
+        {
+          "index": "C",
+          "value": 1.989
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 859.933
+        },
+        {
+          "index": "B",
+          "value": 851.7
+        },
+        {
+          "index": "C",
+          "value": 766.7
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.38
+        },
+        {
+          "index": "B",
+          "value": 431.212
+        },
+        {
+          "index": "C",
+          "value": 391.932
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.989
+        },
+        {
+          "index": "B",
+          "value": 1.975
+        },
+        {
+          "index": "C",
+          "value": 1.957
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1135.967
+        },
+        {
+          "index": "B",
+          "value": 1126.38
+        },
+        {
+          "index": "C",
+          "value": 1014.9
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 435.711
+        },
+        {
+          "index": "B",
+          "value": 432.049
+        },
+        {
+          "index": "C",
+          "value": 392.54
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.609
+        },
+        {
+          "index": "B",
+          "value": 2.607
+        },
+        {
+          "index": "C",
+          "value": 2.586
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1036.151
+        },
+        {
+          "index": "B",
+          "value": 1027.081
+        },
+        {
+          "index": "C",
+          "value": 926.138
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.458
+        },
+        {
+          "index": "B",
+          "value": 431.228
+        },
+        {
+          "index": "C",
+          "value": 391.759
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.408
+        },
+        {
+          "index": "B",
+          "value": 2.382
+        },
+        {
+          "index": "C",
+          "value": 2.365
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1067.923
+        },
+        {
+          "index": "B",
+          "value": 1061.937
+        },
+        {
+          "index": "C",
+          "value": 958.47
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.24
+        },
+        {
+          "index": "B",
+          "value": 430.961
+        },
+        {
+          "index": "C",
+          "value": 391.438
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.483
+        },
+        {
+          "index": "B",
+          "value": 2.465
+        },
+        {
+          "index": "C",
+          "value": 2.45
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1090.16
+        },
+        {
+          "index": "B",
+          "value": 1081.445
+        },
+        {
+          "index": "C",
+          "value": 976.015
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.201
+        },
+        {
+          "index": "B",
+          "value": 430.793
+        },
+        {
+          "index": "C",
+          "value": 392.379
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.517
+        },
+        {
+          "index": "B",
+          "value": 2.511
+        },
+        {
+          "index": "C",
+          "value": 2.488
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1067.8
+        },
+        {
+          "index": "B",
+          "value": 1059.3
+        },
+        {
+          "index": "C",
+          "value": 956.1
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.385
+        },
+        {
+          "index": "B",
+          "value": 431.082
+        },
+        {
+          "index": "C",
+          "value": 391.531
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.482
+        },
+        {
+          "index": "B",
+          "value": 2.458
+        },
+        {
+          "index": "C",
+          "value": 2.443
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 903.875
+        },
+        {
+          "index": "B",
+          "value": 896.0
+        },
+        {
+          "index": "C",
+          "value": 809.25
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.789
+        },
+        {
+          "index": "B",
+          "value": 427.329
+        },
+        {
+          "index": "C",
+          "value": 389.218
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.099
+        },
+        {
+          "index": "B",
+          "value": 2.097
+        },
+        {
+          "index": "C",
+          "value": 2.08
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 816.35
+        },
+        {
+          "index": "B",
+          "value": 808.6
+        },
+        {
+          "index": "C",
+          "value": 729.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.199
+        },
+        {
+          "index": "B",
+          "value": 430.154
+        },
+        {
+          "index": "C",
+          "value": 390.821
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.902
+        },
+        {
+          "index": "B",
+          "value": 1.881
+        },
+        {
+          "index": "C",
+          "value": 1.866
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 688.95
+        },
+        {
+          "index": "B",
+          "value": 683.45
+        },
+        {
+          "index": "C",
+          "value": 615.6
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.09
+        },
+        {
+          "index": "B",
+          "value": 426.808
+        },
+        {
+          "index": "C",
+          "value": 388.415
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.607
+        },
+        {
+          "index": "B",
+          "value": 1.602
+        },
+        {
+          "index": "C",
+          "value": 1.586
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 772.75
+        },
+        {
+          "index": "B",
+          "value": 766.0
+        },
+        {
+          "index": "C",
+          "value": 691.5
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.538
+        },
+        {
+          "index": "B",
+          "value": 428.944
+        },
+        {
+          "index": "C",
+          "value": 390.225
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.792
+        },
+        {
+          "index": "B",
+          "value": 1.786
+        },
+        {
+          "index": "C",
+          "value": 1.773
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T10:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 793.2
+        },
+        {
+          "index": "B",
+          "value": 787.033
+        },
+        {
+          "index": "C",
+          "value": 710.875
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.033
+        },
+        {
+          "index": "B",
+          "value": 428.677
+        },
+        {
+          "index": "C",
+          "value": 392.238
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.836
+        },
+        {
+          "index": "B",
+          "value": 1.836
+        },
+        {
+          "index": "C",
+          "value": 1.813
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 812.0
+        },
+        {
+          "index": "B",
+          "value": 806.4
+        },
+        {
+          "index": "C",
+          "value": 728.6
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.64
+        },
+        {
+          "index": "B",
+          "value": 430.147
+        },
+        {
+          "index": "C",
+          "value": 391.219
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.877
+        },
+        {
+          "index": "B",
+          "value": 1.875
+        },
+        {
+          "index": "C",
+          "value": 1.864
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 831.615
+        },
+        {
+          "index": "B",
+          "value": 826.1
+        },
+        {
+          "index": "C",
+          "value": 746.072
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.692
+        },
+        {
+          "index": "B",
+          "value": 431.43
+        },
+        {
+          "index": "C",
+          "value": 392.353
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.932
+        },
+        {
+          "index": "B",
+          "value": 1.915
+        },
+        {
+          "index": "C",
+          "value": 1.902
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 902.708
+        },
+        {
+          "index": "B",
+          "value": 896.87
+        },
+        {
+          "index": "C",
+          "value": 810.243
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.893
+        },
+        {
+          "index": "B",
+          "value": 432.514
+        },
+        {
+          "index": "C",
+          "value": 393.346
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.081
+        },
+        {
+          "index": "B",
+          "value": 2.074
+        },
+        {
+          "index": "C",
+          "value": 2.061
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 962.1
+        },
+        {
+          "index": "B",
+          "value": 956.423
+        },
+        {
+          "index": "C",
+          "value": 863.443
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.603
+        },
+        {
+          "index": "B",
+          "value": 432.274
+        },
+        {
+          "index": "C",
+          "value": 392.498
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.219
+        },
+        {
+          "index": "B",
+          "value": 2.213
+        },
+        {
+          "index": "C",
+          "value": 2.201
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1078.04
+        },
+        {
+          "index": "B",
+          "value": 1069.813
+        },
+        {
+          "index": "C",
+          "value": 966.125
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 435.053
+        },
+        {
+          "index": "B",
+          "value": 436.322
+        },
+        {
+          "index": "C",
+          "value": 395.082
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.479
+        },
+        {
+          "index": "B",
+          "value": 2.453
+        },
+        {
+          "index": "C",
+          "value": 2.446
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1223.013
+        },
+        {
+          "index": "B",
+          "value": 1214.888
+        },
+        {
+          "index": "C",
+          "value": 1095.315
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 436.915
+        },
+        {
+          "index": "B",
+          "value": 435.588
+        },
+        {
+          "index": "C",
+          "value": 394.818
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.8
+        },
+        {
+          "index": "B",
+          "value": 2.79
+        },
+        {
+          "index": "C",
+          "value": 2.775
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1582.625
+        },
+        {
+          "index": "B",
+          "value": 1573.0
+        },
+        {
+          "index": "C",
+          "value": 1418.25
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 434.383
+        },
+        {
+          "index": "B",
+          "value": 433.566
+        },
+        {
+          "index": "C",
+          "value": 397.92
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 3.644
+        },
+        {
+          "index": "B",
+          "value": 3.629
+        },
+        {
+          "index": "C",
+          "value": 3.567
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1993.25
+        },
+        {
+          "index": "B",
+          "value": 1980.75
+        },
+        {
+          "index": "C",
+          "value": 1791.25
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 440.08
+        },
+        {
+          "index": "B",
+          "value": 434.322
+        },
+        {
+          "index": "C",
+          "value": 394.358
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.53
+        },
+        {
+          "index": "B",
+          "value": 4.563
+        },
+        {
+          "index": "C",
+          "value": 4.542
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2783.0
+        },
+        {
+          "index": "B",
+          "value": 2758.6
+        },
+        {
+          "index": "C",
+          "value": 1904.2
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 435.879
+        },
+        {
+          "index": "B",
+          "value": 436.951
+        },
+        {
+          "index": "C",
+          "value": 423.107
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 6.371
+        },
+        {
+          "index": "B",
+          "value": 6.305
+        },
+        {
+          "index": "C",
+          "value": 4.537
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2778.767
+        },
+        {
+          "index": "B",
+          "value": 2745.333
+        },
+        {
+          "index": "C",
+          "value": 2186.567
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 427.56
+        },
+        {
+          "index": "B",
+          "value": 428.014
+        },
+        {
+          "index": "C",
+          "value": 405.996
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 6.498
+        },
+        {
+          "index": "B",
+          "value": 6.411
+        },
+        {
+          "index": "C",
+          "value": 5.428
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2416.0
+        },
+        {
+          "index": "B",
+          "value": 2393.333
+        },
+        {
+          "index": "C",
+          "value": 2177.833
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 419.362
+        },
+        {
+          "index": "B",
+          "value": 413.972
+        },
+        {
+          "index": "C",
+          "value": 387.432
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 5.762
+        },
+        {
+          "index": "B",
+          "value": 5.781
+        },
+        {
+          "index": "C",
+          "value": 5.624
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T11:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2205.557
+        },
+        {
+          "index": "B",
+          "value": 2186.31
+        },
+        {
+          "index": "C",
+          "value": 1973.42
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.133
+        },
+        {
+          "index": "B",
+          "value": 420.967
+        },
+        {
+          "index": "C",
+          "value": 382.044
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 5.14
+        },
+        {
+          "index": "B",
+          "value": 5.193
+        },
+        {
+          "index": "C",
+          "value": 5.163
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2637.532
+        },
+        {
+          "index": "B",
+          "value": 2612.382
+        },
+        {
+          "index": "C",
+          "value": 2182.333
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 427.805
+        },
+        {
+          "index": "B",
+          "value": 426.383
+        },
+        {
+          "index": "C",
+          "value": 399.558
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 6.165
+        },
+        {
+          "index": "B",
+          "value": 6.124
+        },
+        {
+          "index": "C",
+          "value": 5.487
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2362.6
+        },
+        {
+          "index": "B",
+          "value": 2347.15
+        },
+        {
+          "index": "C",
+          "value": 2086.833
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 419.504
+        },
+        {
+          "index": "B",
+          "value": 425.543
+        },
+        {
+          "index": "C",
+          "value": 389.679
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 5.639
+        },
+        {
+          "index": "B",
+          "value": 5.516
+        },
+        {
+          "index": "C",
+          "value": 5.357
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2234.217
+        },
+        {
+          "index": "B",
+          "value": 2217.477
+        },
+        {
+          "index": "C",
+          "value": 2010.893
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 415.516
+        },
+        {
+          "index": "B",
+          "value": 413.409
+        },
+        {
+          "index": "C",
+          "value": 392.201
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 5.382
+        },
+        {
+          "index": "B",
+          "value": 5.369
+        },
+        {
+          "index": "C",
+          "value": 5.123
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2295.233
+        },
+        {
+          "index": "B",
+          "value": 2276.367
+        },
+        {
+          "index": "C",
+          "value": 2029.9
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 421.914
+        },
+        {
+          "index": "B",
+          "value": 421.489
+        },
+        {
+          "index": "C",
+          "value": 387.562
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 5.436
+        },
+        {
+          "index": "B",
+          "value": 5.4
+        },
+        {
+          "index": "C",
+          "value": 5.231
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1946.0
+        },
+        {
+          "index": "B",
+          "value": 1935.0
+        },
+        {
+          "index": "C",
+          "value": 1751.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 425.825
+        },
+        {
+          "index": "B",
+          "value": 423.99
+        },
+        {
+          "index": "C",
+          "value": 387.785
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.571
+        },
+        {
+          "index": "B",
+          "value": 4.565
+        },
+        {
+          "index": "C",
+          "value": 4.514
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1828.75
+        },
+        {
+          "index": "B",
+          "value": 1818.375
+        },
+        {
+          "index": "C",
+          "value": 1644.375
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 428.85
+        },
+        {
+          "index": "B",
+          "value": 427.545
+        },
+        {
+          "index": "C",
+          "value": 389.858
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.266
+        },
+        {
+          "index": "B",
+          "value": 4.254
+        },
+        {
+          "index": "C",
+          "value": 4.219
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1906.5
+        },
+        {
+          "index": "B",
+          "value": 1893.833
+        },
+        {
+          "index": "C",
+          "value": 1712.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.913
+        },
+        {
+          "index": "B",
+          "value": 425.863
+        },
+        {
+          "index": "C",
+          "value": 390.54
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.434
+        },
+        {
+          "index": "B",
+          "value": 4.447
+        },
+        {
+          "index": "C",
+          "value": 4.385
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1592.25
+        },
+        {
+          "index": "B",
+          "value": 1580.438
+        },
+        {
+          "index": "C",
+          "value": 1427.813
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 426.714
+        },
+        {
+          "index": "B",
+          "value": 426.335
+        },
+        {
+          "index": "C",
+          "value": 387.288
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 3.733
+        },
+        {
+          "index": "B",
+          "value": 3.709
+        },
+        {
+          "index": "C",
+          "value": 3.688
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1481.063
+        },
+        {
+          "index": "B",
+          "value": 1473.896
+        },
+        {
+          "index": "C",
+          "value": 1330.896
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.531
+        },
+        {
+          "index": "B",
+          "value": 428.555
+        },
+        {
+          "index": "C",
+          "value": 390.5
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 3.434
+        },
+        {
+          "index": "B",
+          "value": 3.439
+        },
+        {
+          "index": "C",
+          "value": 3.409
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1981.125
+        },
+        {
+          "index": "B",
+          "value": 1974.692
+        },
+        {
+          "index": "C",
+          "value": 1785.092
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.159
+        },
+        {
+          "index": "B",
+          "value": 430.282
+        },
+        {
+          "index": "C",
+          "value": 392.1
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.588
+        },
+        {
+          "index": "B",
+          "value": 4.59
+        },
+        {
+          "index": "C",
+          "value": 4.556
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1928.56
+        },
+        {
+          "index": "B",
+          "value": 1916.01
+        },
+        {
+          "index": "C",
+          "value": 1735.3
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 428.996
+        },
+        {
+          "index": "B",
+          "value": 427.935
+        },
+        {
+          "index": "C",
+          "value": 388.464
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.497
+        },
+        {
+          "index": "B",
+          "value": 4.479
+        },
+        {
+          "index": "C",
+          "value": 4.468
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T12:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1717.307
+        },
+        {
+          "index": "B",
+          "value": 1707.38
+        },
+        {
+          "index": "C",
+          "value": 1543.395
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.501
+        },
+        {
+          "index": "B",
+          "value": 428.164
+        },
+        {
+          "index": "C",
+          "value": 389.213
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.0
+        },
+        {
+          "index": "B",
+          "value": 3.989
+        },
+        {
+          "index": "C",
+          "value": 3.967
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1547.417
+        },
+        {
+          "index": "B",
+          "value": 1537.997
+        },
+        {
+          "index": "C",
+          "value": 1390.72
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.327
+        },
+        {
+          "index": "B",
+          "value": 428.022
+        },
+        {
+          "index": "C",
+          "value": 388.917
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 3.606
+        },
+        {
+          "index": "B",
+          "value": 3.594
+        },
+        {
+          "index": "C",
+          "value": 3.576
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1236.333
+        },
+        {
+          "index": "B",
+          "value": 1228.0
+        },
+        {
+          "index": "C",
+          "value": 1108.333
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.273
+        },
+        {
+          "index": "B",
+          "value": 427.373
+        },
+        {
+          "index": "C",
+          "value": 388.033
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.874
+        },
+        {
+          "index": "B",
+          "value": 2.874
+        },
+        {
+          "index": "C",
+          "value": 2.857
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1241.833
+        },
+        {
+          "index": "B",
+          "value": 1233.833
+        },
+        {
+          "index": "C",
+          "value": 1114.333
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.787
+        },
+        {
+          "index": "B",
+          "value": 428.457
+        },
+        {
+          "index": "C",
+          "value": 389.828
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.876
+        },
+        {
+          "index": "B",
+          "value": 2.881
+        },
+        {
+          "index": "C",
+          "value": 2.86
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1136.0
+        },
+        {
+          "index": "B",
+          "value": 1128.75
+        },
+        {
+          "index": "C",
+          "value": 1018.125
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.33
+        },
+        {
+          "index": "B",
+          "value": 430.488
+        },
+        {
+          "index": "C",
+          "value": 392.939
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.622
+        },
+        {
+          "index": "B",
+          "value": 2.623
+        },
+        {
+          "index": "C",
+          "value": 2.591
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1163.83
+        },
+        {
+          "index": "B",
+          "value": 1154.76
+        },
+        {
+          "index": "C",
+          "value": 1042.227
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.642
+        },
+        {
+          "index": "B",
+          "value": 431.813
+        },
+        {
+          "index": "C",
+          "value": 393.007
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.696
+        },
+        {
+          "index": "B",
+          "value": 2.674
+        },
+        {
+          "index": "C",
+          "value": 2.653
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 879.75
+        },
+        {
+          "index": "B",
+          "value": 873.5
+        },
+        {
+          "index": "C",
+          "value": 789.325
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.843
+        },
+        {
+          "index": "B",
+          "value": 430.523
+        },
+        {
+          "index": "C",
+          "value": 390.155
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 2.047
+        },
+        {
+          "index": "B",
+          "value": 2.03
+        },
+        {
+          "index": "C",
+          "value": 2.024
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 761.25
+        },
+        {
+          "index": "B",
+          "value": 756.25
+        },
+        {
+          "index": "C",
+          "value": 683.125
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.433
+        },
+        {
+          "index": "B",
+          "value": 428.919
+        },
+        {
+          "index": "C",
+          "value": 389.776
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.764
+        },
+        {
+          "index": "B",
+          "value": 1.763
+        },
+        {
+          "index": "C",
+          "value": 1.753
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 650.667
+        },
+        {
+          "index": "B",
+          "value": 647.333
+        },
+        {
+          "index": "C",
+          "value": 583.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.637
+        },
+        {
+          "index": "B",
+          "value": 430.52
+        },
+        {
+          "index": "C",
+          "value": 390.71
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.512
+        },
+        {
+          "index": "B",
+          "value": 1.504
+        },
+        {
+          "index": "C",
+          "value": 1.493
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 671.667
+        },
+        {
+          "index": "B",
+          "value": 665.667
+        },
+        {
+          "index": "C",
+          "value": 600.333
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 427.347
+        },
+        {
+          "index": "B",
+          "value": 430.563
+        },
+        {
+          "index": "C",
+          "value": 388.787
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.572
+        },
+        {
+          "index": "B",
+          "value": 1.546
+        },
+        {
+          "index": "C",
+          "value": 1.545
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 629.253
+        },
+        {
+          "index": "B",
+          "value": 624.328
+        },
+        {
+          "index": "C",
+          "value": 562.448
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 428.489
+        },
+        {
+          "index": "B",
+          "value": 426.525
+        },
+        {
+          "index": "C",
+          "value": 390.513
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.469
+        },
+        {
+          "index": "B",
+          "value": 1.464
+        },
+        {
+          "index": "C",
+          "value": 1.442
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 626.5
+        },
+        {
+          "index": "B",
+          "value": 621.417
+        },
+        {
+          "index": "C",
+          "value": 560.833
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.252
+        },
+        {
+          "index": "B",
+          "value": 428.19
+        },
+        {
+          "index": "C",
+          "value": 388.992
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.453
+        },
+        {
+          "index": "B",
+          "value": 1.452
+        },
+        {
+          "index": "C",
+          "value": 1.443
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T13:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 639.467
+        },
+        {
+          "index": "B",
+          "value": 634.367
+        },
+        {
+          "index": "C",
+          "value": 572.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.176
+        },
+        {
+          "index": "B",
+          "value": 427.532
+        },
+        {
+          "index": "C",
+          "value": 388.1
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.491
+        },
+        {
+          "index": "B",
+          "value": 1.484
+        },
+        {
+          "index": "C",
+          "value": 1.475
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 570.96
+        },
+        {
+          "index": "B",
+          "value": 566.483
+        },
+        {
+          "index": "C",
+          "value": 511.952
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 427.496
+        },
+        {
+          "index": "B",
+          "value": 426.632
+        },
+        {
+          "index": "C",
+          "value": 388.123
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.336
+        },
+        {
+          "index": "B",
+          "value": 1.328
+        },
+        {
+          "index": "C",
+          "value": 1.32
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 684.14
+        },
+        {
+          "index": "B",
+          "value": 679.36
+        },
+        {
+          "index": "C",
+          "value": 612.68
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.858
+        },
+        {
+          "index": "B",
+          "value": 430.74
+        },
+        {
+          "index": "C",
+          "value": 391.059
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.585
+        },
+        {
+          "index": "B",
+          "value": 1.577
+        },
+        {
+          "index": "C",
+          "value": 1.567
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 747.207
+        },
+        {
+          "index": "B",
+          "value": 741.663
+        },
+        {
+          "index": "C",
+          "value": 669.583
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.516
+        },
+        {
+          "index": "B",
+          "value": 429.496
+        },
+        {
+          "index": "C",
+          "value": 390.22
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.733
+        },
+        {
+          "index": "B",
+          "value": 1.727
+        },
+        {
+          "index": "C",
+          "value": 1.717
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 578.5
+        },
+        {
+          "index": "B",
+          "value": 574.375
+        },
+        {
+          "index": "C",
+          "value": 519.625
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 426.459
+        },
+        {
+          "index": "B",
+          "value": 427.483
+        },
+        {
+          "index": "C",
+          "value": 387.908
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.357
+        },
+        {
+          "index": "B",
+          "value": 1.345
+        },
+        {
+          "index": "C",
+          "value": 1.341
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 679.594
+        },
+        {
+          "index": "B",
+          "value": 675.469
+        },
+        {
+          "index": "C",
+          "value": 610.094
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 430.367
+        },
+        {
+          "index": "B",
+          "value": 430.492
+        },
+        {
+          "index": "C",
+          "value": 389.469
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.579
+        },
+        {
+          "index": "B",
+          "value": 1.57
+        },
+        {
+          "index": "C",
+          "value": 1.566
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 829.3
+        },
+        {
+          "index": "B",
+          "value": 822.9
+        },
+        {
+          "index": "C",
+          "value": 743.6
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.652
+        },
+        {
+          "index": "B",
+          "value": 431.189
+        },
+        {
+          "index": "C",
+          "value": 391.785
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.921
+        },
+        {
+          "index": "B",
+          "value": 1.909
+        },
+        {
+          "index": "C",
+          "value": 1.899
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 765.225
+        },
+        {
+          "index": "B",
+          "value": 743.7
+        },
+        {
+          "index": "C",
+          "value": 686.075
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 432.285
+        },
+        {
+          "index": "B",
+          "value": 420.229
+        },
+        {
+          "index": "C",
+          "value": 390.459
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.77
+        },
+        {
+          "index": "B",
+          "value": 1.772
+        },
+        {
+          "index": "C",
+          "value": 1.757
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 757.708
+        },
+        {
+          "index": "B",
+          "value": 752.09
+        },
+        {
+          "index": "C",
+          "value": 679.602
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 431.012
+        },
+        {
+          "index": "B",
+          "value": 428.676
+        },
+        {
+          "index": "C",
+          "value": 389.285
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.758
+        },
+        {
+          "index": "B",
+          "value": 1.755
+        },
+        {
+          "index": "C",
+          "value": 1.746
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 796.097
+        },
+        {
+          "index": "B",
+          "value": 789.737
+        },
+        {
+          "index": "C",
+          "value": 713.14
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.21
+        },
+        {
+          "index": "B",
+          "value": 430.27
+        },
+        {
+          "index": "C",
+          "value": 388.92
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.854
+        },
+        {
+          "index": "B",
+          "value": 1.835
+        },
+        {
+          "index": "C",
+          "value": 1.834
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 659.75
+        },
+        {
+          "index": "B",
+          "value": 655.65
+        },
+        {
+          "index": "C",
+          "value": 591.125
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 428.866
+        },
+        {
+          "index": "B",
+          "value": 427.397
+        },
+        {
+          "index": "C",
+          "value": 388.924
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.539
+        },
+        {
+          "index": "B",
+          "value": 1.535
+        },
+        {
+          "index": "C",
+          "value": 1.521
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 865.417
+        },
+        {
+          "index": "B",
+          "value": 862.167
+        },
+        {
+          "index": "C",
+          "value": 777.708
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 440.046
+        },
+        {
+          "index": "B",
+          "value": 436.885
+        },
+        {
+          "index": "C",
+          "value": 400.112
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.964
+        },
+        {
+          "index": "B",
+          "value": 1.972
+        },
+        {
+          "index": "C",
+          "value": 1.942
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T14:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1980.056
+        },
+        {
+          "index": "B",
+          "value": 1966.139
+        },
+        {
+          "index": "C",
+          "value": 1484.673
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 450.375
+        },
+        {
+          "index": "B",
+          "value": 450.001
+        },
+        {
+          "index": "C",
+          "value": 416.644
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 4.385
+        },
+        {
+          "index": "B",
+          "value": 4.357
+        },
+        {
+          "index": "C",
+          "value": 3.572
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 2499.5
+        },
+        {
+          "index": "B",
+          "value": 2529.125
+        },
+        {
+          "index": "C",
+          "value": 1764.375
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 455.941
+        },
+        {
+          "index": "B",
+          "value": 449.559
+        },
+        {
+          "index": "C",
+          "value": 413.361
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 5.492
+        },
+        {
+          "index": "B",
+          "value": 5.621
+        },
+        {
+          "index": "C",
+          "value": 4.331
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1699.55
+        },
+        {
+          "index": "B",
+          "value": 1685.017
+        },
+        {
+          "index": "C",
+          "value": 1441.783
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 436.19
+        },
+        {
+          "index": "B",
+          "value": 437.27
+        },
+        {
+          "index": "C",
+          "value": 396.284
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 3.902
+        },
+        {
+          "index": "B",
+          "value": 3.845
+        },
+        {
+          "index": "C",
+          "value": 3.625
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 1402.5
+        },
+        {
+          "index": "B",
+          "value": 1391.917
+        },
+        {
+          "index": "C",
+          "value": 1253.917
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 433.17
+        },
+        {
+          "index": "B",
+          "value": 431.891
+        },
+        {
+          "index": "C",
+          "value": 394.292
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 3.24
+        },
+        {
+          "index": "B",
+          "value": 3.226
+        },
+        {
+          "index": "C",
+          "value": 3.18
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 452.25
+        },
+        {
+          "index": "B",
+          "value": 448.75
+        },
+        {
+          "index": "C",
+          "value": 405.375
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 410.719
+        },
+        {
+          "index": "B",
+          "value": 416.494
+        },
+        {
+          "index": "C",
+          "value": 374.056
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.102
+        },
+        {
+          "index": "B",
+          "value": 1.078
+        },
+        {
+          "index": "C",
+          "value": 1.085
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 310.6
+        },
+        {
+          "index": "B",
+          "value": 309.0
+        },
+        {
+          "index": "C",
+          "value": 277.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 416.791
+        },
+        {
+          "index": "B",
+          "value": 416.125
+        },
+        {
+          "index": "C",
+          "value": 376.319
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.746
+        },
+        {
+          "index": "B",
+          "value": 0.742
+        },
+        {
+          "index": "C",
+          "value": 0.737
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 317.25
+        },
+        {
+          "index": "B",
+          "value": 315.625
+        },
+        {
+          "index": "C",
+          "value": 284.75
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 415.41
+        },
+        {
+          "index": "B",
+          "value": 415.707
+        },
+        {
+          "index": "C",
+          "value": 378.538
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.764
+        },
+        {
+          "index": "B",
+          "value": 0.76
+        },
+        {
+          "index": "C",
+          "value": 0.753
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 525.375
+        },
+        {
+          "index": "B",
+          "value": 522.5
+        },
+        {
+          "index": "C",
+          "value": 471.375
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 426.801
+        },
+        {
+          "index": "B",
+          "value": 426.211
+        },
+        {
+          "index": "C",
+          "value": 387.692
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.231
+        },
+        {
+          "index": "B",
+          "value": 1.226
+        },
+        {
+          "index": "C",
+          "value": 1.216
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 518.5
+        },
+        {
+          "index": "B",
+          "value": 513.25
+        },
+        {
+          "index": "C",
+          "value": 464.375
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 424.944
+        },
+        {
+          "index": "B",
+          "value": 427.664
+        },
+        {
+          "index": "C",
+          "value": 388.034
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.221
+        },
+        {
+          "index": "B",
+          "value": 1.2
+        },
+        {
+          "index": "C",
+          "value": 1.197
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 238.0
+        },
+        {
+          "index": "B",
+          "value": 236.25
+        },
+        {
+          "index": "C",
+          "value": 213.75
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 414.73
+        },
+        {
+          "index": "B",
+          "value": 413.33
+        },
+        {
+          "index": "C",
+          "value": 375.23
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.574
+        },
+        {
+          "index": "B",
+          "value": 0.572
+        },
+        {
+          "index": "C",
+          "value": 0.57
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 318.0
+        },
+        {
+          "index": "B",
+          "value": 317.583
+        },
+        {
+          "index": "C",
+          "value": 287.528
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 421.787
+        },
+        {
+          "index": "B",
+          "value": 422.931
+        },
+        {
+          "index": "C",
+          "value": 383.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.752
+        },
+        {
+          "index": "B",
+          "value": 0.75
+        },
+        {
+          "index": "C",
+          "value": 0.749
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 455.667
+        },
+        {
+          "index": "B",
+          "value": 454.333
+        },
+        {
+          "index": "C",
+          "value": 412.5
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 427.802
+        },
+        {
+          "index": "B",
+          "value": 429.092
+        },
+        {
+          "index": "C",
+          "value": 391.25
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.067
+        },
+        {
+          "index": "B",
+          "value": 1.061
+        },
+        {
+          "index": "C",
+          "value": 1.056
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T15:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 432.477
+        },
+        {
+          "index": "B",
+          "value": 431.808
+        },
+        {
+          "index": "C",
+          "value": 391.585
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 429.864
+        },
+        {
+          "index": "B",
+          "value": 431.895
+        },
+        {
+          "index": "C",
+          "value": 392.977
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.007
+        },
+        {
+          "index": "B",
+          "value": 1.0
+        },
+        {
+          "index": "C",
+          "value": 0.997
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 553.723
+        },
+        {
+          "index": "B",
+          "value": 647.192
+        },
+        {
+          "index": "C",
+          "value": 569.759
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 450.231
+        },
+        {
+          "index": "B",
+          "value": 442.758
+        },
+        {
+          "index": "C",
+          "value": 401.343
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.23
+        },
+        {
+          "index": "B",
+          "value": 1.46
+        },
+        {
+          "index": "C",
+          "value": 1.42
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 557.94
+        },
+        {
+          "index": "B",
+          "value": 560.305
+        },
+        {
+          "index": "C",
+          "value": 506.12
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 446.369
+        },
+        {
+          "index": "B",
+          "value": 446.155
+        },
+        {
+          "index": "C",
+          "value": 405.824
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.251
+        },
+        {
+          "index": "B",
+          "value": 1.257
+        },
+        {
+          "index": "C",
+          "value": 1.249
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 470.375
+        },
+        {
+          "index": "B",
+          "value": 476.375
+        },
+        {
+          "index": "C",
+          "value": 431.5
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 449.483
+        },
+        {
+          "index": "B",
+          "value": 446.629
+        },
+        {
+          "index": "C",
+          "value": 405.596
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.047
+        },
+        {
+          "index": "B",
+          "value": 1.067
+        },
+        {
+          "index": "C",
+          "value": 1.066
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 466.625
+        },
+        {
+          "index": "B",
+          "value": 485.75
+        },
+        {
+          "index": "C",
+          "value": 441.875
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 419.039
+        },
+        {
+          "index": "B",
+          "value": 450.654
+        },
+        {
+          "index": "C",
+          "value": 389.332
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.118
+        },
+        {
+          "index": "B",
+          "value": 1.078
+        },
+        {
+          "index": "C",
+          "value": 1.132
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 394.125
+        },
+        {
+          "index": "B",
+          "value": 397.0
+        },
+        {
+          "index": "C",
+          "value": 359.625
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 438.663
+        },
+        {
+          "index": "B",
+          "value": 442.405
+        },
+        {
+          "index": "C",
+          "value": 402.377
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.899
+        },
+        {
+          "index": "B",
+          "value": 0.898
+        },
+        {
+          "index": "C",
+          "value": 0.895
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 464.0
+        },
+        {
+          "index": "B",
+          "value": 597.333
+        },
+        {
+          "index": "C",
+          "value": 588.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 461.143
+        },
+        {
+          "index": "B",
+          "value": 375.363
+        },
+        {
+          "index": "C",
+          "value": 336.353
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 1.007
+        },
+        {
+          "index": "B",
+          "value": 1.648
+        },
+        {
+          "index": "C",
+          "value": 1.759
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 419.9
+        },
+        {
+          "index": "B",
+          "value": 582.6
+        },
+        {
+          "index": "C",
+          "value": 681.1
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 471.028
+        },
+        {
+          "index": "B",
+          "value": 360.11
+        },
+        {
+          "index": "C",
+          "value": 333.44
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.892
+        },
+        {
+          "index": "B",
+          "value": 1.639
+        },
+        {
+          "index": "C",
+          "value": 2.047
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 449.233
+        },
+        {
+          "index": "B",
+          "value": 738.817
+        },
+        {
+          "index": "C",
+          "value": 745.133
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 471.144
+        },
+        {
+          "index": "B",
+          "value": 328.965
+        },
+        {
+          "index": "C",
+          "value": 314.973
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.953
+        },
+        {
+          "index": "B",
+          "value": 2.294
+        },
+        {
+          "index": "C",
+          "value": 2.365
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 448.74
+        },
+        {
+          "index": "B",
+          "value": 824.76
+        },
+        {
+          "index": "C",
+          "value": 857.27
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 462.407
+        },
+        {
+          "index": "B",
+          "value": 310.319
+        },
+        {
+          "index": "C",
+          "value": 310.654
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.97
+        },
+        {
+          "index": "B",
+          "value": 2.656
+        },
+        {
+          "index": "C",
+          "value": 2.761
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 345.583
+        },
+        {
+          "index": "B",
+          "value": 373.583
+        },
+        {
+          "index": "C",
+          "value": 578.5
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 443.118
+        },
+        {
+          "index": "B",
+          "value": 357.017
+        },
+        {
+          "index": "C",
+          "value": 273.467
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.781
+        },
+        {
+          "index": "B",
+          "value": 1.088
+        },
+        {
+          "index": "C",
+          "value": 2.104
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 234.773
+        },
+        {
+          "index": "B",
+          "value": 239.783
+        },
+        {
+          "index": "C",
+          "value": 190.703
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 437.389
+        },
+        {
+          "index": "B",
+          "value": 439.905
+        },
+        {
+          "index": "C",
+          "value": 219.071
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.537
+        },
+        {
+          "index": "B",
+          "value": 0.545
+        },
+        {
+          "index": "C",
+          "value": 0.895
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T16:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 135.7
+        },
+        {
+          "index": "B",
+          "value": 143.5
+        },
+        {
+          "index": "C",
+          "value": 126.433
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 411.1
+        },
+        {
+          "index": "B",
+          "value": 432.248
+        },
+        {
+          "index": "C",
+          "value": 309.561
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.337
+        },
+        {
+          "index": "B",
+          "value": 0.332
+        },
+        {
+          "index": "C",
+          "value": 0.412
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 95.043
+        },
+        {
+          "index": "B",
+          "value": 96.957
+        },
+        {
+          "index": "C",
+          "value": 84.847
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 417.904
+        },
+        {
+          "index": "B",
+          "value": 418.789
+        },
+        {
+          "index": "C",
+          "value": 332.669
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.228
+        },
+        {
+          "index": "B",
+          "value": 0.232
+        },
+        {
+          "index": "C",
+          "value": 0.256
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 77.0
+        },
+        {
+          "index": "B",
+          "value": 77.667
+        },
+        {
+          "index": "C",
+          "value": 70.333
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 409.877
+        },
+        {
+          "index": "B",
+          "value": 414.478
+        },
+        {
+          "index": "C",
+          "value": 360.918
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.189
+        },
+        {
+          "index": "B",
+          "value": 0.188
+        },
+        {
+          "index": "C",
+          "value": 0.196
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 68.9
+        },
+        {
+          "index": "B",
+          "value": 69.2
+        },
+        {
+          "index": "C",
+          "value": 63.6
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 406.433
+        },
+        {
+          "index": "B",
+          "value": 406.976
+        },
+        {
+          "index": "C",
+          "value": 369.773
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.17
+        },
+        {
+          "index": "B",
+          "value": 0.171
+        },
+        {
+          "index": "C",
+          "value": 0.172
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 48.645
+        },
+        {
+          "index": "B",
+          "value": 49.315
+        },
+        {
+          "index": "C",
+          "value": 45.288
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 391.912
+        },
+        {
+          "index": "B",
+          "value": 400.041
+        },
+        {
+          "index": "C",
+          "value": 362.37
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.125
+        },
+        {
+          "index": "B",
+          "value": 0.123
+        },
+        {
+          "index": "C",
+          "value": 0.126
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 58.02
+        },
+        {
+          "index": "B",
+          "value": 58.54
+        },
+        {
+          "index": "C",
+          "value": 53.9
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 400.291
+        },
+        {
+          "index": "B",
+          "value": 403.875
+        },
+        {
+          "index": "C",
+          "value": 366.561
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.146
+        },
+        {
+          "index": "B",
+          "value": 0.146
+        },
+        {
+          "index": "C",
+          "value": 0.148
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 32.367
+        },
+        {
+          "index": "B",
+          "value": 32.675
+        },
+        {
+          "index": "C",
+          "value": 29.525
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 385.094
+        },
+        {
+          "index": "B",
+          "value": 391.452
+        },
+        {
+          "index": "C",
+          "value": 360.223
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.085
+        },
+        {
+          "index": "B",
+          "value": 0.084
+        },
+        {
+          "index": "C",
+          "value": 0.083
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 19.8
+        },
+        {
+          "index": "B",
+          "value": 20.1
+        },
+        {
+          "index": "C",
+          "value": 17.4
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 382.36
+        },
+        {
+          "index": "B",
+          "value": 388.98
+        },
+        {
+          "index": "C",
+          "value": 360.328
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.053
+        },
+        {
+          "index": "B",
+          "value": 0.052
+        },
+        {
+          "index": "C",
+          "value": 0.05
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 12.233
+        },
+        {
+          "index": "B",
+          "value": 12.76
+        },
+        {
+          "index": "C",
+          "value": 11.283
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 361.925
+        },
+        {
+          "index": "B",
+          "value": 362.971
+        },
+        {
+          "index": "C",
+          "value": 328.856
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.034
+        },
+        {
+          "index": "B",
+          "value": 0.036
+        },
+        {
+          "index": "C",
+          "value": 0.035
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 5.75
+        },
+        {
+          "index": "B",
+          "value": 6.25
+        },
+        {
+          "index": "C",
+          "value": 5.917
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 360.511
+        },
+        {
+          "index": "B",
+          "value": 360.111
+        },
+        {
+          "index": "C",
+          "value": 330.742
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.017
+        },
+        {
+          "index": "B",
+          "value": 0.019
+        },
+        {
+          "index": "C",
+          "value": 0.019
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 362.478
+        },
+        {
+          "index": "B",
+          "value": 361.966
+        },
+        {
+          "index": "C",
+          "value": 356.269
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 2095584.0
+    },
+    {
+      "time": "2025-03-01T17:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 54.559
+        },
+        {
+          "index": "B",
+          "value": 54.406
+        },
+        {
+          "index": "C",
+          "value": 54.599
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 2879411.2
+    },
+    {
+      "time": "2025-03-01T17:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 14.36
+        },
+        {
+          "index": "B",
+          "value": 14.298
+        },
+        {
+          "index": "C",
+          "value": 14.393
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 22.99
+        },
+        {
+          "index": "B",
+          "value": 22.91
+        },
+        {
+          "index": "C",
+          "value": 23.133
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 74.882
+        },
+        {
+          "index": "B",
+          "value": 74.587
+        },
+        {
+          "index": "C",
+          "value": 73.319
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T18:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T19:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T20:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T20:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T20:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T20:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T20:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T20:45:00",
+      "dcPowerInput": [],
+      "dcVoltageInput": [],
+      "dcCurrentInput": []
+    },
+    {
+      "time": "2025-03-01T21:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T21:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T21:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T21:35:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T21:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T21:55:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T22:10:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T22:15:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T22:30:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T22:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T22:50:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T23:05:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T23:20:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T23:25:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T23:40:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-01T23:45:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    },
+    {
+      "time": "2025-03-02T00:00:00",
+      "dcPowerInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcVoltageInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "dcCurrentInput": [
+        {
+          "index": "A",
+          "value": 0.0
+        },
+        {
+          "index": "B",
+          "value": 0.0
+        },
+        {
+          "index": "C",
+          "value": 0.0
+        }
+      ],
+      "isolationResistance": 3000000.0
+    }
+  ]
+}

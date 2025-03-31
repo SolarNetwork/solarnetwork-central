@@ -40,7 +40,7 @@ import net.solarnetwork.util.StringUtils;
  * </p>
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @JsonPropertyOrder({ "name", "reference", "identifiers", "metadata", "children" })
 public final class CloudDataValue implements Serializable, Comparable<CloudDataValue> {
@@ -65,6 +65,20 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 
 	/** Standard metadata key for a time zone identifier. */
 	public static final String TIME_ZONE_METADATA = "tz";
+
+	/**
+	 * Standard metadata key for a GPS latitude decimal value.
+	 *
+	 * @since 1.6
+	 */
+	public static final String LATITUDE_METADATA = "lat";
+
+	/**
+	 * Standard metadata key for a GPS longitude decimal value.
+	 *
+	 * @since 1.6
+	 */
+	public static final String LONGITUDE_METADATA = "lon";
 
 	/** Standard metadata key for a device manufacturer name. */
 	public static final String MANUFACTURER_METADATA = "manufacturer";
@@ -98,6 +112,27 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 * @since 1.5
 	 */
 	public static final String ACTIVE_METADATA = "active";
+
+	/**
+	 * Standard metadata key for an azimuth angle value, in degrees.
+	 *
+	 * @since 1.6
+	 */
+	public static final String AZIMUTH_METADATA = "azimuth";
+
+	/**
+	 * Standard metadata key for a horizontal tilt angle value, in degrees.
+	 *
+	 * @since 1.6
+	 */
+	public static final String TILT_METADATA = "tilt";
+
+	/**
+	 * Standard metadata key for a start date.
+	 *
+	 * @since 1.6
+	 */
+	public static final String START_DATE_METADATA = "startDate";
 
 	/**
 	 * A wildcard identifier value.

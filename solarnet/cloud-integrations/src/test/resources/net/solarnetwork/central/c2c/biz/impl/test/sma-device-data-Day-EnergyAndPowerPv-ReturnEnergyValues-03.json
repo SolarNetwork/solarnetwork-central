@@ -1,0 +1,332 @@
+{
+  "plant": {
+    "plantId": "11260000",
+    "name": "Site 1",
+    "timezone": "America/New_York"
+  },
+  "device": {
+    "deviceId": "11260000",
+    "name": "WR8KU002 SN:2001200000",
+    "timezone": "America/New_York"
+  },
+  "setType": "EnergyAndPowerPv",
+  "resolution": "FiveMinutes",
+  "set": [
+    {
+      "time": "2025-03-30T06:50:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-30T06:55:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-30T07:00:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-30T07:05:00",
+      "pvGeneration": 0.0
+    },
+    {
+      "time": "2025-03-30T07:10:00",
+      "pvGeneration": 4.0
+    },
+    {
+      "time": "2025-03-30T07:15:00",
+      "pvGeneration": 6.0
+    },
+    {
+      "time": "2025-03-30T07:20:00",
+      "pvGeneration": 8.0
+    },
+    {
+      "time": "2025-03-30T07:25:00",
+      "pvGeneration": 12.0
+    },
+    {
+      "time": "2025-03-30T07:30:00",
+      "pvGeneration": 14.0
+    },
+    {
+      "time": "2025-03-30T07:35:00",
+      "pvGeneration": 15.0
+    },
+    {
+      "time": "2025-03-30T07:40:00",
+      "pvGeneration": 19.0
+    },
+    {
+      "time": "2025-03-30T07:45:00",
+      "pvGeneration": 21.0
+    },
+    {
+      "time": "2025-03-30T07:50:00",
+      "pvGeneration": 23.0
+    },
+    {
+      "time": "2025-03-30T07:55:00",
+      "pvGeneration": 27.0
+    },
+    {
+      "time": "2025-03-30T08:00:00",
+      "pvGeneration": 30.0
+    },
+    {
+      "time": "2025-03-30T08:05:00",
+      "pvGeneration": 43.0
+    },
+    {
+      "time": "2025-03-30T08:10:00",
+      "pvGeneration": 52.0
+    },
+    {
+      "time": "2025-03-30T08:15:00",
+      "pvGeneration": 63.0
+    },
+    {
+      "time": "2025-03-30T08:20:00",
+      "pvGeneration": 71.0
+    },
+    {
+      "time": "2025-03-30T08:25:00",
+      "pvGeneration": 81.0
+    },
+    {
+      "time": "2025-03-30T08:30:00",
+      "pvGeneration": 104.0
+    },
+    {
+      "time": "2025-03-30T08:35:00",
+      "pvGeneration": 137.0
+    },
+    {
+      "time": "2025-03-30T08:40:00",
+      "pvGeneration": 158.0
+    },
+    {
+      "time": "2025-03-30T08:45:00",
+      "pvGeneration": 114.0
+    },
+    {
+      "time": "2025-03-30T08:50:00",
+      "pvGeneration": 171.0
+    },
+    {
+      "time": "2025-03-30T08:55:00",
+      "pvGeneration": 160.0
+    },
+    {
+      "time": "2025-03-30T09:00:00",
+      "pvGeneration": 153.0
+    },
+    {
+      "time": "2025-03-30T09:05:00",
+      "pvGeneration": 196.0
+    },
+    {
+      "time": "2025-03-30T09:10:00",
+      "pvGeneration": 155.0
+    },
+    {
+      "time": "2025-03-30T09:15:00",
+      "pvGeneration": 139.0
+    },
+    {
+      "time": "2025-03-30T09:20:00",
+      "pvGeneration": 192.0
+    },
+    {
+      "time": "2025-03-30T09:25:00",
+      "pvGeneration": 247.0
+    },
+    {
+      "time": "2025-03-30T09:30:00",
+      "pvGeneration": 242.0
+    },
+    {
+      "time": "2025-03-30T09:35:00",
+      "pvGeneration": 176.0
+    },
+    {
+      "time": "2025-03-30T09:40:00",
+      "pvGeneration": 130.0
+    },
+    {
+      "time": "2025-03-30T09:45:00",
+      "pvGeneration": 154.0
+    },
+    {
+      "time": "2025-03-30T09:50:00",
+      "pvGeneration": 315.0
+    },
+    {
+      "time": "2025-03-30T09:55:00",
+      "pvGeneration": 353.0
+    },
+    {
+      "time": "2025-03-30T10:00:00",
+      "pvGeneration": 359.0
+    },
+    {
+      "time": "2025-03-30T10:05:00",
+      "pvGeneration": 398.0
+    },
+    {
+      "time": "2025-03-30T10:10:00",
+      "pvGeneration": 239.0
+    },
+    {
+      "time": "2025-03-30T10:15:00",
+      "pvGeneration": 383.0
+    },
+    {
+      "time": "2025-03-30T10:20:00",
+      "pvGeneration": 312.0
+    },
+    {
+      "time": "2025-03-30T10:25:00",
+      "pvGeneration": 340.0
+    },
+    {
+      "time": "2025-03-30T10:30:00",
+      "pvGeneration": 212.0
+    },
+    {
+      "time": "2025-03-30T10:35:00",
+      "pvGeneration": 191.0
+    },
+    {
+      "time": "2025-03-30T10:40:00",
+      "pvGeneration": 189.0
+    },
+    {
+      "time": "2025-03-30T10:45:00",
+      "pvGeneration": 198.0
+    },
+    {
+      "time": "2025-03-30T10:50:00",
+      "pvGeneration": 247.0
+    },
+    {
+      "time": "2025-03-30T10:55:00",
+      "pvGeneration": 256.0
+    },
+    {
+      "time": "2025-03-30T11:00:00",
+      "pvGeneration": 278.0
+    },
+    {
+      "time": "2025-03-30T11:05:00",
+      "pvGeneration": 281.0
+    },
+    {
+      "time": "2025-03-30T11:10:00",
+      "pvGeneration": 278.0
+    },
+    {
+      "time": "2025-03-30T11:15:00",
+      "pvGeneration": 238.0
+    },
+    {
+      "time": "2025-03-30T11:20:00",
+      "pvGeneration": 215.0
+    },
+    {
+      "time": "2025-03-30T11:25:00",
+      "pvGeneration": 209.0
+    },
+    {
+      "time": "2025-03-30T11:30:00",
+      "pvGeneration": 224.0
+    },
+    {
+      "time": "2025-03-30T11:35:00",
+      "pvGeneration": 231.0
+    },
+    {
+      "time": "2025-03-30T11:40:00",
+      "pvGeneration": 156.0
+    },
+    {
+      "time": "2025-03-30T11:45:00",
+      "pvGeneration": 159.0
+    },
+    {
+      "time": "2025-03-30T11:50:00",
+      "pvGeneration": 352.0
+    },
+    {
+      "time": "2025-03-30T11:55:00",
+      "pvGeneration": 512.0
+    },
+    {
+      "time": "2025-03-30T12:00:00",
+      "pvGeneration": 386.0
+    },
+    {
+      "time": "2025-03-30T12:05:00",
+      "pvGeneration": 437.0
+    },
+    {
+      "time": "2025-03-30T12:10:00",
+      "pvGeneration": 309.0
+    },
+    {
+      "time": "2025-03-30T12:15:00",
+      "pvGeneration": 300.0
+    },
+    {
+      "time": "2025-03-30T12:20:00",
+      "pvGeneration": 358.0
+    },
+    {
+      "time": "2025-03-30T12:25:00",
+      "pvGeneration": 348.0
+    },
+    {
+      "time": "2025-03-30T12:30:00",
+      "pvGeneration": 431.0
+    },
+    {
+      "time": "2025-03-30T12:35:00",
+      "pvGeneration": 446.0
+    },
+    {
+      "time": "2025-03-30T12:40:00",
+      "pvGeneration": 413.0
+    },
+    {
+      "time": "2025-03-30T12:45:00",
+      "pvGeneration": 263.0
+    },
+    {
+      "time": "2025-03-30T12:50:00",
+      "pvGeneration": 209.0
+    },
+    {
+      "time": "2025-03-30T12:55:00",
+      "pvGeneration": 180.0
+    },
+    {
+      "time": "2025-03-30T13:00:00",
+      "pvGeneration": 283.0
+    },
+    {
+      "time": "2025-03-30T13:05:00",
+      "pvGeneration": 197.0
+    },
+    {
+      "time": "2025-03-30T13:10:00",
+      "pvGeneration": 128.0
+    },
+    {
+      "time": "2025-03-30T13:15:00",
+      "pvGeneration": 116.0
+    },
+    {
+      "time": "2025-03-30T13:20:00",
+      "pvGeneration": 107.0
+    }
+  ]
+}

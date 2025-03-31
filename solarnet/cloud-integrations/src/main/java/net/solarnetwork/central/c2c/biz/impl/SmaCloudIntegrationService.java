@@ -1,5 +1,5 @@
 /* ==================================================================
- * EnphaseCloudIntegrationService.java - 3/03/2025 11:24:37 am
+ * SmaCloudIntegrationService.java - 29/03/2025 6:45:04 am
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -65,47 +65,38 @@ import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.SettingUtils;
 
 /**
- * Enphase API v4 implementation of {@link CloudIntegrationService}.
+ * Sma implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.0
  */
-public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
+public class SmaCloudIntegrationService extends BaseRestOperationsCloudIntegrationService {
 
 	/** The service identifier. */
-	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.enphase";
+	public static final String SERVICE_IDENTIFIER = "s10k.c2c.i9n.sma";
 
 	/**
-	 * The URL template for listing all available sites.
+	 * The URL path for listing all available systems.
 	 */
-	public static final String LIST_SYSTEMS_PATH = "/api/v4/systems";
+	public static final String LIST_SYSTEMS_PATH = "/v1/plants";
 
-	/** The base URL to the AlsoEnergy API. */
-	public static final URI BASE_URI = URI.create("https://api.enphaseenergy.com");
+	/** The base URL to the SMA API. */
+	public static final URI BASE_URI = URI.create("https://monitoring.smaapis.de");
+
+	/** The base authorization URL for the SMA API. */
+	public static final URI AUTHORIZATION_BASE_URI = URI.create("https://auth.smaapis.de");
 
 	/** The OAuth authorization path. */
-	public static final String AUTH_PATH = "/oauth/authorize";
+	public static final String AUTH_PATH = "/oauth2/auth";
 
 	/** The OAuth authorization URL. */
-	public static final URI AUTH_URI = BASE_URI.resolve(AUTH_PATH);
+	public static final URI AUTH_URI = AUTHORIZATION_BASE_URI.resolve(AUTH_PATH);
 
 	/** The OAuth token URL. */
-	public static final String TOKEN_PATH = "/oauth/token";
+	public static final String TOKEN_PATH = "/oauth2/token";
 
 	/** The OAuth token URL. */
-	public static final URI TOKEN_URI = BASE_URI.resolve(TOKEN_PATH);
-
-	/** The API key query parameter. */
-	public static final String API_KEY_PARAM = "key";
-
-	/** The 1-based page query parameter. */
-	public static final String PAGE_PARAM = "page";
-
-	/** The page size query parameter, between 1 - 100. */
-	public static final String PAGE_SIZE_PARAM = "size";
-
-	/** The maximum page size allowed. */
-	public static final int MAX_PAGE_SIZE = 100;
+	public static final URI TOKEN_URI = AUTHORIZATION_BASE_URI.resolve(TOKEN_PATH);
 
 	/**
 	 * The well-known URLs.
@@ -123,12 +114,12 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	static {
 		// @formatter:off
 		SETTINGS = List.of(
-				API_KEY_SETTING_SPECIFIER,
 				OAUTH_CLIENT_ID_SETTING_SPECIFIER,
 				OAUTH_CLIENT_SECRET_SETTING_SPECIFIER,
 				OAUTH_ACCESS_TOKEN_SETTING_SPECIFIER,
 				OAUTH_REFRESH_TOKEN_SETTING_SPECIFIER,
-				BASE_URL_SETTING_SPECIFIER
+				BASE_URL_SETTING_SPECIFIER,
+				AUTHORIZATION_BASE_URL_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}
@@ -170,24 +161,22 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public EnphaseCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
+	public SmaCloudIntegrationService(Collection<CloudDatumStreamService> datumStreamServices,
 			UserEventAppenderBiz userEventAppenderBiz, TextEncryptor encryptor,
 			CloudIntegrationConfigurationDao integrationDao, RandomGenerator rng, RestOperations restOps,
 			OAuth2AuthorizedClientManager oauthClientManager, Clock clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
 		super(SERVICE_IDENTIFIER, "AlsoEnergy", datumStreamServices, userEventAppenderBiz, encryptor,
 				SETTINGS, WELL_KNOWN_URLS,
-				new OAuth2RestOperationsHelper(
-						LoggerFactory.getLogger(EnphaseCloudIntegrationService.class),
+				new OAuth2RestOperationsHelper(LoggerFactory.getLogger(SmaCloudIntegrationService.class),
 						userEventAppenderBiz, restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
 						integrationServiceIdentifier -> SECURE_SETTINGS, oauthClientManager, clock,
 						integrationLocksCache));
 		this.integrationDao = requireNonNullArgument(integrationDao, "integrationDao");
 		this.rng = requireNonNullArgument(rng, "rng");
 		this.tokenFetchHelper = new RestOperationsHelper(
-				LoggerFactory.getLogger(EnphaseCloudIntegrationService.class), userEventAppenderBiz,
-				restOps, INTEGRATION_HTTP_ERROR_TAGS, encryptor,
-				integrationServiceIdentifier -> SECURE_SETTINGS);
+				LoggerFactory.getLogger(SmaCloudIntegrationService.class), userEventAppenderBiz, restOps,
+				INTEGRATION_HTTP_ERROR_TAGS, encryptor, integrationServiceIdentifier -> SECURE_SETTINGS);
 	}
 
 	@Override
@@ -195,13 +184,6 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 		// check that authentication settings provided
 		final List<ErrorDetail> errorDetails = new ArrayList<>(2);
 		final MessageSource ms = requireNonNullArgument(getMessageSource(), "messageSource");
-
-		final String apiKey = integration.serviceProperty(CloudIntegrationService.API_KEY_SETTING,
-				String.class);
-		if ( apiKey == null || apiKey.isEmpty() ) {
-			String errMsg = ms.getMessage("error.apiKey.missing", null, locale);
-			errorDetails.add(new ErrorDetail(CloudIntegrationService.API_KEY_SETTING, null, errMsg));
-		}
 
 		final String oauthClientId = integration
 				.serviceProperty(CloudIntegrationService.OAUTH_CLIENT_ID_SETTING, String.class);
@@ -237,27 +219,21 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		if ( !errorDetails.isEmpty() ) {
 			String errMsg = ms.getMessage("error.settings.missing", null, locale);
-			return Result.error("EPCI.0001", errMsg, errorDetails);
+			return Result.error("SACI.0001", errMsg, errorDetails);
 		}
 
-		// validate by requesting the available sites
+		// validate by requesting the available systems
 		try {
-			final var decrypted = integration.copyWithId(integration.getId());
-			decrypted.unmaskSensitiveInformation(id -> SECURE_SETTINGS, encryptor);
-
 			final String response = restOpsHelper.httpGet("List systems", integration, String.class,
 					(req) -> UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
-							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
-							.queryParam(API_KEY_PARAM,
-									decrypted.serviceProperty(API_KEY_SETTING, String.class))
-							.buildAndExpand().toUri(),
+							.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH).buildAndExpand().toUri(),
 					HttpEntity::getBody);
 			log.debug("Validation of config {} succeeded: {}", integration.getConfigId(), response);
 			return Result.success();
 		} catch ( RemoteServiceException e ) {
 			return validationResult(e, null);
 		} catch ( Exception e ) {
-			return Result.error("EPCI.0002", "Validation failed: " + e.getMessage());
+			return Result.error("SACI.0002", "Validation failed: " + e.getMessage());
 		}
 	}
 
@@ -285,12 +261,14 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 		String stateValue = new AuthorizationState(integration.getConfigId(), stateToken).stateValue();
 
 		// @formatter:off
-		URI uri = UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+		URI uri = UriComponentsBuilder.fromUri(resolveUrl(
+					integration, AUTHORIZATION_BASE_URL_SETTING, AUTHORIZATION_BASE_URI))
 				.path(AUTH_PATH)
 				.queryParam("response_type", "code")
 				.queryParam("client_id", oauthClientId)
 				.queryParam("redirect_uri", redirectUri)
 				.queryParam("state", stateValue)
+				.queryParam("scope", "offline_access")
 				.buildAndExpand().toUri();
 		// @formatter:on
 
@@ -330,11 +308,13 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 		final JsonNode json = tokenFetchHelper.http("Get OAuth token", HttpMethod.POST, null,
 				integration, JsonNode.class, (req) -> {
 				// @formatter:off
-					URI uri = UriComponentsBuilder.fromUri(resolveBaseUrl(integration, BASE_URI))
+					URI uri = UriComponentsBuilder.fromUri(resolveUrl(
+							integration, AUTHORIZATION_BASE_URL_SETTING, AUTHORIZATION_BASE_URI))
 						.path(TOKEN_PATH)
 						.queryParam("grant_type", "authorization_code")
 						.queryParam(AUTHORIZATION_CODE_PARAM, code)
 						.queryParam(REDIRECT_URI_PARAM, redirectUri)
+						.queryParam("scope", "offline_access")
 						.buildAndExpand().toUri();
 					// @formatter:on
 					req.setBasicAuth(decrypted.serviceProperty(OAUTH_CLIENT_ID_SETTING, String.class),
@@ -344,17 +324,14 @@ public class EnphaseCloudIntegrationService extends BaseRestOperationsCloudInteg
 
 		/*- JSON example:
 			{
-			    "access_token": "unique access token",
-			    "token_type": "bearer",
-			    "refresh_token": "unique refresh token",
-			    "expires_in": 86393,
-			    "scope": "read write",
-			    "enl_uid": "217231",
-			    "enl_cid": "5",
-			    "enl_password_last_changed": "1638870641",
-			    "is_internal_app": false,
-			    "app_type": "system",
-			    "jti": "1ee68d30-3e79-4347-b7ea-a5851f6f15db"
+			  "access_token":"eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiw...",
+			  "expires_in":300,
+			  "refresh_expires_in":0,
+			  "refresh_token":"eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIi...",
+			  "token_type":"Bearer",
+			  "not-before-policy":1626710983,
+			  "session_state":"a57421a7-a319-476b-9bad-14de52ec3109",
+			  "scope":"profile monitoringApi:read email offline_access"
 			}
 		 */
 
