@@ -76,22 +76,22 @@ public class UserSecretInput {
 	}
 
 	/**
-	 * Get the topic ID.
+	 * Get the topic.
 	 * 
-	 * @return the topic ID
+	 * @return the topic
 	 */
 	public String getTopic() {
 		return topic;
 	}
 
 	/**
-	 * Set the topic ID.
+	 * Set the topic.
 	 * 
 	 * @param topic
-	 *        the topic ID to set
+	 *        the topic to set
 	 */
-	public void setTopic(String topicId) {
-		this.topic = topicId;
+	public void setTopic(String topic) {
+		this.topic = topic;
 	}
 
 	/**
