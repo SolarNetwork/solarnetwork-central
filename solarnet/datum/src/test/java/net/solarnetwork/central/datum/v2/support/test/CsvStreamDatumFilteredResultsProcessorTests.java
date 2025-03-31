@@ -1,21 +1,21 @@
 /* ==================================================================
  * CsvStreamDatumFilteredResultsProcessorTests.java - 17/04/2023 3:46:02 pm
- * 
+ *
  * Copyright 2023 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -58,9 +58,9 @@ import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Test cases for the {@link CsvStreamDatumFilteredResultsProcessor} class.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CsvStreamDatumFilteredResultsProcessorTests {
 
@@ -108,6 +108,44 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 				ts,streamId,objectId,sourceId,a,b,c,d,tags\r
 				2022-04-29T01:52:00Z,%1$s,123,test/source,1.23,2.34,3.45,foo,a\r
 				2022-04-29T01:52:01Z,%1$s,123,test/source,3.21,4.32,5.43,bar,\r
+				""".formatted(meta.getStreamId())));
+	}
+
+	@Test
+	public void oneStream_datum_propGap() throws IOException {
+		// GIVEN
+		ObjectDatumStreamMetadata meta = nodeMeta(123L, "test/source", new String[] { "a", "b" },
+				new String[] { "c" }, null);
+		Instant start = Instant
+				.from(LocalDateTime.of(2022, 4, 29, 13, 52).atZone(ZoneId.of("Pacific/Auckland")));
+
+		DatumProperties p1 = new DatumProperties();
+		p1.setInstantaneous(decimalArray("1.23", "2.34"));
+		p1.setAccumulating(decimalArray("3.45"));
+		StreamDatum d1 = new BasicStreamDatum(meta.getStreamId(), start, p1);
+
+		DatumProperties p2 = new DatumProperties();
+		p2.setInstantaneous(decimalArray(null, "4.32"));
+		p2.setAccumulating(decimalArray("5.43"));
+		StreamDatum d2 = new BasicStreamDatum(meta.getStreamId(), start.plusSeconds(1), p2);
+
+		BasicObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), asList(d1, d2));
+
+		// WHEN
+		StringWriter out = new StringWriter();
+		try (CsvStreamDatumFilteredResultsProcessor processor = new CsvStreamDatumFilteredResultsProcessor(
+				out)) {
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			processor.handleResultItem(d1);
+			processor.handleResultItem(d2);
+		}
+
+		// THEN
+		String csv = out.toString();
+		assertThat("Datum CSV", csv, is("""
+				ts,streamId,objectId,sourceId,a,b,c,tags\r
+				2022-04-29T01:52:00Z,%1$s,123,test/source,1.23,2.34,3.45,\r
+				2022-04-29T01:52:01Z,%1$s,123,test/source,,4.32,5.43,\r
 				""".formatted(meta.getStreamId())));
 	}
 
@@ -215,7 +253,7 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 				statisticsOf(new BigDecimal[][] {
 						decimalArray("10", "1.0", "2.0"),
 						decimalArray("10", "2.0", "3.0")
-					}, new BigDecimal[][] { 
+					}, new BigDecimal[][] {
 						decimalArray("30", "100", "130")
 					}
 				)
@@ -259,7 +297,7 @@ public class CsvStreamDatumFilteredResultsProcessorTests {
 				statisticsOf(new BigDecimal[][] {
 					decimalArray("10", "1.0", "2.0"),
 					decimalArray("10", "2.0", "3.0")
-				}, new BigDecimal[][] { 
+				}, new BigDecimal[][] {
 					decimalArray("30", "100", "130")
 				}));
 		// @formatter:on
