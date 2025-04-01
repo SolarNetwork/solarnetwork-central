@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.ocpp.dao;
 
+import net.solarnetwork.central.common.dao.IdentifierCriteria;
 import net.solarnetwork.central.common.dao.UserCriteria;
 import net.solarnetwork.dao.DateRangeCriteria;
 import net.solarnetwork.dao.PaginationCriteria;

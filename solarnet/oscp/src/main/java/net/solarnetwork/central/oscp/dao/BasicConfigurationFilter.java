@@ -25,6 +25,7 @@ package net.solarnetwork.central.oscp.dao;
 import java.util.Arrays;
 import java.util.Objects;
 import net.solarnetwork.central.common.dao.BasicCoreCriteria;
+import net.solarnetwork.central.common.dao.IdentifierCriteria;
 import net.solarnetwork.dao.PaginationCriteria;
 
 /**
