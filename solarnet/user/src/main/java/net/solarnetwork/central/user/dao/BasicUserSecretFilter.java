@@ -106,7 +106,7 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	 * This will completely replace the configured topics.
 	 * </p>
 	 * 
-	 * @param topicId
+	 * @param topic
 	 *        the topic to set
 	 */
 	public void setTopic(String topic) {
@@ -124,13 +124,13 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 	}
 
 	/**
-	 * Set the topicS.
+	 * Set the topics.
 	 * 
 	 * @param topics
 	 *        the topics to set
 	 */
-	public void setTopics(String[] topicIds) {
-		this.topics = topicIds;
+	public void setTopics(String[] topics) {
+		this.topics = topics;
 	}
 
 	/**
