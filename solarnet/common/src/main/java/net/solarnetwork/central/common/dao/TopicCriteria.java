@@ -33,7 +33,7 @@ public interface TopicCriteria {
 	/**
 	 * Test if any topic criteria exists.
 	 * 
-	 * @return {@literal true} if a topic criteria exists
+	 * @return {@code true} if a topic criteria exists
 	 */
 	default boolean hasTopicCriteria() {
 		String id = getTopic();
@@ -43,7 +43,7 @@ public interface TopicCriteria {
 	/**
 	 * Get an array of topics.
 	 * 
-	 * @return array of topics (may be {@literal null})
+	 * @return array of topics (may be {@code null})
 	 */
 	String[] getTopics();
 
@@ -52,10 +52,10 @@ public interface TopicCriteria {
 	 * 
 	 * <p>
 	 * This returns the first available topic from the {@link #getTopics()}
-	 * array, or {@literal null} if not available.
+	 * array, or {@code null} if not available.
 	 * </p>
 	 * 
-	 * @return the topic, or {@literal null} if not available
+	 * @return the topic, or {@code null} if not available
 	 */
 	default String getTopic() {
 		String[] ids = getTopics();
