@@ -1,21 +1,21 @@
 /* ==================================================================
  * WebServiceGlobalControllerSupport.java - 16/11/2021 10:48:48 AM
- * 
+ *
  * Copyright 2021 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -66,9 +66,9 @@ import net.solarnetwork.util.NumberUtils;
 
 /**
  * Global REST controller support.
- * 
+ *
  * @author matt
- * @version 1.8
+ * @version 1.9
  */
 @RestControllerAdvice
 @Order(1000)
@@ -85,7 +85,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link MaxUploadSizeExceededException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -114,7 +114,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle data access resource failure exceptions.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -146,7 +146,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle transient data access exceptions.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -200,7 +200,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a transaction exception.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -247,7 +247,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle an {@link AuthorizationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -266,7 +266,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -286,7 +286,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link BadCredentialsException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -305,7 +305,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link AuthenticationException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -324,7 +324,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link AccessDeniedException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -343,7 +343,7 @@ public class WebServiceGlobalControllerSupport {
 	/**
 	 * Handle a {@link RuntimeException} not handled by other exception
 	 * handlers.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -362,7 +362,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle an {@link ExecutionException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -388,7 +388,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle an {@link IllegalArgumentException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -407,7 +407,7 @@ public class WebServiceGlobalControllerSupport {
 	/**
 	 * Handle a {@link RuntimeException} not handled by other exception
 	 * handlers.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -434,7 +434,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle an {@link Error}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -456,7 +456,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link HttpMessageConversionException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -486,7 +486,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link ClientAbortException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -505,7 +505,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link AsyncRequestNotUsableException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -524,7 +524,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link IOException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
@@ -536,6 +536,14 @@ public class WebServiceGlobalControllerSupport {
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	public Result<?> handleIOException(IOException e, WebRequest request) {
+		Throwable cause = e;
+		do {
+			if ( cause instanceof AsyncRequestNotUsableException ex ) {
+				handleAsyncRequestNotUsableException(ex, request, null);
+				return null;
+			}
+			cause = cause.getCause();
+		} while ( cause != null );
 		log.warn("IOException in request {}; user [{}]", requestDescription(request),
 				userPrincipalName(request), e);
 		return error("WEB.09000", e.getMessage());
@@ -543,7 +551,7 @@ public class WebServiceGlobalControllerSupport {
 
 	/**
 	 * Handle a {@link RemoteServiceException}.
-	 * 
+	 *
 	 * @param e
 	 *        the exception
 	 * @param request
