@@ -37,13 +37,14 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
-import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityTokenStatus;
+import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
@@ -59,7 +60,7 @@ import net.solarnetwork.central.user.domain.UserNodeTransfer;
  * Test cases for the {@link MyBatisUserNodeDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -85,7 +86,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 	private SolarNode node = null;
 	private Long userNodeId = null;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		userNodeCertificateDao = new MyBatisUserNodeCertificateDao();
 		userNodeCertificateDao.setSqlSessionFactory(getSqlSessionFactory());
@@ -98,7 +99,7 @@ public class MyBatisUserNodeDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
 		assertNotNull(this.node);
-		deleteFromTables(DELETE_TABLES);
+		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		storeNewUser();
 		assertNotNull(this.user);
 		userNodeId = null;

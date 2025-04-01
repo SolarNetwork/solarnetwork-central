@@ -29,18 +29,20 @@ import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.SecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.central.user.domain.UserNode;
 import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * API for registered user tasks.
  *
  * @author matt
- * @version 3.1
+ * @version 3.2
  */
 public interface UserBiz {
 
@@ -176,10 +178,26 @@ public interface UserBiz {
 	 * Get all {@link UserAuthToken} entities for a given user.
 	 *
 	 * @param userId
-	 *        the ID to get the tokens for
+	 *        the ID of the user to get the tokens for
 	 * @return the tokens, or an empty list if none available
 	 */
 	List<UserAuthToken> getAllUserAuthTokens(Long userId);
+
+	/**
+	 * List the available {@link UserAuthToken} entities for a given user, with
+	 * an optional search filter.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the tokens for
+	 * @param filter
+	 *        the optional search filter
+	 * @return the matching tokens, never {@code null}
+	 * @throws IllegalArgumentException
+	 *         if {@code userId} is {@code null}
+	 * @since 3.2
+	 */
+	FilterResults<UserAuthToken, String> listUserAuthTokensForUser(Long userId,
+			UserAuthTokenFilter filter);
 
 	/**
 	 * Delete a user auth token.

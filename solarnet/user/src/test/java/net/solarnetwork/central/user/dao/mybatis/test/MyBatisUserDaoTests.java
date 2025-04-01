@@ -32,8 +32,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.domain.UserFilterCommand;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
@@ -44,7 +45,7 @@ import net.solarnetwork.dao.FilterResults;
  * Test cases for the {@link MyBatisUserDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -62,9 +63,9 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
 	private Long userId = null;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		deleteFromTables(DELETE_TABLES);
+		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		userId = null;
 	}
 
@@ -80,7 +81,7 @@ public class MyBatisUserDaoTests extends AbstractMyBatisUserDaoTestSupport {
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
 		Long id = userDao.save(newUser);
-		logger.debug("Got new user PK: " + id);
+		log.debug("Got new user PK: " + id);
 		assertNotNull(id);
 		userId = id;
 	}

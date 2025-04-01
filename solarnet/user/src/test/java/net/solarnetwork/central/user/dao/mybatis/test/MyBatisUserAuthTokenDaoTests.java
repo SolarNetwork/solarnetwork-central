@@ -22,6 +22,11 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
+import static net.solarnetwork.central.test.CommonTestUtils.RNG;
+import static net.solarnetwork.central.test.CommonTestUtils.randomBoolean;
+import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.Identity.sortByIdentity;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -32,29 +37,34 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
+import net.solarnetwork.central.test.CommonDbTestUtils;
+import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAuthTokenDao;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * Test cases for the {@link MyBatisUserAuthTokenDao} class.
  * 
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -74,7 +84,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 	private SolarNode node = null;
 	private UserAuthToken userAuthToken = null;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		solarNodeDao = new MyBatisSolarNodeDao();
 		solarNodeDao.setSqlSessionFactory(getSqlSessionFactory());
@@ -84,7 +94,7 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
 		assertThat("Node available", this.node, is(notNullValue()));
-		deleteFromTables(DELETE_TABLES);
+		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
 		assertThat("User available", this.user, is(notNullValue()));
 		userAuthToken = null;
@@ -301,7 +311,90 @@ public class MyBatisUserAuthTokenDaoTests extends AbstractMyBatisUserDaoTestSupp
 		final String result = builder.build();
 		assertThat("Authorization header", result, equalTo(
 				"SNWS2 Credential=public.token12345678,SignedHeaders=date;host,Signature=535124f5f333c0aebe42996a429a2a6e4b347dcc2ac2d8cbb8ac6b641fafbab7"));
+	}
 
+	@Test
+	public void findFiltered() {
+		// GIVEN
+		final int userCount = 2;
+		final int tokenCount = 20;
+		final List<UserAuthToken> entities = new ArrayList<>(userCount * tokenCount);
+
+		for ( int u = 0; u < userCount; u++ ) {
+			final Long userId = CommonDbTestUtils.insertUser(jdbcTemplate);
+			for ( int t = 0; t < tokenCount; t++ ) {
+				final String tokenId = randomString(20);
+				UserAuthToken token = new UserAuthToken(tokenId, userId, randomString(),
+						randomBoolean() ? SecurityTokenType.User : SecurityTokenType.ReadNodeData);
+				token.setStatus(
+						randomBoolean() ? SecurityTokenStatus.Active : SecurityTokenStatus.Disabled);
+				userAuthTokenDao.save(token);
+				entities.add(token);
+			}
+		}
+
+		allTableData(log, jdbcTemplate, "solaruser.user_auth_token", "auth_token");
+
+		// WHEN
+		Long randomUserId = entities.get(RNG.nextInt(entities.size())).getUserId();
+
+		BasicUserAuthTokenFilter filter = new BasicUserAuthTokenFilter();
+		filter.setUserId(randomUserId);
+		FilterResults<UserAuthToken, String> result_allForUser = userAuthTokenDao.findFiltered(filter);
+
+		UserAuthToken randomToken = entities.get(RNG.nextInt(entities.size()));
+		filter.setUserId(randomToken.getUserId());
+		filter.setIdentifier(randomToken.getId());
+		FilterResults<UserAuthToken, String> result_forIdentifier = userAuthTokenDao
+				.findFiltered(filter);
+
+		boolean randomActive = randomBoolean();
+		filter.setUserId(randomUserId);
+		filter.setIdentifier(null);
+		filter.setActive(randomActive);
+		FilterResults<UserAuthToken, String> result_forActive = userAuthTokenDao.findFiltered(filter);
+
+		SecurityTokenType randomType = SecurityTokenType.values()[RNG
+				.nextInt(SecurityTokenType.values().length)];
+		filter.setActive(null);
+		filter.setTokenType(randomType.name());
+		FilterResults<UserAuthToken, String> result_forType = userAuthTokenDao.findFiltered(filter);
+
+		// THEN
+		// @formatter:off
+		then(result_allForUser)
+			.as("All results for user %d returned in order", randomUserId)
+			.containsExactlyElementsOf(entities.stream()
+					.filter(t -> randomUserId.equals(t.getUserId()))
+					.sorted(sortByIdentity())
+					.toList())
+			;
+		
+		then(result_forIdentifier)
+			.as("Results for user %d and identifier %s returned", randomToken.getUserId(), randomToken.getId())
+			.containsExactly(randomToken)
+			;
+
+		then(result_forActive)
+			.as("All results for user %d and active = %s status in order", randomUserId, randomActive)
+			.containsExactlyElementsOf(entities.stream()
+					.filter(t -> randomUserId.equals(t.getUserId())
+							&& t.getStatus() == (randomActive 
+									? SecurityTokenStatus.Active : SecurityTokenStatus.Disabled))
+					.sorted(sortByIdentity())
+					.toList())
+			;
+
+		then(result_forType)
+			.as("All results for user %d and type = %s status in order", randomUserId, randomType)
+			.containsExactlyElementsOf(entities.stream()
+					.filter(t -> randomUserId.equals(t.getUserId())
+							&& randomType == t.getType())
+					.sorted(sortByIdentity())
+					.toList())
+			;
+	
+		// @formatter:on
 	}
 
 }
