@@ -120,7 +120,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 	private static final Long TEST_USER_ID = randomLong();
 
 	@Mock
-	SolarNodeOwnershipDao nodeOwnershipDao;
+	private SolarNodeOwnershipDao nodeOwnershipDao;
 
 	@Mock
 	private UserEventAppenderBiz userEventAppenderBiz;
@@ -215,7 +215,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
 		final URI listSystems = UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL)
+				.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(EnphaseCloudIntegrationService.PAGE_SIZE_PARAM, MAX_PAGE_SIZE)
 				.queryParam(EnphaseCloudIntegrationService.PAGE_PARAM, 1).buildAndExpand().toUri();
@@ -339,7 +339,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 
 		final URI listSystemDevices = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.SYSTEM_DEVICES_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.SYSTEM_DEVICES_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.buildAndExpand(systemId).toUri();
 
@@ -615,7 +615,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
@@ -800,7 +800,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
@@ -923,7 +923,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
@@ -1047,7 +1047,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
@@ -1168,7 +1168,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.INVERTER_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(GRANULARITY_PARAM, EnphaseGranularity.forQueryDateRange(filter.getStartDate(), filter.getEndDate()).getKey())
@@ -1330,7 +1330,7 @@ public class EnphaseCloudDatumStreamServiceTests {
 		// request inverter data
 		final URI listSystemInverterTelemetry = UriComponentsBuilder
 				.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_URL_TEMPLATE)
+				.path(EnphaseCloudDatumStreamService.RGM_TELEMETRY_PATH_TEMPLATE)
 				.queryParam(EnphaseCloudIntegrationService.API_KEY_PARAM, apiKey)
 				.queryParam(START_AT_PARAM, FifteenMinute.tickStart(filter.getStartDate(), UTC).getEpochSecond())
 				.queryParam(END_AT_PARAM, FifteenMinute.tickStart(filter.getEndDate(), UTC).getEpochSecond())

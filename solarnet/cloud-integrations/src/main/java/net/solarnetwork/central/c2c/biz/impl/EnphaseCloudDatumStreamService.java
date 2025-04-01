@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -127,7 +127,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * Accepts a single {@code {systemId}} parameter.
 	 * </p>
 	 */
-	public static final String SYSTEM_VIEW_URL_TEMPLATE = "/api/v4/systems/{systemId}";
+	public static final String SYSTEM_VIEW_PATH_TEMPLATE = "/api/v4/systems/{systemId}";
 
 	/**
 	 * The URI path to list the devices for a given system.
@@ -136,7 +136,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * Accepts a single {@code {systemId}} parameter.
 	 * </p>
 	 */
-	public static final String SYSTEM_DEVICES_URL_TEMPLATE = "/api/v4/systems/{systemId}/devices";
+	public static final String SYSTEM_DEVICES_PATH_TEMPLATE = "/api/v4/systems/{systemId}/devices";
 
 	/**
 	 * The URI path to list inverter telemetry a given system.
@@ -145,7 +145,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * Accepts a single {@code {systemId}} parameter.
 	 * </p>
 	 */
-	public static final String INVERTER_TELEMETRY_URL_TEMPLATE = "/api/v4/systems/{systemId}/telemetry/production_micro";
+	public static final String INVERTER_TELEMETRY_PATH_TEMPLATE = "/api/v4/systems/{systemId}/telemetry/production_micro";
 
 	/**
 	 * The URI path to list revenue grade meter telemetry a given system.
@@ -154,7 +154,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	 * Accepts a single {@code {systemId}} parameter.
 	 * </p>
 	 */
-	public static final String RGM_TELEMETRY_URL_TEMPLATE = "/api/v4/systems/{systemId}/rgm_stats";
+	public static final String RGM_TELEMETRY_PATH_TEMPLATE = "/api/v4/systems/{systemId}/rgm_stats";
 
 	/** The epoch end date query parameter name. */
 	public static final String END_AT_PARAM = "end_at";
@@ -282,7 +282,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			List<CloudDataValue> pageResults = restOpsHelper.httpGet("List systems", integration,
 					JsonNode.class,
 					(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
-							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_URL)
+							.path(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH)
 							.queryParam(API_KEY_PARAM,
 									decryp.serviceProperty(API_KEY_SETTING, String.class))
 							.queryParam(PAGE_SIZE_PARAM, MAX_PAGE_SIZE)
@@ -313,7 +313,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return restOpsHelper.httpGet("List system devices", integration, JsonNode.class,
 		// @formatter:off
 				(req) -> fromUri(resolveBaseUrl(integration, BASE_URI))
-						.path(SYSTEM_DEVICES_URL_TEMPLATE)
+						.path(SYSTEM_DEVICES_PATH_TEMPLATE)
 						.queryParam(API_KEY_PARAM, decryp.serviceProperty(API_KEY_SETTING, String.class))
 						.buildAndExpand(filters).toUri(),
 						// @formatter:on
@@ -726,7 +726,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					List<GeneralDatum> datum = restOpsHelper.httpGet("List system inverter data",
 							integration, JsonNode.class,
 							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
-									.path(INVERTER_TELEMETRY_URL_TEMPLATE)
+									.path(INVERTER_TELEMETRY_PATH_TEMPLATE)
 									.queryParam(API_KEY_PARAM,
 											decryptedIntegration.serviceProperty(API_KEY_SETTING,
 													String.class))
@@ -753,7 +753,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					List<GeneralDatum> datum = restOpsHelper.httpGet("List system meter data",
 							integration, JsonNode.class,
 							req -> fromUri(resolveBaseUrl(integration, BASE_URI))
-									.path(RGM_TELEMETRY_URL_TEMPLATE)
+									.path(RGM_TELEMETRY_PATH_TEMPLATE)
 									.queryParam(API_KEY_PARAM,
 											decryptedIntegration.serviceProperty(API_KEY_SETTING,
 													String.class))

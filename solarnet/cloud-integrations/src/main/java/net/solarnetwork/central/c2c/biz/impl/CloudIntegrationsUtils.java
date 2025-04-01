@@ -41,7 +41,7 @@ import java.time.temporal.TemporalAmount;
  * Helper methods for cloud integrations.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class CloudIntegrationsUtils {
 
@@ -54,6 +54,29 @@ public final class CloudIntegrationsUtils {
 
 	/** Constant for number of seconds per hour. */
 	public static final BigDecimal SECS_PER_HOUR = new BigDecimal(3600);
+
+	/**
+	 * Truncate a date based on a temporal amount.
+	 *
+	 * <p>
+	 * Only {@link Period} and {@link Duration} amount types are supported.
+	 * </p>
+	 *
+	 * @param date
+	 *        the date to truncate
+	 * @param amount
+	 *        the duration to truncate to
+	 * @return the truncated date, or {@code date} if {@code amount} is not a
+	 *         {@link Period} or {@link Duration}
+	 * @since 1.1
+	 */
+	public static Instant truncateDate(Instant date, TemporalAmount amount) {
+		return switch (amount) {
+			case Period p -> truncateDate(date, p);
+			case Duration d -> truncateDate(date, d);
+			default -> date;
+		};
+	}
 
 	/**
 	 * Truncate a date based on a duration.

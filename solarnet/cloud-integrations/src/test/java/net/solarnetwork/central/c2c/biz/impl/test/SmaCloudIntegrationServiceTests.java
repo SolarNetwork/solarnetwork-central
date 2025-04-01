@@ -1,5 +1,5 @@
 /* ==================================================================
- * EnphaseCloudIntegrationServiceTests.java - 3/03/2025 3:11:43 pm
+ * SmaCloudIntegrationServiceTests.java - 29/03/2025 7:20:16 am
  *
  * Copyright 2025 SolarNetwork.net Dev Team
  *
@@ -22,10 +22,8 @@
 
 package net.solarnetwork.central.c2c.biz.impl.test;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Instant.now;
 import static java.time.ZoneOffset.UTC;
-import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.AUTHORIZATION_CODE_PARAM;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.AUTHORIZATION_STATE_PARAM;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.OAUTH_ACCESS_TOKEN_SETTING;
@@ -78,7 +76,6 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.threeten.extra.MutableClock;
@@ -87,7 +84,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
 import net.solarnetwork.central.c2c.biz.CloudDatumStreamService;
 import net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService;
-import net.solarnetwork.central.c2c.biz.impl.EnphaseCloudIntegrationService;
+import net.solarnetwork.central.c2c.biz.impl.SmaCloudIntegrationService;
 import net.solarnetwork.central.c2c.dao.CloudIntegrationConfigurationDao;
 import net.solarnetwork.central.c2c.domain.AuthorizationState;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
@@ -96,14 +93,14 @@ import net.solarnetwork.domain.Result;
 import net.solarnetwork.domain.Result.ErrorDetail;
 
 /**
- * Test cases for the {@link EnphaseCloudIntegrationService} class.
+ * Test cases for the {@link SmaCloudIntegrationService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.0
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
-public class EnphaseCloudIntegrationServiceTests {
+public class SmaCloudIntegrationServiceTests {
 
 	private static final Long TEST_USER_ID = randomLong();
 
@@ -136,16 +133,16 @@ public class EnphaseCloudIntegrationServiceTests {
 
 	private MutableClock clock = MutableClock.of(Instant.now().truncatedTo(ChronoUnit.DAYS), UTC);
 
-	private EnphaseCloudIntegrationService service;
+	private SmaCloudIntegrationService service;
 
 	@BeforeEach
 	public void setup() {
-		service = new EnphaseCloudIntegrationService(Collections.singleton(datumStreamService),
+		service = new SmaCloudIntegrationService(Collections.singleton(datumStreamService),
 				userEventAppenderBiz, encryptor, integrationDao, rng, restOps, oauthClientManager, clock,
 				null);
 
 		ResourceBundleMessageSource msg = new ResourceBundleMessageSource();
-		msg.setBasenames(EnphaseCloudIntegrationService.class.getName(),
+		msg.setBasenames(SmaCloudIntegrationService.class.getName(),
 				BaseCloudIntegrationService.class.getName());
 		service.setMessageSource(msg);
 	}
@@ -176,35 +173,29 @@ public class EnphaseCloudIntegrationServiceTests {
 			.satisfies(r -> {
 				and.then(r.getErrors())
 					.as("Error details provided for missing authentication settings")
-					.hasSize(5)
+					.hasSize(4)
 					.satisfies(errors -> {
 						and.then(errors)
 							.as("Error detail")
 							.element(0)
-							.as("API key flagged")
-							.returns(API_KEY_SETTING, from(ErrorDetail::getLocation))
-							;
-						and.then(errors)
-							.as("Error detail")
-							.element(1)
 							.as("OAuth client ID flagged")
 							.returns(OAUTH_CLIENT_ID_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
-							.element(2)
+							.element(1)
 							.as("OAuth client secret flagged")
 							.returns(OAUTH_CLIENT_SECRET_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
-							.element(3)
+							.element(2)
 							.as("OAuth access token flagged")
 							.returns(OAUTH_ACCESS_TOKEN_SETTING, from(ErrorDetail::getLocation))
 							;
 						and.then(errors)
 							.as("Error detail")
-							.element(4)
+							.element(3)
 							.as("OAuth refresh token flagged")
 							.returns(OAUTH_REFRESH_TOKEN_SETTING, from(ErrorDetail::getLocation))
 							;
@@ -219,7 +210,6 @@ public class EnphaseCloudIntegrationServiceTests {
 	public void validate_ok() {
 		// GIVEN
 		final String tokenUri = "https://example.com/oauth/token";
-		final String apiKey = randomString();
 		final String clientId = randomString();
 		final String clientSecret = randomString();
 		final String accessToken = randomString();
@@ -229,7 +219,6 @@ public class EnphaseCloudIntegrationServiceTests {
 				randomLong(), now());
 		// @formatter:off
 		conf.setServiceProps(Map.of(
-				API_KEY_SETTING, apiKey,
 				OAUTH_CLIENT_ID_SETTING, clientId,
 				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
 				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
@@ -254,8 +243,8 @@ public class EnphaseCloudIntegrationServiceTests {
 
 		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
 
-		final URI listSystems = EnphaseCloudIntegrationService.BASE_URI
-				.resolve(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH + "?key=" + apiKey);
+		final URI listSystems = SmaCloudIntegrationService.BASE_URI
+				.resolve(SmaCloudIntegrationService.LIST_SYSTEMS_PATH);
 		final ResponseEntity<String> res = new ResponseEntity<String>(randomString(), HttpStatus.OK);
 		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class)))
 				.willReturn(res);
@@ -282,85 +271,6 @@ public class EnphaseCloudIntegrationServiceTests {
 			.isNotNull()
 			.as("Result is success")
 			.returns(true, from(Result::getSuccess))
-			;
-		// @formatter:on
-	}
-
-	@Test
-	public void validate_429_tooManyRequests() {
-		// GIVEN
-		final String tokenUri = "https://example.com/oauth/token";
-		final String apiKey = randomString();
-		final String clientId = randomString();
-		final String clientSecret = randomString();
-		final String accessToken = randomString();
-		final String refreshToken = randomString();
-
-		final CloudIntegrationConfiguration conf = new CloudIntegrationConfiguration(TEST_USER_ID,
-				randomLong(), now());
-		// @formatter:off
-		conf.setServiceProps(Map.of(
-				API_KEY_SETTING, apiKey,
-				OAUTH_CLIENT_ID_SETTING, clientId,
-				OAUTH_CLIENT_SECRET_SETTING, clientSecret,
-				OAUTH_ACCESS_TOKEN_SETTING, accessToken,
-				OAUTH_REFRESH_TOKEN_SETTING, refreshToken
-			));
-
-		// NOTE: CLIENT_CREDENTIALS used even though auth-code is technically used, with access/refresh tokens provided
-		final ClientRegistration oauthClientReg = ClientRegistration
-			.withRegistrationId("test")
-			.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-			.clientId(clientId)
-			.clientSecret(clientSecret)
-			.tokenUri(tokenUri)
-			.build();
-		// @formatter:on
-
-		final OAuth2AccessToken oauthAccessToken = new OAuth2AccessToken(TokenType.BEARER,
-				randomString(), now(), now().plusSeconds(60));
-
-		final OAuth2AuthorizedClient oauthAuthClient = new OAuth2AuthorizedClient(oauthClientReg, "Test",
-				oauthAccessToken);
-
-		given(oauthClientManager.authorize(any())).willReturn(oauthAuthClient);
-
-		final URI listSystems = EnphaseCloudIntegrationService.BASE_URI
-				.resolve(EnphaseCloudIntegrationService.LIST_SYSTEMS_PATH + "?key=" + apiKey);
-		given(restOps.exchange(eq(listSystems), eq(HttpMethod.GET), any(), eq(String.class))).willThrow(
-				HttpClientErrorException.create("Too many requests", HttpStatus.TOO_MANY_REQUESTS,
-						"429 TOO_MANY_REQUESTS", new HttpHeaders(), "Too many".getBytes(UTF_8), UTF_8));
-
-		// WHEN
-
-		Result<Void> result = service.validate(conf, Locale.getDefault());
-
-		// THEN
-		// @formatter:off
-		then(oauthClientManager).should().authorize(authRequestCaptor.capture());
-
-		and.then(authRequestCaptor.getValue())
-			.as("OAuth request provided")
-			.isNotNull()
-			.as("No OAuth2AuthorizedClient provided")
-			.returns(null, from(OAuth2AuthorizeRequest::getAuthorizedClient))
-			.as("Client registration ID is configuration system identifier")
-			.returns(conf.systemIdentifier(), OAuth2AuthorizeRequest::getClientRegistrationId)
-			;
-
-		and.then(result)
-			.as("Result generated")
-			.isNotNull()
-			.as("Result is success")
-			.returns(true, from(Result::getSuccess))
-			.as("Code included")
-			.returns("BCI.0002", from(Result::getCode))
-			.satisfies(r -> {
-				and.then(r.getMessage())
-					.as("429 included in message")
-					.contains("HTTP 429")
-					;
-			})
 			;
 		// @formatter:on
 	}
@@ -406,11 +316,12 @@ public class EnphaseCloudIntegrationServiceTests {
 			.as("Method is GET")
 			.returns("GET", from(HttpRequestInfo::method))
 			.as("URI generated with client ID configured on integration")
-			.returns(UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.AUTH_URI)
+			.returns(UriComponentsBuilder.fromUri(SmaCloudIntegrationService.AUTH_URI)
 					.queryParam("response_type", "code")
 					.queryParam("client_id", clientId)
 					.queryParam("redirect_uri", redirectUri)
 					.queryParam("state", expectedState.stateValue())
+					.queryParam("scope", "offline_access")
 					.buildAndExpand().toUri()
 					, from(HttpRequestInfo::uri))
 			.as("No headers provided")
@@ -446,14 +357,15 @@ public class EnphaseCloudIntegrationServiceTests {
 				.willReturn(true);
 
 		// request token
-		final URI getTokenUri = UriComponentsBuilder.fromUri(EnphaseCloudIntegrationService.BASE_URI)
-				.path(EnphaseCloudIntegrationService.TOKEN_PATH)
+		final URI getTokenUri = UriComponentsBuilder
+				.fromUri(SmaCloudIntegrationService.AUTHORIZATION_BASE_URI)
+				.path(SmaCloudIntegrationService.TOKEN_PATH)
 				.queryParam("grant_type", "authorization_code")
 				.queryParam(AUTHORIZATION_CODE_PARAM, code).queryParam(REDIRECT_URI_PARAM, redirectUri)
-				.buildAndExpand().toUri();
+				.queryParam("scope", "offline_access").buildAndExpand().toUri();
 
-		final JsonNode resJson = getObjectFromJSON(
-				utf8StringResource("enphase-token-01.json", getClass()), ObjectNode.class);
+		final JsonNode resJson = getObjectFromJSON(utf8StringResource("sma-token-01.json", getClass()),
+				ObjectNode.class);
 		given(restOps.exchange(eq(getTokenUri), eq(HttpMethod.POST), any(), eq(JsonNode.class)))
 				.willReturn(new ResponseEntity<JsonNode>(resJson, HttpStatus.OK));
 

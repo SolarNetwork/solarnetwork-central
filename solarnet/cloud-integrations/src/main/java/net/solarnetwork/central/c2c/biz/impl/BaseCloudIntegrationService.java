@@ -44,7 +44,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * Abstract base implementation of {@link CloudIntegrationService}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudIntegrationService {
@@ -57,6 +57,15 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 */
 	public static final TextFieldSettingSpecifier BASE_URL_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
 			BASE_URL_SETTING, null);
+
+	/**
+	 * A setting specifier for the
+	 * {@link CloudIntegrationService#AUTHORIZATION_BASE_URL_SETTING}.
+	 *
+	 * @since 1.6
+	 */
+	public static final TextFieldSettingSpecifier AUTHORIZATION_BASE_URL_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			AUTHORIZATION_BASE_URL_SETTING, null);
 
 	/**
 	 * A setting specifier for the
@@ -177,15 +186,7 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 * @since 1.1
 	 */
 	public static URI resolveBaseUrl(CloudIntegrationConfiguration integration, URI defaultBaseUrl) {
-		URI result = defaultBaseUrl;
-		if ( integration != null && integration.hasServiceProperty(BASE_URL_SETTING) ) {
-			try {
-				result = new URI(integration.serviceProperty(BASE_URL_SETTING, String.class));
-			} catch ( URISyntaxException e ) {
-				// ignore, use default
-			}
-		}
-		return result;
+		return resolveUrl(integration, BASE_URL_SETTING, defaultBaseUrl);
 	}
 
 	/**
@@ -209,9 +210,67 @@ public abstract class BaseCloudIntegrationService extends BaseCloudIntegrationsI
 	 */
 	public static String resolveBaseUrl(CloudIntegrationConfiguration integration,
 			String defaultBaseUrl) {
-		String result = defaultBaseUrl;
-		if ( integration != null && integration.hasServiceProperty(BASE_URL_SETTING) ) {
-			result = integration.serviceProperty(BASE_URL_SETTING, String.class);
+		return resolveUrl(integration, BASE_URL_SETTING, defaultBaseUrl);
+	}
+
+	/**
+	 * Resolve a base URL.
+	 *
+	 * <p>
+	 * This method will look for a service property named {@code settingName}
+	 * and attempt to parse that as a URI and return it, falling back to
+	 * returning {@code defaultUrl} if that fails.
+	 * </p>
+	 *
+	 * @param integration
+	 *        the integration to look for the base URL service property on
+	 * @param settingName
+	 *        the name of the URL setting
+	 * @param defaultUrl
+	 *        the fallback URL to use
+	 * @return the URL, or {@code null} if the service property cannot be
+	 *         resolved as a URI and the given {@code defaultUrl} is
+	 *         {@code null}
+	 * @since 1.6
+	 */
+	public static URI resolveUrl(CloudIntegrationConfiguration integration, String settingName,
+			URI defaultUrl) {
+		URI result = defaultUrl;
+		if ( integration != null && integration.hasServiceProperty(settingName) ) {
+			try {
+				result = new URI(integration.serviceProperty(settingName, String.class));
+			} catch ( URISyntaxException e ) {
+				// ignore, use default
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Resolve a URL string value.
+	 *
+	 * <p>
+	 * This method will look for a service property named {@code settingName}
+	 * and return it, falling back to returning {@code defaultUrl} if that
+	 * fails.
+	 * </p>
+	 *
+	 * @param integration
+	 *        the integration to look for the {@code settingName} service
+	 *        property on
+	 * @param settingName
+	 *        the name of the URL setting
+	 * @param defaultUrl
+	 *        the fallback URL to use
+	 * @return the URL, or {@code null} if the service property cannot be
+	 *         resolved
+	 * @since 1.6
+	 */
+	public static String resolveUrl(CloudIntegrationConfiguration integration, String settingName,
+			String defaultUrl) {
+		String result = defaultUrl;
+		if ( integration != null && integration.hasServiceProperty(settingName) ) {
+			result = integration.serviceProperty(settingName, String.class);
 		}
 		return result;
 	}

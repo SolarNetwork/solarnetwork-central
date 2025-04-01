@@ -546,7 +546,7 @@ public class DaoUserDatumDeleteBiz implements UserDatumDeleteBiz, UserDatumDelet
 
 		@Override
 		public String toString() {
-			return "DatumImportTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config="
+			return "DatumDeleteTask{userId=" + getUserId() + ",jobId=" + getJobId() + ",config="
 					+ (info != null ? info.getConfiguration() : null) + ",jobState=" + getJobState()
 					+ ",percentComplete=" + getPercentComplete() + ",completionDate="
 					+ getCompletionDate() + "}";
