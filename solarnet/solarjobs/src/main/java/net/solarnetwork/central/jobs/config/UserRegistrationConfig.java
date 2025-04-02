@@ -65,7 +65,7 @@ public class UserRegistrationConfig implements SolarNetUserConfiguration {
 	@Bean
 	@Qualifier(USER_AUTH_TOKEN)
 	public Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache(
-			@Qualifier(USER_SECRET) CacheSettings settings) {
+			@Qualifier(USER_AUTH_TOKEN) CacheSettings settings) {
 		return settings.createCache(cacheManager, UserStringCompositePK.class, UserAuthToken.class,
 				USER_AUTH_TOKEN + "-cache");
 	}
