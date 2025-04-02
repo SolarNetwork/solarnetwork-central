@@ -115,9 +115,9 @@
 					<otherwise>'Disabled'</otherwise>
 				</choose> AS solaruser.user_auth_token_status)
 			</if>
-			<if test="filter.tokenTypes != null and filter.tokenTypes.length > 0">
+			<if test="filter.tokenTypeEnums != null">
 				AND uat.token_type = ANY(CAST(
-					#{filter.tokenTypes,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+					#{filter.tokenTypeEnums,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
 					AS solaruser.user_auth_token_type[]))
 			</if>
 		</where>

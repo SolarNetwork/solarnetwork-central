@@ -86,7 +86,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	private SolarLocationDao solarLocationDao;
 	private SolarNodeDao solarNodeDao;
 
-	private Cache<UserStringCompositePK, UserAuthToken> authTokenCache;
+	private Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache;
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -256,10 +256,11 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 			UserAuthTokenFilter filter) {
 		requireNonNullArgument(userId, "userId");
 
-		final Cache<UserStringCompositePK, UserAuthToken> cache = getAuthTokenCache();
+		final Cache<UserStringCompositePK, UserAuthToken> cache = getUserAuthTokenCache();
 
 		UserStringCompositePK cacheKey = null;
-		if ( cache != null && filterForIdentifier(filter).equals(filter) ) {
+		if ( cache != null && filter.hasIdentifierCriteria()
+				&& filterForIdentifier(filter).equals(filter) ) {
 			cacheKey = new UserStringCompositePK(userId, filter.getIdentifier());
 			var result = cache.get(cacheKey);
 			if ( result != null ) {
@@ -270,7 +271,7 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 		BasicUserAuthTokenFilter f = new BasicUserAuthTokenFilter(filter);
 		f.setUserId(userId);
 
-		var result = userAuthTokenDao.findFiltered(filter);
+		var result = userAuthTokenDao.findFiltered(f);
 
 		if ( cacheKey != null && result.getReturnedResultCount() == 1 ) {
 			cache.put(cacheKey, result.getResults().iterator().next());
@@ -505,18 +506,18 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	 * 
 	 * @return the cache
 	 */
-	public Cache<UserStringCompositePK, UserAuthToken> getAuthTokenCache() {
-		return authTokenCache;
+	public Cache<UserStringCompositePK, UserAuthToken> getUserAuthTokenCache() {
+		return userAuthTokenCache;
 	}
 
 	/**
 	 * Set the token cache.
 	 * 
-	 * @param authTokenCache
+	 * @param userAuthTokenCache
 	 *        the cache to set
 	 */
-	public void setAuthTokenCache(Cache<UserStringCompositePK, UserAuthToken> authTokenCache) {
-		this.authTokenCache = authTokenCache;
+	public void setUserAuthTokenCache(Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache) {
+		this.userAuthTokenCache = userAuthTokenCache;
 	}
 
 }

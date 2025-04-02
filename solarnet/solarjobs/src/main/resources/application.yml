@@ -369,27 +369,33 @@ app:
     thread-name-prefix: "SolarNet-Sched-"
     pool-size: 10
     remove-on-cancel-policy: true
-  user.datum:
-    delete:
-      completed-task-minimum-cache-time: 14400000
-      delete-batch-days: 7
-      parallelism: 1
-  user.reg:
-    mail.template:
-      from: "nobody@localhost"
-  user.secret:
-    biz:
-      key-pair-password-hmac-key: "Secret123"
-      secret-encryption-salt: "flimflam"
+  user:
     cache:
-      keypair-cache:
+      user-auth-token:
         ttl: 900
         heap-max-entries: 1000
         disk-max-size-mb: 0
-      secret-cache:
-        ttl: 900
-        heap-max-entries: 1000
-        disk-max-size-mb: 0
+    datum:
+      delete:
+        completed-task-minimum-cache-time: 14400000
+        delete-batch-days: 7
+        parallelism: 1
+    reg:
+      mail.template:
+        from: "nobody@localhost"
+    secret:
+      biz:
+        key-pair-password-hmac-key: "Secret123"
+        secret-encryption-salt: "flimflam"
+      cache:
+        keypair-cache:
+          ttl: 900
+          heap-max-entries: 1000
+          disk-max-size-mb: 0
+        secret-cache:
+          ttl: 900
+          heap-max-entries: 1000
+          disk-max-size-mb: 0
   user-alert:
     stale-data:
       mail:

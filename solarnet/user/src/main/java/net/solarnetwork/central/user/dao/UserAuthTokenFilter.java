@@ -46,7 +46,7 @@ public interface UserAuthTokenFilter
 	 * @return {@code true} if a token type criteria exists
 	 */
 	default boolean hasTokenTypeCriteria() {
-		return !tokenTypes().isEmpty();
+		return !tokenTypesSet().isEmpty();
 	}
 
 	/**
@@ -72,11 +72,11 @@ public interface UserAuthTokenFilter
 	}
 
 	/**
-	 * Get the token types as a set.
+	 * Get the token types as a set of enumeration values.
 	 * 
 	 * @return the valid token types as a set
 	 */
-	default Set<SecurityTokenType> tokenTypes() {
+	default Set<SecurityTokenType> tokenTypesSet() {
 		String[] a = getTokenTypes();
 		if ( a == null || a.length < 1 ) {
 			return Collections.emptySet();
@@ -90,6 +90,20 @@ public interface UserAuthTokenFilter
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Get the token types as an array of enumeration values.
+	 * 
+	 * @return the set of token types, or {@code null}
+	 */
+	default SecurityTokenType[] getTokenTypeEnums() {
+		Set<SecurityTokenType> set = tokenTypesSet();
+		if ( set.isEmpty() ) {
+			return null;
+		}
+		return set.toArray(SecurityTokenType[]::new);
+
 	}
 
 }

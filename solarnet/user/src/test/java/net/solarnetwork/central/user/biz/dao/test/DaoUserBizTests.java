@@ -170,7 +170,7 @@ public class DaoUserBizTests {
 		userBiz.setUserAuthTokenDao(userAuthTokenDao);
 		userBiz.setUserNodeDao(userNodeDao);
 		userBiz.setUserAlertDao(userAlertDao);
-		userBiz.setAuthTokenCache(tokenCache);
+		userBiz.setUserAuthTokenCache(tokenCache);
 	}
 
 	@Test
@@ -628,7 +628,7 @@ public class DaoUserBizTests {
 	@Test
 	public void listTokensForUser_noCache() {
 		// GIVEN
-		userBiz.setAuthTokenCache(null);
+		userBiz.setUserAuthTokenCache(null);
 
 		final UserAuthToken token = new UserAuthToken(randomString(), TEST_USER_ID, randomString(),
 				SecurityTokenType.User);
@@ -649,8 +649,12 @@ public class DaoUserBizTests {
 		
 		then(userAuthTokenDao).should().findFiltered(userAuthTokenFilterCaptor.capture());
 		and.then(userAuthTokenFilterCaptor.getValue())
-			.as("Filter passed to DAO same as given")
-			.isSameAs(filter)
+			.as("Filter passed to DAO not same as given")
+			.isNotSameAs(filter)
+			.as("User ID added to DAO filter")
+			.returns(new Long[] {TEST_USER_ID}, from(UserAuthTokenFilter::getUserIds))
+			.as("Active included in DAO filter")
+			.returns(filter.getActive(), from(UserAuthTokenFilter::getActive))
 			;
 		
 		and.then(result)
@@ -684,8 +688,12 @@ public class DaoUserBizTests {
 		
 		then(userAuthTokenDao).should().findFiltered(userAuthTokenFilterCaptor.capture());
 		and.then(userAuthTokenFilterCaptor.getValue())
-			.as("Filter passed to DAO same as given")
-			.isSameAs(filter)
+			.as("Filter passed to DAO not same as given")
+			.isNotSameAs(filter)
+			.as("User ID added to DAO filter")
+			.returns(new Long[] {TEST_USER_ID}, from(UserAuthTokenFilter::getUserIds))
+			.as("Identifier included in DAO filter")
+			.returns(filter.getIdentifiers(), from(UserAuthTokenFilter::getIdentifiers))
 			;
 		
 		then(tokenCache).should().put(eq(cacheKey), tokenCaptor.capture());
