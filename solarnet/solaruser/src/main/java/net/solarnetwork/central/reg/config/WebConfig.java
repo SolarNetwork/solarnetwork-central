@@ -83,7 +83,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
