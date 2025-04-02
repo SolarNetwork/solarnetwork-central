@@ -83,7 +83,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -220,7 +220,9 @@ public class WebConfig implements WebMvcConfigurer {
 		// @formatter:off
 		reg.addUrlPatterns(
 				"/api/v1/sec/datum/auxiliary",
-				"/api/v1/sec/nodes"
+				"/api/v1/sec/nodes",
+				"/api/v1/sec/user/auth-tokens",
+				"/api/v1/sec/user/auth-tokens/find"
 		);
 		// @formatter:on
 		return reg;

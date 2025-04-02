@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -29,23 +30,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.SecurityTokenDao;
-import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDao;
+import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisFilterableDaoSupport;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
+import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * MyBatis implementation of {@link UserAuthTokenDao}.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
-public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken, String>
+public class MyBatisUserAuthTokenDao extends
+		BaseMyBatisFilterableDaoSupport<UserAuthToken, String, UserAuthToken, UserAuthTokenFilter>
 		implements UserAuthTokenDao, SecurityTokenDao {
 
 	/** The query name used for {@link #findUserAuthTokensForUser(Long)}. */
 	public static final String QUERY_FOR_USER_ID = "find-UserAuthToken-for-UserID";
+
+	/**
+	 * The query name used for {@link #findUserAuthTokensForUser(Long)}.
+	 */
+	public static final String QUERY_FOR_FILTER = "find-UserAuthToken-for-filter";
 
 	/**
 	 * The query name used for
@@ -57,7 +67,12 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	 * Default constructor.
 	 */
 	public MyBatisUserAuthTokenDao() {
-		super(UserAuthToken.class, String.class);
+		super(UserAuthToken.class, String.class, UserAuthToken.class);
+	}
+
+	@Override
+	protected boolean isAssignedPrimaryKeys() {
+		return true;
 	}
 
 	@Override
@@ -66,8 +81,10 @@ public class MyBatisUserAuthTokenDao extends BaseMyBatisGenericDao<UserAuthToken
 	}
 
 	@Override
-	public String save(final UserAuthToken datum) {
-		return handleAssignedPrimaryKeyStore(datum);
+	public FilterResults<UserAuthToken, String> findFiltered(UserAuthTokenFilter filter,
+			List<SortDescriptor> sorts, Long offset, Integer max) {
+		requireNonNullArgument(requireNonNullArgument(filter, "filter").getUserId(), "filter.userId");
+		return doFindFiltered(filter, sorts, offset, max);
 	}
 
 	@Override

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.dao;
 import java.time.Instant;
 import java.util.List;
 import net.solarnetwork.central.user.domain.UserAuthToken;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
@@ -32,9 +33,10 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * DAO API for {@link UserAuthToken} entities.
  *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
-public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String> {
+public interface UserAuthTokenDao extends GenericDao<UserAuthToken, String>,
+		FilterableDao<UserAuthToken, String, UserAuthTokenFilter> {
 
 	/**
 	 * Find a list of all UserNodeAuthToken objects for a particular user.

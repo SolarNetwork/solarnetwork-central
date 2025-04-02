@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.config;
  * Marker interface for the Instructor configuration package.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface SolarNetUserConfiguration {
 
@@ -38,5 +38,8 @@ public interface SolarNetUserConfiguration {
 
 	/** The qualifier for the user secret related services. */
 	public static final String USER_SECRET = "user-secret";
+
+	/** The qualifier for the token related services. */
+	public static final String USER_AUTH_TOKEN = "user-auth-token";
 
 }

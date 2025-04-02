@@ -34,6 +34,7 @@ import net.solarnetwork.central.biz.dao.DaoUserMetadataBiz;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.dao.UserMetadataDao;
+import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
 import net.solarnetwork.central.user.biz.dao.DaoRegistrationBiz;
@@ -46,6 +47,7 @@ import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
 import net.solarnetwork.central.user.dao.UserNodeDao;
+import net.solarnetwork.central.user.domain.UserAuthToken;
 import net.solarnetwork.service.CertificateService;
 import net.solarnetwork.service.PasswordEncoder;
 
@@ -53,10 +55,10 @@ import net.solarnetwork.service.PasswordEncoder;
  * Configuration for the registration service.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
-public class RegistrationBizConfig {
+public class RegistrationBizConfig implements SolarNetUserConfiguration {
 
 	/** The qualifier for the user registration related services. */
 	public static final String USER_REGISTRATION = "user-registration";
@@ -117,6 +119,10 @@ public class RegistrationBizConfig {
 	@Autowired
 	private CertificateService certificateService;
 
+	@Autowired(required = false)
+	@Qualifier(USER_AUTH_TOKEN)
+	private Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache;
+
 	@ConfigurationProperties(prefix = "app.user.reg.biz")
 	@Bean
 	public DaoRegistrationBiz registrationBiz() {
@@ -149,6 +155,7 @@ public class RegistrationBizConfig {
 		biz.setUserAuthTokenDao(userAuthTokenDao);
 		biz.setSolarNodeDao(solarNodeDao);
 		biz.setSolarLocationDao(solarLocationDao);
+		biz.setUserAuthTokenCache(userAuthTokenCache);
 		return biz;
 	}
 

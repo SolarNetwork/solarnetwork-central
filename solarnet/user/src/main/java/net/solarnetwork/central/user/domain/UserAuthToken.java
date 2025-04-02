@@ -42,7 +42,7 @@ import net.solarnetwork.domain.SerializeIgnore;
  * A user authorization token.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity<String>, SecurityToken {
 
@@ -84,6 +84,34 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 		setAuthSecret(secret);
 		setStatus(SecurityTokenStatus.Active);
 		setType(type);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UserAuthToken{userId=");
+		builder.append(userId);
+		builder.append(", id=");
+		builder.append(getId());
+
+		if ( name != null ) {
+			builder.append(", name=");
+			builder.append(name);
+		}
+		if ( status != null ) {
+			builder.append(", status=");
+			builder.append(status);
+		}
+		if ( type != null ) {
+			builder.append(", type=");
+			builder.append(type);
+		}
+		if ( policy != null ) {
+			builder.append(", policy=");
+			builder.append(getPolicy());
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

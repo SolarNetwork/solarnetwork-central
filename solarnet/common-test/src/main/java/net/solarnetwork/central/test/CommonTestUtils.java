@@ -39,7 +39,7 @@ import net.solarnetwork.util.ClassUtils;
  * Common test utilities.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public final class CommonTestUtils {
 
@@ -101,6 +101,21 @@ public final class CommonTestUtils {
 	 */
 	public static String randomString() {
 		return UUID.randomUUID().toString().replace("-", "").substring(0, 14);
+	}
+
+	/**
+	 * Get a random string value of an arbitrary length.
+	 *
+	 * @return the string
+	 * @since 1.6
+	 */
+	public static String randomString(int len) {
+		StringBuilder buf = new StringBuilder();
+		while ( buf.length() < len ) {
+			buf.append(UUID.randomUUID().toString().replace("-", ""));
+		}
+		buf.setLength(len);
+		return buf.toString();
 	}
 
 	/**

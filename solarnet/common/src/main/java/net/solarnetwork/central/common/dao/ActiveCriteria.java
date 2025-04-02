@@ -1,7 +1,7 @@
 /* ==================================================================
- * ChargePointActionStatusFilter.java - 16/11/2022 5:37:52 pm
+ * ActiveCriteria.java - 2/04/2025 8:43:03 am
  * 
- * Copyright 2022 SolarNetwork.net Dev Team
+ * Copyright 2025 SolarNetwork.net Dev Team
  * 
  * This program is free software; you can redistribute it and/or 
  * modify it under the terms of the GNU General Public License as 
@@ -20,22 +20,46 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.dao;
-
-import net.solarnetwork.central.common.dao.IdentifierCriteria;
-import net.solarnetwork.central.common.dao.UserCriteria;
-import net.solarnetwork.dao.DateRangeCriteria;
-import net.solarnetwork.dao.PaginationCriteria;
-import net.solarnetwork.dao.SortCriteria;
+package net.solarnetwork.central.common.dao;
 
 /**
- * Filter API for charge point action queries.
+ * Criteria API for active status entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface ChargePointActionStatusFilter
-		extends ChargePointCriteria, IdentifierCriteria, ChargePointConnectorCriteria,
-		UserCriteria, ActionCriteria, DateRangeCriteria, SortCriteria, PaginationCriteria {
+public interface ActiveCriteria {
+
+	/**
+	 * Test if an active criteria exists.
+	 * 
+	 * @return {@literal true} if an active criteria exists
+	 */
+	default boolean hasActiveCriteria() {
+		Boolean a = getActive();
+		return (a != null);
+	}
+
+	/**
+	 * Get the active criteria.
+	 * 
+	 * @return the active criteria (may be {@code null})
+	 */
+	Boolean getActive();
+
+	/**
+	 * Get the active criteria as a primitive boolean.
+	 * 
+	 * <p>
+	 * This returns the {@link #getActive()} value if not {@code null} and
+	 * {@code false} otherwise
+	 * </p>
+	 * 
+	 * @return the active criteria, or {@code false} if not available
+	 */
+	default boolean active() {
+		Boolean a = getActive();
+		return (a != null ? a : false);
+	}
 
 }

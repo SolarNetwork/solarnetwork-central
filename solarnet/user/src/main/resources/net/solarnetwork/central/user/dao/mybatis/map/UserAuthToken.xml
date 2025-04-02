@@ -97,4 +97,56 @@
 			uat.auth_token = #{id}
 	</select>
 	
+	<!-- 
+		FilterableDao support 
+	-->
+
+	<sql id="fragment-findall-UserAuthToken-where">
+		<where>
+			<if test="filter.userIds != null and filter.userIds.length > 0">
+				AND uat.user_id = ANY(#{filter.userIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.identifiers != null and filter.identifiers.length > 0">
+				AND uat.auth_token = ANY(#{filter.identifiers,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
+			</if>
+			<if test="filter.active != null">
+				AND uat.status = CAST(<choose>
+					<when test="filter.active == true">'Active'</when>
+					<otherwise>'Disabled'</otherwise>
+				</choose> AS solaruser.user_auth_token_status)
+			</if>
+			<if test="filter.tokenTypeEnums != null">
+				AND uat.token_type = ANY(CAST(
+					#{filter.tokenTypeEnums,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler}
+					AS solaruser.user_auth_token_type[]))
+			</if>
+		</where>
+	</sql>
+
+	<select id="findall-UserAuthToken-UserAuthToken" parameterType="net.solarnetwork.central.user.dao.UserAuthTokenFilter" resultMap="UserAuthTokenFullResult">
+		SELECT 
+			<include refid="fragment-UserAuthToken-full-result"/>
+		FROM
+			solaruser.user_auth_token uat
+		<include refid="fragment-findall-UserAuthToken-where"/>
+		ORDER BY
+		<choose>
+			<when test="SortDescriptors != null and SortDescriptors.size &gt; 0">
+				 <foreach collection="SortDescriptors" item="item" separator=",">
+				 	<choose>
+						<when test="item.sortKey == &quot;created&quot;">uat.created</when>
+						<when test="item.sortKey == &quot;user&quot;">uat.user_id</when>
+						<when test="item.sortKey == &quot;status&quot;">uat.status</when>
+						<when test="item.sortKey == &quot;type&quot;">uat.token_type</when>
+						<otherwise>uat.auth_token</otherwise>
+					</choose>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				uat.auth_token
+			</otherwise>
+		</choose>
+	</select>
+	
 </mapper>

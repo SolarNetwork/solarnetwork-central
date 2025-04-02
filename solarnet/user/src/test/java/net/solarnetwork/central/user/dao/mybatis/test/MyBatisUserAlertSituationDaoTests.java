@@ -33,8 +33,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserAlertDao;
@@ -50,7 +50,7 @@ import net.solarnetwork.central.user.domain.UserAlertType;
  * Test cases for the {@link MyBatisUserAlertSituationDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -64,7 +64,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	private UserAlert userAlert = null;
 	private UserAlertSituation userAlertSituation = null;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		solarNodeDao = new MyBatisSolarNodeDao();
 		solarNodeDao.setSqlSessionFactory(getSqlSessionFactory());

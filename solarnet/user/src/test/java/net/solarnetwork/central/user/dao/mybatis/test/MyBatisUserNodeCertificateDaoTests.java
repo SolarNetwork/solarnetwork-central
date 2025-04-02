@@ -26,8 +26,9 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import java.time.Instant;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeCertificateDao;
@@ -65,7 +66,7 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 	private SolarNode node = null;
 	private UserNodeCertificate userNodeCert = null;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		userNodeDao = new MyBatisUserNodeDao();
 		userNodeDao.setSqlSessionFactory(getSqlSessionFactory());
@@ -77,7 +78,7 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
 		assertNotNull(this.node);
-		deleteFromTables(DELETE_TABLES);
+		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
 		assertNotNull(this.user);
 		UserNode un = new UserNode(this.user, this.node);

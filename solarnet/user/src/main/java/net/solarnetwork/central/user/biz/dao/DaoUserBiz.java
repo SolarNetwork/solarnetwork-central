@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.user.biz.dao;
 
+import static net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter.filterForIdentifier;
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Propagation;
@@ -36,6 +39,7 @@ import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.domain.SolarNode;
+import net.solarnetwork.central.domain.UserStringCompositePK;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
@@ -44,8 +48,10 @@ import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.user.biz.NodeOwnershipBiz;
 import net.solarnetwork.central.user.biz.UserBiz;
+import net.solarnetwork.central.user.dao.BasicUserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAuthTokenDao;
+import net.solarnetwork.central.user.dao.UserAuthTokenFilter;
 import net.solarnetwork.central.user.dao.UserDao;
 import net.solarnetwork.central.user.dao.UserNodeCertificateDao;
 import net.solarnetwork.central.user.dao.UserNodeConfirmationDao;
@@ -57,13 +63,15 @@ import net.solarnetwork.central.user.domain.UserNodeCertificate;
 import net.solarnetwork.central.user.domain.UserNodeConfirmation;
 import net.solarnetwork.central.user.domain.UserNodePK;
 import net.solarnetwork.central.user.domain.UserNodeTransfer;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
 /**
  * DAO-based implementation of {@link UserBiz}.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
@@ -77,6 +85,8 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	private UserAuthTokenDao userAuthTokenDao;
 	private SolarLocationDao solarLocationDao;
 	private SolarNodeDao solarNodeDao;
+
+	private Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache;
 
 	@Override
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -238,6 +248,36 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 	public List<UserAuthToken> getAllUserAuthTokens(Long userId) {
 		assert userId != null;
 		return userAuthTokenDao.findUserAuthTokensForUser(userId);
+	}
+
+	@Override
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	public FilterResults<UserAuthToken, String> listUserAuthTokensForUser(Long userId,
+			UserAuthTokenFilter filter) {
+		requireNonNullArgument(userId, "userId");
+
+		final Cache<UserStringCompositePK, UserAuthToken> cache = getUserAuthTokenCache();
+
+		UserStringCompositePK cacheKey = null;
+		if ( cache != null && filter.hasIdentifierCriteria()
+				&& filterForIdentifier(filter).equals(filter) ) {
+			cacheKey = new UserStringCompositePK(userId, filter.getIdentifier());
+			var result = cache.get(cacheKey);
+			if ( result != null ) {
+				return new BasicFilterResults<>(List.of(result));
+			}
+		}
+
+		BasicUserAuthTokenFilter f = new BasicUserAuthTokenFilter(filter);
+		f.setUserId(userId);
+
+		var result = userAuthTokenDao.findFiltered(f);
+
+		if ( cacheKey != null && result.getReturnedResultCount() == 1 ) {
+			cache.put(cacheKey, result.getResults().iterator().next());
+		}
+
+		return result;
 	}
 
 	@Override
@@ -459,6 +499,25 @@ public class DaoUserBiz implements UserBiz, NodeOwnershipBiz {
 
 	public void setUserAlertDao(UserAlertDao userAlertDao) {
 		this.userAlertDao = userAlertDao;
+	}
+
+	/**
+	 * Get the token cache.
+	 * 
+	 * @return the cache
+	 */
+	public Cache<UserStringCompositePK, UserAuthToken> getUserAuthTokenCache() {
+		return userAuthTokenCache;
+	}
+
+	/**
+	 * Set the token cache.
+	 * 
+	 * @param userAuthTokenCache
+	 *        the cache to set
+	 */
+	public void setUserAuthTokenCache(Cache<UserStringCompositePK, UserAuthToken> userAuthTokenCache) {
+		this.userAuthTokenCache = userAuthTokenCache;
 	}
 
 }

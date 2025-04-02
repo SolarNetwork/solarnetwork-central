@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.security;
 
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +51,7 @@ import net.solarnetwork.util.CollectionUtils;
  * Security helper methods.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class SecurityUtils {
 
@@ -232,6 +233,25 @@ public class SecurityUtils {
 	}
 
 	/**
+	 * Get the actor for a given principal.
+	 *
+	 * @param principal
+	 *        the principal
+	 * @return the actor, never {@literal null}
+	 * @throws SecurityException
+	 *         if the actor is not available
+	 * @since 2.5
+	 */
+	public SecurityActor getActor(Principal principal) {
+		if ( principal instanceof SecurityActor a ) {
+			return a;
+		} else if ( principal instanceof Authentication a ) {
+			return getActor(a);
+		}
+		throw new SecurityException("User ID not available.");
+	}
+
+	/**
 	 * Get the actor for a given authentication.
 	 *
 	 * @param auth
@@ -276,20 +296,18 @@ public class SecurityUtils {
 	 *         if the user ID is not available
 	 * @since 2.1
 	 */
-	public static Long getActorUserId(Authentication auth) throws SecurityException {
-		Long userId = null;
-		if ( auth instanceof UserIdRelated u ) {
-			userId = u.getUserId();
-		} else if ( auth.getDetails() instanceof UserIdRelated u ) {
-			userId = u.getUserId();
-		} else {
-			SecurityActor actor = getActor(auth);
-			if ( actor instanceof UserIdRelated u ) {
-				userId = u.getUserId();
+	public static Long getActorUserId(Principal principal) throws SecurityException {
+		if ( principal instanceof UserIdRelated u ) {
+			return u.getUserId();
+		} else if ( principal instanceof Authentication auth ) {
+			if ( auth.getDetails() instanceof UserIdRelated u ) {
+				return u.getUserId();
+			} else {
+				SecurityActor actor = getActor(auth);
+				if ( actor instanceof UserIdRelated u ) {
+					return u.getUserId();
+				}
 			}
-		}
-		if ( userId != null ) {
-			return userId;
 		}
 		throw new SecurityException("User not available");
 	}

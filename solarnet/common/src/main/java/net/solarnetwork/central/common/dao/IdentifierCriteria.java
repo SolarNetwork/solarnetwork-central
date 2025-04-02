@@ -1,5 +1,5 @@
 /* ==================================================================
- * ChargePointCriteria.java - 16/11/2022 5:34:39 pm
+ * IdentifierCriteria.java - 16/11/2022 5:34:39 pm
  * 
  * Copyright 2022 SolarNetwork.net Dev Team
  * 
@@ -20,7 +20,7 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.ocpp.dao;
+package net.solarnetwork.central.common.dao;
 
 /**
  * Search criteria for identifier related data.
@@ -31,28 +31,31 @@ package net.solarnetwork.central.ocpp.dao;
 public interface IdentifierCriteria {
 
 	/**
-	 * Get the first identifier.
-	 * 
-	 * <p>
-	 * This returns the first available identifier from the
-	 * {@link #getIdentifiers()} array, or {@literal null} if not available.
-	 * </p>
-	 * 
-	 * @return the first identifier, or {@literal null} if not available
-	 */
-	String getIdentifier();
-
-	/**
 	 * Get an array of identifiers.
 	 * 
-	 * @return array of identifiers (may be {@literal null})
+	 * @return array of identifiers (may be {@code null})
 	 */
 	String[] getIdentifiers();
 
 	/**
+	 * Get the first identifier.
+	 * 
+	 * <p>
+	 * This returns the first available identifier from the
+	 * {@link #getIdentifiers()} array, or {@code null} if not available.
+	 * </p>
+	 * 
+	 * @return the first identifier, or {@code null} if not available
+	 */
+	default String getIdentifier() {
+		String[] a = getIdentifiers();
+		return (a != null && a.length > 0 ? a[0] : null);
+	}
+
+	/**
 	 * Test if this filter has any identifier criteria.
 	 * 
-	 * @return {@literal true} if the identifier is non-null
+	 * @return {@code true} if the identifier is non-null
 	 */
 	default boolean hasIdentifierCriteria() {
 		return getIdentifier() != null;

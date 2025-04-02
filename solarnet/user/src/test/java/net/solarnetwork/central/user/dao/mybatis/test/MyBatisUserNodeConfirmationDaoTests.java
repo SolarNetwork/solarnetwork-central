@@ -27,8 +27,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import java.time.Instant;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeConfirmationDao;
@@ -39,7 +40,7 @@ import net.solarnetwork.central.user.domain.UserNodeConfirmation;
  * Test cases for the {@link MyBatisUserNodeConfirmationDao} class.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoTestSupport {
 
@@ -60,7 +61,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 	private UserNodeConfirmation userNodeConf = null;
 	private Long testNodeId;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		userNodeConfirmationDao = new MyBatisUserNodeConfirmationDao();
 		userNodeConfirmationDao.setSqlSessionFactory(getSqlSessionFactory());
@@ -70,7 +71,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
 		assertNotNull(this.node);
-		deleteFromTables(DELETE_TABLES);
+		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
 		assertNotNull(this.user);
 		userNodeConf = null;
