@@ -56,7 +56,7 @@ import net.solarnetwork.domain.datum.ObjectDatumKind;
  * Test cases for the {@link SelectObjectStreamMetadata} class.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SelectObjectStreamMetadataTests {
 
@@ -158,6 +158,23 @@ public class SelectObjectStreamMetadataTests {
 		// THEN
 		assertThat("SQL matches", sql,
 				equalToTextResource("node-stream-meta-nodes-localDates.sql", TestSqlResources.class));
+	}
+
+	@Test
+	public void sql_streamMeta_nodes_localDates_minimum() {
+		// GIVEN
+		BasicDatumCriteria filter = new BasicDatumCriteria();
+		filter.setNodeIds(new Long[] { 1L, 2L });
+		filter.setLocalStartDate(LocalDateTime.now().truncatedTo(ChronoUnit.HOURS));
+		filter.setLocalEndDate(LocalDateTime.now());
+
+		// WHEN
+		String sql = new SelectObjectStreamMetadata(filter, ObjectDatumKind.Node,
+				MetadataSelectStyle.Minimum).getSql();
+
+		// THEN
+		assertThat("SQL matches", sql, equalToTextResource(
+				"node-stream-meta-nodes-localDates-minimum.sql", TestSqlResources.class));
 	}
 
 	@Test

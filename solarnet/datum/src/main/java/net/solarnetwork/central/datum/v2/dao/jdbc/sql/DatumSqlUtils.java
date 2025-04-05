@@ -70,7 +70,7 @@ import net.solarnetwork.util.SearchFilter.VisitorCallback;
  * SQL utilities for datum.
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  * @since 3.8
  */
 public final class DatumSqlUtils {
@@ -927,7 +927,8 @@ public final class DatumSqlUtils {
 			buf.append("INNER JOIN solaruser.user_auth_token ut ON ut.user_id = un.user_id\n");
 		}
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
-		if ( style != MetadataSelectStyle.Minimum ) {
+		if ( style != MetadataSelectStyle.Minimum
+				|| (streamFilter != null && streamFilter.hasLocalDate()) ) {
 			String joinStyle = (style == MetadataSelectStyle.WithGeography ? "INNER JOIN"
 					: "LEFT OUTER JOIN");
 			buf.append(joinStyle).append(" solarnet.sn_node n ON n.node_id = s.node_id\n");
@@ -1004,7 +1005,7 @@ public final class DatumSqlUtils {
 	public static int joinStreamMetadataDateRangeSql(ObjectStreamCriteria filter, String tableName,
 			Aggregation aggregation, String zoneClause, StringBuilder buf) {
 		StringBuilder where = new StringBuilder();
-		int paramCount = filter.hasLocalDateRange()
+		int paramCount = filter.hasLocalDate()
 				? DatumSqlUtils.whereLocalDateRange(filter, aggregation, zoneClause, where)
 				: DatumSqlUtils.whereDateRange(filter, aggregation, where);
 		if ( paramCount < 1 ) {
@@ -1108,7 +1109,8 @@ public final class DatumSqlUtils {
 		}
 		buf.append("\nFROM solardatm.da_loc_datm_meta s\n");
 		// for Minimum style we don't need to find the time zone so don't have to join to sn_loc table
-		if ( style != MetadataSelectStyle.Minimum ) {
+		if ( style != MetadataSelectStyle.Minimum
+				|| (streamFilter != null && streamFilter.hasLocalDate()) ) {
 			String joinStyle = (style == MetadataSelectStyle.WithGeography ? "INNER JOIN"
 					: "LEFT OUTER JOIN");
 			buf.append(joinStyle).append(" solarnet.sn_loc l ON l.id = s.loc_id\n");
