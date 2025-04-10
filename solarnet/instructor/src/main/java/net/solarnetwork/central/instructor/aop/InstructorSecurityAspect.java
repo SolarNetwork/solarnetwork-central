@@ -95,6 +95,10 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 	public void updateInstructionsState(Set<Long> instructionIds) {
 	}
 
+	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.update*ForUser(..)) && args(userId,..)")
+	public void updateInstructionsForUser(Long userId) {
+	}
+
 	@Pointcut("execution(* net.solarnetwork.central.instructor.biz.InstructorBiz.findFilteredNodeInstructions(..)) && args(filter,..)")
 	public void findFilteredInstructions(InstructionFilter filter) {
 	}
@@ -235,4 +239,19 @@ public class InstructorSecurityAspect extends AuthorizationSupport {
 			updateInstructionAccessCheck(instructionId);
 		}
 	}
+
+	/**
+	 * Allow the current user access to updating instructions in their account.
+	 *
+	 * @param userId
+	 *        the user ID
+	 */
+	@Before(value = "updateInstructionsForUser(userId)", argNames = "userId")
+	public void updateInstructionsForUserAccessCheck(Long userId) {
+		if ( userId == null ) {
+			return;
+		}
+		requireUserWriteAccess(userId);
+	}
+
 }

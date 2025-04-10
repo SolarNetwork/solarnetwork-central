@@ -23,6 +23,7 @@
 package net.solarnetwork.central.instructor.biz;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * API for central instruction service.
  * 
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public interface InstructorBiz {
 
@@ -128,6 +129,21 @@ public interface InstructorBiz {
 	 * @since 1.3
 	 */
 	void updateInstructionsState(Set<Long> instructionIds, InstructionState state);
+
+	/**
+	 * Update the state of a set of instructions matching search criteria.
+	 * 
+	 * @param userId
+	 *        the owner user ID
+	 * @param filter
+	 *        the search criteria to match
+	 * @param state
+	 *        the new state to update matching instructions to
+	 * @return the IDs of all updated instructions
+	 * @since 2.1
+	 */
+	Collection<Long> updateInstructionsStateForUser(Long userId, InstructionFilter filter,
+			InstructionState state);
 
 	/**
 	 * Update the state of a specific instruction.

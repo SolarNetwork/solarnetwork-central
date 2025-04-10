@@ -24,6 +24,7 @@ package net.solarnetwork.central.instructor.dao;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Map;
 import net.solarnetwork.central.dao.EntityMatch;
 import net.solarnetwork.central.instructor.domain.InstructionFilter;
@@ -37,7 +38,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO API for {@link NodeInstruction}.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public interface NodeInstructionDao
 		extends GenericDao<NodeInstruction, Long>, FilterableDao<EntityMatch, Long, InstructionFilter> {
@@ -155,4 +156,23 @@ public interface NodeInstructionDao
 	void findFilteredStream(InstructionFilter filter,
 			FilteredResultsProcessor<NodeInstruction> processor) throws IOException;
 
+	/**
+	 * Update the state of instructions matching a search criteria.
+	 * 
+	 * <p>
+	 * Only instructions that match the given criteria <b>and</b> are not
+	 * already in the {@code desiredState} will be updated.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the instruction owner ID
+	 * @param filter
+	 *        the search criteria
+	 * @param desiredState
+	 *        the state to change the matching instructions to
+	 * @return the instruction IDs that were updated
+	 * @since 2.6
+	 */
+	Collection<Long> updateNodeInstructionsState(Long userId, InstructionFilter filter,
+			InstructionState desiredState);
 }

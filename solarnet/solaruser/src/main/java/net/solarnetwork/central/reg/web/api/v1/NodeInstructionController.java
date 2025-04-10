@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.reg.web.api.v1;
 
+import static net.solarnetwork.central.security.SecurityUtils.getCurrentActorUserId;
 import static net.solarnetwork.domain.Result.success;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -71,7 +73,7 @@ import net.solarnetwork.domain.Result;
  * Controller for node instruction web service API.
  *
  * @author matt
- * @version 2.6
+ * @version 2.7
  */
 @GlobalExceptionRestController
 @Controller("v1nodeInstructionController")
@@ -410,7 +412,7 @@ public class NodeInstructionController {
 	 *        the desired state
 	 * @return the response
 	 */
-	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = "!ids")
+	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = { "id", "!ids" })
 	@ResponseBody
 	public Result<Void> updateInstructionState(@RequestParam("id") Long instructionId,
 			@RequestParam("state") InstructionState state) {
@@ -428,12 +430,29 @@ public class NodeInstructionController {
 	 * @return the response
 	 * @since 1.2
 	 */
-	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = "ids")
+	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = { "!id", "ids" })
 	@ResponseBody
-	public Result<Void> updateInstructionState(@RequestParam("ids") Set<Long> instructionIds,
+	public Result<Void> updateInstructionsState(@RequestParam("ids") Set<Long> instructionIds,
 			@RequestParam("state") InstructionState state) {
 		instructorBiz.updateInstructionsState(instructionIds, state);
 		return success();
+	}
+
+	/**
+	 * Update the state of instructions matching search criteria.
+	 *
+	 * @param filter
+	 *        the search criteria of the instructions to update
+	 * @param state
+	 *        the desired state
+	 * @return the updated instruction IDs
+	 * @since 2.7
+	 */
+	@RequestMapping(value = "/updateState", method = RequestMethod.POST, params = { "!id", "!ids" })
+	@ResponseBody
+	public Result<Collection<Long>> updateInstructionsState(final SimpleInstructionFilter filter,
+			@RequestParam("state") InstructionState state) {
+		return success(instructorBiz.updateInstructionsStateForUser(getCurrentActorUserId(), filter, state));
 	}
 
 	/**
