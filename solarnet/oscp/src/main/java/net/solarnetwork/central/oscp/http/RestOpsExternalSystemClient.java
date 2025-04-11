@@ -23,12 +23,14 @@
 package net.solarnetwork.central.oscp.http;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.HTTP_TAG;
 import static net.solarnetwork.central.oscp.domain.OscpUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationHeader;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.net.URI;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -58,6 +60,7 @@ import net.solarnetwork.central.oscp.domain.AuthRoleInfo;
 import net.solarnetwork.central.oscp.domain.BaseOscpExternalSystemConfiguration;
 import net.solarnetwork.central.oscp.domain.ExternalSystemConfigurationException;
 import net.solarnetwork.central.oscp.domain.ExternalSystemServiceProperties;
+import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.util.TaskContext;
 import net.solarnetwork.central.oscp.web.OscpWebUtils;
 
@@ -222,7 +225,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 					context.config().getId().ident(), uri);
 			if ( userEventAppenderBiz != null && context.successEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
-						eventForConfiguration(context.config(), context.successEventTags(), "Success"));
+						eventForConfiguration(context.config(), context.successEventTags(), "Success",
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 		} catch ( ExternalSystemConfigurationException e ) {
 			log.warn("[{}] with {} {} failed at [{}] because of a system configuration error: {}",
@@ -231,7 +235,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("System configuration error: %s", e.getMessage())));
+								format("System configuration error: %s", e.getMessage()),
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;
 		} catch ( ResourceAccessException e ) {
@@ -241,7 +246,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("Communication error: %s", e.getMessage())));
+								format("Communication error: %s", e.getMessage()),
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;
 		} catch ( RestClientResponseException e ) {
@@ -252,7 +258,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("Invalid HTTP status returned: %s", e.getStatusCode())));
+								format("Invalid HTTP status returned: %s", e.getStatusCode()),
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;
 		} catch ( UnknownContentTypeException e ) {
@@ -263,7 +270,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("Invalid HTTP Content-Type returned: %s", e.getContentType())));
+								format("Invalid HTTP Content-Type returned: %s", e.getContentType()),
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;
 		} catch ( OAuth2AuthorizationException e ) {
@@ -272,7 +280,8 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("OAuth error: %s", e.getMessage())));
+								format("OAuth error: %s", e.getMessage()),
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;
 		} catch ( RuntimeException e ) {
@@ -281,10 +290,28 @@ public class RestOpsExternalSystemClient implements ExternalSystemClient {
 			if ( userEventAppenderBiz != null && context.errorEventTags() != null ) {
 				userEventAppenderBiz.addEvent(context.config().getId().getUserId(),
 						eventForConfiguration(context.config(), context.errorEventTags(),
-								format("Unknown error: %s", e.toString())));
+								format("Unknown error: %s", e.toString()),
+								requestInfoMap(method, uri, headers, body), HTTP_TAG));
 			}
 			throw e;
 		}
+	}
+
+	private static Map<String, ?> requestInfoMap(HttpMethod method, URI uri, HttpHeaders headers,
+			Object body) {
+		Map<String, Object> info = new LinkedHashMap<>(4);
+		info.put(OscpUserEvents.METHOD_DATA_KEY, method.toString());
+		info.put(OscpUserEvents.URL_DATA_KEY, uri);
+		if ( headers.containsKey(OscpWebUtils.REQUEST_ID_HEADER) ) {
+			info.put(OscpUserEvents.REQUEST_ID_DATA_KEY,
+					headers.getFirst(OscpWebUtils.REQUEST_ID_HEADER));
+		}
+		if ( headers.containsKey(OscpWebUtils.CORRELATION_ID_HEADER) ) {
+			info.put(OscpUserEvents.CORRELATION_ID_DATA_KEY,
+					headers.getFirst(OscpWebUtils.CORRELATION_ID_HEADER));
+		}
+		info.put(OscpUserEvents.CONTENT_DATA_KEY, body);
+		return info;
 	}
 
 	/**

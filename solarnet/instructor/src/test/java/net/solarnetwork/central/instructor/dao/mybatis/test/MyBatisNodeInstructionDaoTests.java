@@ -28,6 +28,7 @@ import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
@@ -45,6 +46,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -70,7 +72,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * Test cases for the {@link MyBatisNodeInstructionDao} class.
  * 
  * @author matt
- * @version 2.5
+ * @version 2.6
  */
 public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSupport {
 
@@ -978,6 +980,87 @@ public class MyBatisNodeInstructionDaoTests extends AbstractMyBatisDaoTestSuppor
 					.isEqualTo(merged)
 					;
 			})
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateForDateRange() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		setupTestUser(userId);
+		setupTestUserNode(userId, TEST_NODE_ID);
+
+		final Instant ts1 = Instant.now().truncatedTo(MINUTES).minus(1, HOURS);
+		final NodeInstruction ni1 = storeNewInstruction(TEST_NODE_ID, ts1);
+		final Instant ts2 = Instant.now().truncatedTo(MINUTES);
+		final NodeInstruction ni2 = storeNewInstruction(TEST_NODE_ID, ts2);
+		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
+		storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
+			instr.setExpirationDate(Instant.now().truncatedTo(HOURS).plus(1, HOURS));
+		});
+
+		// WHEN
+		SimpleInstructionFilter f = new SimpleInstructionFilter();
+		f.setNodeId(TEST_NODE_ID);
+		f.setStartDate(ts1);
+		f.setEndDate(ts3);
+		Collection<Long> results = dao.updateNodeInstructionsState(userId, f, InstructionState.Declined);
+
+		// THEN
+		then(results).as("Results for ts 1 and 2 returned").contains(ni1.getId(), ni2.getId());
+
+		List<Map<String, Object>> rows = allTableData(log, jdbcTemplate, "solarnet.sn_node_instruction",
+				"id");
+		// @formatter:off
+		then(rows)
+			.as("Rows for each instruction exist")
+			.hasSize(3)
+			.filteredOn(row -> row.get("deliver_state").equals(InstructionState.Declined.name()))
+			.extracting(row -> (Long)row.get("id"))
+			.as("Instructions 1 and 2 updated to desired state because they match search criteria")
+			.containsOnly(ni1.getId(), ni2.getId())
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void updateForStates() throws IOException {
+		// GIVEN
+		final Long userId = randomLong();
+		setupTestUser(userId);
+		setupTestUserNode(userId, TEST_NODE_ID);
+
+		final Instant ts1 = Instant.now().truncatedTo(MINUTES).minus(1, HOURS);
+		final NodeInstruction ni1 = storeNewInstruction(TEST_NODE_ID, ts1, null, instr -> {
+			instr.setState(InstructionState.Executing);
+		});
+		final Instant ts2 = Instant.now().truncatedTo(MINUTES);
+		storeNewInstruction(TEST_NODE_ID, ts2);
+		final Instant ts3 = Instant.now().truncatedTo(MINUTES).plus(1, HOURS);
+		final NodeInstruction ni3 = storeNewInstruction(TEST_NODE_ID, ts3, null, instr -> {
+			instr.setState(InstructionState.Received);
+		});
+
+		// WHEN
+		SimpleInstructionFilter f = new SimpleInstructionFilter();
+		f.setNodeId(TEST_NODE_ID);
+		f.setStateSet(EnumSet.of(InstructionState.Executing, InstructionState.Received));
+		Collection<Long> results = dao.updateNodeInstructionsState(userId, f, InstructionState.Declined);
+
+		// THEN
+		then(results).as("Results for ts 1 and 3 returned").contains(ni1.getId(), ni3.getId());
+
+		List<Map<String, Object>> rows = allTableData(log, jdbcTemplate, "solarnet.sn_node_instruction",
+				"id");
+		// @formatter:off
+		then(rows)
+			.as("Rows for each instruction exist")
+			.hasSize(3)
+			.filteredOn(row -> row.get("deliver_state").equals(InstructionState.Declined.name()))
+			.extracting(row -> (Long)row.get("id"))
+			.as("Instructions 1 and 2 updated to desired state because they match search criteria")
+			.containsOnly(ni1.getId(), ni3.getId())
 			;
 		// @formatter:on
 	}

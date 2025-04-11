@@ -26,6 +26,11 @@ import static java.time.Instant.now;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.CAPACITY_PROVIDER_TAG;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.HTTP_TAG;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.OSCP_TAG;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.REGISTER_TAG;
+import static net.solarnetwork.central.oscp.domain.OscpUserEvents.UPDATE_GROUP_CAPACITY_FORECAST_TAG;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.CORRELATION_ID_HEADER;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REGISTER_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.REQUEST_ID_HEADER;
@@ -33,6 +38,10 @@ import static net.solarnetwork.central.oscp.web.OscpWebUtils.tokenAuthorizationH
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.HANDSHAKE_ACK_URL_PATH;
 import static net.solarnetwork.central.oscp.web.OscpWebUtils.UrlPaths_20.UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -44,7 +53,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
+import static org.mockito.Mockito.times;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.client.ExpectedCount.once;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
@@ -84,6 +93,7 @@ import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
+import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.oscp.dao.CapacityGroupConfigurationDao;
 import net.solarnetwork.central.oscp.dao.CapacityGroupSettingsDao;
@@ -103,6 +113,7 @@ import net.solarnetwork.central.oscp.domain.ForecastType;
 import net.solarnetwork.central.oscp.domain.MeasurementStyle;
 import net.solarnetwork.central.oscp.domain.MeasurementUnit;
 import net.solarnetwork.central.oscp.domain.OscpRole;
+import net.solarnetwork.central.oscp.domain.OscpUserEvents;
 import net.solarnetwork.central.oscp.domain.Phase;
 import net.solarnetwork.central.oscp.domain.RegistrationStatus;
 import net.solarnetwork.central.oscp.domain.SystemSettings;
@@ -127,8 +138,9 @@ import oscp.v20.VersionUrl;
  * Test cases for the {@link DaoFlexibilityProviderBiz} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
+@SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
 public class DaoFlexibilityProviderBizTests {
 
@@ -173,6 +185,9 @@ public class DaoFlexibilityProviderBizTests {
 
 	@Captor
 	private ArgumentCaptor<DatumPublishEvent> datumPublishEventCaptor;
+
+	@Captor
+	private ArgumentCaptor<LogEventInfo> logEventInfoCaptor;
 
 	private ObjectMapper objectMapper;
 	private CallingThreadExecutorService executor;
@@ -277,7 +292,8 @@ public class DaoFlexibilityProviderBizTests {
 				new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()),
 				OscpRole.CapacityProvider);
 		final String sysToken = randomUUID().toString();
-		final KeyValuePair sysVersionUrl = new KeyValuePair("2.0",
+		final String oscpVersion = "2.0";
+		final KeyValuePair sysVersionUrl = new KeyValuePair(oscpVersion,
 				"http://oscp.example.com/oscp/cp/2.0");
 
 		final CapacityProviderConfiguration cp = new CapacityProviderConfiguration(userId,
@@ -337,6 +353,51 @@ public class DaoFlexibilityProviderBizTests {
 
 		assertThat("Configuration status updated", cp2.getRegistrationStatus(),
 				is(equalTo(RegistrationStatus.Registered)));
+
+		// post events
+		then(userEventAppenderBiz).should(times(2)).addEvent(eq(userId), logEventInfoCaptor.capture());
+		// @formatter:off
+		and.then(logEventInfoCaptor.getAllValues())
+			.as("Event 1")
+			.element(0)
+			.as("Appropriate event tags used")
+			.returns(new String[] {OSCP_TAG, CAPACITY_PROVIDER_TAG, REGISTER_TAG}, from(LogEventInfo::getTags))
+			.extracting(e -> JsonUtils.getStringMap(e.getData()), map(String.class, Object.class))
+			.as("Event data includes config ID")
+			.containsEntry(OscpUserEvents.CONFIG_ID_DATA_KEY, cp.getConfigId())
+			.as("Event data includes registration status")
+			.containsEntry(OscpUserEvents.REGISTRATION_STATUS_DATA_KEY, String.valueOf((char)cp.getRegistrationStatus().getCode()))
+			.as("Event data includes version")
+			.containsEntry(OscpUserEvents.VERSION_DATA_KEY, oscpVersion)
+			.as("Event data includes URL")
+			.containsEntry(OscpUserEvents.URL_DATA_KEY, sysVersionUrl.getValue())
+			;
+		and.then(logEventInfoCaptor.getAllValues())
+			.as("Event 2")
+			.element(1)
+			.as("Appropriate event tags used")
+			.returns(new String[] {OSCP_TAG, CAPACITY_PROVIDER_TAG, REGISTER_TAG, HTTP_TAG}, from(LogEventInfo::getTags))
+			.extracting(e -> JsonUtils.getStringMap(e.getData()), map(String.class, Object.class))
+			.as("Event data includes config ID")
+			.containsEntry(OscpUserEvents.CONFIG_ID_DATA_KEY, cp.getConfigId())
+			.as("Event data includes registration status")
+			.containsEntry(OscpUserEvents.REGISTRATION_STATUS_DATA_KEY, String.valueOf((char)cp.getRegistrationStatus().getCode()))
+			.as("Event data includes version")
+			.containsEntry(OscpUserEvents.VERSION_DATA_KEY, oscpVersion)
+			.as("Event data includes URL")
+			.containsEntry(OscpUserEvents.URL_DATA_KEY, sysVersionUrl.getValue() + REGISTER_URL_PATH)
+			.as("Event data includes HTTP method")
+			.containsEntry(OscpUserEvents.METHOD_DATA_KEY, HttpMethod.POST.toString())
+			.as("Event data includes request ID")
+			.containsKey(OscpUserEvents.REQUEST_ID_DATA_KEY)
+			.hasEntrySatisfying(OscpUserEvents.CONTENT_DATA_KEY, content -> {
+				and.then(content)
+					.as("Content is Map")
+					.isInstanceOf(Map.class)
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -559,9 +620,8 @@ public class DaoFlexibilityProviderBizTests {
 	public void updateGroupCapacityForecast() throws Exception {
 		// GIVEN
 		final String groupIdentifier = randomUUID().toString();
-		final AuthRoleInfo authInfo = new AuthRoleInfo(
-				new UserLongCompositePK(randomUUID().getMostSignificantBits(),
-						randomUUID().getMostSignificantBits()),
+		final Long userId = randomLong();
+		final AuthRoleInfo authInfo = new AuthRoleInfo(new UserLongCompositePK(userId, randomLong()),
 				OscpRole.CapacityProvider);
 		final Instant topOfHour = Instant.now().truncatedTo(ChronoUnit.HOURS);
 		TimeBlockAmount amount = new TimeBlockAmount(topOfHour, topOfHour.plus(1, ChronoUnit.HOURS),
@@ -607,6 +667,37 @@ public class DaoFlexibilityProviderBizTests {
 
 		// WHEN
 		biz.updateGroupCapacityForecast(authInfo, groupIdentifier, requestId, forecast);
+
+		// post events
+		then(userEventAppenderBiz).should(times(1)).addEvent(eq(userId), logEventInfoCaptor.capture());
+		// @formatter:off
+		and.then(logEventInfoCaptor.getAllValues())
+			.as("Event 1")
+			.element(0)
+			.as("Appropriate event tags used")
+			.returns(new String[] {OSCP_TAG, CAPACITY_PROVIDER_TAG, UPDATE_GROUP_CAPACITY_FORECAST_TAG, HTTP_TAG},
+					from(LogEventInfo::getTags))
+			.extracting(e -> JsonUtils.getStringMap(e.getData()), map(String.class, Object.class))
+			.as("Event data includes CO config ID")
+			.containsEntry(OscpUserEvents.CONFIG_ID_DATA_KEY, conf.getConfigId())
+			.as("Event data includes registration status")
+			.containsEntry(OscpUserEvents.REGISTRATION_STATUS_DATA_KEY, String.valueOf((char)conf.getRegistrationStatus().getCode()))
+			.as("Event data includes version")
+			.containsEntry(OscpUserEvents.VERSION_DATA_KEY, "2.0")
+			.as("Event data includes URL")
+			.containsEntry(OscpUserEvents.URL_DATA_KEY, conf.getBaseUrl() + UPDATE_GROUP_CAPACITY_FORECAST_URL_PATH)
+			.as("Event data includes HTTP method")
+			.containsEntry(OscpUserEvents.METHOD_DATA_KEY, HttpMethod.POST.toString())
+			.as("Event data includes request ID")
+			.containsKey(OscpUserEvents.REQUEST_ID_DATA_KEY)
+			.hasEntrySatisfying(OscpUserEvents.CONTENT_DATA_KEY, content -> {
+				and.then(content)
+					.as("Content is Map")
+					.isInstanceOf(Map.class)
+					;
+			})
+			;
+		// @formatter:on
 	}
 
 	@Test

@@ -22,21 +22,27 @@
 
 package net.solarnetwork.central.instructor.biz.dao.test;
 
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.expect;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasEntry;
-import static org.hamcrest.Matchers.sameInstance;
+import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import net.solarnetwork.central.biz.NodeServiceAuditor;
 import net.solarnetwork.central.instructor.biz.InstructorBiz;
 import net.solarnetwork.central.instructor.biz.dao.DaoInstructorBiz;
@@ -44,36 +50,35 @@ import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.dao.NodeInstructionQueueHook;
 import net.solarnetwork.central.instructor.domain.Instruction;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
+import net.solarnetwork.central.instructor.support.SimpleInstructionFilter;
 import net.solarnetwork.domain.InstructionStatus.InstructionState;
 
 /**
  * Test cases for the {@link DaoInstructorBiz} class.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
+@SuppressWarnings("static-access")
+@ExtendWith(MockitoExtension.class)
 public class DaoInstructorBizTests {
 
+	@Mock
 	private NodeInstructionDao nodeInstructionDao;
-	private List<NodeInstructionQueueHook> hooks;
+
+	@Mock
 	private NodeServiceAuditor auditor;
+
+	@Captor
+	private ArgumentCaptor<NodeInstruction> nodeInstructionCaptor;
+
+	private List<NodeInstructionQueueHook> hooks;
 	private DaoInstructorBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
-		nodeInstructionDao = EasyMock.createMock(NodeInstructionDao.class);
 		hooks = new ArrayList<>();
-		auditor = EasyMock.createMock(NodeServiceAuditor.class);
 		biz = new DaoInstructorBiz(nodeInstructionDao, hooks, auditor);
-	}
-
-	@After
-	public void teardown() {
-		EasyMock.verify(nodeInstructionDao, auditor);
-	}
-
-	private void replayAll() {
-		EasyMock.replay(nodeInstructionDao, auditor);
 	}
 
 	@Test
@@ -85,30 +90,38 @@ public class DaoInstructorBizTests {
 		final Instruction instr = new Instruction("foo", Instant.now());
 		instr.addParameter("foo", "bar");
 
-		Capture<NodeInstruction> nodeInstructionCaptor = new Capture<>();
-		expect(nodeInstructionDao.save(capture(nodeInstructionCaptor))).andReturn(instrId);
+		given(nodeInstructionDao.save(any())).willReturn(instrId);
 
 		NodeInstruction dbInstr = new NodeInstruction(instr.getTopic(), instr.getCreated(), nodeId);
 		dbInstr.setState(InstructionState.Queued);
 		dbInstr.setParameters(instr.getParameters());
-		expect(nodeInstructionDao.get(instrId)).andReturn(dbInstr);
-
-		auditor.auditNodeService(nodeId, InstructorBiz.INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
+		given(nodeInstructionDao.get(instrId)).willReturn(dbInstr);
 
 		// WHEN
-		replayAll();
 		NodeInstruction result = biz.queueInstruction(nodeId, instr);
 
 		// THEN
-		assertThat("Stored same topic", nodeInstructionCaptor.getValue().getTopic(),
-				equalTo(instr.getTopic()));
-		assertThat("Stored same date", nodeInstructionCaptor.getValue().getCreated(),
-				equalTo(instr.getCreated()));
-		assertThat("Stored same node ID", nodeInstructionCaptor.getValue().getNodeId(), equalTo(nodeId));
-		assertThat("Stored same parameters", nodeInstructionCaptor.getValue().getParameters(),
-				equalTo(instr.getParameters()));
+		then(auditor).should().auditNodeService(nodeId, InstructorBiz.INSTRUCTION_ADDED_AUDIT_SERVICE,
+				1);
 
-		assertThat("Returned DB result", result, sameInstance(dbInstr));
+		// @formatter:off
+		then(nodeInstructionDao).should().save(nodeInstructionCaptor.capture());
+		and.then(nodeInstructionCaptor.getValue())
+			.as("Stored same topic")
+			.returns(instr.getTopic(), from(NodeInstruction::getTopic))
+			.as("Stored same date")
+			.returns(instr.getCreated(), from(NodeInstruction::getCreated))
+			.as("Stored same node ID")
+			.returns(nodeId, from(NodeInstruction::getNodeId))
+			.as("Stored same parameters")
+			.returns(instr.getParameters(), from(NodeInstruction::getParameters))
+			;
+		
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(dbInstr)
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -124,8 +137,7 @@ public class DaoInstructorBizTests {
 		}
 		instr.addParameter("foo", buf.toString());
 
-		Capture<NodeInstruction> nodeInstructionCaptor = new Capture<>();
-		expect(nodeInstructionDao.save(capture(nodeInstructionCaptor))).andReturn(instrId);
+		given(nodeInstructionDao.save(any())).willReturn(instrId);
 
 		NodeInstruction dbInstr = new NodeInstruction(instr.getTopic(), instr.getCreated(), nodeId);
 		dbInstr.setState(InstructionState.Queued);
@@ -133,27 +145,61 @@ public class DaoInstructorBizTests {
 			dbInstr.addParameter("foo",
 					buf.substring(i, i + Math.min(biz.getMaxParamValueLength(), buf.length() - i)));
 		}
-		expect(nodeInstructionDao.get(instrId)).andReturn(dbInstr);
-
-		auditor.auditNodeService(nodeId, InstructorBiz.INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
+		given(nodeInstructionDao.get(instrId)).willReturn(dbInstr);
 
 		// WHEN
-		replayAll();
 		NodeInstruction result = biz.queueInstruction(nodeId, instr);
 
 		// THEN
-		assertThat("Stored same topic", nodeInstructionCaptor.getValue().getTopic(),
-				equalTo(instr.getTopic()));
-		assertThat("Stored same date", nodeInstructionCaptor.getValue().getCreated(),
-				equalTo(instr.getCreated()));
-		assertThat("Stored same node ID", nodeInstructionCaptor.getValue().getNodeId(), equalTo(nodeId));
+		// @formatter:off
+		then(auditor).should().auditNodeService(nodeId, InstructorBiz.INSTRUCTION_ADDED_AUDIT_SERVICE, 1);
+		
+		then(nodeInstructionDao).should().save(nodeInstructionCaptor.capture());
+		and.then(nodeInstructionCaptor.getValue())
+			.as("Stored same topic")
+			.returns(instr.getTopic(), from(NodeInstruction::getTopic))
+			.as("Stored same date")
+			.returns(instr.getCreated(), from(NodeInstruction::getCreated))
+			.as("Stored same node ID")
+			.returns(nodeId, from(NodeInstruction::getNodeId))
+			.as("Stored SPLIT parameters")
+			.returns(dbInstr.getParameters(), from(NodeInstruction::getParameters))
+			;
+		
+		and.then(result)
+			.as("DAO result returned")
+			.isSameAs(dbInstr)
+			.extracting(NodeInstruction::getParams, map(String.class, String.class))
+			.as("Auto-merge result same as initial value")
+			.containsEntry("foo", buf.toString())
+			;
+		
+		// @formatter:on
+	}
 
-		assertThat("Stored SPLIT parameters", nodeInstructionCaptor.getValue().getParameters(),
-				equalTo(dbInstr.getParameters()));
+	@Test
+	public void updateInstructions_filter() {
+		// GIVEN
+		final Long userId = randomLong();
 
-		assertThat("Returned DB result", result, sameInstance(dbInstr));
-		assertThat("Auto-merge result same as initial value", dbInstr.getParams(),
-				hasEntry("foo", buf.toString()));
+		final List<Long> updatedIds = List.of(randomLong(), randomLong());
+
+		final SimpleInstructionFilter filter = new SimpleInstructionFilter();
+		final InstructionState desiredState = InstructionState.Declined;
+
+		given(nodeInstructionDao.updateNodeInstructionsState(eq(userId), same(filter), eq(desiredState)))
+				.willReturn(updatedIds);
+
+		// WHEN
+		Collection<Long> result = biz.updateInstructionsStateForUser(userId, filter, desiredState);
+
+		// THEN
+		// @formatter:off
+		and.then(result)
+			.as("Result from DAO returned")
+			.isSameAs(updatedIds)
+			;
+		// @formatter:on
 	}
 
 }

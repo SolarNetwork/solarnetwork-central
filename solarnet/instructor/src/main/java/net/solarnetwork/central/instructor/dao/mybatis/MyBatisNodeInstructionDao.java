@@ -27,6 +27,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +46,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * MyBatis implementation of {@link NodeInstructionDao}.
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public class MyBatisNodeInstructionDao
 		extends BaseMyBatisFilterableDao<NodeInstruction, EntityMatch, InstructionFilter, Long>
@@ -92,6 +93,14 @@ public class MyBatisNodeInstructionDao
 	 * @since 1.10
 	 */
 	public static final String UPDATE_TRANSITION_EXPIRED = "update-NodeInstruction-expired";
+
+	/**
+	 * Query name used by
+	 * {@link #updateNodeInstructionsState(Long, InstructionFilter, InstructionState)}.
+	 * 
+	 * @since 1.11
+	 */
+	public static final String UPDATE_STATES_FOR_FILTER = "update-NodeInstruction-filter";
 
 	/**
 	 * Default constructor.
@@ -201,6 +210,17 @@ public class MyBatisNodeInstructionDao
 	@Override
 	public int transitionExpiredInstructions(NodeInstruction criteria) {
 		return getSqlSession().update(UPDATE_TRANSITION_EXPIRED, criteria);
+	}
+
+	@Override
+	public Collection<Long> updateNodeInstructionsState(Long userId, InstructionFilter filter,
+			InstructionState desiredState) {
+		requireNonNullArgument(userId, "userId");
+		requireNonNullArgument(filter, "filter");
+		requireNonNullArgument(desiredState, "desiredState");
+
+		return getSqlSession().selectList(UPDATE_STATES_FOR_FILTER,
+				Map.of("userId", userId, "filter", filter, "state", desiredState));
 	}
 
 }

@@ -22,9 +22,11 @@
 
 package net.solarnetwork.central.instructor.biz.dao;
 
+import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,7 +51,7 @@ import net.solarnetwork.domain.InstructionStatus.InstructionState;
  * DAO based implementation of {@link InstructorBiz}.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class DaoInstructorBiz implements InstructorBiz {
 
@@ -240,6 +242,14 @@ public class DaoInstructorBiz implements InstructorBiz {
 			Map<String, ?> params = (resultParameters != null ? resultParameters.get(id) : null);
 			updateInstructionState(id, state, params);
 		}
+	}
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED)
+	public Collection<Long> updateInstructionsStateForUser(Long userId, InstructionFilter filter,
+			InstructionState state) {
+		return nodeInstructionDao.updateNodeInstructionsState(requireNonNullArgument(userId, "userId"),
+				filter, state);
 	}
 
 	/**

@@ -119,7 +119,7 @@ import oscp.v20.VersionUrl;
  * DAO based implementation of {@link FlexibilityProviderBiz}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
@@ -266,11 +266,13 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			conf.setRegistrationStatus(RegistrationStatus.Pending);
 		}
 
-		userEventAppenderBiz.addEvent(authInfo.userId(), event(CAPACITY_PROVIDER_REGISTER_TAGS, null,
-				getJSONString(Map.of(CONFIG_ID_DATA_KEY, conf.getEntityId(),
-						REGISTRATION_STATUS_DATA_KEY, (char) conf.getRegistrationStatus().getCode(),
-						VERSION_DATA_KEY, versionUrl.getKey(), URL_DATA_KEY, versionUrl.getValue()),
-						null)));
+		Map<String, Object> info = new LinkedHashMap<>(4);
+		info.put(CONFIG_ID_DATA_KEY, conf.getEntityId());
+		info.put(REGISTRATION_STATUS_DATA_KEY, (char) conf.getRegistrationStatus().getCode());
+		info.put(VERSION_DATA_KEY, versionUrl.getKey());
+		info.put(URL_DATA_KEY, versionUrl.getValue());
+		userEventAppenderBiz.addEvent(authInfo.userId(),
+				event(CAPACITY_PROVIDER_REGISTER_TAGS, null, getJSONString(info, null)));
 
 		dao.save(conf);
 		dao.saveExternalSystemAuthToken(conf.getId(), externalSystemToken);

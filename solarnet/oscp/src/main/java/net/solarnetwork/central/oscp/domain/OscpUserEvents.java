@@ -24,7 +24,7 @@ package net.solarnetwork.central.oscp.domain;
 
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import net.solarnetwork.central.domain.LogEventInfo;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -33,7 +33,7 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
  * Constants and helpers for OSCP user event handling.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface OscpUserEvents {
 
@@ -116,6 +116,27 @@ public interface OscpUserEvents {
 	String CONTENT_DATA_KEY = "content";
 
 	/**
+	 * User event tag for an HTTP interaction.
+	 *
+	 * @since 1.1
+	 */
+	String HTTP_TAG = "http";
+
+	/**
+	 * User event data key for a method, such as HTTP verb.
+	 *
+	 * @since 1.1
+	 */
+	String METHOD_DATA_KEY = "method";
+
+	/**
+	 * User event data key for a request identifier.
+	 *
+	 * @since 1.1
+	 */
+	String REQUEST_ID_DATA_KEY = "requestId";
+
+	/**
 	 * Get a user log event for a configuration ID.
 	 *
 	 * @param configId
@@ -130,9 +151,7 @@ public interface OscpUserEvents {
 	 */
 	static LogEventInfo eventForConfiguration(UserLongCompositePK configId, String[] baseTags,
 			String message, String... extraTags) {
-		Map<String, Object> data = new HashMap<>(4);
-		data.put(CONFIG_ID_DATA_KEY, configId.getEntityId());
-		return event(baseTags, message, getJSONString(data, null), extraTags);
+		return eventForConfiguration(configId, baseTags, message, (Map<String, ?>) null);
 	}
 
 	/**
@@ -150,12 +169,62 @@ public interface OscpUserEvents {
 	 */
 	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
 			String[] baseTags, String message, String... extraTags) {
-		Map<String, Object> data = new HashMap<>(4);
+		return eventForConfiguration(config, baseTags, message, (Map<String, ?>) null);
+	}
+
+	/**
+	 * Get a user log event for a configuration ID.
+	 *
+	 * @param configId
+	 *        the configuration ID
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param info
+	 *        optional extra information to include in the event
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the log event
+	 * @since 1.1
+	 */
+	static LogEventInfo eventForConfiguration(UserLongCompositePK configId, String[] baseTags,
+			String message, Map<String, ?> info, String... extraTags) {
+		Map<String, Object> data = new LinkedHashMap<>(4);
+		data.put(CONFIG_ID_DATA_KEY, configId.getEntityId());
+		if ( info != null ) {
+			data.putAll(info);
+		}
+		return event(baseTags, message, getJSONString(data, null), extraTags);
+	}
+
+	/**
+	 * Get a user log event for a configuration.
+	 *
+	 * @param config
+	 *        the configuration
+	 * @param baseTags
+	 *        the base tags
+	 * @param message
+	 *        the message
+	 * @param info
+	 *        optional extra information to include in the event
+	 * @param extraTags
+	 *        optional extra tags
+	 * @return the log event
+	 * @since 1.1
+	 */
+	static LogEventInfo eventForConfiguration(BaseOscpExternalSystemConfiguration<?> config,
+			String[] baseTags, String message, Map<String, ?> info, String... extraTags) {
+		Map<String, Object> data = new LinkedHashMap<>(4);
 		if ( config != null ) {
 			data.put(CONFIG_ID_DATA_KEY, config.getEntityId());
 			data.put(REGISTRATION_STATUS_DATA_KEY, (char) config.getRegistrationStatus().getCode());
 			data.put(VERSION_DATA_KEY, config.getOscpVersion());
 			data.put(URL_DATA_KEY, config.getBaseUrl());
+		}
+		if ( info != null ) {
+			data.putAll(info);
 		}
 		return event(baseTags, message, getJSONString(data, null), extraTags);
 	}

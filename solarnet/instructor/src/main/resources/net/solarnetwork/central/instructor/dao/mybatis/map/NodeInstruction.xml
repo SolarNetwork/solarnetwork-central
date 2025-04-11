@@ -145,16 +145,10 @@
 		<where>
 			<if test="filter != null">
 				<if test="filter.instructionIds != null">
-					AND ni.id IN
-					<foreach item="item" collection="filter.instructionIds" open="(" separator="," close=")">
-					       #{item,javaType=long,jdbcType=BIGINT}
-					</foreach>
+					AND ni.id = ANY(#{filter.instructionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 				</if>
 				<if test="filter.nodeIds != null">
-					AND ni.node_id IN
-					<foreach item="item" collection="filter.nodeIds" open="(" separator="," close=")">
-					       #{item,javaType=long,jdbcType=BIGINT}
-					</foreach>
+					AND ni.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
 				</if>
 				<if test="filter.states != null">
 					AND ni.deliver_state IN
@@ -223,5 +217,36 @@
 			#{obj.name,javaType=string,jdbcType=VARCHAR}, 
 			#{obj.value,javaType=string,jdbcType=VARCHAR})
 	</insert>
+	
+	<!-- Update for filter: note <select> used to return update result set -->
+	<select id="update-NodeInstruction-filter" parameterType="map" resultType="long" flushCache="true">
+		UPDATE solarnet.sn_node_instruction
+		SET deliver_state = #{state}::solarnet.instruction_delivery_state
+		FROM solaruser.user_node
+		WHERE user_node.user_id = #{userId}
+			AND sn_node_instruction.node_id = user_node.node_id
+			AND deliver_state &lt;&gt; #{state}::solarnet.instruction_delivery_state
+		<if test="filter != null">
+			<if test="filter.instructionIds != null">
+				AND sn_node_instruction.id = ANY(#{filter.instructionIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.nodeIds != null">
+				AND sn_node_instruction.node_id = ANY(#{filter.nodeIds,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.LongArrayTypeHandler})
+			</if>
+			<if test="filter.states != null">
+				AND sn_node_instruction.deliver_state IN
+				<foreach item="item" collection="filter.states" open="(" separator="," close=")">
+				       CAST(#{item} AS solarnet.instruction_delivery_state)
+				</foreach>
+ 				</if>
+			<if test="filter.startDate != null">
+				AND sn_node_instruction.instr_date &gt;= #{filter.startDate,jdbcType=TIMESTAMP}
+			</if>
+			<if test="filter.endDate != null">
+				AND sn_node_instruction.instr_date &lt; #{filter.endDate,jdbcType=TIMESTAMP}
+			</if>
+		</if>
+		RETURNING sn_node_instruction.id
+	</select>
 
 </mapper>
