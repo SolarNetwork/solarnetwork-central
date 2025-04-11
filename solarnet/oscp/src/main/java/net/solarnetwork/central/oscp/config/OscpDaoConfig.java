@@ -1,21 +1,21 @@
 /* ==================================================================
  * OscpDaoConfig.java - 15/08/2022 9:55:47 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,6 +23,7 @@
 package net.solarnetwork.central.oscp.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -48,9 +49,9 @@ import net.solarnetwork.central.oscp.dao.jdbc.JdbcUserSettingsDao;
 
 /**
  * OSCP DAO configuration.
- * 
+ *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @Configuration(proxyBeanMethods = false)
 public class OscpDaoConfig {
@@ -63,7 +64,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP users settings DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -73,7 +74,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP flexibility provider DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -83,7 +84,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP asset configuration DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -93,7 +94,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP capacity group configuration DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -103,7 +104,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP capacity group settings DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -113,7 +114,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP capacity optimizer configuration DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -123,7 +124,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP capacity optimizer configuration DAO.
-	 * 
+	 *
 	 * @return the DAO
 	 */
 	@Bean
@@ -133,7 +134,7 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP external system support DAO.
-	 * 
+	 *
 	 * @param capacityProviderDao
 	 *        the capacity provider DAO
 	 * @param capacityOptimizerDao
@@ -149,12 +150,17 @@ public class OscpDaoConfig {
 
 	/**
 	 * The OSCP measurement DAO.
-	 * 
+	 *
+	 * @param createZeroValueMeasurementsOnMissingData
+	 *        {@code true} to create zero-valued measurements on missing data
 	 * @return the DAO
 	 */
 	@Bean
-	public MeasurementDao oscpMeasurementDao() {
-		return new DefaultMeasurementDao(readingDatumDao);
+	public MeasurementDao oscpMeasurementDao(
+			@Value("${app.oscp.create-zero-value-measurements-on-missing-data:false}") boolean createZeroValueMeasurementsOnMissingData) {
+		DefaultMeasurementDao dao = new DefaultMeasurementDao(readingDatumDao);
+		dao.setCreateZeroValueMeasurementsOnMissingData(createZeroValueMeasurementsOnMissingData);
+		return dao;
 	}
 
 }

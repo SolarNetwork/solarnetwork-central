@@ -64,10 +64,12 @@ app:
         ttl: 120
         heap-max-entries: 1000
         disk-max-size-mb: 0
-  oscp.v20:
-    mqtt.instr-handler:
-      mqtt-topic: "instr/OSCP_v20"
-      subscribe-timeout: 30
+  oscp:
+    create-zero-value-measurements-on-missing-data: true
+    v20:
+      mqtt.instr-handler:
+        mqtt-topic: "instr/OSCP_v20"
+        subscribe-timeout: 30
   scheduler-manager:
     blocked-job-max-seconds: 1800
     ping-test-maximum-execution-milliseconds: 2000
