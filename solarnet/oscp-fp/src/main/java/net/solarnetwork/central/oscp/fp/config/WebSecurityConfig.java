@@ -23,22 +23,27 @@
 package net.solarnetwork.central.oscp.fp.config;
 
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.oscp.dao.AuthTokenAuthorizationDao;
 import net.solarnetwork.central.oscp.fp.v20.web.AdjustGroupCapacityForecastController;
 import net.solarnetwork.central.oscp.fp.v20.web.UpdateGroupCapacityForecastController;
@@ -46,13 +51,14 @@ import net.solarnetwork.central.oscp.security.ExternalSystemJwtAuthenticationCon
 import net.solarnetwork.central.oscp.security.OscpTokenAuthenticationProvider;
 import net.solarnetwork.central.oscp.security.OscpTokenAuthorizationHeaderAuthenticationFilter;
 import net.solarnetwork.central.oscp.security.Role;
+import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
 import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestRejectedHandler;
 
 /**
  * Web security configuration.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration
 @EnableWebSecurity
@@ -79,6 +85,28 @@ public class WebSecurityConfig {
 	@Order(1)
 	public static class ManagementWebSecurityConfig {
 
+		@Autowired
+		private DataSource dataSource;
+
+		@Autowired
+		private PasswordEncoder passwordEncoder;
+
+		@Autowired
+		private ObjectMapper objectMapper;
+
+		private AuthenticationProvider opsAuthenticationProvider() {
+			JdbcUserDetailsService service = new JdbcUserDetailsService(objectMapper);
+			service.setDataSource(dataSource);
+			service.setUsersByUsernameQuery(JdbcUserDetailsService.DEFAULT_USERS_BY_USERNAME_SQL);
+			service.setAuthoritiesByUsernameQuery(
+					JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
+
+			DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+			provider.setUserDetailsService(service);
+			provider.setPasswordEncoder(passwordEncoder);
+			return provider;
+		}
+
 		@Order(1)
 		@Bean
 		public SecurityFilterChain filterChainManagement(HttpSecurity http) throws Exception {
@@ -97,6 +125,8 @@ public class WebSecurityConfig {
 					.sessionManagement((sm) -> sm.sessionCreationPolicy(STATELESS))
 
 					.httpBasic((httpBasic) -> httpBasic.realmName("SN Operations"))
+
+					.authenticationProvider(opsAuthenticationProvider())
 
 					.authorizeHttpRequests((matchers) -> matchers
 						.requestMatchers(HttpMethod.GET,
