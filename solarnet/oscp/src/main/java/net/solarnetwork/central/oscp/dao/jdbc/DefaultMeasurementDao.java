@@ -170,37 +170,39 @@ public class DefaultMeasurementDao implements MeasurementDao {
 			} catch ( IOException e ) {
 				throw new TransientDataAccessResourceException("IO error querying datum.", e);
 			}
-			if ( processor.getData().isEmpty() ) {
-				// generate a "zero" measurement value
+
+			StreamDatum sd = !processor.getData().isEmpty() ? processor.getData().getFirst() : null;
+
+			if ( sd == null || !(sd instanceof ReadingDatum d)
+					|| d.getTimestamp().equals(d.getEndTimestamp()) ) {
+				// generate a "zero" measurement value if no data available, or the reading start/end on same date,
+				// which can happen with reading queries where tolerance falls outside of measurement period
 				AssetEnergyDatumConfiguration energy = asset.getEnergy();
 				var m = Measurement.energyMeasurement(BigDecimal.ZERO, asset.getPhase(),
 						energy.getUnit(), criteria.getEndDate(), energy.getType(), energy.getDirection(),
 						criteria.getStartDate());
 				result.add(m);
 			} else {
-				StreamDatum sd = processor.getData().getFirst();
-				if ( sd instanceof ReadingDatum d ) {
-					ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
-							.metadataForStreamId(d.getStreamId());
-					AssetEnergyDatumConfiguration energy = asset.getEnergy();
-					DatumProperties props = d.getProperties();
-					for ( String propName : energy.getPropertyNames() ) {
-						int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
-						if ( idx < 0 ) {
-							continue;
-						}
-						BigDecimal v = props.accumulatingValue(idx);
-						if ( v == null ) {
-							continue;
-						}
-						if ( energy.getMultiplier() != null ) {
-							v = v.multiply(energy.getMultiplier());
-						}
-						var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
-								d.getEndTimestamp(), energy.getType(), energy.getDirection(),
-								d.getTimestamp());
-						result.add(m);
+				ObjectDatumStreamMetadata meta = processor.getMetadataProvider()
+						.metadataForStreamId(d.getStreamId());
+				AssetEnergyDatumConfiguration energy = asset.getEnergy();
+				DatumProperties props = d.getProperties();
+				for ( String propName : energy.getPropertyNames() ) {
+					int idx = meta.propertyIndex(DatumSamplesType.Accumulating, propName);
+					if ( idx < 0 ) {
+						continue;
 					}
+					BigDecimal v = props.accumulatingValue(idx);
+					if ( v == null ) {
+						continue;
+					}
+					if ( energy.getMultiplier() != null ) {
+						v = v.multiply(energy.getMultiplier());
+					}
+					var m = Measurement.energyMeasurement(v, asset.getPhase(), energy.getUnit(),
+							d.getEndTimestamp(), energy.getType(), energy.getDirection(),
+							d.getTimestamp());
+					result.add(m);
 				}
 			}
 		}
