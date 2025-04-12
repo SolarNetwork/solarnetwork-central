@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -81,7 +82,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Test cases for the {@link DefaultMeasurementDao} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class DefaultMeasurementDaoTests {
@@ -278,6 +279,247 @@ public class DefaultMeasurementDaoTests {
 				is(equalTo(Measurement.energyMeasurement(
 						p.accumulatingValue(1).multiply(asset.getEnergy().getMultiplier()),
 						asset.getPhase(), asset.getEnergy().getUnit(), end, asset.getEnergy().getType(),
+						asset.getEnergy().getDirection(), start))));
+	}
+
+	/**
+	 * Validate what happens when there are no datum for the selected time
+	 * range.
+	 *
+	 * @throws IOException
+	 */
+	@Test
+	public void getMeasurements_noData() throws IOException {
+		// GIVEN
+		final Long cgId = randomUUID().getMostSignificantBits();
+
+		final Long userId = randomUUID().getMostSignificantBits();
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
+
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant end = start.plus(15, ChronoUnit.MINUTES);
+
+		ObjectDatumStreamMetadata meta = nodeMeta(asset.getNodeId(), asset.getSourceId(),
+				new String[] { "watts" }, new String[] { "wattHours" }, null);
+
+		ObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), List.of());
+
+		will((Answer<Void>) invocation -> {
+			StreamDatumFilteredResultsProcessor processor = invocation.getArgument(1);
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			return null;
+		}).given(readingDatumDao).findFilteredStream(any(), any(), isNull(), isNull(), isNull());
+
+		// WHEN
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+
+		Collection<Measurement> results = dao.getMeasurements(asset, criteria);
+
+		// THEN
+		then(readingDatumDao).should(times(1)).findFilteredStream(criteriaCaptor.capture(), any(),
+				isNull(), isNull(), isNull());
+
+		// query 1 for instantaneous averages
+		DatumCriteria daoCriteria = criteriaCaptor.getAllValues().get(0);
+		assertThat("Datum criteria reading type not set", daoCriteria.getReadingType(), is(nullValue()));
+		assertThat("Datum criteria time tolerance not set", daoCriteria.getTimeTolerance(),
+				is(nullValue()));
+		assertThat("Datum criteria for asset node ID", daoCriteria.getNodeId(),
+				is(equalTo(asset.getNodeId())));
+		assertThat("Datum criteria for asset source ID", daoCriteria.getSourceId(),
+				is(equalTo(asset.getSourceId())));
+		assertThat("Datum criteria start date from input criteria", daoCriteria.getStartDate(),
+				is(equalTo(start)));
+		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
+				is(equalTo(end)));
+		assertThat("Datum criteria aggregation as duration of input criteria date range",
+				daoCriteria.getAggregation(), is(equalTo(Aggregation.FifteenMinute)));
+
+		assertThat("Results are empty", results.isEmpty(), is(equalTo(true)));
+	}
+
+	/**
+	 * Validate what happens when there are no datum for the selected time
+	 * range.
+	 *
+	 * @throws IOException
+	 */
+	@Test
+	public void getMeasurements_noData_zeroMeasurements() throws IOException {
+		// GIVEN
+		dao.setCreateZeroValueMeasurementsOnMissingData(true);
+
+		final Long cgId = randomUUID().getMostSignificantBits();
+
+		final Long userId = randomUUID().getMostSignificantBits();
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
+
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant end = start.plus(15, ChronoUnit.MINUTES);
+
+		ObjectDatumStreamMetadata meta = nodeMeta(asset.getNodeId(), asset.getSourceId(),
+				new String[] { "watts" }, new String[] { "wattHours" }, null);
+
+		ObjectDatumStreamDataSet<StreamDatum> data = dataSet(asList(meta), List.of());
+
+		will((Answer<Void>) invocation -> {
+			StreamDatumFilteredResultsProcessor processor = invocation.getArgument(1);
+			processor.start(null, null, null, singletonMap(METADATA_PROVIDER_ATTR, data));
+			return null;
+		}).given(readingDatumDao).findFilteredStream(any(), any(), isNull(), isNull(), isNull());
+
+		// WHEN
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+
+		Collection<Measurement> results = dao.getMeasurements(asset, criteria);
+
+		// THEN
+		then(readingDatumDao).should(times(2)).findFilteredStream(criteriaCaptor.capture(), any(),
+				isNull(), isNull(), isNull());
+
+		// query 1 for instantaneous averages
+		DatumCriteria daoCriteria = criteriaCaptor.getAllValues().get(0);
+		assertThat("Datum criteria reading type not set", daoCriteria.getReadingType(), is(nullValue()));
+		assertThat("Datum criteria time tolerance not set", daoCriteria.getTimeTolerance(),
+				is(nullValue()));
+		assertThat("Datum criteria for asset node ID", daoCriteria.getNodeId(),
+				is(equalTo(asset.getNodeId())));
+		assertThat("Datum criteria for asset source ID", daoCriteria.getSourceId(),
+				is(equalTo(asset.getSourceId())));
+		assertThat("Datum criteria start date from input criteria", daoCriteria.getStartDate(),
+				is(equalTo(start)));
+		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
+				is(equalTo(end)));
+		assertThat("Datum criteria aggregation as duration of input criteria date range",
+				daoCriteria.getAggregation(), is(equalTo(Aggregation.FifteenMinute)));
+
+		// query 2 for accumulating reading
+		daoCriteria = criteriaCaptor.getAllValues().get(1);
+		assertThat("Datum criteria reading type", daoCriteria.getReadingType(),
+				is(equalTo(DatumReadingType.CalculatedAtDifference)));
+		assertThat("Datum criteria time tolerance", daoCriteria.getTimeTolerance(),
+				is(equalTo(Period.ofDays(1))));
+		assertThat("Datum criteria for asset node ID", daoCriteria.getNodeId(),
+				is(equalTo(asset.getNodeId())));
+		assertThat("Datum criteria for asset source ID", daoCriteria.getSourceId(),
+				is(equalTo(asset.getSourceId())));
+		assertThat("Datum criteria start date from input criteria", daoCriteria.getStartDate(),
+				is(equalTo(start)));
+		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
+				is(equalTo(end)));
+		assertThat("Datum criteria aggregation not set", daoCriteria.getAggregation(), is(nullValue()));
+
+		List<Measurement> resultList = new ArrayList<>(results);
+		assertThat("Results returned for instantaneous and energy measurements", results, hasSize(2));
+		assertThat("Instantaneous measurement", resultList.get(0),
+				is(equalTo(instantaneousMeasurement(BigDecimal.ZERO, asset.getPhase(),
+						asset.getInstantaneous().getUnit(), end))));
+		assertThat("Energy measurement", resultList.get(1),
+				is(equalTo(Measurement.energyMeasurement(BigDecimal.ZERO, asset.getPhase(),
+						asset.getEnergy().getUnit(), end, asset.getEnergy().getType(),
+						asset.getEnergy().getDirection(), start))));
+	}
+
+	/**
+	 * Validate what happens when there are no datum for the selected time
+	 * range.
+	 *
+	 * @throws IOException
+	 */
+	@Test
+	public void getMeasurements_onlyEnergyData_singleDateReading() throws IOException {
+		// GIVEN
+		dao.setCreateZeroValueMeasurementsOnMissingData(true);
+
+		final Long cgId = randomUUID().getMostSignificantBits();
+
+		final Long userId = randomUUID().getMostSignificantBits();
+		AssetConfiguration asset = OscpJdbcTestUtils.newAssetConfiguration(userId, cgId, Instant.now())
+				.copyWithId(new UserLongCompositePK(userId, randomUUID().getMostSignificantBits()));
+
+		final Instant start = Instant.now().truncatedTo(ChronoUnit.HOURS);
+		final Instant end = start.plus(15, ChronoUnit.MINUTES);
+
+		ObjectDatumStreamMetadata meta = nodeMeta(asset.getNodeId(), asset.getSourceId(),
+				new String[] { "watts" }, new String[] { "wattHours" }, null);
+
+		DatumProperties p = propertiesOf(null, decimalArray("3.45"), null, null);
+		DatumPropertiesStatistics s = statisticsOf(null,
+				new BigDecimal[][] { decimalArray("10", "0", "10") });
+		var reading = new ReadingDatumEntity(meta.getStreamId(), start.minusSeconds(1), Aggregation.None,
+				start.minusSeconds(1), p, s);
+
+		MutableInt count = new MutableInt();
+		will((Answer<Void>) invocation -> {
+			StreamDatumFilteredResultsProcessor processor = invocation.getArgument(1);
+			if ( count.incrementAndGet() == 1 ) {
+				processor.start(null, null, null,
+						singletonMap(METADATA_PROVIDER_ATTR, dataSet(asList(meta), List.of())));
+			} else {
+				processor.start(null, null, null,
+						singletonMap(METADATA_PROVIDER_ATTR, dataSet(asList(meta), asList(reading))));
+				processor.handleResultItem(reading);
+			}
+			return null;
+		}).given(readingDatumDao).findFilteredStream(any(), any(), isNull(), isNull(), isNull());
+
+		// WHEN
+		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setStartDate(start);
+		criteria.setEndDate(end);
+
+		Collection<Measurement> results = dao.getMeasurements(asset, criteria);
+
+		// THEN
+		then(readingDatumDao).should(times(2)).findFilteredStream(criteriaCaptor.capture(), any(),
+				isNull(), isNull(), isNull());
+
+		// query 1 for instantaneous averages
+		DatumCriteria daoCriteria = criteriaCaptor.getAllValues().get(0);
+		assertThat("Datum criteria reading type not set", daoCriteria.getReadingType(), is(nullValue()));
+		assertThat("Datum criteria time tolerance not set", daoCriteria.getTimeTolerance(),
+				is(nullValue()));
+		assertThat("Datum criteria for asset node ID", daoCriteria.getNodeId(),
+				is(equalTo(asset.getNodeId())));
+		assertThat("Datum criteria for asset source ID", daoCriteria.getSourceId(),
+				is(equalTo(asset.getSourceId())));
+		assertThat("Datum criteria start date from input criteria", daoCriteria.getStartDate(),
+				is(equalTo(start)));
+		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
+				is(equalTo(end)));
+		assertThat("Datum criteria aggregation as duration of input criteria date range",
+				daoCriteria.getAggregation(), is(equalTo(Aggregation.FifteenMinute)));
+
+		// query 2 for accumulating reading
+		daoCriteria = criteriaCaptor.getAllValues().get(1);
+		assertThat("Datum criteria reading type", daoCriteria.getReadingType(),
+				is(equalTo(DatumReadingType.CalculatedAtDifference)));
+		assertThat("Datum criteria time tolerance", daoCriteria.getTimeTolerance(),
+				is(equalTo(Period.ofDays(1))));
+		assertThat("Datum criteria for asset node ID", daoCriteria.getNodeId(),
+				is(equalTo(asset.getNodeId())));
+		assertThat("Datum criteria for asset source ID", daoCriteria.getSourceId(),
+				is(equalTo(asset.getSourceId())));
+		assertThat("Datum criteria start date from input criteria", daoCriteria.getStartDate(),
+				is(equalTo(start)));
+		assertThat("Datum criteria end date from input criteria", daoCriteria.getEndDate(),
+				is(equalTo(end)));
+		assertThat("Datum criteria aggregation not set", daoCriteria.getAggregation(), is(nullValue()));
+
+		List<Measurement> resultList = new ArrayList<>(results);
+		assertThat("Results returned for instantaneous and energy measurements", results, hasSize(2));
+		assertThat("Instantaneous measurement", resultList.get(0),
+				is(equalTo(instantaneousMeasurement(BigDecimal.ZERO, asset.getPhase(),
+						asset.getInstantaneous().getUnit(), end))));
+		assertThat("Energy measurement", resultList.get(1),
+				is(equalTo(Measurement.energyMeasurement(BigDecimal.ZERO, asset.getPhase(),
+						asset.getEnergy().getUnit(), end, asset.getEnergy().getType(),
 						asset.getEnergy().getDirection(), start))));
 	}
 
