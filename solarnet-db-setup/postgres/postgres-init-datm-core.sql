@@ -470,7 +470,7 @@ $$;
  * Get the metadata associated with a node datum or location datum stream.
  *
  * The `kind` output column will be `n` if the found metadata is for a node datum stream,
- * or `l` for a location datum stream, by looking in the `da_datum_meta` and `da_loc_datum_meta`
+ * or `l` for a location datum stream, by looking in the `da_datum_meta` and `da_loc_datm_meta`
  * tables for a matching stream ID. If the stream ID is found in both tables, the node metadata
  * will be returned.
  *
