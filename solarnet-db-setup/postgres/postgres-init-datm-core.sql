@@ -24,9 +24,27 @@ CREATE TABLE solardatm.da_loc_datm_meta (
 	names_a		TEXT[],
 	names_s		TEXT[],
 	jdata		JSONB,
+	fts_default tsvector,
 	CONSTRAINT da_loc_datm_meta_pkey PRIMARY KEY (stream_id),
 	CONSTRAINT da_loc_datm_meta_unq UNIQUE (loc_id, source_id)
 );
+
+CREATE INDEX da_loc_datm_meta_fts_default_idx ON solardatm.da_loc_datm_meta USING gin(fts_default);
+
+CREATE OR REPLACE FUNCTION solardatm.da_loc_datm_meta_maintain_fts()
+	RETURNS "trigger"  LANGUAGE 'plpgsql' VOLATILE AS $$
+BEGIN
+	NEW.fts_default :=
+		   to_tsvector('pg_catalog.english', COALESCE(NEW.jdata #>> '{m,name}',''));
+	RETURN NEW;
+END
+$$;
+
+CREATE TRIGGER da_loc_datm_meta_maintain_fts
+  BEFORE INSERT OR UPDATE
+  ON solardatm.da_loc_datm_meta
+  FOR EACH ROW
+  EXECUTE PROCEDURE solardatm.da_loc_datm_meta_maintain_fts();
 
 -- type to use in aggregate functions regardless of physical table
 CREATE TYPE solardatm.datm_rec AS (
