@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.domain.CloudDataValue.DESCRIPTION_METADATA;
@@ -83,7 +84,7 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -233,8 +234,8 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 
 			BasicQueryFilter nextQueryFilter = null;
 
-			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution);
-			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution);
+			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, resolution, UTC);
+			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, resolution, UTC);
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_DURATION) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_DURATION.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {

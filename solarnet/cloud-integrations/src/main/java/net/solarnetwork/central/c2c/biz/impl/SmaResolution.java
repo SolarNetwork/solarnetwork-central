@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * Enumeration of time resolution values.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public enum SmaResolution {
 
@@ -96,7 +96,7 @@ public enum SmaResolution {
 	 * @return the start instant
 	 */
 	public Instant tickStart(Instant ts, ZoneId zone) {
-		return CloudIntegrationsUtils.truncateDate(ts, tickAmount);
+		return CloudIntegrationsUtils.truncateDate(ts, tickAmount, zone);
 	}
 
 	/**

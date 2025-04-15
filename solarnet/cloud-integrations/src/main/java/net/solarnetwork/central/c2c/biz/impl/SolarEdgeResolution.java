@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.ZoneOffset.UTC;
 import java.time.Duration;
 import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * Enumeration of SolarEdge data resolution values.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public enum SolarEdgeResolution {
 
@@ -80,7 +81,7 @@ public enum SolarEdgeResolution {
 	 * @return the truncated date
 	 */
 	public Instant truncateDate(Instant date) {
-		return CloudIntegrationsUtils.truncateDate(date, tickDuration);
+		return CloudIntegrationsUtils.truncateDate(date, tickDuration, UTC);
 	}
 
 	/**

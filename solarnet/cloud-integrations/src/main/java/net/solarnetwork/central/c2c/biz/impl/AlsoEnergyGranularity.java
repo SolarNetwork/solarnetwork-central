@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * Enumeration of AlsoEnergy data granularity ("BinSize") values.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public enum AlsoEnergyGranularity {
 
@@ -107,7 +107,7 @@ public enum AlsoEnergyGranularity {
 	 * @return the start instant
 	 */
 	public Instant tickStart(Instant ts, ZoneId zone) {
-		return CloudIntegrationsUtils.truncateDate(ts, tickAmount);
+		return CloudIntegrationsUtils.truncateDate(ts, tickAmount, zone);
 	}
 
 	/**

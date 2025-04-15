@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
-import static java.time.ZoneOffset.UTC;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Clock;
@@ -41,7 +40,7 @@ import java.time.temporal.TemporalAmount;
  * Helper methods for cloud integrations.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public final class CloudIntegrationsUtils {
 
@@ -66,14 +65,16 @@ public final class CloudIntegrationsUtils {
 	 *        the date to truncate
 	 * @param amount
 	 *        the duration to truncate to
+	 * @param zone
+	 *        the time zone to use for {@link Period} based amounts
 	 * @return the truncated date, or {@code date} if {@code amount} is not a
 	 *         {@link Period} or {@link Duration}
 	 * @since 1.1
 	 */
-	public static Instant truncateDate(Instant date, TemporalAmount amount) {
+	public static Instant truncateDate(Instant date, TemporalAmount amount, ZoneId zone) {
 		return switch (amount) {
-			case Period p -> truncateDate(date, p);
-			case Duration d -> truncateDate(date, d);
+			case Period p -> truncateDate(date, p, zone);
+			case Duration d -> truncateDate(date, d, zone);
 			default -> date;
 		};
 	}
@@ -87,8 +88,8 @@ public final class CloudIntegrationsUtils {
 	 *        the duration to truncate to
 	 * @return the truncated date
 	 */
-	public static Instant truncateDate(Instant date, Duration period) {
-		return Clock.tick(Clock.fixed(date, UTC), period).instant();
+	public static Instant truncateDate(Instant date, Duration period, ZoneId zone) {
+		return Clock.tick(Clock.fixed(date, zone), period).instant();
 	}
 
 	/**
