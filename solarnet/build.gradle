@@ -73,6 +73,7 @@ subprojects {
 	ext {
 		awsSdk2Version = '2.26.31'
 		batikVersion = '1.18'
+		bucket4jVersion = '8.10.1'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.18.0'
 		cronUtilsVersion = '9.2.0'

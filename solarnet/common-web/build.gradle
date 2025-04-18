@@ -53,6 +53,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-actuator'
 	
 	// Utilities
+	implementation "com.bucket4j:bucket4j-core:${bucket4jVersion}"
 	implementation 'io.github.classgraph:classgraph:4.8.179'
 	
 	// Testing
