@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.assertj.core.api.BDDAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
@@ -420,6 +422,38 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		assertNotNull("Situation associated", found.getSituation());
 		assertEquals(sit.getId(), found.getSituation().getId());
+	}
+
+	@Test
+	public void findAlertsForUser_multiAlerts_someWithSituation() {
+		// GIVEN
+		final int alertCount = 3;
+		final List<UserAlert> alerts = new ArrayList<>(alertCount);
+
+		for ( int i = 0; i < alertCount; i++ ) {
+			storeNew();
+			alerts.add(this.userAlert);
+		}
+
+		// create an Active situation
+		UserAlertSituation sit = new UserAlertSituation();
+		sit.setAlert(alerts.get(1));
+		sit.setCreated(Instant.now());
+		sit.setStatus(UserAlertSituationStatus.Active);
+		sit.setId(userAlertSituationDao.save(sit));
+
+		// WHEN
+		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
+
+		// THEN
+		// @formatter:off
+		then(results)
+			.as("Results returned for all alerts")
+			.containsExactlyElementsOf(alerts)
+			.element(1)
+			.returns(sit, BDDAssertions.from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
