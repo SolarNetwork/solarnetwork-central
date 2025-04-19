@@ -24,6 +24,7 @@ The following Spring runtime profiles are available:
 | `datum-import-s3-resource-storage` | Store datum import resources in S3. See [S3ResourceStorageConfig][S3ResourceStorageConfig]. |
 | `mqtt` | Enables publishing aggregates to SolarFlux. See [SolarFluxPublishingConfig][SolarFluxPublishingConfig]. |
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
+| `rate-limit` | Enables rate-limiting maintenance jobs. See [RateLimitConfig][RateLimitConfig]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 | `ocpp-jobs` | Enable OCPP specific jobs. See [OcppJobsConfig][OcppJobsConfig]. |
@@ -71,6 +72,7 @@ The build produces an executable JAR at `build/libs/solarjobs-x.y.z.jar`.
 [solarnet-user-datum]: ../user-datum/
 [solarnet-user-ocpp]: ../user-ocpp/
 [OcppJobsConfig]: src/main/java/net/solarnetwork/central/jobs/config/OcppJobsConfig.java
+[RateLimitConfig]: src/main/java/net/solarnetwork/central/jobs/config/RateLimitConfig.java
 [S3ResourceStorageConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/imp/config/S3ResourceStorageConfig.java
 [SnfBillingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SnfBillingConfig.java
 [SolarFluxPublishingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SolarFluxPublishingConfig.java
