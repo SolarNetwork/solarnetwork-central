@@ -14,6 +14,7 @@ The following Spring runtime profiles are available:
 | Profile | Description |
 |:--------|:------------|
 | `query-auditor` | Enables auditing datum query access using a second write-access JDBC connection. See [DatumQueryBizConfig][DatumQueryBizConfig], [JdbcQueryAuditorConfig][JdbcQueryAuditorConfig].|
+| `rate-limit` | Enables rate-limiting API access. See [RateLimitConfig][RateLimitConfig]. |
 
 
 # Runtime configuration
@@ -47,3 +48,4 @@ The build produces an executable JAR at `build/libs/solarquery-x.y.z.jar`.
 [solarnet-datum]: ../datum/
 [DatumQueryBizConfig]: src/main/java/net/solarnetwork/central/query/config/DatumQueryBizConfig.java
 [JdbcQueryAuditorConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/config/JdbcQueryAuditorConfig.java
+[RateLimitConfig]: src/main/java/net/solarnetwork/central/query/config/RateLimitConfig.java
