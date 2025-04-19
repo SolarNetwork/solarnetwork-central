@@ -44,6 +44,8 @@ dependencies {
 	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${myBatisStarterVersion}"
 	
 	// Utils
+	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
+	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
 	implementation "net.sf.supercsv:super-csv:${superCsvVersion}"

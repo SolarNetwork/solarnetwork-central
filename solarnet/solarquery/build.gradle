@@ -37,11 +37,13 @@ dependencies {
 	implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdocStarterVersion}"
 	
 	// Utilities
-	implementation 'javax.cache:cache-api'
-	implementation 'org.ehcache:ehcache'
+	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
+	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+	implementation 'javax.cache:cache-api'
     implementation "net.sf.supercsv:super-csv:${superCsvVersion}"
 	implementation 'org.aspectj:aspectjweaver'
+	implementation 'org.ehcache:ehcache'
 
 	// Testing
 	testImplementation project(':solarnet-common-test')

@@ -67,6 +67,8 @@ dependencies {
 	
 	// Utils
 	implementation 'commons-codec:commons-codec'
+	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
+	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'
