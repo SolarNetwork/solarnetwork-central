@@ -293,6 +293,12 @@ app:
         from: "nobody@localhost.localdomain"
   versioned-messages-cache:
       ttl: 600
+  web.rate-limit:
+    capacity: 2
+    tokens: 1
+    duration: "1s"
+    eviction-jitter: "15s"
+    table-name: "solarcommon.bucket"
   web.security:
     token:
       max-request-body-size: "20MB"

@@ -85,7 +85,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
