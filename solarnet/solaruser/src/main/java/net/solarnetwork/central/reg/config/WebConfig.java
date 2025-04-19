@@ -24,6 +24,7 @@ package net.solarnetwork.central.reg.config;
 
 import static net.solarnetwork.central.reg.config.ContentCachingServiceConfig.QUERY_CACHE;
 import static net.solarnetwork.central.reg.config.ContentCachingServiceConfig.QUERY_CACHING_SERVICE;
+import static net.solarnetwork.central.reg.config.RateLimitConfig.RATE_LIMIT;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -33,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,8 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
@@ -56,15 +60,19 @@ import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 import net.solarnetwork.central.support.DelegatingParser;
 import net.solarnetwork.central.support.InstantFormatter;
 import net.solarnetwork.central.web.PingController;
 import net.solarnetwork.central.web.support.ContentCachingFilter;
 import net.solarnetwork.central.web.support.ContentCachingService;
+import net.solarnetwork.central.web.support.RateLimitingFilter;
 import net.solarnetwork.central.web.support.WebServiceControllerSupport;
 import net.solarnetwork.central.web.support.WebServiceErrorAttributes;
 import net.solarnetwork.central.web.support.WebServiceGlobalControllerSupport;
@@ -83,7 +91,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlView;
  * Web layer configuration.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -213,6 +221,7 @@ public class WebConfig implements WebMvcConfigurer {
 	}
 
 	@Bean
+	@Order(0)
 	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
 	public FilterRegistrationBean<ContentCachingFilter> contentCachingFilterRegistration() {
 		FilterRegistrationBean<ContentCachingFilter> reg = new FilterRegistrationBean<>();
@@ -224,6 +233,25 @@ public class WebConfig implements WebMvcConfigurer {
 				"/api/v1/sec/user/auth-tokens",
 				"/api/v1/sec/user/auth-tokens/find"
 		);
+		// @formatter:on
+		return reg;
+	}
+
+	@Bean
+	@Order(1)
+	@Profile(RATE_LIMIT)
+	public FilterRegistrationBean<RateLimitingFilter> rateLimitFilterRegistration(
+			@Qualifier(RATE_LIMIT) ProxyManager<Long> proxyManager,
+			@Qualifier(RATE_LIMIT) Supplier<BucketConfiguration> configurationProvider,
+			HandlerExceptionResolver handlerExceptionResolver) {
+		var filter = new RateLimitingFilter(proxyManager, configurationProvider);
+		filter.setExceptionResolver(handlerExceptionResolver);
+		FilterRegistrationBean<RateLimitingFilter> reg = new FilterRegistrationBean<>();
+		reg.setFilter(filter);
+		// @formatter:off
+		reg.addUrlPatterns(
+				"/api/*"
+				);
 		// @formatter:on
 		return reg;
 	}
