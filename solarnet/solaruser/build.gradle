@@ -11,7 +11,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
 description = 'SolarUser'
-version = '2.53.0'
+version = '2.54.0'
 
 base {
 	archivesName = 'solaruser'
@@ -67,6 +67,8 @@ dependencies {
 	
 	// Utils
 	implementation 'commons-codec:commons-codec'
+	implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4jVersion}"
+	implementation "com.bucket4j:bucket4j_jdk17-postgresql:${bucket4jVersion}"
 	implementation "com.networknt:json-schema-validator:${jsonSchemaValidatorVersion}"
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 	implementation 'javax.cache:cache-api'

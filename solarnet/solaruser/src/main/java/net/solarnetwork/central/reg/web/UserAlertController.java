@@ -68,7 +68,7 @@ import net.solarnetwork.util.StringUtils;
  * Controller for user alerts.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 @GlobalServiceController
 @RequestMapping("/u/sec/alerts")
@@ -116,7 +116,6 @@ public class UserAlertController extends ControllerSupport {
 			for ( UserAlert alert : alerts ) {
 				if ( alert.getType() == UserAlertType.NodeStaleData ) {
 					nodeDataAlerts.add(alert);
-					break;
 				}
 			}
 			model.addAttribute("nodeDataAlerts", nodeDataAlerts);

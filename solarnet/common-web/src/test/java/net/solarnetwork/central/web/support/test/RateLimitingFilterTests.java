@@ -23,7 +23,6 @@
 package net.solarnetwork.central.web.support.test;
 
 import static net.solarnetwork.central.web.support.RateLimitingFilter.idForString;
-import static org.apache.http.HttpHeaders.AUTHORIZATION;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
@@ -31,6 +30,7 @@ import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpMethod.GET;
 import java.io.IOException;
 import java.time.Duration;

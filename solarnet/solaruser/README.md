@@ -36,6 +36,7 @@ The following Spring runtime profiles are available:
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
 | `ocpp-v16` | Enables OCPP v1.6 integration. See references to [SolarNetOcppConfiguration][SolarNetOcppConfiguration]. |
 | `oscp-v20`    | Enable OSCP v2.0 integration. See references to [SolarNetOscpConfiguration][SolarNetOscpConfiguration]. |
+| `rate-limit` | Enables rate-limiting API access. See [RateLimitConfig][RateLimitConfig]. |
 | `snf-billing` | Enable SNF billing. See [SnfBillingConfig][SnfBillingConfig]. |
 | `user-event-sqs` | Enable the SQS user event service. See [UserEventServiceSqsConfig][UserEventServiceSqsConfig]. |
 
@@ -88,6 +89,7 @@ The build produces an executable JAR at `build/libs/solaruser-x.y.z.jar`.
 [InstructorBizConfig]: ../instructor/src/main/java/net/solarnetwork/central/instructor/config/InstructorBizConfig.java
 [JdbcNodeServiceAuditorConfig]: ../common/src/main/java/net/solarnetwork/central/common/config/JdbcNodeServiceAuditorConfig.java
 [PkiDogtagConfig]: ../user/src/main/java/net/solarnetwork/central/user/config/PkiDogtagConfig.java
+[RateLimitConfig]: src/main/java/net/solarnetwork/central/reg/config/RateLimitConfig.java
 [S3ResourceStorageConfig]: ../datum/src/main/java/net/solarnetwork/central/datum/imp/config/S3ResourceStorageConfig.java
 [SnfBillingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SnfBillingConfig.java
 [SolarFluxPublishingConfig]: src/main/java/net/solarnetwork/central/jobs/config/SolarFluxPublishingConfig.java
