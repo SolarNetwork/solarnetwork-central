@@ -294,6 +294,7 @@ app:
   versioned-messages-cache:
       ttl: 600
   web.rate-limit:
+    key-prefix: "u|"
     capacity: 2
     tokens: 1
     duration: "1s"

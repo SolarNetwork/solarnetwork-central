@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.codec.digest.MurmurHash2;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
@@ -38,8 +39,6 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.solarnetwork.central.web.RateLimitExceededException;
@@ -48,9 +47,9 @@ import net.solarnetwork.central.web.RateLimitExceededException;
  * Filter for rate-limiting HTTP requests.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public final class RateLimitingFilter implements Filter {
+public final class RateLimitingFilter extends OncePerRequestFilter implements Filter {
 
 	/** HTTP response header to hold the "remaining" rate limit count. */
 	public static final String X_SN_RATE_LIMIT_REMAINING_HEADER = "X-SN-Rate-Limit-Remaining";
@@ -66,6 +65,7 @@ public final class RateLimitingFilter implements Filter {
 
 	private final ProxyManager<Long> proxyManager;
 	private final Supplier<BucketConfiguration> bucketConfigurationProvider;
+	private final String keyPrefix;
 
 	private HandlerExceptionResolver exceptionResolver;
 
@@ -81,13 +81,33 @@ public final class RateLimitingFilter implements Filter {
 	 */
 	public RateLimitingFilter(ProxyManager<Long> proxyManager,
 			Supplier<BucketConfiguration> bucketConfigurationProvider) {
+		this(proxyManager, bucketConfigurationProvider, null);
+	}
+
+	/**
+	 * Constructor.
+	 *
+	 * @param proxyManager
+	 *        the bucket proxy manager
+	 * @param bucketConfigurationProvider
+	 *        the bucket configuration provider
+	 * @param keyPrefix
+	 *        a prefix to add to keys, for example the application name; can be
+	 *        {@code null} or empty for no prefix
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@code null}
+	 * @since 1.1
+	 */
+	public RateLimitingFilter(ProxyManager<Long> proxyManager,
+			Supplier<BucketConfiguration> bucketConfigurationProvider, String keyPrefix) {
 		super();
 		this.proxyManager = requireNonNullArgument(proxyManager, "proxyManager");
 		this.bucketConfigurationProvider = requireNonNullArgument(bucketConfigurationProvider,
 				"bucketConfigurationProvider");
+		this.keyPrefix = (keyPrefix != null && !keyPrefix.isEmpty() ? keyPrefix : null);
 	}
 
-	private static String requestKey(HttpServletRequest request) {
+	private String requestKey(HttpServletRequest request) {
 		String key = null;
 		String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if ( authHeader != null ) {
@@ -107,7 +127,7 @@ public final class RateLimitingFilter implements Filter {
 				key = request.getRemoteAddr();
 			}
 		}
-		return key;
+		return (keyPrefix != null ? keyPrefix + key : key);
 	}
 
 	/**
@@ -122,25 +142,23 @@ public final class RateLimitingFilter implements Filter {
 	}
 
 	@Override
-	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-			throws IOException, ServletException {
-		final HttpServletRequest req = (HttpServletRequest) request;
-		final HttpServletResponse res = (HttpServletResponse) response;
-
-		final String key = requestKey(req);
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+			FilterChain filterChain) throws ServletException, IOException {
+		final String key = requestKey(request);
 		final Long id = idForString(key);
 		final Bucket bucket = proxyManager.builder().build(id, bucketConfigurationProvider);
 
 		ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 		if ( probe.isConsumed() ) {
-			res.addIntHeader(X_SN_RATE_LIMIT_REMAINING_HEADER, (int) probe.getRemainingTokens());
-			chain.doFilter(request, response);
+			response.addIntHeader(X_SN_RATE_LIMIT_REMAINING_HEADER, (int) probe.getRemainingTokens());
+			filterChain.doFilter(request, response);
 		} else {
 			final HandlerExceptionResolver resolver = this.exceptionResolver;
 			if ( resolver != null ) {
-				resolver.resolveException(req, res, null, new RateLimitExceededException(key, id));
+				resolver.resolveException(request, response, null,
+						new RateLimitExceededException(key, id));
 			} else {
-				res.sendError(HttpStatus.TOO_MANY_REQUESTS.value());
+				response.sendError(HttpStatus.TOO_MANY_REQUESTS.value());
 			}
 		}
 	}
