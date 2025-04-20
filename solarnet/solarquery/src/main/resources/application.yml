@@ -81,6 +81,12 @@ app:
       lock-pool-capacity: 128
       request-lock-timeout: 180000
       stat-log-access-count: 10000
+  web.rate-limit:
+    capacity: 2
+    tokens: 1
+    duration: "1s"
+    eviction-jitter: "15s"
+    table-name: "solarcommon.bucket"
   web.security:
     token:
       max-request-body-size: 65535

@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
  * Enumeration of Enphase data granularity ("BinSize") values.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public enum EnphaseGranularity {
 
@@ -90,7 +90,7 @@ public enum EnphaseGranularity {
 			return ts;
 		}
 		if ( tickAmount instanceof Duration d ) {
-			return CloudIntegrationsUtils.truncateDate(ts, d);
+			return CloudIntegrationsUtils.truncateDate(ts, d, zone);
 		} else if ( tickAmount instanceof Period p ) {
 			return CloudIntegrationsUtils.truncateDate(ts, p, zone);
 		}

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.c2c.biz.impl;
 
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.impl.BaseCloudIntegrationService.resolveBaseUrl;
 import static net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils.SECS_PER_HOUR;
 import static net.solarnetwork.central.c2c.biz.impl.EgaugeCloudIntegrationService.BASE_URI_TEMPLATE;
@@ -115,7 +116,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -305,8 +306,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 
 			BasicQueryFilter nextQueryFilter = null;
 
-			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, granularity);
-			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, granularity);
+			Instant startDate = CloudIntegrationsUtils.truncateDate(filterStartDate, granularity, UTC);
+			Instant endDate = CloudIntegrationsUtils.truncateDate(filterEndDate, granularity, UTC);
 			if ( Duration.between(startDate, endDate).compareTo(MAX_QUERY_TIME_RANGE) > 0 ) {
 				Instant nextEndDate = startDate.plus(MAX_QUERY_TIME_RANGE.multipliedBy(2));
 				if ( nextEndDate.isAfter(endDate) ) {

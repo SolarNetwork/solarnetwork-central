@@ -73,6 +73,7 @@ subprojects {
 	ext {
 		awsSdk2Version = '2.26.31'
 		batikVersion = '1.18'
+		bucket4jVersion = '8.14.0'
 		checkstyleVersion = '8.34'
 		commonsIoVersion = '2.18.0'
 		cronUtilsVersion = '9.2.0'
@@ -81,7 +82,7 @@ subprojects {
 		myBatisStarterVersion = '3.0.4'
 		okhttp3Mockwebserver = '4.12.0'
 		saxonVersion = '12.5'
-		snCommonVersion = '3.30.0'
+		snCommonVersion = '3.31.0'
 		snCommonExprSpelVersion = '3.1.0'
 		snCommonMqttVersion = '5.0.0'
 		snCommonMqttNettyVersion = '4.0.3'

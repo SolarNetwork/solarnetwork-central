@@ -411,6 +411,13 @@ app:
       destination-cache:
         ttl: 600
         heap-max-entries: 1000
+  web.rate-limit:
+    cleaner:
+      schedule:  "0 15 4 * * *"
+      max-remove-per-transaction: 1000
+      continue-removing-threshold: 50
+    eviction-jitter: "15s"
+    table-name: "solarcommon.bucket"
   versioned-messages-cache:
       ttl: 600
 

@@ -288,8 +288,8 @@ public class SecurityUtils {
 	/**
 	 * Get the ID of the user associated with a given authentication.
 	 *
-	 * @param auth
-	 *        the authentication
+	 * @param principal
+	 *        the user principal
 	 * @return the ID of the user associated with the actor, never
 	 *         {@literal null}
 	 * @throws SecurityException

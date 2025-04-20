@@ -42,7 +42,7 @@ import net.solarnetwork.central.c2c.biz.impl.CloudIntegrationsUtils;
  * Test cases for the {@link CloudIntegrationsUtils} class.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class CloudIntegrationsUtilsTests {
 
@@ -52,7 +52,7 @@ public class CloudIntegrationsUtilsTests {
 		Instant ts = Instant.now().truncatedTo(SECONDS);
 
 		// WHEN
-		Instant result = CloudIntegrationsUtils.truncateDate(ts, Duration.ofMinutes(5));
+		Instant result = CloudIntegrationsUtils.truncateDate(ts, Duration.ofMinutes(5), UTC);
 
 		// THEN
 		// @formatter:off
@@ -69,7 +69,7 @@ public class CloudIntegrationsUtilsTests {
 		Instant ts = Instant.now();
 
 		// WHEN
-		Instant result = CloudIntegrationsUtils.truncateDate(ts, Duration.ofHours(1));
+		Instant result = CloudIntegrationsUtils.truncateDate(ts, Duration.ofHours(1), UTC);
 
 		// THEN
 		// @formatter:off
@@ -137,7 +137,7 @@ public class CloudIntegrationsUtilsTests {
 	@Test
 	public void nextTickStart_5min() {
 		// GIVEN
-		Instant ts = CloudIntegrationsUtils.truncateDate(Instant.now(), Duration.ofMinutes(5));
+		Instant ts = CloudIntegrationsUtils.truncateDate(Instant.now(), Duration.ofMinutes(5), UTC);
 
 		// WHEN
 		Instant result = CloudIntegrationsUtils.nextTickStart(Duration.ofMinutes(5), ts, UTC);
@@ -154,7 +154,7 @@ public class CloudIntegrationsUtilsTests {
 	@Test
 	public void nextTickStart_hour() {
 		// GIVEN
-		Instant ts = CloudIntegrationsUtils.truncateDate(Instant.now(), Duration.ofHours(1));
+		Instant ts = CloudIntegrationsUtils.truncateDate(Instant.now(), Duration.ofHours(1), UTC);
 
 		// WHEN
 		Instant result = CloudIntegrationsUtils.nextTickStart(Duration.ofHours(1), ts, UTC);
