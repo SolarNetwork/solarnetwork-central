@@ -24,6 +24,7 @@ package net.solarnetwork.central.web.support;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +54,12 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 
 	/** HTTP response header to hold the "remaining" rate limit count. */
 	public static final String X_SN_RATE_LIMIT_REMAINING_HEADER = "X-SN-Rate-Limit-Remaining";
+
+	/**
+	 * HTTP response header to hold the date after which a retry can be
+	 * attempted.
+	 */
+	public static final String X_SN_RATE_LIMIT_RETRY_AFTER = "X-SN-Rate-Limit-Retry-After";
 
 	/** HTTP request header for a proxied client IP address. */
 	public static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
@@ -153,6 +160,10 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 			response.addIntHeader(X_SN_RATE_LIMIT_REMAINING_HEADER, (int) probe.getRemainingTokens());
 			filterChain.doFilter(request, response);
 		} else {
+			response.addHeader(key, key);
+			final int waitMs = (int) TimeUnit.NANOSECONDS.toMillis(probe.getNanosToWaitForRefill());
+			response.setHeader(X_SN_RATE_LIMIT_RETRY_AFTER,
+					String.valueOf(System.currentTimeMillis() + waitMs));
 			final HandlerExceptionResolver resolver = this.exceptionResolver;
 			if ( resolver != null ) {
 				resolver.resolveException(request, response, null,
