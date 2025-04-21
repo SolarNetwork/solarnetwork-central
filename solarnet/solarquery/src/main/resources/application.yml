@@ -82,6 +82,7 @@ app:
       request-lock-timeout: 180000
       stat-log-access-count: 10000
   web.rate-limit:
+    key-prefix: "q|"
     capacity: 2
     tokens: 1
     duration: "1s"

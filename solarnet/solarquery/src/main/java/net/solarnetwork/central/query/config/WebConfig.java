@@ -85,7 +85,7 @@ import net.solarnetwork.web.jakarta.support.SimpleXmlHttpMessageConverter;
  * Web layer configuration.
  * 
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 @Configuration
 @Import({ WebServiceErrorAttributes.class, WebServiceControllerSupport.class,
@@ -255,8 +255,9 @@ public class WebConfig implements WebMvcConfigurer {
 	public FilterRegistrationBean<RateLimitingFilter> rateLimitFilterRegistration(
 			@Qualifier(RATE_LIMIT) ProxyManager<Long> proxyManager,
 			@Qualifier(RATE_LIMIT) Supplier<BucketConfiguration> configurationProvider,
+			@Value("${app.web.rate-limit.key-prefix:}") String keyPrefix,
 			HandlerExceptionResolver handlerExceptionResolver) {
-		var filter = new RateLimitingFilter(proxyManager, configurationProvider);
+		var filter = new RateLimitingFilter(proxyManager, configurationProvider, keyPrefix);
 		filter.setExceptionResolver(handlerExceptionResolver);
 		FilterRegistrationBean<RateLimitingFilter> reg = new FilterRegistrationBean<>();
 		reg.setFilter(filter);
