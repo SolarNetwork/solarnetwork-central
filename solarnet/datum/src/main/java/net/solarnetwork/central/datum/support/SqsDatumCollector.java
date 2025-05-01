@@ -745,68 +745,67 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 				// @formatter:on
 				try {
 					ReceiveMessageResponse resp = sqsClient.receiveMessage(receiveMessageRequest).get();
-					if ( !resp.hasMessages() ) {
-						continue;
-					}
-					List<Message> msgs = resp.messages();
-					stats.increment(BasicCount.SqsQueueReceived, msgs.size());
-					int accepted = 0;
-					List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
-					try {
-						for ( Message msg : msgs ) {
-							try {
-								JsonNode tree = sqsObjectMapper.readTree(msg.body());
-								Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
-								CompletableFuture<Object> f = new CompletableFuture<Object>();
-								if ( queue.offer(new WorkItem(o, f)) ) {
-									stats.increment(BasicCount.WorkQueueAdds);
-									f.thenAccept(r -> {
-										sqsDeleteMessage(msg.receiptHandle());
-									});
-									accepted++;
-								} else {
-									// adjust visibility to 0 to allow reprocessing
-									rejectedReceiptHandles.add(msg.receiptHandle());
+					if ( resp.hasMessages() ) {
+						List<Message> msgs = resp.messages();
+						stats.increment(BasicCount.SqsQueueReceived, msgs.size());
+						int accepted = 0;
+						List<String> rejectedReceiptHandles = new ArrayList<>(msgs.size());
+						try {
+							for ( Message msg : msgs ) {
+								try {
+									JsonNode tree = sqsObjectMapper.readTree(msg.body());
+									Object o = DatumJsonUtils.parseDatum(sqsObjectMapper, tree);
+									CompletableFuture<Object> f = new CompletableFuture<Object>();
+									if ( queue.offer(new WorkItem(o, f)) ) {
+										stats.increment(BasicCount.WorkQueueAdds);
+										f.thenAccept(r -> {
+											sqsDeleteMessage(msg.receiptHandle());
+										});
+										accepted++;
+									} else {
+										// adjust visibility to 0 to allow reprocessing
+										rejectedReceiptHandles.add(msg.receiptHandle());
+									}
+								} catch ( IOException e ) {
+									throw new RuntimeException(e);
 								}
-							} catch ( IOException e ) {
-								throw new RuntimeException(e);
 							}
-						}
-					} finally {
-						if ( !rejectedReceiptHandles.isEmpty() ) {
-							sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
-								List<ChangeMessageVisibilityBatchRequestEntry> entries = rejectedReceiptHandles
-										.stream().map(id -> {
-											return ChangeMessageVisibilityBatchRequestEntry.builder()
-													.id(UUID.randomUUID().toString()).receiptHandle(id)
-													.visibilityTimeout(0).build();
-										}).toList();
-								changeVizReq.queueUrl(sqsQueueUrl).entries(entries);
-							}).handle((changeVizResp, changeVizEx) -> {
-								if ( changeVizEx == null ) {
-									log.debug(
-											"Un-hid {} messages received from SQS queue but rejected by work queue.",
-											rejectedReceiptHandles.size());
-								} else {
-									Throwable t = changeVizEx.getCause();
-									log.warn(
-											"Failed to un-hide {} messages received from SQS queue but rejected by work queue:",
-											rejectedReceiptHandles.size(), t.toString());
-								}
-								return changeVizResp;
-							});
-						}
-						int rejected = msgs.size() - accepted;
-						if ( rejected > 0 && sleep < readSleepMaxMs ) {
-							sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
-							log.info(
-									"Increased read throttle from SQS queue to {}ms after {} work queue rejections.",
-									sleep, rejected);
-						} else if ( rejected < 1 && sleep > readSleepMinMs ) {
-							sleep = Math.max(sleep - readSleepThrottleStepMs, readSleepMinMs);
-							log.info(
-									"Decreased read throttle from SQS queue to {}ms after all {} work queue items accepted.",
-									sleep, accepted);
+						} finally {
+							if ( !rejectedReceiptHandles.isEmpty() ) {
+								sqsClient.changeMessageVisibilityBatch(changeVizReq -> {
+									List<ChangeMessageVisibilityBatchRequestEntry> entries = rejectedReceiptHandles
+											.stream().map(id -> {
+												return ChangeMessageVisibilityBatchRequestEntry.builder()
+														.id(UUID.randomUUID().toString())
+														.receiptHandle(id).visibilityTimeout(0).build();
+											}).toList();
+									changeVizReq.queueUrl(sqsQueueUrl).entries(entries);
+								}).handle((changeVizResp, changeVizEx) -> {
+									if ( changeVizEx == null ) {
+										log.debug(
+												"Un-hid {} messages received from SQS queue but rejected by work queue.",
+												rejectedReceiptHandles.size());
+									} else {
+										Throwable t = changeVizEx.getCause();
+										log.warn(
+												"Failed to un-hide {} messages received from SQS queue but rejected by work queue:",
+												rejectedReceiptHandles.size(), t.toString());
+									}
+									return changeVizResp;
+								});
+							}
+							int rejected = msgs.size() - accepted;
+							if ( rejected > 0 && sleep < readSleepMaxMs ) {
+								sleep = Math.min(sleep + readSleepThrottleStepMs, readSleepMaxMs);
+								log.info(
+										"Increased read throttle from SQS queue to {}ms after {} work queue rejections.",
+										sleep, rejected);
+							} else if ( rejected < 1 && sleep > readSleepMinMs ) {
+								sleep = Math.max(sleep - readSleepThrottleStepMs, readSleepMinMs);
+								log.info(
+										"Decreased read throttle from SQS queue to {}ms after all {} work queue items accepted.",
+										sleep, accepted);
+							}
 						}
 					}
 				} catch ( Exception ex ) {
@@ -1103,8 +1102,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * each received message that is rejected from the work queue, or to
 	 * decrease after successfully offering all messages to the work queue.
 	 *
-	 * @return the step amount, in milliseconds; defaults to
-	 *         {@link #DEFAULT_READ_REJECTION_SLEEP_MS
+	 * @return the step amount, in milliseconds; defaults to {@link
+	 * #DEFAULT_READ_REJECTION_SLEEP_MS
 	 */
 	public long getReadSleepThrottleStepMs() {
 		return readSleepThrottleStepMs;
