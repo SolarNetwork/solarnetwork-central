@@ -89,7 +89,9 @@ import net.solarnetwork.util.StatTracker;
  *
  * @author matt
  * @version 2.9
+ * @deprecated since 2.9, use {@link SqsDatumCollector}
  */
+@Deprecated
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
 		CacheEntryRemovedListener<Serializable, Serializable>, PingTest, ServiceLifecycleObserver,

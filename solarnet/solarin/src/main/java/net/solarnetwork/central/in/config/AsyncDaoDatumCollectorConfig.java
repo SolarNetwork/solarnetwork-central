@@ -48,6 +48,7 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 1.0
  */
+@SuppressWarnings("deprecation")
 @Profile("!datum-collector-sqs")
 @Configuration(proxyBeanMethods = false)
 public class AsyncDaoDatumCollectorConfig implements SolarInConfiguration {

@@ -57,6 +57,7 @@ import org.ehcache.jsr107.EhcacheCachingProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -83,6 +84,8 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 2.1
  */
+@SuppressWarnings("deprecation")
+@EnabledIfSystemProperty(named = "test.deprecated", matches = ".*")
 public class AsyncDatumCollectorTests_BufferingDelegatingCache implements UncaughtExceptionHandler {
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";

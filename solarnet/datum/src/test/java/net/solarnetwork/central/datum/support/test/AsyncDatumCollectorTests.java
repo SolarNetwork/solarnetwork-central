@@ -83,6 +83,7 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 2.1
  */
+@SuppressWarnings("deprecation")
 public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
