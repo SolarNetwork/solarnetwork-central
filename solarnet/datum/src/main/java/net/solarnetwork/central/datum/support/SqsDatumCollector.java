@@ -746,7 +746,7 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 				try {
 					ReceiveMessageResponse resp = sqsClient.receiveMessage(receiveMessageRequest).get();
 					if ( !resp.hasMessages() ) {
-						return;
+						continue;
 					}
 					List<Message> msgs = resp.messages();
 					stats.increment(BasicCount.SqsQueueReceived, msgs.size());
@@ -1103,8 +1103,8 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 	 * each received message that is rejected from the work queue, or to
 	 * decrease after successfully offering all messages to the work queue.
 	 *
-	 * @return the step amount, in milliseconds; defaults to {@link
-	 * #DEFAULT_READ_REJECTION_SLEEP_MS
+	 * @return the step amount, in milliseconds; defaults to
+	 *         {@link #DEFAULT_READ_REJECTION_SLEEP_MS
 	 */
 	public long getReadSleepThrottleStepMs() {
 		return readSleepThrottleStepMs;
