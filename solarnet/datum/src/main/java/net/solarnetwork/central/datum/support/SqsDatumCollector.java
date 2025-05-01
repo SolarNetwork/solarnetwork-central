@@ -451,6 +451,30 @@ public class SqsDatumCollector implements DatumWriteOnlyDao, PingTest, ServiceLi
 		}
 		final DatumWriterThread[] writers = this.writerThreads;
 		final QueueReaderThread[] readers = this.readerThreads;
+		int writersAlive = 0;
+		int readersAlive = 0;
+		if ( writeEnabled ) {
+			if ( writers != null ) {
+				for ( DatumWriterThread t : writers ) {
+					if ( t.isAlive() ) {
+						writersAlive++;
+					}
+				}
+			}
+			if ( readers != null ) {
+				for ( QueueReaderThread t : readers ) {
+					if ( t.isAlive() ) {
+						readersAlive++;
+					}
+				}
+			}
+			if ( writersAlive < writers.length || readersAlive < readers.length ) {
+				return new PingTestResult(false,
+						String.format("Not all threads running: %d/%d writers, %d/%d readers.",
+								writersAlive, writers.length, readersAlive, readers.length),
+						statMap);
+			}
+		}
 		return new PingTestResult(true,
 				String.format("Processed %d datum using %d writers, %d readers.", recvCount,
 						writers != null ? writers.length : 0, readers != null ? readers.length : 0),
