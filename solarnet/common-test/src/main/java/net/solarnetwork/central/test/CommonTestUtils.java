@@ -27,6 +27,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hamcrest.Description;
@@ -39,7 +41,7 @@ import net.solarnetwork.util.ClassUtils;
  * Common test utilities.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public final class CommonTestUtils {
 
@@ -286,6 +288,50 @@ public final class CommonTestUtils {
 		} catch ( Exception e ) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * Generate a basic ASCII table structure for a map.
+	 *
+	 * @param map
+	 *        the map
+	 * @param keyName
+	 *        the key header column name
+	 * @param valName
+	 *        the value header column name
+	 * @return the formatted table
+	 */
+	public static String basicTable(Map<?, ?> map, String keyName, String valName) {
+		if ( map == null || map.isEmpty() ) {
+			return null;
+		}
+		int keyWidth = keyName != null ? keyName.length() : 0;
+		int valWidth = valName != null ? valName.length() : 0;
+		boolean valRightJustified = false;
+		final Map<String, String> dispMap = new LinkedHashMap<>(map.size());
+		for ( Map.Entry<?, ?> e : map.entrySet() ) {
+			String k = e.getKey().toString();
+			String v = e.getValue().toString();
+			keyWidth = Math.max(keyWidth, k.length());
+			valWidth = Math.max(valWidth, v.length());
+			dispMap.put(k, v);
+			if ( !valRightJustified && e.getValue() instanceof Number ) {
+				valRightJustified = true;
+			}
+		}
+		final String tmpl = "%-" + keyWidth + "s %" + (valRightJustified ? "" : "-") + valWidth + "s\n";
+		StringBuilder buf = new StringBuilder(256);
+		if ( keyName != null && valName != null && !keyName.isBlank() && !valName.isBlank() ) {
+			buf.append(String.format(tmpl, keyName, valName));
+			for ( int i = 0, len = keyWidth + 1 + valWidth; i < len; i++ ) {
+				buf.append('-');
+			}
+			buf.append('\n');
+		}
+		for ( Map.Entry<String, String> e : dispMap.entrySet() ) {
+			buf.append(String.format(tmpl, e.getKey(), e.getValue()));
+		}
+		return buf.toString();
 	}
 
 }

@@ -130,6 +130,11 @@ subprojects {
 			// the following are to pick up security fixes in transitive dependencies
 			force "commons-io:commons-io:${commonsIoVersion}"
 	  	}
+	  	resolutionStrategy.eachDependency {
+	  		if (it.requested.group == 'software.amazon.awssdk') {
+	  			it.useVersion "${awsSdk2Version}"
+	  		}
+		}
 	}
 
 	// Disable JavaDoc doclint on Java 8. It's annoying.

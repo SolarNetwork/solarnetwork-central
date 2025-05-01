@@ -38,12 +38,10 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -79,7 +77,7 @@ import net.solarnetwork.test.Assertion;
  * Test cases for the {@link DaoDataCollectorBiz} class.
  * 
  * @author matt
- * @version 3.2
+ * @version 3.3
  */
 public class DaoDataCollectorBizTests {
 
@@ -92,9 +90,7 @@ public class DaoDataCollectorBizTests {
 	private SolarLocationDao locationDao;
 	private SolarNodeDao nodeDao;
 	private DatumMetadataBiz datumMetadataBiz;
-	private Cache<Serializable, Serializable> datumCache;
 
-	@SuppressWarnings("unchecked")
 	@Before
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
@@ -102,10 +98,8 @@ public class DaoDataCollectorBizTests {
 		datumMetadataBiz = EasyMock.createMock(DatumMetadataBiz.class);
 		locationDao = EasyMock.createMock(SolarLocationDao.class);
 		nodeDao = EasyMock.createMock(SolarNodeDao.class);
-		datumCache = EasyMock.createMock(Cache.class);
-		biz = new DaoDataCollectorBiz();
+		biz = new DaoDataCollectorBiz(datumDao);
 		biz.setDatumMetadataBiz(datumMetadataBiz);
-		biz.setDatumDao(datumDao);
 		biz.setMetaDao(metaDao);
 		biz.setSolarLocationDao(locationDao);
 		biz.setSolarNodeDao(nodeDao);
@@ -113,11 +107,11 @@ public class DaoDataCollectorBizTests {
 
 	@After
 	public void teardown() {
-		EasyMock.verify(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao, datumCache);
+		EasyMock.verify(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao, datumCache);
+		EasyMock.replay(datumDao, metaDao, datumMetadataBiz, locationDao, nodeDao);
 	}
 
 	@Test
@@ -171,28 +165,7 @@ public class DaoDataCollectorBizTests {
 		d.setSamples(new DatumSamples());
 		d.getSamples().putInstantaneousSampleValue("foo", 1);
 
-		expect(datumDao.store(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
-
-		// WHEN
-		replayAll();
-		SecurityUtils.becomeNode(d.getNodeId());
-		biz.postGeneralNodeDatum(singleton(d));
-
-		// THEN
-	}
-
-	@Test
-	public void postGeneralNodeDatum_datumCache() {
-		// GIVEN
-		biz.setDatumCache(datumCache);
-		GeneralNodeDatum d = new GeneralNodeDatum();
-		d.setNodeId(UUID.randomUUID().getMostSignificantBits());
-		d.setSourceId(TEST_SOURCE_ID);
-		d.setCreated(Instant.now());
-		d.setSamples(new DatumSamples());
-		d.getSamples().putInstantaneousSampleValue("foo", 1);
-
-		datumCache.put(d.getId(), d);
+		expect(datumDao.persist(d)).andReturn(new DatumPK(UUID.randomUUID(), d.getCreated()));
 
 		// WHEN
 		replayAll();
@@ -220,41 +193,6 @@ public class DaoDataCollectorBizTests {
 		// save datum
 		Capture<DatumEntity> datumCaptor = new Capture<>();
 		expect(datumDao.store(capture(datumCaptor))).andReturn(datumPk);
-
-		// WHEN
-		replayAll();
-		SecurityUtils.becomeNode(meta.getObjectId());
-		biz.postStreamDatum(singleton(d));
-
-		// THEN
-		StreamMetadataCriteria metaCriteria = metaCriteriaCaptor.getValue();
-		assertThat("Meta criteria stream ID", metaCriteria.getStreamId(), is(equalTo(d.getStreamId())));
-
-		DatumEntity entity = datumCaptor.getValue();
-		assertThat("Datum ID copied", entity.getId(), is(equalTo(datumPk)));
-		assertThat("Datum properties copied", entity.getProperties(), is(equalTo(p)));
-	}
-
-	@Test
-	public void postStreamDatum_kindNotCached_datumCache() {
-		// GIVEN
-		biz.setDatumCache(datumCache);
-
-		DatumProperties p = DatumProperties.propertiesOf(decimalArray("1.23"), decimalArray("2.34"),
-				new String[] { "a" }, new String[] { "b" });
-		BasicStreamDatum d = new BasicStreamDatum(UUID.randomUUID(), Instant.now(), p);
-		BasicObjectDatumStreamMetadata meta = new BasicObjectDatumStreamMetadata(d.getStreamId(),
-				"Etc/UTC", ObjectDatumKind.Node, 1L, "test", null, new String[] { "a" },
-				new String[] { "b" }, new String[] { "c" }, null);
-		DatumPK datumPk = new DatumPK(d.getStreamId(), d.getTimestamp());
-
-		// lookup stream metadata
-		Capture<StreamMetadataCriteria> metaCriteriaCaptor = new Capture<>();
-		expect(metaDao.findStreamMetadata(capture(metaCriteriaCaptor))).andReturn(meta);
-
-		// add datum to cache
-		Capture<DatumEntity> datumCaptor = new Capture<>();
-		datumCache.put(eq(datumPk), capture(datumCaptor));
 
 		// WHEN
 		replayAll();

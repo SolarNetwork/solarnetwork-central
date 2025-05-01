@@ -80,6 +80,22 @@ app:
       temp-max-entries: 100
       heap-max-entries: 0
       disk-max-size-mb: 2000
+    sqs-collector:
+      region: "us-west-2"
+      queue-name: "datum-queue"
+      url: "https://sqs.us-west-2.amazonaws.com/1234567890/datum-queue"
+      access-key: "ACCESS_KEY_HERE"
+      secret-key: "SECRET_KEY_HERE"
+      work-queue-size: 100
+      work-item-max-wait: "5s"
+      read-concurrency: 1
+      write-concurrency: 2
+      read-max-message-count: 10
+      read-max-wait-time: "20s"
+      read-sleep-min: "0s"
+      read-sleep-max: "30s"
+      read-sleep-throttle-step: "1s"
+      shutdown-wait: "30s"
   solarqueue:
     connection:
       uid: "SolarIn-@@SOLAR_IN_ID@@"

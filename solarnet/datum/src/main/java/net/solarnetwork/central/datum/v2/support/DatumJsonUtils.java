@@ -39,8 +39,11 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import net.solarnetwork.central.datum.domain.GeneralLocationDatum;
+import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.v2.dao.AggregateDatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
@@ -54,15 +57,30 @@ import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * Utilities for Datum JSON processing.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  * @since 2.8
  */
 public final class DatumJsonUtils {
+
+	/**
+	 * The JSON field name for an "object type".
+	 *
+	 * @since 2.5
+	 */
+	public static final String OBJECT_TYPE_FIELD = "__type__";
+
+	/**
+	 * The {@link GeneralNodeDatum} or {@link GeneralLocationDatum} type.
+	 *
+	 * @since 2.5
+	 */
+	public static final String GENERAL_NODE_DATUM_TYPE = "datum";
 
 	private DatumJsonUtils() {
 		// don't construct me
@@ -1245,6 +1263,97 @@ public final class DatumJsonUtils {
 		ObjectMapper mapper = JsonUtils.newDatumObjectMapper(jsonFactory);
 		mapper.registerModule(DATUM_MODULE);
 		return mapper;
+	}
+
+	/**
+	 * Get a string field value.
+	 *
+	 * @param node
+	 *        the JSON node with the field to extract the value of
+	 * @param fieldName
+	 *        the name of the field to extract the value of
+	 * @param placeholder
+	 *        a fallback value to return if the field does not exist
+	 * @return the field value as a string, or {@code placeholder} if the field
+	 *         does not exist
+	 * @since 2.5
+	 */
+	public static String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
+		JsonNode child = node.get(fieldName);
+		return (child == null ? placeholder : child.asText());
+	}
+
+	/**
+	 * Parse a datum from a JSON tree.
+	 *
+	 * <p>
+	 * This method inspects the node and returns a {@link StreamDatum} or a
+	 * {@link Datum} depending on the structure of the node.
+	 * </p>
+	 *
+	 * @param mapper
+	 *        the mapper to use
+	 * @param node
+	 *        the JSON node to parse
+	 * @return the datum instance, or {@code null} if the structure is not
+	 *         recognized
+	 * @throws IOException
+	 *         if a parsing error occurs
+	 * @since 2.5
+	 */
+	public static Object parseDatum(ObjectMapper mapper, JsonNode node) throws IOException {
+		if ( node.isArray() ) {
+			return parseStreamDatum(mapper, node);
+		} else {
+			String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
+			if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
+					|| nodeType.isEmpty() ) {
+				return parseGeneralDatum(mapper, node);
+			} else {
+				return null;
+			}
+		}
+	}
+
+	/**
+	 * Parse a {@link StreamDatum} from a JSON tree.
+	 *
+	 * @param mapper
+	 *        the mapper to use
+	 * @param node
+	 *        the node to parse
+	 * @return the datum
+	 * @throws IOException
+	 *         if the node cannot be parsed
+	 * @since 2.5
+	 */
+	public static StreamDatum parseStreamDatum(ObjectMapper mapper, JsonNode node) throws IOException {
+		try {
+			return mapper.treeToValue(node, StreamDatum.class);
+		} catch ( IOException e ) {
+			throw new IOException("Unable to parse JSON into StreamDatum: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Parse a {@link net.solarnetwork.domain.datum.Datum} from a JSON tree.
+	 *
+	 * @param mapper
+	 *        the mapper to use
+	 * @param node
+	 *        the node to parse
+	 * @return the datum
+	 * @throws IOException
+	 *         if the node cannot be parsed
+	 * @since 2.5
+	 */
+	public static net.solarnetwork.domain.datum.Datum parseGeneralDatum(ObjectMapper mapper,
+			JsonNode node) throws IOException {
+		try {
+			return mapper.treeToValue(node, net.solarnetwork.domain.datum.Datum.class);
+		} catch ( IOException e ) {
+			throw new IOException("Unable to parse JSON into GeneralDatum: " + e.getMessage(), e);
+		}
 	}
 
 }

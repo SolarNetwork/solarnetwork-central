@@ -50,6 +50,7 @@ dependencies {
 	implementation "software.amazon.awssdk:netty-nio-client:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3:${awsSdk2Version}"
 	implementation "software.amazon.awssdk:s3-transfer-manager:${awsSdk2Version}"
+	implementation "software.amazon.awssdk:sqs:${awsSdk2Version}"
 	
 	// SolarNetwork
 	api 'net.solarnetwork.common:net.solarnetwork.common.s3:3.2.0'

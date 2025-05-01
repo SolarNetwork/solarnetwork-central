@@ -21,6 +21,7 @@ The following Spring runtime profiles are available:
 | `dogtag` | Node PKI support via Dogtag. See [PkiDogtagConfig][PkiDogtagConfig]. |
 | `mqtt` | Enables integration with SolarIn/MQTT. See [MqttDataCollectorConfig][MqttDataCollectorConfig]. |
 | `no-solarflux` | Disable SolarFlux MQTT integration when `mqtt` profile is active. |
+| `sqs-datum-collector` | Use the SQS datum collector instead of the in-process one. |
 
 For example, in a production deployment the `SPRING_PROFILES_ACTIVE` environment variable can be
 configured as

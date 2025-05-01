@@ -132,7 +132,7 @@ public interface DatumEntityDao extends GenericDao<DatumEntity, DatumPK>,
 	 * @since 1.1
 	 */
 	@Override
-	DatumPK store(DatumEntity datum);
+	DatumPK store(StreamDatum datum);
 
 	/**
 	 * Store a general node datum, saving as a datum entity, treating as input

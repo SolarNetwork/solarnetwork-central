@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.in.web;
 
+import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.GENERAL_NODE_DATUM_TYPE;
+import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.OBJECT_TYPE_FIELD;
+import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.getStringFieldValue;
+import static net.solarnetwork.central.datum.v2.support.DatumJsonUtils.parseDatum;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -64,21 +68,15 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * JSON implementation of bulk upload service.
  *
  * @author matt
- * @version 3.5
+ * @version 3.6
  */
 @Controller
 @RequestMapping(value = { "/solarin/bulkCollector.do", "/solarin/u/bulkCollector.do" },
 		consumes = "application/json")
 public class BulkJsonDataCollector extends AbstractDataCollector {
 
-	/** The JSON field name for an "object type". */
-	public static final String OBJECT_TYPE_FIELD = "__type__";
-
 	/** The InstructionStatus type. */
 	public static final String INSTRUCTION_STATUS_TYPE = "InstructionStatus";
-
-	/** The {@link GeneralNodeDatum} or {@link GeneralLocationDatum} type. */
-	public static final String GENERAL_NODE_DATUM_TYPE = "datum";
 
 	/**
 	 * The JSON field name for a location ID on a {@link GeneralLocationDatum}
@@ -261,44 +259,17 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 	}
 
 	private Object handleNode(JsonNode node) {
-		if ( node.isArray() ) {
-			return handleStreamDatum(node);
-		} else {
-			String nodeType = getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE);
-			JsonNode instrId = node.get(INSTRUCTION_ID_FIELD);
-			if ( (instrId != null && instrId.isNumber())
-					|| INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(nodeType) ) {
-				return handleInstructionStatus(node);
-			} else if ( GENERAL_NODE_DATUM_TYPE.equalsIgnoreCase(nodeType) || nodeType == null
-					|| nodeType.isEmpty() ) {
-				return handleGeneralDatum(node);
-			} else {
-				return null;
-			}
+		JsonNode instrId = node.get(INSTRUCTION_ID_FIELD);
+		if ( (instrId != null && instrId.isNumber()) || INSTRUCTION_STATUS_TYPE.equalsIgnoreCase(
+				getStringFieldValue(node, OBJECT_TYPE_FIELD, GENERAL_NODE_DATUM_TYPE)) ) {
+			return handleInstructionStatus(node);
 		}
-	}
-
-	private String getStringFieldValue(JsonNode node, String fieldName, String placeholder) {
-		JsonNode child = node.get(fieldName);
-		return (child == null ? placeholder : child.asText());
-	}
-
-	private StreamDatum handleStreamDatum(JsonNode node) {
 		try {
-			return objectMapper.treeToValue(node, StreamDatum.class);
+			return parseDatum(objectMapper, node);
 		} catch ( IOException e ) {
-			log.warn("Unable to parse JSON {} into StreamDatum: {}", node, e.getMessage());
+			log.warn("Unable to parse JSON {}: {}", node, e.getMessage());
 		}
 		return null;
-	}
-
-	private Datum handleGeneralDatum(JsonNode node) {
-		try {
-			return objectMapper.treeToValue(node, Datum.class);
-		} catch ( IOException e ) {
-			log.warn("Unable to parse JSON {} into GeneralDatum: {}", node, e.getMessage());
-			return null;
-		}
 	}
 
 	private Instruction handleInstructionStatus(JsonNode node) {
