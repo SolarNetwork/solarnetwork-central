@@ -48,9 +48,9 @@ import javax.cache.Caching;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +119,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		datumDao = new TestDatumDao();
 		txManager = new TestTxManager();
@@ -147,7 +147,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		collector.serviceDidStartup();
 	}
 
-	@After
+	@AfterEach
 	public void teardown() throws Throwable {
 		collector.shutdownAndWait();
 		try {

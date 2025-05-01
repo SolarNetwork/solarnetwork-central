@@ -108,7 +108,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
  * @version 1.0
  */
 @ExtendWith(MockitoExtension.class)
-@EnabledIfSystemProperty(named = "sqs", matches = ".*")
+@EnabledIfSystemProperty(named = "test.sqs", matches = ".*")
 public class SqsDatumCollector_IntegrationTests implements UncaughtExceptionHandler {
 
 	private static SqsProperties SQS_PROPS;
