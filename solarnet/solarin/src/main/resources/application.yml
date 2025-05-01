@@ -96,6 +96,7 @@ app:
       read-sleep-max: "30s"
       read-sleep-throttle-step: "1s"
       shutdown-wait: "30s"
+      stat-frequency: 200
   solarqueue:
     connection:
       uid: "SolarIn-@@SOLAR_IN_ID@@"
