@@ -22,7 +22,6 @@
 
 package net.solarnetwork.central.oscp.fp.config;
 
-import java.time.Duration;
 import java.util.Arrays;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -40,83 +39,17 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import net.solarnetwork.central.common.config.SolarNetCommonConfiguration;
+import net.solarnetwork.central.support.HttpClientSettings;
 import net.solarnetwork.web.jakarta.support.LoggingHttpRequestInterceptor;
 
 /**
  * HTTP client configuration.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 @Configuration(proxyBeanMethods = false)
 public class HttpClientConfig {
-
-	/** Settings for the HTTP client. */
-	public static class HttpClientSettings {
-
-		/** The HTTP client connect timeout. */
-		private Duration connectTimeout = Duration.ofSeconds(10);
-		private Duration connectionRequestTimeout = Duration.ofSeconds(15);
-		private Duration socketTimeout = Duration.ofSeconds(20);
-
-		/**
-		 * Get the connection timeout.
-		 *
-		 * @return the timeout
-		 */
-		public Duration getConnectTimeout() {
-			return connectTimeout;
-		}
-
-		/**
-		 * Set the connection timeout.
-		 *
-		 * @param connectTimeout
-		 *        the timeout to set
-		 */
-		public void setConnectTimeout(Duration connectTimeout) {
-			this.connectTimeout = connectTimeout;
-		}
-
-		/**
-		 * Get the connection pool borrow timeout.
-		 *
-		 * @return the timeout
-		 */
-		public Duration getConnectionRequestTimeout() {
-			return connectionRequestTimeout;
-		}
-
-		/**
-		 * Set the connection pool borrow timeout.
-		 *
-		 * @param connectionRequestTimeout
-		 *        the connectionRequestTimeout to set
-		 */
-		public void setConnectionRequestTimeout(Duration connectionRequestTimeout) {
-			this.connectionRequestTimeout = connectionRequestTimeout;
-		}
-
-		/**
-		 * Get the socket timeout.
-		 *
-		 * @return the timeout
-		 */
-		public Duration getSocketTimeout() {
-			return socketTimeout;
-		}
-
-		/**
-		 * Set the socket timeout.
-		 *
-		 * @param socketTimeout
-		 *        the timeout to set
-		 */
-		public void setSocketTimeout(Duration socketTimeout) {
-			this.socketTimeout = socketTimeout;
-		}
-
-	}
 
 	@Bean
 	@ConfigurationProperties(prefix = "app.http.client.settings")
@@ -127,7 +60,8 @@ public class HttpClientConfig {
 	@Bean
 	public RequestConfig httpRequestConfig(HttpClientSettings settings) {
 		RequestConfig config = RequestConfig.custom()
-				.setConnectionRequestTimeout(Timeout.of(settings.connectionRequestTimeout)).build();
+				.setConnectionRequestTimeout(Timeout.of(settings.getConnectionRequestTimeout()))
+				.setConnectionKeepAlive(Timeout.of(settings.getConnectionKeepAlive())).build();
 		return config;
 	}
 
@@ -135,8 +69,11 @@ public class HttpClientConfig {
 	@Bean
 	public PoolingHttpClientConnectionManager poolingConnectionManager(HttpClientSettings settings) {
 		ConnectionConfig config = ConnectionConfig.custom()
-				.setConnectTimeout(Timeout.of(settings.connectTimeout))
-				.setSocketTimeout(Timeout.of(settings.socketTimeout)).build();
+				.setConnectTimeout(Timeout.of(settings.getConnectionKeepAlive()))
+				.setTimeToLive(Timeout.of(settings.getConnectionTimeToLive()))
+				.setSocketTimeout(Timeout.of(settings.getSocketTimeout()))
+				.setValidateAfterInactivity(Timeout.of(settings.getConnectionValidateAfterInactivity()))
+				.build();
 		var poolingConnectionManager = new PoolingHttpClientConnectionManager();
 		poolingConnectionManager.setDefaultConnectionConfig(config);
 		return poolingConnectionManager;
