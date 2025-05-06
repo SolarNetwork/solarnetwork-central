@@ -1,21 +1,21 @@
 /* ==================================================================
  * ContentCachingResponseWrapper.java - 3/05/2022 10:46:05 am
- * 
+ *
  * Copyright 2022 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,20 +42,20 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
  * content written to the {@linkplain #getOutputStream() output stream}, and
  * allows this content to be retrieved via a {@link #getContentAsByteArray()
  * byte array}.
- * 
+ *
  * <p>
  * Note that the content is copied to the underlying servlet stream <em>as
  * well</em> as the cached content buffer. This wrapper supports compressing the
  * cached content with gzip.
  * </p>
- * 
+ *
  * <p>
  * Originally based on
  * {@link org.springframework.web.util.ContentCachingResponseWrapper}.
  * </p>
- * 
+ *
  * @author matt
- * @version 1.3
+ * @version 1.4
  * @since 1.2
  */
 public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
@@ -71,7 +71,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 	/**
 	 * Create a new ContentCachingResponseWrapper for the given servlet
 	 * response.
-	 * 
+	 *
 	 * @param response
 	 *        the original servlet response
 	 * @param gzip
@@ -211,7 +211,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	/**
 	 * Test if the cached content has been compressed with gzip.
-	 * 
+	 *
 	 * @return {@literal true} if the cached content is compressed with gzip
 	 */
 	public boolean isContentGzip() {
@@ -220,7 +220,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	/**
 	 * Get the HTTP headers.
-	 * 
+	 *
 	 * @return the headers
 	 */
 	public HttpHeaders getHttpHeaders() {
@@ -281,7 +281,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 				if ( !cacheStreamFinished && outputStreamException == null ) {
 					cacheStream.flush();
 				}
-				super.flush();
+				this.os.flush();
 			} catch ( IOException e ) {
 				if ( outputStreamException == null ) {
 					outputStreamException = e;
@@ -294,7 +294,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 		public void close() throws IOException {
 			try {
 				finishContentStream();
-				super.close();
+				this.os.close();
 			} catch ( IOException e ) {
 				if ( outputStreamException == null ) {
 					outputStreamException = e;

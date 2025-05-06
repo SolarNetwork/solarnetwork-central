@@ -23,6 +23,7 @@
 package net.solarnetwork.central.common.config;
 
 import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.AUDIT;
+import static net.solarnetwork.central.common.config.SolarNetCommonConfiguration.USER_SERVICE_AUDITOR;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,11 +40,8 @@ import net.solarnetwork.central.common.dao.jdbc.JdbcUserServiceAuditor;
  * @version 1.0
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(JdbcUserServiceAuditorConfig.USER_SERVICE_AUDITOR)
+@Profile(USER_SERVICE_AUDITOR)
 public class JdbcUserServiceAuditorConfig {
-
-	/** A qualifier for user service auditor. */
-	public static final String USER_SERVICE_AUDITOR = "user-service-auditor";
 
 	@Autowired
 	private DataSource dataSource;
