@@ -23,20 +23,16 @@
 package net.solarnetwork.central.user.event.dest.sqs;
 
 import java.util.Map;
+import net.solarnetwork.central.support.SqsProperties;
 import net.solarnetwork.util.ClassUtils;
 
 /**
  * Service properties for the SQS node event hook destination.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class SqsDestinationProperties {
-
-	private String region;
-	private String queueName;
-	private String accessKey;
-	private String secretKey;
+public class SqsDestinationProperties extends SqsProperties {
 
 	/**
 	 * Create an instance from service properties.
@@ -54,96 +50,6 @@ public class SqsDestinationProperties {
 		SqsDestinationProperties props = new SqsDestinationProperties();
 		ClassUtils.setBeanProperties(props, serviceProperties, true);
 		return props;
-	}
-
-	/**
-	 * Test if the configuration appears valid.
-	 * 
-	 * <p>
-	 * This simply tests for non-null property values.
-	 * </p>
-	 * 
-	 * @return {@literal true} if the configuration appears valid
-	 */
-	public boolean isValid() {
-		return (region != null && !region.trim().isEmpty() && queueName != null
-				&& !queueName.trim().isEmpty() && accessKey != null && secretKey != null);
-	}
-
-	/**
-	 * Get the SQS queue region.
-	 * 
-	 * @return the SQS queue region
-	 */
-	public String getRegion() {
-		return region;
-	}
-
-	/**
-	 * Set the SQS queue region.
-	 * 
-	 * @param region
-	 *        the SQS queue region
-	 */
-	public synchronized void setRegion(String region) {
-		this.region = region;
-	}
-
-	/**
-	 * Get the SQS queue name.
-	 * 
-	 * @return the queue name
-	 */
-	public String getQueueName() {
-		return queueName;
-	}
-
-	/**
-	 * Set the SQS queue name.
-	 * 
-	 * @param queueName
-	 *        the queue name to set
-	 */
-	public void setQueueName(String queueName) {
-		this.queueName = queueName;
-	}
-
-	/**
-	 * Get the AWS access key.
-	 * 
-	 * @return the access key
-	 */
-	public String getAccessKey() {
-		return accessKey;
-	}
-
-	/**
-	 * Set the AWS access key.
-	 * 
-	 * @param accessKey
-	 *        the key to use
-	 */
-	public void setAccessKey(String accessKey) {
-		this.accessKey = accessKey;
-	}
-
-	/**
-	 * Get the AWS secret key.
-	 * 
-	 * @return the AWS secret key
-	 */
-	public String getSecretKey() {
-		return secretKey;
-	}
-
-	/**
-	 * Set the AWS secret key.
-	 * 
-	 * @param secretKey
-	 *        the AWS secret key to use
-	 */
-	public void setSecretKey(String secretKey) {
-		this.secretKey = secretKey;
 	}
 
 }

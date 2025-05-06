@@ -27,12 +27,13 @@ import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * API for a write-only datum DAO.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface DatumWriteOnlyDao
 		extends GenericWriteOnlyDao<GeneralObjectDatum<? extends GeneralObjectDatumKey>, DatumPK> {
@@ -44,7 +45,7 @@ public interface DatumWriteOnlyDao
 	 *        the datum to store
 	 * @return the stored primary key
 	 */
-	DatumPK store(DatumEntity datum);
+	DatumPK store(StreamDatum datum);
 
 	/**
 	 * Store a datum.

@@ -48,9 +48,10 @@ import javax.cache.Caching;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -63,15 +64,14 @@ import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatum;
 import net.solarnetwork.central.datum.domain.GeneralObjectDatumKey;
 import net.solarnetwork.central.datum.support.AsyncDatumCollector;
-import net.solarnetwork.central.datum.v2.dao.DatumEntity;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.domain.BasePK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.JCacheFactoryBean;
-import net.solarnetwork.dao.Entity;
 import net.solarnetwork.domain.datum.Datum;
 import net.solarnetwork.domain.datum.DatumSamples;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.util.StatTracker;
 
@@ -81,6 +81,8 @@ import net.solarnetwork.util.StatTracker;
  * @author matt
  * @version 2.1
  */
+@SuppressWarnings("deprecation")
+@EnabledIfSystemProperty(named = "test.deprecated", matches = ".*")
 public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements UncaughtExceptionHandler {
 
 	private static final String TEST_CACHE_NAME = "test-datum-buffer-persistence";
@@ -117,7 +119,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		datumDao = new TestDatumDao();
 		txManager = new TestTxManager();
@@ -145,7 +147,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		collector.serviceDidStartup();
 	}
 
-	@After
+	@AfterEach
 	public void teardown() throws Throwable {
 		collector.shutdownAndWait();
 		try {
@@ -177,12 +179,12 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		return d;
 	}
 
-	private void doStore(Entity<?> o) {
+	private void doStore(Object o) {
 		try {
 			// simulate taking some time
 			long time = 20;
 			if ( RNG.nextDouble() > 0.96 ) {
-				log.info("Consumer: random long thread sleep {}...", o.getId());
+				log.info("Consumer: random long thread sleep {}...", o);
 				time = 200;
 			}
 			Thread.sleep(time);
@@ -190,7 +192,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 			// ignore
 		}
 		stored.add(o);
-		log.debug("STORED: |{}", o.getId());
+		log.debug("STORED: |{}", o);
 	}
 
 	private void thenBufferStatsEquals(int size, int watermark, int lag) {
@@ -341,7 +343,7 @@ public class AsyncDatumCollectorTests_BufferingDelegatingCache2 implements Uncau
 		}
 
 		@Override
-		public DatumPK store(DatumEntity datum) {
+		public DatumPK store(StreamDatum datum) {
 			doStore(datum);
 			return null;
 		}

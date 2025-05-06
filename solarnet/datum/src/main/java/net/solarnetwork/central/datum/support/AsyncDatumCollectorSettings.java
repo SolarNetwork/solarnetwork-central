@@ -26,8 +26,10 @@ package net.solarnetwork.central.datum.support;
  * Settings for the AsyncDatumCollector.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
+ * @deprecated since 1.3
  */
+@Deprecated
 public class AsyncDatumCollectorSettings {
 
 	private int threads = AsyncDatumCollector.DEFAULT_CONCURRENCY;

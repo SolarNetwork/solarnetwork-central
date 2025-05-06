@@ -44,6 +44,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
@@ -141,12 +142,13 @@ import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
+import net.solarnetwork.domain.datum.StreamDatum;
 
 /**
  * {@link JdbcOperations} based implementation of {@link DatumEntityDao}.
  *
  * @author matt
- * @version 2.9
+ * @version 2.10
  * @since 3.8
  */
 public class JdbcDatumEntityDao
@@ -247,11 +249,16 @@ public class JdbcDatumEntityDao
 	}
 
 	@Override
-	public DatumPK store(DatumEntity datum) {
-		StoreDatum sql = new StoreDatum(datum);
+	public DatumPK store(StreamDatum datum) {
+		DatumEntity entity = switch (datum) {
+			case DatumEntity d -> d;
+			default -> new DatumEntity(datum.getStreamId(), datum.getTimestamp(), Instant.now(),
+					datum.getProperties());
+		};
+		StoreDatum sql = new StoreDatum(entity);
 		return jdbcTemplate.execute(sql, cs -> {
 			cs.execute();
-			return datum.getId();
+			return entity.getId();
 		});
 	}
 
@@ -748,7 +755,7 @@ public class JdbcDatumEntityDao
 		if ( combining != null ) {
 			sqlProps.put(PARAM_COMBINING, combining);
 		}
-
+		
 		// get query name to execute
 		String query = getQueryForFilter(filter);
 		*/

@@ -63,6 +63,7 @@ import net.solarnetwork.central.datum.v2.domain.DatumPK;
 import net.solarnetwork.central.datum.v2.domain.ObjectDatumPK;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
 import net.solarnetwork.central.support.LinkedHashSetBlockingQueue;
+import net.solarnetwork.domain.datum.StreamDatum;
 import net.solarnetwork.service.PingTest;
 import net.solarnetwork.service.PingTestResult;
 import net.solarnetwork.service.ServiceLifecycleObserver;
@@ -87,8 +88,10 @@ import net.solarnetwork.util.StatTracker;
  * </p>
  *
  * @author matt
- * @version 2.8
+ * @version 2.9
+ * @deprecated since 2.9, use {@link SqsDatumCollector}
  */
+@Deprecated
 public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializable, Serializable>,
 		CacheEntryUpdatedListener<Serializable, Serializable>,
 		CacheEntryRemovedListener<Serializable, Serializable>, PingTest, ServiceLifecycleObserver,
@@ -351,9 +354,13 @@ public class AsyncDatumCollector implements CacheEntryCreatedListener<Serializab
 	}
 
 	@Override
-	public DatumPK store(DatumEntity datum) {
-		DatumPK id = requireNonNullArgument(datum.getId(), "entity.id");
-		datumCache.put(id, datum);
+	public DatumPK store(StreamDatum datum) {
+		DatumPK id = switch (datum) {
+			case DatumEntity d -> requireNonNullArgument(d.getId(), "entity.id");
+			default -> new DatumPK(requireNonNullArgument(datum.getStreamId(), "datum.streamId"),
+					requireNonNullArgument(datum.getTimestamp(), "datum.timestamp"));
+		};
+		datumCache.put(id, (Serializable) datum);
 		return id;
 	}
 

@@ -105,7 +105,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
  * @author matt
  * @version 2.0
  */
-@EnabledIfSystemProperty(named = "s3", matches = ".*")
+@EnabledIfSystemProperty(named = "test.s3", matches = ".*")
 public class S3DatumExportDestinationServiceTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
