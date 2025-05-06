@@ -38,8 +38,13 @@ import software.amazon.awssdk.services.sqs.SqsAsyncClientBuilder;
  */
 public class SqsDatumCollectorSettings extends SqsProperties {
 
+	/** The {@code statFrequency} property default value. */
+	public static final int DEFAULT_STAT_FREQUENCY = 200;
+
+	/** The {@code workQueueSize} property default value. */
 	public static final int DEFUALT_WORK_QUEUE_SIZE = 100;
 
+	private int statFrequency = DEFAULT_STAT_FREQUENCY;
 	private int workQueueSize = DEFUALT_WORK_QUEUE_SIZE;
 	private Duration workItemMaxWait = Duration
 			.ofMillis(SqsDatumCollector.DEFAULT_WORK_ITEM_MAX_WAIT_MS);
@@ -70,6 +75,25 @@ public class SqsDatumCollectorSettings extends SqsProperties {
 					StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)));
 		}
 		return builder.build();
+	}
+
+	/**
+	 * Get the statistic frequency.
+	 *
+	 * @return the frequency; defaults to {@link #DEFAULT_STAT_FREQUENCY}
+	 */
+	public int getStatFrequency() {
+		return statFrequency;
+	}
+
+	/**
+	 * Set the statistic frequency.
+	 *
+	 * @param statFrequency
+	 *        the frequency to set
+	 */
+	public void setStatFrequency(int statFrequency) {
+		this.statFrequency = statFrequency;
 	}
 
 	/**

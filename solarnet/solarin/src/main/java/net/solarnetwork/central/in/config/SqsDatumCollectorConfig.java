@@ -23,6 +23,7 @@
 package net.solarnetwork.central.in.config;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -34,6 +35,7 @@ import net.solarnetwork.central.datum.support.SqsDatumCollectorSettings;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumWriteOnlyDao;
 import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.util.StatTracker;
 
 /**
  * Configuration for the {@link DatumWriteOnlyDao}, without SQS.
@@ -57,9 +59,13 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 	@Qualifier(DATUM_COLLECTOR)
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public SqsDatumCollector sqsDatumCollector(SqsDatumCollectorSettings settings) {
+		StatTracker stats = new StatTracker("SqsDatumCollector",
+				"net.solarnetwork.central.datum.support.SqsDatumCollector",
+				LoggerFactory.getLogger(SqsDatumCollector.class), settings.getStatFrequency());
+
 		SqsDatumCollector collector = new SqsDatumCollector(settings.newAsyncClient(), settings.getUrl(),
 				DatumJsonUtils.newDatumObjectMapper(),
-				new ArrayBlockingQueue<>(settings.getWorkQueueSize()), datumDao);
+				new ArrayBlockingQueue<>(settings.getWorkQueueSize()), datumDao, stats);
 		collector.setReadConcurrency(settings.getReadConcurrency());
 		collector.setWriteConcurrency(settings.getWriteConcurrency());
 		if ( settings.getWorkItemMaxWait() != null ) {

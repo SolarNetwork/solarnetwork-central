@@ -82,7 +82,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageResponse;
  * @author matt
  * @version 1.0
  */
-@EnabledIfSystemProperty(named = "sqs", matches = ".*")
+@EnabledIfSystemProperty(named = "test.sqs", matches = ".*")
 public class SqsUserNodeEventHookServiceTests {
 
 	private static Map<String, Object> TEST_PROPS;
