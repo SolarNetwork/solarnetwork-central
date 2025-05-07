@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
  * Marker interface for the common application configuration package.
  * 
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 @Configuration
 @ComponentScan
@@ -57,5 +57,12 @@ public class SolarNetCommonConfiguration {
 	 * @since 1.2
 	 */
 	public static final String NOT_HTTP_TRACE = "!http-trace";
+
+	/**
+	 * A qualifier for user service auditor.
+	 * 
+	 * @since 1.3
+	 */
+	public static final String USER_SERVICE_AUDITOR = "user-service-auditor";
 
 }

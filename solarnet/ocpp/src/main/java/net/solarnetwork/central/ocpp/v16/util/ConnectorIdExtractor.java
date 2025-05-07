@@ -33,13 +33,14 @@ import ocpp.v16.jakarta.cs.StatusNotificationRequest;
  * Extract a connector ID from OCPP v1.6 request messages.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class ConnectorIdExtractor implements Function<Object, ChargePointConnectorKey> {
 
 	@Override
 	public ChargePointConnectorKey apply(Object o) {
 		return switch (o) {
+			case null -> null;
 			case MeterValuesRequest r -> keyFor(0, r.getConnectorId());
 			case StartTransactionRequest r -> keyFor(0, r.getConnectorId());
 			case StatusNotificationRequest r -> keyFor(0, r.getConnectorId());

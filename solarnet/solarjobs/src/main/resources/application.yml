@@ -118,10 +118,14 @@ app:
     disk-max-size-mb: 100
   http.client:
     connections:
+      default-max-per-route: 4
       max-total: 20
     settings:
       connect-timeout: "10s"
+      connection-keep-alive: "60s"
       connection-request-timeout: "15s"
+      connection-time-to-live: "60s"
+      connection-validate-after-inactivity: "15s"
       socket-timeout: "20s"
   job:
     billing:

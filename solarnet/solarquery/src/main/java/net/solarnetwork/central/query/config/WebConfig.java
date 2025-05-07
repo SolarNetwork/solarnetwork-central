@@ -45,7 +45,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.annotation.Order;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.datetime.standard.TemporalAccessorParser;
 import org.springframework.format.datetime.standard.TemporalAccessorPrinter;
@@ -224,10 +223,10 @@ public class WebConfig implements WebMvcConfigurer {
 	}
 
 	@Bean
-	@Order(0)
 	@ConditionalOnBean(name = QUERY_CACHING_SERVICE)
 	public FilterRegistrationBean<ContentCachingFilter> contentCachingFilterRegistration() {
 		FilterRegistrationBean<ContentCachingFilter> reg = new FilterRegistrationBean<>();
+		reg.setOrder(0);
 		reg.setFilter(contentCachingFilter());
 		// @formatter:off
 		reg.addUrlPatterns(
@@ -250,7 +249,6 @@ public class WebConfig implements WebMvcConfigurer {
 	}
 
 	@Bean
-	@Order(1)
 	@Profile(RATE_LIMIT)
 	public FilterRegistrationBean<RateLimitingFilter> rateLimitFilterRegistration(
 			@Qualifier(RATE_LIMIT) ProxyManager<Long> proxyManager,
@@ -260,6 +258,7 @@ public class WebConfig implements WebMvcConfigurer {
 		var filter = new RateLimitingFilter(proxyManager, configurationProvider, keyPrefix);
 		filter.setExceptionResolver(handlerExceptionResolver);
 		FilterRegistrationBean<RateLimitingFilter> reg = new FilterRegistrationBean<>();
+		reg.setOrder(1);
 		reg.setFilter(filter);
 		// @formatter:off
 		reg.addUrlPatterns(
