@@ -42,19 +42,6 @@ import net.solarnetwork.central.web.support.ResponseLengthUserServiceFilter;
 @Configuration(proxyBeanMethods = false)
 public class WebUserServiceAuditorConfig {
 
-	/*-
-	.requestMatchers("/api/v1/sec/user/billing/**").hasAnyAuthority(BILLING_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/c2c/**").hasAnyAuthority(CLOUD_INTEGRATIONS_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/din/**").hasAnyAuthority(DATUM_INPUT_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/dnp3/**").hasAnyAuthority(DNP3_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/event/**").hasAnyAuthority(EVENT_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/export/**").hasAnyAuthority(EXPORT_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/import/**").hasAnyAuthority(IMPORT_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/inin/**").hasAnyAuthority(INSTRUCTION_INPUT_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/ocpp/**").hasAnyAuthority(OCPP_AUTHORITY)
-	.requestMatchers("/api/v1/sec/user/oscp/**").hasAnyAuthority(OSCP_AUTHORITY)
-	*/
-
 	@Bean
 	public FilterRegistrationBean<ResponseLengthUserServiceFilter> datumResponseLengthUserServiceFilterRegistration(
 			UserServiceAuditor userServiceAuditor) {
