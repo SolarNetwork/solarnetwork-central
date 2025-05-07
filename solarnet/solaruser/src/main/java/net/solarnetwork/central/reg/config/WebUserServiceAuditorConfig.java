@@ -271,7 +271,7 @@ public class WebUserServiceAuditorConfig {
 	@Bean
 	public FilterRegistrationBean<ResponseLengthUserServiceFilter> metaResponseLengthUserServiceFilterRegistration(
 			UserServiceAuditor userServiceAuditor) {
-		var filter = new ResponseLengthUserServiceFilter(userServiceAuditor, "Uinn");
+		var filter = new ResponseLengthUserServiceFilter(userServiceAuditor, "Umet");
 		var reg = new FilterRegistrationBean<ResponseLengthUserServiceFilter>();
 		reg.setOrder(-1);
 		reg.setFilter(filter);
