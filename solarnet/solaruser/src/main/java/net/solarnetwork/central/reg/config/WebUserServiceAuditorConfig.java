@@ -211,7 +211,7 @@ public class WebUserServiceAuditorConfig {
 	@Bean
 	public FilterRegistrationBean<ResponseLengthUserServiceFilter> dnp3ResponseLengthUserServiceFilterRegistration(
 			UserServiceAuditor userServiceAuditor) {
-		var filter = new ResponseLengthUserServiceFilter(userServiceAuditor, "Udnp3");
+		var filter = new ResponseLengthUserServiceFilter(userServiceAuditor, "Udp3");
 		var reg = new FilterRegistrationBean<ResponseLengthUserServiceFilter>();
 		reg.setOrder(-1);
 		reg.setFilter(filter);
