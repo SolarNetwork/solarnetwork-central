@@ -42,8 +42,8 @@ import net.solarnetwork.central.security.SecurityException;
 /**
  * Base class for data collector implementations.
  *
- * @author matt.magoffin
- * @version 2.1
+ * @author matt
+ * @version 2.2
  */
 public abstract class AbstractDataCollector {
 
@@ -74,8 +74,8 @@ public abstract class AbstractDataCollector {
 	 */
 	@RequestMapping(method = RequestMethod.GET)
 	@ResponseStatus(value = HttpStatus.METHOD_NOT_ALLOWED, reason = "POST required")
-	public Void getData() {
-		return null;
+	public void getData() {
+		// nothing to do
 	}
 
 	/**
