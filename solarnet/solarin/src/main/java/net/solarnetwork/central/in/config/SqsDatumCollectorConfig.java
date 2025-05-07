@@ -59,8 +59,7 @@ public class SqsDatumCollectorConfig implements SolarInConfiguration {
 	@Qualifier(DATUM_COLLECTOR)
 	@Bean(initMethod = "serviceDidStartup", destroyMethod = "serviceDidShutdown")
 	public SqsDatumCollector sqsDatumCollector(SqsDatumCollectorSettings settings) {
-		StatTracker stats = new StatTracker("SqsDatumCollector",
-				"net.solarnetwork.central.datum.support.SqsDatumCollector",
+		StatTracker stats = new StatTracker("SqsDatumCollector", null,
 				LoggerFactory.getLogger(SqsDatumCollector.class), settings.getStatFrequency());
 
 		SqsDatumCollector collector = new SqsDatumCollector(settings.newAsyncClient(), settings.getUrl(),
