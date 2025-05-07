@@ -83,7 +83,7 @@ import net.solarnetwork.ocpp.domain.ChargeSessionEndReason;
  * Web service API for OCPP management.
  *
  * @author matt
- * @version 2.3
+ * @version 2.4
  */
 @Profile(OCPP_V16)
 @GlobalExceptionRestController
@@ -450,6 +450,50 @@ public class UserOcppController {
 		final Long userId = SecurityUtils.getCurrentActorUserId();
 		userOcppBiz().deleteUserChargePointConnector(userId,
 				new ChargePointConnectorKey(chargePointId, connectorId));
+		return success();
+	}
+
+	/**
+	 * View a specific credential.
+	 *
+	 * @param chargePointId
+	 *        the charge point ID
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the ID of the connector to view
+	 * @return the system user
+	 * @since 2.4
+	 */
+	@RequestMapping(method = RequestMethod.GET,
+			value = "/connectors/{chargePointId}/{evseId}/{connectorId}")
+	public Result<CentralChargePointConnector> viewConnector(
+			@PathVariable("chargePointId") long chargePointId, @PathVariable("evseId") int evseId,
+			@PathVariable("connectorId") int connectorId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		return success(userOcppBiz().chargePointConnectorForUser(userId,
+				new ChargePointConnectorKey(chargePointId, evseId, connectorId)));
+	}
+
+	/**
+	 * Delete a specific credential.
+	 *
+	 * @param chargePointId
+	 *        the ID of the charge point
+	 * @param evseId
+	 *        the EVSE ID
+	 * @param connectorId
+	 *        the connector ID to delete
+	 * @return the result
+	 * @since 2.4
+	 */
+	@RequestMapping(method = RequestMethod.DELETE,
+			value = "/connectors/{chargePointId}/{evseId}/{connectorId}")
+	public Result<Void> deleteConnector(@PathVariable("chargePointId") long chargePointId,
+			@PathVariable("evseId") int evseId, @PathVariable("connectorId") int connectorId) {
+		final Long userId = SecurityUtils.getCurrentActorUserId();
+		userOcppBiz().deleteUserChargePointConnector(userId,
+				new ChargePointConnectorKey(chargePointId, evseId, connectorId));
 		return success();
 	}
 

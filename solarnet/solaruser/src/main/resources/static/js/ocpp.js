@@ -194,7 +194,7 @@ $(document).ready(function() {
 			if ( config.id ) {
 				return;
 			}
-			config.id = config.chargePointId + '.' + config.connectorId;
+			config.id = config.chargePointId + '.' + config.evseId + '.' + config.connectorId;
 			return config;
 		}
 
@@ -492,9 +492,10 @@ $(document).ready(function() {
 			var options = {};
 			var form = $(event.target).closest('form').get(0);
 			if ( form && form.elements['connectorId'] ) {
-				// connectors have a (chargePointId, connectorId) ID value
+				// connectors have a (chargePointId, evseId, connectorId) ID value
 				options.urlSerializer = action => {
 					return action + '/' + encodeURIComponent(form.elements['chargePointId'].value)
+						+ '/' + encodeURIComponent(form.elements['evseId'].value)
 						+ '/' + encodeURIComponent(form.elements['connectorId'].value);
 				};
 			} else if ( form && form.elements['chargePointId'] && form.elements['sourceIdTemplate'] ) {
