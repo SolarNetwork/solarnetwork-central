@@ -53,6 +53,7 @@ import java.util.function.Function;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -432,7 +433,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
-			final var expression = expressionService.expression(config);
+			final Expression expression = expression(datumStream, config);
 			final boolean generateVirtualDatum = virtualDatum != null && virtualDatum.isEmpty();
 			for ( MutableDatum d : datum ) {
 				if ( generateVirtualDatum ) {
@@ -459,7 +460,7 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
-			final var expression = expressionService.expression(config);
+			final Expression expression = expression(datumStream, config);
 			for ( Entry<Instant, List<GeneralDatum>> e : virtualDatum.entrySet() ) {
 				for ( GeneralDatum d : e.getValue() ) {
 					evaluateExpression(integrationId, params, userId, datumStreamsAccessor, config,
@@ -476,6 +477,29 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		return result;
 	}
 
+	private Expression expression(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamPropertyConfiguration config) {
+		final Expression expression;
+		try {
+			expression = expressionService.expression(config);
+		} catch ( ExpressionException e ) {
+			Throwable t = e;
+			while ( t.getCause() != null ) {
+				t = t.getCause();
+			}
+			String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+			userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
+					DATUM_STREAM_EXPRESSION_ERROR_TAGS,
+					"Error evaluating datum stream property expression.",
+					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
+			throw new IllegalArgumentException(
+					"Error evaluating datum stream %s property configuration %s: %s"
+							.formatted(datumStream.getId().ident(), config.getId().ident(), exMsg),
+					e);
+		}
+		return expression;
+	}
+
 	private void evaluateExpression(Long integrationId, final Map<String, ?> params, final Long userId,
 			final BasicDatumStreamsAccessor datumStreamsAccessor,
 			CloudDatumStreamPropertyConfiguration config, final Map<String, Object> vars,
@@ -486,11 +510,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 					new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), d.getSourceId()),
 					datumStreamMetadataDao, datumStreamMetadataCache);
 		}
-		DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId,
-				integrationId, d, params, metaOps, datumStreamsAccessor,
-				this instanceof HttpOperations httpOps ? httpOps : null);
 		Object val = null;
 		try {
+			DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId,
+					integrationId, d, params, metaOps, datumStreamsAccessor,
+					this instanceof HttpOperations httpOps ? httpOps : null);
 			val = expressionService.evaluateDatumPropertyExpression(expression, root, vars,
 					Object.class);
 		} catch ( Exception e ) {
