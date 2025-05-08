@@ -116,7 +116,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -341,11 +341,11 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 					res -> parseDatum(res.getBody(), ds, deviceId, refsByRegisterName));
 
 			// evaluate expressions on final datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, resultDatum
-					.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
+					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 		});
 	}
 

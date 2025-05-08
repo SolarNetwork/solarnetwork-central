@@ -138,11 +138,10 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 					: Collections.emptyList());
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return resultDatum.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast)
-					.toList();
+			return r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList();
 		});
 	}
 

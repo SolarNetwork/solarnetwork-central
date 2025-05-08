@@ -40,7 +40,7 @@ import net.solarnetwork.settings.SettingSpecifierProvider;
  * API for a cloud datum stream service.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public interface CloudDatumStreamService
 		extends Identity<String>, SettingSpecifierProvider, LocalizedServiceInfoProvider {
@@ -77,6 +77,19 @@ public interface CloudDatumStreamService
 	 * @since 1.3
 	 */
 	String DATUM_STREAM_ID_FILTER = "datumStreamId";
+
+	/**
+	 * A standard setting for either an array or comma-delimited list of virtual
+	 * source ID values.
+	 *
+	 * <p>
+	 * Virtual source IDs are those created exclusively from expression property
+	 * configurations.
+	 * </p>
+	 *
+	 * @since 1.5
+	 */
+	String VIRTUAL_SOURCE_IDS_SETTING = "virtualSourceIds";
 
 	/**
 	 * Get a localized collection of the available data value filter criteria.
