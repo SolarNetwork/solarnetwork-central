@@ -50,7 +50,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * "missing" datum using a {@link DatumEntityDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 
@@ -150,8 +150,8 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
 				.findFiltered(c);
 
-		log.debug("Query user {} node {} source [{}] for {} between {} - {} found {}", userId, objectId,
-				sourceId, c.getMax(), c.getStartDate(), c.getEndDate(),
+		log.debug("Query user {} {} {} source [{}] for {} between {} - {} found {}", userId, kind,
+				objectId, sourceId, c.getMax(), c.getStartDate(), c.getEndDate(),
 				daoResults.getReturnedResultCount());
 
 		final QueryAuditor auditor = (kind == ObjectDatumKind.Node ? this.auditor : null);
@@ -166,8 +166,8 @@ public class QueryingDatumStreamsAccessor extends BasicDatumStreamsAccessor {
 			gfc.setMax(maxAllowedResults);
 			var gapFillResults = datumDao.findFiltered(gfc);
 
-			log.debug("Gap fill query user {} node {} source [{}] for {} between {} - {} found {}",
-					userId, objectId, sourceId, gfc.getMax(), gfc.getStartDate(), gfc.getEndDate(),
+			log.debug("Gap fill query user {} {} {} source [{}] for {} between {} - {} found {}", userId,
+					kind, objectId, sourceId, gfc.getMax(), gfc.getStartDate(), gfc.getEndDate(),
 					gapFillResults.getReturnedResultCount());
 
 			processQueryResults(userId, kind, objectId, sourceId, list, gapFillResults, auditor);

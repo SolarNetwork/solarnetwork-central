@@ -99,7 +99,7 @@ import net.solarnetwork.util.StringUtils;
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -574,6 +574,8 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final Map<String, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
 					sourceIdMap, valueProps);
 
+			final var usedQueryFilter = new BasicQueryFilter();
+
 			// for each system, find last import date and query for latest
 			for ( Entry<String, SystemQueryPlan> planEntry : queryPlans.entrySet() ) {
 				var systemId = planEntry.getKey();
@@ -585,12 +587,21 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				filter.setParameters(Map.of(SYSTEM_ID_FILTER, systemId));
 				filter.setMax(1);
 
+				if ( usedQueryFilter.getStartDate() == null
+						|| usedQueryFilter.getStartDate().isAfter(filter.getStartDate()) ) {
+					usedQueryFilter.setStartDate(filter.getStartDate());
+				}
+				if ( usedQueryFilter.getEndDate() == null
+						|| usedQueryFilter.getEndDate().isBefore(filter.getEndDate()) ) {
+					usedQueryFilter.setEndDate(filter.getEndDate());
+				}
+
 				fetchDatumForSystem(filter, ms, datumStream, mapping, integration, valueProps, exprProps,
 						sourceIdMap, planEntry.getValue(), resultDatum);
 			}
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			evaluateExpressions(datumStream, null, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			return resultDatum.stream().map(Datum.class::cast).toList();
@@ -659,13 +670,13 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 				queryFilter.setEndDate(queryFilter.getStartDate().plus(MAX_QUERY_TIME_RANGE));
 			}
 
-			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
-					integration.getConfigId());
-
 			var usedFilter = new BasicQueryFilter();
 			usedFilter.setStartDate(startDate);
 			usedFilter.setEndDate(endDate);
+
+			// evaluate expressions on merged datum
+			evaluateExpressions(datumStream, usedFilter, exprProps, resultDatum, mapping.getConfigId(),
+					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter,
 					resultDatum.stream().map(Datum.class::cast).toList());

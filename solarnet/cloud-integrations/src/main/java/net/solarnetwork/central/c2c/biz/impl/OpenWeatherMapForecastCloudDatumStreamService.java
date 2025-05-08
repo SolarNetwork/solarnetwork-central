@@ -52,7 +52,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * weather forecast API.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OpenWeatherMapForecastCloudDatumStreamService
 		extends BaseOpenWeatherMapCloudDatumStreamService {
@@ -131,7 +131,7 @@ public class OpenWeatherMapForecastCloudDatumStreamService
 					res -> parseDatum(res.getBody(), ds));
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			evaluateExpressions(datumStream, null, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			return resultDatum.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast)

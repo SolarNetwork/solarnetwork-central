@@ -82,7 +82,7 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 	 */
 	private Map<ObjectDatumKind, Map<Long, Map<String, List<Datum>>>> sortedDatumStreams() {
 		if ( timeSortedDatumBySource == null ) {
-			// create tmp map with SortedSet to identify and warn about duplicate datum
+			// create tmp map with SortedSet to identify and eliminate duplicate datum (first seen wins)
 			Map<ObjectDatumKind, Map<Long, Map<String, SortedSet<Datum>>>> map = new HashMap<>(2);
 			for ( Datum d : datum ) {
 				SortedSet<Datum> set = map.computeIfAbsent(d.getKind(), k -> new HashMap<>(2))
@@ -93,10 +93,10 @@ public class BasicDatumStreamsAccessor implements DatumStreamsAccessor {
 				if ( !set.contains(d) ) {
 					set.add(d);
 				} else {
+					// this can be a legitimate situation for example when prefetch datum
+					// overlaps with active query set (might be re-processing)
 					Logger log = LoggerFactory.getLogger(getClass());
-					log.error(
-							"Duplicate datum discovered and discarded; check calling methods for logic error: {}",
-							d, new Exception("Duplicate datum"));
+					log.debug("Duplicate datum discovered and discarded: {}", d);
 				}
 			}
 			// convert SortedSet to List for indexed based access

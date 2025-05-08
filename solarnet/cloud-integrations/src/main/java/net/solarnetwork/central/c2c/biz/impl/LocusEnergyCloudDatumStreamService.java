@@ -137,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.12
+ * @version 1.13
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -699,9 +699,15 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 				}
 			}
 
+			BasicQueryFilter usedFilter = new BasicQueryFilter();
+			if ( startDate != null && endDate != null ) {
+				usedFilter.setStartDate(startDate);
+				usedFilter.setEndDate(endDate);
+			}
+
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, result.values(), mapping.getConfigId(),
-					integration.getConfigId());
+			evaluateExpressions(datumStream, usedFilter, exprProps, result.values(),
+					mapping.getConfigId(), integration.getConfigId());
 
 			BasicQueryFilter nextQueryFilter = null;
 			if ( granularity != LocusEnergyGranularity.Latest && endDate.isBefore(filterEndDate) ) {

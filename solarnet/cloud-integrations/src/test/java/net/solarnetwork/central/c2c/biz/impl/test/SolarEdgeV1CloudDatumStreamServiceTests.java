@@ -626,6 +626,10 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		// actual order of DAO queries is not determinate, so have to set up argument filters
 
 		given(datumDao.findFiltered(argThat(c -> {
+			return c != null && "INV/*".equals(c.getSourceId()) && c.getMax() == null;
+		}))).willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(), List.of()));
+
+		given(datumDao.findFiltered(argThat(c -> {
 			return c != null && streamMeta1.getSourceId().equals(c.getSourceId()) && c.getMax() != null
 					&& c.getMax() == 1;
 		}))).willReturn(filterResults1);
@@ -650,9 +654,9 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 
 		// THEN
 		// @formatter:off
-		then(datumDao).should(times(4)).findFiltered(criteriaCaptor.capture());
+		then(datumDao).should(times(5)).findFiltered(criteriaCaptor.capture());
 		and.then(criteriaCaptor.getAllValues())
-			.hasSize(4)
+			.hasSize(5)
 			.satisfies(l -> {
 				final Instant genDatumDate = Instant.parse("2024-10-23T20:15:00Z");
 				and.then(l)
@@ -955,6 +959,11 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		// perform datum lookup to satisfy latestMatching('INV/*') expressions
 		var inverterDatumStreamMetadatasByComponentId = new HashMap<UUID, ObjectDatumStreamMetadata>();
 		var datumDaoMock = given(datumDao.findFiltered(any()));
+
+		// first do prefetch (find nothing)
+		datumDaoMock = datumDaoMock
+				.willReturn(new BasicObjectDatumStreamFilterResults<>(Map.of(), List.of()));
+
 		var datumDaoTimestamp = expectedStartDate.minusMinutes(5).toInstant();
 		var allDaoDatum = new ArrayList<DatumEntity>();
 		int i = 0;
@@ -991,7 +1000,7 @@ public class SolarEdgeV1CloudDatumStreamServiceTests {
 		// THEN
 		// @formatter:off
 		// will invoke DAO 2x per inverter stream
-		then(datumDao).should(times(14)).findFiltered(criteriaCaptor.capture());
+		then(datumDao).should(times(15)).findFiltered(criteriaCaptor.capture());
 
 		var datumCriterias = criteriaCaptor.getAllValues();
 		log.info("Datum searches: {}", JsonUtils.getJSONString(datumCriterias));

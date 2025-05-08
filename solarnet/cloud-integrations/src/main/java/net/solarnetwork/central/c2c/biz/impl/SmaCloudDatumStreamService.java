@@ -95,7 +95,7 @@ import net.solarnetwork.util.StringUtils;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -597,7 +597,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				.flatMap(e -> e.getValue().values().stream()).toList();
 
 		// evaluate expressions on merged datum
-		evaluateExpressions(exprProps, allDatum, mapping.getConfigId(), integration.getConfigId());
+		evaluateExpressions(ds, queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, exprProps,
+				allDatum, mapping.getConfigId(), integration.getConfigId());
 
 		return new BasicCloudDatumStreamQueryResult(
 				queryPeriod != SmaPeriod.Recent ? usedQueryFilter : null, nextQueryFilter,

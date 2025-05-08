@@ -37,11 +37,15 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
@@ -60,23 +64,32 @@ import net.solarnetwork.central.c2c.domain.BasicCloudDatumStreamLocalizedService
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamMappingConfiguration;
 import net.solarnetwork.central.c2c.domain.CloudDatumStreamPropertyConfiguration;
+import net.solarnetwork.central.c2c.domain.CloudDatumStreamQueryFilter;
 import net.solarnetwork.central.c2c.domain.CloudIntegrationConfiguration;
 import net.solarnetwork.central.datum.biz.QueryAuditor;
 import net.solarnetwork.central.datum.support.BasicDatumStreamsAccessor;
 import net.solarnetwork.central.datum.support.LazyDatumMetadataOperations;
 import net.solarnetwork.central.datum.support.QueryingDatumStreamsAccessor;
+import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
 import net.solarnetwork.central.datum.v2.dao.DatumEntityDao;
 import net.solarnetwork.central.datum.v2.dao.DatumStreamMetadataDao;
+import net.solarnetwork.central.datum.v2.dao.ObjectDatumStreamFilterResults;
+import net.solarnetwork.central.datum.v2.domain.DatumPK;
+import net.solarnetwork.central.datum.v2.domain.ObjectDatum;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
@@ -90,7 +103,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -345,6 +358,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	/**
 	 * Evaluate a set of property expressions on a set of datum.
 	 *
+	 * @param datumStream
+	 *        the datum stream configuration
+	 * @param filter
+	 *        the query filter applicable to the given datum, or {@code null}
 	 * @param configurations
 	 *        the property configurations
 	 * @param datum
@@ -357,17 +374,24 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        {@code integrationId} parameter
 	 * @since 1.6
 	 */
-	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
+	public void evaluateExpressions(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter,
+			Collection<CloudDatumStreamPropertyConfiguration> configurations,
 			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId) {
 		assert mappingId != null && integrationId != null;
 		if ( datum != null && !datum.isEmpty() && configurations != null && !configurations.isEmpty() ) {
-			evaluateExpressions(configurations, datum, mappingId, integrationId, null);
+			evaluateExpressions(datumStream, filter, configurations, datum, mappingId, integrationId,
+					null);
 		}
 	}
 
 	/**
 	 * Evaluate a set of property expressions on a set of datum.
 	 *
+	 * @param datumStream
+	 *        the datum stream configuration
+	 * @param filter
+	 *        the query filter applicable to the given datum, or {@code null}
 	 * @param configurations
 	 *        the property configurations
 	 * @param datum
@@ -381,7 +405,9 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @param parameters
 	 *        optional parameters to pass to the expressions
 	 */
-	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
+	public void evaluateExpressions(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter,
+			Collection<CloudDatumStreamPropertyConfiguration> configurations,
 			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId,
 			Map<String, ?> parameters) {
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
@@ -401,10 +427,15 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		// assume all configurations owned by the same user; extract the user ID from the first one
 		final Long userId = configurations.iterator().next().getUserId();
 
+		// if expressions found that will be querying for data, pre-fetch that data now
+		final Collection<? extends Datum> accessorDatum = (datumDao != null
+				? loadExpressionDatum(datumStream, filter, configurations, datum, userId)
+				: datum);
+
 		final var datumStreamsAccessor = (datumDao != null
-				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum,
-						userId, clock, datumDao, queryAuditor)
-				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum));
+				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(),
+						accessorDatum, userId, clock, datumDao, queryAuditor)
+				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), accessorDatum));
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
@@ -462,6 +493,74 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				}
 			}
 		}
+	}
+
+	private static final Pattern PREFETCH_SOURCE_ID_REGEX = Pattern
+			.compile("\\b(?:latest|offset)(?:Matching)?\\(\\s*['\"]([^'\"]+)['\"]");
+
+	private Collection<? extends Datum> loadExpressionDatum(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamQueryFilter filter,
+			Collection<CloudDatumStreamPropertyConfiguration> configurations,
+			Collection<? extends MutableDatum> datum, Long userId) {
+		if ( datumStream == null || datumStream.getObjectId() == null || datumStream.getKind() == null
+				|| filter == null || filter.getStartDate() == null || filter.getEndDate() == null ) {
+			return datum;
+		}
+
+		// look for source IDs to look up
+		Set<String> sourceIds = new HashSet<>(8);
+		for ( CloudDatumStreamPropertyConfiguration conf : configurations ) {
+			if ( conf.getValueReference() == null ) {
+				continue;
+			}
+			Matcher m = PREFETCH_SOURCE_ID_REGEX.matcher(conf.getValueReference());
+			int findStart = 0;
+			while ( m.find(findStart) ) {
+				sourceIds.add(m.group(1));
+				findStart = m.end();
+			}
+		}
+
+		if ( sourceIds.isEmpty() ) {
+			return datum;
+		}
+
+		// fetch all datum in filter date range
+		BasicDatumCriteria c = new BasicDatumCriteria();
+		c.setObjectKind(datumStream.getKind());
+		if ( datumStream.getKind() == ObjectDatumKind.Node ) {
+			c.setNodeId(datumStream.getObjectId());
+		} else {
+			c.setLocationId(datumStream.getObjectId());
+		}
+		c.setSourceIds(sourceIds.toArray(String[]::new));
+		c.setUserId(userId);
+		c.setStartDate(filter.getStartDate());
+		c.setEndDate(filter.getEndDate().plusMillis(1));
+
+		ObjectDatumStreamFilterResults<net.solarnetwork.central.datum.v2.domain.Datum, DatumPK> daoResults = datumDao
+				.findFiltered(c);
+
+		log.debug("Fetch query user {} {} {} sources {} between {} - {} found {}", userId,
+				c.getObjectKind(), c.getObjectId(), sourceIds, c.getStartDate(), c.getEndDate(),
+				daoResults.getReturnedResultCount());
+
+		if ( daoResults.getReturnedResultCount() < 1 ) {
+			return datum;
+		}
+
+		List<Datum> result = new ArrayList<>(datum);
+		for ( var daoDatum : daoResults ) {
+			ObjectDatumStreamMetadata meta = daoResults.metadataForStreamId(daoDatum.getStreamId());
+			var d = ObjectDatum.forStreamDatum(daoDatum, userId, new DatumId(c.getObjectKind(),
+					c.getObjectId(), meta.getSourceId(), daoDatum.getTimestamp()), meta);
+			if ( queryAuditor != null ) {
+				queryAuditor.auditNodeDatum(d);
+			}
+			result.add(d);
+		}
+
+		return result;
 	}
 
 	/**

@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -782,8 +782,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
-					integration.getConfigId());
+			evaluateExpressions(datumStream, usedQueryFilter, exprProps, resultDatum,
+					mapping.getConfigId(), integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
 					resultDatum.stream().map(Datum.class::cast).toList());
