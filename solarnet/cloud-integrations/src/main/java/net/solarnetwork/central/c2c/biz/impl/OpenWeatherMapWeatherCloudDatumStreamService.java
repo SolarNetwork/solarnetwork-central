@@ -53,7 +53,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * weather API.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OpenWeatherMapWeatherCloudDatumStreamService
 		extends BaseOpenWeatherMapCloudDatumStreamService {
@@ -132,11 +132,10 @@ public class OpenWeatherMapWeatherCloudDatumStreamService
 					: Collections.emptyList());
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return resultDatum.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast)
-					.toList();
+			return r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList();
 		});
 	}
 

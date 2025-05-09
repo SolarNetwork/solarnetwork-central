@@ -99,7 +99,7 @@ import net.solarnetwork.util.StringUtils;
  * Fronius implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -590,10 +590,10 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return resultDatum.stream().map(Datum.class::cast).toList();
+			return r.stream().map(Datum.class::cast).toList();
 		});
 	}
 
@@ -660,7 +660,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			}
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			var usedFilter = new BasicQueryFilter();
@@ -668,7 +668,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			usedFilter.setEndDate(endDate);
 
 			return new BasicCloudDatumStreamQueryResult(usedFilter, nextQueryFilter,
-					resultDatum.stream().map(Datum.class::cast).toList());
+					r.stream().map(Datum.class::cast).toList());
 		});
 	}
 

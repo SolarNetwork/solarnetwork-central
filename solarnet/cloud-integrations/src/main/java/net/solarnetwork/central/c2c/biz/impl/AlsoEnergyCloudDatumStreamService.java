@@ -100,7 +100,7 @@ import net.solarnetwork.util.StringUtils;
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -383,11 +383,11 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 			}
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					resultDatum.stream().map(Datum.class::cast).toList());
+					r.stream().map(Datum.class::cast).toList());
 		});
 	}
 

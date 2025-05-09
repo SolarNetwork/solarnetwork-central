@@ -84,7 +84,7 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -302,11 +302,11 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 							usedQueryFilter.getStartDate(), usedQueryFilter.getEndDate()));
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
-			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter, resultDatum
-					.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
+					r.stream().sorted(Identity.sortByIdentity()).map(Datum.class::cast).toList());
 		});
 	}
 

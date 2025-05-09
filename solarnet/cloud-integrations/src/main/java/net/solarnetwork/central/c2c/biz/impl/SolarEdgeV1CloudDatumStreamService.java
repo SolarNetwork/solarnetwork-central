@@ -111,7 +111,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -882,11 +882,11 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 			}
 
 			// evaluate expressions on merged datum
-			evaluateExpressions(exprProps, resultDatum, mapping.getConfigId(),
+			var r = evaluateExpressions(datumStream, exprProps, resultDatum, mapping.getConfigId(),
 					integration.getConfigId());
 
 			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, nextQueryFilter,
-					resultDatum.stream().map(Datum.class::cast).toList());
+					r.stream().map(Datum.class::cast).toList());
 		});
 	}
 

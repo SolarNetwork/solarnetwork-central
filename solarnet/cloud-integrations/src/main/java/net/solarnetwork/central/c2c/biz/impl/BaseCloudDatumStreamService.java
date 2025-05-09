@@ -23,27 +23,37 @@
 package net.solarnetwork.central.c2c.biz.impl;
 
 import static java.util.stream.StreamSupport.stream;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.c2c.domain.CloudIntegrationsUserEvents.eventForConfiguration;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.util.NumberUtils.narrow;
 import static net.solarnetwork.util.NumberUtils.parseNumber;
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import static net.solarnetwork.util.StringUtils.expandTemplateString;
 import static net.solarnetwork.util.StringUtils.nonEmptyString;
+import static org.springframework.util.StringUtils.commaDelimitedListToStringArray;
 import static org.springframework.util.StringUtils.delimitedListToStringArray;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.SequencedCollection;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Function;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionException;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
@@ -71,10 +81,12 @@ import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.support.HttpOperations;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.LocalizedServiceInfo;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumMetadataOperations;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesExpressionRoot;
 import net.solarnetwork.domain.datum.DatumSamplesType;
+import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
 import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
@@ -90,7 +102,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.14
+ * @version 1.15
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -357,12 +369,10 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 *        {@code integrationId} parameter
 	 * @since 1.6
 	 */
-	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
-			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId) {
-		assert mappingId != null && integrationId != null;
-		if ( datum != null && !datum.isEmpty() && configurations != null && !configurations.isEmpty() ) {
-			evaluateExpressions(configurations, datum, mappingId, integrationId, null);
-		}
+	public Collection<GeneralDatum> evaluateExpressions(CloudDatumStreamConfiguration datumStream,
+			SequencedCollection<CloudDatumStreamPropertyConfiguration> configurations,
+			Collection<GeneralDatum> datum, Long mappingId, Long integrationId) {
+		return evaluateExpressions(datumStream, configurations, datum, mappingId, integrationId, null);
 	}
 
 	/**
@@ -381,11 +391,13 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 * @param parameters
 	 *        optional parameters to pass to the expressions
 	 */
-	public void evaluateExpressions(Collection<CloudDatumStreamPropertyConfiguration> configurations,
-			Collection<? extends MutableDatum> datum, Long mappingId, Long integrationId,
+	public Collection<GeneralDatum> evaluateExpressions(CloudDatumStreamConfiguration datumStream,
+			SequencedCollection<CloudDatumStreamPropertyConfiguration> configurations,
+			Collection<GeneralDatum> datum, Long mappingId, Long integrationId,
 			Map<String, ?> parameters) {
+		assert mappingId != null && integrationId != null;
 		if ( configurations == null || configurations.isEmpty() || datum == null || datum.isEmpty() ) {
-			return;
+			return datum;
 		}
 
 		final Map<String, ?> params;
@@ -398,6 +410,11 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 			params = tmp;
 		}
 
+		final List<String> virtualSourceIds = servicePropertyStringList(datumStream,
+				VIRTUAL_SOURCE_IDS_SETTING);
+		final SortedMap<Instant, List<GeneralDatum>> virtualDatum = (virtualSourceIds != null
+				&& !virtualSourceIds.isEmpty() ? new TreeMap<>() : null);
+
 		// assume all configurations owned by the same user; extract the user ID from the first one
 		final Long userId = configurations.iterator().next().getUserId();
 
@@ -405,62 +422,131 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 				? new QueryingDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum,
 						userId, clock, datumDao, queryAuditor)
 				: new BasicDatumStreamsAccessor(expressionService.sourceIdPathMatcher(), datum));
+
+		// assuming all property configurations from same mapping
+		final var expressionVars = Map.of("userId", (Object) datumStream.getUserId(),
+				"datumStreamMappingId", configurations.getFirst().getDatumStreamMappingId());
+
+		final var placeholders = servicePropertyStringMap(datumStream, PLACEHOLDERS_SERVICE_PROPERTY);
+
 		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
 			if ( !config.getValueType().isExpression() ) {
 				continue;
 			}
-			final var vars = Map.of("userId", (Object) config.getUserId(), "datumStreamMappingId",
-					config.getDatumStreamMappingId());
-			final var expression = expressionService.expression(config);
+			final Expression expression = expression(datumStream, config);
+			final boolean generateVirtualDatum = virtualDatum != null && virtualDatum.isEmpty();
 			for ( MutableDatum d : datum ) {
-				DatumMetadataOperations metaOps = null;
-				if ( datumStreamMetadataDao != null ) {
-					metaOps = new LazyDatumMetadataOperations(
-							new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(),
-									d.getSourceId()),
-							datumStreamMetadataDao, datumStreamMetadataCache);
-				}
-				DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId,
-						integrationId, d, params, metaOps, datumStreamsAccessor,
-						this instanceof HttpOperations httpOps ? httpOps : null);
-				Object val = null;
-				try {
-					val = expressionService.evaluateDatumPropertyExpression(expression, root, vars,
-							Object.class);
-				} catch ( Exception e ) {
-					Throwable t = e;
-					while ( t.getCause() != null ) {
-						t = t.getCause();
-					}
-					String exMsg = (t.getMessage() != null ? t.getMessage()
-							: t.getClass().getSimpleName());
-					userEventAppenderBiz.addEvent(config.getUserId(),
-							eventForConfiguration(config.getId(), DATUM_STREAM_EXPRESSION_ERROR_TAGS,
-									"Error evaluating datum stream property expression.",
-									Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY,
-											config.getValueReference())));
-				}
-				if ( val != null ) {
-					Object propVal = switch (config.getPropertyType()) {
-						case Accumulating, Instantaneous -> {
-							// convert to number
-							if ( val instanceof Number ) {
-								yield val;
-							} else {
-								try {
-									yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
-								} catch ( IllegalArgumentException e ) {
-									yield null;
-								}
-							}
+				if ( generateVirtualDatum ) {
+					virtualDatum.computeIfAbsent(d.getTimestamp(), k -> {
+						var l = new ArrayList<GeneralDatum>(virtualSourceIds.size());
+						for ( String virtualSourceId : virtualSourceIds ) {
+							String sourceId = expandTemplateString(virtualSourceId, placeholders);
+							l.add(new GeneralDatum(new DatumId(datumStream.getKind(),
+									datumStream.getObjectId(), sourceId, d.getTimestamp()),
+									new DatumSamples()));
 						}
-						case Status, Tag -> val.toString();
-					};
-					propVal = config.applyValueTransforms(propVal);
-					d.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
-							config.getPropertyName(), propVal);
+						return l;
+					});
+				}
+				evaluateExpression(integrationId, params, userId, datumStreamsAccessor, config,
+						expressionVars, expression, d);
+			}
+		}
+
+		if ( virtualDatum == null ) {
+			return datum;
+		}
+		for ( CloudDatumStreamPropertyConfiguration config : configurations ) {
+			if ( !config.getValueType().isExpression() ) {
+				continue;
+			}
+			final Expression expression = expression(datumStream, config);
+			for ( Entry<Instant, List<GeneralDatum>> e : virtualDatum.entrySet() ) {
+				for ( GeneralDatum d : e.getValue() ) {
+					evaluateExpression(integrationId, params, userId, datumStreamsAccessor, config,
+							expressionVars, expression, d);
 				}
 			}
+		}
+		List<GeneralDatum> result = new ArrayList<>(
+				datum.size() + (virtualSourceIds.size() * virtualDatum.size()));
+		result.addAll(datum);
+		for ( Entry<Instant, List<GeneralDatum>> e : virtualDatum.entrySet() ) {
+			result.addAll(e.getValue());
+		}
+		return result;
+	}
+
+	private Expression expression(CloudDatumStreamConfiguration datumStream,
+			CloudDatumStreamPropertyConfiguration config) {
+		final Expression expression;
+		try {
+			expression = expressionService.expression(config);
+		} catch ( ExpressionException e ) {
+			Throwable t = e;
+			while ( t.getCause() != null ) {
+				t = t.getCause();
+			}
+			String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+			userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
+					DATUM_STREAM_EXPRESSION_ERROR_TAGS,
+					"Error evaluating datum stream property expression.",
+					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
+			throw new IllegalArgumentException(
+					"Error evaluating datum stream %s property configuration %s: %s"
+							.formatted(datumStream.getId().ident(), config.getId().ident(), exMsg),
+					e);
+		}
+		return expression;
+	}
+
+	private void evaluateExpression(Long integrationId, final Map<String, ?> params, final Long userId,
+			final BasicDatumStreamsAccessor datumStreamsAccessor,
+			CloudDatumStreamPropertyConfiguration config, final Map<String, Object> vars,
+			final Expression expression, MutableDatum d) {
+		DatumMetadataOperations metaOps = null;
+		if ( datumStreamMetadataDao != null && d.getKind() != null && d.getObjectId() != null ) {
+			metaOps = new LazyDatumMetadataOperations(
+					new ObjectDatumStreamMetadataId(d.getKind(), d.getObjectId(), d.getSourceId()),
+					datumStreamMetadataDao, datumStreamMetadataCache);
+		}
+		Object val = null;
+		try {
+			DatumSamplesExpressionRoot root = expressionService.createDatumExpressionRoot(userId,
+					integrationId, d, params, metaOps, datumStreamsAccessor,
+					this instanceof HttpOperations httpOps ? httpOps : null);
+			val = expressionService.evaluateDatumPropertyExpression(expression, root, vars,
+					Object.class);
+		} catch ( Exception e ) {
+			Throwable t = e;
+			while ( t.getCause() != null ) {
+				t = t.getCause();
+			}
+			String exMsg = (t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+			userEventAppenderBiz.addEvent(config.getUserId(), eventForConfiguration(config.getId(),
+					DATUM_STREAM_EXPRESSION_ERROR_TAGS,
+					"Error evaluating datum stream property expression.",
+					Map.of(MESSAGE_DATA_KEY, exMsg, SOURCE_DATA_KEY, config.getValueReference())));
+		}
+		if ( val != null ) {
+			Object propVal = switch (config.getPropertyType()) {
+				case Accumulating, Instantaneous -> {
+					// convert to number
+					if ( val instanceof Number ) {
+						yield val;
+					} else {
+						try {
+							yield narrow(parseNumber(val.toString(), BigDecimal.class), 2);
+						} catch ( IllegalArgumentException e ) {
+							yield null;
+						}
+					}
+				}
+				case Status, Tag -> val.toString();
+			};
+			propVal = config.applyValueTransforms(propVal);
+			d.asMutableSampleOperations().putSampleValue(config.getPropertyType(),
+					config.getPropertyName(), propVal);
 		}
 	}
 
@@ -606,16 +692,69 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 		if ( configuration == null ) {
 			return null;
 		}
-		final Object sourceIdMap = configuration.serviceProperty(key, Object.class);
-		final Map<String, String> componentSourceIdMapping;
-		if ( sourceIdMap instanceof Map<?, ?> ) {
-			componentSourceIdMapping = (Map<String, String>) sourceIdMap;
-		} else if ( sourceIdMap != null ) {
-			componentSourceIdMapping = StringUtils.commaDelimitedStringToMap(sourceIdMap.toString());
+		final Object propVal = configuration.serviceProperty(key, Object.class);
+		final Map<String, String> result;
+		if ( propVal instanceof Map<?, ?> ) {
+			result = (Map<String, String>) propVal;
+		} else if ( propVal != null ) {
+			result = StringUtils.commaDelimitedStringToMap(propVal.toString());
 		} else {
-			componentSourceIdMapping = null;
+			result = null;
 		}
-		return componentSourceIdMapping;
+		return result;
+	}
+
+	/**
+	 * Resolve a list from a setting on a configuration.
+	 *
+	 * <p>
+	 * The property value can be a {@code List}, array, or a comma-delimited
+	 * single value.
+	 * </p>
+	 *
+	 * @param configuration
+	 *        the configuration to extract the mapping from
+	 * @param key
+	 *        the service property key to extract
+	 * @return the list, or {@literal null}
+	 * @since 1.15
+	 */
+	@SuppressWarnings("unchecked")
+	public static List<String> servicePropertyStringList(IdentifiableConfiguration configuration,
+			String key) {
+		if ( configuration == null ) {
+			return null;
+		}
+		final Object propVal = configuration.serviceProperty(key, Object.class);
+		if ( propVal == null ) {
+			return null;
+		}
+		final List<String> result;
+		if ( propVal instanceof List<?> l && !l.isEmpty() ) {
+			if ( l.get(0) instanceof String ) {
+				// assume all values are strings
+				result = (List<String>) l;
+			} else {
+				result = new ArrayList<>(l.size());
+				for ( Object o : l ) {
+					if ( o != null ) {
+						result.add(o.toString());
+					}
+				}
+			}
+		} else if ( propVal instanceof String[] a ) {
+			result = Arrays.asList(a);
+		} else if ( propVal instanceof Object[] a ) {
+			result = new ArrayList<>(a.length);
+			for ( Object o : a ) {
+				if ( o != null ) {
+					result.add(o.toString());
+				}
+			}
+		} else {
+			result = List.of(commaDelimitedListToStringArray(propVal.toString()));
+		}
+		return result;
 	}
 
 	/**

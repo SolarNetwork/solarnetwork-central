@@ -458,15 +458,17 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				startDate = periodEndDate;
 			}
 
+			Collection<GeneralDatum> r = datum.values().stream().flatMap(e -> e.values().stream())
+					.toList();
+
 			// evaluate expressions on merged datum
 			if ( !exprProps.isEmpty() ) {
-				var allDatum = datum.values().stream().flatMap(e -> e.values().stream()).toList();
-				evaluateExpressions(exprProps, allDatum, ds.getDatumStreamMappingId(),
+				r = evaluateExpressions(datumStream, exprProps, r, ds.getDatumStreamMappingId(),
 						mapping.getIntegrationId());
 			}
 
-			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null, datum.values().stream()
-					.flatMap(m -> m.values().stream()).map(Datum.class::cast).toList());
+			return new BasicCloudDatumStreamQueryResult(usedQueryFilter, null,
+					r.stream().map(Datum.class::cast).toList());
 		});
 	}
 

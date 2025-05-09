@@ -22,9 +22,13 @@
 
 package net.solarnetwork.central.c2c.biz.impl.test;
 
+import static net.solarnetwork.central.c2c.biz.CloudDatumStreamService.VIRTUAL_SOURCE_IDS_SETTING;
+import static net.solarnetwork.central.c2c.domain.CloudIntegrationsConfigurationEntity.PLACEHOLDERS_SERVICE_PROPERTY;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
+import static net.solarnetwork.domain.datum.DatumSamplesType.Instantaneous;
 import static org.assertj.core.api.BDDAssertions.and;
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -63,17 +67,19 @@ import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.domain.LocalizedServiceInfo;
 import net.solarnetwork.domain.datum.Datum;
+import net.solarnetwork.domain.datum.DatumId;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumSamplesType;
 import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.domain.datum.GeneralDatumMetadata;
+import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 
 /**
  * Test cases for the {@link BaseCloudDatumStreamService} class.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @SuppressWarnings("static-access")
 @ExtendWith(MockitoExtension.class)
@@ -278,7 +284,10 @@ public class BaseCloudDatumStreamServiceTests {
 		final var nodeId = randomLong();
 		final var sourceId = randomString();
 		final var integrationId = randomLong();
+		final var datumStreamId = randomLong();
 		final var mappingId = randomLong();
+
+		final var datumStream = new CloudDatumStreamConfiguration(userId, datumStreamId, Instant.now());
 
 		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
 				Instant.now());
@@ -299,7 +308,8 @@ public class BaseCloudDatumStreamServiceTests {
 						.willReturn(new GeneralDatumMetadata(Map.of("foo", foo)));
 
 		// WHEN
-		service.evaluateExpressions(List.of(exprProp), List.of(datum), mappingId, integrationId);
+		service.evaluateExpressions(datumStream, List.of(exprProp), List.of(datum), mappingId,
+				integrationId);
 
 		// THEN
 		then(datumStreamMetadataCache).shouldHaveNoMoreInteractions();
@@ -322,7 +332,10 @@ public class BaseCloudDatumStreamServiceTests {
 		final var nodeId = randomLong();
 		final var sourceId = randomString();
 		final var integrationId = randomLong();
+		final var datumStreamId = randomLong();
 		final var mappingId = randomLong();
+
+		final var datumStream = new CloudDatumStreamConfiguration(userId, datumStreamId, Instant.now());
 
 		final var exprProp = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
 				Instant.now());
@@ -343,7 +356,8 @@ public class BaseCloudDatumStreamServiceTests {
 		given(nodeMetadataReadOnlyDao.get(nodeId)).willReturn(nodeMeta);
 
 		// WHEN
-		service.evaluateExpressions(List.of(exprProp), List.of(datum), mappingId, integrationId);
+		service.evaluateExpressions(datumStream, List.of(exprProp), List.of(datum), mappingId,
+				integrationId);
 
 		// THEN
 		then(nodeMetadataReadOnlyDao).shouldHaveNoMoreInteractions();
@@ -354,6 +368,123 @@ public class BaseCloudDatumStreamServiceTests {
 		and.then(datum.getSampleLong(exprProp.getPropertyType(), exprProp.getPropertyName()))
 			.as("Datum populated with value from metadata lazily resolved from cache")
 			.isEqualTo(foo)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void evaluateExpressions_virtualSourceId() {
+		// GIVEN
+		final var service = serviceWithExpressionSupport();
+
+		final var userId = randomLong();
+		final var nodeId = randomLong();
+		final var integrationId = randomLong();
+		final var datumStreamId = randomLong();
+		final var mappingId = randomLong();
+
+		// configure a single /gen/1 source ID
+		final var siteId = randomString();
+		final var virtualSourceId = "/{site}/gen/1";
+		final var datumStream = new CloudDatumStreamConfiguration(userId, datumStreamId, Instant.now());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setServiceProps(Map.of(VIRTUAL_SOURCE_IDS_SETTING, virtualSourceId,
+				PLACEHOLDERS_SERVICE_PROPERTY, Map.of("site", siteId)));
+
+		final var exprProp1 = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 0,
+				Instant.now());
+		exprProp1.setEnabled(true);
+		exprProp1.setPropertyName("v1");
+		exprProp1.setPropertyType(DatumSamplesType.Instantaneous);
+		exprProp1.setValueType(CloudDatumStreamValueType.SpelExpression);
+		exprProp1.setValueReference("""
+				sourceId.contains('/gen/') ? sum(latestMatching('/inv/*', timestamp).![w]) : null
+				""");
+
+		final var exprProp2 = new CloudDatumStreamPropertyConfiguration(userId, mappingId, 1,
+				Instant.now());
+		exprProp2.setEnabled(true);
+		exprProp2.setPropertyName("v2");
+		exprProp2.setPropertyType(DatumSamplesType.Instantaneous);
+		exprProp2.setValueType(CloudDatumStreamValueType.SpelExpression);
+		exprProp2.setValueReference("""
+				sourceId.contains('/gen/') ? sum(latestMatching('/inv/*', timestamp).![a]) : null
+				""");
+
+		// create 2 datum streams, each with 2 datum
+		final var inv1Datum1 = GeneralDatum.nodeDatum(nodeId, "/inv/1",
+				Instant.now().truncatedTo(ChronoUnit.HOURS),
+				new DatumSamples(Map.of("w", 123, "a", 321), null, null));
+		final var inv1Datum2 = GeneralDatum.nodeDatum(nodeId, "/inv/1",
+				inv1Datum1.getTimestamp().plusSeconds(1),
+				new DatumSamples(Map.of("w", 234, "a", 432), null, null));
+
+		final var inv2Datum1 = GeneralDatum.nodeDatum(nodeId, "/inv/2", inv1Datum1.getTimestamp(),
+				new DatumSamples(Map.of("w", 345, "a", 543), null, null));
+		final var inv2Datum2 = GeneralDatum.nodeDatum(nodeId, "/inv/2", inv1Datum2.getTimestamp(),
+				new DatumSamples(Map.of("w", 456, "a", 654), null, null));
+
+		// WHEN
+		var result = service.evaluateExpressions(datumStream, List.of(exprProp1, exprProp2),
+				List.of(inv1Datum1, inv1Datum2, inv2Datum1, inv2Datum2), mappingId, integrationId);
+
+		// THEN
+		then(nodeMetadataReadOnlyDao).shouldHaveNoMoreInteractions();
+		then(datumStreamMetadataCache).shouldHaveNoInteractions();
+		then(datumStreamMappingDao).shouldHaveNoInteractions();
+
+		// @formatter:off
+		and.then(result)
+			.as("Input datum + (virtual datum per timestamp) returned")
+			.hasSize(6)
+			;
+		and.then(result).element(0)
+			.as("Datum order preserved")
+			.isEqualTo(inv1Datum1)
+			.as("Property 'w' unchanged")
+			.returns(123, from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'out' not created on input datum")
+			.returns(null, from(d -> d.getSampleInteger(Instantaneous, "out")))
+			;
+		and.then(result).element(1)
+			.as("Datum order preserved")
+			.isEqualTo(inv1Datum2)
+			.as("Property 'w' unchanged")
+			.returns(234, from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'out' not created on input datum")
+			.returns(null, from(d -> d.getSampleInteger(Instantaneous, "out")))
+			;
+		and.then(result).element(2)
+			.as("Datum order preserved")
+			.isEqualTo(inv2Datum1)
+			.as("Property 'w' unchanged")
+			.returns(345, from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'out' not created on input datum")
+			.returns(null, from(d -> d.getSampleInteger(Instantaneous, "out")))
+			;
+		and.then(result).element(3)
+			.as("Datum order preserved")
+			.isEqualTo(inv2Datum2)
+			.as("Property 'w' unchanged")
+			.returns(456, from(d -> d.getSampleInteger(Instantaneous, "w")))
+			.as("Property 'out' not created on input datum")
+			.returns(null, from(d -> d.getSampleInteger(Instantaneous, "out")))
+			;
+
+		and.then(result).element(4)
+			.as("Virtual datum added for 1st timestamp")
+			.returns(new DatumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum1.getTimestamp()),
+					from(GeneralDatum::getId))
+			.as("Samples are sum() of inv1d1 + inv1d2")
+			.returns(new DatumSamples(Map.of("v1", 468, "v2", 864), null, null), from(GeneralDatum::getSamples))
+			;
+		and.then(result).element(5)
+			.as("Virtual datum added for 2nd timestamp")
+			.returns(new DatumId(datumStream.getKind(), datumStream.getObjectId(), "/%s/gen/1".formatted(siteId), inv1Datum2.getTimestamp()),
+					from(GeneralDatum::getId))
+			.as("Samples are sum() of inv1d2 + inv2d2")
+			.returns(new DatumSamples(Map.of("v1", 690, "v2", 1086), null, null), from(GeneralDatum::getSamples))
 			;
 		// @formatter:on
 	}
