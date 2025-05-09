@@ -14,7 +14,7 @@ dependencyManagement {
 }
 
 description = 'SolarNet: Cloud Integrations'
-version = '1.24.1'
+version = '1.25.0'
 
 base {
 	archivesName = 'solarnet-cloud-integrations'
