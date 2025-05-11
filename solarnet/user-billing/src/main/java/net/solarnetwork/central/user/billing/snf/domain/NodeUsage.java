@@ -57,13 +57,13 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  *
  * @author matt
- * @version 2.7
+ * @version 2.8
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
 	@Serial
-	private static final long serialVersionUID = 6848689122993706234L;
+	private static final long serialVersionUID = 2065963869415863734L;
 
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
@@ -84,6 +84,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger dnp3DataPoints;
 	private BigInteger oauthClientCredentials;
 	private BigInteger cloudIntegrationsData;
+	private BigInteger apiData;
 	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
 
@@ -99,6 +100,7 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] dnp3DataPointsTiers;
 	private BigInteger[] oauthClientCredentialsTiers;
 	private BigInteger[] cloudIntegrationsDataTiers;
+	private BigInteger[] apiDataTiers;
 	private NodeUsageCost[] costsTiers;
 
 	/**
@@ -157,6 +159,7 @@ public class NodeUsage extends BasicLongEntity
 		setDnp3DataPoints(BigInteger.ZERO);
 		setOauthClientCredentials(BigInteger.ZERO);
 		setCloudIntegrationsData(BigInteger.ZERO);
+		setApiData(BigInteger.ZERO);
 		setTotalCost(BigDecimal.ZERO);
 		this.costs = new NodeUsageCost();
 	}
@@ -186,6 +189,14 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(oscpCapacityGroups);
 		builder.append(", oscpCapacity=");
 		builder.append(oscpCapacity);
+		builder.append(", dnp3DataPoints=");
+		builder.append(dnp3DataPoints);
+		builder.append(", oauthClientCredentials=");
+		builder.append(oauthClientCredentials);
+		builder.append(", cloudIntegrationsData=");
+		builder.append(cloudIntegrationsData);
+		builder.append(", apiData=");
+		builder.append(apiData);
 		builder.append(", datumPropertiesInCost=");
 		builder.append(costs.getDatumPropertiesInCost());
 		builder.append(", datumOutCost=");
@@ -202,10 +213,14 @@ public class NodeUsage extends BasicLongEntity
 		builder.append(costs.getOscpCapacityCost());
 		builder.append(", dnp3DataPointsCost=");
 		builder.append(costs.getDnp3DataPointsCost());
-		builder.append(", oauthClientCredentials=");
-		builder.append(oauthClientCredentials);
-		builder.append(", cloudIntegrationsData=");
-		builder.append(cloudIntegrationsData);
+		builder.append(", dnp3DataPointsCost=");
+		builder.append(costs.getDnp3DataPointsCost());
+		builder.append(", oauthClientCredentialsCost=");
+		builder.append(costs.getOauthClientCredentialsCost());
+		builder.append(", cloudIntegrationsDataCost=");
+		builder.append(costs.getCloudIntegrationsDataCost());
+		builder.append(", apiDataCost=");
+		builder.append(costs.getApiDataCost());
 		builder.append(", totalCost=");
 		builder.append(totalCost);
 		builder.append("}");
@@ -243,6 +258,7 @@ public class NodeUsage extends BasicLongEntity
 				&& Objects.equals(dnp3DataPoints, other.dnp3DataPoints)
 				&& Objects.equals(oauthClientCredentials, other.oauthClientCredentials)
 				&& Objects.equals(cloudIntegrationsData, other.cloudIntegrationsData)
+				&& Objects.equals(apiData, other.apiData)
 				;
 		// @formatter:on
 	}
@@ -598,6 +614,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
 	 * <li>{@link #OAUTH_CLIENT_CREDENTIALS_KEY}</li>
 	 * <li>{@link #CLOUD_INTEGRATIONS_DATA_KEY}</li>
+	 * <li>{@link #API_DATA_KEY}</li>
 	 * </ol>
 	 *
 	 * @return the map, never {@literal null}
@@ -616,6 +633,7 @@ public class NodeUsage extends BasicLongEntity
 		result.put(DNP3_DATA_POINTS_KEY, getDnp3DataPointsTiersCostBreakdown());
 		result.put(OAUTH_CLIENT_CREDENTIALS_KEY, getOauthClientCredentialsTiersCostBreakdown());
 		result.put(CLOUD_INTEGRATIONS_DATA_KEY, getCloudIntegrationsDataTiersCostBreakdown());
+		result.put(API_DATA_KEY, getApiDataTiersCostBreakdown());
 		return result;
 	}
 
@@ -638,6 +656,7 @@ public class NodeUsage extends BasicLongEntity
 	 * <li>{@link #DNP3_DATA_POINTS_KEY}</li>
 	 * <li>{@link #OAUTH_CLIENT_CREDENTIALS_KEY}</li>
 	 * <li>{@link #CLOUD_INTEGRATIONS_DATA_KEY}</li>
+	 * <li>{@link #API_DATA_KEY}</li>
 	 * </ol>
 	 *
 	 * @return the map, never {@literal null}
@@ -668,6 +687,8 @@ public class NodeUsage extends BasicLongEntity
 				new BigDecimal(oauthClientCredentials), costs.getOauthClientCredentialsCost()));
 		result.put(CLOUD_INTEGRATIONS_DATA_KEY, new UsageInfo(CLOUD_INTEGRATIONS_DATA_KEY,
 				new BigDecimal(cloudIntegrationsData), costs.getCloudIntegrationsDataCost()));
+		result.put(API_DATA_KEY,
+				new UsageInfo(API_DATA_KEY, new BigDecimal(apiData), costs.getApiDataCost()));
 		return result;
 	}
 
@@ -1825,6 +1846,122 @@ public class NodeUsage extends BasicLongEntity
 					&& i < cloudIntegrationsDataCostTiers.length ? cloudIntegrationsDataCostTiers[i]
 							: null);
 			costsTiers[i].setCloudIntegrationsDataCost(val);
+		}
+	}
+
+	/**
+	 * Get the API data.
+	 *
+	 * @return the count
+	 * @since 2.8
+	 */
+	public BigInteger getApiData() {
+		return apiData;
+	}
+
+	/**
+	 * Set the count of API data.
+	 *
+	 * @param apiData
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
+	 * @since 2.8
+	 */
+	public void setApiData(BigInteger apiData) {
+		if ( apiData == null ) {
+			apiData = BigInteger.ZERO;
+		}
+		this.apiData = apiData;
+	}
+
+	/**
+	 * Get the cost of API data.
+	 *
+	 * @return the cost
+	 * @since 2.8
+	 */
+	public BigDecimal getApiDataCost() {
+		return costs.getApiDataCost();
+	}
+
+	/**
+	 * Set the cost of API data.
+	 *
+	 * @param apiDataCost
+	 *        the cost to set
+	 * @since 2.8
+	 */
+	public void setApiDataCost(BigDecimal apiDataCost) {
+		costs.setApiDataCost(apiDataCost);
+	}
+
+	/**
+	 * Get the API data tier cost breakdown.
+	 *
+	 * @return the costs, never {@literal null}
+	 * @since 2.8
+	 */
+	@JsonIgnore
+	public List<NamedCost> getApiDataTiersCostBreakdown() {
+		return tiersCostBreakdown(apiDataTiers, costsTiers, NodeUsageCost::getApiDataCost);
+	}
+
+	/**
+	 * Get the API data, per tier.
+	 *
+	 * @return the counts
+	 * @since 2.8
+	 */
+	public BigInteger[] getApiDataTiers() {
+		return apiDataTiers;
+	}
+
+	/**
+	 * Set the API data, per tier.
+	 *
+	 * @param apiDataTiers
+	 *        the counts to set
+	 * @since 2.8
+	 */
+	public void setApiDataTiers(BigInteger[] apiDataTiers) {
+		this.apiDataTiers = apiDataTiers;
+	}
+
+	/**
+	 * Set the API data, per tier, as decimals.
+	 *
+	 * @param apiDataTiers
+	 *        the counts to set
+	 * @since 2.8
+	 */
+	public void setApiDataTiersNumeric(BigDecimal[] apiDataTiers) {
+		this.apiDataTiers = decimalsToIntegers(apiDataTiers);
+	}
+
+	/**
+	 * Get the cost of API data, per tier.
+	 *
+	 * @return the cost
+	 * @since 2.8
+	 */
+	public BigDecimal[] getApiDataCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getApiDataCost);
+	}
+
+	/**
+	 * Set the cost of API data, per tier.
+	 *
+	 * @param apiDataCostTiers
+	 *        the costs to set
+	 * @since 2.8
+	 */
+	public void setApiDataCostTiers(BigDecimal[] apiDataCostTiers) {
+		prepCostsTiers(apiDataCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (apiDataCostTiers != null && i < apiDataCostTiers.length
+					? apiDataCostTiers[i]
+					: null);
+			costsTiers[i].setApiDataCost(val);
 		}
 	}
 

@@ -26,7 +26,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
  * Node usage constants.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public interface NodeUsages {
 
@@ -65,4 +65,7 @@ public interface NodeUsages {
 
 	/** A key to use for Cloud Integrations data usage. */
 	String CLOUD_INTEGRATIONS_DATA_KEY = "c2c-data";
+
+	/** A key to use for API data usage. */
+	String API_DATA_KEY = "api-data";
 }

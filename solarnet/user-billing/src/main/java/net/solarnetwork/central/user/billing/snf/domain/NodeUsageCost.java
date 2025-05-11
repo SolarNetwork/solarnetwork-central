@@ -36,7 +36,7 @@ import java.util.Objects;
  * </p>
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class NodeUsageCost implements Serializable {
 
@@ -55,6 +55,7 @@ public class NodeUsageCost implements Serializable {
 	private BigDecimal dnp3DataPointsCost;
 	private BigDecimal oauthClientCredentialsCost;
 	private BigDecimal cloudIntegrationsDataCost;
+	private BigDecimal apiDataCost;
 
 	/**
 	 * Constructor.
@@ -62,7 +63,7 @@ public class NodeUsageCost implements Serializable {
 	public NodeUsageCost() {
 		this(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
 				BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-				BigDecimal.ZERO);
+				BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
 	}
 
 	/**
@@ -396,11 +397,58 @@ public class NodeUsageCost implements Serializable {
 		setCloudIntegrationsDataCost(cloudIntegrationsDataCost);
 	}
 
+	/**
+	 * Constructor.
+	 *
+	 * @param datumPropertiesInCost
+	 *        the properties in cost
+	 * @param datumOutCost
+	 *        the datum out cost
+	 * @param datumDaysStoredCost
+	 *        the days stored cost
+	 * @param instructionsIssuedCost
+	 *        the instructions issued cost
+	 * @param ocppChargersCost
+	 *        the OCPP Chargers cost
+	 * @param oscpCapacityGroupsCost
+	 *        the OSCP Capacity Groups cost
+	 * @param oscpCapacityCost
+	 *        the OSCP capacity cost
+	 * @param dnp3DataPointsCost
+	 *        the DNP3 Data Points cost
+	 * @param cloudIntegrationsDataCost
+	 *        the Cloud Integrations data cost
+	 * @param apiDataCost
+	 *        the API data cost
+	 * @since 1.7
+	 */
+	public NodeUsageCost(BigDecimal datumPropertiesInCost, BigDecimal datumOutCost,
+			BigDecimal datumDaysStoredCost, BigDecimal instructionsIssuedCost, BigDecimal fluxDataInCost,
+			BigDecimal fluxDataOutCost, BigDecimal ocppChargersCost, BigDecimal oscpCapacityGroupsCost,
+			BigDecimal oscpCapacityCost, BigDecimal dnp3DataPointsCost,
+			BigDecimal oauthClientCredentialsCost, BigDecimal cloudIntegrationsDataCost,
+			BigDecimal apiDataCost) {
+		super();
+		setDatumPropertiesInCost(datumPropertiesInCost);
+		setDatumOutCost(datumOutCost);
+		setDatumDaysStoredCost(datumDaysStoredCost);
+		setInstructionsIssuedCost(instructionsIssuedCost);
+		setFluxDataInCost(fluxDataInCost);
+		setFluxDataOutCost(fluxDataOutCost);
+		setOcppChargersCost(ocppChargersCost);
+		setOscpCapacityGroupsCost(oscpCapacityGroupsCost);
+		setOscpCapacityCost(oscpCapacityCost);
+		setDnp3DataPointsCost(dnp3DataPointsCost);
+		setOauthClientCredentialsCost(oauthClientCredentialsCost);
+		setCloudIntegrationsDataCost(cloudIntegrationsDataCost);
+		setApiDataCost(apiDataCost);
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(datumDaysStoredCost, datumOutCost, datumPropertiesInCost, ocppChargersCost,
 				oscpCapacityGroupsCost, oscpCapacityCost, dnp3DataPointsCost, oauthClientCredentialsCost,
-				cloudIntegrationsDataCost);
+				cloudIntegrationsDataCost, apiDataCost);
 	}
 
 	@Override
@@ -419,7 +467,8 @@ public class NodeUsageCost implements Serializable {
 				&& Objects.equals(oscpCapacityCost, other.oscpCapacityCost)
 				&& Objects.equals(dnp3DataPointsCost, other.dnp3DataPointsCost)
 				&& Objects.equals(oauthClientCredentialsCost, other.oauthClientCredentialsCost)
-				&& Objects.equals(cloudIntegrationsDataCost, other.cloudIntegrationsDataCost);
+				&& Objects.equals(cloudIntegrationsDataCost, other.cloudIntegrationsDataCost)
+				&& Objects.equals(apiDataCost, other.apiDataCost);
 	}
 
 	@Override
@@ -444,6 +493,8 @@ public class NodeUsageCost implements Serializable {
 		builder.append(oauthClientCredentialsCost);
 		builder.append(", cloudIntegrationsDataCost=");
 		builder.append(cloudIntegrationsDataCost);
+		builder.append(", apiDataCost=");
+		builder.append(apiDataCost);
 		builder.append("}");
 		return builder.toString();
 	}
@@ -719,6 +770,30 @@ public class NodeUsageCost implements Serializable {
 			cloudIntegrationsDataCost = BigDecimal.ZERO;
 		}
 		this.cloudIntegrationsDataCost = cloudIntegrationsDataCost;
+	}
+
+	/**
+	 * Get the API data cost.
+	 *
+	 * @return the cost, never {@literal null}
+	 * @since 1.7
+	 */
+	public final BigDecimal getApiDataCost() {
+		return apiDataCost;
+	}
+
+	/**
+	 * Set the API data cost.
+	 *
+	 * @param apiDataCost
+	 *        the cost to set
+	 * @since 1.7
+	 */
+	public final void setApiDataCost(BigDecimal apiDataCost) {
+		if ( apiDataCost == null ) {
+			apiDataCost = BigDecimal.ZERO;
+		}
+		this.apiDataCost = apiDataCost;
 	}
 
 }

@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.invoiceForSnfInvoice;
 import static net.solarnetwork.central.user.billing.snf.SnfBillingUtils.usageMetadata;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.API_DATA_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.CLOUD_INTEGRATIONS_DATA_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_DAYS_STORED_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
@@ -108,7 +109,7 @@ import net.solarnetwork.service.TemplateRenderer;
  * Default implementation of {@link SnfInvoicingSystem}.
  *
  * @author matt
- * @version 1.7
+ * @version 1.8
  */
 public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -155,6 +156,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	private String dnp3DataPointsKey = DNP3_DATA_POINTS_KEY;
 	private String oauthClientCredentialsKey = OAUTH_CLIENT_CREDENTIALS_KEY;
 	private String cloudIntegrationsDataKey = CLOUD_INTEGRATIONS_DATA_KEY;
+	private String apiDataKey = API_DATA_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
@@ -367,6 +369,15 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 						new BigDecimal(usage.getCloudIntegrationsData()),
 						usage.getCloudIntegrationsDataCost());
 				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, CLOUD_INTEGRATIONS_DATA_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
+				items.add(item);
+			}
+			if ( usage.getApiData().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, apiDataKey,
+						new BigDecimal(usage.getApiData()), usage.getApiDataCost());
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, API_DATA_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -948,6 +959,30 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 	public final void setCloudIntegrationsDataKey(String cloudIntegrationsDataKey) {
 		this.cloudIntegrationsDataKey = requireNonNullArgument(cloudIntegrationsDataKey,
 				"cloudIntegrationsDataKey");
+	}
+
+	/**
+	 * Get the item key for API data.
+	 *
+	 * @return the key, never {@literal null}; defaults to
+	 *         {@link NodeUsages#API_DATA_KEY}
+	 * @since 1.8
+	 */
+	public final String getApiDataKey() {
+		return apiDataKey;
+	}
+
+	/**
+	 * Set the item key for API data.
+	 *
+	 * @param apiDataKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 * @since 1.8
+	 */
+	public final void setApiDataKey(String apiDataKey) {
+		this.apiDataKey = requireNonNullArgument(apiDataKey, "apiDataKey");
 	}
 
 	/**
