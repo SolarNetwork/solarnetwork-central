@@ -23,6 +23,8 @@
 package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
@@ -40,7 +42,7 @@ import net.solarnetwork.service.support.BasicIdentifiable;
  * Basic implementation of {@link AuthorizationService}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OcppAuthorizationService extends BasicIdentifiable implements AuthorizationService {
 
@@ -48,6 +50,8 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 
 	private final CentralAuthorizationDao authorizationDao;
 	private final CentralChargePointDao chargePointDao;
+
+	private Set<String> wildcardIdTagPrefixes;
 
 	/**
 	 * Constructor.
@@ -73,6 +77,16 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 			CentralChargePoint cp = (CentralChargePoint) chargePointDao.getForIdentity(identity);
 			if ( cp != null ) {
 				auth = authorizationDao.getForToken(cp.getUserId(), idTag);
+				if ( auth == null && wildcardIdTagPrefixes != null
+						&& !wildcardIdTagPrefixes.isEmpty() ) {
+					final String idTagLc = idTag.toLowerCase();
+					for ( String prefix : wildcardIdTagPrefixes ) {
+						if ( idTagLc.startsWith(prefix) ) {
+							auth = authorizationDao.getForToken(cp.getUserId(), prefix + "*");
+							break;
+						}
+					}
+				}
 			}
 		}
 		AuthorizationInfo.Builder result = AuthorizationInfo.builder().withId(idTag);
@@ -91,6 +105,39 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 			result.withStatus(AuthorizationStatus.Invalid);
 		}
 		return result.build();
+	}
+
+	/**
+	 * Get the allowed wildcard ID Tag prefixes.
+	 * 
+	 * @return the prefixes
+	 */
+	public Set<String> getWildcardIdTagPrefixes() {
+		return wildcardIdTagPrefixes;
+	}
+
+	/**
+	 * Set the allowed wildcard ID Tag prefixes.
+	 * 
+	 * <p>
+	 * These prefixes will be compared to ID Tag values passed to
+	 * {@link #authorize(ChargePointIdentity, String)} if an exact ID Tag match
+	 * is not found. If an ID Tag starts with one of these prefixes, then a
+	 * token in the form {@code PREFIX*} (the prefix with an asterisk appended)
+	 * will be looked up in the configured {@link CentralAuthorizationDao}.
+	 * </p>
+	 * 
+	 * <p>
+	 * All prefixes will be converted to lower-case.
+	 * </p>
+	 * 
+	 * @param wildcardIdTagPrefixes
+	 *        the prefixes to set
+	 */
+	public void setWildcardIdTagPrefixes(Set<String> wildcardIdTagPrefixes) {
+		Set<String> prefixes = (wildcardIdTagPrefixes != null ? wildcardIdTagPrefixes.stream()
+				.map(p -> p.toLowerCase()).collect(Collectors.toUnmodifiableSet()) : null);
+		this.wildcardIdTagPrefixes = prefixes;
 	}
 
 }
