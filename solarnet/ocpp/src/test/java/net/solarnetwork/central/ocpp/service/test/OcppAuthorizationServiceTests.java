@@ -28,6 +28,7 @@ import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +47,7 @@ import net.solarnetwork.ocpp.domain.ChargePointIdentity;
  * Test cases for the {@link OcppAuthorizationService} class.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 @ExtendWith(MockitoExtension.class)
 public class OcppAuthorizationServiceTests {
@@ -245,6 +246,96 @@ public class OcppAuthorizationServiceTests {
 			.returns(null, AuthorizationInfo::getExpiryDate)
 			.as("Parent ID not available")
 			.returns(null, AuthorizationInfo::getParentId)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void auth_ok_fromPrefix() {
+		// GIVEN
+		service.setWildcardIdTagPrefixes(Set.of("vid:"));
+
+		Long userId = randomLong();
+		Long nodeId = randomLong();
+		ChargePointIdentity identity = new ChargePointIdentity(randomString(), userId.toString());
+		String idTag = "vid:" + randomString();
+
+		// look up charger
+		CentralChargePoint cp = new CentralChargePoint(randomLong(), userId, nodeId);
+		given(chargePointDao.getForIdentity(identity)).willReturn(cp);
+
+		// look up auth exact match (not found)
+		given(authorizationDao.getForToken(userId, idTag)).willReturn(null);
+
+		// look  up auth via prefix match
+		Authorization auth = new Authorization(randomLong());
+		auth.setToken("vid:*");
+		auth.setEnabled(true);
+		auth.setExpiryDate(Instant.now().plus(1L, ChronoUnit.DAYS));
+		auth.setParentId(randomString());
+		given(authorizationDao.getForToken(userId, "vid:*")).willReturn(auth);
+
+		// WHEN
+		AuthorizationInfo result = service.authorize(identity, idTag);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result provided")
+			.isNotNull()
+			.as("ID is token")
+			.returns(idTag, AuthorizationInfo::getId)
+			.as("Status is accepted")
+			.returns(AuthorizationStatus.Accepted, AuthorizationInfo::getStatus)
+			.as("Expiry copied from Authorization")
+			.returns(auth.getExpiryDate(), AuthorizationInfo::getExpiryDate)
+			.as("Parent ID copied from Authorization")
+			.returns(auth.getParentId(), AuthorizationInfo::getParentId)
+			;
+		// @formatter:on
+	}
+
+	@Test
+	public void auth_ok_fromPrefix_caseInsensitive() {
+		// GIVEN
+		service.setWildcardIdTagPrefixes(Set.of("Vid:"));
+
+		Long userId = randomLong();
+		Long nodeId = randomLong();
+		ChargePointIdentity identity = new ChargePointIdentity(randomString(), userId.toString());
+		String idTag = "VID:" + randomString();
+
+		// look up charger
+		CentralChargePoint cp = new CentralChargePoint(randomLong(), userId, nodeId);
+		given(chargePointDao.getForIdentity(identity)).willReturn(cp);
+
+		// look up auth exact match (not found)
+		given(authorizationDao.getForToken(userId, idTag)).willReturn(null);
+
+		// look  up auth via prefix match
+		Authorization auth = new Authorization(randomLong());
+		auth.setToken("vid:*");
+		auth.setEnabled(true);
+		auth.setExpiryDate(Instant.now().plus(1L, ChronoUnit.DAYS));
+		auth.setParentId(randomString());
+		given(authorizationDao.getForToken(userId, "vid:*")).willReturn(auth);
+
+		// WHEN
+		AuthorizationInfo result = service.authorize(identity, idTag);
+
+		// THEN
+		// @formatter:off
+		then(result)
+			.as("Result provided")
+			.isNotNull()
+			.as("ID is token")
+			.returns(idTag, AuthorizationInfo::getId)
+			.as("Status is accepted")
+			.returns(AuthorizationStatus.Accepted, AuthorizationInfo::getStatus)
+			.as("Expiry copied from Authorization")
+			.returns(auth.getExpiryDate(), AuthorizationInfo::getExpiryDate)
+			.as("Parent ID copied from Authorization")
+			.returns(auth.getParentId(), AuthorizationInfo::getParentId)
 			;
 		// @formatter:on
 	}
