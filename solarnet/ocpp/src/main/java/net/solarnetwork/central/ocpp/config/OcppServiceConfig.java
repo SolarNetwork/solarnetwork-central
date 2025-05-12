@@ -25,6 +25,7 @@ package net.solarnetwork.central.ocpp.config;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V16;
 import static net.solarnetwork.central.ocpp.config.SolarNetOcppConfiguration.OCPP_V201;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -49,6 +50,7 @@ public class OcppServiceConfig {
 	@Autowired
 	private CentralChargePointDao ocppCentralChargePointDao;
 
+	@ConfigurationProperties(prefix = "app.ocpp.auth-service")
 	@Bean
 	public AuthorizationService ocppAuthorizationService() {
 		return new OcppAuthorizationService(ocppCentralAuthorizationDao, ocppCentralChargePointDao);
