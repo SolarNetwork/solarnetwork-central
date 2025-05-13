@@ -137,7 +137,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.13
+ * @version 1.14
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -165,7 +165,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
-		SETTINGS = List.of(granularitySpec);
+		SETTINGS = List.of(granularitySpec, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/**

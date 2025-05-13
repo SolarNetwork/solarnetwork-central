@@ -84,7 +84,7 @@ import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
  * irradiance API.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDatumStreamService {
 
@@ -120,7 +120,8 @@ public class SolcastIrradianceCloudDatumStreamService extends BaseSolcastCloudDa
 				new BasicTextFieldSettingSpecifier(AZIMUTH_SETTING, null),
 				new BasicTextFieldSettingSpecifier(TILT_SETTING, null),
 				ARRAY_TYPE_SETTTING_SPECIFIER,
-				RESOLUTION_SETTING_SPECIFIER
+				RESOLUTION_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}

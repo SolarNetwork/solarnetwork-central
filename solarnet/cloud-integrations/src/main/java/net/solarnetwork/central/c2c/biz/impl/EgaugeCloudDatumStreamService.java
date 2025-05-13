@@ -116,7 +116,7 @@ import net.solarnetwork.util.StringUtils;
  * however.
  *
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -137,7 +137,8 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 				new BasicTextFieldSettingSpecifier(DEVICE_ID_FILTER, null),
 				BaseCloudIntegrationService.USERNAME_SETTING_SPECIFIER,
 				BaseCloudIntegrationService.PASSWORD_SETTING_SPECIFIER,
-				new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null)
+				new BasicTextFieldSettingSpecifier(GRANULARITY_SETTING, null),
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}

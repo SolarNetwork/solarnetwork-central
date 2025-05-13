@@ -111,7 +111,7 @@ import net.solarnetwork.util.StringUtils;
  * SolarEdge implementation of {@link CloudDatumStreamService} using the V1 API.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -160,7 +160,8 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 						(l, r) -> r, () -> new LinkedHashMap<>(SolarEdgeResolution.values().length))));
 		resolutionSpec.setValueTitles(resolutionTitles);
 
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, ibSourceIdSpec, resolutionSpec);
+		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, ibSourceIdSpec, resolutionSpec,
+				SOURCE_ID_MAP_SETTING_SPECIFIER, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/**

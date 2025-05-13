@@ -95,7 +95,7 @@ import net.solarnetwork.util.StringUtils;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -151,7 +151,8 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER);
+		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, SOURCE_ID_MAP_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/** The supported placeholder keys. */

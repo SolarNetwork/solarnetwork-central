@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -168,7 +168,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 	/** The service settings. */
 	public static final List<SettingSpecifier> SETTINGS;
 	static {
-		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER);
+		SETTINGS = List.of(UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER, SOURCE_ID_MAP_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/** The supported placeholder keys. */

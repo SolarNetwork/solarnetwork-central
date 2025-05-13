@@ -110,7 +110,6 @@ import net.solarnetwork.domain.datum.GeneralDatum;
 import net.solarnetwork.service.RemoteServiceException;
 import net.solarnetwork.settings.SettingSpecifier;
 import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
-import net.solarnetwork.settings.support.BasicTextAreaSettingSpecifier;
 import net.solarnetwork.support.XmlSupport;
 import net.solarnetwork.util.IntRange;
 
@@ -190,7 +189,7 @@ import net.solarnetwork.util.IntRange;
  * </ul>
  *
  * @author matt
- * @version 1.9
+ * @version 1.10
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -215,9 +214,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 						(l, r) -> r, () -> new LinkedHashMap<>(SolrenViewGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
-		var sourceIdMapSpec = new BasicTextAreaSettingSpecifier(SOURCE_ID_MAP_SETTING, null, true);
-
-		SETTINGS = List.of(granularitySpec, sourceIdMapSpec);
+		SETTINGS = List.of(granularitySpec, SOURCE_ID_MAP_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/**
