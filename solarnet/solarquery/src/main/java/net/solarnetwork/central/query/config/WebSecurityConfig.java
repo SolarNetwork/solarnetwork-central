@@ -60,7 +60,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  * 
  * @author matt
- * @version 1.6
+ * @version 1.7
  */
 @Configuration
 @EnableWebSecurity
@@ -100,8 +100,7 @@ public class WebSecurityConfig {
 	}
 
 	private AuthenticationProvider authenticationProvider() {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService());
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService());
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}

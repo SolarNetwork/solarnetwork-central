@@ -190,7 +190,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		given(integrationDao.get(integration.getId())).willReturn(integration);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -353,7 +353,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -514,7 +514,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -637,7 +637,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -830,7 +830,7 @@ public class AlsoEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())

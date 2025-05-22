@@ -91,7 +91,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 				"sensitiveKeysProvider");
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings("removal")
 	@Override
 	public ClientRegistration findByRegistrationId(String registrationId) {
 		final List<Long> ids = systemIdentifierLongComponents(registrationId, true);

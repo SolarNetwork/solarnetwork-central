@@ -55,7 +55,7 @@ import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.header.HeaderWriter;
 import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -75,7 +75,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
  * Security configuration.
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 @Configuration
 @EnableWebSecurity
@@ -153,8 +153,7 @@ public class WebSecurityConfig {
 	}
 
 	private AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService) {
-		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-		provider.setUserDetailsService(userDetailsService);
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 		provider.setPasswordEncoder(passwordEncoder);
 		return provider;
 	}
@@ -195,7 +194,7 @@ public class WebSecurityConfig {
 		public SecurityFilterChain filterChainBrowser(HttpSecurity http) throws Exception {
 			// Add a special header to the login page, so JavaScript can reliably detect when redirected there
 			HeaderWriter loginHeaderWriter = new DelegatingRequestMatcherHeaderWriter(
-					new AntPathRequestMatcher("/login"),
+					PathPatternRequestMatcher.withDefaults().matcher("/login"),
 					new StaticHeadersWriter(LOGIN_PAGE_HEADER, "true"));
 
 			// opt-in to Spring Security 6 behavior
