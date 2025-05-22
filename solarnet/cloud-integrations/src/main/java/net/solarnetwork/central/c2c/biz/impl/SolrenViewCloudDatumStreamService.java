@@ -169,6 +169,12 @@ import net.solarnetwork.util.IntRange;
  *    "sourceIdMap":  "123456=source/1, 234567=source/2"
  * }}</pre>
  *
+ * <p>
+ * The source ID map keys can also be specified in the form
+ * {@code /SITE_ID/COMPONENT_ID} for consistency with other
+ * {@link CloudDatumStreamService} implementations.
+ * </p>
+ *
  * <h2>Default wildcard source IDs</h2>
  *
  * <p>
@@ -189,7 +195,7 @@ import net.solarnetwork.util.IntRange;
  * </ul>
  *
  * @author matt
- * @version 1.10
+ * @version 1.11
  */
 public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -451,7 +457,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 								.buildAndExpand(siteId, periodStartDate, periodEndDate)
 								.toUri();
 						// @formatter:on
-					}, res -> parseDatum(ds, res.getBody(), periodStartDate, datum, refsByComponent));
+					}, res -> parseDatum(ds, siteId, res.getBody(), periodStartDate, datum,
+							refsByComponent));
 				}
 				startDate = periodEndDate;
 			}
@@ -712,8 +719,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return intermediateDataValue(List.of(siteId.toString(), id), id, null, propCollection);
 	}
 
-	private Void parseDatum(CloudDatumStreamConfiguration datumStream, String body, Instant ts,
-			Map<Instant, Map<String, GeneralDatum>> datumByTimeSource,
+	private Void parseDatum(CloudDatumStreamConfiguration datumStream, Long siteId, String body,
+			Instant ts, Map<Instant, Map<String, GeneralDatum>> datumByTimeSource,
 			Map<String, List<ValueRef>> refsByComponent) {
 		final Document dom;
 		try {
@@ -730,8 +737,8 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 			throw new RemoteServiceException(e.getMessage(), e);
 		}
 
-		// get optional map of component ID -> source ID
-		final Map<String, String> componentSourceIdMapping = componentSourceIdMap(datumStream);
+		// get optional map of component ID (or ref) -> source ID
+		final Map<String, String> sourceIdMapping = sourceIdMap(datumStream);
 
 		for ( int i = 0, len = componentNodes.getLength(); i < len; i++ ) {
 			Node n = componentNodes.item(i);
@@ -742,9 +749,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				continue;
 			}
 
-			String sourceId = componentSourceIdMapping != null
-					? componentSourceIdMapping.get(componentId)
-					: datumStream.getSourceId() + '/' + (i + 1);
+			String sourceId = resolveSourceId(datumStream, siteId, componentId, i, sourceIdMapping);
 			if ( sourceId == null ) {
 				continue;
 			}
@@ -763,8 +768,24 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return null;
 	}
 
-	private Map<String, String> componentSourceIdMap(CloudDatumStreamConfiguration datumStream) {
+	private Map<String, String> sourceIdMap(CloudDatumStreamConfiguration datumStream) {
 		return servicePropertyStringMap(datumStream, SOURCE_ID_MAP_SETTING);
+	}
+
+	private static String resolveSourceId(CloudDatumStreamConfiguration datumStream, Long siteId,
+			String componentId, int i, Map<String, String> sourceIdMap) {
+		if ( sourceIdMap != null ) {
+			String result = sourceIdMap.get(componentId);
+			if ( result != null ) {
+				return result;
+			}
+			// try ref form
+			String key = "/%d/%s".formatted(siteId, componentId);
+			return sourceIdMap.get(key);
+		}
+
+		// auto-generated source ID based on component index
+		return datumStream.getSourceId() + '/' + (i + 1);
 	}
 
 	private void parseDatumProperties(Node componentNode, String componentId, GeneralDatum datum,
