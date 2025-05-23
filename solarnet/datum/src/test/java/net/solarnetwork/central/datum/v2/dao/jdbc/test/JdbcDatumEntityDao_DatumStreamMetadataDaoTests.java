@@ -75,10 +75,9 @@ import javax.cache.Cache;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import net.solarnetwork.central.datum.dao.jdbc.test.BaseDatumJdbcTestSupport;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.domain.LocationSourcePK;
@@ -130,7 +129,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		EasyMock.replay(cache, idCache);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(cache, idCache);
 	}
@@ -1332,7 +1331,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		filter.setObjectKind(ObjectDatumKind.Node);
-		ObjectDatumStreamMetadata persisted = ((DatumStreamMetadataDao) dao).findStreamMetadata(filter);
+		ObjectDatumStreamMetadata persisted = dao.findStreamMetadata(filter);
 
 		// THEN
 		// @formatter:off
@@ -1387,7 +1386,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		filter.setObjectKind(ObjectDatumKind.Node);
-		ObjectDatumStreamMetadata persisted = ((DatumStreamMetadataDao) dao).findStreamMetadata(filter);
+		ObjectDatumStreamMetadata persisted = dao.findStreamMetadata(filter);
 
 		// THEN
 		// @formatter:off
@@ -1442,7 +1441,7 @@ public class JdbcDatumEntityDao_DatumStreamMetadataDaoTests extends BaseDatumJdb
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setStreamId(meta.getStreamId());
 		filter.setObjectKind(ObjectDatumKind.Node);
-		ObjectDatumStreamMetadata persisted = ((DatumStreamMetadataDao) dao).findStreamMetadata(filter);
+		ObjectDatumStreamMetadata persisted = dao.findStreamMetadata(filter);
 
 		// THEN
 		// @formatter:off

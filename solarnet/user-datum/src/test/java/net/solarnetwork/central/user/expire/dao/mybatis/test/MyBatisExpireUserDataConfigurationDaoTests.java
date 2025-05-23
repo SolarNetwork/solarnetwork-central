@@ -28,6 +28,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.domain.datum.DatumProperties.propertiesOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -35,7 +36,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertNotNull;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.Period;
@@ -51,8 +51,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
@@ -93,13 +93,13 @@ public class MyBatisExpireUserDataConfigurationDaoTests extends AbstractMyBatisU
 	private ExpireUserDataConfiguration conf;
 	private ObjectDatumStreamMetadata streamMeta;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		confDao = new MyBatisExpireUserDataConfigurationDao();
 		confDao.setSqlSessionFactory(getSqlSessionFactory());
 
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		conf = null;
 
 		setupTestNode();

@@ -24,16 +24,16 @@ package net.solarnetwork.central.user.expire.biz.dao.test;
 
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.sameInstance;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;
 import net.solarnetwork.central.user.expire.biz.dao.DaoUserExpireBiz;
 import net.solarnetwork.central.user.expire.dao.ExpireUserDataConfigurationDao;
@@ -53,7 +53,7 @@ public class DaoUserExpireBizTests {
 
 	private DaoUserExpireBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dataConfigurationDao = EasyMock.createMock(ExpireUserDataConfigurationDao.class);
 
@@ -64,7 +64,7 @@ public class DaoUserExpireBizTests {
 		EasyMock.replay(dataConfigurationDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(dataConfigurationDao);
 	}

@@ -22,18 +22,16 @@
 
 package net.solarnetwork.central.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarLocationDao;
 import net.solarnetwork.central.domain.LocationMatch;
 import net.solarnetwork.central.domain.SolarLocation;
@@ -51,7 +49,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 
 	private SolarLocation location = null;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		solarLocationDao = new MyBatisSolarLocationDao();
 		solarLocationDao.setSqlSessionFactory(getSqlSessionFactory());
@@ -73,37 +71,34 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		loc.setStreet("street");
 		loc.setTimeZoneId("UTC");
 		Long id = solarLocationDao.save(loc);
-		assertNotNull(id);
+		then(id).isNotNull();
 		loc.setId(id);
 		location = loc;
 	}
 
 	private void validatePublic(SolarLocation src, SolarLocation entity) {
-		assertNotNull("SolarLocation should exist", entity);
-		assertNotNull("Created date should be set", entity.getCreated());
-		assertEquals(src.getCountry(), entity.getCountry());
-		assertEquals(src.getLocality(), entity.getLocality());
-		assertEquals(src.getPostalCode(), entity.getPostalCode());
-		assertEquals(src.getRegion(), entity.getRegion());
-		assertEquals(src.getStateOrProvince(), entity.getStateOrProvince());
-		assertEquals(src.getTimeZoneId(), entity.getTimeZoneId());
+		then(entity).as("SolarLocation should exist").isNotNull().satisfies(e -> {
+			then(entity.getCreated()).as("Created date should be set").isNotNull();
+		}).returns(src.getCountry(), from(SolarLocation::getCountry))
+				.returns(src.getLocality(), from(SolarLocation::getLocality))
+				.returns(src.getPostalCode(), from(SolarLocation::getPostalCode))
+				.returns(src.getRegion(), from(SolarLocation::getRegion))
+				.returns(src.getStateOrProvince(), from(SolarLocation::getStateOrProvince))
+				.returns(src.getTimeZoneId(), from(SolarLocation::getTimeZoneId));
 	}
 
 	private void validate(SolarLocation src, SolarLocation entity) {
 		validatePublic(src, entity);
 		if ( src.getLatitude() != null ) {
-			assertNotNull(entity.getLatitude());
-			assertEquals(0, src.getLatitude().compareTo(entity.getLatitude()));
+			then(entity.getLatitude()).isEqualByComparingTo(src.getLatitude());
 		}
 		if ( src.getLongitude() != null ) {
-			assertNotNull(entity.getLongitude());
-			assertEquals(0, src.getLongitude().compareTo(entity.getLongitude()));
+			then(entity.getLongitude()).isEqualByComparingTo(src.getLongitude());
 		}
 		if ( src.getElevation() != null ) {
-			assertNotNull(entity.getElevation());
-			assertEquals(0, src.getElevation().compareTo(entity.getElevation()));
+			then(entity.getElevation()).isEqualByComparingTo(src.getElevation());
 		}
-		assertEquals(src.getStreet(), entity.getStreet());
+		then(entity).returns(src.getStreet(), from(SolarLocation::getStreet));
 	}
 
 	@Test
@@ -119,7 +114,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		SolarLocation loc = solarLocationDao.get(location.getId());
 		loc.setName("new name");
 		Long newId = solarLocationDao.save(loc);
-		assertEquals(loc.getId(), newId);
+		then(newId).isEqualTo(loc.getId());
 		SolarLocation loc2 = solarLocationDao.get(location.getId());
 		validate(loc, loc2);
 	}
@@ -130,7 +125,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		// should not find this location, because properties other than country and time zone are set
 		SolarLocation loc = solarLocationDao.getSolarLocationForTimeZone(location.getCountry(),
 				location.getTimeZoneId());
-		assertNull(loc);
+		then(loc).isNull();
 	}
 
 	@Test
@@ -141,12 +136,12 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		loc.setCountry("NZ");
 		loc.setTimeZoneId("Pacific/Auckland");
 		Long id = solarLocationDao.save(loc);
-		assertNotNull(id);
+		then(id).isNotNull();
 		loc.setId(id);
 		// should not find this location, because properties other than country and time zone are set
 		SolarLocation found = solarLocationDao.getSolarLocationForTimeZone(loc.getCountry(),
 				loc.getTimeZoneId());
-		assertNotNull(loc);
+		then(loc).isNotNull();
 		validate(loc, found);
 	}
 
@@ -156,9 +151,9 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		filter.setName("does-not-exist");
 		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
 				null);
-		assertNotNull(results);
-		assertEquals(0, results.getReturnedResultCount());
-		assertEquals(Long.valueOf(0L), results.getTotalResults());
+		then(results).asInstanceOf(type(FilterResults.class))
+				.returns(0, from(FilterResults<?, ?>::getReturnedResultCount))
+				.returns(0L, from(FilterResults<?, ?>::getTotalResults));
 	}
 
 	@Test
@@ -168,13 +163,10 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		filter.setRegion(TEST_LOC_REGION);
 		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
 				null);
-		assertNotNull(results);
-		assertEquals(1, results.getReturnedResultCount());
-		assertEquals(Long.valueOf(1L), results.getTotalResults());
-		assertNotNull(results.getResults());
-		LocationMatch match = results.getResults().iterator().next();
-		assertNotNull(match);
-		assertEquals(TEST_LOC_ID, match.getId());
+		then(results).asInstanceOf(type(FilterResults.class))
+				.returns(1, from(FilterResults<?, ?>::getReturnedResultCount))
+				.returns(1L, from(FilterResults<?, ?>::getTotalResults));
+		then(results).element(0).returns(TEST_LOC_ID, from(LocationMatch::getId));
 	}
 
 	@Test
@@ -202,17 +194,12 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		filter.setTimeZoneId(TEST_TZ);
 		FilterResults<LocationMatch, Long> results = solarLocationDao.findFiltered(filter, null, null,
 				null);
-		assertNotNull(results);
-		assertEquals(3, results.getReturnedResultCount());
-		assertEquals(Long.valueOf(3L), results.getTotalResults());
-		assertNotNull(results.getResults());
+		then(results).asInstanceOf(type(FilterResults.class))
+				.returns(3, from(FilterResults<?, ?>::getReturnedResultCount))
+				.returns(3L, from(FilterResults<?, ?>::getTotalResults));
 
-		List<Long> expectedIds = Arrays.asList(TEST_LOC_ID, id2, id3);
-		int idx = 0;
-		for ( LocationMatch match : results.getResults() ) {
-			assertEquals("Results should be ordered by name", expectedIds.get(idx), match.getId());
-			idx++;
-		}
+		then(results).extracting(LocationMatch::getId).as("Results should be ordered by name")
+				.containsExactly(TEST_LOC_ID, id2, id3);
 	}
 
 	@Test
@@ -221,7 +208,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		SolarLocation criteria = new SolarLocation();
 		criteria.setPostalCode(TEST_LOC_POSTAL_CODE);
 		SolarLocation match = solarLocationDao.getSolarLocationForLocation(criteria);
-		assertNull(match);
+		then(match).isNull();
 	}
 
 	@Test
@@ -229,8 +216,7 @@ public class MyBatisSolarLocationDaoTests extends AbstractMyBatisDaoTestSupport 
 		setupTestLocation();
 		SolarLocation criteria = solarLocationDao.get(TEST_LOC_ID);
 		SolarLocation match = solarLocationDao.getSolarLocationForLocation(criteria);
-		assertNotNull(match);
-		assertEquals(criteria, match);
+		then(match).isNotNull().isEqualTo(criteria);
 	}
 
 	@Test

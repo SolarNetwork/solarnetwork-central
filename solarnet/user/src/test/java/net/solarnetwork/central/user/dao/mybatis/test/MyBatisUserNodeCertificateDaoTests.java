@@ -22,9 +22,8 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,10 +76,10 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
-		assertNotNull(this.node);
+		then(this.node).isNotNull();
 		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		UserNode un = new UserNode(this.user, this.node);
 		userNodeDao.save(un);
 
@@ -97,18 +96,25 @@ public class MyBatisUserNodeCertificateDaoTests extends AbstractMyBatisUserDaoTe
 		newUserNodeCert.setKeystoreData(TEST_CERT);
 		newUserNodeCert.setStatus(UserNodeCertificateStatus.v);
 		UserNodePK id = userNodeCertificateDao.save(newUserNodeCert);
-		assertNotNull(id);
+		then(id).isNotNull();
 		this.userNodeCert = userNodeCertificateDao.get(id);
 	}
 
 	private void validate(UserNodeCertificate cert, UserNodeCertificate entity) {
-		assertNotNull("UserNodeCertificate should exist", entity);
-		assertNotNull("Created date should be set", entity.getCreated());
-		assertEquals(cert.getId(), entity.getId());
-		assertArrayEquals(cert.getKeystoreData(), entity.getKeystoreData());
-		assertEquals(cert.getStatus(), entity.getStatus());
-		assertEquals(cert.getNode(), entity.getNode());
-		assertEquals(cert.getUser(), entity.getUser());
+		// @formatter:off
+		then(entity)
+			.as("UserNodeCertificate should exist")
+			.isNotNull()
+			.returns(cert.getId(), from(UserNodeCertificate::getId))
+			.returns(cert.getKeystoreData(), from(UserNodeCertificate::getKeystoreData))
+			.returns(cert.getStatus(), from(UserNodeCertificate::getStatus))
+			.returns(cert.getNode(), from(UserNodeCertificate::getNode))
+			.returns(cert.getUser(), from(UserNodeCertificate::getUser))
+			.extracting(UserNodeCertificate::getCreated)
+			.as("Created date should be set")
+			.isNotNull()
+			;
+		// @formatter:on
 	}
 
 	@Test

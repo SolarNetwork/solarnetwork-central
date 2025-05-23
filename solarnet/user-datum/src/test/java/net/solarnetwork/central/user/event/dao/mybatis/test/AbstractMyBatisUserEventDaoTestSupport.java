@@ -27,13 +27,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
 import java.util.UUID;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.domain.SolarNode;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserNodeDao;
 import net.solarnetwork.central.user.domain.User;
@@ -48,14 +48,15 @@ import net.solarnetwork.central.user.domain.UserNode;
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class AbstractMyBatisUserEventDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisUserEventDaoTestSupport
+		extends AbstractJUnit5CentralTransactionalTest {
 
 	private SqlSessionFactory sqlSessionFactory;
 
 	protected MyBatisUserDao userDao;
 	protected MyBatisUserNodeDao userNodeDao;
 
-	@Before
+	@BeforeEach
 	public void setupAbstractTestSupport() {
 		userDao = new MyBatisUserDao();
 		userDao.setSqlSessionFactory(sqlSessionFactory);

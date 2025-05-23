@@ -23,7 +23,7 @@
 package net.solarnetwork.central.query.biz.dao.test;
 
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -75,7 +75,7 @@ public abstract class AbstractQueryBizDaoTestSupport extends AbstractJUnit5Centr
 		return sqlSessionFactory;
 	}
 
-	@Before
+	@BeforeEach
 	public void setupBaseSupport() {
 		solarNodeDao = new MyBatisSolarNodeDao();
 		((MyBatisSolarNodeDao) solarNodeDao).setSqlSessionFactory(sqlSessionFactory);

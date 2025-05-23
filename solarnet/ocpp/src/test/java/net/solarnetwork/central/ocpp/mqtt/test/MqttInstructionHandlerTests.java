@@ -39,9 +39,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,7 +87,7 @@ public class MqttInstructionHandlerTests {
 	private MqttConnection mqttConnection;
 	private MqttInstructionHandler<ChargePointAction> handler;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		instructionDao = EasyMock.createMock(NodeInstructionDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
@@ -101,7 +101,7 @@ public class MqttInstructionHandlerTests {
 				objectMapper, chargePointRouter);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(instructionDao, chargePointDao, chargePointRouter, mqttConnection,
 				chargePointBroker);

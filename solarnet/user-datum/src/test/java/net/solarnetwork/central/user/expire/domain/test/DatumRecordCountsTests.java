@@ -24,7 +24,7 @@ package net.solarnetwork.central.user.expire.domain.test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.domain.DatumRecordCounts;

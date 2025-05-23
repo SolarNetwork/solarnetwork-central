@@ -40,8 +40,8 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.export.dao.mybatis.MyBatisDatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.DatumExportState;
@@ -71,7 +71,7 @@ public class MyBatisUserDatumExportTaskInfoDaoTests extends AbstractMyBatisUserD
 	private UserDatumExportConfiguration userDatumExportConfig;
 	private UserDatumExportTaskInfo info;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisUserDatumExportTaskInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());

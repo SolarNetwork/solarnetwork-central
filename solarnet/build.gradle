@@ -111,29 +111,31 @@ subprojects {
 			// Test dependencies.
 			easymock: 'org.easymock:easymock:3.1',
 			hamcrest: 'org.hamcrest:hamcrest-library',
-			junit4: 'org.junit.vintage:junit-vintage-engine',
 			mockito: 'org.mockito:mockito-core',
 			mockitoJupiter: 'org.mockito:mockito-junit-jupiter'
 		]
 	}
 	
 	dependencies {
-		testImplementation libraries.junit4,
-				libraries.hamcrest,
+		testImplementation libraries.hamcrest,
 				libraries.mockito,
 				libraries.mockitoJupiter,
-				libraries.easymock
+				libraries.easymock,
+				'org.junit.platform:junit-platform-launcher'
 	}
 
-	configurations.all {
-		resolutionStrategy {
-			// the following are to pick up security fixes in transitive dependencies
-			force "commons-io:commons-io:${commonsIoVersion}"
-	  	}
-	  	resolutionStrategy.eachDependency {
-	  		if (it.requested.group == 'software.amazon.awssdk') {
-	  			it.useVersion "${awsSdk2Version}"
-	  		}
+	configurations {
+    	all*.exclude group: 'commons-logging'
+		all {	
+			resolutionStrategy {
+				// the following are to pick up security fixes in transitive dependencies
+				force "commons-io:commons-io:${commonsIoVersion}"
+		  	}
+		  	resolutionStrategy.eachDependency {
+		  		if (it.requested.group == 'software.amazon.awssdk') {
+		  			it.useVersion "${awsSdk2Version}"
+		  		}
+			}
 		}
 	}
 

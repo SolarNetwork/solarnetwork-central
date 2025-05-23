@@ -33,11 +33,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-import javax.sql.DataSource;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import org.junit.jupiter.api.Test;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.util.TimeBasedV7UuidGenerator;
 import net.solarnetwork.util.UuidUtils;
 
@@ -47,15 +44,7 @@ import net.solarnetwork.util.UuidUtils;
  * @author matt
  * @version 2.1
  */
-public class CommonSupportingProceduresTests extends AbstractJdbcDaoTestSupport {
-
-	private JdbcTemplate jdbcTemplate;
-
-	@Override
-	@Autowired
-	public void setDataSource(DataSource dataSource) {
-		this.jdbcTemplate = new JdbcTemplate(dataSource);
-	}
+public class CommonSupportingProceduresTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	@Test
 	public void formatRfc1123DateSmallDay() {

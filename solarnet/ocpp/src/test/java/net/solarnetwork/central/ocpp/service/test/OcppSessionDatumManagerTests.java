@@ -60,9 +60,9 @@ import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.TaskScheduler;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
@@ -114,7 +114,7 @@ public class OcppSessionDatumManagerTests {
 	private OcppSessionDatumManager manager;
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Before
+	@BeforeEach
 	public void setup() {
 		authService = createMock(AuthorizationService.class);
 		chargePointDao = createMock(ChargePointDao.class);
@@ -133,7 +133,7 @@ public class OcppSessionDatumManagerTests {
 		manager.setTaskScheduler(taskScheduler);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(authService, chargePointDao, chargeSessionDao, datumDao, chargePointSettingsDao,
 				fluxPublisher, taskScheduler);

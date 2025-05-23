@@ -86,8 +86,8 @@ public abstract class BaseDatumJdbcTestSupport extends AbstractJUnit5JdbcDaoTest
 	 *        the user username
 	 */
 	@Override
-	protected void setupTestUser(Long id, String username) {
-		setupTestUser(id, username, passwordEncoder.encode("password"), null);
+	protected String setupTestUser(Long id, String username) {
+		return setupTestUser(id, username, passwordEncoder.encode("password"), null);
 	}
 
 	/**

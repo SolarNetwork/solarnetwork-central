@@ -48,8 +48,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
@@ -82,7 +82,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private SnfInvoice last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		addressDao = new MyBatisAddressDao();
 		addressDao.setSqlSessionTemplate(getSqlSessionTemplate());

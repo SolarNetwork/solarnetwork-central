@@ -40,9 +40,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.domain.UserLongCompositePK;
 import net.solarnetwork.central.user.export.biz.UserExportTaskBiz;
@@ -67,7 +67,7 @@ public class DefaultUserExportJobsServiceTests {
 
 	private DefaultUserExportJobsService service;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		configurationDao = EasyMock.createMock(UserDatumExportConfigurationDao.class);
 		taskBiz = EasyMock.createMock(UserExportTaskBiz.class);
@@ -79,7 +79,7 @@ public class DefaultUserExportJobsServiceTests {
 		EasyMock.replay(configurationDao, taskBiz);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(configurationDao, taskBiz);
 	}

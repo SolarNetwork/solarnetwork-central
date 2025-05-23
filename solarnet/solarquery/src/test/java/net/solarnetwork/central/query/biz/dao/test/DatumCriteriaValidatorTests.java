@@ -28,15 +28,15 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.validation.BindException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import net.solarnetwork.central.datum.domain.DatumReadingType;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.query.biz.dao.DatumCriteriaValidator;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link DatumCriteriaValidator} class.

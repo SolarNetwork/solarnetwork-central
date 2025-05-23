@@ -26,7 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 import net.solarnetwork.central.dao.mybatis.support.MyBatisExceptionTranslator;

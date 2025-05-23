@@ -54,9 +54,9 @@ import org.easymock.IAnswer;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -114,7 +114,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		datumDao = EasyMock.createMock(DatumWriteOnlyDao.class);
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
@@ -141,7 +141,7 @@ public class AsyncDatumCollectorTests implements UncaughtExceptionHandler {
 		collector.serviceDidStartup();
 	}
 
-	@After
+	@AfterEach
 	public void teardown() throws Throwable {
 		collector.shutdownAndWait();
 		try {

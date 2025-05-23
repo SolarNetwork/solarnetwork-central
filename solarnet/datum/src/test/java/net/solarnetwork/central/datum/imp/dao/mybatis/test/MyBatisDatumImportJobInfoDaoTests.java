@@ -42,8 +42,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -72,7 +72,7 @@ public class MyBatisDatumImportJobInfoDaoTests extends AbstractMyBatisDatumImpor
 	private DatumImportJobInfo info;
 	private TransactionTemplate txTemplate;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisDatumImportJobInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());

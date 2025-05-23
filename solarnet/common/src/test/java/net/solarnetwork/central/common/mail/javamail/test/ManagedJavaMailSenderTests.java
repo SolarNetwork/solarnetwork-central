@@ -22,11 +22,10 @@
 
 package net.solarnetwork.central.common.mail.javamail.test;
 
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.mail.SimpleMailMessage;
 import net.solarnetwork.central.common.mail.javamail.ManagedJavaMailSender;
-import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
 
 /**
  * Test cases for the {@link ManagedJavaMailSender} class.
@@ -34,10 +33,8 @@ import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
  * @author matt
  * @version 1.0
  */
+@EnabledIfSystemProperty(named = "test.smtp", matches = ".*")
 public class ManagedJavaMailSenderTests extends AbstractJavaMailTestSupport {
-
-	@ClassRule
-	public static SystemPropertyMatchTestRule SMTP_RULE = new SystemPropertyMatchTestRule("smtp");
 
 	@Test
 	public void sendSimpleMail() {

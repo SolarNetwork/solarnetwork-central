@@ -24,6 +24,7 @@ package net.solarnetwork.central.datum.v2.support.test;
 
 import static net.solarnetwork.domain.BasicLocation.locationOf;
 import static net.solarnetwork.util.NumberUtils.decimalArray;
+import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.arrayContaining;
@@ -45,8 +46,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
@@ -708,12 +708,10 @@ public class DatumUtilsTests {
 	public void truncateDate_local_other() {
 		for ( Aggregation agg : EnumSet.complementOf(
 				EnumSet.of(Aggregation.Hour, Aggregation.Day, Aggregation.Month, Aggregation.Year)) ) {
-			try {
-				DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6), agg);
-				Assert.fail("Should have thrown IllegalArgumentException for aggregation " + agg);
-			} catch ( IllegalArgumentException e ) {
-				// good
-			}
+			thenIllegalArgumentException()
+					.as("Should have thrown IllegalArgumentException for aggregation %s", agg)
+					.isThrownBy(
+							() -> DatumUtils.truncateDate(LocalDateTime.of(2020, 2, 3, 4, 5, 6), agg));
 		}
 	}
 

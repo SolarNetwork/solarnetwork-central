@@ -1,21 +1,21 @@
 /* ==================================================================
  * HtmlInvoiceTests.java - 25/07/2020 5:09:20 PM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -23,8 +23,8 @@
 package net.solarnetwork.central.user.billing.snf.st4.invoice.html.test;
 
 import static java.util.UUID.randomUUID;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.stringtemplate.v4.STGroupDir;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
@@ -51,7 +51,7 @@ import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 
 /**
  * Test cases for the invoice template.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -108,8 +108,8 @@ public class HtmlInvoiceTests {
 		// @formatter:off
 		String expected = String
 				.format("<html><head><title>Yo! %s</title></head><body><p>Hello, world.</p><table>"
-						+ "<tr>\n\t<th>datum-props-in</th>\n\t<td>Metrics In</td>\n\t<td>%1$s</td>\n</tr>" 
-						+ "<tr>\n\t<th>GST</th>\n\t<td></td>\n\t<td>%1$s</td>\n</tr>" 
+						+ "<tr>\n\t<th>datum-props-in</th>\n\t<td>Metrics In</td>\n\t<td>%1$s</td>\n</tr>"
+						+ "<tr>\n\t<th>GST</th>\n\t<td></td>\n\t<td>%1$s</td>\n</tr>"
 						+ "</table></body></html>", invoice.getInvoiceNumber());
 		// @formatter:on
 		assertThat("Output generated", output, equalTo(expected));

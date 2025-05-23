@@ -43,8 +43,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.export.domain.OutputCompressionType;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
@@ -81,7 +81,7 @@ public class MyBatisUserDatumExportConfigurationDaoTests extends AbstractMyBatis
 	private User user;
 	private UserDatumExportConfiguration conf;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dataConfDao = new MyBatisUserDataConfigurationDao();
 		dataConfDao.setSqlSessionFactory(getSqlSessionFactory());

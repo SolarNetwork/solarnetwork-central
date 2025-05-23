@@ -1,21 +1,21 @@
 /* ==================================================================
  * StaleSolarFluxProcessorTests.java - 1/11/2019 4:18:33 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -47,9 +47,9 @@ import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -66,18 +66,18 @@ import net.solarnetwork.central.datum.v2.dao.jdbc.sql.SelectStaleFluxDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
 import net.solarnetwork.central.datum.v2.domain.DatumPK;
-import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
-import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.Identity;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
+import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
+import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 import net.solarnetwork.test.Assertion;
 import net.solarnetwork.util.NumberUtils;
 
 /**
  * Test cases for the {@link StaleSolarFluxProcessor} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */
@@ -116,7 +116,7 @@ public class StaleSolarFluxProcessorTests {
 
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
@@ -141,7 +141,7 @@ public class StaleSolarFluxProcessorTests {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(jdbcTemplate, datumDao, processor);
 		if ( !otherMocks.isEmpty() ) {

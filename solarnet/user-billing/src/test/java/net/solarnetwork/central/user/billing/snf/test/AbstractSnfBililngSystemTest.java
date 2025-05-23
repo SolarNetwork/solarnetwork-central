@@ -27,8 +27,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
@@ -63,7 +63,7 @@ public class AbstractSnfBililngSystemTest {
 	protected LocalDate startDate;
 	protected LocalDate endDate;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		accountDao = EasyMock.createMock(AccountDao.class);
 		invoiceDao = EasyMock.createMock(SnfInvoiceDao.class);
@@ -91,7 +91,7 @@ public class AbstractSnfBililngSystemTest {
 				taxCodeDao, messageDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao, usageDao,
 				taxCodeDao, messageDao);

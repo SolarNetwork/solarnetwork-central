@@ -22,13 +22,10 @@
 
 package net.solarnetwork.central.user.domain.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import java.util.Collections;
+import static org.assertj.core.api.BDDAssertions.then;
+import java.util.Map;
 import java.util.TimeZone;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.SolarLocation;
 import net.solarnetwork.central.user.domain.User;
 
@@ -55,9 +52,9 @@ public class UserTests {
 		SolarLocation loc = testLocation();
 		User user = new User();
 		user.setLocation(loc);
-		Assert.assertSame(loc, user.getLocation());
+		then(loc).isSameAs(user.getLocation());
 		user.setLocationId(-2L);
-		assertNull("Location reset", user.getLocation());
+		then(user.getLocation()).as("Location reset").isNull();
 	}
 
 	@Test
@@ -66,7 +63,7 @@ public class UserTests {
 		User user = new User();
 		user.setLocation(loc);
 		user.setLocationId(TEST_LOCATION_ID);
-		assertSame("Location preserved", loc, user.getLocation());
+		then(loc).as("Location preserved").isSameAs(user.getLocation());
 	}
 
 	@Test
@@ -75,7 +72,7 @@ public class UserTests {
 		User user = new User();
 		user.setLocationId(-2L);
 		user.setLocation(loc);
-		assertEquals("Location ID set", TEST_LOCATION_ID, user.getLocationId());
+		then(user.getLocationId()).as("Location ID set").isEqualTo(TEST_LOCATION_ID);
 	}
 
 	@Test
@@ -83,14 +80,14 @@ public class UserTests {
 		SolarLocation loc = testLocation();
 		User user = new User();
 		user.setLocation(loc);
-		assertEquals("TimeZone extracted", TimeZone.getTimeZone(loc.getTimeZoneId()),
-				user.getTimeZone());
+		then(user.getTimeZone()).as("TimeZone extracted")
+				.isEqualTo(TimeZone.getTimeZone(loc.getTimeZoneId()));
 	}
 
 	@Test
 	public void timeZoneFromNullLocation() {
 		User user = new User();
-		assertNull("No location", user.getTimeZone());
+		then(user.getTimeZone()).as("No location").isNull();
 	}
 
 	@Test
@@ -99,16 +96,16 @@ public class UserTests {
 		loc.setTimeZoneId(null);
 		User user = new User();
 		user.setLocation(loc);
-		assertNull("No time zone ID", user.getTimeZone());
+		then(user.getTimeZone()).as("No time zone ID").isNull();
 	}
 
 	@Test
 	public void putInternalDataInitial() {
 		User u = new User();
 		Object prev = u.putInternalDataValue("foo", "bar");
-		assertEquals("Internal data", Collections.singletonMap("foo", "bar"), u.getInternalData());
-		assertNull("Previous value", prev);
-		assertEquals("Internal data JSON", "{\"foo\":\"bar\"}", u.getInternalDataJson());
+		then(u.getInternalData()).as("Internal data").isEqualTo(Map.of("foo", "bar"));
+		then(prev).as("Previous value").isNull();
+		then(u.getInternalDataJson()).as("Internal data JSON").isEqualTo("{\"foo\":\"bar\"}");
 	}
 
 	@Test
@@ -116,9 +113,10 @@ public class UserTests {
 		User u = new User();
 		u.setInternalDataJson("{\"foo\":\"bim\"}");
 		Object prev = u.putInternalDataValue("foo", "bar");
-		assertEquals("Internal data", Collections.singletonMap("foo", "bar"), u.getInternalData());
-		assertEquals("Previous value", "bim", prev);
-		assertEquals("Internal data JSON", "{\"foo\":\"bar\"}", u.getInternalDataJson());
+		then(u.getInternalData()).as("Internal data").isEqualTo(Map.of("foo", "bar"));
+		then(prev).as("Previous value").isEqualTo("bim");
+		then(u.getInternalDataJson()).as("Internal data JSON").isEqualTo("{\"foo\":\"bar\"}");
+
 	}
 
 	@Test
@@ -126,9 +124,9 @@ public class UserTests {
 		User u = new User();
 		u.setInternalDataJson("{\"foo\":\"bim\"}");
 		Object prev = u.putInternalDataValue("foo", null);
-		assertEquals("Internal data", Collections.emptyMap(), u.getInternalData());
-		assertEquals("Previous value", "bim", prev);
-		assertEquals("Internal data JSON", "{}", u.getInternalDataJson());
+		then(u.getInternalData()).as("Internal data").isEqualTo(Map.of());
+		then(prev).as("Previous value").isEqualTo("bim");
+		then(u.getInternalDataJson()).as("Internal data JSON").isEqualTo("{}");
 	}
 
 }

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
@@ -30,9 +31,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.SolarLocationDao;
 import net.solarnetwork.central.dao.SolarNodeDao;
 import net.solarnetwork.central.domain.SolarNode;
@@ -77,7 +77,7 @@ public class DaoNodeOwnershipBizTests {
 
 	private DaoUserBiz userBiz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		testUser = new User();
 		testUser.setEmail(TEST_EMAIL);
@@ -160,7 +160,7 @@ public class DaoNodeOwnershipBizTests {
 		replayAll();
 		UserNodeTransfer result = userBiz.confirmNodeOwnershipTransfer(testUser.getId(),
 				testNode.getId(), true);
-		Assert.assertSame("UserNodeTransfer from DAO returned", xfer, result);
+		then(result).as("UserNodeTransfer from DAO returned").isSameAs(xfer);
 		verifyAll();
 	}
 }

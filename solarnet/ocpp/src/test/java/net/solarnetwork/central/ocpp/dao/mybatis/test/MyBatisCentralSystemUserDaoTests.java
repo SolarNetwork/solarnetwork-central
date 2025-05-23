@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
@@ -66,7 +66,7 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 	private Long nodeId;
 	private SystemUser last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		chargePointDao = new MyBatisCentralChargePointDao();
 		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -111,13 +111,14 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		last.setAllowedChargePoints(entity.getAllowedChargePoints());
 	}
 
-	@Test(expected = DuplicateKeyException.class)
+	@Test
 	public void insert_duplicate() {
 		insert();
 		SystemUser entity = createTestSystemUser();
 		dao.save(entity);
-		getSqlSessionTemplate().flushStatements();
-		fail("Should not be able to create duplicate.");
+		thenExceptionOfType(DuplicateKeyException.class).as("Should not be able to create duplicate.")
+				.isThrownBy(() -> getSqlSessionTemplate().flushStatements());
+
 	}
 
 	@Test
@@ -333,10 +334,11 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		assertThat("Password IS NOT returned", entity.getPassword(), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void findByUserAndUsername_noMatch() {
 		insert();
-		dao.getForUsername(userId, "not a match");
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.getForUsername(userId, "not a match"));
 	}
 
 	@Test
@@ -348,10 +350,11 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		assertThat("Password IS NOT returned", entity.getPassword(), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void findByUserAndId_noMatch() {
 		insert();
-		dao.get(userId, last.getId() - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.get(userId, last.getId() - 1));
 	}
 
 	@Test
@@ -361,10 +364,11 @@ public class MyBatisCentralSystemUserDaoTests extends AbstractMyBatisDaoTestSupp
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void deleteByUserAndId_noMatch() {
 		insert();
-		dao.delete(userId, last.getId() - 1);
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.delete(userId, last.getId() - 1));
 	}
 
 }

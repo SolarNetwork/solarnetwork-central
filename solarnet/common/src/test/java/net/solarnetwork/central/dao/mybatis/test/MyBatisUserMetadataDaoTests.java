@@ -24,16 +24,14 @@ package net.solarnetwork.central.dao.mybatis.test;
 
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.BasicUserMetadataFilter;
 import net.solarnetwork.central.dao.mybatis.MyBatisUserMetadataDao;
 import net.solarnetwork.central.domain.UserMetadataEntity;
@@ -56,7 +54,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	private Long testUserId;
 	private UserMetadataEntity lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new MyBatisUserMetadataDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
@@ -85,15 +83,18 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void storeNew() {
 		UserMetadataEntity datum = getTestInstance();
 		Long id = dao.save(datum);
-		assertNotNull(id);
+		then(id).isNotNull();
 		lastDatum = datum;
 	}
 
 	private void validate(UserMetadataEntity src, UserMetadataEntity entity) {
-		assertNotNull("GeneralNodeDatum should exist", entity);
-		assertEquals(src.getUserId(), entity.getUserId());
-		assertEquals(src.getCreated(), entity.getCreated());
-		assertEquals(src.getMeta(), entity.getMeta());
+		// @formatter:off
+		then(entity).as("UserMetadataEntity should exist").isNotNull()
+			.returns(src.getUserId(), from(UserMetadataEntity::getUserId))
+			.returns(src.getCreated(), from(UserMetadataEntity::getCreated))
+			.returns(src.getMeta(), from(UserMetadataEntity::getMeta))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -133,7 +134,7 @@ public class MyBatisUserMetadataDaoTests extends AbstractMyBatisDaoTestSupport {
 		then(results)
 			.as("Non-null results returned")
 			.containsExactly(lastDatum)
-			.asInstanceOf(InstanceOfAssertFactories.type(FilterResults.class))
+			.asInstanceOf(type(FilterResults.class))
 			.as("Total results not returned")
 			.returns(null, from(r -> r.getTotalResults()))
 			.as("Returned results same as list size")

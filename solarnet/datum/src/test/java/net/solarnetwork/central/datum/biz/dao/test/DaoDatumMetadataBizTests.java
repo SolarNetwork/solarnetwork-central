@@ -40,8 +40,8 @@ import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.common.dao.BasicLocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestCriteria;
 import net.solarnetwork.central.common.dao.LocationRequestDao;
@@ -89,7 +89,7 @@ public class DaoDatumMetadataBizTests {
 		verify(metaDao, locationRequestDao);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		locationRequestDao = EasyMock.createMock(LocationRequestDao.class);

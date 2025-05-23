@@ -36,9 +36,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.biz.DatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.biz.dao.DaoDatumAuxiliaryBiz;
 import net.solarnetwork.central.datum.domain.DatumAuxiliaryType;
@@ -86,14 +86,14 @@ public class DaoDatumAuxiliaryBizTests {
 		verify(datumAuxiliaryDao, metaDao);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		datumAuxiliaryDao = EasyMock.createMock(DatumAuxiliaryEntityDao.class);
 		metaDao = EasyMock.createMock(DatumStreamMetadataDao.class);
 		biz = new DaoDatumAuxiliaryBiz(datumAuxiliaryDao, metaDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		verifyAll();
 	}

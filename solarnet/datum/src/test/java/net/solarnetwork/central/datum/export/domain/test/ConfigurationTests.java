@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.export.biz.DatumExportOutputFormatService;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
 import net.solarnetwork.central.datum.export.domain.BasicOutputConfiguration;

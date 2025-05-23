@@ -38,9 +38,9 @@ import java.util.List;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -81,7 +81,7 @@ public class MqttDataCollectorTests_StreamDatum {
 		return JsonUtils.newDatumObjectMapper(jsonFactory);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		objectMapper = createObjectMapper(new CBORFactory());
 		dataCollectorBiz = EasyMock.createMock(DataCollectorBiz.class);
@@ -95,7 +95,7 @@ public class MqttDataCollectorTests_StreamDatum {
 		service = new MqttDataCollector(objectMapper, dataCollectorBiz, nodeInstructionDao, mqttStats);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(dataCollectorBiz, nodeInstructionDao);
 	}

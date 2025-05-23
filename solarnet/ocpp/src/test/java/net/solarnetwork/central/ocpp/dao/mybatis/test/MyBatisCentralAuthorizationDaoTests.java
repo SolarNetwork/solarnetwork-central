@@ -22,17 +22,17 @@
 
 package net.solarnetwork.central.ocpp.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.DuplicateKeyException;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralAuthorizationDao;
@@ -53,7 +53,7 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 	private Long userId;
 	private Authorization last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisCentralAuthorizationDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -84,13 +84,13 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		last.setParentId(entity.getParentId());
 	}
 
-	@Test(expected = DuplicateKeyException.class)
+	@Test
 	public void insert_duplicate() {
 		insert();
 		Authorization entity = createTestAuthorization();
 		dao.save(entity);
-		getSqlSessionTemplate().flushStatements();
-		fail("Should not be able to create duplicate.");
+		thenExceptionOfType(DuplicateKeyException.class).as("Should not be able to create duplicate.")
+				.isThrownBy(() -> getSqlSessionTemplate().flushStatements());
 	}
 
 	@Test
@@ -210,10 +210,11 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		assertThat("Token matches", entity.getToken(), equalTo("foobar"));
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
 	public void findByUserAndId_noMatch() {
 		insert();
-		dao.get(userId, last.getId() - 1);
+
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.get(userId, last.getId() - 1));
 	}
 
 	@Test
@@ -223,10 +224,12 @@ public class MyBatisCentralAuthorizationDaoTests extends AbstractMyBatisDaoTestS
 		assertThat("No longer found", dao.get(last.getId()), nullValue());
 	}
 
-	@Test(expected = DataRetrievalFailureException.class)
+	@Test
 	public void deleteByUserAndId_noMatch() {
 		insert();
-		dao.delete(userId, last.getId() - 1);
+		;
+		thenExceptionOfType(DataRetrievalFailureException.class)
+				.isThrownBy(() -> dao.delete(userId, last.getId() - 1));
 	}
 
 }

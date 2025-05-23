@@ -52,9 +52,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -99,7 +99,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 				.enable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		setupMqttServer();
 
@@ -135,7 +135,7 @@ public class SolarFluxDatumPublisherTests extends MqttServerSupport {
 		}
 	}
 
-	@After
+	@AfterEach
 	@Override
 	public void teardown() {
 		super.teardown();

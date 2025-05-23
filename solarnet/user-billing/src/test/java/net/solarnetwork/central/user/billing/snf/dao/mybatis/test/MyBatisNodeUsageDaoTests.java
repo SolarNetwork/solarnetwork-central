@@ -56,8 +56,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.AuditNodeServiceEntity;
 import net.solarnetwork.central.datum.v2.dao.jdbc.DatumDbUtils;
 import net.solarnetwork.central.domain.AuditUserServiceValue;
@@ -92,7 +92,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 	private Long locId;
 	private Long nodeId;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new MyBatisNodeUsageDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());

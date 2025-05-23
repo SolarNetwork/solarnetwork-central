@@ -1,21 +1,21 @@
 /* ==================================================================
  * InvoicePaymentTests.java - 30/07/2020 6:29:34 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -27,10 +27,10 @@ import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.fail;
 import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -39,8 +39,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
@@ -56,7 +56,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 
 /**
  * Test cases for invoice payment DB procedures.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -71,7 +71,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 	private Address address;
 	private Account account;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		addressDao = new MyBatisAddressDao();
 		addressDao.setSqlSessionTemplate(getSqlSessionTemplate());
@@ -149,13 +149,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to add another payment
-		try {
-			addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
-					new BigDecimal("0.01"));
-			fail("Should have thrown DataIntegrigtyViolationException from lack of funds in payment.");
-		} catch ( DataIntegrityViolationException e ) {
-			// good one
-		}
+		thenExceptionOfType(DataIntegrityViolationException.class)
+				.as("Should throw DataIntegrigtyViolationException from lack of funds in payment.")
+				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getId(),
+						invoice.getId().getId(), new BigDecimal("0.01")));
 	}
 
 	@Test
@@ -222,13 +219,11 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to decrease payment amount < invoice payments
-		try {
-			jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
-					new BigDecimal("1.11"), payment.getId().getId());
-			fail("Should have thrown DataIntegrigtyViolationException from lack of funds in payment.");
-		} catch ( DataIntegrityViolationException e ) {
-			// good one
-		}
+		thenExceptionOfType(DataIntegrityViolationException.class)
+				.as("Should throw DataIntegrigtyViolationException from lack of funds in payment.")
+				.isThrownBy(() -> jdbcTemplate.update(
+						"update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
+						new BigDecimal("1.11"), payment.getId().getId()));
 	}
 
 	@Test
@@ -283,13 +278,10 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to add another payment to same invoice using that extra dollar
-		try {
-			addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
-					BigDecimal.ONE);
-			fail("Should have thrown DataIntegrigtyViolationException from paying more than invoice amount.");
-		} catch ( DataIntegrityViolationException e ) {
-			// good one
-		}
+		thenExceptionOfType(DataIntegrityViolationException.class).as(
+				"Should throw DataIntegrigtyViolationException from paying more than invoice amount.")
+				.isThrownBy(() -> addInvoicePayment(invoice.getAccountId(), payment.getId().getId(),
+						invoice.getId().getId(), BigDecimal.ONE));
 	}
 
 	private List<Map<String, Object>> addPaymentViaProcedure(Long accountId, Long invoiceId,

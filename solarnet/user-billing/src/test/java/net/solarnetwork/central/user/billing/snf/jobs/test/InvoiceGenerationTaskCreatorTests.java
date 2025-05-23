@@ -41,9 +41,9 @@ import java.util.List;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.domain.UserFilter;
 import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
@@ -77,7 +77,7 @@ public class InvoiceGenerationTaskCreatorTests {
 	private AccountTaskDao accountTaskDao;
 	private InvoiceGenerationTaskCreator creator;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		userDao = EasyMock.createMock(UserDao.class);
 		invoicingSystem = EasyMock.createMock(SnfInvoicingSystem.class);
@@ -90,7 +90,7 @@ public class InvoiceGenerationTaskCreatorTests {
 		EasyMock.replay(userDao, invoicingSystem, accountTaskDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(userDao, invoicingSystem, accountTaskDao);
 	}

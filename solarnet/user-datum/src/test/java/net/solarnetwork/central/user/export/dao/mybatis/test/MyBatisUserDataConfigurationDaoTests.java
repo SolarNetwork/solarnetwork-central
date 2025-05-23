@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.export.dao.mybatis.test;
 
 import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -32,15 +33,14 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertNotNull;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.UserLongCompositePK;
@@ -65,13 +65,13 @@ public class MyBatisUserDataConfigurationDaoTests extends AbstractMyBatisUserDao
 	private User user;
 	private UserDataConfiguration conf;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		confDao = new MyBatisUserDataConfigurationDao();
 		confDao.setSqlSessionFactory(getSqlSessionFactory());
 
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		conf = null;
 	}
 

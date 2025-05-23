@@ -45,7 +45,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.v2.dao.BasicDatumCriteria;

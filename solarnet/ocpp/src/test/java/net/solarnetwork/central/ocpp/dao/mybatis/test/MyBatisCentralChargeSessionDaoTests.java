@@ -42,8 +42,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.ocpp.dao.BasicOcppCriteria;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargePointDao;
 import net.solarnetwork.central.ocpp.dao.mybatis.MyBatisCentralChargeSessionDao;
@@ -76,7 +76,7 @@ public class MyBatisCentralChargeSessionDaoTests extends AbstractMyBatisDaoTestS
 	private Long nodeId;
 	private CentralChargeSession last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		chargePointDao = new MyBatisCentralChargePointDao();
 		chargePointDao.setSqlSessionTemplate(getSqlSessionTemplate());

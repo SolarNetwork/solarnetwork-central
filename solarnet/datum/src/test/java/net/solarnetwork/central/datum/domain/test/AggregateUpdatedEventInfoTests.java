@@ -1,21 +1,21 @@
 /* ==================================================================
  * AggregateUpdatedEventInfoTests.java - 5/06/2020 8:29:18 am
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,14 +25,14 @@ package net.solarnetwork.central.datum.domain.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import java.time.Instant;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link AggregateUpdatedEventInfo} class.
- * 
+ *
  * @author matt
  * @version 2.0
  */

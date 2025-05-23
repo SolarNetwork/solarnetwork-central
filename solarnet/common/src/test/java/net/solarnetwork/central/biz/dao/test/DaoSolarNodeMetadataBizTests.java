@@ -22,15 +22,14 @@
 
 package net.solarnetwork.central.biz.dao.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.biz.dao.DaoSolarNodeMetadataBiz;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
@@ -57,7 +56,7 @@ public class DaoSolarNodeMetadataBizTests {
 		verify(solarNodeMetadataDao);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		solarNodeMetadataDao = EasyMock.createMock(SolarNodeMetadataDao.class);
 		biz = new DaoSolarNodeMetadataBiz(solarNodeMetadataDao);
@@ -79,9 +78,9 @@ public class DaoSolarNodeMetadataBizTests {
 		verifyAll();
 
 		SolarNodeMetadata stored = metaCap.getValue();
-		assertEquals("Node", TEST_NODE_ID, stored.getNodeId());
-		assertTrue("Tag created", stored.getMeta().hasTag("bam"));
-		assertEquals("Info value", "bar", stored.getMeta().getInfoString("foo"));
+		then(stored.getNodeId()).as("Node").isEqualTo(TEST_NODE_ID);
+		then(stored.getMeta().hasTag("bam")).as("Tag craeted").isTrue();
+		then(stored.getMeta().getInfoString("foo")).as("Info value").isEqualTo("bar");
 	}
 
 	@Test
@@ -101,10 +100,10 @@ public class DaoSolarNodeMetadataBizTests {
 		verifyAll();
 
 		SolarNodeMetadata stored = metaCap.getValue();
-		assertEquals("Node", TEST_NODE_ID, stored.getNodeId());
-		assertTrue("Tag created", stored.getMeta().hasTag("bam"));
-		assertEquals("Info value", "bar", stored.getMeta().getInfoString("foo"));
-		assertEquals("Info prop value", "W", stored.getMeta().getInfoString("watts", "unit"));
+		then(stored.getNodeId()).as("Node").isEqualTo(TEST_NODE_ID);
+		then(stored.getMeta().hasTag("bam")).as("Tag craeted").isTrue();
+		then(stored.getMeta().getInfoString("foo")).as("Info value").isEqualTo("bar");
+		then(stored.getMeta().getInfoString("watts", "unit")).as("Info prop avlue").isEqualTo("W");
 	}
 
 	@Test
@@ -153,11 +152,11 @@ public class DaoSolarNodeMetadataBizTests {
 		verifyAll();
 
 		SolarNodeMetadata stored = meta2Cap.getValue();
-		assertEquals("Node", TEST_NODE_ID, stored.getNodeId());
-		assertTrue("Has original tag", stored.getMeta().hasTag("bam"));
-		assertTrue("Has new tag", stored.getMeta().hasTag("mab"));
-		assertEquals("Replaced info value", "bam", stored.getMeta().getInfoString("foo"));
-		assertEquals("New info value", "rab", stored.getMeta().getInfoString("oof"));
+		then(stored.getNodeId()).as("Node").isEqualTo(TEST_NODE_ID);
+		then(stored.getMeta().hasTag("bam")).as("Has original tag").isTrue();
+		then(stored.getMeta().hasTag("mab")).as("Has new tag").isTrue();
+		then(stored.getMeta().getInfoString("foo")).as("Replaced info value").isEqualTo("bam");
+		then(stored.getMeta().getInfoString("oof")).as("New info value").isEqualTo("rab");
 	}
 
 	@Test
@@ -197,16 +196,16 @@ public class DaoSolarNodeMetadataBizTests {
 		verifyAll();
 
 		SolarNodeMetadata stored = metaCap.getValue();
-		assertEquals("Node", TEST_NODE_ID, stored.getNodeId());
 
-		assertTrue("Has original tag", stored.getMeta().hasTag("bam"));
-		assertTrue("Has new tag", stored.getMeta().hasTag("mab"));
-		assertEquals("Replaced info value", "bam", stored.getMeta().getInfoString("foo"));
-		assertEquals("New info value", "rab", stored.getMeta().getInfoString("oof"));
-		assertEquals("Replaced info property value", "Wh",
-				stored.getMeta().getInfoString("watts", "unit"));
-		assertEquals("New info property value", "SI",
-				stored.getMeta().getInfoString("watts", "unitType"));
+		then(stored.getNodeId()).as("Node").isEqualTo(TEST_NODE_ID);
+		then(stored.getMeta().hasTag("bam")).as("Has original tag").isTrue();
+		then(stored.getMeta().hasTag("mab")).as("Has new tag").isTrue();
+		then(stored.getMeta().getInfoString("foo")).as("Replaced info value").isEqualTo("bam");
+		then(stored.getMeta().getInfoString("oof")).as("New info value").isEqualTo("rab");
+		then(stored.getMeta().getInfoString("watts", "unit")).as("Replaced info property value")
+				.isEqualTo("Wh");
+		then(stored.getMeta().getInfoString("watts", "unitType")).as("New info property value")
+				.isEqualTo("SI");
 	}
 
 	@Test

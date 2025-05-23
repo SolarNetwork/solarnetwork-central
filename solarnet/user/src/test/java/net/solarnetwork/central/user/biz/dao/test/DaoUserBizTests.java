@@ -26,15 +26,13 @@ import static net.solarnetwork.central.test.CommonTestUtils.RNG;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.and;
 import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -184,13 +182,12 @@ public class DaoUserBizTests {
 				(SecurityPolicy) null);
 
 		// THEN
-		assertNotNull(generated);
-		assertNotNull(generated.getAuthToken());
-		assertEquals("Auth token should be exactly 20 characters", 20,
-				generated.getAuthToken().length());
-		assertNotNull(generated.getAuthSecret());
-		assertEquals(TEST_USER_ID, generated.getUserId());
-		assertEquals(SecurityTokenStatus.Active, generated.getStatus());
+		and.then(generated).isNotNull();
+		and.then(generated.getAuthToken()).isNotNull();
+		and.then(generated.getAuthToken()).as("Auth token should be exactly 20 characters").hasSize(20);
+		and.then(generated.getAuthSecret()).isNotNull();
+		and.then(generated.getUserId()).isEqualTo(TEST_USER_ID);
+		and.then(generated.getStatus()).isEqualTo(SecurityTokenStatus.Active);
 	}
 
 	@Test
@@ -272,14 +269,11 @@ public class DaoUserBizTests {
 				SecurityTokenType.User);
 		given(userAuthTokenDao.get(TEST_AUTH_TOKEN)).willReturn(token);
 
-		try {
-			userBiz.deleteUserAuthToken(TEST_USER_ID - 1L, TEST_AUTH_TOKEN);
-			fail("Should have thrown AuthorizationException");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.ACCESS_DENIED, e.getReason());
-			assertEquals(TEST_AUTH_TOKEN, e.getId());
-		}
-
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> userBiz.deleteUserAuthToken(TEST_USER_ID - 1L, TEST_AUTH_TOKEN))
+				.returns(AuthorizationException.Reason.ACCESS_DENIED,
+						from(AuthorizationException::getReason))
+				.returns(TEST_AUTH_TOKEN, from(AuthorizationException::getId));
 	}
 
 	@Test
@@ -299,11 +293,11 @@ public class DaoUserBizTests {
 		then(userAuthTokenDao).should().save(tokenCaptor.capture());
 		and.then(tokenCaptor.getValue()).as("Returned entity same as saved to DAO").isSameAs(updated);
 
-		assertNotNull("Updated token", updated);
-		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
-		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
-		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
-		assertEquals("Token state", SecurityTokenStatus.Disabled, updated.getStatus());
+		and.then(updated).as("Updated token").isNotNull();
+		and.then(updated.getAuthToken()).as("Updated token ID").isEqualTo(TEST_AUTH_TOKEN);
+		and.then(updated.getAuthSecret()).as("Token secret").isEqualTo(TEST_AUTH_SECRET);
+		and.then(updated.getUserId()).as("Token user").isEqualTo(TEST_USER_ID);
+		and.then(updated.getStatus()).as("Token state").isEqualTo(SecurityTokenStatus.Disabled);
 	}
 
 	@Test
@@ -330,11 +324,11 @@ public class DaoUserBizTests {
 		then(userAuthTokenDao).should().save(tokenCaptor.capture());
 		and.then(tokenCaptor.getValue()).as("Returned entity same as saved to DAO").isSameAs(updated);
 
-		assertNotNull("Updated token", updated);
-		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
-		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
-		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
-		assertEquals("Token policy", newPolicy, updated.getPolicy());
+		and.then(updated).as("Updated token").isNotNull();
+		and.then(updated.getAuthToken()).as("Updated token ID").isEqualTo(TEST_AUTH_TOKEN);
+		and.then(updated.getAuthSecret()).as("Token secret").isEqualTo(TEST_AUTH_SECRET);
+		and.then(updated.getUserId()).as("Token user").isEqualTo(TEST_USER_ID);
+		and.then(updated.getPolicy()).as("Token policy").isEqualTo(newPolicy);
 	}
 
 	@Test
@@ -360,16 +354,16 @@ public class DaoUserBizTests {
 		then(userAuthTokenDao).should().save(tokenCaptor.capture());
 		and.then(tokenCaptor.getValue()).as("Returned entity same as saved to DAO").isSameAs(updated);
 
-		assertNotNull("Updated token", updated);
-		assertEquals("Updated token ID", TEST_AUTH_TOKEN, updated.getAuthToken());
-		assertEquals("Token secret", TEST_AUTH_SECRET, updated.getAuthSecret());
-		assertEquals("Token user", TEST_USER_ID, updated.getUserId());
+		and.then(updated).as("Updated token").isNotNull();
+		and.then(updated.getAuthToken()).as("Updated token ID").isEqualTo(TEST_AUTH_TOKEN);
+		and.then(updated.getAuthSecret()).as("Token secret").isEqualTo(TEST_AUTH_SECRET);
+		and.then(updated.getUserId()).as("Token user").isEqualTo(TEST_USER_ID);
 
 		BasicSecurityPolicy expectedPolicy = new BasicSecurityPolicy.Builder()
 				.withMinAggregation(Aggregation.Month).withMinLocationPrecision(LocationPrecision.Block)
 				.build();
 
-		assertEquals("Token policy", expectedPolicy, updated.getPolicy());
+		and.then(updated.getPolicy()).as("Token policy").isEqualTo(expectedPolicy);
 	}
 
 	@Test

@@ -53,7 +53,7 @@ import java.util.Arrays;
 import java.util.Map;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.snf.DefaultSnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;

@@ -64,9 +64,9 @@ import javax.cache.event.CacheEntryUpdatedListener;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.support.BufferingDelegatingCache;
@@ -93,7 +93,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		executor = Executors.newWorkStealingPool();
 		cacheManager = createCacheManager();
@@ -106,7 +106,7 @@ public class BufferingDelegatingCacheTests implements CacheEntryCreatedListener<
 		map = new ConcurrentHashMap<>(50);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() throws Throwable {
 		if ( cache != null ) {
 			cache.close();

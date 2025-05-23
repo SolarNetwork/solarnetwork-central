@@ -26,6 +26,7 @@ import static java.util.Arrays.asList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata.emptyMeta;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -51,11 +52,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailMessage;
 import org.springframework.mail.SimpleMailMessage;
@@ -72,7 +72,7 @@ import net.solarnetwork.central.domain.SolarNode;
 import net.solarnetwork.central.mail.MailService;
 import net.solarnetwork.central.mail.mock.MockMailSender;
 import net.solarnetwork.central.mail.support.DefaultMailService;
-import net.solarnetwork.central.test.AbstractCentralTest;
+import net.solarnetwork.central.test.CentralTestConstants;
 import net.solarnetwork.central.user.alert.jobs.EmailNodeStaleDataAlertProcessor;
 import net.solarnetwork.central.user.dao.UserAlertDao;
 import net.solarnetwork.central.user.dao.UserAlertSituationDao;
@@ -95,7 +95,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * @author matt
  * @version 1.3
  */
-public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
+public class EmailNodeStaleDataAlertProcessorTests implements CentralTestConstants {
 
 	private static final MockMailSender MailSender = new MockMailSender();
 	private static final MailService MailService = new DefaultMailService(MailSender);
@@ -151,12 +151,12 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 	}
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		MessageSource.setBasename(EmailNodeStaleDataAlertProcessor.class.getName());
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		datumDao = EasyMock.createMock(DatumEntityDao.class);
 		solarNodeDao = EasyMock.createMock(SolarNodeDao.class);
@@ -184,7 +184,7 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 		testNode.setLocation(testLoc);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(datumDao, solarNodeDao, userDao, userNodeDao, userAlertDao,
 				userAlertSituationDao);
@@ -246,8 +246,8 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				service.getBatchSize())).andReturn(pendingAlerts);
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertNull(startingId);
-		Assert.assertEquals("No mail sent", 0, MailSender.getSent().size());
+		then(startingId).isNull();
+		then(MailSender.getSent()).as("no mail sent").isEmpty();
 	}
 
 	@Test
@@ -300,12 +300,12 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				containsString("source \"" + TEST_SOURCE_ID));
 		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
 				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
-		Assert.assertTrue("Situation created", newSituation.hasCaptured());
-		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
-		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
-		Assert.assertNotNull(newSituation.getValue().getNotified());
-		Assert.assertTrue("Saved alert validTo not increased",
-				pendingAlerts.get(0).getValidTo().equals(pendingAlertValidTo));
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlerts.get(0).getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
 	}
 
 	@Test
@@ -527,15 +527,15 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlert.getId(),
-				startingId);
-		Assert.assertEquals("No mail sent", 0, MailSender.getSent().size());
-		Assert.assertTrue("Situation created", newSituation.hasCaptured());
-		Assert.assertEquals(pendingAlert, newSituation.getValue().getAlert());
-		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
-		Assert.assertNotNull(newSituation.getValue().getNotified());
-		Assert.assertTrue("Saved alert validTo not increased",
-				pendingAlert.getValidTo().equals(pendingAlertValidTo));
+		then(startingId).as("Next staring ID is last processed alert ID")
+				.isEqualTo(pendingAlert.getId());
+		then(MailSender.getSent()).as("No mail sent").isEmpty();
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlert);
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlert.getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
 	}
 
 	private String mailFormattedDate(Instant ts) {
@@ -604,20 +604,19 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				containsString("source \"" + TEST_SOURCE_ID));
 		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
 				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
-		Assert.assertTrue("Situation created", newSituation.hasCaptured());
-		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
-		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
-		Assert.assertNotNull(newSituation.getValue().getNotified());
-		Assert.assertTrue("Saved alert validTo not increased",
-				pendingAlert.getValidTo().equals(pendingAlertValidTo));
-		Assert.assertNotNull(newSituation.getValue().getInfo());
-		Assert.assertEquals(TEST_NODE_ID_2, newSituation.getValue().getInfo()
-				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID));
-		Assert.assertEquals(TEST_SOURCE_ID, newSituation.getValue().getInfo()
-				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID));
-		Assert.assertEquals(nodeDataResults.iterator().next().getTimestamp().toEpochMilli(),
-				newSituation.getValue().getInfo()
-						.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
+
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlert.getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
+
+		then(newSituation.getValue().getInfo()).isNotNull()
+				.containsEntry(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID, TEST_NODE_ID_2)
+				.containsEntry(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID, TEST_SOURCE_ID)
+				.containsEntry(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED,
+						nodeDataResults.iterator().next().getTimestamp().toEpochMilli());
 	}
 
 	@Test
@@ -670,9 +669,9 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 
 		replayAll();
 		Long startingId = service.processAlerts(null, batchTime);
-		Assert.assertEquals("Next staring ID is last processed alert ID", pendingAlert.getId(),
-				startingId);
-		Assert.assertEquals("Mail sent", 0, MailSender.getSent().size());
+		then(startingId).as("Next staring ID is last processed alert ID")
+				.isEqualTo(pendingAlert.getId());
+		then(MailSender.getSent()).as("Mail sent").isEmpty();
 	}
 
 	@Test
@@ -739,19 +738,19 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				containsString("source \"" + TEST_SOURCE_ID));
 		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
 				"since " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
-		Assert.assertTrue("Situation created", newSituation.hasCaptured());
-		Assert.assertEquals(pendingAlerts.get(0), newSituation.getValue().getAlert());
-		Assert.assertEquals(UserAlertSituationStatus.Active, newSituation.getValue().getStatus());
-		Assert.assertNotNull(newSituation.getValue().getNotified());
-		Assert.assertTrue("Saved alert validTo not increased",
-				pendingAlert.getValidTo().equals(pendingAlertValidTo));
-		Assert.assertNotNull(newSituation.getValue().getInfo());
-		Assert.assertEquals(TEST_NODE_ID, newSituation.getValue().getInfo()
-				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID));
-		Assert.assertEquals(TEST_SOURCE_ID, newSituation.getValue().getInfo()
-				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID));
-		Assert.assertEquals(dataTimestamp.toInstant().toEpochMilli(), newSituation.getValue().getInfo()
-				.get(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED));
+
+		then(newSituation.hasCaptured()).as("Situation created").isTrue();
+		then(newSituation.getValue().getAlert()).isEqualTo(pendingAlerts.get(0));
+		then(newSituation.getValue().getStatus()).isEqualTo(UserAlertSituationStatus.Active);
+		then(newSituation.getValue().getNotified()).isNotNull();
+		then(pendingAlert.getValidTo()).as("Saved alert validTo not increased")
+				.isEqualTo(pendingAlertValidTo);
+
+		then(newSituation.getValue().getInfo()).isNotNull()
+				.containsEntry(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_NODE_ID, TEST_NODE_ID)
+				.containsEntry(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_SOURCE_ID, TEST_SOURCE_ID)
+				.containsEntry(EmailNodeStaleDataAlertProcessor.SITUATION_INFO_DATUM_CREATED,
+						dataTimestamp.toInstant().toEpochMilli());
 	}
 
 	@Test
@@ -858,11 +857,11 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 			final int batchSize = (i < 2 ? 5 : 2);
 			startingId = service.processAlerts(startingId, batchTime);
 			if ( i == 3 ) {
-				Assert.assertNull("No more batch values", startingId);
+				then(startingId).as("No more batch values").isNull();
 			} else {
-				Assert.assertEquals("Next staring ID is last processed alert ID",
-						pendingAlerts.get((i * 5) + batchSize - 1).getId(), startingId);
-				Assert.assertEquals("Mail sent", batchSize, MailSender.getSent().size());
+				then(startingId).as("Next staring ID is last processed alert ID")
+						.isEqualTo(pendingAlerts.get((i * 5) + batchSize - 1).getId());
+				then(MailSender.getSent()).as("Mail sent").hasSize(batchSize);
 				for ( MailMessage sent : MailSender.getSent() ) {
 					SimpleMailMessage sentMail = (SimpleMailMessage) sent;
 					assertThat("Mail subject", sentMail.getSubject(),
@@ -932,10 +931,10 @@ public class EmailNodeStaleDataAlertProcessorTests extends AbstractCentralTest {
 				containsString("source \"" + TEST_SOURCE_ID));
 		assertThat("Mail has formatted datum date", sentMail.getText(), containsString(
 				"on " + mailFormattedDate(nodeDataResults.iterator().next().getTimestamp())));
-		Assert.assertEquals(UserAlertSituationStatus.Resolved, activeSituation.getStatus());
-		Assert.assertNotNull(activeSituation.getNotified());
-		Assert.assertTrue("Saved alert validTo increased",
-				pendingAlerts.get(0).getValidTo().isAfter(pendingAlertValidTo));
+		then(activeSituation.getStatus()).isEqualTo(UserAlertSituationStatus.Resolved);
+		then(activeSituation.getNotified()).isNotNull();
+		then(pendingAlerts.get(0).getValidTo()).as("Saved alert validTo increased")
+				.isAfter(pendingAlertValidTo);
 	}
 
 }

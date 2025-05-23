@@ -42,8 +42,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -73,7 +73,7 @@ public class MyBatisDatumExportTaskInfoDaoTests extends AbstractMyBatisDaoTestSu
 	private String lastTokenId;
 	private Long lastUserId;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisDatumExportTaskInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());

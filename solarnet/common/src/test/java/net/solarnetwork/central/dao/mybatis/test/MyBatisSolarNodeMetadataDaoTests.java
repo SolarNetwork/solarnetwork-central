@@ -25,12 +25,12 @@ package net.solarnetwork.central.dao.mybatis.test;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -38,8 +38,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
 import net.solarnetwork.central.domain.SolarNodeMetadata;
 import net.solarnetwork.central.domain.SolarNodeMetadataFilterMatch;
@@ -61,7 +62,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 
 	private SolarNodeMetadata lastDatum;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		dao = new MyBatisSolarNodeMetadataDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
@@ -87,7 +88,7 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 	public void storeNew() {
 		SolarNodeMetadata datum = getTestInstance();
 		Long id = dao.save(datum);
-		assertNotNull(id);
+		then(id).isNotNull();
 		lastDatum = datum;
 	}
 
@@ -97,14 +98,17 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 		SolarNodeMetadata datum = lastDatum;
 		datum.getMeta().putInfoValue("bim", "bam");
 		Long id = dao.save(datum);
-		assertEquals(lastDatum.getId(), id);
+		then(id).isEqualTo(lastDatum.getId());
 	}
 
 	private void validate(SolarNodeMetadata src, SolarNodeMetadata entity) {
-		assertNotNull("GeneralNodeDatum should exist", entity);
-		assertEquals(src.getNodeId(), entity.getNodeId());
-		assertEquals(src.getCreated(), entity.getCreated());
-		assertEquals(src.getMeta(), entity.getMeta());
+		// @formatter:off
+		then(entity).as("GeneralNodeDatum should exist").isNotNull()
+			.returns(src.getNodeId(), from(SolarNodeMetadata::getNodeId))
+			.returns(src.getCreated(), from(SolarNodeMetadata::getCreated))
+			.returns(src.getMeta(), from(SolarNodeMetadata::getMeta))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -137,11 +141,17 @@ public class MyBatisSolarNodeMetadataDaoTests extends AbstractMyBatisDaoTestSupp
 
 		FilterResults<SolarNodeMetadataFilterMatch, Long> results = dao.findFiltered(criteria, null,
 				null, null);
-		assertNotNull(results);
-		assertEquals(1L, (long) results.getTotalResults());
-		assertEquals(1, results.getReturnedResultCount());
-		SolarNodeMetadataFilterMatch match = results.getResults().iterator().next();
-		assertEquals("Match ID", TEST_NODE_ID, match.getId());
+		// @formatter:off
+		then(results)
+			.isNotNull()
+			.asInstanceOf(InstanceOfAssertFactories.type(FilterResults.class))
+			.returns(1, from(FilterResults<?,?>::getReturnedResultCount))
+			.returns(1L, from(FilterResults<?,?>::getTotalResults))
+			;
+		then(results)
+			.extracting(SolarNodeMetadataFilterMatch::getId)
+			.containsExactly(TEST_NODE_ID);
+		// @formatter:on
 	}
 
 	@Test

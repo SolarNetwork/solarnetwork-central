@@ -1,21 +1,21 @@
 /* ==================================================================
  * DatumUtilsTests.java - 7/10/2019 3:25:02 pm
- * 
+ *
  * Copyright 2019 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -49,7 +49,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -59,17 +59,17 @@ import net.solarnetwork.central.datum.v2.domain.AggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.BasicDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.BasicObjectDatumStreamMetadata;
 import net.solarnetwork.central.datum.v2.domain.Datum;
+import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumProperties;
 import net.solarnetwork.domain.datum.DatumPropertiesStatistics;
 import net.solarnetwork.domain.datum.ObjectDatumKind;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
-import net.solarnetwork.central.datum.v2.support.DatumJsonUtils;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataProvider;
-import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link DatumJsonUtils} class.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -290,7 +290,7 @@ public class DatumJsonUtilsTests {
 		AggregateDatumEntity datum = new AggregateDatumEntity(
 				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
-						arrayOfDecimals("1.23", "2.34"), 
+						arrayOfDecimals("1.23", "2.34"),
 						arrayOfDecimals("123456"),
 						null, null),
 				statisticsOf(
@@ -315,7 +315,7 @@ public class DatumJsonUtilsTests {
 		AggregateDatumEntity datum = new AggregateDatumEntity(
 				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
-						arrayOfDecimals("1.23", null), 
+						arrayOfDecimals("1.23", null),
 						arrayOfDecimals(null, "123456"),
 						null, null),
 				statisticsOf(
@@ -362,7 +362,7 @@ public class DatumJsonUtilsTests {
 		AggregateDatumEntity datum = new AggregateDatumEntity(
 				UUID.randomUUID(), Instant.now(), Aggregation.Hour,
 				propertiesOf(
-						null, 
+						null,
 						arrayOfDecimals("123456"),
 						null, null),
 				statisticsOf(
@@ -477,7 +477,7 @@ public class DatumJsonUtilsTests {
 				+ "\",\"metadata\":{\"tz\":\"UTC\",\"props\":[\"one\",\"two\",\"three\",\"four\",\"five\",\"six\"],"
 				+ "\"class\":{\"i\":[\"one\",\"two\",\"three\"],"
 				+ "\"a\":[\"four\",\"five\"],\"s\":[\"six\"]}}"
-				+ format(",\"values\":[" 
+				+ format(",\"values\":["
 								+ "[%d,1.23,2.34,3.45,456,567,\"On\"],"
 								+ "[%d,[1.11,2.22,60],[2.22,3.33,59],[3.33,4.44,58],[0,456],[0,567]],"
 								+ "[%d,1.234,2.345,3.456,4567,5678,\"Onn\",\"TAG\"],"
@@ -523,7 +523,7 @@ public class DatumJsonUtilsTests {
 
 	/**
 	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
-	 * 
+	 *
 	 * @param nums
 	 *        the string numbers, which will be parsed as {@link BigDecimal}
 	 *        instances

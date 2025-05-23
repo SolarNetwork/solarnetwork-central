@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import net.solarnetwork.central.common.mail.javamail.ManagedJavaMailSender;
 import net.solarnetwork.util.ClassUtils;
 
@@ -44,7 +44,7 @@ public class AbstractJavaMailTestSupport {
 	protected ManagedJavaMailSender sender;
 	protected Properties testProps;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		Properties props = new Properties();
 		try (Reader in = new InputStreamReader(

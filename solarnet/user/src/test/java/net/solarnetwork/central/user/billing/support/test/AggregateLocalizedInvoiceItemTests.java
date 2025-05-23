@@ -32,7 +32,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import java.math.BigDecimal;
 import java.util.Locale;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.support.AggregateLocalizedInvoiceItem;
 

@@ -24,16 +24,16 @@ package net.solarnetwork.central.user.event.domain.test;
 
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.MatcherAssert.assertThat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.codec.JsonUtils;
 

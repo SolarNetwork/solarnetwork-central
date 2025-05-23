@@ -44,7 +44,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoField;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.datum.domain.CombiningType;

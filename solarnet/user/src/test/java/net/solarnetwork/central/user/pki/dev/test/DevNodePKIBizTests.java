@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.pki.dev.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
@@ -31,9 +32,8 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,7 +53,7 @@ public class DevNodePKIBizTests {
 	private BCCertificateService certificateService;
 	private DevNodePKIBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		biz = new DevNodePKIBiz();
 
@@ -84,7 +84,7 @@ public class DevNodePKIBizTests {
 		KeyPair keypair = keyGen.generateKeyPair();
 		X509Certificate certificate = createSelfSignedCertificate("UID=1111,O=SolarNetworkDev", keypair);
 		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
-		Assert.assertNotNull("CSR request ID", reqID);
+		then(reqID).as("CSR request ID").isNotNull();
 	}
 
 	@Test
@@ -94,9 +94,9 @@ public class DevNodePKIBizTests {
 		KeyPair keypair = keyGen.generateKeyPair();
 		X509Certificate certificate = createSelfSignedCertificate("UID=1111,O=SolarNetworkDev", keypair);
 		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
-		Assert.assertNotNull("CSR request ID", reqID);
+		then(reqID).as("CSR request ID").isNotNull();
 		X509Certificate[] result = biz.approveCSR(reqID);
-		Assert.assertNotNull("X.509 certificate", result);
+		then(result).as("X.509 certificate").isNotNull();
 	}
 
 	@Test
@@ -104,10 +104,10 @@ public class DevNodePKIBizTests {
 		biz.serviceDidStartup();
 
 		File webserverKeyStoreFile = new File(biz.getBaseDir(), "central.jks");
-		Assert.assertTrue("Webserver KeyStore exists", webserverKeyStoreFile.canRead());
+		then(webserverKeyStoreFile.canRead()).as("Webserver KeyStore exists").isTrue();
 
 		File nodeTrustKeyStoreFile = new File(biz.getBaseDir(), "central-trust.jks");
-		Assert.assertTrue("Node trust  KeyStore exists", nodeTrustKeyStoreFile.canRead());
+		then(nodeTrustKeyStoreFile.canRead()).as("Node trust  KeyStore exists").isTrue();
 	}
 
 }
