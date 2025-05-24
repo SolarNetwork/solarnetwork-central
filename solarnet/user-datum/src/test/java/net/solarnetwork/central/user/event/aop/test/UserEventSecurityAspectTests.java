@@ -23,17 +23,18 @@
 package net.solarnetwork.central.user.event.aop.test;
 
 import static java.time.Instant.now;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.test.AbstractCentralTest;
+import net.solarnetwork.central.test.CentralTestConstants;
 import net.solarnetwork.central.user.event.aop.UserEventSecurityAspect;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 
@@ -43,7 +44,7 @@ import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration
  * @author matt
  * @version 2.0
  */
-public class UserEventSecurityAspectTests extends AbstractCentralTest {
+public class UserEventSecurityAspectTests implements CentralTestConstants {
 
 	private static final Long TEST_USER_ID = -11L;
 
@@ -66,29 +67,31 @@ public class UserEventSecurityAspectTests extends AbstractCentralTest {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		aspect = new UserEventSecurityAspect(nodeOwnershipDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		SecurityContextHolder.clearContext();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void actionForUserNoAuth() {
 		replayAll();
-		aspect.actionForUserCheck(TEST_USER_ID);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.actionForUserCheck(TEST_USER_ID));
 		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void actionForUserWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		aspect.actionForUserCheck(-2L);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.actionForUserCheck(-2L));
 		verifyAll();
 	}
 
@@ -100,29 +103,32 @@ public class UserEventSecurityAspectTests extends AbstractCentralTest {
 		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigNoAuth() {
 		replayAll();
 		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(TEST_USER_ID, now());
-		aspect.saveConfigurationCheck(config);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration(-99L, now());
-		aspect.saveConfigurationCheck(config);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserNodeEventHookConfiguration config = new UserNodeEventHookConfiguration((Long) null, now());
-		aspect.saveConfigurationCheck(config);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 		verifyAll();
 	}
 

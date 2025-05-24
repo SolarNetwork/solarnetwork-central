@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.CallableStatementCreator;
 import org.springframework.jdbc.core.ColumnMapRowMapper;
 import org.springframework.jdbc.core.SqlOutParameter;
@@ -58,7 +58,7 @@ import org.springframework.jdbc.core.SqlReturnResultSet;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityTokenStatus;
 import net.solarnetwork.central.security.SecurityTokenType;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.security.Snws2AuthorizationBuilder;
 
@@ -68,7 +68,7 @@ import net.solarnetwork.security.Snws2AuthorizationBuilder;
  * @author matt
  * @version 2.1
  */
-public class AuthTokenStoredProcedureTests extends AbstractJdbcDaoTestSupport {
+public class AuthTokenStoredProcedureTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private static final String SQL_SNWS2_CANON_REQ_DATA = "{? = call solaruser.snws2_canon_request_data(?, ?, ?)}";
 	private static final String SQL_SNWS2_SIGNATURE_DATA = "{? = call solaruser.snws2_signature_data(?, ?)}";

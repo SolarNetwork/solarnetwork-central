@@ -46,9 +46,9 @@ import org.easymock.IAnswer;
 import org.ehcache.core.config.DefaultConfiguration;
 import org.ehcache.impl.config.persistence.DefaultPersistenceConfiguration;
 import org.ehcache.jsr107.EhcacheCachingProvider;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -96,7 +96,7 @@ public class UserNodeEventTaskProcessorJobTests {
 
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		txManager = EasyMock.createMock(PlatformTransactionManager.class);
 		taskDao = EasyMock.createMock(UserNodeEventTaskDao.class);
@@ -138,7 +138,7 @@ public class UserNodeEventTaskProcessorJobTests {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		if ( serviceCache != null ) {
 			serviceCache.close();

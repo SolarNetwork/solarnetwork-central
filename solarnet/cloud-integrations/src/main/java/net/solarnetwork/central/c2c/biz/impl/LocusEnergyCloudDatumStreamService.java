@@ -52,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -137,7 +136,7 @@ import net.solarnetwork.settings.support.BasicMultiValueSettingSpecifier;
  *  }}</pre>
  *
  * @author matt
- * @version 1.13
+ * @version 1.15
  */
 public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -165,7 +164,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 						() -> new LinkedHashMap<>(LocusEnergyGranularity.values().length))));
 		granularitySpec.setValueTitles(granularityTitles);
 
-		SETTINGS = List.of(granularitySpec);
+		SETTINGS = List.of(granularitySpec, VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/**
@@ -640,9 +639,7 @@ public class LocusEnergyCloudDatumStreamService extends BaseRestOperationsCloudD
 							if ( dataNode instanceof ObjectNode o && o.has("ts") ) {
 								Map<String, JsonNode> datumValues = new LinkedHashMap<>(
 										fieldNames.size());
-								for ( Iterator<Entry<String, JsonNode>> itr = o.fields(); itr
-										.hasNext(); ) {
-									Entry<String, JsonNode> e = itr.next();
+								for ( Entry<String, JsonNode> e : o.properties() ) {
 									if ( "ts".equals(e.getKey()) || fieldNames.contains(e.getKey()) ) {
 										datumValues.put(e.getKey(), e.getValue());
 									}

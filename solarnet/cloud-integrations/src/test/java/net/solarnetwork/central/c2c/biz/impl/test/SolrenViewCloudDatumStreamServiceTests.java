@@ -308,6 +308,152 @@ public class SolrenViewCloudDatumStreamServiceTests {
 	}
 
 	@Test
+	public void requestLatest_refSourceIdMap() {
+		// GIVEN
+		final Long siteId = randomLong();
+		final String componentId1 = "1013811710134";
+		final String componentId2 = "1013811710042";
+
+		// configure integration
+		final CloudIntegrationConfiguration integration = new CloudIntegrationConfiguration(TEST_USER_ID,
+				randomLong(), now());
+
+		given(integrationDao.get(integration.getId())).willReturn(integration);
+
+		// configure datum stream mapping
+		final CloudDatumStreamMappingConfiguration mapping = new CloudDatumStreamMappingConfiguration(
+				TEST_USER_ID, randomLong(), now());
+		mapping.setIntegrationId(integration.getConfigId());
+
+		given(datumStreamMappingDao.get(mapping.getId())).willReturn(mapping);
+
+		// configure datum stream properties
+		final CloudDatumStreamPropertyConfiguration c1p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 1, now());
+		c1p1.setEnabled(true);
+		c1p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c1p1.setPropertyName("watts");
+		c1p1.setValueType(CloudDatumStreamValueType.Reference);
+		c1p1.setValueReference(componentValueRef(siteId, componentId1, "W"));
+
+		final CloudDatumStreamPropertyConfiguration c1p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 2, now());
+		c1p2.setEnabled(true);
+		c1p2.setPropertyType(DatumSamplesType.Accumulating);
+		c1p2.setPropertyName("wattHours");
+		c1p2.setValueType(CloudDatumStreamValueType.Reference);
+		c1p2.setValueReference(componentValueRef(siteId, componentId1, "WHL"));
+
+		final CloudDatumStreamPropertyConfiguration c2p1 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 3, now());
+		c2p1.setEnabled(true);
+		c2p1.setPropertyType(DatumSamplesType.Instantaneous);
+		c2p1.setPropertyName("watts");
+		c2p1.setValueType(CloudDatumStreamValueType.Reference);
+		c2p1.setValueReference(componentValueRef(siteId, componentId2, "W"));
+
+		final CloudDatumStreamPropertyConfiguration c2p2 = new CloudDatumStreamPropertyConfiguration(
+				TEST_USER_ID, mapping.getConfigId(), 4, now());
+		c2p2.setEnabled(true);
+		c2p2.setPropertyType(DatumSamplesType.Accumulating);
+		c2p2.setPropertyName("wattHours");
+		c2p2.setValueType(CloudDatumStreamValueType.Reference);
+		c2p2.setValueReference(componentValueRef(siteId, componentId2, "WHL"));
+
+		given(datumStreamPropertyDao.findAll(TEST_USER_ID, mapping.getConfigId(), null))
+				.willReturn(List.of(c1p1, c1p2, c2p1, c2p2));
+
+		// configure datum stream
+		final Long nodeId = randomLong();
+		final String sourceId = randomString();
+		final CloudDatumStreamConfiguration datumStream = new CloudDatumStreamConfiguration(TEST_USER_ID,
+				randomLong(), now());
+		datumStream.setDatumStreamMappingId(mapping.getConfigId());
+		datumStream.setKind(ObjectDatumKind.Node);
+		datumStream.setObjectId(nodeId);
+		datumStream.setSourceId(sourceId);
+		// @formatter:off
+		datumStream.setServiceProps(Map.of(
+				SolrenViewCloudDatumStreamService.GRANULARITY_SETTING, "5min",
+				SolrenViewCloudDatumStreamService.SOURCE_ID_MAP_SETTING, Map.of(
+						"/%s/%s".formatted(siteId, componentId1), sourceId + "/ONE",
+						"/%s/%s".formatted(siteId, componentId2), sourceId + "/TWO"
+				)
+		));
+		// @formatter:on
+
+		// request data
+		final String resXml = utf8StringResource("solrenview-site-data-01.xml", getClass());
+		final var res = new ResponseEntity<String>(resXml, HttpStatus.OK);
+		given(restOps.exchange(any(), eq(HttpMethod.GET), any(), eq(String.class))).willReturn(res);
+
+		// WHEN
+		Iterable<Datum> result = service.latestDatum(datumStream);
+
+		// THEN
+		// @formatter:off
+		then(restOps).should().exchange(uriCaptor.capture(), eq(HttpMethod.GET), httpEntityCaptor.capture(), eq(String.class));
+
+		// expected date range is clock-aligned
+		Instant expectedEndDate = clock.instant();
+		Instant expectedStartDate = expectedEndDate.minus(SolrenViewGranularity.FiveMinute.getTickDuration());
+
+		and.then(uriCaptor.getValue())
+			.as("Request URI")
+			.isEqualTo(fromUri(BASE_URI)
+					.path(XML_FEED_PATH)
+					.queryParam(XML_FEED_USE_UTC_PARAM)
+					.queryParam(XML_FEED_INCLUDE_LIFETIME_ENERGY_PARAM)
+					.queryParam(XML_FEED_SITE_ID_PARAM, "{siteId}")
+					.queryParam(XML_FEED_START_DATE_PARAM, "{startDate}")
+					.queryParam(XML_FEED_END_DATE_PARAM, "{endDate}")
+					.buildAndExpand(siteId, expectedStartDate, expectedEndDate)
+					.toUri()
+			)
+			;
+
+		and.then(result)
+			.as("Datum parsed from HTTP response")
+			.hasSize(2)
+			.allSatisfy(d -> {
+				and.then(d)
+					.as("Datum kind is from DatumStream configuration")
+					.returns(datumStream.getKind(), Datum::getKind)
+					.as("Datum object ID is from DatumStream configuration")
+					.returns(datumStream.getObjectId(), Datum::getObjectId)
+					.as("Datum timestamp based on query start date")
+					.returns(expectedStartDate, Datum::getTimestamp)
+					;
+			})
+			.satisfies(list -> {
+				and.then(list).element(0)
+					.as("Datum source ID is mapped from DatumStream configuration")
+					.returns(datumStream.getSourceId() + "/ONE", from(Datum::getSourceId))
+					.as("Datum samples from XML response")
+					.returns(new DatumSamples(Map.of(
+								"watts", 390
+							), Map.of(
+								"wattHours", 517756000
+							), null),
+						Datum::asSampleOperations)
+					;
+				and.then(list).element(1)
+					.as("Datum source ID is mapped from DatumStream configuration")
+					.returns(datumStream.getSourceId() + "/TWO", from(Datum::getSourceId))
+					.as("Datum samples from XML response")
+					.returns(new DatumSamples(Map.of(
+								"watts", 425
+							), Map.of(
+								"wattHours", 514789000
+							), null),
+						Datum::asSampleOperations)
+					;
+			})
+			;
+		// @formatter:on
+	}
+
+	@Test
 	public void requestLatest_placeholderRefs() {
 		// GIVEN
 		final Long siteId = randomLong();

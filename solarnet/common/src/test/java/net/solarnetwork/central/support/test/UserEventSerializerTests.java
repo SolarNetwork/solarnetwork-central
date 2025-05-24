@@ -34,8 +34,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.TimeUnit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import net.solarnetwork.central.domain.UserEvent;
@@ -68,7 +68,7 @@ public class UserEventSerializerTests {
 		return m;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		uuidGenerator = new TimeBasedV7UuidGenerator(new SecureRandom(),
 				Clock.fixed(TEST_DATE, ZoneOffset.UTC), UuidUtils.V7_MICRO_COUNT_PRECISION);

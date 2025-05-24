@@ -22,19 +22,20 @@
 
 package net.solarnetwork.central.query.aop.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import net.solarnetwork.central.datum.domain.AggregateGeneralNodeDatumFilter;
 import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatumFilter;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicyEnforcer;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link SecurityPolicyEnforcer} class.
@@ -57,7 +58,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_SOURCE_ID, filter.getSourceId());
+		then(filter.getSourceId()).as("Filled in source ID").isEqualTo(TEST_SOURCE_ID);
 	}
 
 	@Test
@@ -68,7 +69,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_SOURCE_ID, filter.getSourceId());
+		then(filter.getSourceId()).as("Filled in source ID").isEqualTo(TEST_SOURCE_ID);
 	}
 
 	@Test
@@ -79,7 +80,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Filled in source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -90,7 +91,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Filled in source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -102,7 +103,7 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setSourceIds(new String[] { TEST_SOURCE_ID, "Other" });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Restricted source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -114,10 +115,10 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_SOURCE_ID2, "Other", "Other2" });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Restricted source IDs").isEqualTo(policySourceIds);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void denyFromPolicySourceIds() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -126,7 +127,7 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setSourceIds(new String[] { "Other" });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		filter.getSourceIds();
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> filter.getSourceIds());
 	}
 
 	private static final String TEST_SOURCE_PAT_ONELEVEL = "/Main/*";
@@ -143,7 +144,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
 				new AntPathMatcher());
 		String[] result = enforcer.verifySourceIds(new String[] { TEST_SOURCE_ID_ONELEVEL });
-		Assert.assertArrayEquals("Verify source IDs", new String[] { TEST_SOURCE_ID_ONELEVEL }, result);
+		then(result).as("Verify source IDs").containsExactly(TEST_SOURCE_ID_ONELEVEL);
 	}
 
 	@Test
@@ -155,18 +156,19 @@ public class SecurityPolicyEnforcerTests {
 				new AntPathMatcher());
 		String[] result = enforcer.verifySourceIds(
 				new String[] { TEST_SOURCE_ID_ONELEVEL, TEST_SOURCE_ID_MULTILEVEL, "/some/other" });
-		Assert.assertArrayEquals("Restricted source IDs",
-				new String[] { TEST_SOURCE_ID_ONELEVEL, TEST_SOURCE_ID_MULTILEVEL }, result);
+		then(result).as("Verify source IDs").containsExactly(TEST_SOURCE_ID_ONELEVEL,
+				TEST_SOURCE_ID_MULTILEVEL);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void verifySourceIdsWithPathMatcherDenied() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", null,
 				new AntPathMatcher());
-		enforcer.verifySourceIds(new String[] { "/not/accepted", "/some/other" });
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(
+				() -> enforcer.verifySourceIds(new String[] { "/not/accepted", "/some/other" }));
 	}
 
 	@Test
@@ -178,7 +180,7 @@ public class SecurityPolicyEnforcerTests {
 				new AntPathMatcher());
 		String[] inputSourceIds = new String[] { "/Main2/foo/bar/bam/Meter", "/Main2/Meter" };
 		String[] result = enforcer.verifySourceIds(inputSourceIds);
-		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
+		then(result).as("Restricted source IDs").isEqualTo(inputSourceIds);
 	}
 
 	@Test
@@ -190,7 +192,7 @@ public class SecurityPolicyEnforcerTests {
 				new AntPathMatcher());
 		String[] inputSourceIds = new String[] { "/A/BC/1" };
 		String[] result = enforcer.verifySourceIds(inputSourceIds);
-		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
+		then(result).as("Restricted source IDs").isEqualTo(inputSourceIds);
 	}
 
 	@Test
@@ -201,7 +203,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_NODE_ID, filter.getNodeId());
+		then(filter.getNodeId()).as("Filled in node ID").isEqualTo(TEST_NODE_ID);
 	}
 
 	@Test
@@ -212,7 +214,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_NODE_ID, filter.getNodeId());
+		then(filter.getNodeId()).as("Filled in node ID").isEqualTo(TEST_NODE_ID);
 	}
 
 	@Test
@@ -223,7 +225,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Filled in node IDs").isEqualTo(policyNodeIds);
 	}
 
 	@Test
@@ -234,7 +236,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Filled in node IDs").isEqualTo(policyNodeIds);
 	}
 
 	@Test
@@ -246,7 +248,7 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setNodeIds(new Long[] { TEST_NODE_ID, -1L });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Restricted node IDs").isEqualTo(policyNodeIds);
 	}
 
 	@Test
@@ -258,10 +260,10 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID2, -1L, -2L });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Restricted node IDs").isEqualTo(policyNodeIds);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void denyFromPolicyNodeIds() {
 		Long[] policyNodeIds = new Long[] { TEST_NODE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -270,7 +272,8 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setNodeIds(new Long[] { -1L });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		filter.getNodeIds();
+
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> filter.getNodeIds());
 	}
 
 	@Test
@@ -281,7 +284,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		AggregateGeneralNodeDatumFilter filter = SecurityPolicyEnforcer
 				.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in aggregation", min, filter.getAggregation());
+		then(filter.getAggregation()).as("Filled in aggregation").isEqualTo(min);
 	}
 
 	@Test
@@ -293,7 +296,6 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		AggregateGeneralNodeDatumFilter filter = SecurityPolicyEnforcer
 				.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in aggregation", min, filter.getAggregation());
+		then(filter.getAggregation()).as("Filled in aggregation").isEqualTo(min);
 	}
-
 }

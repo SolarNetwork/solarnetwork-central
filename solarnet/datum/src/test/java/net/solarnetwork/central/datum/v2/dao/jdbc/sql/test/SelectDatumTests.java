@@ -27,6 +27,7 @@ import static net.solarnetwork.central.test.CommonTestUtils.equalToTextResource;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static net.solarnetwork.domain.SimpleSortDescriptor.sorts;
+import static org.assertj.core.api.BDDAssertions.thenIllegalArgumentException;
 import static org.easymock.EasyMock.aryEq;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.createMock;
@@ -53,8 +54,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.SqlProvider;
@@ -77,11 +77,11 @@ public class SelectDatumTests {
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void sql_find_minute() {
 		BasicDatumCriteria filter = new BasicDatumCriteria();
 		filter.setAggregation(Aggregation.Minute);
-		new SelectDatum(filter).getSql();
+		thenIllegalArgumentException().isThrownBy(() -> new SelectDatum(filter).getSql());
 	}
 
 	@Test
@@ -94,12 +94,9 @@ public class SelectDatumTests {
 				EnumSet.of(Aggregation.None, Aggregation.Hour, Aggregation.Day, Aggregation.Month)) ) {
 			// WHEN
 			filter.setAggregation(agg);
-			try {
-				new SelectDatum(filter).getSql();
-				Assert.fail("MostRecent should not be allowed with aggregation " + agg);
-			} catch ( IllegalArgumentException e ) {
-				// ok
-			}
+			thenIllegalArgumentException()
+					.as("MostRecent should not be allowed with aggregation %s", agg)
+					.isThrownBy(() -> new SelectDatum(filter).getSql());
 		}
 	}
 

@@ -40,8 +40,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.MimeType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +76,7 @@ public class ObjectMapperStreamDatumFilteredResultsProcessorTests {
 		return m;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		mapper = createObjectMapper();
 	}

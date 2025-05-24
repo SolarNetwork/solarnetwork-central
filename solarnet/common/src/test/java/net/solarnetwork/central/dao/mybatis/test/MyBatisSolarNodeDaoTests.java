@@ -25,21 +25,20 @@ package net.solarnetwork.central.dao.mybatis.test;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.SolarNodeMetadataDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeMetadataDao;
@@ -63,7 +62,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 	private MyBatisSolarNodeDao dao;
 	private SolarNodeMetadataDao metadataDao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		setupTestLocation();
 		dao = new MyBatisSolarNodeDao();
@@ -80,18 +79,19 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 				TEST_LOC_ID);
 
 		SolarNode node = dao.get(TEST_NODE_ID);
-		assertNotNull(node);
-		assertNotNull(node.getId());
-		assertEquals(TEST_NODE_ID, node.getId());
-		assertEquals(TEST_LOC_ID, node.getLocationId());
-		assertNotNull(node.getTimeZone());
-		assertEquals(TEST_TZ, node.getTimeZone().getID());
+		// @formatter:off
+		then(node).isNotNull()
+			.returns(TEST_NODE_ID, from(SolarNode::getId))
+			.returns(TEST_LOC_ID, from(SolarNode::getLocationId))
+			.returns(TEST_TZ, from(n -> n.getTimeZone().getID()))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void getNonExistingSolarNodeById() throws Exception {
 		SolarNode node = dao.get(-99L);
-		assertNull(node);
+		then(node).isNull();
 	}
 
 	@Test
@@ -100,7 +100,7 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		node.setLocationId(TEST_LOC_ID);
 
 		Long id = dao.save(node);
-		assertNotNull(id);
+		then(id).isNotNull();
 	}
 
 	@Test
@@ -109,14 +109,14 @@ public class MyBatisSolarNodeDaoTests extends AbstractMyBatisDaoTestSupport {
 		node.setLocationId(TEST_LOC_ID);
 
 		Long id = dao.save(node);
-		assertNotNull(id);
+		then(id).isNotNull();
 		node = dao.get(id);
-		assertEquals(id, node.getId());
+		then(node).returns(id, from(SolarNode::getId));
 		node.setName("myname");
 		Long id2 = dao.save(node);
-		assertEquals(id, id2);
+		then(id2).isEqualTo(id);
 		node = dao.get(id);
-		assertEquals("myname", node.getName());
+		then(node).returns("myname", from(SolarNode::getName));
 	}
 
 	@Test

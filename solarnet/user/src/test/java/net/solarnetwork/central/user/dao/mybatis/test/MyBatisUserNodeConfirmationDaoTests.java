@@ -22,9 +22,8 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,10 +69,10 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
-		assertNotNull(this.node);
+		then(this.node).isNotNull();
 		JdbcTestUtils.deleteFromTables(jdbcTemplate, DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		userNodeConf = null;
 		testNodeId = TEST_NODE_ID;
 	}
@@ -88,21 +87,28 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		newUserNodeConf.setCountry("NZ");
 		newUserNodeConf.setTimeZoneId("Pacific/Auckland");
 		Long id = userNodeConfirmationDao.save(newUserNodeConf);
-		assertNotNull(id);
+		then(id).isNotNull();
 		this.userNodeConf = userNodeConfirmationDao.get(id);
 	}
 
 	private void validate(UserNodeConfirmation conf, UserNodeConfirmation entity) {
-		assertNotNull("UserNodeConfirmation should exist", entity);
-		assertNotNull("Created date should be set", entity.getCreated());
-		assertEquals(conf.getConfirmationDate(), entity.getConfirmationDate());
-		assertEquals(conf.getConfirmationKey(), entity.getConfirmationKey());
-		assertEquals(conf.getSecurityPhrase(), entity.getSecurityPhrase());
-		assertEquals(conf.getCountry(), entity.getCountry());
-		assertEquals(conf.getTimeZoneId(), entity.getTimeZoneId());
-		assertEquals(conf.getId(), entity.getId());
-		assertEquals(conf.getNodeId(), entity.getNodeId());
-		assertEquals(conf.getUser(), entity.getUser());
+		// @formatter:off
+		then(entity)
+			.as("UserNodeConfirmation should exist")
+			.isNotNull()
+			.returns(conf.getConfirmationDate(), from(UserNodeConfirmation::getConfirmationDate))
+			.returns(conf.getConfirmationKey(), from(UserNodeConfirmation::getConfirmationKey))
+			.returns(conf.getSecurityPhrase(), from(UserNodeConfirmation::getSecurityPhrase))
+			.returns(conf.getCountry(), from(UserNodeConfirmation::getCountry))
+			.returns(conf.getTimeZoneId(), from(UserNodeConfirmation::getTimeZoneId))
+			.returns(conf.getId(), from(UserNodeConfirmation::getId))
+			.returns(conf.getNodeId(), from(UserNodeConfirmation::getNodeId))
+			.returns(conf.getUser(), from(UserNodeConfirmation::getUser))
+			.extracting(UserNodeConfirmation::getCreated)
+			.as("Created date should be set")
+			.isNotNull()
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -117,11 +123,10 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		storeNew();
 		setupTestNode(TEST_ID_2);
 		UserNodeConfirmation conf = userNodeConfirmationDao.get(userNodeConf.getId());
-		assertNull(conf.getNodeId());
+		then(conf.getNodeId()).isNull();
 		conf.setNodeId(testNodeId);
 		Long id = userNodeConfirmationDao.save(conf);
-		assertNotNull(id);
-		assertEquals(userNodeConf.getId(), id);
+		then(id).isNotNull().isEqualTo(userNodeConf.getId());
 		UserNodeConfirmation updated = userNodeConfirmationDao.get(userNodeConf.getId());
 		validate(conf, updated);
 	}
@@ -138,8 +143,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 	public void findPendingConfirmationsForUserEmpty() {
 		List<UserNodeConfirmation> results = userNodeConfirmationDao
 				.findPendingConfirmationsForUser(user);
-		assertNotNull(results);
-		assertEquals(0, results.size());
+		then(results).isNotNull().isEmpty();
 	}
 
 	@Test
@@ -147,8 +151,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		storeNew();
 		List<UserNodeConfirmation> results = userNodeConfirmationDao
 				.findPendingConfirmationsForUser(user);
-		assertNotNull(results);
-		assertEquals(1, results.size());
+		then(results).isNotNull().hasSize(1);
 		UserNodeConfirmation conf = results.get(0);
 		validate(userNodeConf, conf);
 	}
@@ -161,8 +164,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		storeNew();
 		List<UserNodeConfirmation> results = userNodeConfirmationDao
 				.findPendingConfirmationsForUser(user);
-		assertNotNull(results);
-		assertEquals(2, results.size());
+		then(results).isNotNull().hasSize(2);
 		validate(conf0, results.get(0));
 		validate(userNodeConf, results.get(1));
 	}
@@ -181,8 +183,7 @@ public class MyBatisUserNodeConfirmationDaoTests extends AbstractMyBatisUserDaoT
 		storeNew();
 		List<UserNodeConfirmation> results = userNodeConfirmationDao
 				.findPendingConfirmationsForUser(user);
-		assertNotNull(results);
-		assertEquals(1, results.size());
+		then(results).isNotNull().hasSize(1);
 		validate(userNodeConf, results.get(0));
 	}
 

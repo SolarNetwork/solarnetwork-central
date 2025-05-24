@@ -25,7 +25,7 @@ package net.solarnetwork.central.ocpp.domain.test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import java.time.Instant;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.ocpp.domain.CentralSystemUser;
 
 /**

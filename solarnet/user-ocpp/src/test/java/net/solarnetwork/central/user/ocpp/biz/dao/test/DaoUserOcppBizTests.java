@@ -38,9 +38,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.ocpp.dao.CentralAuthorizationDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointConnectorDao;
 import net.solarnetwork.central.ocpp.dao.CentralChargePointDao;
@@ -83,7 +83,7 @@ public class DaoUserOcppBizTests {
 
 	private DaoUserOcppBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		authorizationDao = EasyMock.createMock(CentralAuthorizationDao.class);
 		chargePointDao = EasyMock.createMock(CentralChargePointDao.class);
@@ -100,7 +100,7 @@ public class DaoUserOcppBizTests {
 				chargePointActionStatusDao, passwordEncoder);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(authorizationDao, chargePointDao, chargePointStatusDao,
 				chargePointActionStatusDao, chargePointSettingsDao, connectorDao, chargeSessionDao,

@@ -197,7 +197,7 @@ public class LocusEnergyConfig implements SolarNetCloudIntegrationsConfiguration
 		var authRestClient = RestClient.create(authRestOps);
 		// @formatter:on
 
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		OAuth2AuthorizedClientProvider provider = OAuth2AuthorizedClientProviderBuilder.builder()
 				.password(b -> {
 					var client = new DefaultPasswordTokenResponseClient();

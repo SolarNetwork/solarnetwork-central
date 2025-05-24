@@ -71,9 +71,9 @@ import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
@@ -163,7 +163,7 @@ public class DaoDatumImportBizTests {
 
 	private TestDaoDatumImportBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		scheduledExecutorService = EasyMock.createMock(TaskScheduler.class);
 		executorSercvice = EasyMock.createMock(AsyncTaskExecutor.class);
@@ -184,7 +184,7 @@ public class DaoDatumImportBizTests {
 				jobInfoDao, datumDao, loadingContext, resourceStorageService);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(scheduledExecutorService, executorSercvice, userNodeDao, jobInfoDao, datumDao,
 				loadingContext, resourceStorageService);

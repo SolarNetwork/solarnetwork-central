@@ -28,14 +28,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import javax.sql.DataSource;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import net.solarnetwork.central.common.dao.jdbc.BulkLoadingDaoSupport;
@@ -45,7 +43,7 @@ import net.solarnetwork.central.dao.BulkLoadingDao.LoadingExceptionHandler;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingOptions;
 import net.solarnetwork.central.dao.BulkLoadingDao.LoadingTransactionMode;
 import net.solarnetwork.central.support.SimpleBulkLoadingOptions;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 
 /**
  * Test cases for the {@link BulkLoadingDaoSupport} class.
@@ -58,24 +56,17 @@ import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
  * @author matt
  * @version 2.0
  */
-public class BulkLoadingDaoSupportTests extends AbstractJdbcDaoTestSupport {
+public class BulkLoadingDaoSupportTests extends AbstractJUnit5JdbcDaoTestSupport {
 
-	private JdbcTemplate jdbcTemplate;
 	private PlatformTransactionManager txManager;
 	private BulkLoadingDaoSupport support;
-
-	@Override
-	@Autowired
-	public void setDataSource(DataSource dataSource) {
-		this.jdbcTemplate = new JdbcTemplate(dataSource);
-	}
 
 	@Autowired
 	public void setTransactionManager(PlatformTransactionManager txManager) {
 		this.txManager = txManager;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		TestTransaction.end();
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
@@ -97,7 +88,7 @@ public class BulkLoadingDaoSupportTests extends AbstractJdbcDaoTestSupport {
 		support.setTransactionManager(this.txManager);
 	}
 
-	@After
+	@AfterEach
 	public void cleanup() {
 		jdbcTemplate.execute(new ConnectionCallback<Void>() {
 

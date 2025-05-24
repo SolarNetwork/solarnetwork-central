@@ -92,7 +92,9 @@ import net.solarnetwork.domain.datum.MutableDatum;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadataId;
 import net.solarnetwork.service.IdentifiableConfiguration;
 import net.solarnetwork.settings.SettingSpecifier;
+import net.solarnetwork.settings.TextFieldSettingSpecifier;
 import net.solarnetwork.settings.ToggleSettingSpecifier;
+import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
 import net.solarnetwork.settings.support.BasicToggleSettingSpecifier;
 import net.solarnetwork.util.IntRange;
 import net.solarnetwork.util.NumberUtils;
@@ -102,7 +104,7 @@ import net.solarnetwork.util.StringUtils;
  * Base implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.15
+ * @version 1.16
  */
 public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsIdentifiableService
 		implements CloudDatumStreamService {
@@ -114,6 +116,22 @@ public abstract class BaseCloudDatumStreamService extends BaseCloudIntegrationsI
 	 */
 	public static final ToggleSettingSpecifier UPPER_CASE_SOURCE_ID_SETTING_SPECIFIER = new BasicToggleSettingSpecifier(
 			UPPER_CASE_SOURCE_ID_SETTING, Boolean.FALSE);
+
+	/**
+	 * A setting specifier for the {@code SOURCE_ID_MAP_SETTING}.
+	 *
+	 * @since 1.16
+	 */
+	public static final TextFieldSettingSpecifier SOURCE_ID_MAP_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			SOURCE_ID_MAP_SETTING, null);
+
+	/**
+	 * A setting specifier for the {@code VIRTUAL_SOURCE_IDS_SETTING}.
+	 *
+	 * @since 1.16
+	 */
+	public static final TextFieldSettingSpecifier VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER = new BasicTextFieldSettingSpecifier(
+			VIRTUAL_SOURCE_IDS_SETTING, null);
 
 	/** A clock to use. */
 	protected final Clock clock;

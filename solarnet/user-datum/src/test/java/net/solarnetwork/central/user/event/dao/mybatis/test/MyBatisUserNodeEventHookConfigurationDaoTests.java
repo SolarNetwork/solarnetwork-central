@@ -34,8 +34,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
@@ -61,7 +61,7 @@ public class MyBatisUserNodeEventHookConfigurationDaoTests
 	private User user;
 	private UserNodeEventHookConfiguration last;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisUserNodeEventHookConfigurationDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());

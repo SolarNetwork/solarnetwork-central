@@ -26,7 +26,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import java.math.BigDecimal;
 import org.apache.ibatis.session.SqlSession;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.SqlSessionTemplate;
 import net.solarnetwork.central.dao.mybatis.test.AbstractMyBatisDaoTestSupport;
 import net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler;

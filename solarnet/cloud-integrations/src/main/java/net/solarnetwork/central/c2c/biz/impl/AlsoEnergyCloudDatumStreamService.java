@@ -100,7 +100,7 @@ import net.solarnetwork.util.StringUtils;
  * AlsoEnergy implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -151,7 +151,8 @@ public class AlsoEnergyCloudDatumStreamService extends BaseRestOperationsCloudDa
 		granularitySpec.setValueTitles(granularityTitles);
 
 		var tzSpec = new BasicTextFieldSettingSpecifier(TIME_ZONE_SETTING, null);
-		SETTINGS = List.of(granularitySpec, tzSpec);
+		SETTINGS = List.of(granularitySpec, tzSpec, SOURCE_ID_MAP_SETTING_SPECIFIER,
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER);
 	}
 
 	/** The supported placeholder keys. */

@@ -23,6 +23,7 @@
 package net.solarnetwork.central.datum.v2.dao.jdbc.sql.test;
 
 import static java.time.Instant.now;
+import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
@@ -36,6 +37,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,10 +81,12 @@ public class DeleteDatumByIdTests {
 		// GIVEN
 		final Long userId = randomLong();
 
+		final Instant now = now().truncatedTo(MILLIS);
+
 		final List<ObjectDatumId> ids = List.of(
-				ObjectDatumId.nodeId(randomUUID(), null, null, now(), Aggregation.None),
-				ObjectDatumId.nodeId(randomUUID(), null, null, now(), Aggregation.None),
-				ObjectDatumId.nodeId(randomUUID(), null, null, now(), Aggregation.None));
+				ObjectDatumId.nodeId(randomUUID(), null, null, now, Aggregation.None),
+				ObjectDatumId.nodeId(randomUUID(), null, null, now.plusMillis(1), Aggregation.None),
+				ObjectDatumId.nodeId(randomUUID(), null, null, now.plusMillis(2), Aggregation.None));
 
 		givenPrepStatement();
 
@@ -131,10 +135,14 @@ public class DeleteDatumByIdTests {
 		// GIVEN
 		final Long userId = randomLong();
 
+		final Instant now = now().truncatedTo(MILLIS);
+
 		final List<ObjectDatumId> ids = List.of(
-				ObjectDatumId.nodeId(null, randomLong(), randomString(), now(), Aggregation.None),
-				ObjectDatumId.nodeId(null, randomLong(), randomString(), now(), Aggregation.None),
-				ObjectDatumId.nodeId(null, randomLong(), randomString(), now(), Aggregation.None));
+				ObjectDatumId.nodeId(null, randomLong(), randomString(), now, Aggregation.None),
+				ObjectDatumId.nodeId(null, randomLong(), randomString(), now.plusMillis(1),
+						Aggregation.None),
+				ObjectDatumId.nodeId(null, randomLong(), randomString(), now.plusMillis(2),
+						Aggregation.None));
 
 		givenPrepStatement();
 

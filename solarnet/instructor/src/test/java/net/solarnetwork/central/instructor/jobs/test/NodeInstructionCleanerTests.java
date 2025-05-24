@@ -30,9 +30,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import java.time.Instant;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.instructor.dao.NodeInstructionDao;
 import net.solarnetwork.central.instructor.jobs.NodeInstructionCleaner;
 import net.solarnetwork.test.Assertion;
@@ -48,13 +48,13 @@ public class NodeInstructionCleanerTests {
 	private NodeInstructionDao instructionDao;
 	private NodeInstructionCleaner job;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		instructionDao = EasyMock.createMock(NodeInstructionDao.class);
 		job = new NodeInstructionCleaner(instructionDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(instructionDao);
 	}

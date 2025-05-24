@@ -22,6 +22,9 @@
 
 package net.solarnetwork.central.user.biz.dao.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -30,11 +33,6 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -66,8 +64,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPInputStream;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.biz.NetworkIdentificationBiz;
@@ -150,7 +148,7 @@ public class DaoRegistrationBizTests {
 
 	private final BCCertificateService certificateService = new BCCertificateService();
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		networkIdentity = new BasicNetworkIdentity("key", "tos", "host", 80, false);
 		networkIdentityBiz = EasyMock.createMock(NetworkIdentificationBiz.class);
@@ -211,9 +209,10 @@ public class DaoRegistrationBizTests {
 		replayAll();
 
 		final RegistrationReceipt receipt = registrationBiz.registerUser(testUser);
-		assertNotNull(receipt);
-		assertNotNull(receipt.getConfirmationCode());
-		assertEquals(newUser.getEmail(), receipt.getUsername());
+		then(receipt).returns(newUser.getEmail(), from(RegistrationReceipt::getUsername))
+				.satisfies(r -> {
+					then(r.getConfirmationCode()).isNotNull();
+				});
 
 		verifyAll();
 	}
@@ -230,13 +229,11 @@ public class DaoRegistrationBizTests {
 		expect(userDao.getUserByEmail(testUser.getEmail())).andReturn(existingUser);
 		replayAll();
 
-		try {
-			registrationBiz.registerUser(testUser);
-			fail("Expected AuthorizationException for duplicate user");
-		} catch ( AuthorizationException e ) {
-			assertEquals(e.getEmail(), testUser.getEmail());
-			assertEquals(e.getReason(), Reason.DUPLICATE_EMAIL);
-		}
+		thenExceptionOfType(AuthorizationException.class)
+				.as("Expected AuthorizationException for duplicate user")
+				.isThrownBy(() -> registrationBiz.registerUser(testUser))
+				.returns(testUser.getEmail(), from(AuthorizationException::getEmail))
+				.returns(Reason.DUPLICATE_EMAIL, from(AuthorizationException::getReason));
 
 		verifyAll();
 	}
@@ -254,25 +251,33 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertEquals(networkIdentity.getHost(), result.getHost());
-		assertEquals(networkIdentity.getPort(), result.getPort());
-		assertEquals(networkIdentity.getIdentityKey(), result.getIdentityKey());
-		assertEquals(networkIdentity.getPort(), result.getPort());
-		assertEquals(TEST_SECURITY_PHRASE, result.getSecurityPhrase());
-		assertEquals(TEST_EMAIL, result.getUsername());
-		assertEquals(Boolean.FALSE, Boolean.valueOf(result.isForceTLS()));
-		assertEquals(NetworkAssociationDetails.class, result.getClass());
-		assertNull(((NetworkAssociationDetails) result).getNetworkId());
+		// @formatter:off
+		then(result)
+			.returns(networkIdentity.getHost(), from(NetworkAssociation::getHost))
+			.returns(networkIdentity.getPort(), from(NetworkAssociation::getPort))
+			.returns(networkIdentity.getIdentityKey(), from(NetworkAssociation::getIdentityKey))
+			.returns(TEST_SECURITY_PHRASE, from(NetworkAssociation::getSecurityPhrase))
+			.returns(TEST_EMAIL, from(NetworkAssociation::getUsername))
+			.returns(false, from(NetworkAssociation::isForceTLS))
+			.isInstanceOfSatisfying(NetworkAssociationDetails.class, d -> {
+				then(d.getNetworkId()).isNull();
+			})
+			;
 
 		Map<String, Object> detailMap = decodeAssociationDetails(result.getConfirmationKey());
-		assertEquals(7, detailMap.size());
-		assertNotNull("Confirmation key must be present", detailMap.get("confirmationKey"));
-		assertNotNull("Expiration date must be present", detailMap.get("expiration"));
-		assertEquals("false", detailMap.get("forceTLS"));
-		assertEquals("host", detailMap.get("host"));
-		assertEquals("key", detailMap.get("identityKey"));
-		assertEquals("80", detailMap.get("port"));
-		assertEquals(TEST_EMAIL, detailMap.get("username"));
+		then(detailMap)
+			.hasSize(7)
+			.as("Confirmation key must be present")
+			.containsKey("confirmationKey")
+			.as("Expiration date must be present")
+			.containsKey("expiration")
+			.containsEntry("forceTLS", "false")
+			.containsEntry("host", "host")
+			.containsEntry("identityKey", "key")
+			.containsEntry("port", "80")
+			.containsEntry("username", TEST_EMAIL)
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -412,15 +417,16 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertNotNull(cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertNull(cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertNotNull(conf.getConfirmationDate());
-		assertNotNull(conf.getNodeId());
-		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isNull();
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(conf.getConfirmationDate()).isNotNull();
+		then(conf.getNodeId()).isNotNull();
+		then(conf.getConfirmationDate()).as("The confirmation date must be >= now")
+				.isAfterOrEqualTo(now);
 	}
 
 	@Test
@@ -470,15 +476,16 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertNotNull(cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertNull(cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertNotNull(conf.getConfirmationDate());
-		assertNotNull(conf.getNodeId());
-		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isNull();
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(conf.getConfirmationDate()).isNotNull();
+		then(conf.getNodeId()).isNotNull();
+		then(conf.getConfirmationDate()).as("The confirmation date must be >= now")
+				.isAfterOrEqualTo(now);
 	}
 
 	@Test
@@ -521,15 +528,16 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertNotNull(cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertNull(cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertNotNull(conf.getConfirmationDate());
-		assertEquals(TEST_NODE_ID, conf.getNodeId());
-		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isNull();
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(conf.getConfirmationDate()).isNotNull();
+		then(conf.getNodeId()).isNotNull();
+		then(conf.getConfirmationDate()).as("The confirmation date must be >= now")
+				.isAfterOrEqualTo(now);
 	}
 
 	@Test
@@ -573,15 +581,16 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertNotNull(cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertNull(cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertNotNull(conf.getConfirmationDate());
-		assertEquals(TEST_NODE_ID, conf.getNodeId());
-		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isNull();
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(conf.getConfirmationDate()).isNotNull();
+		then(conf.getNodeId()).isNotNull();
+		then(conf.getConfirmationDate()).as("The confirmation date must be >= now")
+				.isAfterOrEqualTo(now);
 	}
 
 	@Test
@@ -624,15 +633,16 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertNotNull(cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertNull(cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertNotNull(conf.getConfirmationDate());
-		assertEquals(TEST_NODE_ID, conf.getNodeId());
-		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isNull();
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(conf.getConfirmationDate()).isNotNull();
+		then(conf.getNodeId()).isNotNull();
+		then(conf.getConfirmationDate()).as("The confirmation date must be >= now")
+				.isAfterOrEqualTo(now);
 	}
 
 	@Test
@@ -643,15 +653,12 @@ public class DaoRegistrationBizTests {
 				.andReturn(null);
 
 		replayAll();
-		try {
-			NetworkAssociationDetails details = new NetworkAssociationDetails();
-			details.setUsername(TEST_EMAIL);
-			details.setConfirmationKey(BAD_CONF_KEY);
-			registrationBiz.confirmNodeAssociation(details);
-			fail("Expected AuthorizationException for bad node ID");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_NOT_CONFIRMED, e.getReason());
-		}
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(BAD_CONF_KEY);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> registrationBiz.confirmNodeAssociation(details))
+				.returns(Reason.REGISTRATION_NOT_CONFIRMED, from(AuthorizationException::getReason));
 		verifyAll();
 	}
 
@@ -666,16 +673,14 @@ public class DaoRegistrationBizTests {
 		expect(userDao.getUserByEmail(TEST_EMAIL)).andReturn(testUser);
 		expect(userNodeConfirmationDao.getConfirmationForKey(TEST_USER_ID, TEST_CONF_KEY))
 				.andReturn(conf);
+
 		replayAll();
-		try {
-			NetworkAssociationDetails details = new NetworkAssociationDetails();
-			details.setUsername(TEST_EMAIL);
-			details.setConfirmationKey(TEST_CONF_KEY);
-			registrationBiz.confirmNodeAssociation(details);
-			fail("Expected AuthorizationException for already confirmed");
-		} catch ( AuthorizationException e ) {
-			assertEquals(AuthorizationException.Reason.REGISTRATION_ALREADY_CONFIRMED, e.getReason());
-		}
+		NetworkAssociationDetails details = new NetworkAssociationDetails();
+		details.setUsername(TEST_EMAIL);
+		details.setConfirmationKey(TEST_CONF_KEY);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> registrationBiz.confirmNodeAssociation(details))
+				.returns(Reason.REGISTRATION_ALREADY_CONFIRMED, from(AuthorizationException::getReason));
 
 		verifyAll();
 	}
@@ -697,7 +702,7 @@ public class DaoRegistrationBizTests {
 				}
 			}
 		}
-		assertNotNull(associationData);
+		then(associationData).isNotNull();
 		return associationData;
 	}
 
@@ -710,8 +715,8 @@ public class DaoRegistrationBizTests {
 
 		//BasicRegistrationReceipt receipt = new BasicRegistrationReceipt(TEST_EMAIL, TEST_CONF_KEY);
 		RegistrationReceipt receipt = registrationBiz.generateResetPasswordReceipt(TEST_EMAIL);
-		assertNotNull("Receipt must not be null", receipt);
-		assertEquals("The username should be the email", TEST_EMAIL, receipt.getUsername());
+		then(receipt).as("Receipt must not be null").isNotNull();
+		then(receipt.getUsername()).as("The username should be the email", TEST_EMAIL);
 
 		verifyAll();
 	}
@@ -735,7 +740,7 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertEquals("The user's password should be changed", encodedPass, testUser.getPassword());
+		then(testUser.getPassword()).as("The user's password should be changed").isEqualTo(encodedPass);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -835,15 +840,16 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertNotNull(cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.a.getValue(), cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertNotNull(conf.getConfirmationDate());
-		assertNotNull(conf.getNodeId());
-		assertFalse("The confirmation date must be >= now", now.isAfter(conf.getConfirmationDate()));
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isEqualTo(UserNodeCertificateStatus.a.getValue());
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(conf.getConfirmationDate()).isNotNull();
+		then(conf.getNodeId()).isNotNull();
+		then(conf.getConfirmationDate()).as("The confirmation date must be >= now")
+				.isAfterOrEqualTo(now);
 	}
 
 	private KeyStore loadKeyStore(String password, InputStream in) {
@@ -1036,31 +1042,31 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(cert);
-		assertEquals(TEST_INSTRUCTION_ID.toString(), cert.getConfirmationKey());
-		assertEquals(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()),
-				cert.getNetworkCertificateSubjectDN());
-		assertEquals(UserNodeCertificateStatus.v.getValue(), cert.getNetworkCertificateStatus());
-		assertEquals(TEST_NODE_ID, cert.getNetworkId());
-		assertEquals(Base64.getEncoder().encodeToString(renewedCertificate.getKeystoreData()),
+		then(cert).isNotNull();
+		then(cert.getConfirmationKey()).isNotNull();
+		then(cert.getNetworkCertificateSubjectDN())
+				.isEqualTo(String.format(TEST_DN_FORMAT, TEST_NODE_ID.toString()));
+		then(cert.getNetworkCertificateStatus()).isEqualTo(UserNodeCertificateStatus.v.getValue());
+		then(cert.getNetworkId()).isEqualTo(TEST_NODE_ID);
+		then(cert.getNetworkCertificate()).isEqualTo(
+				Base64.getEncoder().encodeToString(renewedCertificate.getKeystoreData()),
 				cert.getNetworkCertificate());
 
 		Instruction instr = instrCap.getValue();
-		assertEquals(DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, instr.getTopic());
-		assertNotNull(instr.getParameters());
-		assertEquals(4, instr.getParameters().size());
+		then(instr.getTopic()).isEqualTo(DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE);
+		then(instr.getParameters()).hasSize(4);
 		StringBuilder generatedPem = new StringBuilder();
 		for ( InstructionParameter param : instr.getParameters() ) {
-			assertEquals(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, param.getName());
+			then(param.getName()).isEqualTo(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE);
 			generatedPem.append(param.getValue());
 		}
 
 		String expectedPem = certificateService.generatePKCS7CertificateChainString(
 				new X509Certificate[] { renewedCertificate.getNodeCertificate(renewedKeystore) });
-		assertEquals(expectedPem, generatedPem.toString());
+		then(generatedPem.toString()).isEqualTo(expectedPem);
 
 		// our stored certificate should have the request ID set to the instruction ID
-		assertEquals(TEST_INSTRUCTION_ID.toString(), originalCertificate.getRequestId());
+		then(originalCertificate.getRequestId()).isEqualTo(TEST_INSTRUCTION_ID.toString());
 	}
 
 	private AuthenticatedNode setAuthenticatedNode(final Long nodeId) {
@@ -1149,23 +1155,22 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(result);
+		then(result).isNotNull();
 
 		Instruction instr = instrCap.getValue();
-		assertEquals(DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE, instr.getTopic());
-		assertNotNull(instr.getParameters());
-		assertEquals(4, instr.getParameters().size());
+		then(instr.getTopic()).isEqualTo(DaoRegistrationBiz.INSTRUCTION_TOPIC_RENEW_CERTIFICATE);
+		then(instr.getParameters()).hasSize(4);
 		StringBuilder generatedPem = new StringBuilder();
 		for ( InstructionParameter param : instr.getParameters() ) {
-			assertEquals(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE, param.getName());
+			then(param.getName()).isEqualTo(DaoRegistrationBiz.INSTRUCTION_PARAM_CERTIFICATE);
 			generatedPem.append(param.getValue());
 		}
 
 		UserNodeCertificate userNodeCert = userNodeCertCap.getValue();
-		assertNotNull(userNodeCert);
+		then(userNodeCert).isNotNull();
 
 		// our stored certificate should have the request ID set to the instruction ID
-		assertEquals(TEST_INSTRUCTION_ID.toString(), userNodeCert.getRequestId());
+		then(userNodeCert.getRequestId()).isEqualTo(TEST_INSTRUCTION_ID.toString());
 	}
 
 	@Test
@@ -1194,11 +1199,11 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(status);
-		assertEquals(confirmationKey, status.getConfirmationKey());
-		assertEquals(UserNodeCertificateInstallationStatus.RequestQueued,
-				status.getInstallationStatus());
-		assertEquals("123", status.getNetworkCertificate());
+		then(status).isNotNull();
+		then(status.getConfirmationKey()).isEqualTo(confirmationKey);
+		then(status.getInstallationStatus())
+				.isEqualTo(UserNodeCertificateInstallationStatus.RequestQueued);
+		then(status.getNetworkCertificate()).isEqualTo("123");
 	}
 
 	@Test
@@ -1224,10 +1229,10 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(status);
-		assertEquals(confirmationKey, status.getConfirmationKey());
-		assertEquals(UserNodeCertificateInstallationStatus.RequestReceived,
-				status.getInstallationStatus());
+		then(status).isNotNull();
+		then(status.getConfirmationKey()).isEqualTo(confirmationKey);
+		then(status.getInstallationStatus())
+				.isEqualTo(UserNodeCertificateInstallationStatus.RequestReceived);
 	}
 
 	@Test
@@ -1253,10 +1258,10 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(status);
-		assertEquals(confirmationKey, status.getConfirmationKey());
-		assertEquals(UserNodeCertificateInstallationStatus.RequestReceived,
-				status.getInstallationStatus());
+		then(status).isNotNull();
+		then(status.getConfirmationKey()).isEqualTo(confirmationKey);
+		then(status.getInstallationStatus())
+				.isEqualTo(UserNodeCertificateInstallationStatus.RequestReceived);
 	}
 
 	@Test
@@ -1282,9 +1287,9 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(status);
-		assertEquals(confirmationKey, status.getConfirmationKey());
-		assertEquals(UserNodeCertificateInstallationStatus.Installed, status.getInstallationStatus());
+		then(status).isNotNull();
+		then(status.getConfirmationKey()).isEqualTo(confirmationKey);
+		then(status.getInstallationStatus()).isEqualTo(UserNodeCertificateInstallationStatus.Installed);
 	}
 
 	@Test
@@ -1310,9 +1315,9 @@ public class DaoRegistrationBizTests {
 
 		verifyAll();
 
-		assertNotNull(status);
-		assertEquals(confirmationKey, status.getConfirmationKey());
-		assertEquals(UserNodeCertificateInstallationStatus.Declined, status.getInstallationStatus());
+		then(status).isNotNull();
+		then(status.getConfirmationKey()).isEqualTo(confirmationKey);
+		then(status.getInstallationStatus()).isEqualTo(UserNodeCertificateInstallationStatus.Declined);
 	}
 
 }

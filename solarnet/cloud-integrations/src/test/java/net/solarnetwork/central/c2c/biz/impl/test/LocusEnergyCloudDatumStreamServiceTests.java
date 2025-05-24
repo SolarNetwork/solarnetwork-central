@@ -237,7 +237,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -368,7 +368,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 						Map.of("siteId", (Object) 321, "componentId", componentId)));
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -495,7 +495,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -630,7 +630,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -763,7 +763,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -923,7 +923,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -1059,7 +1059,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 		datumStream.setSourceId(sourceId);
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())
@@ -1188,7 +1188,7 @@ public class LocusEnergyCloudDatumStreamServiceTests {
 				Map.of(LocusEnergyCloudDatumStreamService.GRANULARITY_SETTING, "daily"));
 
 		// @formatter:off
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration.withRegistrationId("test")
 				.authorizationGrantType(AuthorizationGrantType.PASSWORD)
 				.clientId(randomString())

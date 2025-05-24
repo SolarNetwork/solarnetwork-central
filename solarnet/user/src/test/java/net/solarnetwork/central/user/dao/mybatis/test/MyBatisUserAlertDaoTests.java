@@ -22,11 +22,8 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
+import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -35,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.BDDAssertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
@@ -75,10 +73,10 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
-		assertNotNull(this.node);
+		then(this.node).isNotNull();
 		//deleteFromTables(DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		userAlert = null;
 	}
 
@@ -104,7 +102,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		alert.setOptions(options);
 
 		Long id = userAlertDao.save(alert);
-		assertNotNull(id);
+		then(id).isNotNull();
 		alert.setId(id);
 		this.userAlert = alert;
 	}
@@ -113,20 +111,21 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	public void getByPrimaryKey() {
 		storeNew();
 		UserAlert alert = userAlertDao.get(this.userAlert.getId());
-		assertNotNull(alert);
-		assertEquals(this.userAlert.getId(), alert.getId());
-		assertEquals(this.user.getId(), alert.getUserId());
-		assertEquals(TEST_NODE_ID, alert.getNodeId());
-		assertEquals(this.userAlert.getType(), alert.getType());
-		assertEquals(this.userAlert.getStatus(), alert.getStatus());
-		assertNotNull(alert.getOptions());
-
-		Map<String, Object> options = alert.getOptions();
-		assertEquals("foo", options.get("string"));
-		assertEquals(42, options.get("number"));
-
-		assertNotNull(options.get("list"));
-		assertEquals(Arrays.asList("first", "second"), options.get("list"));
+		// @formatter:off
+		then(alert)
+			.isNotNull()
+			.returns(userAlert.getId(), from(UserAlert::getId))
+			.returns(user.getId(), from(UserAlert::getUserId))
+			.returns(TEST_NODE_ID, from(UserAlert::getNodeId))
+			.returns(userAlert.getType(), from(UserAlert::getType))
+			.returns(userAlert.getStatus(), from(UserAlert::getStatus))
+			.extracting(UserAlert::getOptions)
+			.asInstanceOf(InstanceOfAssertFactories.map(String.class, Object.class))
+			.containsEntry("string", "foo")
+			.containsEntry("number", 42)
+			.containsEntry("list", Arrays.asList("first", "second"))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -142,26 +141,26 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		alert.setOptions(options);
 
 		Long id = userAlertDao.save(alert);
-		assertNotNull(id);
-		assertEquals(this.userAlert.getId(), id);
+		then(id).isNotNull();
+		then(id).isEqualTo(this.userAlert.getId());
 		UserAlert updatedUserAlert = userAlertDao.get(id);
-		assertNotNull(updatedUserAlert);
-		assertEquals(this.userAlert.getId(), updatedUserAlert.getId());
-		assertEquals(this.user.getId(), updatedUserAlert.getUserId());
-		assertEquals(TEST_NODE_ID, updatedUserAlert.getNodeId());
-		assertEquals(this.userAlert.getType(), updatedUserAlert.getType());
-		assertEquals(UserAlertStatus.Disabled, updatedUserAlert.getStatus());
-		assertNotNull(alert.getOptions());
-
-		options = updatedUserAlert.getOptions();
-		assertEquals("foo", options.get("string"));
-		assertEquals(42, options.get("number"));
-		assertEquals("updated", options.get("updated-string"));
-
-		assertNotNull(options.get("list"));
-		assertEquals(Arrays.asList("first", "second"), options.get("list"));
-
-		assertEquals(created, updatedUserAlert.getCreated());
+		// @formatter:off
+		then(updatedUserAlert)
+			.isNotNull()
+			.returns(userAlert.getId(), from(UserAlert::getId))
+			.returns(user.getId(), from(UserAlert::getUserId))
+			.returns(TEST_NODE_ID, from(UserAlert::getNodeId))
+			.returns(userAlert.getType(), from(UserAlert::getType))
+			.returns(UserAlertStatus.Disabled, from(UserAlert::getStatus))
+			.returns(created, from(UserAlert::getCreated))
+			.extracting(UserAlert::getOptions)
+			.asInstanceOf(InstanceOfAssertFactories.map(String.class, Object.class))
+			.containsEntry("string", "foo")
+			.containsEntry("number", 42)
+			.containsEntry("updated-string", "updated")
+			.containsEntry("list", Arrays.asList("first", "second"))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -172,7 +171,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		Instant v = old.plus(1, ChronoUnit.DAYS);
 		userAlertDao.updateValidTo(alert.getId(), v);
 		UserAlert updated = userAlertDao.get(alert.getId());
-		assertEquals("ValidTo date updated", v, updated.getValidTo());
+		then(updated.getValidTo()).as("ValidTo date updated").isEqualTo(v);
 	}
 
 	@Test
@@ -180,7 +179,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		storeNew();
 		userAlertDao.delete(userAlert);
 		UserAlert alert = userAlertDao.get(userAlert.getId());
-		assertNull("Deleted alert not found", alert);
+		then(alert).as("Deleted alert not found").isNull();
 	}
 
 	@Test
@@ -188,20 +187,20 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		getAlertWithSituationSituationActiveAndResolved();
 		userAlertDao.delete(userAlert);
 		UserAlert alert = userAlertDao.get(userAlert.getId());
-		assertNull("Deleted alert not found", alert);
+		then(alert).as("Deleted alert not found").isNull();
 	}
 
 	@Test
 	public void deleteForNodeNone() {
 		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
-		assertEquals("None deleted", 0, deleted);
+		then(deleted).as("None deleted").isZero();
 	}
 
 	@Test
 	public void deleteForNode() {
 		storeNew();
 		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
-		assertEquals("1 deleted", 1, deleted);
+		then(deleted).as("1 deleted").isOne();
 	}
 
 	@Test
@@ -211,7 +210,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 			storeNew();
 		}
 		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
-		assertEquals("All alerts for user deleted", numAlerts, deleted);
+		then(deleted).as("All alerts for user deleted").isEqualTo(numAlerts);
 	}
 
 	@Test
@@ -229,18 +228,17 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		Long secondAlertId = userAlertDao.save(alert);
 
 		int deleted = userAlertDao.deleteAllAlertsForNode(user.getId(), node.getId());
-		assertEquals("Only 1 deleted", 1, deleted);
+		then(deleted).as("Only 1 deleted").isOne();
 
 		UserAlert secondAlert = userAlertDao.get(secondAlertId);
-		assertNotNull("Other alert not deleted", secondAlert);
+		then(secondAlert).as("Other alert not deleted").isNotNull();
 	}
 
 	@Test
 	public void findAlertsToProcessNone() {
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
 				null, null);
-		assertNotNull("Results should not be null", results);
-		assertEquals(0, results.size());
+		then(results).as("Results should not be null").isNotNull().isEmpty();
 	}
 
 	@Test
@@ -248,9 +246,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		storeNew();
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
 				null, null);
-		assertNotNull("Results should not be null", results);
-		assertEquals(1, results.size());
-		assertEquals(userAlert, results.get(0));
+		then(results).as("Results should not be null").hasSize(1).element(0).isEqualTo(userAlert);
 	}
 
 	@Test
@@ -262,9 +258,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		}
 		List<UserAlert> results = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData, null,
 				null, null);
-		assertNotNull("Results should not be null", results);
-		assertEquals(alerts.size(), results.size());
-		assertEquals(alerts, results);
+		then(results).as("Results should not be null").containsExactlyElementsOf(alerts);
 	}
 
 	@Test
@@ -281,19 +275,18 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		for ( int i = 0; i < 4; i++ ) {
 			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 					startingId, batchTime, max);
-			assertNotNull("Results should not be null", batch);
+			then(batch).as("Results should not be null").isNotNull();
 			if ( i < 3 ) {
-				assertTrue("Batch results available", batch.size() > 0);
+				then(batch).as("Batch results available").isNotEmpty();
 			} else {
-				assertEquals("No more batch results available", 0, batch.size());
+				then(batch).as("No more batch results available").isEmpty();
 			}
 			results.addAll(batch);
 			if ( batch.size() > 0 ) {
 				startingId = batch.get(batch.size() - 1).getId();
 			}
 		}
-		assertEquals(alerts.size(), results.size());
-		assertEquals(alerts, results);
+		then(results).containsExactlyElementsOf(alerts);
 	}
 
 	@Test
@@ -315,45 +308,49 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		for ( int i = 0; i < 4; i++ ) {
 			List<UserAlert> batch = userAlertDao.findAlertsToProcess(UserAlertType.NodeStaleData,
 					startingId, batchTime, max);
-			assertNotNull("Results should not be null", batch);
+			then(batch).as("Results should not be null").isNotNull();
 			if ( i < 3 ) {
-				assertTrue("Batch results available", batch.size() > 0);
+				then(batch).as("Batch results available").isNotEmpty();
 			} else {
-				assertEquals("No more batch results available", 0, batch.size());
+				then(batch).as("No more batch results available").isEmpty();
 			}
 			results.addAll(batch);
 			if ( batch.size() > 0 ) {
 				startingId = batch.get(batch.size() - 1).getId();
 			}
 		}
-		assertEquals(alerts.size(), results.size());
-		assertEquals(alerts, results);
+		then(results).containsExactlyElementsOf(alerts);
 	}
 
 	@Test
 	public void findAlertsForUserNoResults() {
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
-		assertNotNull("Results should never be null", results);
-		assertEquals("No alerts available", 0, results.size());
+		then(results).as("Results should never be null").isNotNull();
+		then(results).as("No alerts available").isEmpty();
 	}
 
 	@Test
 	public void findAlertsForUserNoMatch() {
 		storeNew();
 		List<UserAlert> results = userAlertDao.findAlertsForUser(Long.MIN_VALUE);
-		assertNotNull("Results should never be null", results);
-		assertEquals("No alerts available for user", 0, results.size());
+		then(results).as("Results should never be null").isNotNull();
+		then(results).as("No alerts available").isEmpty();
 	}
 
 	@Test
 	public void findAlertsForUserNoSituation() {
 		storeNew();
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
-		assertNotNull("Results should never be null", results);
-		assertEquals("Alerts available for user", 1, results.size());
-		UserAlert found = results.get(0);
-		assertEquals(this.userAlert.getId(), found.getId());
-		assertNull(found.getSituation());
+		// @formatter:off
+		then(results).as("Results should never be null")
+			.isNotNull()
+			.as("Alert available")
+			.hasSize(1)
+			.element(0)
+			.returns(userAlert.getId(), from(UserAlert::getId))
+			.returns(null, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -368,11 +365,16 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setId(userAlertSituationDao.save(resolved));
 
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
-		assertNotNull("Results should never be null", results);
-		assertEquals("Alerts available for user", 1, results.size());
-		UserAlert found = results.get(0);
-		assertEquals(this.userAlert.getId(), found.getId());
-		assertNull(found.getSituation());
+		// @formatter:off
+		then(results).as("Results should never be null")
+			.isNotNull()
+			.as("Alert available")
+			.hasSize(1)
+			.element(0)
+			.returns(userAlert.getId(), from(UserAlert::getId))
+			.returns(null, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -387,13 +389,16 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		sit.setId(userAlertSituationDao.save(sit));
 
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
-		assertNotNull("Results should never be null", results);
-		assertEquals("Alerts available for user", 1, results.size());
-		UserAlert found = results.get(0);
-		assertEquals(this.userAlert.getId(), found.getId());
-
-		assertNotNull("Situation associated", found.getSituation());
-		assertEquals(sit.getId(), found.getSituation().getId());
+		// @formatter:off
+		then(results).as("Results should never be null")
+			.isNotNull()
+			.as("Alert available")
+			.hasSize(1)
+			.element(0)
+			.returns(userAlert.getId(), from(UserAlert::getId))
+			.returns(sit, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -415,13 +420,16 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		sit.setId(userAlertSituationDao.save(sit));
 
 		List<UserAlert> results = userAlertDao.findAlertsForUser(user.getId());
-		assertNotNull("Results should never be null", results);
-		assertEquals("Alerts available for user", 1, results.size());
-		UserAlert found = results.get(0);
-		assertEquals(this.userAlert.getId(), found.getId());
-
-		assertNotNull("Situation associated", found.getSituation());
-		assertEquals(sit.getId(), found.getSituation().getId());
+		// @formatter:off
+		then(results).as("Results should never be null")
+			.isNotNull()
+			.as("Alert available")
+			.hasSize(1)
+			.element(0)
+			.returns(userAlert.getId(), from(UserAlert::getId))
+			.returns(sit, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -460,9 +468,13 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 	public void getAlertWithSituationNoSituation() {
 		storeNew();
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
-		assertNotNull("Alert available", found);
-		assertEquals(this.userAlert.getId(), found.getId());
-		assertNull("No active situation", found.getSituation());
+		// @formatter:off
+		then(found)
+			.as("Alert available")
+			.isEqualTo(userAlert)
+			.returns(null, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -477,9 +489,13 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setId(userAlertSituationDao.save(resolved));
 
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
-		assertNotNull("Alert available", found);
-		assertEquals(this.userAlert.getId(), found.getId());
-		assertNull("No active situation", found.getSituation());
+		// @formatter:off
+		then(found)
+			.as("Alert available")
+			.isEqualTo(userAlert)
+			.returns(null, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -494,11 +510,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		sit.setId(userAlertSituationDao.save(sit));
 
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
-		assertNotNull("Alert available", found);
-		assertEquals(this.userAlert.getId(), found.getId());
-
-		assertNotNull("Situation associated", found.getSituation());
-		assertEquals(sit.getId(), found.getSituation().getId());
+		// @formatter:off
+		then(found)
+			.as("Alert available")
+			.isEqualTo(userAlert)
+			.as("Situation associated")
+			.returns(sit, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -520,11 +539,14 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		sit.setId(userAlertSituationDao.save(sit));
 
 		UserAlert found = userAlertDao.getAlertSituation(userAlert.getId());
-		assertNotNull("Alert available", found);
-		assertEquals(this.userAlert.getId(), found.getId());
-
-		assertNotNull("Situation associated", found.getSituation());
-		assertEquals(sit.getId(), found.getSituation().getId());
+		// @formatter:off
+		then(found)
+			.as("Alert available")
+			.isEqualTo(userAlert)
+			.as("Situation associated")
+			.returns(sit, from(UserAlert::getSituation))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -532,7 +554,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		findAlertsForUserWithSituationResolved();
 
 		int count = userAlertDao.alertSituationCountForUser(user.getId());
-		assertEquals("Active count", 0, count);
+		then(count).as("Active count").isZero();
 	}
 
 	@Test
@@ -540,7 +562,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		findAlertsForUserWithSituationActiveAndResolved();
 
 		int count = userAlertDao.alertSituationCountForUser(user.getId());
-		assertEquals("Active count", 1, count);
+		then(count).as("Active count").isOne();
 	}
 
 	@Test
@@ -548,8 +570,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		findAlertsForUserWithSituationResolved();
 
 		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForUser(user.getId());
-		assertNotNull("Results never null", results);
-		assertEquals("No active situations", 0, results.size());
+		then(results).as("No active situations").isNotNull().isEmpty();
 	}
 
 	@Test
@@ -557,13 +578,17 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		findAlertsForUserWithSituationActiveAndResolved();
 
 		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForUser(user.getId());
-		assertNotNull("Results never null", results);
-		assertEquals("Active situations", 1, results.size());
-
-		UserAlert alert = results.get(0);
-		assertNotNull("With situation", alert.getSituation());
-		assertEquals("Situation active", UserAlertSituationStatus.Active,
-				alert.getSituation().getStatus());
+		// @formatter:off
+		then(results)
+			.as("Alert available")
+			.hasSize(1)
+			.element(0)
+			.extracting(UserAlert::getSituation)
+			.as("Situation associated")
+			.isNotNull()
+			.returns(UserAlertSituationStatus.Active, from(UserAlertSituation::getStatus))
+			;
+		// @formatter:on
 	}
 
 	@Test
@@ -591,8 +616,7 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setId(userAlertSituationDao.save(resolved));
 
 		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForNode(node.getId());
-		assertNotNull("Results never null", results);
-		assertEquals("No active situations", 0, results.size());
+		then(results).as("No active situations").isNotNull().isEmpty();
 	}
 
 	@Test
@@ -620,12 +644,16 @@ public class MyBatisUserAlertDaoTests extends AbstractMyBatisUserDaoTestSupport 
 		resolved.setId(userAlertSituationDao.save(resolved));
 
 		List<UserAlert> results = userAlertDao.findActiveAlertSituationsForNode(node.getId());
-		assertNotNull("Results never null", results);
-		assertEquals("Active situations", 1, results.size());
-
-		UserAlert alert = results.get(0);
-		assertNotNull("With situation", alert.getSituation());
-		assertEquals("Situation active", UserAlertSituationStatus.Active,
-				alert.getSituation().getStatus());
+		// @formatter:off
+		then(results)
+			.as("Alert available")
+			.hasSize(1)
+			.element(0)
+			.extracting(UserAlert::getSituation)
+			.as("Situation associated")
+			.isNotNull()
+			.returns(UserAlertSituationStatus.Active, from(UserAlertSituation::getStatus))
+			;
+		// @formatter:on
 	}
 }

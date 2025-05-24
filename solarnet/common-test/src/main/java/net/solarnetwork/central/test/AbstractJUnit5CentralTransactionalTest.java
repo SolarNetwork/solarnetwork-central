@@ -23,16 +23,22 @@
 package net.solarnetwork.central.test;
 
 import java.util.logging.Level;
+import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 /**
  * Base test for Spring-managed transactional tests in JUnit 5.
@@ -43,7 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  *
  * @author matt
- * @version 1.3
+ * @version 1.5
  */
 @SpringJUnitConfig
 @Transactional
@@ -51,7 +57,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AbstractJUnit5CentralTransactionalTest implements CentralTestConstants {
 
 	@Autowired
-	protected JdbcOperations jdbcTemplate;
+	protected JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	protected ApplicationContext applicationContext;
 
 	/** A class-level logger. */
 	protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -60,6 +69,33 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
 		SLF4JBridgeHandler.install();
 		java.util.logging.Logger.getLogger("").setLevel(Level.FINEST);
+	}
+
+	/**
+	 * Execute the given SQL script.
+	 * <p>
+	 * Use with caution outside of a transaction!
+	 * <p>
+	 * The script will normally be loaded by classpath.
+	 * <p>
+	 * <b>Do not use this method to execute DDL if you expect rollback.</b>
+	 *
+	 * @param sqlResourcePath
+	 *        the Spring resource path for the SQL script
+	 * @param continueOnError
+	 *        whether to continue without throwing an exception in the event of
+	 *        an error
+	 * @throws DataAccessException
+	 *         if there is an error executing a statement
+	 * @see ResourceDatabasePopulator
+	 */
+	protected void executeSqlScript(String sqlResourcePath, boolean continueOnError)
+			throws DataAccessException {
+		DataSource ds = this.jdbcTemplate.getDataSource();
+		Assert.state(ds != null, "No DataSource set");
+		Assert.state(this.applicationContext != null, "No ApplicationContext set");
+		Resource resource = this.applicationContext.getResource(sqlResourcePath);
+		new ResourceDatabasePopulator(continueOnError, false, "UTF-8", resource).execute(ds);
 	}
 
 	/**
@@ -143,9 +179,10 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *
 	 * @param userId
 	 *        the ID of the user to create
+	 * @return the username
 	 */
-	protected void setupTestUser(Long userId) {
-		setupTestUser(userId, "test" + userId + "@localhost");
+	protected String setupTestUser(Long userId) {
+		return setupTestUser(userId, "test" + userId + "@localhost");
 	}
 
 	/**
@@ -161,8 +198,8 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the location ID
 	 * @since 1.2
 	 */
-	protected void setupTestUser(Long userId, Long locationId) {
-		setupTestUser(userId, "test" + userId + "@localhost", locationId);
+	protected String setupTestUser(Long userId, Long locationId) {
+		return setupTestUser(userId, "test" + userId + "@localhost", locationId);
 	}
 
 	/**
@@ -174,8 +211,8 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the username to use
 	 * @since 1.1
 	 */
-	protected void setupTestUser(Long userId, String username) {
-		setupTestUser(userId, username, null);
+	protected String setupTestUser(Long userId, String username) {
+		return setupTestUser(userId, username, null);
 	}
 
 	/**
@@ -191,11 +228,12 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the location ID to use
 	 * @since 1.3
 	 */
-	protected void setupTestUser(Long userId, String username, String password, Long locationId) {
+	protected String setupTestUser(Long userId, String username, String password, Long locationId) {
 		String dispName = String.format("Tester %d", userId);
 		jdbcTemplate.update(
 				"insert into solaruser.user_user (id, disp_name, email, password, loc_id) values (?,?,?,?,?)",
 				userId, dispName, username, password, locationId);
+		return username;
 	}
 
 	/**
@@ -209,8 +247,8 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 *        the location ID to use
 	 * @since 1.2
 	 */
-	protected void setupTestUser(Long userId, String username, Long locationId) {
-		setupTestUser(userId, username, "password-" + userId, locationId);
+	protected String setupTestUser(Long userId, String username, Long locationId) {
+		return setupTestUser(userId, username, "password-" + userId, locationId);
 	}
 
 	/**
@@ -224,6 +262,19 @@ public class AbstractJUnit5CentralTransactionalTest implements CentralTestConsta
 	 */
 	protected void setupTestUserNode(Long userId, Long nodeId) {
 		jdbcTemplate.update("insert into solaruser.user_node (user_id, node_id) values (?,?)", userId,
+				nodeId);
+	}
+
+	/**
+	 * Set a node's name in the sn_node table.
+	 *
+	 * @param nodeId
+	 *        the ID of the node to save the name for
+	 * @param name
+	 *        the name
+	 */
+	protected void saveNodeName(Long nodeId, String name) {
+		jdbcTemplate.update("update solaruser.user_node set disp_name = ? where node_id = ?", name,
 				nodeId);
 	}
 

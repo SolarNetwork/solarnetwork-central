@@ -36,11 +36,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
 import net.solarnetwork.central.datum.domain.BasicDatumAppEvent;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.user.domain.User;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisDatumAppEventAcceptor;
 import net.solarnetwork.central.user.event.dao.mybatis.MyBatisUserNodeEventHookConfigurationDao;
@@ -49,6 +48,7 @@ import net.solarnetwork.central.user.event.domain.UserNodeEvent;
 import net.solarnetwork.central.user.event.domain.UserNodeEventHookConfiguration;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTask;
 import net.solarnetwork.central.user.event.domain.UserNodeEventTaskState;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link MyBatisUserNodeEventTaskDao} class.
@@ -74,7 +74,7 @@ public class MyBatisUserNodeEventTaskDaoTests extends AbstractMyBatisUserEventDa
 	private UserNodeEventHookConfiguration lastHook;
 	private AggregateUpdatedEventInfo lastEventInfo;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		hookConfDao = new MyBatisUserNodeEventHookConfigurationDao();
 		hookConfDao.setSqlSessionFactory(getSqlSessionFactory());

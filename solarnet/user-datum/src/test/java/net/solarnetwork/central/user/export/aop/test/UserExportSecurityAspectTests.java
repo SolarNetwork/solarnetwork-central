@@ -25,17 +25,18 @@ package net.solarnetwork.central.user.export.aop.test;
 import static java.time.Instant.now;
 import static net.solarnetwork.central.domain.UserLongCompositePK.UNASSIGNED_USER_ID;
 import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEntityIdKey;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import net.solarnetwork.central.dao.SolarNodeOwnershipDao;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.test.AbstractCentralTest;
+import net.solarnetwork.central.test.CentralTestConstants;
 import net.solarnetwork.central.user.export.aop.UserExportSecurityAspect;
 import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
 
@@ -45,7 +46,7 @@ import net.solarnetwork.central.user.export.domain.UserDatumExportConfiguration;
  * @author matt
  * @version 2.0
  */
-public class UserExportSecurityAspectTests extends AbstractCentralTest {
+public class UserExportSecurityAspectTests implements CentralTestConstants {
 
 	private static final Long TEST_USER_ID = -11L;
 
@@ -68,30 +69,31 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		aspect = new UserExportSecurityAspect(nodeOwnershipDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		SecurityContextHolder.clearContext();
-	}
-
-	@Test(expected = AuthorizationException.class)
-	public void actionForUserNoAuth() {
-		replayAll();
-		aspect.actionForUserCheck(TEST_USER_ID);
 		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
+	public void actionForUserNoAuth() {
+		replayAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.actionForUserCheck(TEST_USER_ID));
+	}
+
+	@Test
 	public void actionForUserWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		aspect.actionForUserCheck(-2L);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.actionForUserCheck(-2L));
 	}
 
 	@Test
@@ -99,36 +101,35 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 		becomeUser("ROLE_USER");
 		replayAll();
 		aspect.actionForUserCheck(TEST_USER_ID);
-		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigNoAuth() {
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
 				unassignedEntityIdKey(TEST_USER_ID), now());
-		aspect.saveConfigurationCheck(config);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
 				unassignedEntityIdKey(-2L), now());
-		aspect.saveConfigurationCheck(config);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
 				unassignedEntityIdKey(UNASSIGNED_USER_ID), now());
-		aspect.saveConfigurationCheck(config);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
 	@Test
@@ -138,6 +139,5 @@ public class UserExportSecurityAspectTests extends AbstractCentralTest {
 		UserDatumExportConfiguration config = new UserDatumExportConfiguration(
 				unassignedEntityIdKey(TEST_USER_ID), now());
 		aspect.saveConfigurationCheck(config);
-		verifyAll();
 	}
 }

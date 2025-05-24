@@ -22,11 +22,12 @@
 
 package net.solarnetwork.central.user.expire.aop.test;
 
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.easymock.EasyMock.expect;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,7 +36,7 @@ import net.solarnetwork.central.datum.domain.DatumFilterCommand;
 import net.solarnetwork.central.domain.BasicSolarNodeOwnership;
 import net.solarnetwork.central.security.AuthenticatedUser;
 import net.solarnetwork.central.security.AuthorizationException;
-import net.solarnetwork.central.test.AbstractCentralTest;
+import net.solarnetwork.central.test.CentralTestConstants;
 import net.solarnetwork.central.user.expire.aop.UserExpireSecurityAspect;
 import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
 
@@ -45,7 +46,7 @@ import net.solarnetwork.central.user.expire.domain.ExpireUserDataConfiguration;
  * @author matt
  * @version 2.0
  */
-public class UserExpireSecurityAspectTests extends AbstractCentralTest {
+public class UserExpireSecurityAspectTests implements CentralTestConstants {
 
 	private static final Long TEST_USER_ID = -11L;
 
@@ -68,30 +69,31 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		SecurityContextHolder.getContext().setAuthentication(auth);
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		nodeOwnershipDao = EasyMock.createMock(SolarNodeOwnershipDao.class);
 		aspect = new UserExpireSecurityAspect(nodeOwnershipDao);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		SecurityContextHolder.clearContext();
-	}
-
-	@Test(expected = AuthorizationException.class)
-	public void actionForUserNoAuth() {
-		replayAll();
-		aspect.actionForUserCheck(TEST_USER_ID);
 		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
+	public void actionForUserNoAuth() {
+		replayAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.actionForUserCheck(TEST_USER_ID));
+	}
+
+	@Test
 	public void actionForUserWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
-		aspect.actionForUserCheck(-2L);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.actionForUserCheck(-2L));
 	}
 
 	@Test
@@ -99,35 +101,34 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		becomeUser("ROLE_USER");
 		replayAll();
 		aspect.actionForUserCheck(TEST_USER_ID);
-		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigNoAuth() {
 		replayAll();
 		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		config.setUserId(TEST_USER_ID);
-		aspect.saveConfigurationCheck(config);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigWrongUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		config.setUserId(-2L);
-		aspect.saveConfigurationCheck(config);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void saveConfigMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
-		aspect.saveConfigurationCheck(config);
-		verifyAll();
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.saveConfigurationCheck(config));
 	}
 
 	@Test
@@ -137,7 +138,6 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		ExpireUserDataConfiguration config = new ExpireUserDataConfiguration();
 		config.setUserId(TEST_USER_ID);
 		aspect.saveConfigurationCheck(config);
-		verifyAll();
 	}
 
 	@Test
@@ -147,15 +147,15 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(TEST_USER_ID);
 		aspect.datumFilterCheck(filter);
-		verifyAll();
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void datumFilterMissingUser() {
 		becomeUser("ROLE_USER");
 		replayAll();
 		DatumFilterCommand filter = new DatumFilterCommand();
-		aspect.datumFilterCheck(filter);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.datumFilterCheck(filter));
 	}
 
 	@Test
@@ -171,7 +171,7 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		aspect.datumFilterCheck(filter);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void datumFilterNodeNotAllowed() {
 		becomeUser("ROLE_USER");
 		final Long nodeId = 2L;
@@ -180,7 +180,8 @@ public class UserExpireSecurityAspectTests extends AbstractCentralTest {
 		DatumFilterCommand filter = new DatumFilterCommand();
 		filter.setUserId(TEST_USER_ID);
 		filter.setNodeId(2L);
-		aspect.datumFilterCheck(filter);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> aspect.datumFilterCheck(filter));
 	}
 
 }

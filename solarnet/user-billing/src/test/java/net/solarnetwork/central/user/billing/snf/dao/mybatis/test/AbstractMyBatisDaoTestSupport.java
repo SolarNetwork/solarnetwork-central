@@ -36,14 +36,14 @@ import java.util.UUID;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.test.context.ContextConfiguration;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 
@@ -56,7 +56,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Address;
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisDaoTestSupport extends AbstractJUnit5CentralTransactionalTest {
 
 	/** A test user ID. */
 	protected static final Long TEST_USER_ID = UUID.randomUUID().getMostSignificantBits();
@@ -80,7 +80,7 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		this.sqlSessionFactory = sqlSessionFactory;
 	}
 
-	@After
+	@AfterEach
 	public void flushStatements() {
 		getSqlSessionTemplate().flushStatements();
 	}

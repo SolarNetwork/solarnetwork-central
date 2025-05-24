@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.security.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.is;
@@ -33,8 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.util.AntPathMatcher;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -148,7 +149,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_SOURCE_ID, filter.getSourceId());
+		then(filter.getSourceId()).as("Filled in source ID").isEqualTo(TEST_SOURCE_ID);
 	}
 
 	@Test
@@ -159,7 +160,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_SOURCE_ID, filter.getSourceId());
+		then(filter.getSourceId()).as("Filled in source ID").isEqualTo(TEST_SOURCE_ID);
 	}
 
 	@Test
@@ -170,7 +171,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Filled in source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -181,7 +182,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Filled in source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -193,7 +194,7 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setSourceIds(new String[] { TEST_SOURCE_ID, "Other" });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Restricted source IDs").isEqualTo(policySourceIds);
 	}
 
 	@Test
@@ -205,10 +206,10 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setSourceIds(new String[] { TEST_SOURCE_ID, TEST_SOURCE_ID2, "Other", "Other2" });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policySourceIds, filter.getSourceIds());
+		then(filter.getSourceIds()).as("Restricted source IDs").isEqualTo(policySourceIds);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void denyFromPolicySourceIds() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -218,7 +219,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd,
 				new AntPathMatcher());
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		filter.getSourceIds();
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> filter.getSourceIds());
 	}
 
 	private static final String TEST_SOURCE_PAT_ONELEVEL = "/Main/*";
@@ -242,16 +243,17 @@ public class SecurityPolicyEnforcerTests {
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
 		String[] result = enforcer.verifySourceIds(new String[] { TEST_SOURCE_ID_ONELEVEL });
-		Assert.assertArrayEquals("Verify source IDs", new String[] { TEST_SOURCE_ID_ONELEVEL }, result);
+		then(result).as("Verify source IDs").containsExactly(TEST_SOURCE_ID_ONELEVEL);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void verifySourceIdsWithPathMatcher_noPathRoot() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
-		enforcer.verifySourceIds(new String[] { "Main/1" });
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> enforcer.verifySourceIds(new String[] { "Main/1" }));
 	}
 
 	@Test
@@ -262,17 +264,18 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
 		String[] result = enforcer.verifySourceIds(
 				new String[] { TEST_SOURCE_ID_ONELEVEL, TEST_SOURCE_ID_MULTILEVEL, "/some/other" });
-		Assert.assertArrayEquals("Restricted source IDs",
-				new String[] { TEST_SOURCE_ID_ONELEVEL, TEST_SOURCE_ID_MULTILEVEL }, result);
+		then(result).as("Restricted source IDs").containsExactly(TEST_SOURCE_ID_ONELEVEL,
+				TEST_SOURCE_ID_MULTILEVEL);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void verifySourceIdsWithPathMatcherDenied() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_PAT_ONELEVEL, TEST_SOURCE_PAT_MULTILEVEL };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
 				.withSourceIds(new LinkedHashSet<String>(Arrays.asList(policySourceIds))).build();
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
-		enforcer.verifySourceIds(new String[] { "/not/accepted", "/some/other" });
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(
+				() -> enforcer.verifySourceIds(new String[] { "/not/accepted", "/some/other" }));
 	}
 
 	@Test
@@ -283,7 +286,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
 		String[] inputSourceIds = new String[] { "/Main2/foo/bar/bam/Meter", "/Main2/Meter" };
 		String[] result = enforcer.verifySourceIds(inputSourceIds);
-		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
+		then(result).as("Restricted source IDs").isEqualTo(inputSourceIds);
 	}
 
 	@Test
@@ -294,7 +297,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy);
 		String[] inputSourceIds = new String[] { "/A/BC/1" };
 		String[] result = enforcer.verifySourceIds(inputSourceIds);
-		Assert.assertArrayEquals("Restricted source IDs", inputSourceIds, result);
+		then(result).as("Restricted source IDs").isEqualTo(inputSourceIds);
 	}
 
 	@Test
@@ -305,7 +308,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_NODE_ID, filter.getNodeId());
+		then(filter.getNodeId()).as("Filled in source ID").isEqualTo(TEST_NODE_ID);
 	}
 
 	@Test
@@ -316,7 +319,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in source ID", TEST_NODE_ID, filter.getNodeId());
+		then(filter.getNodeId()).as("Filled in node ID").isEqualTo(TEST_NODE_ID);
 	}
 
 	@Test
@@ -327,7 +330,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Filled in node IDs").isEqualTo(policyNodeIds);
 	}
 
 	@Test
@@ -338,7 +341,7 @@ public class SecurityPolicyEnforcerTests {
 		DatumFilterCommand cmd = new DatumFilterCommand();
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Filled in source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Filled in node IDs").isEqualTo(policyNodeIds);
 	}
 
 	@Test
@@ -350,7 +353,7 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setNodeIds(new Long[] { TEST_NODE_ID, -1L });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Restricted node IDs").isEqualTo(policyNodeIds);
 	}
 
 	@Test
@@ -362,10 +365,10 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setNodeIds(new Long[] { TEST_NODE_ID, TEST_NODE_ID2, -1L, -2L });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		Assert.assertArrayEquals("Restricted source IDs", policyNodeIds, filter.getNodeIds());
+		then(filter.getNodeIds()).as("Restricted node IDs").isEqualTo(policyNodeIds);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void denyFromPolicyNodeIds() {
 		Long[] policyNodeIds = new Long[] { TEST_NODE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -374,7 +377,8 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setNodeIds(new Long[] { -1L });
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		filter.getNodeIds();
+
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> filter.getNodeIds());
 	}
 
 	@Test
@@ -385,7 +389,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		AggregateGeneralNodeDatumFilter filter = SecurityPolicyEnforcer
 				.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in aggregation", min, filter.getAggregation());
+		then(filter.getAggregation()).as("Filled in aggregation").isEqualTo(min);
 	}
 
 	@Test
@@ -397,7 +401,7 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", cmd);
 		AggregateGeneralNodeDatumFilter filter = SecurityPolicyEnforcer
 				.createSecurityPolicyProxy(enforcer);
-		Assert.assertEquals("Filled in aggregation", min, filter.getAggregation());
+		then(filter.getAggregation()).as("Filled in aggregation").isEqualTo(min);
 	}
 
 	private static final String TEST_META_PAT_ONELEVEL = "/m/*";
@@ -417,10 +421,10 @@ public class SecurityPolicyEnforcerTests {
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("1", "one");
 		GeneralDatumMetadata result = enforcer.verifyMetadata(meta);
-		Assert.assertSame("Verify metadata paths", meta, result);
+		then(result).as("Verify metadata paths").isSameAs(meta);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void verifyMetadataPathsDenied() {
 		String[] policyMetadataPaths = new String[] { TEST_META_ONELEVEL, TEST_META_MULTILEVEL };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -430,7 +434,8 @@ public class SecurityPolicyEnforcerTests {
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
 		GeneralDatumMetadata meta = new GeneralDatumMetadata();
 		meta.putInfoValue("2", "two");
-		enforcer.verifyMetadata(meta);
+		thenExceptionOfType(AuthorizationException.class)
+				.isThrownBy(() -> enforcer.verifyMetadata(meta));
 	}
 
 	@Test
@@ -447,7 +452,7 @@ public class SecurityPolicyEnforcerTests {
 
 		GeneralDatumMetadata expected = new GeneralDatumMetadata(null, meta.getPropertyInfo());
 
-		Assert.assertEquals("Restricted metadata", expected, result);
+		then(result).as("Restricted metadata").isEqualTo(expected);
 	}
 
 	@Test
@@ -470,7 +475,7 @@ public class SecurityPolicyEnforcerTests {
 		expected.putInfoValue("bc", "a", "A");
 		expected.putInfoValue("bc", "b", "B");
 
-		Assert.assertEquals("Restricted metadata", expected, result);
+		then(result).as("Restricted metadata").isEqualTo(expected);
 	}
 
 	@Test
@@ -496,10 +501,10 @@ public class SecurityPolicyEnforcerTests {
 		expected.putInfoValue("b", "2", nestedMap);
 		expected.putInfoValue("c", "bar", "yes");
 
-		Assert.assertEquals("Restricted metadata", expected, result);
+		then(result).as("Restricted metadata").isEqualTo(expected);
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void denyFromPolicyNodeMetadataPaths() {
 		String[] policyMetadataPaths = new String[] { TEST_META_ONELEVEL, TEST_META_MULTILEVEL };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -513,7 +518,8 @@ public class SecurityPolicyEnforcerTests {
 		SecurityPolicyEnforcer enforcer = new SecurityPolicyEnforcer(policy, "Tester", src,
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
 		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		match.getMetadata();
+
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> match.getMetadata());
 	}
 
 	@Test
@@ -535,7 +541,7 @@ public class SecurityPolicyEnforcerTests {
 				new AntPathMatcher(), SecurityPolicyMetadataType.Node);
 		SolarNodeMetadataFilterMatch match = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
 		GeneralDatumMetadata result = match.getMetadata();
-		Assert.assertEquals("Restricted metadata", expected, result);
+		then(result).as("Restricted metadata").isEqualTo(expected);
 	}
 
 	private ObjectMapper nodeMetadataObjectMapper() {
@@ -572,8 +578,8 @@ public class SecurityPolicyEnforcerTests {
 
 		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(match);
-		Assert.assertEquals("Restricted metadata JSON",
-				"{\"nodeId\":1,\"pm\":{\"foo\":{\"bar\":\"bam\"}}}", json);
+		then(json).as("Restricted metadata JSON")
+				.isEqualTo("{\"nodeId\":1,\"pm\":{\"foo\":{\"bar\":\"bam\"}}}");
 	}
 
 	private <T> T objectFromJSONResource(String resourceName, Class<T> objectClass) {
@@ -602,8 +608,8 @@ public class SecurityPolicyEnforcerTests {
 
 		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(proxy);
-		Assert.assertEquals("Restricted metadata JSON",
-				"{\"m\":{\"building\":\"Warehouse\",\"room\":\"Office\"}}", json);
+		then(json).as("Restricted metadata JSON")
+				.isEqualTo("{\"m\":{\"building\":\"Warehouse\",\"room\":\"Office\"}}");
 	}
 
 	@Test
@@ -621,8 +627,8 @@ public class SecurityPolicyEnforcerTests {
 
 		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(proxy);
-		Assert.assertEquals("Restricted metadata JSON",
-				"{\"pm\":{\"hours\":{\"M-F\":\"08:00-18:00\",\"Sa-Su\":\"10:00-14:00\"}}}", json);
+		then(json).as("Restricted metadata JSON")
+				.isEqualTo("{\"pm\":{\"hours\":{\"M-F\":\"08:00-18:00\",\"Sa-Su\":\"10:00-14:00\"}}}");
 	}
 
 	@Test
@@ -641,8 +647,8 @@ public class SecurityPolicyEnforcerTests {
 
 		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(proxy);
-		Assert.assertEquals("Restricted metadata JSON",
-				"{\"pm\":{\"building\":{\"floors\":3,\"employees\":48}}}", json);
+		then(json).as("Restricted metadata JSON")
+				.isEqualTo("{\"pm\":{\"building\":{\"floors\":3,\"employees\":48}}}");
 	}
 
 	@Test
@@ -661,9 +667,8 @@ public class SecurityPolicyEnforcerTests {
 
 		ObjectMapper mapper = nodeMetadataObjectMapper();
 		String json = mapper.writeValueAsString(proxy);
-		Assert.assertEquals("Restricted metadata JSON",
-				"{\"m\":{\"building\":\"Warehouse\"},\"pm\":{\"building\":{\"floors\":3,\"employees\":48}}}",
-				json);
+		then(json).as("Restricted metadata JSON").isEqualTo(
+				"{\"m\":{\"building\":\"Warehouse\"},\"pm\":{\"building\":{\"floors\":3,\"employees\":48}}}");
 	}
 
 	@Test
@@ -705,7 +710,7 @@ public class SecurityPolicyEnforcerTests {
 				is(arrayContaining("/a/a/1", "/a/a/2", "/a/a/a/1")));
 	}
 
-	@Test(expected = AuthorizationException.class)
+	@Test
 	public void restrictToPolicySourceIds_fromPattern_noMatch() {
 		String[] policySourceIds = new String[] { TEST_SOURCE_ID };
 		BasicSecurityPolicy policy = new BasicSecurityPolicy.Builder()
@@ -714,7 +719,8 @@ public class SecurityPolicyEnforcerTests {
 		cmd.setSourceIds(new String[] { "/a/**" }); // pattern does not match any policy ID
 		SecurityPolicyEnforcer enforcer = patternEnforcer(policy, cmd);
 		GeneralNodeDatumFilter filter = SecurityPolicyEnforcer.createSecurityPolicyProxy(enforcer);
-		filter.getSourceIds();
+
+		thenExceptionOfType(AuthorizationException.class).isThrownBy(() -> filter.getSourceIds());
 	}
 
 	@Test

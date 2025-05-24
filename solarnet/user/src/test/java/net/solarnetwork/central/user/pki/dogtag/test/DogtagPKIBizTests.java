@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.pki.dogtag.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -30,12 +31,12 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,7 +45,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractJUnit4SpringContextTests;
 import org.springframework.web.client.RestOperations;
 import net.solarnetwork.central.security.AuthenticatedUser;
-import net.solarnetwork.central.test.SystemPropertyMatchTestRule;
 import net.solarnetwork.central.user.pki.dogtag.DogtagPKIBiz;
 import net.solarnetwork.pki.bc.BCCertificateService;
 
@@ -55,10 +55,9 @@ import net.solarnetwork.pki.bc.BCCertificateService;
  * @version 1.1
  */
 @ContextConfiguration
+@SpringBootTest
+@EnabledIfSystemProperty(named = "test.dogtag", matches = ".*")
 public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
-
-	@ClassRule
-	public static SystemPropertyMatchTestRule DOGTAG_RULE = new SystemPropertyMatchTestRule("dogtag");
 
 	@Value("${dogtag.baseUrl}")
 	private String baseUrl;
@@ -69,7 +68,7 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 	private BCCertificateService certificateService;
 	private DogtagPKIBiz biz;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		biz = new DogtagPKIBiz();
 		biz.setBaseUrl(baseUrl);
@@ -105,7 +104,7 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 		KeyPair keypair = keyGen.generateKeyPair();
 		X509Certificate certificate = createSelfSignedCertificate("UID=1111,O=SolarNetworkDev", keypair);
 		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
-		Assert.assertNotNull("CSR request ID", reqID);
+		then(reqID).as("CSR request ID").isNotNull();
 	}
 
 	@Test
@@ -115,9 +114,9 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 		KeyPair keypair = keyGen.generateKeyPair();
 		X509Certificate certificate = createSelfSignedCertificate("UID=1111,O=SolarNetworkDev", keypair);
 		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
-		Assert.assertNotNull("CSR request ID", reqID);
+		then(reqID).as("CSR request ID").isNotNull();
 		X509Certificate[] result = biz.approveCSR(reqID);
-		Assert.assertNotNull("X.509 certificate", result);
+		then(result).as("X.509 certificate").isNotNull();
 	}
 
 	@Test
@@ -127,13 +126,13 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 		KeyPair keypair = keyGen.generateKeyPair();
 		X509Certificate certificate = createSelfSignedCertificate("UID=1111,O=SolarNetworkDev", keypair);
 		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
-		Assert.assertNotNull("CSR request ID", reqID);
+		then(reqID).as("CSR request ID").isNotNull();
 		X509Certificate[] result = biz.approveCSR(reqID);
-		Assert.assertNotNull("X.509 certificate", result);
+		then(result).as("X.509 certificate").isNotNull();
 
 		// request renew
 		String renewRequestID = biz.submitRenewalRequest(result[0]);
-		Assert.assertNotNull(renewRequestID);
+		then(renewRequestID).isNotNull();
 	}
 
 	@Test
@@ -143,21 +142,22 @@ public class DogtagPKIBizTests extends AbstractJUnit4SpringContextTests {
 		KeyPair keypair = keyGen.generateKeyPair();
 		X509Certificate certificate = createSelfSignedCertificate("UID=1111,O=SolarNetworkDev", keypair);
 		String reqID = biz.submitCSR(certificate, keypair.getPrivate());
-		Assert.assertNotNull("CSR request ID", reqID);
+		then(reqID).as("CSR request ID").isNotNull();
 		X509Certificate[] result = biz.approveCSR(reqID);
-		Assert.assertNotNull("X.509 certificate", result);
+		then(result).as("X.509 certificate").isNotNull();
 
 		// request renew
 		String renewRequestID = biz.submitRenewalRequest(result[0]);
-		Assert.assertNotNull(renewRequestID);
+		then(renewRequestID).isNotNull();
 
 		// approve renew
 		X509Certificate[] renewed = biz.approveCSR(renewRequestID);
-		Assert.assertNotNull("X.509 certificate", renewed);
+		then(renewed).as("X.509 certificate").isNotNull();
 
 		// validate renewed subject the same, and has larger serial numberd
-		Assert.assertEquals(result[0].getSubjectX500Principal(), renewed[0].getSubjectX500Principal());
-		Assert.assertEquals(1, renewed[0].getSerialNumber().compareTo(result[0].getSerialNumber()));
+		then(renewed[0].getSubjectX500Principal()).isEqualTo(result[0].getSubjectX500Principal());
+		then(renewed[0].getSerialNumber()).as("Renewed serial number larger than original")
+				.isGreaterThan(result[0].getSerialNumber());
 	}
 
 }

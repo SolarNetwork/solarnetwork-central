@@ -27,6 +27,7 @@ import static net.solarnetwork.central.domain.UserLongCompositePK.unassignedEnti
 import static net.solarnetwork.central.test.CommonDbTestUtils.allTableData;
 import static net.solarnetwork.central.test.CommonTestUtils.randomString;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -41,8 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mybatis.spring.MyBatisSystemException;
 import net.solarnetwork.central.datum.export.dao.mybatis.MyBatisDatumExportTaskInfoDao;
 import net.solarnetwork.central.datum.export.domain.BasicConfiguration;
@@ -71,7 +72,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 	private User user;
 	private UserAdhocDatumExportTaskInfo info;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		dao = new MyBatisUserAdhocDatumExportTaskInfoDao();
 		dao.setSqlSessionFactory(getSqlSessionFactory());
@@ -204,7 +205,7 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		this.info = info;
 	}
 
-	@Test(expected = MyBatisSystemException.class)
+	@Test
 	public void update() {
 		storeNew();
 
@@ -215,7 +216,8 @@ public class MyBatisUserAdhocDatumExportTaskInfoDaoTests extends AbstractMyBatis
 		info.setCreated(Instant.now());
 		((BasicConfiguration) info.getConfig()).setHourDelayOffset(1);
 
-		dao.save(info);
+		thenExceptionOfType(MyBatisSystemException.class).isThrownBy(() ->
+		dao.save(info));
 	}
 
 	@Test

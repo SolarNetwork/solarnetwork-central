@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecurityTokenAuthenticationFilterTests.java - Dec 13, 2012 6:08:36 AM
- * 
+ *
  * Copyright 2007-2012 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -26,6 +26,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV1Value;
 import static net.solarnetwork.central.security.web.test.SecurityWebTestUtils.createAuthorizationHeaderV2Value;
+import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
@@ -34,8 +35,6 @@ import static org.easymock.EasyMock.verify;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasEntry;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -47,8 +46,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import org.easymock.EasyMock;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -73,7 +72,7 @@ import net.solarnetwork.web.jakarta.security.SecurityTokenAuthenticationEntryPoi
 
 /**
  * Unit tests for the {@link SecurityTokenAuthenticationFilter} class.
- * 
+ *
  * @author matt
  * @version 2.2
  */
@@ -95,10 +94,10 @@ public class SecurityTokenAuthenticationFilterTests {
 	}
 
 	private void validateAuthentication() {
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		assertNotNull(auth);
-		assertEquals(TEST_AUTH_TOKEN, auth.getName());
+		then(auth).isNotNull();
+		then(auth.getName()).isEqualTo(TEST_AUTH_TOKEN);
 	}
 
 	private void validateUnauthorizedResponse(AuthenticationScheme scheme, String expectedMessage) {
@@ -109,8 +108,7 @@ public class SecurityTokenAuthenticationFilterTests {
 			String expectedMessage) {
 		assertThat("Status code", response.getStatus(), is(expectedStatusCode));
 		if ( expectedStatusCode == HttpServletResponse.SC_UNAUTHORIZED ) {
-			assertEquals("WWW-Authenticate", scheme.getSchemeName(),
-					response.getHeader("WWW-Authenticate"));
+			then(response.getHeader("WWW-Authenticate")).isEqualTo(scheme.getSchemeName());
 		}
 		assertThat("Content type is JSON", response.getContentType(),
 				is(MediaType.APPLICATION_JSON_VALUE));
@@ -124,7 +122,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		filterChain = EasyMock.createMock(FilterChain.class);
 		response = new MockHttpServletResponse();
@@ -250,7 +248,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -266,7 +264,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -283,7 +281,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -300,7 +298,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -316,7 +314,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -332,7 +330,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -352,7 +350,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -373,7 +371,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -395,7 +393,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -417,7 +415,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -440,7 +438,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -463,7 +461,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -525,7 +523,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -548,7 +546,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -571,7 +569,7 @@ public class SecurityTokenAuthenticationFilterTests {
 		expect(userDetailsService.loadUserByUsername(TEST_AUTH_TOKEN)).andReturn(userDetails);
 		replay(filterChain, userDetailsService);
 		filter.doFilter(request, response, filterChain);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 		verify(filterChain, userDetailsService);
 	}
@@ -638,7 +636,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -690,7 +688,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -742,7 +740,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 
@@ -769,7 +767,7 @@ public class SecurityTokenAuthenticationFilterTests {
 
 		// then
 		verify(filterChain, userDetailsService);
-		assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		then(response.getStatus()).isEqualTo(HttpServletResponse.SC_OK);
 		validateAuthentication();
 	}
 

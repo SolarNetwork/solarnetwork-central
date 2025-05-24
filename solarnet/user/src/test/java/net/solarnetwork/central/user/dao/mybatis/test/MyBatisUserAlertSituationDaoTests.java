@@ -22,17 +22,14 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.dao.mybatis.MyBatisSolarNodeDao;
@@ -75,10 +72,10 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 
 		setupTestNode();
 		this.node = solarNodeDao.get(TEST_NODE_ID);
-		assertNotNull(this.node);
+		then(this.node).isNotNull();
 		//deleteFromTables(DELETE_TABLES);
 		this.user = createNewUser(TEST_EMAIL);
-		assertNotNull(this.user);
+		then(this.user).isNotNull();
 		userAlert = null;
 		userAlertSituation = null;
 	}
@@ -103,7 +100,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		alert.setOptions(options);
 
 		Long id = userAlertDao.save(alert);
-		assertNotNull(id);
+		then(id).isNotNull();
 		alert.setId(id);
 		this.userAlert = alert;
 		return alert;
@@ -136,7 +133,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	@Test
 	public void storeNew() {
 		UserAlertSituation sit = storeNew(createUserAlert(), UserAlertSituationStatus.Active, null);
-		assertNotNull("Primary key should be assigned", sit.getId());
+		then(sit.getId()).as("Primary key should be assigned").isNotNull();
 		this.userAlertSituation = sit;
 	}
 
@@ -144,12 +141,12 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 	public void getByPrimaryKey() {
 		storeNew();
 		UserAlertSituation sit = userAlertSituationDao.get(this.userAlertSituation.getId());
-		assertNotNull(sit);
-		assertEquals(this.userAlertSituation.getId(), sit.getId());
-		assertEquals(this.userAlertSituation.getStatus(), sit.getStatus());
-		assertEquals(this.userAlertSituation.getInfo(), sit.getInfo());
-		assertNotNull(sit.getAlert());
-		assertEquals(this.userAlert.getId(), sit.getAlert().getId());
+		then(sit).isNotNull();
+		then(this.userAlertSituation.getId()).isEqualTo(sit.getId());
+		then(this.userAlertSituation.getStatus()).isEqualTo(sit.getStatus());
+		then(this.userAlertSituation.getInfo()).isEqualTo(sit.getInfo());
+		then(sit.getAlert()).isNotNull();
+		then(sit.getAlert().getId()).isEqualTo(this.userAlert.getId());
 	}
 
 	@Test
@@ -165,30 +162,30 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		sit.setStatus(UserAlertSituationStatus.Resolved);
 		sit.setNotified(created.plus(1, ChronoUnit.HOURS));
 		Long id = userAlertSituationDao.save(sit);
-		assertNotNull(id);
-		assertEquals(this.userAlertSituation.getId(), id);
+		then(id).isNotNull().isEqualTo(this.userAlertSituation.getId());
 		UserAlertSituation updatedSit = userAlertSituationDao.get(id);
-		assertNotNull(updatedSit);
-		assertEquals(this.userAlertSituation.getId(), updatedSit.getId());
-		assertNotNull(updatedSit.getAlert());
-		assertEquals(this.userAlert.getId(), updatedSit.getAlert().getId());
-		assertEquals(UserAlertSituationStatus.Resolved, updatedSit.getStatus());
+		// @formatter:off
+		then(updatedSit)
+			.isNotNull()
+			.returns(created, from(UserAlertSituation::getCreated))
+			.returns(UserAlertSituationStatus.Resolved, from(UserAlertSituation::getStatus))
+			.isEqualTo(userAlertSituation)
+			.returns(userAlert, from(UserAlertSituation::getAlert))
+			;
 
-		info = updatedSit.getInfo();
-		assertEquals("foo", info.get("string"));
-		assertEquals(42, info.get("number"));
-		assertEquals("updated", info.get("updated-string"));
-
-		assertNotNull(info.get("list"));
-		assertEquals(Arrays.asList("first", "second"), info.get("list"));
-
-		assertEquals(created, updatedSit.getCreated());
+		then(updatedSit.getInfo())
+			.containsEntry("string", "foo")
+			.containsEntry("number", 42)
+			.containsEntry("updated-string", "updated")
+			.containsEntry("list", List.of("first", "second"))
+			;
+		// @formatter:on
 	}
 
 	@Test
 	public void getByActiveAlertNoAlert() {
 		UserAlertSituation sit = userAlertSituationDao.getActiveAlertSituationForAlert(123L);
-		Assert.assertNull(sit);
+		then(sit).isNull();
 	}
 
 	@Test
@@ -196,8 +193,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		storeNew();
 		UserAlertSituation sit = userAlertSituationDao
 				.getActiveAlertSituationForAlert(this.userAlert.getId());
-		assertNotNull(sit);
-		assertEquals(this.userAlertSituation.getId(), sit.getId());
+		then(sit).isNotNull().isEqualTo(userAlertSituation);
 	}
 
 	@Test
@@ -207,7 +203,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		userAlertSituationDao.save(this.userAlertSituation);
 		UserAlertSituation sit = userAlertSituationDao
 				.getActiveAlertSituationForAlert(this.userAlert.getId());
-		Assert.assertNull(sit);
+		then(sit).isNull();
 	}
 
 	@Test
@@ -221,14 +217,13 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 
 		UserAlertSituation sit = userAlertSituationDao
 				.getActiveAlertSituationForAlert(this.userAlert.getId());
-		assertNotNull(sit);
-		assertEquals(this.userAlertSituation.getId(), sit.getId());
+		then(sit).isNotNull().isEqualTo(userAlertSituation);
 	}
 
 	@Test
 	public void purgeCompletedInstructionsNone() {
 		long result = userAlertSituationDao.purgeResolvedSituations(Instant.now());
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -236,7 +231,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Active, Instant.now());
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().plus(1, ChronoUnit.DAYS));
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -244,7 +239,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		userAlertSituation = storeNew(createUserAlert(), UserAlertSituationStatus.Resolved, null);
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().minus(1, ChronoUnit.DAYS));
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -253,7 +248,7 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 				Instant.now());
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().minus(1, ChronoUnit.DAYS));
-		assertEquals(0, result);
+		then(result).isZero();
 	}
 
 	@Test
@@ -262,9 +257,9 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 				Instant.now());
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(userAlertSituation.getCreated().plus(1, ChronoUnit.DAYS));
-		assertEquals(1, result);
+		then(result).isOne();
 		UserAlertSituation sit = userAlertSituationDao.get(userAlertSituation.getId());
-		assertNull("Purged situation is not found", sit);
+		then(sit).as("Purged situation is not found").isNull();
 	}
 
 	@Test
@@ -276,14 +271,14 @@ public class MyBatisUserAlertSituationDaoTests extends AbstractMyBatisUserDaoTes
 		toPurge.add(storeNew(userAlert, UserAlertSituationStatus.Resolved, Instant.now()));
 		long result = userAlertSituationDao
 				.purgeResolvedSituations(Instant.now().plus(1, ChronoUnit.DAYS));
-		assertEquals("Purged resolved", toPurge.size(), result);
+		then(result).as("Purged resolved").isEqualTo(toPurge.size());
 		for ( UserAlertSituation sit : notToPurge ) {
 			UserAlertSituation match = userAlertSituationDao.get(sit.getId());
-			assertNotNull("Should not be purged", match);
+			then(match).as("Should not be purged").isNotNull();
 		}
 		for ( UserAlertSituation sit : toPurge ) {
 			UserAlertSituation match = userAlertSituationDao.get(sit.getId());
-			assertNull("Purged situation is not found", match);
+			then(match).as("Purged situation is not found").isNull();
 		}
 	}
 

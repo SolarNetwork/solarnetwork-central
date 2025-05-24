@@ -34,16 +34,16 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.central.domain.LocationPrecision;
 import net.solarnetwork.central.security.BasicSecurityPolicy;
 import net.solarnetwork.central.security.SecurityPolicySerializer;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
+import net.solarnetwork.domain.datum.Aggregation;
 
 /**
  * Test cases for the {@link SecurityPolicySerializer} class.
@@ -58,7 +58,7 @@ public class SecurityPolicySerializerTests {
 
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
 		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);

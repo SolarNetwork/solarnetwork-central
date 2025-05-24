@@ -60,7 +60,7 @@ import net.solarnetwork.settings.support.BasicTextFieldSettingSpecifier;
  * weather API.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMapCloudDatumStreamService {
 
@@ -74,7 +74,8 @@ public class OpenWeatherMapDayCloudDatumStreamService extends BaseOpenWeatherMap
 		SETTINGS = List.of(
 				new BasicTextFieldSettingSpecifier(LATITUDE_SETTING, null),
 				new BasicTextFieldSettingSpecifier(LONGITUDE_SETTING, null),
-				new BasicTextFieldSettingSpecifier(LOCATION_ID_SETTING, null)
+				new BasicTextFieldSettingSpecifier(LOCATION_ID_SETTING, null),
+				VIRTUAL_SOURCE_IDS_SETTING_SPECIFIER
 				);
 		// @formatter:on
 	}

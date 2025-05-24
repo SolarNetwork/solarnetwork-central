@@ -45,9 +45,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.datum.biz.DatumAppEventProducer;
 import net.solarnetwork.central.datum.domain.AggregateUpdatedEventInfo;
@@ -74,7 +74,7 @@ public class DaoUserEventHookBizTests {
 
 	private List<Object> methodMocks;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		nodeEventHookConfigurationDao = EasyMock.createMock(UserNodeEventHookConfigurationDao.class);
 		biz = new DaoUserEventHookBiz(nodeEventHookConfigurationDao);
@@ -94,7 +94,7 @@ public class DaoUserEventHookBizTests {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(nodeEventHookConfigurationDao);
 		for ( Object m : methodMocks ) {

@@ -22,15 +22,15 @@
 
 package net.solarnetwork.central.user.expire.dao.mybatis.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.mybatis.spring.boot.test.autoconfigure.MybatisTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.test.context.ContextConfiguration;
-import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.test.AbstractJUnit5CentralTransactionalTest;
 import net.solarnetwork.central.user.dao.mybatis.MyBatisUserDao;
 import net.solarnetwork.central.user.domain.User;
 
@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.domain.User;
 @ContextConfiguration
 @MybatisTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractCentralTransactionalTest {
+public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractJUnit5CentralTransactionalTest {
 
 	public static final String TEST_EMAIL = "foo@localhost.localdomain";
 	public static final String TEST_NAME = "Foo Bar";
@@ -53,7 +53,7 @@ public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractCentralT
 
 	protected MyBatisUserDao userDao;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		userDao = new MyBatisUserDao();
 		userDao.setSqlSessionFactory(sqlSessionFactory);
@@ -85,8 +85,8 @@ public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractCentralT
 		newUser.setPassword(TEST_PASSWORD);
 		newUser.setEnabled(Boolean.TRUE);
 		Long id = userDao.save(newUser);
-		logger.debug("Got new user PK: " + id);
-		assertNotNull(id);
+		log.debug("Got new user PK: " + id);
+		then(id).isNotNull();
 		return id;
 	}
 

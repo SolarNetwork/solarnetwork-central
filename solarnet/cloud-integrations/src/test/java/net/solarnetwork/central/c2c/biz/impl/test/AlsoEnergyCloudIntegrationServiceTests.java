@@ -185,7 +185,7 @@ public class AlsoEnergyCloudIntegrationServiceTests {
 				AlsoEnergyCloudIntegrationService.PASSWORD_SETTING, password
 			));
 
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("removal")
 		final ClientRegistration oauthClientReg = ClientRegistration
 			.withRegistrationId("test")
 			.authorizationGrantType(AuthorizationGrantType.PASSWORD)

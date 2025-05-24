@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.user.dao.mybatis.test;
 
-import static org.junit.Assert.assertNotNull;
+import static org.assertj.core.api.BDDAssertions.then;
 import java.time.Instant;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -99,7 +99,7 @@ public abstract class AbstractMyBatisUserDaoTestSupport extends AbstractJUnit5Ce
 		newUser.setEnabled(Boolean.TRUE);
 		Long id = userDao.save(newUser);
 		log.debug("Got new user PK: " + id);
-		assertNotNull(id);
+		then(id).isNotNull();
 		return id;
 	}
 

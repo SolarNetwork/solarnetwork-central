@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'eclipse'
-	id 'org.springframework.boot' version '3.4.5' apply false
+	id 'org.springframework.boot' version '3.5.0' apply false
 }
 
 apply plugin: 'java-library'
@@ -107,10 +107,8 @@ dependencies {
 	
 	// Testing
 	testImplementation project(':solarnet-common-test')
-    testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
-    testImplementation "org.threeten:threeten-extra:${threetenExtraVersion}"
     testImplementation "net.sf.saxon:Saxon-HE:${saxonVersion}"
-    
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${myBatisStarterVersion}"
 }
 
 jar.manifest {

@@ -22,12 +22,10 @@
 
 package net.solarnetwork.central.security.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.assertj.core.api.BDDAssertions.then;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.security.LegacyPasswordEncoder;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test case for the {@link LegacyPasswordEncoder} class.
@@ -42,7 +40,7 @@ public class LegacyPasswordEncoderTests {
 
 	private LegacyPasswordEncoder encoder;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		encoder = new LegacyPasswordEncoder();
 	}
@@ -50,31 +48,30 @@ public class LegacyPasswordEncoderTests {
 	@Test
 	public void encryptPassword() {
 		String encoded = encoder.encode(TEST_PASSWORD);
-		assertNotNull(encoded);
-		assertEquals("{SHA}0d7defedd7a13311b2e2add2142956c53a89349b1c6fca20c6325af6f3bfd936", encoded);
+		then(encoded).isEqualTo("{SHA}0d7defedd7a13311b2e2add2142956c53a89349b1c6fca20c6325af6f3bfd936");
 	}
 
 	@Test
 	public void encryptNull() {
 		String encoded = encoder.encode(null);
-		assertNull(encoded);
+		then(encoded).isNull();
 	}
 
 	@Test
 	public void matches() {
 		String encoded = encoder.encode(TEST_PASSWORD);
-		assertEquals(true, encoder.matches(TEST_PASSWORD, encoded));
+		then(encoder.matches(TEST_PASSWORD, encoded)).isTrue();
 	}
 
 	@Test
 	public void matchesNull() {
-		assertEquals(false, encoder.matches(null, null));
-		assertEquals(false, encoder.matches(null, "foo"));
-		assertEquals(false, encoder.matches("foo", null));
+		then(encoder.matches(null, null)).isFalse();
+		then(encoder.matches(null, "foo")).isFalse();
+		then(encoder.matches("foo", null)).isFalse();
 	}
 
 	@Test
 	public void doesNotMatch() {
-		assertEquals(false, encoder.matches("nope", encoder.encode("test.password")));
+		then(encoder.matches("nope", encoder.encode("test.password"))).isFalse();
 	}
 }

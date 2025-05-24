@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.security.test;
 
+import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -29,16 +31,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.fail;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.domain.LocationPrecision;
@@ -62,12 +61,8 @@ public class BasicSecurityPolicyTests {
 		Set<Long> nodeIds = new HashSet<Long>(Arrays.asList(1L, 2L, 3L));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(nodeIds).build();
 		assertThat("Node ID set", policy.getNodeIds(), is(nodeIds));
-		try {
-			policy.getNodeIds().add(-1L);
-			fail("Node ID set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class).as("Node ID set should be immutable")
+				.isThrownBy(() -> policy.getNodeIds().add(-1L));
 	}
 
 	@Test
@@ -78,12 +73,8 @@ public class BasicSecurityPolicyTests {
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeIds(nodeIds)
 				.withMergedNodeIds(additionalNodeIds).build();
 		assertThat("Node ID set", policy.getNodeIds(), is(merged));
-		try {
-			policy.getNodeIds().add(-1L);
-			fail("Node ID set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class).as("Node ID set should be immutable")
+				.isThrownBy(() -> policy.getNodeIds().add(-1L));
 	}
 
 	@Test
@@ -91,12 +82,8 @@ public class BasicSecurityPolicyTests {
 		Set<String> sourceIds = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withSourceIds(sourceIds).build();
 		assertThat("Source ID set", policy.getSourceIds(), is(sourceIds));
-		try {
-			policy.getSourceIds().add("no");
-			fail("Source ID set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class).as("Source ID set should be immutable")
+				.isThrownBy(() -> policy.getSourceIds().add("no"));
 	}
 
 	@Test
@@ -107,12 +94,8 @@ public class BasicSecurityPolicyTests {
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withSourceIds(sourceIds)
 				.withMergedSourceIds(additionalSourceIds).build();
 		assertThat("Source ID set", policy.getSourceIds(), is(merged));
-		try {
-			policy.getSourceIds().add("no");
-			fail("Source ID set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class).as("Source ID set should be immutable")
+				.isThrownBy(() -> policy.getSourceIds().add("no"));
 	}
 
 	@Test
@@ -120,12 +103,9 @@ public class BasicSecurityPolicyTests {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeMetadataPaths(paths).build();
 		assertThat("Node metadata path set", policy.getNodeMetadataPaths(), is(paths));
-		try {
-			policy.getNodeMetadataPaths().add("no");
-			fail("Node metadata path set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("Node metadata path set should be immutable")
+				.isThrownBy(() -> policy.getNodeMetadataPaths().add("no"));
 	}
 
 	@Test
@@ -136,25 +116,19 @@ public class BasicSecurityPolicyTests {
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withNodeMetadataPaths(paths)
 				.withMergedNodeMetadataPaths(additionalPaths).build();
 		assertThat("Node metadata path set", policy.getNodeMetadataPaths(), is(merged));
-		try {
-			policy.getNodeMetadataPaths().add("no");
-			fail("Node metadata path set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("Node metadata path set should be immutable")
+				.isThrownBy(() -> policy.getNodeMetadataPaths().add("no"));
 	}
 
 	@Test
 	public void buildUserMetadataPathsPolicy() {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withUserMetadataPaths(paths).build();
-		Assert.assertEquals("User metadata path set", paths, policy.getUserMetadataPaths());
-		try {
-			policy.getUserMetadataPaths().add("no");
-			fail("User metadata path set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		then(policy.getUserMetadataPaths()).as("user metadata path set").isEqualTo(paths);
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("User metadata path set should be immutable")
+				.isThrownBy(() -> policy.getUserMetadataPaths().add("no"));
 	}
 
 	@Test
@@ -164,26 +138,19 @@ public class BasicSecurityPolicyTests {
 		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withUserMetadataPaths(paths)
 				.withMergedUserMetadataPaths(additionalPaths).build();
-		assertThat("User metadata path set", policy.getUserMetadataPaths(), is(merged));
-		try {
-			policy.getUserMetadataPaths().add("no");
-			Assert.fail("User metadata path set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		then(policy.getUserMetadataPaths()).as("user metadata path set").isEqualTo(merged);
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("User metadata path set should be immutable")
+				.isThrownBy(() -> policy.getUserMetadataPaths().add("no"));
 	}
 
 	@Test
 	public void buildApiPathsPolicy() {
 		Set<String> paths = new HashSet<String>(Arrays.asList("one", "two", "three"));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withApiPaths(paths).build();
-		Assert.assertEquals("Api path set", paths, policy.getApiPaths());
-		try {
-			policy.getApiPaths().add("no");
-			fail("Api path set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		then(policy.getApiPaths()).as("Api path set").isEqualTo(paths);
+		thenExceptionOfType(UnsupportedOperationException.class).as("Api path set should be immutable")
+				.isThrownBy(() -> policy.getApiPaths().add("no"));
 	}
 
 	@Test
@@ -193,13 +160,9 @@ public class BasicSecurityPolicyTests {
 		Set<String> merged = new HashSet<String>(Arrays.asList("one", "two", "three", "four", "five"));
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder().withApiPaths(paths)
 				.withMergedApiPaths(additionalPaths).build();
-		assertThat("Api path set", policy.getApiPaths(), is(merged));
-		try {
-			policy.getApiPaths().add("no");
-			Assert.fail("Api path set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		then(policy.getApiPaths()).as("Api path set").isEqualTo(merged);
+		thenExceptionOfType(UnsupportedOperationException.class).as("Api path set should be immutable")
+				.isThrownBy(() -> policy.getApiPaths().add("no"));
 	}
 
 	@Test
@@ -208,12 +171,9 @@ public class BasicSecurityPolicyTests {
 				.build();
 		assertThat("Minimum aggregation set", policy.getAggregations(),
 				contains(Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal));
-		try {
-			policy.getAggregations().add(Aggregation.Minute);
-			fail("Aggregation set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("Aggregation set should be immutable")
+				.isThrownBy(() -> policy.getAggregations().add(Aggregation.Minute));
 	}
 
 	@Test
@@ -229,12 +189,9 @@ public class BasicSecurityPolicyTests {
 				containsInAnyOrder(Aggregation.Day, Aggregation.DayOfYear, Aggregation.DayOfWeek,
 						Aggregation.SeasonalDayOfWeek, Aggregation.Week, Aggregation.WeekOfYear,
 						Aggregation.Month, Aggregation.Year, Aggregation.RunningTotal));
-		try {
-			policy.getAggregations().add(Aggregation.Minute);
-			fail("Aggregation set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("Aggregation set should be immutable")
+				.isThrownBy(() -> policy.getAggregations().add(Aggregation.Minute));
 	}
 
 	@Test
@@ -251,17 +208,13 @@ public class BasicSecurityPolicyTests {
 	public void buildMinLocationPrecisionPolicy() {
 		BasicSecurityPolicy policy = BasicSecurityPolicy.builder()
 				.withMinLocationPrecision(LocationPrecision.PostalCode).build();
-		Assert.assertEquals("Minimum location precision set",
-				EnumSet.of(LocationPrecision.PostalCode, LocationPrecision.Locality,
-						LocationPrecision.Region, LocationPrecision.StateOrProvince,
-						LocationPrecision.TimeZone, LocationPrecision.Country),
-				policy.getLocationPrecisions());
-		try {
-			policy.getLocationPrecisions().add(LocationPrecision.LatLong);
-			fail("LocationPrecision set should be immutable");
-		} catch ( UnsupportedOperationException e ) {
-			// expected
-		}
+		then(policy.getLocationPrecisions()).as("Minimum location precision set").contains(
+				LocationPrecision.PostalCode, LocationPrecision.Locality, LocationPrecision.Region,
+				LocationPrecision.StateOrProvince, LocationPrecision.TimeZone,
+				LocationPrecision.Country);
+		thenExceptionOfType(UnsupportedOperationException.class)
+				.as("LocationPrecition set should be immutable")
+				.isThrownBy(() -> policy.getLocationPrecisions().add(LocationPrecision.LatLong));
 	}
 
 	@Test

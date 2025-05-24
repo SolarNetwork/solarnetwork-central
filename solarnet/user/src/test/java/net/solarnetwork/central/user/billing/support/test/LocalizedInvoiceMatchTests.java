@@ -32,9 +32,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Locale;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceMatch;
 
@@ -55,12 +55,12 @@ public class LocalizedInvoiceMatchTests {
 
 	private InvoiceMatch match;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		match = EasyMock.createMock(InvoiceMatch.class);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(match);
 	}

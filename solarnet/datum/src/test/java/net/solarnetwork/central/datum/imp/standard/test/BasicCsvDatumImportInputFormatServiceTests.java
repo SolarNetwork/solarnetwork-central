@@ -23,6 +23,8 @@
 package net.solarnetwork.central.datum.imp.standard.test;
 
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
+import static org.assertj.core.api.BDDAssertions.from;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.allOf;
@@ -33,7 +35,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -43,8 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import net.solarnetwork.central.datum.domain.GeneralNodeDatum;
 import net.solarnetwork.central.datum.imp.biz.DatumImportInputFormatService.ImportContext;
@@ -255,18 +255,18 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 				new ClassPathResource("test-data-03.csv", getClass()), "text/csv;charset=utf-8");
 
 		// when
-		try (ImportContext ctx = service.createImportContext(config, resource, null)) {
-			for ( @SuppressWarnings("unused")
-			GeneralNodeDatum d : ctx ) {
-				// nothing
+		thenExceptionOfType(DatumImportValidationException.class).isThrownBy(() -> {
+			try (ImportContext ctx = service.createImportContext(config, resource, null)) {
+				for ( @SuppressWarnings("unused")
+				GeneralNodeDatum d : ctx ) {
+					// nothing
+				}
 			}
-			fail("Should have thrown DatumImportValidationException");
-		} catch ( DatumImportValidationException e ) {
-			assertThat("Message", e.getMessage(), equalTo("Error parsing node ID from column 1."));
-			assertThat("Line number", e.getLineNumber(), equalTo(2L));
-			assertThat("Line", e.getLine(),
-					equalTo("A,/DE/G1/B600/GEN/1,2017-04-17 14:30:00,\"{\"\"watts\"\":11899}\""));
-		}
+		}).returns("Error parsing node ID from column 1.",
+				from(DatumImportValidationException::getMessage))
+				.returns(2L, from(DatumImportValidationException::getLineNumber))
+				.returns("A,/DE/G1/B600/GEN/1,2017-04-17 14:30:00,\"{\"\"watts\"\":11899}\"",
+						from(DatumImportValidationException::getLine));
 	}
 
 	@Test
@@ -293,7 +293,7 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 		}
 	}
 
-	@Test(expected = DatumImportValidationException.class)
+	@Test
 	public void badDstDate() throws IOException {
 		// given
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
@@ -306,26 +306,26 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 		// when
 		List<Double> progress = new ArrayList<>(8);
-		try (ImportContext ctx = service.createImportContext(config, resource,
-				new ProgressListener<DatumImportService>() {
 
-					@Override
-					public void progressChanged(DatumImportService context, double amountComplete) {
-						assertThat("Context is service", context, sameInstance(service));
-						progress.add(amountComplete);
-					}
-				})) {
-			for ( @SuppressWarnings("unused")
-			GeneralNodeDatum d : ctx ) {
-				// nothing
+		thenExceptionOfType(DatumImportValidationException.class).isThrownBy(() -> {
+			try (ImportContext ctx = service.createImportContext(config, resource,
+					new ProgressListener<DatumImportService>() {
+
+						@Override
+						public void progressChanged(DatumImportService context, double amountComplete) {
+							assertThat("Context is service", context, sameInstance(service));
+							progress.add(amountComplete);
+						}
+					})) {
+				for ( @SuppressWarnings("unused")
+				GeneralNodeDatum d : ctx ) {
+					// nothing
+				}
 			}
-		}
-
-		// then
-		Assert.fail("Should have thrown DatumImportValidationException.");
+		});
 	}
 
-	@Test(expected = DatumImportValidationException.class)
+	@Test
 	public void badDate() throws IOException {
 		// given
 		BasicCsvDatumImportInputFormatService service = new BasicCsvDatumImportInputFormatService();
@@ -338,23 +338,22 @@ public class BasicCsvDatumImportInputFormatServiceTests {
 
 		// when
 		List<Double> progress = new ArrayList<>(8);
-		try (ImportContext ctx = service.createImportContext(config, resource,
-				new ProgressListener<DatumImportService>() {
+		thenExceptionOfType(DatumImportValidationException.class).isThrownBy(() -> {
+			try (ImportContext ctx = service.createImportContext(config, resource,
+					new ProgressListener<DatumImportService>() {
 
-					@Override
-					public void progressChanged(DatumImportService context, double amountComplete) {
-						assertThat("Context is service", context, sameInstance(service));
-						progress.add(amountComplete);
-					}
-				})) {
-			for ( @SuppressWarnings("unused")
-			GeneralNodeDatum d : ctx ) {
-				// nothing
+						@Override
+						public void progressChanged(DatumImportService context, double amountComplete) {
+							assertThat("Context is service", context, sameInstance(service));
+							progress.add(amountComplete);
+						}
+					})) {
+				for ( @SuppressWarnings("unused")
+				GeneralNodeDatum d : ctx ) {
+					// nothing
+				}
 			}
-		}
-
-		// then
-		Assert.fail("Should have thrown DatumImportValidationException.");
+		});
 	}
 
 }

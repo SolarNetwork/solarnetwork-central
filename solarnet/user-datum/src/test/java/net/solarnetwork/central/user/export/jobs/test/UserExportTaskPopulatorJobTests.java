@@ -31,9 +31,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import net.solarnetwork.central.datum.export.domain.ScheduleType;
 import net.solarnetwork.central.user.export.jobs.UserExportJobsService;
 import net.solarnetwork.central.user.export.jobs.UserExportTaskPopulatorJob;
@@ -58,7 +58,7 @@ public class UserExportTaskPopulatorJobTests {
 		return job;
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		jobsService = EasyMock.createMock(UserExportJobsService.class);
 
@@ -69,7 +69,7 @@ public class UserExportTaskPopulatorJobTests {
 		EasyMock.replay(jobsService);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(jobsService);
 	}

@@ -24,6 +24,7 @@ package net.solarnetwork.central.security.jdbc.test;
 
 import static org.assertj.core.api.BDDAssertions.from;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenExceptionOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -32,9 +33,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -50,7 +50,7 @@ import net.solarnetwork.central.security.SecurityPolicySerializer;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.jdbc.JdbcUserDetailsService;
-import net.solarnetwork.central.test.AbstractJdbcDaoTestSupport;
+import net.solarnetwork.central.test.AbstractJUnit5JdbcDaoTestSupport;
 import net.solarnetwork.codec.ObjectMapperFactoryBean;
 
 /**
@@ -59,7 +59,7 @@ import net.solarnetwork.codec.ObjectMapperFactoryBean;
  * @author matt
  * @version 2.0
  */
-public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
+public class JdbcUserDetailsServiceTests extends AbstractJUnit5JdbcDaoTestSupport {
 
 	private static final String TEST_PASSWORD = "password";
 	private static final String TEST_ROLE = "ROLE_USER";
@@ -70,7 +70,7 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 	private JdbcUserDetailsService service;
 	private ObjectMapper objectMapper;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		ObjectMapperFactoryBean factory = new ObjectMapperFactoryBean();
 		List<JsonSerializer<?>> list = new ArrayList<JsonSerializer<?>>(1);
@@ -84,9 +84,10 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 		service.setDataSource(jdbcTemplate.getDataSource());
 	}
 
-	@Test(expected = UsernameNotFoundException.class)
+	@Test
 	public void noMatchingUser() {
-		service.loadUserByUsername("foobar");
+		thenExceptionOfType(UsernameNotFoundException.class)
+				.isThrownBy(() -> service.loadUserByUsername("foobar"));
 	}
 
 	@Override
@@ -102,13 +103,12 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 		final Long userId = 123L;
 		final String username = setupTestUser(userId);
 		UserDetails details = service.loadUserByUsername(username);
-		Assert.assertNotNull(details);
-		Assert.assertEquals("Username", username, details.getUsername());
 
 		Set<GrantedAuthority> auths = new HashSet<GrantedAuthority>();
 		auths.add(new SimpleGrantedAuthority(TEST_ROLE));
 
-		Assert.assertEquals("Roles", auths, details.getAuthorities());
+		then(details).isNotNull().returns(username, from(UserDetails::getUsername)).returns(auths,
+				from(UserDetails::getAuthorities));
 	}
 
 	private String setupTestToken(Long userId, BasicSecurityPolicy policy) {
@@ -136,16 +136,19 @@ public class JdbcUserDetailsServiceTests extends AbstractJdbcDaoTestSupport {
 		final String token = setupTestToken(userId, policy);
 
 		UserDetails details = service.loadUserByUsername(token);
-		Assert.assertNotNull(details);
-		Assert.assertEquals("Username", token, details.getUsername());
-		Assert.assertTrue("Is AuthenticatedToken", details instanceof SecurityToken);
-		SecurityToken authToken = (SecurityToken) details;
-		Assert.assertEquals("Token", token, authToken.getToken());
-		Assert.assertEquals("Token type", SecurityTokenType.User, authToken.getTokenType());
-		Assert.assertEquals("Token user ID", userId, authToken.getUserId());
-		Assert.assertNotNull("Token policy", authToken.getPolicy());
-		Assert.assertEquals("Token source IDs", policy.getSourceIds(),
-				authToken.getPolicy().getSourceIds());
+		// @formatter:off
+		then(details).isNotNull()
+			.returns(token, from(UserDetails::getUsername))
+			.isInstanceOfSatisfying(SecurityToken.class,t -> {
+				then(t)
+					.returns(token, from(SecurityToken::getToken))
+					.returns(SecurityTokenType.User, from(SecurityToken::getTokenType))
+					.returns(userId, from(SecurityToken::getUserId))
+					.extracting(SecurityToken::getPolicy)
+					.returns(policy.getSourceIds(), from(SecurityPolicy::getSourceIds))
+					;
+			});
+		// @formatter:on
 	}
 
 	@Test

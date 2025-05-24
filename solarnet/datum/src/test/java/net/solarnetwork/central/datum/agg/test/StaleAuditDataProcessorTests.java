@@ -1,21 +1,21 @@
 /* ==================================================================
  * StaleAuditDataProcessorTests.java - 3/07/2018 11:13:16 AM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,9 +36,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.easymock.EasyMock;
 import org.easymock.IAnswer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -48,7 +48,7 @@ import net.solarnetwork.test.Assertion;
 
 /**
  * Test cases for the {@link StaleAuditDataProcessor} class.
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -83,7 +83,7 @@ public class StaleAuditDataProcessorTests {
 	private TestProcessor job;
 	private List<Object> otherMocks;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		jdbcTemplate = EasyMock.createMock(JdbcOperations.class);
 
@@ -106,7 +106,7 @@ public class StaleAuditDataProcessorTests {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void teardown() {
 		EasyMock.verify(jdbcTemplate);
 		if ( !otherMocks.isEmpty() ) {

@@ -58,7 +58,7 @@ import net.solarnetwork.central.security.web.HandlerExceptionResolverRequestReje
  * Web security configuration.
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  */
 @Configuration
 @EnableWebSecurity
@@ -101,8 +101,7 @@ public class WebSecurityConfig {
 			service.setAuthoritiesByUsernameQuery(
 					JdbcUserDetailsService.DEFAULT_AUTHORITIES_BY_USERNAME_SQL);
 
-			DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-			provider.setUserDetailsService(service);
+			DaoAuthenticationProvider provider = new DaoAuthenticationProvider(service);
 			provider.setPasswordEncoder(passwordEncoder);
 			return provider;
 		}
