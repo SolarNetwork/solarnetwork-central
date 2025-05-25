@@ -44,7 +44,7 @@ public interface AsyncProcessor<T> {
 	 * 
 	 * @param item
 	 *        the item to cancel processing for
-	 * @returns {@literal true} if a pending task was cancelled
+	 * @return {@literal true} if a pending task was cancelled
 	 */
 	public boolean cancelAsyncProcessItem(T item);
 
