@@ -233,7 +233,7 @@ public class UserDatumInputController {
 		final MediaType mediaType = MediaType.parseMediaType(contentType);
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 

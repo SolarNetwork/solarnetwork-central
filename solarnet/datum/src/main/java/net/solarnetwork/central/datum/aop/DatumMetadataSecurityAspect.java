@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -305,11 +306,11 @@ public class DatumMetadataSecurityAspect extends AuthorizationSupport {
 		Set<String> capitalized;
 		if ( locationMetadataAdminRoles.size() == 1 ) {
 			capitalized = Collections
-					.singleton(locationMetadataAdminRoles.iterator().next().toUpperCase());
+					.singleton(locationMetadataAdminRoles.iterator().next().toUpperCase(Locale.ENGLISH));
 		} else {
 			capitalized = new HashSet<>(locationMetadataAdminRoles.size());
 			for ( String role : locationMetadataAdminRoles ) {
-				capitalized.add(role.toUpperCase());
+				capitalized.add(role.toUpperCase(Locale.ENGLISH));
 			}
 		}
 		this.locationMetadataAdminRoles = capitalized;

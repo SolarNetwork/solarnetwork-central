@@ -1210,7 +1210,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		String devType = deviceType.getKey();
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			devType = devType.toUpperCase();
+			devType = devType.toUpperCase(Locale.ENGLISH);
 		}
 
 		String compId = componentId;

@@ -835,7 +835,7 @@ public class FroniusCloudDatumStreamService extends BaseRestOperationsCloudDatum
 
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			result = result.toUpperCase();
+			result = result.toUpperCase(Locale.ENGLISH);
 		}
 
 		return result;

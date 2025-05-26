@@ -23,6 +23,7 @@
 package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -79,7 +80,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 				auth = authorizationDao.getForToken(cp.getUserId(), idTag);
 				if ( auth == null && wildcardIdTagPrefixes != null
 						&& !wildcardIdTagPrefixes.isEmpty() ) {
-					final String idTagLc = idTag.toLowerCase();
+					final String idTagLc = idTag.toLowerCase(Locale.ENGLISH);
 					for ( String prefix : wildcardIdTagPrefixes ) {
 						if ( idTagLc.startsWith(prefix) ) {
 							auth = authorizationDao.getForToken(cp.getUserId(), prefix + "*");
@@ -136,7 +137,7 @@ public class OcppAuthorizationService extends BasicIdentifiable implements Autho
 	 */
 	public void setWildcardIdTagPrefixes(Set<String> wildcardIdTagPrefixes) {
 		Set<String> prefixes = (wildcardIdTagPrefixes != null ? wildcardIdTagPrefixes.stream()
-				.map(p -> p.toLowerCase()).collect(Collectors.toUnmodifiableSet()) : null);
+				.map(p -> p.toLowerCase(Locale.ENGLISH)).collect(Collectors.toUnmodifiableSet()) : null);
 		this.wildcardIdTagPrefixes = prefixes;
 	}
 

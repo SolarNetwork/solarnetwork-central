@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,7 +155,7 @@ public class BulkJsonDataCollector extends AbstractDataCollector {
 		AuthenticatedNode authNode = getAuthenticatedNode(true);
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 

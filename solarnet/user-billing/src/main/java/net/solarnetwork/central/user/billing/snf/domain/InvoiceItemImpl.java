@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import net.solarnetwork.central.dao.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
@@ -119,7 +120,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	@Override
 	public String getItemType() {
 		InvoiceItemType type = item.getItemType();
-		return (type != null ? type.toString().toUpperCase() : null);
+		return (type != null ? type.toString().toUpperCase(Locale.ENGLISH) : null);
 	}
 
 	@Override

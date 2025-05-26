@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.datum.biz.DatumProcessor;
@@ -268,7 +269,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 			}
 		}
 		if ( unit.length() > 1 ) {
-			unit = unit.toUpperCase();
+			unit = unit.toUpperCase(Locale.ENGLISH);
 			if ( unit.startsWith("K") ) {
 				n = n.movePointRight(3);
 			}

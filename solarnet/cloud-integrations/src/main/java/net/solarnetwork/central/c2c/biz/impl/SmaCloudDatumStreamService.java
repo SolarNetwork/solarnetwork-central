@@ -617,7 +617,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 
 		Boolean ucSourceId = datumStream.serviceProperty(UPPER_CASE_SOURCE_ID_SETTING, Boolean.class);
 		if ( ucSourceId != null && ucSourceId ) {
-			result = result.toUpperCase();
+			result = result.toUpperCase(Locale.ENGLISH);
 		}
 
 		return result;
@@ -677,7 +677,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 					for ( Entry<?, ?> e : m.entrySet() ) {
 						String key = e.getKey().toString();
 						propVal = e.getValue();
-						populateSampleProp(datum, ref, propVal, "_" + key.toLowerCase());
+						populateSampleProp(datum, ref, propVal, "_" + key.toLowerCase(Locale.ENGLISH));
 					}
 				} else {
 					populateSampleProp(datum, ref, propVal, null);

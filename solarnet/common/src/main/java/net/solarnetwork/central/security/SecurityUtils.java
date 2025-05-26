@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -171,7 +172,7 @@ public class SecurityUtils {
 					null);
 		}
 		for ( GrantedAuthority role : auth.getAuthorities() ) {
-			if ( roles.contains(role.getAuthority().toUpperCase()) ) {
+			if ( roles.contains(role.getAuthority().toUpperCase(Locale.ENGLISH)) ) {
 				return;
 			}
 		}
@@ -195,7 +196,7 @@ public class SecurityUtils {
 		}
 		Set<String> rolesCopy = new HashSet<>(roles);
 		for ( GrantedAuthority role : auth.getAuthorities() ) {
-			if ( !rolesCopy.remove(role.getAuthority().toUpperCase()) ) {
+			if ( !rolesCopy.remove(role.getAuthority().toUpperCase(Locale.ENGLISH)) ) {
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
 			if ( rolesCopy.isEmpty() ) {

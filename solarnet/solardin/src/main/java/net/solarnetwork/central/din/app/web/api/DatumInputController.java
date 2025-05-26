@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.zip.GZIPInputStream;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,8 +94,8 @@ public class DatumInputController {
 	 * @throws IOException
 	 *         if an IO error occurs
 	 */
-	@RequestMapping(value = "", method = RequestMethod.POST, consumes = {
-			MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
+	@RequestMapping(value = "", method = RequestMethod.POST,
+			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_XML_VALUE })
 	public ResponseEntity<Result<Collection<DatumId>>> postDatum(
 			@PathVariable("endpointId") UUID endpointId,
 			@RequestHeader(value = "Content-Type", required = true) String contentType,
@@ -105,7 +106,7 @@ public class DatumInputController {
 		final MediaType mediaType = MediaType.parseMediaType(contentType);
 
 		InputStream input = in;
-		if ( encoding != null && encoding.toLowerCase().contains("gzip") ) {
+		if ( encoding != null && encoding.toLowerCase(Locale.ENGLISH).contains("gzip") ) {
 			input = new GZIPInputStream(in);
 		}
 
