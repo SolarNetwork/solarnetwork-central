@@ -193,7 +193,7 @@ public class JdbcOAuth2AuthorizedClientService
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId,
 			String principalName) {
 		final Long userId = userIdFromSystemIdentifier(clientRegistrationId);

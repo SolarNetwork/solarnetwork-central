@@ -136,7 +136,7 @@ public class SecurityPolicyEnforcer implements InvocationHandler {
 	 *        The policy enforcer.
 	 * @return A new wrapped object.
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T createSecurityPolicyProxy(SecurityPolicyEnforcer enforcer) {
 		Class<?>[] interfaces = ClassUtils.getAllInterfaces(enforcer.getDelegate());
 		return (T) Proxy.newProxyInstance(enforcer.getDelegate().getClass().getClassLoader(), interfaces,

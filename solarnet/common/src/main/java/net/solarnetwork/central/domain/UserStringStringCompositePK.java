@@ -211,7 +211,7 @@ public class UserStringStringCompositePK extends BasePK implements
 		return keyComponentIsAssigned(2);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
 	public <T> T keyComponentValue(int index, Object val) {
 		try {

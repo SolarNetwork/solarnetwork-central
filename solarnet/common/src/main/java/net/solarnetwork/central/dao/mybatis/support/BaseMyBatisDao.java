@@ -87,6 +87,7 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 	 *        the result type
 	 * @return the first result, or {@code null} if none matched the query
 	 */
+	@SuppressWarnings("TypeParameterUnusedInFormals")
 	protected final <E> E selectFirst(String statement, Object parameters) {
 		List<E> results = getSqlSession().selectList(statement, parameters, FIRST_ROW);
 		if ( !results.isEmpty() ) {

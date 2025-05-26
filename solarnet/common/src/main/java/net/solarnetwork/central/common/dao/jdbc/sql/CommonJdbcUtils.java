@@ -76,7 +76,7 @@ public final class CommonJdbcUtils {
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T getArray(ResultSet rs, int colNum) throws SQLException {
 		Array a = rs.getArray(colNum);
 		if ( a == null ) {
@@ -97,7 +97,7 @@ public final class CommonJdbcUtils {
 	 * @throws ClassCastException
 	 *         if a casting error occurs
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	public static <T> T arrayValue(Object o) {
 		if ( o instanceof Array a ) {
 			try {

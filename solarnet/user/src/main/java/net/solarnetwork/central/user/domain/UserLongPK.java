@@ -164,7 +164,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
 	public <T> T keyComponentValue(int index, Object val) {
 		try {

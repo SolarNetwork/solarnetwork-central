@@ -170,7 +170,7 @@ public final class UserUuidPK extends BasePK
 		return keyComponentIsAssigned(1);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "TypeParameterUnusedInFormals" })
 	@Override
 	public <T> T keyComponentValue(int index, Object val) {
 		try {
