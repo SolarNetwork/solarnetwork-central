@@ -192,8 +192,8 @@ public class BasicSolarNodeOwnership
 				&& Objects.equals(userId, other.getUserId())
 				&& Objects.equals(country, other.getCountry())
 				&& Objects.equals(zone, other.getZone())
-				&& Objects.equals(requiresAuthorization, other.isRequiresAuthorization())
-				&& Objects.equals(archived, other.isArchived());
+				&& requiresAuthorization == other.isRequiresAuthorization()
+				&& archived == other.isArchived();
 		// @formatter:on
 	}
 
