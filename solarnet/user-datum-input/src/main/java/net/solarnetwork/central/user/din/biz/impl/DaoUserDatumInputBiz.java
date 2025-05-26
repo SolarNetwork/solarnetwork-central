@@ -240,6 +240,7 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 		return sourceId;
 	}
 
+	@SuppressWarnings("UnnecessaryStringBuilder")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public TransformOutput previewTransform(UserLongCompositePK id, UUID endpointId,

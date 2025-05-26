@@ -269,6 +269,7 @@ public class DaoUserInstructionInputBiz implements UserInstructionInputBiz {
 		return nodeIds;
 	}
 
+	@SuppressWarnings("UnnecessaryStringBuilder")
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public TransformOutput previewTransform(UserUuidPK id, MimeType contentType, InputStream in,
