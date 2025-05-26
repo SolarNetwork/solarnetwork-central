@@ -117,8 +117,6 @@ public abstract class JobSupport implements ManagedJob {
 	 * @param taskName
 	 *        a descriptive name for the job task, to use in logging
 	 * @return the {@literal true} if all tasks were completed
-	 * @throws Exception
-	 *         if any error occurs
 	 * @since 1.7
 	 */
 	protected final boolean executeParallelJob(final String taskName) {
