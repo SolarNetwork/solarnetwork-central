@@ -95,7 +95,7 @@ import net.solarnetwork.util.StringUtils;
  * SMA implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -281,12 +281,12 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 				req -> fromUri(resolveBaseUrl(integration, BASE_URI))
 						.path(SmaCloudIntegrationService.LIST_SYSTEMS_PATH)
 						.buildAndExpand(integration.getServiceProperties()).toUri(),
-				res -> parseSystems(res.getBody(), null));
+				res -> parseSystems(res.getBody()));
 
 		return result;
 	}
 
-	private static List<CloudDataValue> parseSystems(JsonNode json, Map<String, ?> filters) {
+	private static List<CloudDataValue> parseSystems(JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
 		}
@@ -297,13 +297,12 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 		*/
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode sysNode : json.path("plants") ) {
-			result.addAll(parseSystem(sysNode, filters, null));
+			result.addAll(parseSystem(sysNode, null));
 		}
 		return result;
 	}
 
-	private static List<CloudDataValue> parseSystem(JsonNode json, Map<String, ?> filters,
-			Collection<CloudDataValue> children) {
+	private static List<CloudDataValue> parseSystem(JsonNode json, Collection<CloudDataValue> children) {
 		/*- EXAMPLE JSON:
 		    {
 		      "plantId": "7190000",
@@ -585,9 +584,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 											.buildAndExpand(devPlan.deviceId,
 													measurementSetEntry.getKey(), queryPeriod.getKey())
 											.toUri();
-								},
-								res -> parseDeviceDatum(res.getBody(), usedQueryFilter, devPlan.zone,
-										devPlan.systemId, devPlan.deviceId,
+								}, res -> parseDeviceDatum(res.getBody(), usedQueryFilter, devPlan.zone,
 										measurementSetEntry.getValue(), ds, sourceId, resultDatum));
 					}
 				}
@@ -624,8 +621,7 @@ public class SmaCloudDatumStreamService extends BaseRestOperationsCloudDatumStre
 	}
 
 	private List<GeneralDatum> parseDeviceDatum(JsonNode json, CloudDatumStreamQueryFilter filter,
-			ZoneId zone, String systemId, String deviceId, List<ValueRef> valueRefs,
-			CloudDatumStreamConfiguration ds, String sourceId,
+			ZoneId zone, List<ValueRef> valueRefs, CloudDatumStreamConfiguration ds, String sourceId,
 			Map<String, SortedMap<Instant, GeneralDatum>> resultDatum) {
 		/*- EXAMPLE JSON:
 		{

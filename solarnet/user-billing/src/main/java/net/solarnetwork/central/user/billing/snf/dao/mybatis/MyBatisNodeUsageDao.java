@@ -125,7 +125,7 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 		Map<String, Object> params = new LinkedHashMap<>(2);
 		params.put("userId", userId);
 		params.put("startDate", startDate);
-		params.put("endDate", startDate.plusMonths(1));
+		params.put("endDate", endDate);
 		return selectList(queryName, params, null, null);
 	}
 

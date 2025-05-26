@@ -443,7 +443,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
 
-		SnfInvoiceDeliverer deliverer = invoiceDeliverer(invoice.getUserId());
+		SnfInvoiceDeliverer deliverer = invoiceDeliverer();
 		if ( deliverer == null ) {
 			String msg = format("No invoice delivery service available to delivery invoice %d",
 					invoiceId.getId());
@@ -479,7 +479,7 @@ public class DefaultSnfInvoicingSystem implements SnfInvoicingSystem, SnfTaxCode
 		}
 	}
 
-	private SnfInvoiceDeliverer invoiceDeliverer(Long userId) {
+	private SnfInvoiceDeliverer invoiceDeliverer() {
 		Iterable<SnfInvoiceDeliverer> iterable = getDeliveryServices();
 		Iterator<SnfInvoiceDeliverer> itr = (iterable != null ? iterable.iterator() : null);
 		return (itr != null && itr.hasNext() ? itr.next() : null);

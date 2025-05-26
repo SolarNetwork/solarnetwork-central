@@ -40,7 +40,7 @@ import net.solarnetwork.central.oscp.domain.CapacityProviderConfiguration;
  * Insert {@link CapacityProviderConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class InsertCapacityProviderConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -99,7 +99,7 @@ public final class InsertCapacityProviderConfiguration implements PreparedStatem
 		stmt.setString(++p, entity.getName());
 		stmt.setString(++p, entity.getBaseUrl());
 
-		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

@@ -178,7 +178,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			return headers;
 		}
 
-		private CellProcessor processorForDatumProperty(String key, Object value) {
+		private CellProcessor processorForDatumProperty(Object value) {
 			if ( value instanceof java.time.Instant || value instanceof ZonedDateTime
 					|| value instanceof LocalDateTime ) {
 				return INSTANT_CELL_PROCESSOR;
@@ -207,7 +207,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 				if ( CSV_CORE_HEADERS.contains(me.getKey()) ) {
 					continue;
 				}
-				CellProcessor proc = processorForDatumProperty(me.getKey(), me.getValue());
+				CellProcessor proc = processorForDatumProperty(me.getValue());
 				processors[idx++] = (proc != null ? new Optional(proc) : null);
 			}
 			return processors;
@@ -303,7 +303,7 @@ public class CsvDatumExportOutputFormatService extends BaseDatumExportOutputForm
 			headerSet.add(key);
 			CellProcessor[] newProcessors = new CellProcessor[cellProcessors.length + 1];
 			System.arraycopy(cellProcessors, 0, newProcessors, 0, cellProcessors.length);
-			newProcessors[cellProcessors.length] = processorForDatumProperty(key, value);
+			newProcessors[cellProcessors.length] = processorForDatumProperty(value);
 			cellProcessors = newProcessors;
 		}
 

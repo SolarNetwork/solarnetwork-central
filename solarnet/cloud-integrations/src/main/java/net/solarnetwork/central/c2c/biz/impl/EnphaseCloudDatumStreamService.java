@@ -101,7 +101,7 @@ import net.solarnetwork.util.StringUtils;
  * Enphase implementation of {@link CloudDatumStreamService}.
  *
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatumStreamService {
 
@@ -292,7 +292,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 					res -> {
 						var json = res.getBody();
 						pagination.parseJson(json);
-						return parseSystems(json, null);
+						return parseSystems(json);
 					});
 			if ( pageResults != null ) {
 				if ( result == null ) {
@@ -351,7 +351,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		}
 	}
 
-	private static List<CloudDataValue> parseSystems(JsonNode json, Map<String, ?> filters) {
+	private static List<CloudDataValue> parseSystems(JsonNode json) {
 		if ( json == null ) {
 			return Collections.emptyList();
 		}
@@ -388,13 +388,12 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		*/
 		final var result = new ArrayList<CloudDataValue>(4);
 		for ( JsonNode sysNode : json.path("systems") ) {
-			result.addAll(parseSystem(sysNode, filters, null));
+			result.addAll(parseSystem(sysNode, null));
 		}
 		return result;
 	}
 
-	private static List<CloudDataValue> parseSystem(JsonNode json, Map<String, ?> filters,
-			Collection<CloudDataValue> children) {
+	private static List<CloudDataValue> parseSystem(JsonNode json, Collection<CloudDataValue> children) {
 		/*- EXAMPLE JSON:
 		    {
 		      "system_id": 2875,
@@ -715,8 +714,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 			final Map<String, String> sourceIdMap = servicePropertyStringMap(ds, SOURCE_ID_MAP_SETTING);
 
 			final List<GeneralDatum> resultDatum = new ArrayList<>(16);
-			final Map<Long, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(integration, ds,
-					sourceIdMap, valueProps);
+			final Map<Long, SystemQueryPlan> queryPlans = resolveSystemQueryPlans(ds, sourceIdMap,
+					valueProps);
 
 			final var lastReportDate = new MutableLong(endDate.getEpochSecond());
 
@@ -737,8 +736,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 													filter.getEndDate()).getKey())
 									.buildAndExpand(queryPlan.systemId).toUri(),
 							res -> {
-								var result = parseSiteInverterDatum(res.getBody(), queryPlan.systemId,
-										systemInvRefs, ds, sourceIdMap, usedQueryFilter);
+								var result = parseSiteInverterDatum(res.getBody(), systemInvRefs, ds,
+										sourceIdMap, usedQueryFilter);
 								updateLastReportDate(lastReportDate, res.getBody());
 								return result;
 							});
@@ -763,8 +762,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 											usedQueryFilter.getEndDate().getEpochSecond())
 									.buildAndExpand(queryPlan.systemId).toUri(),
 							res -> {
-								var result = parseSiteMeterDatum(res.getBody(), queryPlan.systemId,
-										systemMetRefs, ds, sourceIdMap);
+								var result = parseSiteMeterDatum(res.getBody(), systemMetRefs, ds,
+										sourceIdMap);
 								updateLastReportDate(lastReportDate, res.getBody());
 								return result;
 							});
@@ -791,9 +790,8 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		});
 	}
 
-	private Map<Long, SystemQueryPlan> resolveSystemQueryPlans(CloudIntegrationConfiguration integration,
-			CloudDatumStreamConfiguration datumStream, Map<String, String> sourceIdMap,
-			List<CloudDatumStreamPropertyConfiguration> propConfigs) {
+	private Map<Long, SystemQueryPlan> resolveSystemQueryPlans(CloudDatumStreamConfiguration datumStream,
+			Map<String, String> sourceIdMap, List<CloudDatumStreamPropertyConfiguration> propConfigs) {
 		final var result = new LinkedHashMap<Long, SystemQueryPlan>(2);
 		@SuppressWarnings("unchecked")
 		List<Map<String, ?>> placeholderSets = resolvePlaceholderSets(
@@ -850,7 +848,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return result;
 	}
 
-	private List<GeneralDatum> parseSiteInverterDatum(JsonNode json, Long systemId, List<ValueRef> refs,
+	private List<GeneralDatum> parseSiteInverterDatum(JsonNode json, List<ValueRef> refs,
 			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap,
 			CloudDatumStreamQueryFilter filter) {
 		/*- EXAMPLE JSON:
@@ -943,7 +941,7 @@ public class EnphaseCloudDatumStreamService extends BaseRestOperationsCloudDatum
 		return false;
 	}
 
-	private List<GeneralDatum> parseSiteMeterDatum(JsonNode json, Long systemId, List<ValueRef> refs,
+	private List<GeneralDatum> parseSiteMeterDatum(JsonNode json, List<ValueRef> refs,
 			CloudDatumStreamConfiguration ds, Map<String, String> sourceIdMap) {
 		/*- EXAMPLE JSON:
 			{

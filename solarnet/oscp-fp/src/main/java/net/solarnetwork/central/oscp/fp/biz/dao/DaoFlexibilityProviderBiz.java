@@ -119,7 +119,7 @@ import oscp.v20.VersionUrl;
  * DAO based implementation of {@link FlexibilityProviderBiz}.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 
@@ -602,6 +602,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			doWork20(config);
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(CapacityProviderConfiguration conf) {
 			GroupCapacityComplianceError msg = new GroupCapacityComplianceError(message);
 			if ( blocks != null ) {
@@ -635,6 +636,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			doWork20(config);
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(CapacityProviderConfiguration conf) {
 			AdjustGroupCapacityForecast msg = forecast.toOscp20AdjustGroupCapacityValue(groupIdentifier);
 			post(ADJUST_GROUP_CAPACITY_FORECAST_URL_PATH, msg);
@@ -708,6 +710,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			return ctx;
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(CapacityOptimizerConfiguration conf) {
 			UpdateGroupCapacityForecast msg = forecast
 					.toOscp20UpdateGroupCapacityValue(group.getIdentifier());
@@ -780,6 +783,7 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 			doWork20(config);
 		}
 
+		@SuppressWarnings("UnusedVariable")
 		private void doWork20(C conf) {
 			HandshakeAcknowledge ack = new HandshakeAcknowledge();
 			if ( settings != null ) {

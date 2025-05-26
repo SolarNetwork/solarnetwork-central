@@ -197,7 +197,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 						handleNode(nodeId, root, checkVersion);
 					} else {
 						// V2 stream datum array
-						handleStreamDatumNode(nodeId, root);
+						handleStreamDatumNode(root);
 					}
 					break;
 				} catch ( RepeatableTaskException | TransactionException e ) {
@@ -248,7 +248,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 		}
 	}
 
-	private void handleStreamDatumNode(final Long nodeId, final JsonNode node) {
+	private void handleStreamDatumNode(final JsonNode node) {
 		try {
 			StreamDatum d = objectMapper.treeToValue(node, StreamDatum.class);
 			dataCollectorBiz.postStreamDatum(singleton(d));

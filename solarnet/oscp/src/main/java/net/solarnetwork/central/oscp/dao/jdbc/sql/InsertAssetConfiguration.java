@@ -50,7 +50,7 @@ import net.solarnetwork.central.oscp.domain.StatisticType;
  * Insert {@link AssetConfiguration} entities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class InsertAssetConfiguration implements PreparedStatementCreator, SqlProvider {
 
@@ -139,7 +139,7 @@ public final class InsertAssetConfiguration implements PreparedStatementCreator,
 		p = prepareCodedValue(stmt, p, energy != null ? energy.getDirection() : null,
 				EnergyDirection.Import, false);
 
-		p = CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
+		CommonSqlUtils.prepareJsonString(entity.getServiceProps(), stmt, p, true);
 
 		return stmt;
 	}

@@ -275,7 +275,7 @@ public class OutstationService
 
 			final Runnable task = () -> {
 				try {
-					operateBinaryControl(command, index, opType, config);
+					operateBinaryControl(command, index, config);
 				} catch ( Exception e ) {
 					userEventAppenderBiz.addEvent(auth.getUserId(),
 							Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
@@ -299,30 +299,30 @@ public class OutstationService
 		@Override
 		public CommandStatus operate(AnalogOutputInt16 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputInt16", command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputInt16", command.value);
 		}
 
 		@Override
 		public CommandStatus operate(AnalogOutputInt32 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputInt32", command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputInt32", command.value);
 		}
 
 		@Override
 		public CommandStatus operate(AnalogOutputFloat32 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputFloat32", command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputFloat32", command.value);
 		}
 
 		@Override
 		public CommandStatus operate(AnalogOutputDouble64 command, int index, Database database,
 				OperateType opType) {
-			return handleAnalogOperation(command, index, database, "AnalogOutputDouble64",
-					command.value);
+			return handleAnalogOperation(index, database, "AnalogOutputDouble64", command.value);
 		}
 
-		private CommandStatus handleAnalogOperation(Object command, int index, Database database,
-				String opDescription, Number value) {
+		private CommandStatus handleAnalogOperation(int index,
+				@SuppressWarnings("UnusedVariable") Database database, String opDescription,
+				Number value) {
 			ServerControlConfiguration config = controlConfigForIndex(ControlType.Analog, index);
 			if ( config == null ) {
 				userEventAppenderBiz.addEvent(auth.getUserId(),
@@ -340,7 +340,7 @@ public class OutstationService
 
 			final Runnable task = () -> {
 				try {
-					operateAnalogControl(command, index, opDescription, config, value);
+					operateAnalogControl(index, opDescription, config, value);
 				} catch ( Exception e ) {
 					userEventAppenderBiz.addEvent(auth.getUserId(),
 							Dnp3UserEvents.eventWithEntity(config, INSTRUCTION_TAGS,
@@ -379,7 +379,7 @@ public class OutstationService
 
 	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
-			OperateType opType, ServerControlConfiguration config) {
+			ServerControlConfiguration config) {
 		Instruction instr = null;
 		switch (command.opType) {
 			case LATCH_ON:
@@ -398,7 +398,7 @@ public class OutstationService
 		return issueInstruction("CROB " + command.opType, index, config, instr);
 	}
 
-	private InstructionStatus operateAnalogControl(Object type, int index, String opDescription,
+	private InstructionStatus operateAnalogControl(int index, String opDescription,
 			ServerControlConfiguration config, Number value) {
 		Instruction instr = new Instruction(INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER, now());
 		instr.addParameter(config.getControlId(), value.toString());

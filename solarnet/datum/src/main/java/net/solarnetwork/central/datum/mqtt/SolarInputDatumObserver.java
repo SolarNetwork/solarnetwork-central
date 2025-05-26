@@ -62,7 +62,7 @@ import net.solarnetwork.domain.datum.StreamDatum;
  * Observer of SolarInput datum streams.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 		implements NodeEventObservationRegistrar<ObjectDatum> {
@@ -394,6 +394,7 @@ public class SolarInputDatumObserver extends BaseMqttConnectionObserver
 
 	private ObjectDatumStreamMetadata metadataForStreamId(Long userId, UUID id) {
 		BasicDatumCriteria criteria = new BasicDatumCriteria();
+		criteria.setUserId(userId);
 		criteria.setStreamId(id);
 		ObjectDatumStreamMetadata meta = datumStreamMetadataDao.findStreamMetadata(criteria);
 		return (meta != null && meta.getKind() == ObjectDatumKind.Node ? meta : null);

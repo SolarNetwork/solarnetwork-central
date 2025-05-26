@@ -74,6 +74,7 @@ public class DatumCriteriaValidator implements Validator {
 		}
 	}
 
+	@SuppressWarnings("UnusedVariable")
 	private void validateCriteria(DatumCriteria c, Errors errors, DatumReadingType readingType) {
 		if ( c.isMostRecent() ) {
 			errors.rejectValue("mostRecent", "error.filter.reading.mostRecent.invalid",
