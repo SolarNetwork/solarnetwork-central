@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.inin.biz.impl;
 
-import static net.solarnetwork.central.biz.UserEventAppenderBiz.addEvent;
+import static net.solarnetwork.central.biz.UserEventAppenderBiz.addUserEvent;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
@@ -219,7 +219,7 @@ public class DaoInstructionInputEndpointBiz
 				requireNonNullArgument(contentType, "contentType")) ) {
 			String msg = "Transform service %s does not support input type %s with %s."
 					.formatted(xformServiceId, contentType, in.getClass().getSimpleName());
-			addEvent(userEventAppenderBiz, userId,
+			addUserEvent(userEventAppenderBiz, userId,
 					importErrorEvent(msg, endpoint, xform, null, contentType, null, parameters));
 			throw new IllegalArgumentException(msg);
 		}
@@ -245,7 +245,7 @@ public class DaoInstructionInputEndpointBiz
 			instructions = xformService.transformInput(in, contentType, xform, params);
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
-			addEvent(userEventAppenderBiz, userId,
+			addUserEvent(userEventAppenderBiz, userId,
 					importErrorEvent(msg, endpoint, xform, null, contentType, null, parameters));
 			if ( e instanceof IOException ioe ) {
 				throw ioe;
@@ -279,8 +279,8 @@ public class DaoInstructionInputEndpointBiz
 					nodeId);
 			if ( !userId.equals(owner.getUserId()) ) {
 				var ex = new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
-				addEvent(userEventAppenderBiz, userId, importErrorEvent(ex.getMessage(), endpoint, xform,
-						null, contentType, null, parameters));
+				addUserEvent(userEventAppenderBiz, userId, importErrorEvent(ex.getMessage(), endpoint,
+						xform, null, contentType, null, parameters));
 				throw ex;
 			}
 			instructionCount++;
@@ -290,7 +290,7 @@ public class DaoInstructionInputEndpointBiz
 		for ( NodeInstruction instruction : instructions ) {
 			var queued = instructor.queueInstruction(instruction.getNodeId(), instruction);
 			if ( queued != null ) {
-				addEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, xform, null,
+				addUserEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, xform, null,
 						contentType, null, parameters, queued, INSTRUCTION_IMPORTED_TAG));
 				result.add(queued);
 			}
@@ -326,7 +326,7 @@ public class DaoInstructionInputEndpointBiz
 		if ( !xformService.supportsOutputType(requireNonNullArgument(resType, "contentType")) ) {
 			String msg = "Transform service %s does not support output type %s."
 					.formatted(xformServiceId, resType);
-			addEvent(userEventAppenderBiz, userId,
+			addUserEvent(userEventAppenderBiz, userId,
 					importErrorEvent(msg, endpoint, null, xform, null, resType, parameters));
 			throw new IllegalArgumentException(msg);
 		}
@@ -362,12 +362,12 @@ public class DaoInstructionInputEndpointBiz
 						var instr = instructor.getInstruction(instruction.getId());
 						if ( instr == null ) {
 							String msg = "Instruction [%d] not found".formatted(instruction.getId());
-							addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, null,
-									xform, null, resType, parameters));
+							addUserEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint,
+									null, xform, null, resType, parameters));
 							throw new IllegalStateException(msg);
 						} else if ( instr.getState() == InstructionState.Completed
 								|| instr.getState() == InstructionState.Declined ) {
-							addEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, null,
+							addUserEvent(userEventAppenderBiz, userId, importEvent(null, endpoint, null,
 									xform, null, resType, parameters, instr, INSTRUCTION_EXECUTED_TAG));
 							results.put(instruction.getId(), instr);
 						}
@@ -394,7 +394,7 @@ public class DaoInstructionInputEndpointBiz
 				instr.setResultParameters(INSTRUCTION_EXEC_TIMEOUT_MESSAGE);
 				String msg = "Timeout waiting for instruction [%d] to complete."
 						.formatted(instr.getId());
-				addEvent(userEventAppenderBiz, userId,
+				addUserEvent(userEventAppenderBiz, userId,
 						importErrorEvent(msg, endpoint, null, xform, null, resType, parameters));
 			}
 			finalInstructions.add(instr);
@@ -420,7 +420,7 @@ public class DaoInstructionInputEndpointBiz
 			xformService.transformOutput(finalInstructions, resType, xform, params, out);
 		} catch ( Exception e ) {
 			String msg = "Error executing transform: " + e.getMessage();
-			addEvent(userEventAppenderBiz, userId,
+			addUserEvent(userEventAppenderBiz, userId,
 					importErrorEvent(msg, endpoint, null, xform, null, resType, parameters));
 			if ( e instanceof IOException ioe ) {
 				throw ioe;

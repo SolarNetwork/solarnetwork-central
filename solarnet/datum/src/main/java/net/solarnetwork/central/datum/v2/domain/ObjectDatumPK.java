@@ -83,6 +83,7 @@ public class ObjectDatumPK extends DatumPK implements GeneralObjectDatumKey {
 	 *
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public int compareTo(DatumPK o) {
 		if ( o instanceof ObjectDatumPK id && objectId != null ) {

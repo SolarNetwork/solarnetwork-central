@@ -1,27 +1,28 @@
 /* ==================================================================
  * DatumTestUtils.java - 30/10/2020 2:26:18 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
 
 package net.solarnetwork.central.datum.v2.dao.jdbc.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContaining;
 import static org.hamcrest.Matchers.equalTo;
@@ -59,9 +60,9 @@ import net.solarnetwork.central.datum.v2.domain.ReadingDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAggregateDatum;
 import net.solarnetwork.central.datum.v2.domain.StaleAuditDatum;
 import net.solarnetwork.central.datum.v2.support.DatumCsvIterator;
-import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.codec.JsonUtils;
 import net.solarnetwork.domain.Location;
+import net.solarnetwork.domain.datum.Aggregation;
 import net.solarnetwork.domain.datum.DatumSamples;
 import net.solarnetwork.domain.datum.DatumStreamMetadata;
 import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
@@ -70,7 +71,7 @@ import net.solarnetwork.util.NumberUtils;
 
 /**
  * Helper methods for datum tests.
- * 
+ *
  * @author matt
  * @version 1.3
  */
@@ -82,7 +83,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Create a {@link Matcher} for an array of {@link BigDecimal} values.
-	 * 
+	 *
 	 * @param nums
 	 *        the string numbers, which will be parsed as {@link BigDecimal}
 	 *        instances
@@ -95,7 +96,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one datum stream metadata has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -125,7 +126,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one datum has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -165,7 +166,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one datum auxiliary has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -188,7 +189,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one audit datum has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -225,7 +226,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one aggregate datum has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -260,7 +261,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one stale aggregate datum has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        the assertion message prefix
 	 * @param result
@@ -280,7 +281,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one stale audit datum has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        the assertion message prefix
 	 * @param result
@@ -299,7 +300,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one reading datum has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -315,7 +316,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one record counts has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -337,12 +338,12 @@ public final class DatumTestUtils {
 
 	/**
 	 * Delete from common datum tables.
-	 * 
+	 *
 	 * <p>
 	 * This is designed to help with tests that circumvent test transaction
 	 * auto-rollback.
 	 * </p>
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC operations to use
 	 */
@@ -370,7 +371,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Get a function that remaps the stream ID of {@link AggregateDatum}.
-	 * 
+	 *
 	 * @param streamId
 	 *        the stream ID to remap datum to
 	 * @return the function
@@ -384,7 +385,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Assert one location has values that match another.
-	 * 
+	 *
 	 * @param prefix
 	 *        an assertion message prefix
 	 * @param result
@@ -409,7 +410,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Get an iterator for Datum parsed from a classpath CSV file.
-	 * 
+	 *
 	 * @param clazz
 	 *        the class to load the CSV resource from
 	 * @param resource
@@ -422,9 +423,10 @@ public final class DatumTestUtils {
 	public static Iterator<Datum> datumResourceIterator(Class<?> clazz, String resource,
 			ObjectDatumStreamMetadataProvider metaProvider) {
 		try {
-			return new DatumCsvIterator(new CsvListReader(
-					new InputStreamReader(clazz.getResourceAsStream(resource), "UTF-8"),
-					CsvPreference.STANDARD_PREFERENCE), metaProvider);
+			return new DatumCsvIterator(
+					new CsvListReader(new InputStreamReader(clazz.getResourceAsStream(resource), UTF_8),
+							CsvPreference.STANDARD_PREFERENCE),
+					metaProvider);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
@@ -432,7 +434,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Get a list of Datum parsed from a classpath CSV file.
-	 * 
+	 *
 	 * @param clazz
 	 *        the class to load the CSV resource from
 	 * @param resource
@@ -454,7 +456,7 @@ public final class DatumTestUtils {
 
 	/**
 	 * Populate datum in the database.
-	 * 
+	 *
 	 * @param jdbcTemplate
 	 *        the JDBC template
 	 * @param log

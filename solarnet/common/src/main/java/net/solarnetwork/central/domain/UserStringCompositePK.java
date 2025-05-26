@@ -146,6 +146,7 @@ public final class UserStringCompositePK extends BasePK
 		return entityId;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {

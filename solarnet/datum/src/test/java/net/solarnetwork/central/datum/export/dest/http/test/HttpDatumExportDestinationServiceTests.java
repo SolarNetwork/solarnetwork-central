@@ -119,6 +119,7 @@ public class HttpDatumExportDestinationServiceTests extends BaseHttpClientTests 
 		return new BasicDatumExportResource(r, "text/plain;charset=UTF-8");
 	}
 
+	@SuppressWarnings("FutureReturnValueIgnored")
 	@Test
 	public void basic() throws Exception {
 		// GIVEN

@@ -64,9 +64,9 @@ public final class RateLimitingFilter extends OncePerRequestFilter implements Fi
 	/** HTTP request header for a proxied client IP address. */
 	public static final String X_FORWARDED_FOR_HEADER = "X-Forwarded-For";
 
-	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern.compile("^SolarNetworkWS\s+([^:]+):");
+	private static final Pattern SNWS_V1_KEY_PATTERN = Pattern.compile("^SolarNetworkWS\\s+([^:]+):");
 	private static final Pattern SNWS_V2_KEY_PATTERN = Pattern
-			.compile("^SNWS2\s+.*Credential=([^,]+)(?:,|$)");
+			.compile("^SNWS2\\s+.*Credential=([^,]+)(?:,|$)");
 
 	private static final Long GLOBAL_ANONYMOUS_KEY = -1L;
 

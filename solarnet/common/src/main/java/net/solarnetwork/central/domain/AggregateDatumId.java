@@ -177,6 +177,7 @@ public class AggregateDatumId extends BaseId
 		}
 	}
 
+	@SuppressWarnings("BoxedPrimitiveEquality")
 	@Override
 	public int compareTo(AggregateDatumId o) {
 		if ( this == o ) {

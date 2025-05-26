@@ -205,6 +205,7 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		return id;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {

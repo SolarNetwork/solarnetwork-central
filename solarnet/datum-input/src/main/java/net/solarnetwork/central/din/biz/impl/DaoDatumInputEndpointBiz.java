@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.din.biz.impl;
 
-import static net.solarnetwork.central.biz.UserEventAppenderBiz.addEvent;
+import static net.solarnetwork.central.biz.UserEventAppenderBiz.addUserEvent;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.central.security.AuthorizationException.requireNonNullObject;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
@@ -194,9 +194,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 				requireNonNullArgument(contentType, "contentType")) ) {
 			String msg = "Transform service %s does not support input type %s with %s."
 					.formatted(xformServiceId, contentType, in.getClass().getSimpleName());
-			// @formatter:off
-			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType, inputData,null,parameters));
-			// @formatter:on
+			addUserEvent(userEventAppenderBiz, userId,
+					importErrorEvent(msg, endpoint, xform, contentType, inputData, null, parameters));
 			throw new IllegalArgumentException(msg);
 		}
 
@@ -263,8 +262,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 						eventContentValue(contentType, inputData), e);
 			}
 
-			addEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform, contentType,
-					inputData, prevInputData, parameters));
+			addUserEvent(userEventAppenderBiz, userId, importErrorEvent(msg, endpoint, xform,
+					contentType, inputData, prevInputData, parameters));
 			if ( e instanceof IOException ioe ) {
 				throw ioe;
 			} else if ( e instanceof RuntimeException re ) {
@@ -301,8 +300,8 @@ public class DaoDatumInputEndpointBiz implements DatumInputEndpointBiz, CentralD
 						nodeOwnershipDao.ownershipForNodeId(nodeId), nodeId);
 				if ( !userId.equals(owner.getUserId()) ) {
 					var ex = new AuthorizationException(Reason.ACCESS_DENIED, nodeId);
-					addEvent(userEventAppenderBiz, userId, importErrorEvent(ex.getMessage(), endpoint,
-							xform, contentType, inputData, prevInputData, parameters));
+					addUserEvent(userEventAppenderBiz, userId, importErrorEvent(ex.getMessage(),
+							endpoint, xform, contentType, inputData, prevInputData, parameters));
 					throw ex;
 				}
 

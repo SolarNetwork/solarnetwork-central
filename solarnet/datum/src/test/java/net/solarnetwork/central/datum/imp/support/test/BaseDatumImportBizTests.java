@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.support.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -171,7 +172,7 @@ public class BaseDatumImportBizTests {
 	@Test
 	public void copyInputResource() throws IOException {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
-		byte[] data = "Hello,world".getBytes("UTF-8");
+		byte[] data = "Hello,world".getBytes(UTF_8);
 		ByteArrayResource r = new ByteArrayResource(data);
 		BasicDatumImportResource resource = new BasicDatumImportResource(r, "text/csv");
 		UserUuidPK pk = new UserUuidPK(1L, UUID.randomUUID());
@@ -199,7 +200,7 @@ public class BaseDatumImportBizTests {
 	@Test
 	public void moveTransferrableInputResource() throws IOException {
 		TestDatumImportBiz biz = new TestDatumImportBiz();
-		byte[] data = "Hello,world".getBytes("UTF-8");
+		byte[] data = "Hello,world".getBytes(UTF_8);
 		File srcFile = File.createTempFile("data-", ".csv", biz.getWorkDirectory());
 		FileCopyUtils.copy(data, srcFile);
 

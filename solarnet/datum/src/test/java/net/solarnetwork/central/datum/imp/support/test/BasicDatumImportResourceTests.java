@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.imp.support.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.util.FileCopyUtils.copyToByteArray;
@@ -46,7 +47,7 @@ public class BasicDatumImportResourceTests {
 	@Test
 	public void contentLenth() throws IOException {
 		// given
-		byte[] data = "Hello, world.".getBytes("UTF-8");
+		byte[] data = "Hello, world.".getBytes(UTF_8);
 
 		// when
 		BasicDatumImportResource r = new BasicDatumImportResource(new ByteArrayResource(data),
@@ -59,7 +60,7 @@ public class BasicDatumImportResourceTests {
 	@Test
 	public void contentType() throws IOException {
 		// given
-		byte[] data = "Hello, world.".getBytes("UTF-8");
+		byte[] data = "Hello, world.".getBytes(UTF_8);
 
 		// when
 		BasicDatumImportResource r = new BasicDatumImportResource(new ByteArrayResource(data),
@@ -71,7 +72,7 @@ public class BasicDatumImportResourceTests {
 
 	public void transferFallsBackToCopy() throws IOException {
 		// given
-		byte[] data = "Hello, world.".getBytes("UTF-8");
+		byte[] data = "Hello, world.".getBytes(UTF_8);
 
 		// when
 		BasicDatumImportResource r = new BasicDatumImportResource(new ByteArrayResource(data),
@@ -103,7 +104,7 @@ public class BasicDatumImportResourceTests {
 	@Test
 	public void transfer() throws IOException {
 		// given
-		byte[] data = "Hello, world.".getBytes("UTF-8");
+		byte[] data = "Hello, world.".getBytes(UTF_8);
 		File srcFile = File.createTempFile("foo-", ".txt");
 		FileCopyUtils.copy(data, srcFile);
 

@@ -107,7 +107,7 @@ public class JdbcUserServiceAuditorTests {
 
 	private void stopAuditingAndWaitForFlush() {
 		auditor.disableWriting();
-		sleep(Math.round(FLUSH_DELAY * 2));
+		sleep(FLUSH_DELAY * 2);
 	}
 
 	private static DatumId nodeDatumKey(Instant date, Long nodeId, String sourceId) {

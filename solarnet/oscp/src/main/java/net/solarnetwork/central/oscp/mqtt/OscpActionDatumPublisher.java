@@ -121,7 +121,8 @@ public class OscpActionDatumPublisher extends MqttJsonPublisher<OwnedGeneralNode
 					// not allowed
 					continue;
 				}
-				delegate.apply(d);
+				@SuppressWarnings("unused")
+				var unused = delegate.apply(d);
 			}
 		}
 	}

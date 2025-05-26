@@ -151,6 +151,7 @@ public final class UserUuidPK extends BasePK
 		return uuid;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public boolean keyComponentIsAssigned(int index) {
 		return switch (index) {

@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.datum.export.standard.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
@@ -120,7 +121,7 @@ public class CsvDatumExportOutputFormatServiceTests {
 		assertThat("Temp file exists", tempFile.exists(), equalTo(true));
 		assertThat("Temp file extension", tempFile.getName(), endsWith(".csv"));
 		assertThat("Content type", r.getContentType(), equalTo(service.getExportContentType()));
-		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), "UTF-8"));
+		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 		assertThat("Generated CSV", csv, equalTo("created,nodeId,sourceId,localDate,localTime,watts\r\n"
 				+ "2018-04-23T11:19:00.000Z,-1,test.source,2018-04-23,11:19:00.000,123.456\r\n"));
@@ -193,7 +194,7 @@ public class CsvDatumExportOutputFormatServiceTests {
 		assertThat("Temp file exists", tempFile.exists(), equalTo(true));
 		assertThat("Temp file extension", tempFile.getName(), endsWith(".csv"));
 		assertThat("Content type", r.getContentType(), equalTo(service.getExportContentType()));
-		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), "UTF-8"));
+		String csv = FileCopyUtils.copyToString(new InputStreamReader(r.getInputStream(), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 		assertThat("Generated CSV with discovered additional column", csv,
 				equalTo("created,nodeId,sourceId,localDate,localTime,watts,wattHours\r\n"
@@ -257,7 +258,7 @@ public class CsvDatumExportOutputFormatServiceTests {
 		assertThat("Content type", r.getContentType(),
 				equalTo(OutputCompressionType.GZIP.getContentType()));
 		String csv = FileCopyUtils
-				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), "UTF-8"));
+				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 
 		StringBuilder buf = new StringBuilder("created,nodeId,sourceId,localDate,localTime,watts\r\n");
@@ -331,7 +332,7 @@ public class CsvDatumExportOutputFormatServiceTests {
 		assertThat("Content type", r.getContentType(),
 				equalTo(OutputCompressionType.XZ.getContentType()));
 		String csv = FileCopyUtils.copyToString(
-				new InputStreamReader(new XZCompressorInputStream(r.getInputStream()), "UTF-8"));
+				new InputStreamReader(new XZCompressorInputStream(r.getInputStream()), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 
 		StringBuilder buf = new StringBuilder("created,nodeId,sourceId,localDate,localTime,watts\r\n");
@@ -406,7 +407,7 @@ public class CsvDatumExportOutputFormatServiceTests {
 		assertThat("Content type", r.getContentType(),
 				equalTo(OutputCompressionType.GZIP.getContentType()));
 		String csv = FileCopyUtils
-				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), "UTF-8"));
+				.copyToString(new InputStreamReader(new GZIPInputStream(r.getInputStream()), UTF_8));
 		assertThat("Temp file deleted", tempFile.exists(), equalTo(false));
 
 		StringBuilder buf = new StringBuilder();

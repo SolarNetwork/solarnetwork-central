@@ -196,6 +196,7 @@ public class UserUuidLongCompositePK extends BasePK
 		return entityId;
 	}
 
+	@SuppressWarnings({ "BoxedPrimitiveEquality", "ReferenceEquality" })
 	@Override
 	public final boolean keyComponentIsAssigned(int index) {
 		return switch (index) {

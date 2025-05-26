@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.web.test;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.easymock.EasyMock.anyObject;
@@ -396,7 +397,7 @@ public class JCacheContentCachingServiceTests {
 		final String contentType = "text/plain;charset=UTF-8";
 		headers.setContentType(MediaType.parseMediaType(contentType));
 		final String body = "Hello, world.";
-		final SimpleCachedContent content = new SimpleCachedContent(headers, body.getBytes("UTF-8"),
+		final SimpleCachedContent content = new SimpleCachedContent(headers, body.getBytes(UTF_8),
 				null);
 		expect(cache.get(key)).andReturn(content);
 
@@ -418,7 +419,7 @@ public class JCacheContentCachingServiceTests {
 	private byte[] compress(String content) throws IOException {
 		try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
 				GZIPOutputStream out = new GZIPOutputStream(byos)) {
-			FileCopyUtils.copy(new ByteArrayInputStream(content.getBytes("UTF-8")), out);
+			FileCopyUtils.copy(new ByteArrayInputStream(content.getBytes(UTF_8)), out);
 			return byos.toByteArray();
 		}
 	}
@@ -427,7 +428,7 @@ public class JCacheContentCachingServiceTests {
 		try (ByteArrayOutputStream byos = new ByteArrayOutputStream();
 				GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(content))) {
 			FileCopyUtils.copy(in, byos);
-			return new String(byos.toByteArray(), "UTF-8");
+			return new String(byos.toByteArray(), UTF_8);
 		}
 	}
 
@@ -517,7 +518,7 @@ public class JCacheContentCachingServiceTests {
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers,
-				new ByteArrayInputStream(body.getBytes("UTF-8")));
+				new ByteArrayInputStream(body.getBytes(UTF_8)));
 
 		// then
 		CachedContent content = contentCaptor.getValue();
@@ -526,7 +527,7 @@ public class JCacheContentCachingServiceTests {
 		assertThat("Response Content-Encoding", content.getContentEncoding(), nullValue());
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
-		assertThat("Cached data", new String(cachedBody, "UTF-8"), equalTo("Hello, world."));
+		assertThat("Cached data", new String(cachedBody, UTF_8), equalTo("Hello, world."));
 	}
 
 	@Test
@@ -551,7 +552,7 @@ public class JCacheContentCachingServiceTests {
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.setCompressMinimumLength(8);
 		service.cacheResponse(key, request, 200, headers,
-				new ByteArrayInputStream(body.getBytes("UTF-8")));
+				new ByteArrayInputStream(body.getBytes(UTF_8)));
 
 		// then
 		CachedContent content = contentCaptor.getValue();
@@ -615,7 +616,7 @@ public class JCacheContentCachingServiceTests {
 		replayAll();
 		JCacheContentCachingService service = new JCacheContentCachingService(cache);
 		service.cacheResponse(key, request, 200, headers,
-				new ByteArrayInputStream(body.getBytes("UTF-8")));
+				new ByteArrayInputStream(body.getBytes(UTF_8)));
 
 		// then
 		CachedContent content = contentCaptor.getValue();
@@ -624,7 +625,7 @@ public class JCacheContentCachingServiceTests {
 		assertThat("Content encoding", content.getContentEncoding(), equalTo("foo"));
 
 		byte[] cachedBody = FileCopyUtils.copyToByteArray(content.getContent());
-		assertThat("Cached data", new String(cachedBody, "UTF-8"), equalTo(body));
+		assertThat("Cached data", new String(cachedBody, UTF_8), equalTo(body));
 	}
 
 }

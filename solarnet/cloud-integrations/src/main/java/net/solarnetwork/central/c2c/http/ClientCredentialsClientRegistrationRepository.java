@@ -105,7 +105,7 @@ public class ClientCredentialsClientRegistrationRepository implements ClientRegi
 			throw new EmptyResultDataAccessException(
 					"Configuration for registration ID %s not found.".formatted(registrationId), 1);
 		}
-		conf.clone();
+		conf = conf.clone();
 		conf.unmaskSensitiveInformation(sensitiveKeysProvider, textEncryptor);
 
 		final String clientId = nonEmptyString(

@@ -1,21 +1,21 @@
 /* ==================================================================
  * SecurityWebTestUtils.java - 2/03/2017 12:37:16 PM
- * 
+ *
  * Copyright 2007-2017 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -25,7 +25,7 @@ package net.solarnetwork.central.security.web.test;
 import static net.solarnetwork.web.jakarta.security.AuthenticationData.nullSafeHeaderValue;
 import static net.solarnetwork.web.jakarta.security.AuthenticationUtils.uriEncode;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -52,7 +52,7 @@ import net.solarnetwork.web.jakarta.security.WebConstants;
 
 /**
  * Utilities for unit tests.
- * 
+ *
  * @author matt
  * @version 1.2
  */
@@ -72,19 +72,12 @@ public final class SecurityWebTestUtils {
 	}
 
 	public static byte[] computeHMACSHA256(final byte[] password, final String msg) {
-		try {
-			return computeDigest(password, msg.getBytes("UTF-8"), "HmacSHA256");
-		} catch ( UnsupportedEncodingException e ) {
-			throw new SecurityException("Error loading HmacSHA1 crypto function", e);
-		}
+		return computeDigest(password, msg.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
 	}
 
 	public static byte[] computeDigest(final String password, final String msg, String alg) {
-		try {
-			return computeDigest(password.getBytes("UTF-8"), msg.getBytes("UTF-8"), alg);
-		} catch ( UnsupportedEncodingException e ) {
-			throw new SecurityException("Error encoding secret or message for crypto function", e);
-		}
+		return computeDigest(password.getBytes(StandardCharsets.UTF_8),
+				msg.getBytes(StandardCharsets.UTF_8), alg);
 	}
 
 	public static byte[] computeDigest(final byte[] password, final byte[] msg, String alg) {
@@ -121,7 +114,7 @@ public final class SecurityWebTestUtils {
 	/**
 	 * Create an {@code Authorization} HTTP header using the
 	 * {@link AuthenticationScheme#V2} scheme and no body content.
-	 * 
+	 *
 	 * @param authTokenId
 	 *        The auth token ID.
 	 * @param authTokenSecret
@@ -142,7 +135,7 @@ public final class SecurityWebTestUtils {
 	/**
 	 * Create an {@code Authorization} HTTP header using the
 	 * {@link AuthenticationScheme#V1} scheme.
-	 * 
+	 *
 	 * @param authTokenId
 	 *        The auth token ID.
 	 * @param authTokenSecret
@@ -258,7 +251,7 @@ public final class SecurityWebTestUtils {
 
 	private static byte[] computeSigningKey(String secretKey, Date date) {
 		/*- signing key is like:
-		 
+
 		HMACSHA256(HMACSHA256("SNWS2"+secretKey, "20160301"), "snws2_request")
 		*/
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
@@ -272,7 +265,7 @@ public final class SecurityWebTestUtils {
 
 	private static String computeSignatureData(String canonicalRequestData, Date date) {
 		/*- signature data is like:
-		 
+
 		 	SNWS2-HMAC-SHA256\n
 		 	20170301T120000Z\n
 		 	Hex(SHA256(canonicalRequestData))
@@ -286,7 +279,7 @@ public final class SecurityWebTestUtils {
 	/**
 	 * Create an {@code Authorization} HTTP header using the
 	 * {@link AuthenticationScheme#V2} scheme and no body content.
-	 * 
+	 *
 	 * @param authTokenId
 	 *        The auth token ID.
 	 * @param authTokenSecret
@@ -307,7 +300,7 @@ public final class SecurityWebTestUtils {
 	/**
 	 * Create an {@code Authorization} HTTP header using the
 	 * {@link AuthenticationScheme#V2} scheme.
-	 * 
+	 *
 	 * @param authTokenId
 	 *        The auth token ID.
 	 * @param authTokenSecret
@@ -331,7 +324,7 @@ public final class SecurityWebTestUtils {
 	/**
 	 * Create an {@code Authorization} HTTP header using the
 	 * {@link AuthenticationScheme#V2} scheme.
-	 * 
+	 *
 	 * @param authTokenId
 	 *        The auth token ID.
 	 * @param authTokenSecret
