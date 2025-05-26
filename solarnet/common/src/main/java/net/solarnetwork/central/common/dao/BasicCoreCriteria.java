@@ -181,6 +181,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param locationId
 	 *        the ID of the location
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setLocationId(Long locationId) {
 		setLocationIds(locationId == null ? null : new Long[] { locationId });
@@ -220,6 +221,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setNodeId(Long nodeId) {
 		setNodeIds(nodeId == null ? null : new Long[] { nodeId });
@@ -260,6 +262,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param sourceId
 	 *        the source ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setSourceId(String sourceId) {
 		setSourceIds(sourceId == null ? null : new String[] { sourceId });
@@ -300,6 +303,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param userId
 	 *        the ID of the user
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setUserId(Long userId) {
 		this.userIds = (userId == null ? null : new Long[] { userId });
@@ -339,6 +343,7 @@ public class BasicCoreCriteria extends SimplePagination
 	 * @param tokenId
 	 *        the token ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setTokenId(String tokenId) {
 		setTokenIds(tokenId == null ? null : new String[] { tokenId.trim() });

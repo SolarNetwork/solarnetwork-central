@@ -349,6 +349,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param streamId
 	 *        the stream ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setStreamId(UUID streamId) {
 		this.streamIds = (streamId == null ? null : new UUID[] { streamId });
@@ -389,6 +390,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param objectId
 	 *        the object ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setObjectId(Long objectId) {
 		this.objectIds = (objectId == null ? null : new Long[] { objectId });
@@ -473,6 +475,7 @@ public class StreamDatumFilterCommand extends BaseFilterSupport
 	 * @param sourceId
 	 *        the source ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setSourceId(String sourceId) {
 		this.sourceIds = (sourceId == null ? null : new String[] { sourceId });

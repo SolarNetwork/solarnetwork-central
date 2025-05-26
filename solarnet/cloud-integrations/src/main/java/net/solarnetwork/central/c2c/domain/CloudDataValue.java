@@ -172,7 +172,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * <p>
 	 * The {@code reference} will be set to a path-like value using the
-	 * {@code identifier} components.
+	 * {@code identifiers} components.
 	 * </p>
 	 *
 	 * @param identifiers
@@ -192,7 +192,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * <p>
 	 * The {@code reference} will be set to a path-like value using the
-	 * {@code identifier} components.
+	 * {@code identifiers} components.
 	 * </p>
 	 *
 	 * @param identifiers
@@ -251,7 +251,7 @@ public final class CloudDataValue implements Serializable, Comparable<CloudDataV
 	 *
 	 * <p>
 	 * The {@code reference} will be set to a path-like value using the
-	 * {@code identifier} components.
+	 * {@code identifiers} components.
 	 * </p>
 	 *
 	 * @param identifiers

@@ -95,6 +95,7 @@ public class GeneralReportableIntervalCommand {
 	 * @param nodeId
 	 *        the ID of the node
 	 */
+	@SuppressWarnings("InvalidParam")
 	public void setNodeId(Long nodeId) {
 		this.nodeIds = new Long[] { nodeId };
 	}

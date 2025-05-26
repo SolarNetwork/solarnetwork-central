@@ -364,6 +364,7 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 	 * @param streamId
 	 *        the stream ID to set
 	 */
+	@SuppressWarnings("InvalidParam")
 	@JsonSetter
 	public void setStreamId(UUID streamId) {
 		setStreamIds(streamId == null ? null : new UUID[] { streamId });

@@ -113,7 +113,7 @@ public class NamedCost
 	 *
 	 * @param namedCost
 	 *        the named cost Map, whose keys match the properties of this class
-	 * @return the named cost, or {@literal null} if {@code namedCosts} is
+	 * @return the named cost, or {@literal null} if {@code namedCost} is
 	 *         {@literal null} or does not contain valid property values
 	 */
 	public static NamedCost of(Map<String, ?> namedCost) {

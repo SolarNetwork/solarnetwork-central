@@ -1,21 +1,21 @@
 /* ==================================================================
  * TaxCodeFilter.java - 24/07/2020 6:29:23 AM
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -30,7 +30,7 @@ import net.solarnetwork.domain.SimplePagination;
 
 /**
  * Query filter for {@code TaxCode} entities.
- * 
+ *
  * @author matt
  * @version 1.0
  */
@@ -43,7 +43,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Create a filter for a given date and list of zones.
-	 * 
+	 *
 	 * @param date
 	 *        the date
 	 * @param zones
@@ -60,11 +60,11 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 	/**
 	 * Test if the properties of another instance are the same as in this
 	 * instance.
-	 * 
+	 *
 	 * <p>
 	 * The {@link SimplePagination} properties are not compared by this method.
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *        the other instance to compare to
 	 * @return {@literal true} if the properties of this instance are equal to
@@ -116,7 +116,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Get the tax zones.
-	 * 
+	 *
 	 * @return the zones
 	 */
 	public String[] getZones() {
@@ -125,7 +125,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Set the tax zones.
-	 * 
+	 *
 	 * @param zones
 	 *        the zones to set
 	 */
@@ -135,11 +135,11 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Get the tax zone.
-	 * 
+	 *
 	 * <p>
 	 * This returns the first-available value from the {@code zones} array.
 	 * </p>
-	 * 
+	 *
 	 * @return the zone
 	 */
 	public String getZone() {
@@ -149,23 +149,24 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Set the tax zone.
-	 * 
+	 *
 	 * <p>
 	 * This replaces the configured {@code zones} array with a single-element
 	 * array if {@code zone} is not {@literal null}, otherwise sets
 	 * {@code zones} to {@literal null}.
 	 * </p>
-	 * 
+	 *
 	 * @param zone
 	 *        the zone to set
 	 */
+	@SuppressWarnings("InvalidParam")
 	public void setZone(String zone) {
 		setZones(zone != null ? new String[] { zone } : null);
 	}
 
 	/**
 	 * Get the item key.
-	 * 
+	 *
 	 * @return the item key
 	 */
 	public String getItemKey() {
@@ -174,7 +175,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Set the item key.
-	 * 
+	 *
 	 * @param itemKey
 	 *        the item key to set
 	 */
@@ -184,7 +185,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Get the tax code.
-	 * 
+	 *
 	 * @return the code
 	 */
 	public String getCode() {
@@ -193,7 +194,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Set the tax code.
-	 * 
+	 *
 	 * @param code
 	 *        the code to set
 	 */
@@ -203,7 +204,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Get the effective date.
-	 * 
+	 *
 	 * @return the date
 	 */
 	public Instant getDate() {
@@ -212,7 +213,7 @@ public class TaxCodeFilter extends SimplePagination implements Differentiable<Ta
 
 	/**
 	 * Set the effective date.
-	 * 
+	 *
 	 * @param date
 	 *        the date to set
 	 */

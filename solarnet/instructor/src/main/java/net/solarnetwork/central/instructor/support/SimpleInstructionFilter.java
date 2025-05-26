@@ -77,15 +77,17 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set a single node ID.
 	 *
 	 * <p>
-	 * This is a convenience method for requests that use a single node ID at a time. The node ID is
-	 * still stored on the {@code nodeIds} array, just as the first value. Calling this method replaces
-	 * any existing {@code nodeIds} value with a new array containing just the ID passed into this
-	 * method.
+	 * This is a convenience method for requests that use a single node ID at a
+	 * time. The node ID is still stored on the {@code nodeIds} array, just as
+	 * the first value. Calling this method replaces any existing
+	 * {@code nodeIds} value with a new array containing just the ID passed into
+	 * this method.
 	 * </p>
 	 *
 	 * @param nodeId
-	 * 		the ID of the node
+	 *        the ID of the node
 	 */
+	@SuppressWarnings("InvalidParam")
 	public void setNodeId(Long nodeId) {
 		this.nodeIds = new Long[] { nodeId };
 	}
@@ -94,12 +96,13 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Get the first node ID.
 	 *
 	 * <p>
-	 * This returns the first available node ID from the {@code nodeIds} array, or <em>null</em> if not
-	 * available.
+	 * This returns the first available node ID from the {@code nodeIds} array,
+	 * or <em>null</em> if not available.
 	 * </p>
 	 *
 	 * @return the first node ID
 	 */
+	@SuppressWarnings("InvalidParam")
 	@Override
 	public Long getNodeId() {
 		return this.nodeIds == null || this.nodeIds.length < 1 ? null : this.nodeIds[0];
@@ -133,10 +136,12 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	}
 
 	/**
-	 * Set the {@code states} property via a Set. This is useful when using an {@link EnumSet}.
+	 * Set the {@code states} property via a Set. This is useful when using an
+	 * {@link EnumSet}.
 	 *
 	 * @param stateSet
-	 * 		the Set to convert to a List of {@link InstructionState} values for the {@code states} property
+	 *        the Set to convert to a List of {@link InstructionState} values
+	 *        for the {@code states} property
 	 */
 	public void setStateSet(Set<InstructionState> stateSet) {
 		if ( stateSet == null ) {
@@ -170,7 +175,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set an instruction IDs list.
 	 *
 	 * @param instructionIds
-	 * 		the IDs to set
+	 *        the IDs to set
 	 * @since 1.1
 	 */
 	public void setInstructionIds(Long[] instructionIds) {
@@ -186,7 +191,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set the start date (inclusive).
 	 *
 	 * @param startDate
-	 * 		the start date
+	 *        the start date
 	 * @since 2.1
 	 */
 	public void setStartDate(Instant startDate) {
@@ -202,7 +207,7 @@ public class SimpleInstructionFilter implements InstructionFilter {
 	 * Set the end date (exclusive).
 	 *
 	 * @param endDate
-	 * 		the end date
+	 *        the end date
 	 * @since 2.1
 	 */
 	public void setEndDate(Instant endDate) {

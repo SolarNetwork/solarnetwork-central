@@ -166,6 +166,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *        the location ID to set
 	 * @since 1.4
 	 */
+	@SuppressWarnings("InvalidParam")
 	public void setLocationId(Long locationId) {
 		this.locationId = locationId;
 		if ( (locationId == null && this.location != null) || (locationId != null
@@ -203,6 +204,7 @@ public class User extends BaseEntity implements UserInfo {
 	 *        the location to set
 	 * @since 1.4
 	 */
+	@SuppressWarnings("InvalidParam")
 	public void setLocation(SolarLocation location) {
 		this.location = location;
 		if ( location != null && location.getId() != null ) {

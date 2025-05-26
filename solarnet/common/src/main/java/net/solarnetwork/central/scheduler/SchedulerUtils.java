@@ -62,7 +62,7 @@ public final class SchedulerUtils {
 	 * <p>
 	 * The {@code expression} can be either an integer number representing a
 	 * {@code timeUnit} frequency or else a cron expression. If
-	 * {@code randomize} is {@literal true} then if the cron expression seconds
+	 * {@code randomized} is {@literal true} then if the cron expression seconds
 	 * value is a constant value it
 	 * </p>
 	 *
