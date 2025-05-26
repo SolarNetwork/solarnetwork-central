@@ -35,7 +35,7 @@ import net.solarnetwork.central.datum.v2.dao.AuditDatumCriteria;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationSupport;
 import net.solarnetwork.central.security.SecurityActor;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityToken;
 import net.solarnetwork.central.security.SecurityTokenType;
 import net.solarnetwork.central.security.SecurityUtils;
@@ -85,7 +85,7 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 		try {
 			// the next method will return the user ID from the User token, or the User actor
 			return SecurityUtils.getCurrentActorUserId();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED for actor without user ID");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}

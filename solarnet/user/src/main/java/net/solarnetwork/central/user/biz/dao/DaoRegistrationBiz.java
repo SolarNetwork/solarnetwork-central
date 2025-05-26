@@ -80,7 +80,7 @@ import net.solarnetwork.central.instructor.domain.InstructionParameter;
 import net.solarnetwork.central.instructor.domain.NodeInstruction;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityNode;
 import net.solarnetwork.central.security.SecurityUtils;
 import net.solarnetwork.central.user.biz.NodePKIBiz;
@@ -907,7 +907,7 @@ public class DaoRegistrationBiz implements RegistrationBiz {
 			// we must become the User now for CSR to be generated (if we are a node or token actor)
 			try {
 				SecurityUtils.getCurrentUser();
-			} catch ( SecurityException e ) {
+			} catch ( BasicSecurityException e ) {
 				SecurityUtils.becomeUser(user.getEmail(), user.getName(), user.getId());
 			}
 

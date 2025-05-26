@@ -226,10 +226,10 @@ public class SecurityUtils {
 	 * Get the current {@link SecurityActor}.
 	 *
 	 * @return the current actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
-	public static SecurityActor getCurrentActor() throws SecurityException {
+	public static SecurityActor getCurrentActor() throws BasicSecurityException {
 		return getActor(getCurrentAuthentication());
 	}
 
@@ -239,7 +239,7 @@ public class SecurityUtils {
 	 * @param principal
 	 *        the principal
 	 * @return the actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 * @since 2.5
 	 */
@@ -249,7 +249,7 @@ public class SecurityUtils {
 		} else if ( principal instanceof Authentication a ) {
 			return getActor(a);
 		}
-		throw new SecurityException("User ID not available.");
+		throw new BasicSecurityException("User ID not available.");
 	}
 
 	/**
@@ -258,7 +258,7 @@ public class SecurityUtils {
 	 * @param auth
 	 *        the authentication
 	 * @return the actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 * @since 2.1
 	 */
@@ -270,7 +270,7 @@ public class SecurityUtils {
 		} else if ( auth != null && auth.getDetails() instanceof SecurityActor a ) {
 			return a;
 		}
-		throw new SecurityException("Actor not available");
+		throw new BasicSecurityException("Actor not available");
 	}
 
 	/**
@@ -278,11 +278,11 @@ public class SecurityUtils {
 	 *
 	 * @return The user ID of the current {@link SecurityActor} (never
 	 *         {@literal null}).
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         If the user ID is not available.
 	 * @since 1.3
 	 */
-	public static Long getCurrentActorUserId() throws SecurityException {
+	public static Long getCurrentActorUserId() throws BasicSecurityException {
 		return getActorUserId(getCurrentAuthentication());
 	}
 
@@ -293,11 +293,11 @@ public class SecurityUtils {
 	 *        the user principal
 	 * @return the ID of the user associated with the actor, never
 	 *         {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the user ID is not available
 	 * @since 2.1
 	 */
-	public static Long getActorUserId(Principal principal) throws SecurityException {
+	public static Long getActorUserId(Principal principal) throws BasicSecurityException {
 		if ( principal instanceof UserIdRelated u ) {
 			return u.getUserId();
 		} else if ( principal instanceof Authentication auth ) {
@@ -310,17 +310,17 @@ public class SecurityUtils {
 				}
 			}
 		}
-		throw new SecurityException("User not available");
+		throw new BasicSecurityException("User not available");
 	}
 
 	/**
 	 * Get the current {@link SecurityToken}.
 	 *
 	 * @return the current actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
-	public static SecurityToken getCurrentToken() throws SecurityException {
+	public static SecurityToken getCurrentToken() throws BasicSecurityException {
 		return getToken(getCurrentAuthentication());
 	}
 
@@ -330,17 +330,17 @@ public class SecurityUtils {
 	 * @param auth
 	 *        the authentication
 	 * @return the token actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available or not a token
 	 * @since 2.1
 	 */
-	public static SecurityToken getToken(Authentication auth) throws SecurityException {
+	public static SecurityToken getToken(Authentication auth) throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityToken ) {
 			return (SecurityToken) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityToken ) {
 			return (SecurityToken) auth.getDetails();
 		}
-		throw new SecurityException("Token not available");
+		throw new BasicSecurityException("Token not available");
 	}
 
 	/**
@@ -352,7 +352,7 @@ public class SecurityUtils {
 	public static String currentTokenId() {
 		try {
 			return getCurrentToken().getToken();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			return null;
 		}
 	}
@@ -361,10 +361,10 @@ public class SecurityUtils {
 	 * Get the current {@link SecurityUser}.
 	 *
 	 * @return the current user, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the user is not available
 	 */
-	public static SecurityUser getCurrentUser() throws SecurityException {
+	public static SecurityUser getCurrentUser() throws BasicSecurityException {
 		return getUser(getCurrentAuthentication());
 	}
 
@@ -374,27 +374,27 @@ public class SecurityUtils {
 	 * @param auth
 	 *        the authentication
 	 * @return the user actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not a user
 	 * @since 2.1
 	 */
-	public static SecurityUser getUser(Authentication auth) throws SecurityException {
+	public static SecurityUser getUser(Authentication auth) throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityUser ) {
 			return (SecurityUser) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityUser ) {
 			return (SecurityUser) auth.getDetails();
 		}
-		throw new SecurityException("User not available");
+		throw new BasicSecurityException("User not available");
 	}
 
 	/**
 	 * Get the current {@link SecurityNode}.
 	 *
 	 * @return the current node, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the node is not available
 	 */
-	public static SecurityNode getCurrentNode() throws SecurityException {
+	public static SecurityNode getCurrentNode() throws BasicSecurityException {
 		return getNode(getCurrentAuthentication());
 	}
 
@@ -404,17 +404,17 @@ public class SecurityUtils {
 	 * @param auth
 	 *        the authentication
 	 * @return the node actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not a node
 	 * @since 2.1
 	 */
-	public static SecurityNode getNode(Authentication auth) throws SecurityException {
+	public static SecurityNode getNode(Authentication auth) throws BasicSecurityException {
 		if ( auth != null && auth.getPrincipal() instanceof SecurityNode ) {
 			return (SecurityNode) auth.getPrincipal();
 		} else if ( auth != null && auth.getDetails() instanceof SecurityNode ) {
 			return (SecurityNode) auth.getDetails();
 		}
-		throw new SecurityException("Node not available");
+		throw new BasicSecurityException("Node not available");
 	}
 
 	/**
@@ -449,7 +449,7 @@ public class SecurityUtils {
 		final SecurityActor actor;
 		try {
 			actor = getActor(auth);
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			LOG.warn("Access DENIED to nodes for non-authenticated user");
 			throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 		}
@@ -509,7 +509,7 @@ public class SecurityUtils {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			return null;
 		}
 

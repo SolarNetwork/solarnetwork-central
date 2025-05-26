@@ -25,7 +25,7 @@ package net.solarnetwork.central.inin.security;
 import static net.solarnetwork.central.security.SecurityUtils.getCurrentAuthentication;
 import java.net.URL;
 import org.springframework.security.core.Authentication;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUser;
 
 /**
@@ -47,10 +47,10 @@ public final class SecurityUtils {
 	 * Get the current {@link SecurityEndpointCredential}.
 	 *
 	 * @return the current security actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available
 	 */
-	public static SecurityEndpointCredential getCurrentEndpointCredential() throws SecurityException {
+	public static SecurityEndpointCredential getCurrentEndpointCredential() throws BasicSecurityException {
 		return getEndpointCredential(getCurrentAuthentication());
 	}
 
@@ -60,11 +60,11 @@ public final class SecurityUtils {
 	 * @param auth
 	 *        the authentication
 	 * @return the endpoint actor, never {@literal null}
-	 * @throws SecurityException
+	 * @throws BasicSecurityException
 	 *         if the actor is not available or is not an endpoint credential
 	 */
 	public static SecurityEndpointCredential getEndpointCredential(Authentication auth)
-			throws SecurityException {
+			throws BasicSecurityException {
 		if ( auth instanceof SecurityEndpointCredential c ) {
 			return c;
 		} else if ( auth != null && auth.getPrincipal() instanceof SecurityEndpointCredential c ) {
@@ -72,7 +72,7 @@ public final class SecurityUtils {
 		} else if ( auth != null && auth.getDetails() instanceof SecurityEndpointCredential c ) {
 			return c;
 		}
-		throw new SecurityException("EndpointCredential not available");
+		throw new BasicSecurityException("EndpointCredential not available");
 	}
 
 	/**

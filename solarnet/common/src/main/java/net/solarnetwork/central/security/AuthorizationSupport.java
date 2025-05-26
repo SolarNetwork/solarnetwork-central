@@ -109,7 +109,7 @@ public class AuthorizationSupport {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
 			throw new AuthorizationException(ACCESS_DENIED, nodeId);
 		}
@@ -197,7 +197,7 @@ public class AuthorizationSupport {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to node {} for non-authenticated user", nodeId);
 			throw new AuthorizationException(ACCESS_DENIED, nodeId);
 		}
@@ -278,7 +278,7 @@ public class AuthorizationSupport {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to user {} for non-authenticated user", userId);
 			throw new AuthorizationException(ACCESS_DENIED, userId);
 		}
@@ -347,7 +347,7 @@ public class AuthorizationSupport {
 		final SecurityActor actor;
 		try {
 			actor = SecurityUtils.getCurrentActor();
-		} catch ( SecurityException e ) {
+		} catch ( BasicSecurityException e ) {
 			log.warn("Access DENIED to user {} for non-authenticated user", userId);
 			throw new AuthorizationException(ACCESS_DENIED, userId);
 		}

@@ -355,7 +355,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
 		thenExceptionOfType(AuthorizationException.class)
-				.as("Should have thrown SecurityException for anonymous user")
+				.as("Should have thrown BasicSecurityException for anonymous user")
 				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
 				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}
@@ -376,7 +376,7 @@ public class QuerySecurityAspectTests {
 		criteria.setType("Consumption");
 		criteria.setNodeId(nodeId);
 		thenExceptionOfType(AuthorizationException.class)
-				.as("Should have thrown SecurityException for node ID not owned by owner of token")
+				.as("Should have thrown BasicSecurityException for node ID not owned by owner of token")
 				.isThrownBy(() -> service.userNodeAccessCheck(criteria))
 				.returns(Reason.ACCESS_DENIED, from(AuthorizationException::getReason));
 	}

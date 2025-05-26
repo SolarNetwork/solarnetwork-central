@@ -60,6 +60,7 @@ import org.springframework.web.context.request.async.AsyncRequestNotUsableExcept
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import jakarta.servlet.ServletRequest;
 import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.web.RateLimitExceededException;
 import net.solarnetwork.domain.Result;
 import net.solarnetwork.service.RemoteServiceException;
@@ -266,7 +267,8 @@ public class WebServiceGlobalControllerSupport {
 	}
 
 	/**
-	 * Handle a {@link net.solarnetwork.central.security.SecurityException}.
+	 * Handle a
+	 * {@link net.solarnetwork.central.security.BasicSecurityException}.
 	 *
 	 * @param e
 	 *        the exception
@@ -275,11 +277,10 @@ public class WebServiceGlobalControllerSupport {
 	 * @return an error response object
 	 * @since 1.1
 	 */
-	@ExceptionHandler(net.solarnetwork.central.security.SecurityException.class)
+	@ExceptionHandler(BasicSecurityException.class)
 	@ResponseBody
 	@ResponseStatus(code = HttpStatus.FORBIDDEN)
-	public Result<?> handleSecurityException(net.solarnetwork.central.security.SecurityException e,
-			WebRequest request) {
+	public Result<?> handleSecurityException(BasicSecurityException e, WebRequest request) {
 		log.info("SecurityException in request {}; user [{}]: {}", requestDescription(request),
 				userPrincipalName(request), e.getMessage());
 		return error(null, e.getMessage());

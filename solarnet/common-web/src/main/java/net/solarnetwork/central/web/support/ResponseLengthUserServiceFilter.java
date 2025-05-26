@@ -38,7 +38,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 import net.solarnetwork.central.biz.UserServiceAuditor;
-import net.solarnetwork.central.security.SecurityException;
+import net.solarnetwork.central.security.BasicSecurityException;
 import net.solarnetwork.central.security.SecurityUtils;
 
 /**
@@ -146,7 +146,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 				Long userId = null;
 				try {
 					userId = SecurityUtils.getCurrentActorUserId();
-				} catch ( SecurityException e ) {
+				} catch ( BasicSecurityException e ) {
 					log.debug("User ID not available!");
 				}
 				this.userId = userId;
@@ -227,7 +227,7 @@ public final class ResponseLengthUserServiceFilter extends OncePerRequestFilter 
 				Long userId = null;
 				try {
 					userId = SecurityUtils.getCurrentActorUserId();
-				} catch ( SecurityException e ) {
+				} catch ( BasicSecurityException e ) {
 					log.debug("User ID not available!");
 				}
 				this.userId = userId;
