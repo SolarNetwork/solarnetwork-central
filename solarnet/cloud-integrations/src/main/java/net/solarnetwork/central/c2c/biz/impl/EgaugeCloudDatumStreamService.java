@@ -280,6 +280,7 @@ public class EgaugeCloudDatumStreamService extends BaseRestOperationsCloudDatumS
 		return result.getResults();
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	@Override
 	public CloudDatumStreamQueryResult datum(CloudDatumStreamConfiguration datumStream,
 			CloudDatumStreamQueryFilter filter) {

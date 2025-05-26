@@ -77,6 +77,7 @@ public class DefaultMeasurementDao implements MeasurementDao {
 		this.readingDatumDao = requireNonNullArgument(readingDatumDao, "readingDatumDao");
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	@Override
 	public Collection<Measurement> getMeasurements(AssetConfiguration asset,
 			DateRangeCriteria criteria) {

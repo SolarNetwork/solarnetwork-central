@@ -507,6 +507,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		}, res -> parseComponents(filters.get(SITE_ID_FILTER), res.getBody()));
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private Instant queryEndDate(Clock queryClock, SolrenViewGranularity granularity) {
 		Instant ts = queryClock.instant(); //
 		if ( granularity.getTickDuration().getSeconds() < 86400L
@@ -520,6 +521,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 		return ts.atZone(UTC).with(TemporalAdjusters.firstDayOfYear()).toInstant();
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private Instant queryStartDate(Instant endDate, SolrenViewGranularity granularity) {
 		if ( granularity.getTickDuration().getSeconds() < 86400L
 				|| granularity == SolrenViewGranularity.Day ) {

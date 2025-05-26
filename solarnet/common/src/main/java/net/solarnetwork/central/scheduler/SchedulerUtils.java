@@ -76,6 +76,7 @@ public final class SchedulerUtils {
 	 *         parsed into one
 	 * @since 2.0
 	 */
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	public static Trigger triggerForExpression(final String expression, TimeUnit timeUnit,
 			boolean randomized) {
 		if ( expression != null ) {

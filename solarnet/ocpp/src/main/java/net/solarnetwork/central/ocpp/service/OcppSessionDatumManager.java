@@ -446,6 +446,7 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 		return datum(sourceId, chargePoint, chargePointSettings, sess, reading);
 	}
 
+	@SuppressWarnings("JavaDurationGetSecondsToToSeconds")
 	private Datum datum(String sourceId, CentralChargePoint chargePoint,
 			ChargePointSettings chargePointSettings, ChargeSession sess, SampledValue reading) {
 		Datum d = new Datum(chargePointSettings);
