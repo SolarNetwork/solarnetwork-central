@@ -33,6 +33,11 @@ To build all applications:
 ./gradlew.bat build
 ```
 
+## Enabling ErrorProne
+
+Pass `-P errorProneEnabled=true` to the build command to enable ErrorProne warnings. This is disabled
+by default for now until all sources have been updated to fix their initial ErrorProne warnings.
+
 # Testing
 
 You can run all subproject unit/integration tests and produce a single HTML report at
