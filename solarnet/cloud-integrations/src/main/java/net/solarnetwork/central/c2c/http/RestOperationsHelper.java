@@ -31,7 +31,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -62,7 +62,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * Helper for HTTP interactions using {@link RestOperations}.
  *
  * @author matt
- * @version 1.5
+ * @version 1.6
  */
 public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 
@@ -76,14 +76,14 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	protected final RestOperations restOps;
 
 	/** The error event tags. */
-	protected final String[] errorEventTags;
+	protected final List<String> errorEventTags;
 
 	/**
 	 * The event tags (derived from errorEventTags, minus "error").
 	 *
 	 * @since 1.5
 	 */
-	protected final String[] eventTags;
+	protected final List<String> eventTags;
 
 	/** The sensitive key encryptor. */
 	protected final TextEncryptor encryptor;
@@ -123,7 +123,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 	 *         if any argument is {@literal null}
 	 */
 	public RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider) {
 		super();
 		this.log = requireNonNullArgument(log, "log");
@@ -133,8 +133,7 @@ public class RestOperationsHelper implements CloudIntegrationsUserEvents {
 		this.encryptor = requireNonNullArgument(encryptor, "encryptor");
 		this.sensitiveKeyProvider = requireNonNullArgument(sensitiveKeyProvider, "sensitiveKeyProvider");
 
-		this.eventTags = Arrays.stream(this.errorEventTags).filter(t -> !ERROR_TAG.equals(t))
-				.toArray(String[]::new);
+		this.eventTags = this.errorEventTags.stream().filter(t -> !ERROR_TAG.equals(t)).toList();
 
 		// look for a ContentLengthTrackingClientHttpRequestInterceptor to track response body length with
 		ThreadLocal<AtomicLong> tracker = null;

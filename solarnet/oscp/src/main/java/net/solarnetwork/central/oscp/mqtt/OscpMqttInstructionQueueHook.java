@@ -33,6 +33,7 @@ import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.io.IOException;
 import java.io.Serial;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -76,7 +77,7 @@ import oscp.v20.AdjustGroupCapacityForecast;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook, OscpUserEvents, OscpMqttInstructions {
@@ -350,13 +351,13 @@ public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
 		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 

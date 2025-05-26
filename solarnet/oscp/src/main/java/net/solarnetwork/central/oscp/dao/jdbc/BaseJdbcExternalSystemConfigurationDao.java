@@ -63,7 +63,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * @param <C>
  *        the configuration type
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpExternalSystemConfiguration<C>>
 		implements ExternalSystemConfigurationDao<C> {
@@ -201,7 +201,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *
 	 * @return the tags, never {@literal null}
 	 */
-	protected abstract String[] expiredHeartbeatEventSuccessTags();
+	protected abstract List<String> expiredHeartbeatEventSuccessTags();
 
 	/**
 	 * Get the error event tags to use within
@@ -209,7 +209,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *
 	 * @return the tags, never {@literal null}
 	 */
-	protected abstract String[] expiredHeartbeatEventErrorTags();
+	protected abstract List<String> expiredHeartbeatEventErrorTags();
 
 	/**
 	 * Get the success event tags to use within
@@ -217,7 +217,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *
 	 * @return the tags, never {@literal null}
 	 */
-	protected abstract String[] expiredMeasurementEventSuccessTags();
+	protected abstract List<String> expiredMeasurementEventSuccessTags();
 
 	/**
 	 * Get the error event tags to use within
@@ -225,7 +225,7 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 	 *
 	 * @return the tags, never {@literal null}
 	 */
-	protected abstract String[] expiredMeasurementEventErrorTags();
+	protected abstract List<String> expiredMeasurementEventErrorTags();
 
 	@Override
 	public boolean processExternalSystemWithExpiredHeartbeat(Function<TaskContext<C>, Instant> handler) {

@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.time.InstantSource;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -70,7 +71,7 @@ import net.solarnetwork.service.RemoteServiceException;
  * eGauge REST operations helper.
  *
  * @author matt
- * @version 1.2
+ * @version 1.3
  */
 public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 
@@ -135,7 +136,7 @@ public class EgaugeRestOperationsHelper extends RestOperationsHelper {
 	 *         if any argument is {@literal null}
 	 */
 	public EgaugeRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider, InstantSource clock, RandomGenerator rng,
 			ClientAccessTokenDao clientAccessTokenDao, CloudIntegrationConfigurationDao integrationDao) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);

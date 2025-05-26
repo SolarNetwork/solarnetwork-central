@@ -25,6 +25,7 @@ package net.solarnetwork.central.c2c.biz.impl;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationService.API_KEY_SETTING;
 import static net.solarnetwork.central.c2c.biz.impl.SolarEdgeV1CloudIntegrationService.API_KEY_HEADER;
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * authentication.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 
@@ -66,7 +67,7 @@ public class SolarEdgeV1RestOperationsHelper extends RestOperationsHelper {
 	 *         if any argument is {@literal null}
 	 */
 	public SolarEdgeV1RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 	}

@@ -25,6 +25,7 @@ package net.solarnetwork.central.dnp3.domain;
 import static net.solarnetwork.central.domain.LogEventInfo.event;
 import static net.solarnetwork.codec.JsonUtils.getJSONString;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.domain.CompositeKey;
 import net.solarnetwork.central.domain.LogEventInfo;
@@ -34,7 +35,7 @@ import net.solarnetwork.dao.Entity;
  * Constants and helpers for DNP3 user event handling.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public interface Dnp3UserEvents {
 
@@ -102,16 +103,15 @@ public interface Dnp3UserEvents {
 	String UPDATE_LIST_DATA_KEY = "updates";
 
 	/** User event tags for authorization events. */
-	String[] AUTHORIZATION_TAGS = new String[] { DNP3_TAG, AUTHORIZATION_TAG };
+	List<String> AUTHORIZATION_TAGS = List.of(DNP3_TAG, AUTHORIZATION_TAG);
 
 	/** User event tags for session events. */
-	String[] SESSION_TAGS = new String[] { DNP3_TAG, SESSION_TAG };
+	List<String> SESSION_TAGS = List.of(DNP3_TAG, SESSION_TAG);
 
 	/** User event tags for datum events. */
-	String[] DATUM_TAGS = new String[] { DNP3_TAG, DATUM_TAG };
+	List<String> DATUM_TAGS = List.of(DNP3_TAG, DATUM_TAG);
 
-	/** User event tags for instruction events. */
-	String[] INSTRUCTION_TAGS = new String[] { DNP3_TAG, INSTRUCTION_TAG };
+	List<String> INSTRUCTION_TAGS = List.of(DNP3_TAG, INSTRUCTION_TAG);
 
 	/**
 	 * Get a user log event for a configuration.
@@ -126,7 +126,7 @@ public interface Dnp3UserEvents {
 	 *        optional extra tags
 	 * @return the log event
 	 */
-	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, String[] baseTags,
+	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
 			String message, String... extraTags) {
 		return eventWithEntity(entity, baseTags, message, null, extraTags);
 	}
@@ -146,7 +146,7 @@ public interface Dnp3UserEvents {
 	 *        optional extra tags
 	 * @return the log event
 	 */
-	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, String[] baseTags,
+	static LogEventInfo eventWithEntity(Entity<? extends CompositeKey> entity, List<String> baseTags,
 			String message, Map<String, ?> extraData, String... extraTags) {
 		Map<String, Object> data = eventDataForEntity(entity, extraData);
 		return event(baseTags, message, getJSONString(data, null), extraTags);

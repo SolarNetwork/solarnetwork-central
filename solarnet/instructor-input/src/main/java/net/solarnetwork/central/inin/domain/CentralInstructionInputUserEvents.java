@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.inin.domain;
 
+import java.util.List;
+
 /**
  * Constants for central instruction input (ININ) user events.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface CentralInstructionInputUserEvents {
 
@@ -67,7 +69,7 @@ public interface CentralInstructionInputUserEvents {
 	String RES_TRANSFORM_SERVICE_ID_DATA_KEY = "resTransformServiceId";
 
 	/** User event tags for instruction events. */
-	String[] INSTRUCTION_TAGS = new String[] { INSTRUCTION_TAG, ININ_TAG };
+	List<String> INSTRUCTION_TAGS = List.of(INSTRUCTION_TAG, ININ_TAG);
 
 	/**
 	 * User event data key for a {@code Map} of additional parameters, for

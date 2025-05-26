@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -62,7 +63,7 @@ import net.solarnetwork.service.Identifiable;
  * Handle OCPP instruction messages by publishing/subscribing them to/from MQTT.
  *
  * @author matt
- * @version 2.4
+ * @version 2.5
  */
 public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqttConnectionObserver
 		implements ActionMessageProcessor<JsonNode, Void>, MqttMessageHandler, CentralOcppUserEvents {
@@ -295,13 +296,13 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 		}
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
 		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 

@@ -46,7 +46,7 @@ import net.solarnetwork.service.IdentifiableConfiguration;
  * style authentication.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OpenWeatherMapRestOperationsHelper extends RestOperationsHelper {
 
@@ -71,7 +71,7 @@ public class OpenWeatherMapRestOperationsHelper extends RestOperationsHelper {
 	 *         if any argument is {@literal null}
 	 */
 	public OpenWeatherMapRestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider) {
 		super(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider);
 	}

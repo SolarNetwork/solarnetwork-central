@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.ocpp.domain;
 
+import java.util.List;
+
 /**
  * Constants for central OCPP user events.
  * 
  * @author matt
- * @version 1.3
+ * @version 1.4
  */
 public interface CentralOcppUserEvents {
 
@@ -46,38 +48,37 @@ public interface CentralOcppUserEvents {
 	String MESSAGE_EVENT_TAG = "message";
 
 	/** User event tags for OCPP connection established events. */
-	String[] CHARGE_POINT_CONNECTED_TAGS = new String[] { OCPP_EVENT_TAG, CHARGER_EVENT_TAG,
-			"connected" };
+	List<String> CHARGE_POINT_CONNECTED_TAGS = List.of(OCPP_EVENT_TAG, CHARGER_EVENT_TAG, "connected");
 
 	/** User event tags for OCPP connection ended events. */
-	String[] CHARGE_POINT_DISCONNECTED_TAGS = new String[] { OCPP_EVENT_TAG, CHARGER_EVENT_TAG,
-			"disconnected" };
+	List<String> CHARGE_POINT_DISCONNECTED_TAGS = List.of(OCPP_EVENT_TAG, CHARGER_EVENT_TAG,
+			"disconnected");
 
 	/** User event tags for OCPP instruction general events. */
-	String[] CHARGE_POINT_INSTRUCTION_TAGS = new String[] { OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG };
+	List<String> CHARGE_POINT_INSTRUCTION_TAGS = List.of(OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG);
 
 	/** User event tags for OCPP instruction queued events. */
-	String[] CHARGE_POINT_INSTRUCTION_QUEUED_TAGS = new String[] { OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG,
-			"queued" };
+	List<String> CHARGE_POINT_INSTRUCTION_QUEUED_TAGS = List.of(OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG,
+			"queued");
 
 	/** User event tags for OCPP instruction acknowledged events. */
-	String[] CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS = new String[] { OCPP_EVENT_TAG,
-			INSTRUCTION_EVENT_TAG, "ack" };
+	List<String> CHARGE_POINT_INSTRUCTION_ACKNOWLEDGED_TAGS = List.of(OCPP_EVENT_TAG,
+			INSTRUCTION_EVENT_TAG, "ack");
 
 	/** User event tags for OCPP instruction error events. */
-	String[] CHARGE_POINT_INSTRUCTION_ERROR_TAGS = new String[] { OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG,
-			ERROR_TAG };
+	List<String> CHARGE_POINT_INSTRUCTION_ERROR_TAGS = List.of(OCPP_EVENT_TAG, INSTRUCTION_EVENT_TAG,
+			ERROR_TAG);
 
 	/** User event tags for OCPP message received events. */
-	String[] CHARGE_POINT_MESSAGE_RECEIVED_TAGS = new String[] { OCPP_EVENT_TAG, MESSAGE_EVENT_TAG,
-			"received" };
+	List<String> CHARGE_POINT_MESSAGE_RECEIVED_TAGS = List.of(OCPP_EVENT_TAG, MESSAGE_EVENT_TAG,
+			"received");
 
 	/** User event tags for OCPP message sent events. */
-	String[] CHARGE_POINT_MESSAGE_SENT_TAGS = new String[] { OCPP_EVENT_TAG, MESSAGE_EVENT_TAG, "sent" };
+	List<String> CHARGE_POINT_MESSAGE_SENT_TAGS = List.of(OCPP_EVENT_TAG, MESSAGE_EVENT_TAG, "sent");
 
 	/** User event tags for OCPP message sent events. */
-	String[] CHARGE_POINT_MESSAGE_SENT_ERROR_TAGS = new String[] { OCPP_EVENT_TAG, MESSAGE_EVENT_TAG,
-			"sent", ERROR_TAG };
+	List<String> CHARGE_POINT_MESSAGE_SENT_ERROR_TAGS = List.of(OCPP_EVENT_TAG, MESSAGE_EVENT_TAG,
+			"sent", ERROR_TAG);
 
 	/** User event data key for a charge point identifier. */
 	String CHARGE_POINT_DATA_KEY = "cp";

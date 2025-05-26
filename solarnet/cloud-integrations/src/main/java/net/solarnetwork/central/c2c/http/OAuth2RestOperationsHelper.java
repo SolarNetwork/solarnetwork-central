@@ -26,6 +26,7 @@ import static net.solarnetwork.central.c2c.http.OAuth2Utils.addOAuthBearerAuthor
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.net.URI;
 import java.time.InstantSource;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -51,7 +52,7 @@ import net.solarnetwork.central.domain.UserRelatedCompositeKey;
  * {@link OAuth2AuthorizedClientManager} support.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 
@@ -116,7 +117,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 *         if any argument is {@literal null}
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock) {
 		this(log, userEventAppenderBiz, restOps, errorEventTags, encryptor, sensitiveKeyProvider,
@@ -154,7 +155,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 * @since 1.1
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache) {
@@ -196,7 +197,7 @@ public class OAuth2RestOperationsHelper extends RestOperationsHelper {
 	 * @since 1.1
 	 */
 	public OAuth2RestOperationsHelper(Logger log, UserEventAppenderBiz userEventAppenderBiz,
-			RestOperations restOps, String[] errorEventTags, TextEncryptor encryptor,
+			RestOperations restOps, List<String> errorEventTags, TextEncryptor encryptor,
 			Function<String, Set<String>> sensitiveKeyProvider,
 			OAuth2AuthorizedClientManager oauthClientManager, InstantSource clock,
 			Cache<UserLongCompositePK, Lock> integrationLocksCache,

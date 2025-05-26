@@ -33,6 +33,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -75,7 +76,7 @@ import net.solarnetwork.util.StatTracker;
  * connect.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class CentralOcppNodeInstructionProvider extends
 		DelayedOccasionalProcessor<CentralOcppNodeInstructionProvider.DelayedChargePointIdentifier>
@@ -311,7 +312,7 @@ public class CentralOcppNodeInstructionProvider extends
 				});
 	}
 
-	private void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	private void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
@@ -322,7 +323,7 @@ public class CentralOcppNodeInstructionProvider extends
 		} catch ( JsonProcessingException e ) {
 			dataStr = null;
 		}
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 

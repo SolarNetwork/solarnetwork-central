@@ -685,8 +685,8 @@ public class DaoFlexibilityProviderBiz implements FlexibilityProviderBiz {
 		}
 
 		@Override
-		protected SystemTaskContext<CapacityOptimizerConfiguration> context(String... extraErrorTags) {
-			SystemTaskContext<CapacityOptimizerConfiguration> ctx = super.context(extraErrorTags);
+		protected SystemTaskContext<CapacityOptimizerConfiguration> context() {
+			SystemTaskContext<CapacityOptimizerConfiguration> ctx = super.context();
 
 			// if we have a publish event, then add the source ID as an extra HTTP header parameter
 			final DatumPublishEvent evt = this.publishEvent;

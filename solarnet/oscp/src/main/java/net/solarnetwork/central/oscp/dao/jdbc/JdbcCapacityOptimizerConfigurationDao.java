@@ -47,7 +47,7 @@ import net.solarnetwork.domain.SortDescriptor;
  * JDBC implementation of {@link JdbcCapacityOptimizerConfigurationDao}.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class JdbcCapacityOptimizerConfigurationDao
 		extends BaseJdbcExternalSystemConfigurationDao<CapacityOptimizerConfiguration>
@@ -71,22 +71,22 @@ public class JdbcCapacityOptimizerConfigurationDao
 	}
 
 	@Override
-	protected String[] expiredHeartbeatEventSuccessTags() {
+	protected List<String> expiredHeartbeatEventSuccessTags() {
 		return CAPACITY_OPTIMIZER_HEARTBEAT_TAGS;
 	}
 
 	@Override
-	protected String[] expiredHeartbeatEventErrorTags() {
+	protected List<String> expiredHeartbeatEventErrorTags() {
 		return CAPACITY_OPTIMIZER_HEARTBEAT_ERROR_TAGS;
 	}
 
 	@Override
-	protected String[] expiredMeasurementEventSuccessTags() {
+	protected List<String> expiredMeasurementEventSuccessTags() {
 		return CAPACITY_OPTIMIZER_MEASUREMENT_TAGS;
 	}
 
 	@Override
-	protected String[] expiredMeasurementEventErrorTags() {
+	protected List<String> expiredMeasurementEventErrorTags() {
 		return CAPACITY_OPTIMIZER_MEASUREMENT_ERROR_TAGS;
 	}
 

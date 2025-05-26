@@ -24,6 +24,7 @@ package net.solarnetwork.central.ocpp.service;
 
 import static net.solarnetwork.util.ObjectUtils.requireNonNullArgument;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -261,13 +262,13 @@ public abstract class BaseOcppController extends BasicIdentifiable
 		});
 	}
 
-	protected final void generateUserEvent(Long userId, String[] tags, String message, Object data) {
+	protected final void generateUserEvent(Long userId, List<String> tags, String message, Object data) {
 		final UserEventAppenderBiz biz = getUserEventAppenderBiz();
 		if ( biz == null ) {
 			return;
 		}
 		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
-		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
+		LogEventInfo event = LogEventInfo.event(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}
 
