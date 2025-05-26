@@ -94,10 +94,9 @@ public class GeneralNodeDatumMetadata implements Entity<NodeSourcePK>, Cloneable
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof GeneralNodeDatumMetadata other) ) {
 			return false;
 		}
-		GeneralNodeDatumMetadata other = (GeneralNodeDatumMetadata) obj;
 		if ( id == null ) {
 			return other.id == null;
 		}

@@ -173,6 +173,7 @@ public class GeneralNodeDatum implements Entity<GeneralNodeDatumPK>, Cloneable, 
 		return result;
 	}
 
+	@SuppressWarnings("EqualsGetClass")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {

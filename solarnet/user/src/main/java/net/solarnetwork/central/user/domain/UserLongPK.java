@@ -138,10 +138,9 @@ public class UserLongPK implements UserRelatedCompositeKey<UserLongPK>, Composit
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof UserLongPK other) ) {
 			return false;
 		}
-		UserLongPK other = (UserLongPK) obj;
 		if ( id == null ) {
 			if ( other.id != null ) {
 				return false;

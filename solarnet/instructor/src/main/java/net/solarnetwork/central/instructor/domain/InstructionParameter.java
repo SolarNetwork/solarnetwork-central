@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @author matt
  * @version 1.2
  */
-public class InstructionParameter implements Serializable {
+public final class InstructionParameter implements Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 2828143065346415324L;
@@ -50,9 +50,9 @@ public class InstructionParameter implements Serializable {
 	 * Construct with values.
 	 *
 	 * @param name
-	 * 		the name
+	 *        the name
 	 * @param value
-	 * 		the value
+	 *        the value
 	 */
 	public InstructionParameter(String name, String value) {
 		super();
@@ -85,18 +85,17 @@ public class InstructionParameter implements Serializable {
 	}
 
 	/**
-	 * Compare two {@link InstructionParameter} objects for equality. Only the {@code name} property is
-	 * used for comparison.
+	 * Compare two {@link InstructionParameter} objects for equality. Only the
+	 * {@code name} property is used for comparison.
 	 */
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof InstructionParameter other) ) {
 			return false;
 		}
-		InstructionParameter other = (InstructionParameter) obj;
 		if ( name == null ) {
 			return other.name == null;
 		}

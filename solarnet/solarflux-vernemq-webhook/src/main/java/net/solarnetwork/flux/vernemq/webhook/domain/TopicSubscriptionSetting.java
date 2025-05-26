@@ -91,10 +91,9 @@ public class TopicSubscriptionSetting {
     if (this == obj) {
       return true;
     }
-    if ((obj == null) || (getClass() != obj.getClass())) {
+    if (!(obj instanceof TopicSubscriptionSetting other)) {
       return false;
     }
-    TopicSubscriptionSetting other = (TopicSubscriptionSetting) obj;
     if (qos != other.qos) {
       return false;
     }

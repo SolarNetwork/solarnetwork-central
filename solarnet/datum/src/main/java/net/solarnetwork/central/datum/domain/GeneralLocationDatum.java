@@ -176,6 +176,7 @@ public class GeneralLocationDatum implements Entity<GeneralLocationDatumPK>, Clo
 		return result;
 	}
 
+	@SuppressWarnings("EqualsGetClass")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {

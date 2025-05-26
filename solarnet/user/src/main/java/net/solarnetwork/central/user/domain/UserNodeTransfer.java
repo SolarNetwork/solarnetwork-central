@@ -188,10 +188,9 @@ public class UserNodeTransfer
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof UserNodeTransfer other) ) {
 			return false;
 		}
-		UserNodeTransfer other = (UserNodeTransfer) obj;
 		if ( id == null ) {
 			return other.id == null;
 		}

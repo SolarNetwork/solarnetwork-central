@@ -62,6 +62,7 @@ public abstract class BaseStringIdentity
 	 * Test if two BaseStringEntity objects have the same {@link #getId()}
 	 * value.
 	 */
+	@SuppressWarnings("EqualsGetClass")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {

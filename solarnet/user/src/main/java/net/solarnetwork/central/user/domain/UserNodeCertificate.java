@@ -235,10 +235,9 @@ public class UserNodeCertificate
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof UserNodeCertificate other) ) {
 			return false;
 		}
-		UserNodeCertificate other = (UserNodeCertificate) obj;
 		if ( id == null ) {
 			return other.id == null;
 		}

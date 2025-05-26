@@ -125,10 +125,9 @@ public class UserUuidPK implements Serializable, Cloneable, Comparable<UserUuidP
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof UserUuidPK other) ) {
 			return false;
 		}
-		UserUuidPK other = (UserUuidPK) obj;
 		if ( id == null ) {
 			if ( other.id != null ) {
 				return false;

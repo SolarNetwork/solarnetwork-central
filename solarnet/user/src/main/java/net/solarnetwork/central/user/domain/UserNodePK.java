@@ -123,10 +123,9 @@ public class UserNodePK implements Serializable, Cloneable, Comparable<UserNodeP
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof UserNodePK other) ) {
 			return false;
 		}
-		UserNodePK other = (UserNodePK) obj;
 		if ( nodeId == null ) {
 			if ( other.nodeId != null ) {
 				return false;

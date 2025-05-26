@@ -124,10 +124,9 @@ public class LocationSourcePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof LocationSourcePK other) ) {
 			return false;
 		}
-		LocationSourcePK other = (LocationSourcePK) obj;
 		if ( locationId == null ) {
 			if ( other.locationId != null ) {
 				return false;

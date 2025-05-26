@@ -163,10 +163,9 @@ public class AuditDatumRecordCounts implements Entity<GeneralNodeDatumPK>, Clone
 		if ( this == obj ) {
 			return true;
 		}
-		if ( (obj == null) || (getClass() != obj.getClass()) ) {
+		if ( !(obj instanceof AuditDatumRecordCounts other) ) {
 			return false;
 		}
-		AuditDatumRecordCounts other = (AuditDatumRecordCounts) obj;
 		if ( id == null ) {
 			return other.id == null;
 		}
