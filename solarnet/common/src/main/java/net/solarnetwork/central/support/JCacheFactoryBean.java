@@ -104,7 +104,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 	public void afterPropertiesSet() throws Exception {
 		CachingProvider provider = cacheManager.getCachingProvider();
 		Configuration<K, V> cacheConfig = null;
-		if ( heapMaxEntries != null || diskMaxSizeMB != null
+		if ( (heapMaxEntries != null || diskMaxSizeMB != null)
 				&& "org.ehcache.jsr107.EhcacheCachingProvider".equals(provider.getClass().getName()) ) {
 			CacheConfigurationBuilder<K, V> cacheConfigBuilder = CacheConfigurationBuilder
 					.newCacheConfigurationBuilder(keyType, valueType,

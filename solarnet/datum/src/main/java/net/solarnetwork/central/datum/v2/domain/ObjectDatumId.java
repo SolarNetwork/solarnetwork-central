@@ -384,7 +384,8 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 			return true;
 		}
 		return aggregation == other.aggregation && kind == other.kind
-				&& (streamId != null && other.streamId != null ? Objects.equals(streamId, other.streamId)
+				&& ((streamId != null && other.streamId != null)
+						? Objects.equals(streamId, other.streamId)
 						: Objects.equals(objectId, other.objectId)
 								&& Objects.equals(sourceId, other.sourceId))
 				&& Objects.equals(timestamp, other.timestamp);

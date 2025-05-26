@@ -243,7 +243,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 				&& Objects.equals(key, other.key)
 				&& Objects.equals(itemType, other.itemType)
 				&& Objects.equals(quantity, other.quantity)
-				&& (amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0)
+				&& ((amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0))
 				&& Objects.equals(metadata, other.metadata);
 		// @formatter:on
 	}

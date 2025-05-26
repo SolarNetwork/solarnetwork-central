@@ -162,7 +162,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 		// @formatter:off
 		return Objects.equals(code, other.code)
 				&& Objects.equals(itemKey, other.itemKey)
-				&& (rate == other.rate) || (rate != null && rate.compareTo(other.rate) == 0)
+				&& ((rate == other.rate) || (rate != null && rate.compareTo(other.rate) == 0))
 				&& Objects.equals(validFrom, other.validFrom)
 				&& Objects.equals(validTo, other.validTo);
 		// @formatter:on

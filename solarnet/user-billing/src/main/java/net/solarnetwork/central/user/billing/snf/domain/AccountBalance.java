@@ -141,12 +141,12 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 			return false;
 		}
 		// @formatter:off
-		return (chargeTotal == other.chargeTotal)
-					|| (chargeTotal != null && chargeTotal.compareTo(other.chargeTotal) == 0)
-				&& (paymentTotal == other.paymentTotal)
-					|| (paymentTotal != null && paymentTotal.compareTo(other.paymentTotal) == 0)
-				&& (availableCredit == other.availableCredit)
-					|| (availableCredit != null && availableCredit.compareTo(other.availableCredit) == 0);
+		return ((chargeTotal == other.chargeTotal)
+					|| (chargeTotal != null && chargeTotal.compareTo(other.chargeTotal) == 0))
+				&& ((paymentTotal == other.paymentTotal)
+					|| (paymentTotal != null && paymentTotal.compareTo(other.paymentTotal) == 0))
+				&& ((availableCredit == other.availableCredit)
+					|| (availableCredit != null && availableCredit.compareTo(other.availableCredit) == 0));
 		// @formatter:on
 	}
 

@@ -112,7 +112,7 @@ public class DefaultMailService implements MailService {
 		final Iterator<Resource> attachments = (messageDataSource.getAttachments() != null
 				? messageDataSource.getAttachments().iterator()
 				: null);
-		if ( html || attachments != null && attachments.hasNext() ) {
+		if ( html || (attachments != null && attachments.hasNext()) ) {
 			// need JavaMailSender to send attachments
 			if ( !(mailSender instanceof JavaMailSender sender) ) {
 				throw new RuntimeException("Cannot send mail attachments without a JavaMailSender.");

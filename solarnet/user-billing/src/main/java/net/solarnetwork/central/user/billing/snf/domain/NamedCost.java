@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import net.solarnetwork.domain.Differentiable;
+import net.solarnetwork.util.ObjectUtils;
 
 /**
  * A named resource with associated cost.
@@ -148,10 +149,7 @@ public class NamedCost
 	 */
 	public NamedCost(String name, BigInteger quantity, BigDecimal cost) {
 		super();
-		if ( name == null ) {
-			throw new IllegalArgumentException("The name argument must be provided.");
-		}
-		this.name = name;
+		this.name = ObjectUtils.requireNonNullArgument(name, "name");
 		this.quantity = quantity != null ? quantity : BigInteger.ZERO;
 		this.cost = cost != null ? cost : BigDecimal.ZERO;
 	}
@@ -216,7 +214,7 @@ public class NamedCost
 			return false;
 		}
 		return Objects.equals(name, other.name) && Objects.equals(quantity, other.quantity)
-				&& (cost == other.cost) || (cost != null && cost.compareTo(other.cost) == 0);
+				&& (cost == other.cost || cost.compareTo(other.cost) == 0);
 	}
 
 	@Override

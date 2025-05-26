@@ -165,14 +165,14 @@ public class DatumCsvIterator implements CloseableIterator<Datum> {
 		for ( String val : row ) {
 			i++;
 			map.put(val, i);
-			if ( dateColumn < 0 && "created".equalsIgnoreCase(val) || "ts".equalsIgnoreCase(val)
+			if ( (dateColumn < 0 && "created".equalsIgnoreCase(val)) || "ts".equalsIgnoreCase(val)
 					|| "date".equalsIgnoreCase(val) ) {
 				dateColumn = i;
-			} else if ( objectIdColumn < 0 && "nodeId".equalsIgnoreCase(val)
+			} else if ( (objectIdColumn < 0 && "nodeId".equalsIgnoreCase(val))
 					|| "node_id".equalsIgnoreCase(val) || "locationId".equalsIgnoreCase(val)
 					|| "location_id".equalsIgnoreCase(val) ) {
 				objectIdColumn = i;
-			} else if ( sourceIdColumn < 0 && "sourceId".equalsIgnoreCase(val)
+			} else if ( (sourceIdColumn < 0 && "sourceId".equalsIgnoreCase(val))
 					|| "source_id".equalsIgnoreCase(val) ) {
 				sourceIdColumn = i;
 			}
