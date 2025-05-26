@@ -191,6 +191,8 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 	}
 
 	/**
+	 * Get the filter.
+	 * 
 	 * @return the filter
 	 */
 	public T getFilter() {
@@ -198,6 +200,8 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 	}
 
 	/**
+	 * Get the mode.
+	 * 
 	 * @return the mode
 	 */
 	public MatchType getMode() {
@@ -205,6 +209,8 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 	}
 
 	/**
+	 * Get the join type.
+	 * 
 	 * @return the joinType
 	 */
 	public JoinType getJoinType() {

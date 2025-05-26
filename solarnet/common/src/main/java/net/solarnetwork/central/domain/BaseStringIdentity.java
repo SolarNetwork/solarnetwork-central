@@ -97,6 +97,8 @@ public abstract class BaseStringIdentity
 	}
 
 	/**
+	 * Get the ID.
+	 * 
 	 * @return the id
 	 */
 	@Override
@@ -105,6 +107,8 @@ public abstract class BaseStringIdentity
 	}
 
 	/**
+	 * Set the ID.
+	 * 
 	 * @param id
 	 *        the id to set
 	 */

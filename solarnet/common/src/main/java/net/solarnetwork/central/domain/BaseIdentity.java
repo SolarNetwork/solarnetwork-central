@@ -95,6 +95,8 @@ public abstract class BaseIdentity
 	}
 
 	/**
+	 * Get the ID.
+	 * 
 	 * @return the id
 	 */
 	@Override
@@ -103,6 +105,8 @@ public abstract class BaseIdentity
 	}
 
 	/**
+	 * Set the ID.
+	 * 
 	 * @param id
 	 *        the id to set
 	 */

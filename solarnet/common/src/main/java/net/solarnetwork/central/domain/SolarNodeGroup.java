@@ -79,6 +79,8 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	}
 
 	/**
+	 * Get the name.
+	 * 
 	 * @return the name
 	 */
 	public String getName() {
@@ -86,6 +88,8 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	}
 
 	/**
+	 * Set the name.
+	 * 
 	 * @param name
 	 *        the name to set
 	 */
@@ -94,15 +98,19 @@ public class SolarNodeGroup extends BaseEntity implements Cloneable, Serializabl
 	}
 
 	/**
-	 * @return the locationId
+	 * Get the location ID.
+	 * 
+	 * @return the location ID
 	 */
 	public Long getLocationId() {
 		return locationId;
 	}
 
 	/**
+	 * Set the location ID.
+	 * 
 	 * @param locationId
-	 *        the locationId to set
+	 *        the location ID to set
 	 */
 	public void setLocationId(Long locationId) {
 		this.locationId = locationId;
