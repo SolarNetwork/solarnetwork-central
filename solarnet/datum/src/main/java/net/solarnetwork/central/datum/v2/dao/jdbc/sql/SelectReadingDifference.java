@@ -84,27 +84,14 @@ public final class SelectReadingDifference
 		buf.append("\t, min(d.ts) AS ts, min(s.node_id) AS node_id, min(s.source_id) AS source_id\n");
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN solardatm.");
-		switch (filter.getReadingType()) {
-			case Difference:
-				buf.append("find_datm_diff_rows");
-				break;
-
-			case NearestDifference:
-				buf.append("find_datm_diff_near_rows");
-				break;
-
-			case DifferenceWithin:
-				buf.append("find_datm_diff_within_rows");
-				break;
-
-			case CalculatedAtDifference:
-				buf.append("find_datm_diff_at_rows");
-				break;
-
-			default:
-				throw new UnsupportedOperationException(
-						"Reading type " + filter.getReadingType() + " not supported.");
-		}
+		buf.append(switch (filter.getReadingType()) {
+			case Difference -> "find_datm_diff_rows";
+			case NearestDifference -> "find_datm_diff_near_rows";
+			case DifferenceWithin -> "find_datm_diff_within_rows";
+			case CalculatedAtDifference -> "find_datm_diff_at_rows";
+			default -> throw new UnsupportedOperationException(
+					"Reading type " + filter.getReadingType() + " not supported.");
+		});
 		buf.append("(s.stream_id");
 		if ( filter.hasLocalDateRange() ) {
 			buf.append(", ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");

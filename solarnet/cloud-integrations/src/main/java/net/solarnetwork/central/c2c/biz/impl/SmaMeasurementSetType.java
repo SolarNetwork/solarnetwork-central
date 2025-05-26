@@ -76,6 +76,7 @@ public enum SmaMeasurementSetType {
 		this.measurements = createMeasurements(this.name());
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static SequencedMap<String, SmaMeasurementType<?>> createMeasurements(
 			String measurementSetType) {
 		SequencedMap<String, SmaMeasurementType<?>> types = new LinkedHashMap<>(8);

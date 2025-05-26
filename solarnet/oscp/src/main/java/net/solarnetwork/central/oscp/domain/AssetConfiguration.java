@@ -191,6 +191,7 @@ public class AssetConfiguration extends BaseOscpConfigurationEntity<AssetConfigu
 	 * @throws IllegalArgumentException
 	 *         if {@code audience} is {@literal null} or not supported
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public void setAudience(OscpRole audience) {
 		switch (requireNonNullArgument(audience, "audience")) {
 			case CapacityProvider:

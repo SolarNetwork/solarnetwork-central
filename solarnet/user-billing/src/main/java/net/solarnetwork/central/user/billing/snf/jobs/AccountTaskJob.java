@@ -101,6 +101,7 @@ public class AccountTaskJob extends JobSupport {
 		return processedCount;
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private boolean execute() {
 		final AccountTask task = taskDao.claimAccountTask();
 		if ( task == null ) {

@@ -57,16 +57,12 @@ public interface ObjectCriteria<T extends Filter> {
 
 		@Override
 		public String toString() {
-			switch (this) {
-				case AND:
-					return "&";
-				case OR:
-					return "|";
-				case NOT:
-					return "!";
-				default:
-					throw new AssertionError(this);
-			}
+			return switch (this) {
+				case AND -> "&";
+				case OR -> "|";
+				case NOT -> "!";
+				default -> throw new AssertionError(this);
+			};
 		}
 	}
 
@@ -117,32 +113,20 @@ public interface ObjectCriteria<T extends Filter> {
 
 		@Override
 		public String toString() {
-			switch (this) {
-				case EQUAL:
-					return "=";
-				case NOT_EQUAL:
-					return "<>";
-				case LESS_THAN:
-					return "<";
-				case LESS_THAN_EQUAL:
-					return "<=";
-				case GREATER_THAN:
-					return ">";
-				case GREATER_THAN_EQUAL:
-					return ">=";
-				case SUBSTRING:
-					return "**";
-				case SUBSTRING_AT_START:
-					return "*";
-				case PRESENT:
-					return "?";
-				case APPROX:
-					return "~";
-				case OVERLAP:
-					return "&&";
-				default:
-					throw new AssertionError(this);
-			}
+			return switch (this) {
+				case EQUAL -> "=";
+				case NOT_EQUAL -> "<>";
+				case LESS_THAN -> "<";
+				case LESS_THAN_EQUAL -> "<=";
+				case GREATER_THAN -> ">";
+				case GREATER_THAN_EQUAL -> ">=";
+				case SUBSTRING -> "**";
+				case SUBSTRING_AT_START -> "*";
+				case PRESENT -> "?";
+				case APPROX -> "~";
+				case OVERLAP -> "&&";
+				default -> throw new AssertionError(this);
+			};
 		}
 	}
 

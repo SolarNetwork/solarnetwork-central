@@ -1617,6 +1617,7 @@ public final class DatumSqlUtils {
 	 * @throws IllegalArgumentException
 	 *         if {@code roundingMode} is not supported
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static void dateRoundedParameter(Aggregation aggregation, RoundingMode roundingMode,
 			StringBuilder buf) {
 		if ( roundingMode == null || roundingMode == RoundingMode.UNNECESSARY || aggregation == null
@@ -1666,27 +1667,14 @@ public final class DatumSqlUtils {
 			buf.append('T');
 		}
 		buf.append(count);
-		switch (aggregation) {
-			case Hour:
-				buf.append('H');
-				break;
-
-			case Day:
-				buf.append('D');
-				break;
-
-			case Month:
-				buf.append('M');
-				break;
-
-			case Year:
-				buf.append('Y');
-				break;
-
-			default:
-				throw new IllegalArgumentException(format(
-						"The aggregation %s cannot be translated into a SQL interval.", aggregation));
-		}
+		buf.append(switch (aggregation) {
+			case Hour -> 'H';
+			case Day -> 'D';
+			case Month -> 'M';
+			case Year -> 'Y';
+			default -> throw new IllegalArgumentException(
+					format("The aggregation %s cannot be translated into a SQL interval.", aggregation));
+		});
 		buf.append("'");
 		return buf.toString();
 	}

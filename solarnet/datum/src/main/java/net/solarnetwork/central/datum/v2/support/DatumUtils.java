@@ -590,6 +590,7 @@ public final class DatumUtils {
 	 *         {@literal null} or {@link ObjectDatumStreamMetadata#getKind()} is
 	 *         not {@code Node}
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static ReportingGeneralNodeDatum toGeneralNodeDatum(Datum datum,
 			ObjectDatumStreamMetadata meta) {
 		if ( datum == null || meta.getKind() != ObjectDatumKind.Node ) {

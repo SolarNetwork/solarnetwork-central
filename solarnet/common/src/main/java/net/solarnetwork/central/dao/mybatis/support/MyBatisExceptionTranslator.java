@@ -157,13 +157,10 @@ public class MyBatisExceptionTranslator extends org.mybatis.spring.MyBatisExcept
 		ConcurrencyFailure;
 
 		private DataAccessException toException(Throwable t, DataAccessException fallback) {
-			switch (this) {
-				case ConcurrencyFailure:
-					return new ConcurrencyFailureException(t.getMessage(), t);
-
-				default:
-					return fallback;
-			}
+			return switch (this) {
+				case ConcurrencyFailure -> new ConcurrencyFailureException(t.getMessage(), t);
+				default -> fallback;
+			};
 		}
 	}
 

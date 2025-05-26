@@ -88,6 +88,7 @@ public final class SelectStaleFluxDatum implements PreparedStatementCreator, Sql
 		this.aggregation = aggregation(filter);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(AggregationCriteria filter) {
 		Aggregation agg = Aggregation.None;
 		if ( filter.getAggregation() != null ) {

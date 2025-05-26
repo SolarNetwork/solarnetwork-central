@@ -99,7 +99,7 @@ public class JCacheFactoryBean<K, V> implements FactoryBean<Cache<K, V>>, Initia
 		this.valueType = valueType;
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "StatementSwitchToExpressionSwitch" })
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		CachingProvider provider = cacheManager.getCachingProvider();

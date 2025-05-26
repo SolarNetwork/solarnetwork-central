@@ -70,6 +70,7 @@ public final class SearchFilterUtils {
 	 *        the filter
 	 * @return the JSON Path expression
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static String toSqlJsonPath(SearchFilter filter) {
 		if ( filter == null ) {
 			return null;

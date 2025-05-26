@@ -231,6 +231,7 @@ public class DatumExportController {
 		return success();
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	@ResponseBody
 	@RequestMapping(value = "/configs/{id}/date", method = RequestMethod.POST)
 	public Result<LocalDateTime> updateExportConfigurationDate(@PathVariable("id") Long id,

@@ -226,6 +226,7 @@ public class MeterTransferDataTransferDatumPublisher extends DataTransferProcess
 		return d;
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static String phased(String propName, MeterTransferMeasurand measurand) {
 		if ( propName == null || !measurand.isPhased() ) {
 			return propName;

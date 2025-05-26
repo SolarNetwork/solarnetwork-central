@@ -235,6 +235,7 @@ public class DlbMeterDataTransferDatumPublisher extends DataTransferProcessor {
 		return (m.matches() ? NumberUtils.narrow(StringUtils.numberValue(m.group(1)), 2) : null);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static String phased(String key, String phase) {
 		AcPhase p;
 		switch (phase) {

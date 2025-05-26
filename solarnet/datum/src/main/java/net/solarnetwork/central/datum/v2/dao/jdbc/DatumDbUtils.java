@@ -957,19 +957,11 @@ public final class DatumDbUtils {
 	private static String insertAggStmt(Aggregation kind) {
 		StringBuilder buf = new StringBuilder();
 		buf.append("insert into solardatm.agg_datm_");
-		switch (kind) {
-			case Day:
-				buf.append("daily");
-				break;
-
-			case Month:
-				buf.append("monthly");
-				break;
-
-			default:
-				buf.append("hourly");
-				break;
-		}
+		buf.append(switch (kind) {
+			case Day -> "daily";
+			case Month -> "monthly";
+			default -> "hourly";
+		});
 		buf.append(" (stream_id,ts_start,data_i,data_a,data_s,data_t,stat_i,read_a) ");
 		buf.append(
 				"VALUES (?::uuid,?,?::numeric[],?::numeric[],?::text[],?::text[],?::numeric[][],?::numeric[][])");
@@ -1153,6 +1145,7 @@ public final class DatumDbUtils {
 	 * @param datums
 	 *        the datum to insert
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static void insertAuditDatum(Logger log, JdbcOperations jdbcTemplate,
 			Iterable<AuditDatum> datums) {
 		jdbcTemplate.execute((ConnectionCallback<Void>) con -> {
@@ -1225,61 +1218,26 @@ public final class DatumDbUtils {
 	private static String insertAuditStmt(Aggregation kind) {
 		StringBuilder buf = new StringBuilder();
 		buf.append("insert into solardatm.");
-		switch (kind) {
-			case Hour:
-				buf.append("aud_datm_io");
-				break;
-
-			case Day:
-				buf.append("aud_datm_daily");
-				break;
-
-			case Month:
-				buf.append("aud_datm_monthly");
-				break;
-
-			default:
-				buf.append("aud_acc_datm_daily");
-				break;
-		}
+		buf.append(switch (kind) {
+			case Hour -> "aud_datm_io";
+			case Day -> "aud_datm_daily";
+			case Month -> "aud_datm_monthly";
+			default -> "aud_acc_datm_daily";
+		});
 		buf.append(" (stream_id,ts_start,");
-		switch (kind) {
-			case Hour:
-				buf.append("prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count");
-				break;
-
-			case Day:
-				buf.append(
-						"prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres");
-				break;
-
-			case Month:
-				buf.append(
-						"prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres");
-				break;
-
-			default:
-				buf.append("datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count");
-				break;
-		}
+		buf.append(switch (kind) {
+			case Hour -> "prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count";
+			case Day -> "prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres";
+			case Month -> "prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres";
+			default -> "datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count";
+		});
 		buf.append(") VALUES (?::uuid,?,");
-		switch (kind) {
-			case Hour:
-				buf.append("?,?,?,?,?");
-				break;
-
-			case Day:
-				buf.append("?,?,?,?,?,?,?");
-				break;
-
-			case Month:
-				buf.append("?,?,?,?,?,?,?,?");
-				break;
-
-			default:
-				buf.append("?,?,?,?");
-				break;
-		}
+		buf.append(switch (kind) {
+			case Hour -> "?,?,?,?,?";
+			case Day -> "?,?,?,?,?,?,?";
+			case Month -> "?,?,?,?,?,?,?,?";
+			default -> "?,?,?,?";
+		});
 		buf.append(")");
 		return buf.toString();
 	}
@@ -1789,32 +1747,29 @@ public final class DatumDbUtils {
 	 */
 	public static List<AuditDatum> listAuditDatum(JdbcOperations jdbcTemplate, Aggregation kind) {
 		String tableName;
-		RowMapper<AuditDatum> mapper;
 		String rowNames;
-		switch (kind) {
-			case Day:
+		RowMapper<AuditDatum> mapper = switch (kind) {
+			case Day -> {
 				tableName = "aud_datm_daily";
 				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_pres";
-				mapper = AuditDatumDailyEntityRowMapper.INSTANCE;
-				break;
-
-			case Month:
+				yield AuditDatumDailyEntityRowMapper.INSTANCE;
+			}
+			case Month -> {
 				tableName = "aud_datm_monthly";
 				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres";
-				mapper = AuditDatumMonthlyEntityRowMapper.INSTANCE;
-				break;
-
-			case RunningTotal:
+				yield AuditDatumMonthlyEntityRowMapper.INSTANCE;
+			}
+			case RunningTotal -> {
 				tableName = "aud_acc_datm_daily";
 				rowNames = "stream_id,ts_start,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count";
-				mapper = AuditDatumAccumulativeEntityRowMapper.INSTANCE;
-				break;
-
-			default:
+				yield AuditDatumAccumulativeEntityRowMapper.INSTANCE;
+			}
+			default -> {
 				tableName = "aud_datm_io";
 				rowNames = "stream_id,ts_start,prop_count,prop_u_count,datum_q_count,flux_byte_count,datum_count";
-				mapper = AuditDatumIoEntityRowMapper.INSTANCE;
-		}
+				yield AuditDatumIoEntityRowMapper.INSTANCE;
+			}
+		};
 		return jdbcTemplate.query(
 				format("SELECT %s FROM solardatm.%s ORDER BY stream_id, ts_start", rowNames, tableName),
 				mapper);

@@ -622,6 +622,7 @@ public final class DatumJsonUtils {
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static Datum parseDatum(JsonParser parser, ObjectDatumStreamMetadataProvider metadataProvider)
 			throws IOException {
 		// read up to the next object end
@@ -734,6 +735,7 @@ public final class DatumJsonUtils {
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static AggregateDatum parseAggregateDatum(JsonParser parser,
 			ObjectDatumStreamMetadataProvider metadataProvider) throws IOException {
 		// read up to the next object end
@@ -840,6 +842,7 @@ public final class DatumJsonUtils {
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static DatumProperties parseDatumSamples(JsonParser parser, ObjectDatumStreamMetadata meta)
 			throws IOException {
 		BigDecimal[] instantaneous = null;
@@ -909,6 +912,7 @@ public final class DatumJsonUtils {
 	 * @throws IOException
 	 *         if any parsing error occurs
 	 */
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	public static DatumPropertiesStatistics parseDatumSamplesStatistics(JsonParser parser,
 			ObjectDatumStreamMetadata meta) throws IOException {
 		BigDecimal[][] instantaneous = null;

@@ -69,6 +69,7 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 		this.aggregation = aggregation(filter);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private static Aggregation aggregation(AggregationCriteria filter) {
 		Aggregation agg = Aggregation.Hour;
 		if ( filter.getAggregation() != null ) {
@@ -112,18 +113,11 @@ public final class InsertStaleAggregateDatumSelect implements PreparedStatementC
 	private void sqlFrom(StringBuilder buf) {
 		buf.append("FROM s\n");
 		buf.append("INNER JOIN solardatm.find_datm_");
-		switch (aggregation) {
-			case Day:
-				buf.append("days");
-				break;
-
-			case Month:
-				buf.append("months");
-				break;
-
-			default:
-				buf.append("hours");
-		}
+		buf.append(switch (aggregation) {
+			case Day -> "days";
+			case Month -> "months";
+			default -> "hours";
+		});
 		buf.append("(s.stream_id, ");
 		if ( filter.hasLocalDateRange() ) {
 			buf.append("? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone");

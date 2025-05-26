@@ -377,6 +377,7 @@ public class OutstationService
 
 	private static final String INSTRUCTION_TOPIC_SET_CONTROL_PARAMETER = "SetControlParameter";
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private InstructionStatus operateBinaryControl(ControlRelayOutputBlock command, int index,
 			OperateType opType, ServerControlConfiguration config) {
 		Instruction instr = null;
@@ -814,6 +815,7 @@ public class OutstationService
 		}
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private DatabaseConfig createDatabaseConfig(
 			Map<MeasurementType, List<ServerMeasurementConfiguration>> configs,
 			Map<ControlType, List<ServerControlConfiguration>> controlConfigs) {
@@ -897,6 +899,7 @@ public class OutstationService
 				frozenCounterCount, boStatusCount, aoStatusCount);
 	}
 
+	@SuppressWarnings("StatementSwitchToExpressionSwitch")
 	private EventBufferConfig createEventBufferConfig(
 			Map<MeasurementType, List<ServerMeasurementConfiguration>> configs,
 			Map<ControlType, List<ServerControlConfiguration>> controlConfigs) {

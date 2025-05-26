@@ -96,37 +96,15 @@ public class ObjectSearchFilter<T extends Filter> implements Cloneable {
 			Object value = me.getValue();
 			buf.append('(');
 			buf.append(attributeName);
-			switch (mode) {
-				case GREATER_THAN:
-					buf.append(">");
-					break;
-
-				case GREATER_THAN_EQUAL:
-					buf.append(">=");
-					break;
-
-				case LESS_THAN:
-					buf.append("<");
-					break;
-
-				case LESS_THAN_EQUAL:
-					buf.append("<=");
-					break;
-
-				case PRESENT:
-					buf.append("=*");
-					break;
-
-				case APPROX:
-					buf.append("~=");
-					break;
-
-				default:
-					buf.append("=");
-					break;
-
-			}
-
+			buf.append(switch (mode) {
+				case GREATER_THAN -> ">";
+				case GREATER_THAN_EQUAL -> ">=";
+				case LESS_THAN -> "<";
+				case LESS_THAN_EQUAL -> "<=";
+				case PRESENT -> "=*";
+				case APPROX -> "~=";
+				default -> "=";
+			});
 			if ( mode == MatchType.SUBSTRING ) {
 				buf.append("*");
 				if ( value != null ) {

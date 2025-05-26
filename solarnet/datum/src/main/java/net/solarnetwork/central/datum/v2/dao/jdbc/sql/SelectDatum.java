@@ -221,23 +221,11 @@ public final class SelectDatum
 	}
 
 	private boolean isDateRangeInJoin() {
-		switch (aggregation) {
-			case FiveMinute:
-			case TenMinute:
-			case FifteenMinute:
-			case ThirtyMinute:
-			case DayOfWeek:
-			case SeasonalDayOfWeek:
-			case DayOfYear:
-			case HourOfDay:
-			case SeasonalHourOfDay:
-			case HourOfYear:
-			case WeekOfYear:
-				return true;
+		return switch (aggregation) {
+			case FiveMinute, TenMinute, FifteenMinute, ThirtyMinute, DayOfWeek, SeasonalDayOfWeek, DayOfYear, HourOfDay, SeasonalHourOfDay, HourOfYear, WeekOfYear -> true;
 
-			default:
-				return filter.isMostRecent();
-		}
+			default -> filter.isMostRecent();
+		};
 	}
 
 	private boolean isDefaultLocalDateRange() {
@@ -251,63 +239,47 @@ public final class SelectDatum
 	}
 
 	protected String sqlTableName() {
-		switch (aggregation) {
-			case FiveMinute:
-			case TenMinute:
-			case FifteenMinute:
-			case ThirtyMinute:
-				return filter.hasLocalDateRange()
-						? "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
-						: "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?)";
+		return switch (aggregation) {
+			case FiveMinute, TenMinute, FifteenMinute, ThirtyMinute -> filter.hasLocalDateRange()
+					? "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
+					: "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ?, ?, ?)";
 
-			case Hour:
-				return "solardatm.agg_datm_hourly";
+			case Hour -> "solardatm.agg_datm_hourly";
 
-			case Day:
-			case Week:
-				return "solardatm.agg_datm_daily";
+			case Day, Week -> "solardatm.agg_datm_daily";
 
-			case Month:
-				return "solardatm.agg_datm_monthly";
+			case Month -> "solardatm.agg_datm_monthly";
 
-			case DayOfWeek:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_dow(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_dow(s.stream_id, ?, ?)";
+			case DayOfWeek -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_dow(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_dow(s.stream_id, ?, ?)";
 
-			case SeasonalDayOfWeek:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ?, ?)";
+			case SeasonalDayOfWeek -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_dow_seasonal(s.stream_id, ?, ?)";
 
-			case DayOfYear:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_doy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_doy(s.stream_id, ?, ?)";
+			case DayOfYear -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_doy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_doy(s.stream_id, ?, ?)";
 
-			case HourOfDay:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_hod(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_hod(s.stream_id, ?, ?)";
+			case HourOfDay -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_hod(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_hod(s.stream_id, ?, ?)";
 
-			case SeasonalHourOfDay:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
+			case SeasonalHourOfDay -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_hod_seasonal(s.stream_id, ?, ?)";
 
-			case HourOfYear:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_hoy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_hoy(s.stream_id, ?, ?)";
+			case HourOfYear -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_hoy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_hoy(s.stream_id, ?, ?)";
 
-			case WeekOfYear:
-				return filter.hasLocalDateRange() || isDefaultLocalDateRange()
-						? "solardatm.find_agg_datm_woy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
-						: "solardatm.find_agg_datm_woy(s.stream_id, ?, ?)";
+			case WeekOfYear -> filter.hasLocalDateRange() || isDefaultLocalDateRange()
+					? "solardatm.find_agg_datm_woy(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone)"
+					: "solardatm.find_agg_datm_woy(s.stream_id, ?, ?)";
 
-			default:
-				return "solardatm.da_datm";
-		}
+			default -> "solardatm.da_datm";
+		};
 	}
 
 	private void sqlFrom(StringBuilder buf) {

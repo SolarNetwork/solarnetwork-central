@@ -184,25 +184,11 @@ public interface Dnp3UserEvents {
 		final int keyLength = id.keyComponentLength();
 		for ( int i = 1; i < keyLength; i++ ) { // skip first key: presume user ID
 			Object v = id.keyComponent(i);
-			String k = null;
-			switch (i) {
-				case 1:
-					if ( isCert ) {
-						k = IDENTIFIER_DATA_KEY;
-					} else {
-						k = SERVER_ID_DATA_KEY;
-					}
-					break;
-				case 2:
-					if ( v instanceof Integer ) {
-						k = INDEX_DATA_KEY;
-					} else {
-						k = IDENTIFIER_DATA_KEY;
-					}
-					break;
-				default:
-					// ignore
-			}
+			String k = switch (i) {
+				case 1 -> isCert ? IDENTIFIER_DATA_KEY : SERVER_ID_DATA_KEY;
+				case 2 -> v instanceof Integer ? INDEX_DATA_KEY : IDENTIFIER_DATA_KEY;
+				default -> null;
+			};
 			if ( k != null ) {
 				data.put(k, v);
 			}
