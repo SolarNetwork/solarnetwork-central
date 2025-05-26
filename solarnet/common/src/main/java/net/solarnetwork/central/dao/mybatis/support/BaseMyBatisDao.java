@@ -316,9 +316,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 		sqlProps.put(FILTER_PROPERTY, filter);
 
 		// if filter is SortCriteria and provides sort values, use those over method args
-		if ( filter instanceof SortCriteria && ((SortCriteria) filter).getSorts() != null
-				&& !((SortCriteria) filter).getSorts().isEmpty() ) {
-			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, ((SortCriteria) filter).getSorts());
+		if ( filter instanceof SortCriteria s && s.getSorts() != null && !s.getSorts().isEmpty() ) {
+			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, s.getSorts());
 		} else if ( sorts != null && !sorts.isEmpty() ) {
 			sqlProps.put(SORT_DESCRIPTORS_PROPERTY, sorts);
 		}
@@ -343,8 +342,8 @@ public abstract class BaseMyBatisDao extends SqlSessionDaoSupport {
 		// attempt count first, if max NOT null or specified as -1; if filter is instance of OptimizedQueryCriteria
 		// check the withoutTotalResultsCount flag
 		Long totalCount = null;
-		if ( max != null && max != -1 && !((filter instanceof OptimizedQueryCriteria)
-				&& ((OptimizedQueryCriteria) filter).isWithoutTotalResultsCount()) ) {
+		if ( max != null && max != -1 && !((filter instanceof OptimizedQueryCriteria oqc)
+				&& oqc.isWithoutTotalResultsCount()) ) {
 			Long n = executeCountQuery(query + "-count", sqlProps);
 			if ( n != null ) {
 				totalCount = n;

@@ -178,8 +178,8 @@ public class CentralOcppNodeInstructionProvider extends
 					null);
 			for ( EntityMatch match : matches ) {
 				Instruction instruction;
-				if ( match instanceof Instruction ) {
-					instruction = (Instruction) match;
+				if ( match instanceof Instruction ins ) {
+					instruction = ins;
 				} else {
 					instruction = instructionDao.get(match.getId());
 				}
@@ -318,7 +318,7 @@ public class CentralOcppNodeInstructionProvider extends
 		}
 		String dataStr;
 		try {
-			dataStr = (data instanceof String ? (String) data : objectMapper.writeValueAsString(data));
+			dataStr = (data instanceof String s ? s : objectMapper.writeValueAsString(data));
 		} catch ( JsonProcessingException e ) {
 			dataStr = null;
 		}

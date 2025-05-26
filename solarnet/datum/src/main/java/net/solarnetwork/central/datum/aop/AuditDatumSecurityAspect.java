@@ -74,12 +74,11 @@ public class AuditDatumSecurityAspect extends AuthorizationSupport {
 
 	private Long requireCurrentActorHasUserId() {
 		SecurityActor actor = SecurityUtils.getCurrentActor();
-		if ( actor instanceof SecurityToken ) {
+		if ( actor instanceof SecurityToken token ) {
 			// require a User token
-			SecurityTokenType tokenType = ((SecurityToken) actor).getTokenType();
+			SecurityTokenType tokenType = token.getTokenType();
 			if ( !SecurityTokenType.User.equals(tokenType) ) {
-				log.warn("Access DENIED for non-user token actor: {}",
-						((SecurityToken) actor).getToken());
+				log.warn("Access DENIED for non-user token actor: {}", token.getToken());
 				throw new AuthorizationException(AuthorizationException.Reason.ACCESS_DENIED, null);
 			}
 		}

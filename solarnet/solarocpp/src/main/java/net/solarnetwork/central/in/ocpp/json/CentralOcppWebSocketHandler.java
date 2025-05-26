@@ -410,8 +410,7 @@ public class CentralOcppWebSocketHandler<C extends Enum<C> & Action, S extends E
 			}
 			String dataStr;
 			try {
-				dataStr = (data instanceof String ? (String) data
-						: getObjectMapper().writeValueAsString(data));
+				dataStr = (data instanceof String s ? s : getObjectMapper().writeValueAsString(data));
 			} catch ( JsonProcessingException e ) {
 				dataStr = null;
 			}

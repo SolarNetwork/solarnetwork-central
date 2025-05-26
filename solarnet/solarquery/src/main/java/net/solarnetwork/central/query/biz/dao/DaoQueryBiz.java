@@ -194,11 +194,11 @@ public class DaoQueryBiz implements QueryBiz {
 			c = new BasicDatumCriteria();
 		}
 		c.setObjectKind(ObjectDatumKind.Node);
-		if ( actor instanceof SecurityNode ) {
-			Long nodeId = ((SecurityNode) actor).getNodeId();
+		if ( actor instanceof SecurityNode a ) {
+			Long nodeId = a.getNodeId();
 			c.setNodeId(nodeId);
-		} else if ( actor instanceof SecurityToken ) {
-			String tokenId = ((SecurityToken) actor).getToken();
+		} else if ( actor instanceof SecurityToken a ) {
+			String tokenId = a.getToken();
 			c.setTokenId(tokenId);
 		} else {
 			return Collections.emptySet();
@@ -213,10 +213,10 @@ public class DaoQueryBiz implements QueryBiz {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public Set<Long> findAvailableNodes(SecurityActor actor) {
 		Set<Long> nodeIds = null;
-		if ( actor instanceof SecurityNode ) {
-			nodeIds = Collections.singleton(((SecurityNode) actor).getNodeId());
-		} else if ( actor instanceof SecurityToken ) {
-			String tokenId = ((SecurityToken) actor).getToken();
+		if ( actor instanceof SecurityNode a ) {
+			nodeIds = Collections.singleton(a.getNodeId());
+		} else if ( actor instanceof SecurityToken a ) {
+			String tokenId = a.getToken();
 			Long[] ids = nodeOwnershipDao.nonArchivedNodeIdsForToken(tokenId);
 			nodeIds = (ids != null ? new LinkedHashSet<>(Arrays.asList(ids)) : null);
 		}
@@ -270,10 +270,9 @@ public class DaoQueryBiz implements QueryBiz {
 		Object startDate;
 		Object endDate;
 		long diffDays;
-		if ( filter instanceof LocalDateRangeFilter
-				&& ((LocalDateRangeFilter) filter).getLocalStartDate() != null ) {
-			LocalDateTime s = ((LocalDateRangeFilter) filter).getLocalStartDate();
-			LocalDateTime e = ((LocalDateRangeFilter) filter).getLocalEndDate();
+		if ( filter instanceof LocalDateRangeFilter f && f.getLocalStartDate() != null ) {
+			LocalDateTime s = f.getLocalStartDate();
+			LocalDateTime e = f.getLocalEndDate();
 			if ( e == null ) {
 				e = LocalDateTime.now();
 			}

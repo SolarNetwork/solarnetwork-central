@@ -255,8 +255,8 @@ public class AsyncJdbcChargePointActionStatusDao
 				} catch ( Exception e ) {
 					stats.increment(AsyncJdbcChargePointActionStatusCount.UpdatesFailed);
 					RuntimeException re;
-					if ( e instanceof RuntimeException ) {
-						re = (RuntimeException) e;
+					if ( e instanceof RuntimeException runtime ) {
+						re = runtime;
 					} else {
 						re = new RuntimeException("Exception flushing OCPP charge point action status",
 								e);

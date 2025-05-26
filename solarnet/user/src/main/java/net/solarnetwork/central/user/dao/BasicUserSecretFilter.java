@@ -87,10 +87,9 @@ public class BasicUserSecretFilter extends BasicCoreCriteria
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicUserSecretFilter) ) {
+		if ( !(obj instanceof BasicUserSecretFilter other) ) {
 			return false;
 		}
-		BasicUserSecretFilter other = (BasicUserSecretFilter) obj;
 		return Arrays.equals(topics, topics) && Arrays.equals(keys, other.keys);
 	}
 

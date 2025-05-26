@@ -678,10 +678,10 @@ public class OutstationService
 	}
 
 	private boolean booleanPropertyValue(Object propVal) {
-		if ( propVal instanceof Boolean ) {
-			return (Boolean) propVal;
-		} else if ( propVal instanceof Number ) {
-			return ((Number) propVal).intValue() != 0;
+		if ( propVal instanceof Boolean b ) {
+			return b;
+		} else if ( propVal instanceof Number n ) {
+			return n.intValue() != 0;
 		} else {
 			return StringUtils.parseBoolean(propVal.toString());
 		}

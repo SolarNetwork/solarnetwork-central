@@ -126,10 +126,10 @@ public class ActorDetailsRowMapper implements RowMapper<Actor> {
         Object[] arrayData = (Object[]) data;
         nodeIds = new LinkedHashSet<>(arrayData.length);
         for (Object val : arrayData) {
-          if (val instanceof Long) {
-            nodeIds.add((Long) val);
-          } else if (val instanceof Number) {
-            nodeIds.add(((Number) val).longValue());
+          if (val instanceof Long n) {
+            nodeIds.add(n);
+          } else if (val instanceof Number n) {
+            nodeIds.add(n.longValue());
           } else {
             log.warn("Unexpected non-Number node ID array value returned from DB: [{}]", val);
           }

@@ -426,8 +426,8 @@ public class JdbcAuditService implements AuditService {
     } catch (Exception e) {
       addCount(key, count);
       RuntimeException re;
-      if (e instanceof RuntimeException) {
-        re = (RuntimeException) e;
+      if (e instanceof RuntimeException runtime) {
+        re = runtime;
       } else {
         re = new RuntimeException("Exception flushing node source audit data", e);
       }

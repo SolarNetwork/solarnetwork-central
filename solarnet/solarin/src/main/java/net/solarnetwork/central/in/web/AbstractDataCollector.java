@@ -109,8 +109,8 @@ public abstract class AbstractDataCollector {
 	 */
 	protected AuthenticatedNode getAuthenticatedNode(boolean required) {
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-		if ( principal instanceof AuthenticatedNode ) {
-			return (AuthenticatedNode) principal;
+		if ( principal instanceof AuthenticatedNode n ) {
+			return n;
 		}
 		if ( required ) {
 			throw new SecurityException("Authenticated node required but not avaialble");

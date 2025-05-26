@@ -434,8 +434,8 @@ public class DaoDataCollectorBiz implements DataCollectorBiz {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if ( auth != null ) {
 			Object principal = auth.getPrincipal();
-			if ( principal instanceof AuthenticatedNode ) {
-				return (AuthenticatedNode) principal;
+			if ( principal instanceof AuthenticatedNode n ) {
+				return n;
 			}
 		}
 		return null;

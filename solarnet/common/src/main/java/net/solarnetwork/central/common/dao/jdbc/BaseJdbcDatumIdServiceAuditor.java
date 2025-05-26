@@ -281,8 +281,8 @@ public abstract class BaseJdbcDatumIdServiceAuditor implements PingTest, Service
 				addServiceCount(key, count);
 				statCounter.increment(JdbcNodeServiceAuditorCount.ResultsReadded);
 				RuntimeException re;
-				if ( e instanceof RuntimeException ) {
-					re = (RuntimeException) e;
+				if ( e instanceof RuntimeException runtime ) {
+					re = runtime;
 				} else {
 					re = new RuntimeException("Exception flushing node source audit data", e);
 				}

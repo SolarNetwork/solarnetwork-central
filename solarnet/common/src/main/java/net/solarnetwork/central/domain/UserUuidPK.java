@@ -125,10 +125,9 @@ public final class UserUuidPK extends BasePK
 		if ( this == obj ) {
 			return true;
 		}
-		if ( !(obj instanceof UserUuidPK) ) {
+		if ( !(obj instanceof UserUuidPK other) ) {
 			return false;
 		}
-		UserUuidPK other = (UserUuidPK) obj;
 		return Objects.equals(userId, other.userId) && Objects.equals(uuid, other.uuid);
 	}
 

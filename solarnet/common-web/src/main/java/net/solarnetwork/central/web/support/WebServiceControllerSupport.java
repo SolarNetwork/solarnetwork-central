@@ -361,10 +361,10 @@ public final class WebServiceControllerSupport {
 	public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e,
 			WebRequest request) {
 		Throwable t = e.getMostSpecificCause();
-		if ( t instanceof JsonProcessingException ) {
-			return handleJsonParseException((JsonProcessingException) t, request);
-		} else if ( t instanceof DateTimeParseException ) {
-			return handleDateTimeParseException((DateTimeParseException) t, request);
+		if ( t instanceof JsonProcessingException ex ) {
+			return handleJsonParseException(ex, request);
+		} else if ( t instanceof DateTimeParseException ex ) {
+			return handleDateTimeParseException(ex, request);
 		}
 		log.warn("HttpMessageNotReadableException in request {}: {}", requestDescription(request),
 				e.toString());

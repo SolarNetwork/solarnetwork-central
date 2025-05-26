@@ -151,7 +151,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 						&& e.getMetadata() != null && e.getMetadata().containsKey(META_AVAILABLE_CREDIT))
 				.map(e -> {
 					Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
-					return (availCreditVal instanceof BigDecimal ? (BigDecimal) availCreditVal
+					return (availCreditVal instanceof BigDecimal d ? d
 							: new BigDecimal(availCreditVal.toString()));
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
 		return (!amount.equals(BigDecimal.ZERO) ? amount : null);

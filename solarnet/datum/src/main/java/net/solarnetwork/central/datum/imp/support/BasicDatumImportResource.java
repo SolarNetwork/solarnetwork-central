@@ -96,8 +96,8 @@ public class BasicDatumImportResource implements DatumImportResource, Transferra
 	 */
 	@Override
 	public void transferTo(File dest) throws IOException, IllegalStateException {
-		if ( delegate instanceof TransferrableResource ) {
-			((TransferrableResource) delegate).transferTo(dest);
+		if ( delegate instanceof TransferrableResource r ) {
+			r.transferTo(dest);
 		} else {
 			FileCopyUtils.copy(getInputStream(), new FileOutputStream(dest));
 		}

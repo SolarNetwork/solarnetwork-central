@@ -187,7 +187,7 @@ public class CentralOcppWebSocketHandshakeInterceptor extends OcppWebSocketHands
 		if ( biz == null ) {
 			return;
 		}
-		String dataStr = (data instanceof String ? (String) data : JsonUtils.getJSONString(data, null));
+		String dataStr = (data instanceof String s ? s : JsonUtils.getJSONString(data, null));
 		LogEventInfo event = new LogEventInfo(tags, message, dataStr);
 		biz.addEvent(userId, event);
 	}

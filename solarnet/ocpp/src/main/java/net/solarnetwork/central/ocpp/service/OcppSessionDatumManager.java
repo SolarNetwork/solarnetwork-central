@@ -654,8 +654,8 @@ public class OcppSessionDatumManager extends BasicIdentifiable
 			return;
 		}
 		BigDecimal num;
-		if ( value instanceof Number ) {
-			num = NumberUtils.bigDecimalForNumber((Number) value);
+		if ( value instanceof Number n ) {
+			num = NumberUtils.bigDecimalForNumber(n);
 		} else {
 			try {
 				num = new BigDecimal(value.toString());

@@ -115,8 +115,8 @@ public abstract class BaseDatumImportBiz implements DatumImportBiz {
 	 */
 	protected File saveToWorkDirectory(DatumImportResource resource, UserUuidPK id) throws IOException {
 		File f = getImportDataFile(id);
-		if ( resource instanceof TransferrableResource ) {
-			((TransferrableResource) resource).transferTo(f);
+		if ( resource instanceof TransferrableResource r ) {
+			r.transferTo(f);
 		} else {
 			FileCopyUtils.copy(resource.getInputStream(), new FileOutputStream(f));
 		}

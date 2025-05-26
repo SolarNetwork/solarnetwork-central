@@ -158,24 +158,23 @@ public class BasicDatumCriteria extends BasicCoreCriteria
 		setInstantaneousPropertyNames(criteria.getInstantaneousPropertyNames());
 		setAccumulatingPropertyNames(criteria.getAccumulatingPropertyNames());
 		setStatusPropertyNames(criteria.getStatusPropertyNames());
-		if ( criteria instanceof RecentCriteria ) {
-			setMostRecent(((RecentCriteria) criteria).isMostRecent());
+		if ( criteria instanceof RecentCriteria c ) {
+			setMostRecent(c.isMostRecent());
 		}
-		if ( criteria instanceof OptimizedQueryCriteria ) {
-			setWithoutTotalResultsCount(
-					((OptimizedQueryCriteria) criteria).isWithoutTotalResultsCount());
+		if ( criteria instanceof OptimizedQueryCriteria c ) {
+			setWithoutTotalResultsCount(c.isWithoutTotalResultsCount());
 		}
-		if ( criteria instanceof ReadingTypeCriteria ) {
-			setReadingType(((ReadingTypeCriteria) criteria).getReadingType());
+		if ( criteria instanceof ReadingTypeCriteria c ) {
+			setReadingType(c.getReadingType());
 		}
-		if ( criteria instanceof TimeToleranceCriteria ) {
-			setTimeTolerance(((TimeToleranceCriteria) criteria).getTimeTolerance());
+		if ( criteria instanceof TimeToleranceCriteria c ) {
+			setTimeTolerance(c.getTimeTolerance());
 		}
-		if ( criteria instanceof DatumAuxiliaryCriteria ) {
-			setDatumAuxiliaryType(((DatumAuxiliaryCriteria) criteria).getDatumAuxiliaryType());
+		if ( criteria instanceof DatumAuxiliaryCriteria c ) {
+			setDatumAuxiliaryType(c.getDatumAuxiliaryType());
 		}
-		if ( criteria instanceof DatumRollupCriteria ) {
-			setDatumRollupTypes(((DatumRollupCriteria) criteria).getDatumRollupTypes());
+		if ( criteria instanceof DatumRollupCriteria c ) {
+			setDatumRollupTypes(c.getDatumRollupTypes());
 		}
 	}
 

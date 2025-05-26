@@ -821,7 +821,7 @@ public final class DatumDbUtils {
 					datumStmt.execute();
 
 					Object id = datumStmt.getObject(1);
-					UUID streamId = (id instanceof UUID ? (UUID) id
+					UUID streamId = (id instanceof UUID uuid ? uuid
 							: id != null ? UUID.fromString(id.toString()) : null);
 					result.computeIfAbsent(nspk, k -> createMetadata(streamId, timeZoneId, datums, k));
 				}

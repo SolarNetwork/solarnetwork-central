@@ -261,7 +261,7 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 	private void handleGeneralDatum(final Long nodeId, final JsonNode node, final boolean checkVersion) {
 		try {
 			final Datum d = objectMapper.treeToValue(node, Datum.class);
-			final GeneralDatum gd = (d instanceof GeneralDatum ? (GeneralDatum) d
+			final GeneralDatum gd = (d instanceof GeneralDatum g ? g
 					: new GeneralDatum(
 							new DatumId(d.getKind(), d.getObjectId(), d.getSourceId(), d.getTimestamp()),
 							new DatumSamples(d.asSampleOperations())));
@@ -296,10 +296,10 @@ public class MqttDataCollector extends BaseMqttConnectionObserver implements Mqt
 				// ignore, source ID is required
 				log.warn("Ignoring datum for node {} with missing source ID: {}", nodeId, node);
 			} else {
-				if ( ld instanceof GeneralLocationDatum ) {
-					dataCollectorBiz.postGeneralLocationDatum(singleton((GeneralLocationDatum) ld));
-				} else if ( ld instanceof GeneralNodeDatum ) {
-					dataCollectorBiz.postGeneralNodeDatum(singleton((GeneralNodeDatum) ld));
+				if ( ld instanceof GeneralLocationDatum g ) {
+					dataCollectorBiz.postGeneralLocationDatum(singleton(g));
+				} else if ( ld instanceof GeneralNodeDatum g ) {
+					dataCollectorBiz.postGeneralNodeDatum(singleton(g));
 				}
 			}
 			getMqttStats().increment(d.getKind() == ObjectDatumKind.Location

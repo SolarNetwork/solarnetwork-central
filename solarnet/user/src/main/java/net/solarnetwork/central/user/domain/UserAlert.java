@@ -185,10 +185,10 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 		String[] result = null;
 		if ( options != null ) {
 			Object o = options.get(UserAlertOptions.EMAIL_TOS);
-			if ( o instanceof Collection<?> ) {
-				result = ((Collection<?>) o).stream().map(Object::toString).toArray(String[]::new);
-			} else if ( o instanceof String[] ) {
-				result = (String[]) o;
+			if ( o instanceof Collection<?> c ) {
+				result = c.stream().map(Object::toString).toArray(String[]::new);
+			} else if ( o instanceof String[] a ) {
+				result = a;
 			} else if ( o != null ) {
 				result = new String[] { o.toString() };
 			}
@@ -207,10 +207,10 @@ public class UserAlert extends BaseEntity implements UserRelatedEntity<Long> {
 		List<String> result = null;
 		if ( options != null ) {
 			Object o = options.get(UserAlertOptions.SOURCE_IDS);
-			if ( o instanceof Collection<?> ) {
-				result = ((List<?>) o).stream().map(Object::toString).collect(Collectors.toList());
-			} else if ( o instanceof String[] ) {
-				result = Arrays.asList((String[]) o);
+			if ( o instanceof Collection<?> c ) {
+				result = c.stream().map(Object::toString).collect(Collectors.toList());
+			} else if ( o instanceof String[] a ) {
+				result = Arrays.asList(a);
 			} else if ( o != null ) {
 				result = Collections.singletonList(o.toString());
 			}

@@ -115,7 +115,7 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 	 */
 	public CentralSystemUser(SystemUser other) {
 		super(other);
-		this.userId = (other instanceof CentralSystemUser ? ((CentralSystemUser) other).userId : null);
+		this.userId = (other instanceof CentralSystemUser u ? u.userId : null);
 	}
 
 	/**
@@ -133,12 +133,12 @@ public class CentralSystemUser extends SystemUser implements UserRelatedEntity<L
 
 	@Override
 	public boolean isSameAs(SystemUser other) {
-		if ( !(other instanceof CentralSystemUser) ) {
+		if ( !(other instanceof CentralSystemUser u) ) {
 			return false;
 		}
 		boolean result = super.isSameAs(other);
 		if ( result ) {
-			result = Objects.equals(this.userId, ((CentralSystemUser) other).userId);
+			result = Objects.equals(this.userId, u.userId);
 		}
 		return result;
 	}

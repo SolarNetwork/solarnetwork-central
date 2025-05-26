@@ -250,15 +250,14 @@ public abstract class BaseJdbcExternalSystemConfigurationDao<C extends BaseOscpE
 			Function<CapacityGroupTaskContext<C>, Instant> handler) {
 		PreparedStatementCreator sql = new SelectExternalSystemForMeasurement(role, ONE_FOR_UPDATE_SKIP);
 		RowMapper<C> entityMapper = rowMapperForEntity();
-		if ( !(entityMapper instanceof ColumnCountProvider) ) {
+		if ( !(entityMapper instanceof ColumnCountProvider ccp) ) {
 			throw new RuntimeException(
 					"The configured entity RowMapper must implement ColumnCountProvider: "
 							+ entityMapper);
 		}
 		List<ExternalSystemAndGroup<C>> rows = jdbcOps.query(sql,
 				new ExternalSystemAndGroupConfigurationRowMapper<>(rowMapperForEntity(),
-						new CapacityGroupConfigurationRowMapper(
-								((ColumnCountProvider) entityMapper).getColumnCount())));
+						new CapacityGroupConfigurationRowMapper(ccp.getColumnCount())));
 		if ( !rows.isEmpty() ) {
 			ExternalSystemAndGroup<C> row = rows.getFirst();
 			Instant measurementDate = (role == OscpRole.CapacityProvider

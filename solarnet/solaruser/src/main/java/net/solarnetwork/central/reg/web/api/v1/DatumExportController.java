@@ -486,8 +486,7 @@ public class DatumExportController {
 		if ( config == null || exportBiz == null ) {
 			return config;
 		}
-		BasicConfiguration respConfig = (config instanceof BasicConfiguration
-				? (BasicConfiguration) config
+		BasicConfiguration respConfig = (config instanceof BasicConfiguration bc ? bc
 				: new BasicConfiguration(config));
 
 		if ( respConfig.getDataConfiguration() instanceof UserDataConfiguration u

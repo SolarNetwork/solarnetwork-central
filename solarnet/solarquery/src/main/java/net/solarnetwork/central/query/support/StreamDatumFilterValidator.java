@@ -75,10 +75,10 @@ public class StreamDatumFilterValidator implements SmartValidator {
 		Period tolerance = null;
 		if ( validationHints != null ) {
 			for ( Object o : validationHints ) {
-				if ( o instanceof DatumReadingType ) {
-					readingType = (DatumReadingType) o;
-				} else if ( o instanceof Period ) {
-					tolerance = (Period) o;
+				if ( o instanceof DatumReadingType t ) {
+					readingType = t;
+				} else if ( o instanceof Period p ) {
+					tolerance = p;
 				}
 			}
 		}

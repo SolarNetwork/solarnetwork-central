@@ -111,11 +111,10 @@ public final class DatumTestUtils {
 		assertThat(prefix + " property names", result.getPropertyNames(),
 				arrayContaining(expected.getPropertyNames()));
 		assertThat(prefix + " time zone ID", result.getTimeZoneId(), equalTo(expected.getTimeZoneId()));
-		if ( expected instanceof ObjectDatumStreamMetadata ) {
+		if ( expected instanceof ObjectDatumStreamMetadata oExpected ) {
 			assertThat(prefix + " is object metadata", result,
 					instanceOf(ObjectDatumStreamMetadata.class));
 			ObjectDatumStreamMetadata oResult = (ObjectDatumStreamMetadata) result;
-			ObjectDatumStreamMetadata oExpected = (ObjectDatumStreamMetadata) expected;
 			assertThat(prefix + " object kind", oResult.getKind(), equalTo(oExpected.getKind()));
 			assertThat(prefix + " object ID", oResult.getObjectId(), equalTo(oExpected.getObjectId()));
 			assertThat(prefix + " source ID", oResult.getSourceId(), equalTo(oExpected.getSourceId()));
@@ -139,8 +138,8 @@ public final class DatumTestUtils {
 		assertThat(prefix + " stream ID matches", result.getStreamId(), equalTo(expected.getStreamId()));
 
 		// don't verify timestamp for RunningTotal
-		if ( !(expected instanceof AggregateDatum
-				&& ((AggregateDatum) expected).getAggregation() == Aggregation.RunningTotal) ) {
+		if ( !(expected instanceof AggregateDatum agg
+				&& agg.getAggregation() == Aggregation.RunningTotal) ) {
 			assertThat(prefix + " timestamp", result.getTimestamp(), equalTo(expected.getTimestamp()));
 		}
 
@@ -192,7 +191,7 @@ public final class DatumTestUtils {
 	 *
 	 * @param prefix
 	 *        an assertion message prefix
-	 * @param result
+	 * @param audit
 	 *        the result datum
 	 * @param expected
 	 *        the expected datum

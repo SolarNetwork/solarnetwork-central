@@ -64,7 +64,7 @@ public class MyBatisUserNodeEventTaskDao extends BaseMyBatisDao implements UserN
 		params.put("date", olderThanDate);
 		getSqlSession().update("purge-user-node-event-tasks", params);
 		Object result = params.get("result");
-		return (result instanceof Long ? (Long) result : 0);
+		return (result instanceof Long n ? n : 0);
 	}
 
 }

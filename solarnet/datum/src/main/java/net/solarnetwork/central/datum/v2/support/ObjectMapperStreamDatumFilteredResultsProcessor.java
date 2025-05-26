@@ -265,17 +265,17 @@ public final class ObjectMapperStreamDatumFilteredResultsProcessor
 
 		generator.writeStartArray(d, totalLen);
 		generator.writeNumber(metaIndexMap.get(d.getStreamId()));
-		if ( d instanceof AggregateDatum rd ) {
+		if ( d instanceof AggregateDatum agg ) {
 			generator.writeStartArray(d, 2);
 			generator.writeNumber(ts);
-			if ( rd instanceof ReadingDatum && ((ReadingDatum) rd).getEndTimestamp() != null ) {
-				generator.writeNumber(((ReadingDatum) rd).getEndTimestamp().toEpochMilli());
+			if ( agg instanceof ReadingDatum r && r.getEndTimestamp() != null ) {
+				generator.writeNumber(r.getEndTimestamp().toEpochMilli());
 			} else {
 				generator.writeNull();
 			}
 			generator.writeEndArray();
 
-			DatumPropertiesStatistics stats = rd.getStatistics();
+			DatumPropertiesStatistics stats = agg.getStatistics();
 			if ( stats != null && p != null ) {
 				writeAggregateProperty(generator, DatumSamplesType.Instantaneous, iLen,
 						p.getInstantaneous(), stats.getInstantaneous());

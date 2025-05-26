@@ -125,8 +125,8 @@ public class LocalizedInvoiceUsageRecord<T>
 			return Collections.emptyList();
 		}
 		return recs.stream().map(record -> {
-			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo ) {
-				return (LocalizedInvoiceItemUsageRecordInfo) record;
+			if ( record instanceof LocalizedInvoiceItemUsageRecordInfo li ) {
+				return li;
 			}
 			return LocalizedInvoiceItemUsageRecord.of(record, locale, currencyCode);
 		}).collect(Collectors.toList());

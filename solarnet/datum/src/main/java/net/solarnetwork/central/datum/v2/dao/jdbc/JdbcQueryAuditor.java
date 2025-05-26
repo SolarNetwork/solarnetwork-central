@@ -308,8 +308,8 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 				addNodeSourceCount(key, count);
 				stats.increment(JdbcQueryAuditorCount.ResultsReadded);
 				RuntimeException re;
-				if ( e instanceof RuntimeException ) {
-					re = (RuntimeException) e;
+				if ( e instanceof RuntimeException runtime ) {
+					re = runtime;
 				} else {
 					re = new RuntimeException("Exception flushing node source audit data", e);
 				}

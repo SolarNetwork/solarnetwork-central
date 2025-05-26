@@ -1,21 +1,21 @@
 /* ==================================================================
  * ObjectDatumIdRowMapper.java - 22/11/2020 10:14:03 pm
- * 
+ *
  * Copyright 2020 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -36,11 +36,11 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
 
 /**
  * Map object datum ID rows into {@link ObjectDatumStreamMetadata} instances.
- * 
+ *
  * <p>
  * The expected column order in the SQL results is:
  * </p>
- * 
+ *
  * <ol>
  * <li>stream_id</li>
  * <li>ts</li>
@@ -49,7 +49,7 @@ import net.solarnetwork.domain.datum.ObjectDatumStreamMetadata;
  * <li>source_id</li>
  * <li>kind</li>
  * </ol>
- * 
+ *
  * @author matt
  * @version 1.1
  * @since 3.8
@@ -74,7 +74,7 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param kind
 	 *        the type of metadata to parse; if {@link MetadataKind#Dynamic}
 	 *        then an extra {@literal kind} row must be provided by the query
@@ -98,7 +98,7 @@ public class ObjectDatumIdRowMapper implements RowMapper<ObjectDatumId> {
 			k = MetadataKind.forKey(rs.getString(6));
 		}
 
-		Long objectId = objId instanceof Number ? ((Number) objId).longValue() : null;
+		Long objectId = objId instanceof Number n ? n.longValue() : null;
 		ObjectDatumId result;
 		if ( k == MetadataKind.Location ) {
 			result = new LocationDatumId(streamId, objectId, sourceId, ts, agg);

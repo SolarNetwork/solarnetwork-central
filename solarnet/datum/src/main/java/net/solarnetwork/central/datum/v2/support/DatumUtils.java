@@ -360,8 +360,8 @@ public final class DatumUtils {
 	public static ObjectStreamCriteria criteriaWithoutDates(ObjectStreamCriteria criteria) {
 		requireNonNullArgument(criteria, "criteria");
 		BasicDatumCriteria result;
-		if ( criteria instanceof BasicDatumCriteria ) {
-			result = ((BasicDatumCriteria) criteria).clone();
+		if ( criteria instanceof BasicDatumCriteria c ) {
+			result = c.clone();
 		} else {
 			result = toBasicDatumCriteria(criteria);
 		}
@@ -387,8 +387,8 @@ public final class DatumUtils {
 		BasicDatumCriteria c;
 		if ( criteria == null ) {
 			return null;
-		} else if ( criteria instanceof BasicDatumCriteria ) {
-			c = (BasicDatumCriteria) criteria;
+		} else if ( criteria instanceof BasicDatumCriteria bdc ) {
+			c = bdc;
 		} else {
 			c = new BasicDatumCriteria();
 			c.setAggregation(criteria.getAggregation());
@@ -426,8 +426,8 @@ public final class DatumUtils {
 	 */
 	public static Aggregation aggregationForType(Filter criteria) {
 		Aggregation result = null;
-		if ( criteria instanceof DatumFilter ) {
-			String type = ((DatumFilter) criteria).getType();
+		if ( criteria instanceof DatumFilter f ) {
+			String type = f.getType();
 			if ( "h".equalsIgnoreCase(type) ) {
 				result = Aggregation.Hour;
 			} else if ( "d".equalsIgnoreCase(type) ) {
@@ -726,8 +726,8 @@ public final class DatumUtils {
 			aux.setSamplesStart(s);
 		}
 		aux.setMeta(datum.getMetadata());
-		if ( datum instanceof DatumAuxiliaryEntity ) {
-			aux.setUpdated(((DatumAuxiliaryEntity) datum).getUpdated());
+		if ( datum instanceof DatumAuxiliaryEntity dae ) {
+			aux.setUpdated(dae.getUpdated());
 		}
 	}
 
@@ -778,20 +778,20 @@ public final class DatumUtils {
 
 		DatumSamples s = new DatumSamples();
 		// populate normal data
-		if ( datum instanceof AggregateDatum ) {
-			DatumPropertiesStatistics stats = ((AggregateDatum) datum).getStatistics();
+		if ( datum instanceof AggregateDatum agg ) {
+			DatumPropertiesStatistics stats = agg.getStatistics();
 			populateGeneralDatumSamplesInstantaneousStatistics(s, stats, meta);
 		}
 		DatumProperties props = datum.getProperties();
 		if ( props != null ) {
 			populateGeneralDatumSamples(s, props, meta);
 		}
-		if ( datum instanceof ReadingDatum ) {
+		if ( datum instanceof ReadingDatum r ) {
 			// populate reading (accumulating) data from stats
 			if ( s.getA() != null ) {
 				s.getA().clear();
 			}
-			DatumPropertiesStatistics stats = ((ReadingDatum) datum).getStatistics();
+			DatumPropertiesStatistics stats = r.getStatistics();
 			populateGeneralDatumSamplesAccumulatingStatistics(s, stats, meta);
 		}
 		if ( !s.isEmpty() ) {
@@ -837,8 +837,8 @@ public final class DatumUtils {
 	 * @since 1.5
 	 */
 	public static SolarLocation toSolarLocation(net.solarnetwork.domain.Location l) {
-		if ( l instanceof SolarLocation ) {
-			return (SolarLocation) l;
+		if ( l instanceof SolarLocation sl ) {
+			return sl;
 		}
 		SolarLocation sl = new SolarLocation();
 		sl.setCountry(l.getCountry());

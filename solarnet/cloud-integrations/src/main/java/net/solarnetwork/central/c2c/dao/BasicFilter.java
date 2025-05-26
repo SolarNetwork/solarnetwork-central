@@ -149,10 +149,9 @@ public class BasicFilter extends BasicCoreCriteria
 		if ( !super.equals(obj) ) {
 			return false;
 		}
-		if ( !(obj instanceof BasicFilter) ) {
+		if ( !(obj instanceof BasicFilter other) ) {
 			return false;
 		}
-		BasicFilter other = (BasicFilter) obj;
 		return Arrays.equals(integrationIds, other.integrationIds)
 				&& Arrays.equals(datumStreamIds, other.datumStreamIds)
 				&& Arrays.equals(datumStreamMappingIds, other.datumStreamMappingIds)

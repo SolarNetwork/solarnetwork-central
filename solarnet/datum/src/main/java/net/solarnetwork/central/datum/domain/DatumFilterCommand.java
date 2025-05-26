@@ -116,8 +116,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public DatumFilterCommand(Location loc) {
 		super();
-		if ( loc instanceof SolarLocation ) {
-			location = (SolarLocation) loc;
+		if ( loc instanceof SolarLocation l ) {
+			location = l;
 		} else {
 			location = new SolarLocation(loc);
 		}
@@ -164,8 +164,8 @@ public class DatumFilterCommand extends FilterSupport implements LocationDatumFi
 	 */
 	public DatumFilterCommand(CommonFilter other, Location loc) {
 		super();
-		if ( loc instanceof SolarLocation ) {
-			location = (SolarLocation) loc;
+		if ( loc instanceof SolarLocation l ) {
+			location = l;
 		} else {
 			location = new SolarLocation(loc);
 		}

@@ -213,8 +213,8 @@ public class LocalizedInvoiceMatchFilterResults
 			return null;
 		}
 		return StreamSupport.stream(spliterator(), false).map(item -> {
-			if ( item instanceof LocalizedInvoiceMatchInfo ) {
-				return (LocalizedInvoiceMatchInfo) item;
+			if ( item instanceof LocalizedInvoiceMatchInfo li ) {
+				return li;
 			}
 			return new LocalizedInvoiceMatch(item, locale);
 		}).collect(Collectors.toList());

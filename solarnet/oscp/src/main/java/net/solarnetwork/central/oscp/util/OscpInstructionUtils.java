@@ -123,8 +123,8 @@ public final class OscpInstructionUtils {
 				JsonNode jsonNode = OBJECT_MAPPER.readTree(msgString);
 				if ( jsonNode.isNull() ) {
 					jsonPayload = null;
-				} else if ( jsonNode instanceof ObjectNode ) {
-					jsonPayload = (ObjectNode) jsonNode;
+				} else if ( jsonNode instanceof ObjectNode on ) {
+					jsonPayload = on;
 				} else {
 					throw new IOException(
 							"OSCP " + OSCP_MESSAGE_PARAM + " parameter must be a JSON object.");

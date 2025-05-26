@@ -228,8 +228,8 @@ public class DaoUserEventHookBiz implements UserEventHookBiz {
 	@Transactional(propagation = Propagation.REQUIRED)
 	@Override
 	public void deleteConfiguration(UserLongIdentifiableConfigurationEntity<?> configuration) {
-		if ( configuration instanceof UserNodeEventHookConfiguration ) {
-			nodeEventHookConfigurationDao.delete((UserNodeEventHookConfiguration) configuration);
+		if ( configuration instanceof UserNodeEventHookConfiguration c ) {
+			nodeEventHookConfigurationDao.delete(c);
 		} else {
 			throw new IllegalArgumentException("Unsupported configuration type: " + configuration);
 		}
