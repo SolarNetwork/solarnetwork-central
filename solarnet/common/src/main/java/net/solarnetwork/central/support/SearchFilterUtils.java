@@ -38,6 +38,7 @@ import net.solarnetwork.util.StringUtils;
  * @author matt
  * @version 1.1
  */
+@SuppressWarnings("JdkObsolete")
 public final class SearchFilterUtils {
 
 	private SearchFilterUtils() {

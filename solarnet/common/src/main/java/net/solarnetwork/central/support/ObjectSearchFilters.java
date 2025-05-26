@@ -22,7 +22,7 @@
 
 package net.solarnetwork.central.support;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import net.solarnetwork.central.dao.ObjectCriteria;
 import net.solarnetwork.central.domain.Filter;
@@ -33,13 +33,13 @@ import net.solarnetwork.central.domain.Filter;
  * @param <T>
  *        the object to filter on
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectCriteria<T> {
 
 	private JoinType joinType;
-	private List<ObjectSearchFilter<T>> filters = new LinkedList<>();
-	private List<ObjectSearchFilters<T>> nestedFilters = new LinkedList<>();
+	private List<ObjectSearchFilter<T>> filters = new ArrayList<>(2);
+	private List<ObjectSearchFilters<T>> nestedFilters = new ArrayList<>(2);
 	private Integer resultOffset;
 	private Integer resultMax;
 
@@ -181,11 +181,11 @@ public class ObjectSearchFilters<T extends Filter> implements Cloneable, ObjectC
 	public ObjectSearchFilters<T> clone() {
 		try {
 			ObjectSearchFilters<T> clone = (ObjectSearchFilters<T>) super.clone();
-			clone.filters = new LinkedList<>();
+			clone.filters = new ArrayList<>(filters.size());
 			for ( ObjectSearchFilter<T> aFilter : filters ) {
 				clone.filters.add(aFilter.clone());
 			}
-			clone.nestedFilters = new LinkedList<>();
+			clone.nestedFilters = new ArrayList<>(filters.size());
 			for ( ObjectSearchFilters<T> aFilter : nestedFilters ) {
 				clone.nestedFilters.add(aFilter.clone());
 			}
