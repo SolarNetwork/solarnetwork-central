@@ -37,7 +37,7 @@ public interface MetadataFilter extends Filter {
 	 * <p>
 	 * The metadata filter must be expressed in LDAP search filter style, using
 	 * JSON pointer style paths for keys, for example {@code (/m/foo=bar)},
-	 * {@code (t=foo)}, or {@code (&(&#47;**&#47;foo=bar)(t=special))}.
+	 * {@code (t=foo)}, or <code>(&amp;(/&#42;&#42;/foo=bar)(t=special))</code>.
 	 * </p>
 	 * 
 	 * @return the metadata filter to use (may be {@literal null})
