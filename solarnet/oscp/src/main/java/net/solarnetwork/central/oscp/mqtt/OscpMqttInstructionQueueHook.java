@@ -38,8 +38,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.JsonSchemaFactory;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -82,8 +80,6 @@ import oscp.v20.AdjustGroupCapacityForecast;
  */
 public class OscpMqttInstructionQueueHook extends BaseMqttConnectionObserver
 		implements NodeInstructionQueueHook, OscpUserEvents, OscpMqttInstructions {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final UserNodeDao userNodeDao;
 	private final CapacityGroupConfigurationDao capacityGroupDao;

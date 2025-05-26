@@ -47,8 +47,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -91,8 +89,6 @@ import oscp.v20.AdjustGroupCapacityForecast;
  */
 public class OscpMqttInstructionHandler extends BaseMqttConnectionObserver
 		implements MqttMessageHandler, OscpUserEvents, OscpMqttInstructions {
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private String mqttTopic = MQTT_TOPIC_V20;
 

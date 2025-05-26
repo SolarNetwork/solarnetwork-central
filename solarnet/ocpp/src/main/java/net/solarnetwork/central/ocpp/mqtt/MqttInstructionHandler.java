@@ -32,8 +32,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.solarnetwork.central.biz.UserEventAppenderBiz;
@@ -88,8 +86,6 @@ public class MqttInstructionHandler<T extends Enum<T> & Action> extends BaseMqtt
 	private final CentralChargePointDao chargePointDao;
 	private final Class<T> actionClass;
 	private UserEventAppenderBiz userEventAppenderBiz;
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Constructor.
