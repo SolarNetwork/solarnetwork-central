@@ -418,13 +418,14 @@ public class JdbcQueryAuditor implements QueryAuditor, PingTest, ServiceLifecycl
 	 */
 	public synchronized void enableWriting() {
 		if ( writerThread == null || !writerThread.isGoing() ) {
-			writerThread = new WriterThread();
-			writerThread.setName("JdbcQueryAuditorWriter");
-			synchronized ( writerThread ) {
-				writerThread.start();
-				while ( !writerThread.hasStarted() ) {
+			WriterThread t = new WriterThread();
+			t.setName("JdbcQueryAuditorWriter");
+			this.writerThread = t;
+			synchronized ( t ) {
+				t.start();
+				while ( !t.hasStarted() ) {
 					try {
-						writerThread.wait(5000L);
+						t.wait(5000L);
 					} catch ( InterruptedException e ) {
 						// ignore
 					}
