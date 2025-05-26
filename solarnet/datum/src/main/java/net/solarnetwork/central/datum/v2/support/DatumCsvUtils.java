@@ -166,7 +166,7 @@ public final class DatumCsvUtils {
 		if ( value.endsWith("}") ) {
 			value = value.substring(0, value.length() - 1);
 		}
-		String[] components = value.split("}\\s*,\\s*\\{");
+		String[] components = value.split("}\\s*,\\s*\\{", 0);
 		String[][] result = new String[components.length][];
 		for ( int i = 0; i < components.length; i++ ) {
 			result[i] = parseArrayValue(components[i]);

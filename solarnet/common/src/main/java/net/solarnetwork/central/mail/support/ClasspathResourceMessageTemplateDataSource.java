@@ -53,7 +53,7 @@ import net.solarnetwork.util.StringMerger;
  * </p>
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDataSource
 		implements MessageTemplateDataSource {
@@ -128,7 +128,7 @@ public class ClasspathResourceMessageTemplateDataSource extends SimpleMessageDat
 			if ( wrapColumn > 0 ) {
 				// WordUtils doesn't preserve paragraphs, so first split text into paragraph strings and wrap each of those
 				StringBuilder buf = new StringBuilder();
-				String[] paragraphs = msgText.split("\n{2,}");
+				String[] paragraphs = msgText.split("\n{2,}", -1);
 				for ( String para : paragraphs ) {
 					if ( !buf.isEmpty() ) {
 						buf.append("\n\n");

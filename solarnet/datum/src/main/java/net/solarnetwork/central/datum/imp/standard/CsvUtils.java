@@ -29,7 +29,7 @@ import net.solarnetwork.util.IntRangeSet;
  * CSV utilities.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public final class CsvUtils {
 
@@ -93,7 +93,7 @@ public final class CsvUtils {
 			return null;
 		}
 		IntRangeSet set = new IntRangeSet();
-		String[] ranges = value.trim().split("\\s*,\\s*");
+		String[] ranges = value.trim().split("\\s*,\\s*", 0);
 		for ( String range : ranges ) {
 			String[] components = range.split("\\s*-\\s*", 2);
 			try {

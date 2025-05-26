@@ -45,7 +45,7 @@ import net.solarnetwork.central.mail.MessageDataSource;
  * for sending mail.
  *
  * @author matt
- * @version 2.2
+ * @version 2.3
  */
 public class DefaultMailService implements MailService {
 
@@ -92,7 +92,7 @@ public class DefaultMailService implements MailService {
 				if ( wrapColumn > 0 ) {
 					// WordUtils doesn't preserve paragraphs, so first split text into paragraph strings and wrap each of those
 					StringBuilder buf = new StringBuilder();
-					String[] paragraphs = msgText.split("\n{2,}");
+					String[] paragraphs = msgText.split("\n{2,}", -1);
 					for ( String para : paragraphs ) {
 						if ( !buf.isEmpty() ) {
 							buf.append("\n\n");
