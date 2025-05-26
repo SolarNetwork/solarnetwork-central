@@ -346,8 +346,8 @@ public class AsyncJdbcChargePointActionStatusDao
 		// verify buffer removals does not lag additions
 		final long addCount = statMap
 				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsAdded.name(), 0L);
-		final long removeLag = addCount - (statMap
-				.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L));
+		final long removeLag = addCount
+				- statMap.getOrDefault(AsyncJdbcChargePointActionStatusCount.ResultsRemoved.name(), 0L);
 		final WriterThread t = this.writerThread;
 		final boolean writerRunning = t != null && t.isAlive();
 		if ( removeLag > bufferRemovalLagAlertThreshold ) {

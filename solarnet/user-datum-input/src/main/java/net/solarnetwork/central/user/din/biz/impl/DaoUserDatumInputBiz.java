@@ -337,13 +337,13 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			Class<C> clazz) {
 		GenericDao<C, K> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (credentialDao);
+			result = (GenericDao<C, K>) credentialDao;
 		} else if ( TransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (transformDao);
+			result = (GenericDao<C, K>) transformDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (endpointDao);
+			result = (GenericDao<C, K>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (GenericDao<C, K>) (endpointAuthDao);
+			result = (GenericDao<C, K>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -355,11 +355,11 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 	private <F extends DatumInputFilter> UserModifiableEnabledStatusDao<F> statusDao(Class<?> clazz) {
 		UserModifiableEnabledStatusDao<F> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (credentialDao);
+			result = (UserModifiableEnabledStatusDao<F>) credentialDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (endpointDao);
+			result = (UserModifiableEnabledStatusDao<F>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (UserModifiableEnabledStatusDao<F>) (endpointAuthDao);
+			result = (UserModifiableEnabledStatusDao<F>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
@@ -372,13 +372,13 @@ public class DaoUserDatumInputBiz implements UserDatumInputBiz {
 			Class<C> clazz) {
 		FilterableDao<C, K, F> result = null;
 		if ( CredentialConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (credentialDao);
+			result = (FilterableDao<C, K, F>) credentialDao;
 		} else if ( TransformConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (transformDao);
+			result = (FilterableDao<C, K, F>) transformDao;
 		} else if ( EndpointConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (endpointDao);
+			result = (FilterableDao<C, K, F>) endpointDao;
 		} else if ( EndpointAuthConfiguration.class.isAssignableFrom(clazz) ) {
-			result = (FilterableDao<C, K, F>) (endpointAuthDao);
+			result = (FilterableDao<C, K, F>) endpointAuthDao;
 		}
 		if ( result != null ) {
 			return result;
