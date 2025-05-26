@@ -180,10 +180,10 @@ public class DatumExportController {
 			dataConfigs = exportBiz.configurationsForUser(userId, UserDataConfiguration.class);
 			destConfigs = maskConfigurations(
 					exportBiz.configurationsForUser(userId, UserDestinationConfiguration.class),
-					serviceSettings, (Void) -> exportBiz.availableDestinationServices());
+					serviceSettings, (unused) -> exportBiz.availableDestinationServices());
 			outputConfigs = maskConfigurations(
 					exportBiz.configurationsForUser(userId, UserOutputConfiguration.class),
-					serviceSettings, (Void) -> exportBiz.availableOutputFormatServices());
+					serviceSettings, (unused) -> exportBiz.availableOutputFormatServices());
 		}
 		return success(
 				new DatumExportFullConfigurations(configs, dataConfigs, destConfigs, outputConfigs));
@@ -317,7 +317,7 @@ public class DatumExportController {
 			if ( id != null ) {
 				return success(maskConfiguration(
 						config.copyWithId(new UserLongCompositePK(config.getUserId(), id)),
-						serviceSettings, (Void) -> exportBiz.availableOutputFormatServices()));
+						serviceSettings, (unused) -> exportBiz.availableOutputFormatServices()));
 			}
 		}
 		return error();
@@ -349,7 +349,7 @@ public class DatumExportController {
 			if ( id != null ) {
 				return success(maskConfiguration(
 						config.copyWithId(new UserLongCompositePK(config.getUserId(), id)),
-						serviceSettings, (Void) -> exportBiz.availableDestinationServices()));
+						serviceSettings, (unused) -> exportBiz.availableDestinationServices()));
 			}
 		}
 		return error();
@@ -507,7 +507,7 @@ public class DatumExportController {
 						? (BasicDestinationConfiguration) respConfig.getDestinationConfiguration()
 						: new BasicDestinationConfiguration(respConfig.getDestinationConfiguration()));
 		respDestConfig = maskConfiguration(respDestConfig, serviceSettings,
-				(Void) -> exportBiz.availableDestinationServices());
+				(unused) -> exportBiz.availableDestinationServices());
 		respConfig.setDestinationConfiguration(respDestConfig);
 		return respConfig;
 	}
