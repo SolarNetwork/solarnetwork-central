@@ -206,6 +206,7 @@ public class NamedCost
 		return Objects.hash(cost, name, quantity);
 	}
 
+	@SuppressWarnings("ReferenceEquality")
 	@Override
 	public boolean equals(Object obj) {
 		if ( this == obj ) {

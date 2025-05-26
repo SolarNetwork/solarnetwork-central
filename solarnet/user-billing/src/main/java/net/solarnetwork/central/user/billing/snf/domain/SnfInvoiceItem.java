@@ -233,6 +233,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(SnfInvoiceItem other) {
 		if ( other == null ) {
 			return false;

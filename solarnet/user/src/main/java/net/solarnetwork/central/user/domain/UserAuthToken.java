@@ -123,6 +123,7 @@ public class UserAuthToken extends BaseStringEntity implements UserRelatedEntity
 	 * @return {@literal true} if the name or description differs
 	 * @since 2.1
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isInfoDifferent(UserAuthToken other) {
 		if ( this == other ) {
 			return false;

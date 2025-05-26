@@ -153,6 +153,7 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(Payment other) {
 		if ( other == null ) {
 			return false;

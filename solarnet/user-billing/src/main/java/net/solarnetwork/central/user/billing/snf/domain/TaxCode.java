@@ -154,6 +154,7 @@ public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> 
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(TaxCode other) {
 		if ( other == null ) {
 			return false;

@@ -378,6 +378,7 @@ public sealed class ObjectDatumId implements Cloneable, Serializable
 	 *         instance
 	 * @since 1.2
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isEquivalent(ObjectDatumId other) {
 		if ( this == other ) {
 			return true;

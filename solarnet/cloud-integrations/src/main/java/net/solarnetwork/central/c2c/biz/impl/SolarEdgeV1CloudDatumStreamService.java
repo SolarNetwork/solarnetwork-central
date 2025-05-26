@@ -1048,6 +1048,7 @@ public class SolarEdgeV1CloudDatumStreamService extends BaseRestOperationsCloudD
 		final Map<String, List<ValueRef>> componentRefs = queryPlan.meterRefs;
 		Map<DatumId, GeneralDatum> result = new TreeMap<>();
 		for ( JsonNode json : new JsonNode[] { powerJson, energyJson } ) {
+			@SuppressWarnings("ReferenceEquality")
 			final boolean power = (json == powerJson);
 			for ( JsonNode meterNode : json.findValue("meters") ) {
 				String meterId = nonEmptyString(

@@ -281,6 +281,7 @@ public class JdbcAuditService implements AuditService {
           && Objects.equals(timestamp, other.timestamp);
     }
 
+    @SuppressWarnings("ReferenceEquality")
     @Override
     public int compareTo(Delayed o) {
       // not bothering to check instanceof for performance

@@ -135,6 +135,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(AccountBalance other) {
 		if ( other == null ) {
 			return false;

@@ -163,6 +163,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
+	@SuppressWarnings("ReferenceEquality")
 	public boolean isSameAs(InvoicePayment other) {
 		if ( other == null ) {
 			return false;
