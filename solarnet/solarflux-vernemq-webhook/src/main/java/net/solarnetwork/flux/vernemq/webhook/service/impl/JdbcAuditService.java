@@ -270,6 +270,7 @@ public class JdbcAuditService implements AuditService {
       return Objects.hash(objectId, sourceId, timestamp);
     }
 
+    @SuppressWarnings("EqualsUnsafeCast")
     @Override
     public boolean equals(Object obj) {
       if (this == obj) {
