@@ -28,7 +28,7 @@ import java.io.Serial;
  * Exception for security errors.
  *
  * @author matt
- * @version $Id$
+ * @version 1.0
  */
 public class SecurityException extends RuntimeException {
 
