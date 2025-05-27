@@ -238,7 +238,7 @@ public final class SelectDatum
 				|| filter.getAggregation() == Aggregation.WeekOfYear);
 	}
 
-	protected String sqlTableName() {
+	private String sqlTableName() {
 		return switch (aggregation) {
 			case FiveMinute, TenMinute, FifteenMinute, ThirtyMinute -> filter.hasLocalDateRange()
 					? "solardatm.rollup_datm_for_time_span_slots(s.stream_id, ? AT TIME ZONE s.time_zone, ? AT TIME ZONE s.time_zone, ?)"
