@@ -1,21 +1,21 @@
 /* ==================================================================
  * BasicCsvDatumImportInputFormatService.java - 7/11/2018 2:24:40 PM
- * 
+ *
  * Copyright 2018 SolarNetwork.net Dev Team
- * 
- * This program is free software; you can redistribute it and/or 
- * modify it under the terms of the GNU General Public License as 
- * published by the Free Software Foundation; either version 2 of 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
  * the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful, 
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
  * 02111-1307 USA
  * ==================================================================
  */
@@ -42,9 +42,9 @@ import net.solarnetwork.util.ClassUtils;
 /**
  * CSV import format that requires JSON formatted columns for the instantaneous,
  * accumulating, status, and tag sample properties of datum.
- * 
+ *
  * @author matt
- * @version 2.1
+ * @version 2.2
  */
 public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFormatServiceSupport {
 
@@ -73,7 +73,7 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param config
 		 *        the configuration
 		 * @param resource
@@ -104,7 +104,7 @@ public class BasicCsvDatumImportInputFormatService extends CsvDatumImportInputFo
 			}
 		}
 
-		private class CsvIterator
+		private static class CsvIterator
 				extends BaseCsvIterator<GeneralNodeDatum, BasicCsvDatumImportInputProperties> {
 
 			private CsvIterator(ICsvListReader reader, BasicCsvDatumImportInputProperties props)

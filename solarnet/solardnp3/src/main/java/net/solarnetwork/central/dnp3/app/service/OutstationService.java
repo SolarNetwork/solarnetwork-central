@@ -104,7 +104,7 @@ import net.solarnetwork.util.StringUtils;
  * DNP3 Outstation service.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class OutstationService
 		implements ServiceLifecycleObserver, ChannelListener, Dnp3UserEvents, Consumer<ObjectDatum> {
@@ -239,7 +239,7 @@ public class OutstationService
 	 * =========================================================================
 	 */
 
-	private class Application extends BaseOutstationApplication {
+	private static class Application extends BaseOutstationApplication {
 
 	}
 

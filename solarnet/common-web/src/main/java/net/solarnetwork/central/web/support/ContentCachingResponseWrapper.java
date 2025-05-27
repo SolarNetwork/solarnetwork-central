@@ -55,7 +55,7 @@ import jakarta.servlet.http.HttpServletResponseWrapper;
  * </p>
  *
  * @author matt
- * @version 1.4
+ * @version 1.5
  * @since 1.2
  */
 public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
@@ -305,7 +305,7 @@ public class ContentCachingResponseWrapper extends HttpServletResponseWrapper {
 
 	}
 
-	private class ResponsePrintWriter extends PrintWriter {
+	private static class ResponsePrintWriter extends PrintWriter {
 
 		public ResponsePrintWriter(String characterEncoding, ServletOutputStream os)
 				throws UnsupportedEncodingException {
