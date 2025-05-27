@@ -161,7 +161,7 @@ public class ChargePointActionStatusKey extends BasePK
 		if ( result != 0 ) {
 			return result;
 		}
-		return result = action.compareTo(o.action);
+		return action.compareTo(o.action);
 	}
 
 	@Override
