@@ -659,8 +659,7 @@ public class SolrenViewCloudDatumStreamService extends BaseRestOperationsCloudDa
 				childrenCollection);
 	}
 
-	private void extractPlantLocation(final LinkedHashMap<String, Object> meta,
-			final NodeList locElements) {
+	private void extractPlantLocation(final Map<String, Object> meta, final NodeList locElements) {
 		/*- example XML:
 		    <location>
 		      <latitude/>
