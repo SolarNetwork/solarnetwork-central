@@ -23,6 +23,7 @@
 package net.solarnetwork.central.c2c.biz.impl.test;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.ZoneOffset.UTC;
 import static net.solarnetwork.central.c2c.biz.CloudIntegrationsExpressionService.USER_SECRET_TOPIC_ID;
 import static net.solarnetwork.central.test.CommonTestUtils.randomBytes;
 import static net.solarnetwork.central.test.CommonTestUtils.randomLong;
@@ -237,7 +238,7 @@ public class BasicCloudIntegrationsExpressionService_SpelTests {
 			.isNotNull()
 			;
 
-		BigDecimal expectedResult = schedule.resolveTariff(LocalDateTime.now(), null)
+		BigDecimal expectedResult = schedule.resolveTariff(LocalDateTime.now(UTC), null)
 			.getRates().get("E").getAmount()
 			.multiply(new BigDecimal(3));
 
