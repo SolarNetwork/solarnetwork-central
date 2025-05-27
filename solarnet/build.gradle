@@ -51,6 +51,7 @@ subprojects {
 		if (rootProject.hasProperty('failOnWarnings') && rootProject.failOnWarnings.toBoolean()) {
 			it.options.compilerArgs += ["-Werror"]
 		}
+		it.options.errorprone.disable("InlineMeSuggester")
 	}
 	
 	compileJava {
