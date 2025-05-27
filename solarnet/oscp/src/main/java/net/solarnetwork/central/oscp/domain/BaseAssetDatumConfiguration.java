@@ -30,7 +30,7 @@ import java.util.Objects;
  * Base datum configuration for assets.
  *
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public abstract class BaseAssetDatumConfiguration {
 
@@ -71,7 +71,8 @@ public abstract class BaseAssetDatumConfiguration {
 		// @formatter:off
 		return (Arrays.equals(this.propertyNames, other.propertyNames)
 				&& Objects.equals(this.unit, other.unit)
-				&& Objects.equals(this.multiplier, other.multiplier)
+				&& (this.multiplier == other.multiplier
+					|| (this.multiplier != null && other.multiplier != null && this.multiplier.compareTo(other.multiplier) == 0))
 				&& Objects.equals(this.statisticType, other.statisticType));
 		// @formatter:on
 	}

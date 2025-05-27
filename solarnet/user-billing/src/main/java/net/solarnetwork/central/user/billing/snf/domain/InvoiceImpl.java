@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
  *
  * @author matt
- * @version 2.0
+ * @version 2.1
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
@@ -137,7 +137,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		}
 		BigDecimal sum = items.stream().filter(e -> InvoiceItemType.Credit.equals(e.getItemType()))
 				.map(SnfInvoiceItem::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-		return (!sum.equals(BigDecimal.ZERO) ? sum : null);
+		return (sum.compareTo(BigDecimal.ZERO) != 0 ? sum : null);
 	}
 
 	@Override
@@ -154,7 +154,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 					return (availCreditVal instanceof BigDecimal d ? d
 							: new BigDecimal(availCreditVal.toString()));
 				}).reduce(BigDecimal.ZERO, BigDecimal::add);
-		return (!amount.equals(BigDecimal.ZERO) ? amount : null);
+		return (amount.compareTo(BigDecimal.ZERO) != 0 ? amount : null);
 	}
 
 	@Override

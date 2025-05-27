@@ -44,7 +44,7 @@ import net.solarnetwork.util.NumberUtils;
  * </p>
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 @JsonIgnoreProperties({ "id", "fullyConfigured" })
 @JsonPropertyOrder({ "userId", "datumStreamMappingId", "index", "created", "modified", "enabled",
@@ -124,7 +124,8 @@ public final class CloudDatumStreamPropertyConfiguration extends
 				&& Objects.equals(this.propertyName, other.propertyName)
 				&& Objects.equals(this.valueType, other.valueType)
 				&& Objects.equals(this.valueReference, other.valueReference)
-				&& Objects.equals(this.multiplier, other.multiplier)
+				&& (this.multiplier == other.multiplier
+					|| (this.multiplier != null && other.multiplier != null && this.multiplier.compareTo(other.multiplier) == 0))
 				&& Objects.equals(this.scale, other.scale)
 				;
 		// @formatter:on

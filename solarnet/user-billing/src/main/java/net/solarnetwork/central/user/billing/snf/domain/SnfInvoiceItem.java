@@ -39,7 +39,7 @@ import net.solarnetwork.domain.Differentiable;
  * SNF invoice item entity.
  *
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
 
@@ -242,8 +242,8 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		return Objects.equals(invoiceId, other.invoiceId)
 				&& Objects.equals(key, other.key)
 				&& Objects.equals(itemType, other.itemType)
-				&& Objects.equals(quantity, other.quantity)
-				&& ((amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0))
+				&& ((quantity == other.quantity) || (quantity != null && other.quantity != null && quantity.compareTo(other.quantity) == 0))
+				&& ((amount == other.amount) || (amount != null && other.amount != null && amount.compareTo(other.amount) == 0))
 				&& Objects.equals(metadata, other.metadata);
 		// @formatter:on
 	}
